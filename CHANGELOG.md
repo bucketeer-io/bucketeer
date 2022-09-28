@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.0](https://github.com/bucketeer-io/bucketeer/compare/v0.0.0...v0.1.0) (2022-09-28)
+
+
+### Features
+
+* add the initial implementation ([#1](https://github.com/bucketeer-io/bucketeer/issues/1)) ([038601c](https://github.com/bucketeer-io/bucketeer/commit/038601cc714b1fe66d7bf8b3763b344c89749a35))
+
 ## [0.1.0](https://github.com/bucketeer-io/bucketeer/compare/v0.0.0...v0.1.0) (2022-09-25)
 
 
