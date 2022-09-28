@@ -1,0 +1,2 @@
+export const ENVIRONMENT_ID_MAX_LENGTH = 50;
+export const ENVIRONMENT_LIST_PAGE_SIZE = 50;

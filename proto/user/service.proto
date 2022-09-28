@@ -1,0 +1,59 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.user;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/user";
+
+import "proto/user/user.proto";
+
+message GetUserRequest {
+  string user_id = 1;
+  string environment_namespace = 2;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message ListUsersRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    CREATED_AT = 1;
+    LAST_SEEN = 2;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  string environment_namespace = 1;
+  int64 page_size = 2;
+  string cursor = 3;
+  OrderBy order_by = 4;
+  OrderDirection order_direction = 5;
+  string search_keyword = 6;
+  int64 from = 7;
+  int64 to = 8;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  string cursor = 2;
+}
+
+service UserService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
+}

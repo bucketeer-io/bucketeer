@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "dex.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "dex.name" . }}
+    chart: {{ template "dex.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    envoy: "true"
+spec:
+  type: {{ .Values.service.type }}
+  {{- if .Values.service.clusterIP }}
+  clusterIP: {{ .Values.service.clusterIP }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.service.dexPort }}
+      targetPort: {{ .Values.service.dexPort }}
+      protocol: TCP
+      name: {{ .Values.service.name }}
+    - port: {{ .Values.service.externalPort }}
+      targetPort: {{ .Values.service.internalPort }}
+      protocol: TCP
+      name: envoy
+    - port: {{ .Values.envoy.adminPort }}
+      targetPort: {{ .Values.envoy.adminPort }}
+      protocol: TCP
+      name: admin
+  selector:
+    app: {{ template "dex.name" . }}
+    release: {{ .Release.Name }}

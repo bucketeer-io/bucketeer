@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["auditlog.go"],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/auditlog/domain",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proto/auditlog:go_default_library",
+        "//proto/event/domain:go_default_library",
+    ],
+)

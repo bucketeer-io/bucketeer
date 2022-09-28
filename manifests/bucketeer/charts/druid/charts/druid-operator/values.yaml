@@ -1,0 +1,15 @@
+namespace:
+fullnameOverride:
+image:
+  repository: druidio/druid-operator
+  tag:
+
+nodeSelector: {}
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

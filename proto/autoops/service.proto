@@ -1,0 +1,180 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.autoops;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
+
+import "proto/autoops/auto_ops_rule.proto";
+import "proto/autoops/command.proto";
+import "proto/autoops/ops_count.proto";
+import "proto/autoops/webhook.proto";
+
+message GetAutoOpsRuleRequest {
+  string environment_namespace = 1;
+  string id = 2;
+}
+
+message GetAutoOpsRuleResponse {
+  AutoOpsRule auto_ops_rule = 1;
+}
+
+message CreateAutoOpsRuleRequest {
+  string environment_namespace = 1;
+  CreateAutoOpsRuleCommand command = 2;
+}
+
+message CreateAutoOpsRuleResponse {}
+
+message ListAutoOpsRulesRequest {
+  string environment_namespace = 1;
+  int64 page_size = 2;
+  string cursor = 3;
+  repeated string feature_ids = 4;
+}
+
+message ListAutoOpsRulesResponse {
+  repeated AutoOpsRule auto_ops_rules = 1;
+  string cursor = 2;
+}
+
+message DeleteAutoOpsRuleRequest {
+  string environment_namespace = 1;
+  string id = 2;
+  DeleteAutoOpsRuleCommand command = 3;
+}
+
+message DeleteAutoOpsRuleResponse {}
+
+message UpdateAutoOpsRuleRequest {
+  string environment_namespace = 1;
+  string id = 2;
+  ChangeAutoOpsRuleOpsTypeCommand change_auto_ops_rule_ops_type_command = 3;
+  repeated AddOpsEventRateClauseCommand add_ops_event_rate_clause_commands = 4;
+  repeated ChangeOpsEventRateClauseCommand
+      change_ops_event_rate_clause_commands = 5;
+  repeated DeleteClauseCommand delete_clause_commands = 6;
+  repeated AddDatetimeClauseCommand add_datetime_clause_commands = 7;
+  repeated ChangeDatetimeClauseCommand change_datetime_clause_commands = 8;
+  repeated AddWebhookClauseCommand add_webhook_clause_commands = 9;
+  repeated ChangeWebhookClauseCommand change_webhook_clause_commands = 10;
+}
+
+message UpdateAutoOpsRuleResponse {}
+
+message ExecuteAutoOpsRequest {
+  string environment_namespace = 1;
+  string id = 2;
+  ChangeAutoOpsRuleTriggeredAtCommand
+      change_auto_ops_rule_triggered_at_command = 3;
+}
+
+message ExecuteAutoOpsResponse {
+  bool already_triggered = 1;
+}
+
+message ListOpsCountsRequest {
+  string environment_namespace = 1;
+  int64 page_size = 2;
+  string cursor = 3;
+  repeated string auto_ops_rule_ids = 4;
+  repeated string feature_ids = 5;
+}
+
+message ListOpsCountsResponse {
+  string cursor = 1;
+  repeated OpsCount ops_counts = 2;
+}
+
+message CreateWebhookRequest {
+  string environment_namespace = 1;
+  CreateWebhookCommand command = 2;
+}
+
+message CreateWebhookResponse {
+  Webhook webhook = 1;
+  string url = 2;
+}
+
+message GetWebhookRequest {
+  string id = 1;
+  string environment_namespace = 2;
+}
+
+message GetWebhookResponse {
+  Webhook webhook = 1;
+  string url = 2;
+}
+
+message UpdateWebhookRequest {
+  string id = 1;
+  string environment_namespace = 2;
+  ChangeWebhookNameCommand changeWebhookNameCommand = 3;
+  ChangeWebhookDescriptionCommand changeWebhookDescriptionCommand = 4;
+}
+
+message UpdateWebhookResponse {}
+
+message DeleteWebhookRequest {
+  string id = 1;
+  string environment_namespace = 2;
+  DeleteWebhookCommand command = 3;
+}
+
+message DeleteWebhookResponse {}
+
+message ListWebhooksRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    NAME = 1;
+    CREATED_AT = 2;
+    UPDATED_AT = 3;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  string environment_namespace = 1;
+  int64 page_size = 2;
+  string cursor = 3;
+  OrderBy order_by = 4;
+  OrderDirection order_direction = 5;
+  string search_keyword = 6;
+}
+
+message ListWebhooksResponse {
+  repeated Webhook webhooks = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+service AutoOpsService {
+  rpc GetAutoOpsRule(GetAutoOpsRuleRequest) returns (GetAutoOpsRuleResponse) {}
+  rpc ListAutoOpsRules(ListAutoOpsRulesRequest)
+      returns (ListAutoOpsRulesResponse) {}
+  rpc CreateAutoOpsRule(CreateAutoOpsRuleRequest)
+      returns (CreateAutoOpsRuleResponse) {}
+  rpc DeleteAutoOpsRule(DeleteAutoOpsRuleRequest)
+      returns (DeleteAutoOpsRuleResponse) {}
+  rpc UpdateAutoOpsRule(UpdateAutoOpsRuleRequest)
+      returns (UpdateAutoOpsRuleResponse) {}
+  rpc ExecuteAutoOps(ExecuteAutoOpsRequest) returns (ExecuteAutoOpsResponse) {}
+  rpc ListOpsCounts(ListOpsCountsRequest) returns (ListOpsCountsResponse) {}
+  rpc CreateWebhook(CreateWebhookRequest) returns (CreateWebhookResponse) {}
+  rpc GetWebhook(GetWebhookRequest) returns (GetWebhookResponse) {}
+  rpc UpdateWebhook(UpdateWebhookRequest) returns (UpdateWebhookResponse) {}
+  rpc DeleteWebhook(DeleteWebhookRequest) returns (DeleteWebhookResponse) {}
+  rpc ListWebhooks(ListWebhooksRequest) returns (ListWebhooksResponse) {}
+}

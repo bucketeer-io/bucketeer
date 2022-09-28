@@ -1,0 +1,60 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.autoops;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
+
+import "google/protobuf/any.proto";
+
+message Clause {
+  string id = 1;
+  google.protobuf.Any clause = 2;
+}
+
+message OpsEventRateClause {
+  enum Operator {
+    GREATER_OR_EQUAL = 0;
+    LESS_OR_EQUAL = 1;
+  }
+  reserved 1;  // int32 feature_version = 1
+  string variation_id = 2;
+  string goal_id = 3;
+  int64 min_count = 4;
+  double threadshold_rate = 5;
+  Operator operator = 6;
+}
+
+message DatetimeClause {
+  int64 time = 1;
+}
+
+message WebhookClause {
+  message Condition {
+    enum Operator {
+      EQUAL = 0;
+      NOT_EQUAL = 1;
+      MORE_THAN = 2;
+      MORE_THAN_OR_EQUAL = 3;
+      LESS_THAN = 4;
+      LESS_THAN_OR_EQUAL = 5;
+    }
+    string filter = 1;
+    string value = 2;
+    Operator operator = 3;
+  }
+  string webhook_id = 1;
+  repeated Condition conditions = 2;
+}

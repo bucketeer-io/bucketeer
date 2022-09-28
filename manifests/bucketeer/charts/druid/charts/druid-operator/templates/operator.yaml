@@ -1,0 +1,46 @@
+{{- if .Values.global.druid.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "druid-operator.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "druid-operator.name" . }}
+    chart: {{ template "druid-operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: druid-operator
+  template:
+    metadata:
+      labels:
+        name: druid-operator
+    spec:
+      serviceAccountName: druid-operator
+      containers:
+        - name: druid-operator
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command:
+            - druid-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "druid-operator"
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+#load("@io_bazel_rules_docker//container:bundle.bzl", "container_bundle")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["feature.go"],
+    importpath = "github.com/bucketeer-io/bucketeer/cmd/feature",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//pkg/cli:go_default_library",
+        "//pkg/feature/cmd/cacher:go_default_library",
+        "//pkg/feature/cmd/recorder:go_default_library",
+        "//pkg/feature/cmd/segmentpersister:go_default_library",
+        "//pkg/feature/cmd/server:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "feature",
+    embed = [":go_default_library"],
+    pure = "on",
+    visibility = ["//visibility:public"],
+)
+
+go_image(
+    name = "feature_image",
+    binary = ":feature",
+)
+
+# needed to make bazel build //cmd/feature:... build the docker image which has rule //cmd/feature:feature.tar
+# it seems it is not built because nothing depends on it.
+alias(
+    name = "feature_image_tar",
+    actual = ":feature_image.tar",
+)

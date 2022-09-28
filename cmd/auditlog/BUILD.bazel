@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["auditlog.go"],
+    importpath = "github.com/bucketeer-io/bucketeer/cmd/auditlog",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//pkg/auditlog/cmd/persister:go_default_library",
+        "//pkg/auditlog/cmd/server:go_default_library",
+        "//pkg/cli:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "auditlog",
+    embed = [":go_default_library"],
+    pure = "on",
+    visibility = ["//visibility:public"],
+)
+
+go_image(
+    name = "auditlog_image",
+    binary = ":auditlog",
+)
+
+alias(
+    name = "auditlog_image_tar",
+    actual = ":auditlog_image.tar",
+)

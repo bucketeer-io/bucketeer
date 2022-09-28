@@ -1,0 +1,157 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "goal-batch-transformer.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "goal-batch-transformer.name" . }}
+    chart: {{ template "goal-batch-transformer.chart" . }}
+    release: {{ template "goal-batch-transformer.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "goal-batch-transformer.name" . }}
+      release: {{ template "goal-batch-transformer.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "goal-batch-transformer.name" . }}
+        release: {{ template "goal-batch-transformer.fullname" . }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: {{ template "goal-batch-transformer.fullname" . }}-envoy-config
+        - name: service-cert-secret
+          secret:
+            secretName: {{ template "service-cert-secret" . }}
+        - name: service-token-secret
+          secret:
+            secretName: {{ template "service-token-secret" . }} 
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["transformer"]
+          env:
+            - name: BUCKETEER_GOAL_BATCH_PORT
+              value: "{{ .Values.env.port }}"
+            - name: BUCKETEER_GOAL_BATCH_METRICS_PORT
+              value: "{{ .Values.env.metricsPort }}"
+            - name: BUCKETEER_GOAL_BATCH_PROJECT
+              value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_GOAL_BATCH_FEATURE_SERVICE
+              value: "{{ .Values.env.featureService }}"
+            - name: BUCKETEER_GOAL_BATCH_USER_SERVICE
+              value: "{{ .Values.env.userService }}"
+            - name: BUCKETEER_GOAL_BATCH_GOAL_BATCH_TOPIC
+              value: "{{ .Values.env.goalBatchTopic }}"
+            - name: BUCKETEER_GOAL_BATCH_GOAL_BATCH_SUBSCRIPTION
+              value: "{{ .Values.env.goalBatchSubscription }}"
+            - name: BUCKETEER_GOAL_BATCH_GOAL_TOPIC
+              value: "{{ .Values.env.goalTopic }}"
+            - name: BUCKETEER_GOAL_BATCH_MAX_MPS
+              value: "{{ .Values.env.maxMps }}"
+            - name: BUCKETEER_GOAL_BATCH_NUM_WORKERS
+              value: "{{ .Values.env.numWorkers }}"
+            - name: BUCKETEER_GOAL_BATCH_CERT
+              value: /usr/local/certs/service/tls.crt
+            - name: BUCKETEER_GOAL_BATCH_KEY
+              value: /usr/local/certs/service/tls.key
+            - name: BUCKETEER_GOAL_BATCH_SERVICE_TOKEN
+              value: /usr/local/service-token/token
+            - name: BUCKETEER_GOAL_BATCH_PULLER_NUM_GOROUTINES
+              value: "{{ .Values.env.pullerNumGoroutines }}"
+            - name: BUCKETEER_GOAL_BATCH_PULLER_MAX_OUTSTANDING_MESSAGES
+              value: "{{ .Values.env.pullerMaxOutstandingMessages }}"
+            - name: BUCKETEER_GOAL_BATCH_PULLER_MAX_OUTSTANDING_BYTES
+              value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
+            - name: BUCKETEER_GOAL_BATCH_LOG_LEVEL
+              value: "{{ .Values.env.logLevel }}"
+          volumeMounts:
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+            - name: service-token-secret
+              mountPath: /usr/local/service-token
+              readOnly: true
+          ports:
+            - name: service
+              containerPort: {{ .Values.env.port }}
+            - name: metrics
+              containerPort: {{ .Values.env.metricsPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+        - name: envoy
+          image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+          command: ["envoy"]
+          args:
+            - "-c"
+            - "/usr/local/conf/config.yaml"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /usr/local/conf/
+              readOnly: true
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+          ports:
+            - name: envoy
+              containerPort: {{ .Values.envoy.port }}
+            - name: admin
+              containerPort: {{ .Values.envoy.adminPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.envoy.resources | indent 12 }}
+  strategy:
+    type: RollingUpdate

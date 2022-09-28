@@ -1,0 +1,50 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "evaluation.go",
+        "handler.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/autoops/webhookhandler",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/auth/client:go_default_library",
+        "//pkg/autoops/api:go_default_library",
+        "//pkg/autoops/command:go_default_library",
+        "//pkg/autoops/domain:go_default_library",
+        "//pkg/autoops/storage/v2:go_default_library",
+        "//pkg/crypto:go_default_library",
+        "//pkg/feature/client:go_default_library",
+        "//pkg/log:go_default_library",
+        "//pkg/pubsub/publisher:go_default_library",
+        "//pkg/storage/v2/mysql:go_default_library",
+        "//pkg/token:go_default_library",
+        "//proto/account:go_default_library",
+        "//proto/autoops:go_default_library",
+        "//proto/event/domain:go_default_library",
+        "@com_github_itchyny_gojq//:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["handler_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":go_default_library"],
+    deps = [
+        "//pkg/auth/client/mock:go_default_library",
+        "//pkg/autoops/domain:go_default_library",
+        "//pkg/feature/client/mock:go_default_library",
+        "//pkg/log:go_default_library",
+        "//pkg/pubsub/publisher/mock:go_default_library",
+        "//pkg/storage/v2/mysql/mock:go_default_library",
+        "//pkg/token:go_default_library",
+        "//proto/autoops:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+        "@com_github_golang_protobuf//ptypes:go_default_library_gen",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

@@ -1,0 +1,297 @@
+{{- if .Values.global.druid.enabled }}
+apiVersion: "druid.apache.org/v1alpha1"
+kind: "Druid"
+metadata:
+  name: cluster
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  imagePullSecrets: {{ toYaml .Values.spec.imagePullSecrets | nindent 4 }}
+  image: {{ .Values.spec.image }}
+  startScript: /druid.sh
+  securityContext:
+    fsGroup: 1000
+    runAsUser: 1000
+    runAsGroup: 1000
+  nodeSelector: {{ toYaml .Values.spec.nodeSelector | nindent 4 }}
+  services:
+    - spec:
+        type: ClusterIP
+        clusterIP: None  
+  commonConfigMountPath: "/opt/druid/conf/druid/cluster/_common"
+  jvm.options: {{ toYaml .Values.spec.jvmOptions | nindent 4 }}
+  log4j.config: {{ toYaml .Values.spec.log4jConfig | nindent 4 }}
+  common.runtime.properties: {{ toYaml .Values.spec.commonRuntimeProperties | nindent 4 }}
+  deepStorage:
+    spec:
+      properties: {{ toYaml .Values.spec.deepStorage.spec.properties | nindent 6 }}
+    type: default
+  metadataStore:
+    spec:
+      properties: {{ toYaml .Values.spec.metadataStore.spec.properties | nindent 6 }}
+    type: default
+  zookeeper:
+    spec:
+      properties: {{ toYaml .Values.spec.zookeeper.spec.properties | nindent 6 }}
+    type: default
+  env: {{ toYaml .Values.spec.env | nindent 4 }}
+  volumeMounts: {{ toYaml .Values.spec.volumeMounts | nindent 4 }}
+  volumes: {{ toYaml .Values.spec.volumes | nindent 4 }}
+
+  nodes:
+    brokers:
+      nodeType: "broker"
+      nodeConfigMountPath: "/opt/druid/conf/druid/cluster/query/broker"
+      runtime.properties: {{ toYaml .Values.spec.nodes.brokers.runtimeProperties | nindent 8 }}
+      extra.jvm.options: {{ toYaml .Values.spec.nodes.brokers.extraJvmOptions | nindent 8 }}
+      druid.port: 8088
+      volumeMounts:
+        - mountPath: /druid/data
+          name: data-volume
+      volumes:
+        - name: data-volume
+          emptyDir: {}
+      affinity: {{ toYaml .Values.spec.nodes.brokers.affinity | nindent 8 }}
+      resources: {{ toYaml .Values.spec.nodes.brokers.resources | nindent 8 }}
+      podDisruptionBudgetSpec:
+        maxUnavailable: {{ .Values.spec.nodes.brokers.podDisruptionBudgetSpec.maxUnavailable }}
+      replicas: {{ .Values.spec.nodes.brokers.hpAutoscaler.minReplicas }}
+      hpAutoscaler:
+        minReplicas: {{ .Values.spec.nodes.brokers.hpAutoscaler.minReplicas }}
+        maxReplicas: {{ .Values.spec.nodes.brokers.hpAutoscaler.maxReplicas }}
+        scaleTargetRef:
+          apiVersion: apps/v1
+          kind: StatefulSet
+          name: druid-cluster-brokers
+        metrics: {{ toYaml .Values.spec.nodes.brokers.hpAutoscaler.metrics | nindent 10 }}
+
+    coordinators:
+      nodeType: "coordinator"
+      nodeConfigMountPath: "/opt/druid/conf/druid/cluster/master/coordinator-overlord"
+      runtime.properties: {{ toYaml .Values.spec.nodes.coordinators.runtimeProperties | nindent 8 }}
+      extra.jvm.options: {{ toYaml .Values.spec.nodes.coordinators.extraJvmOptions | nindent 8 }}
+      druid.port: 8088
+      volumeMounts:
+        - mountPath: /druid/data
+          name: data-volume
+      volumes:
+        - name: data-volume
+          emptyDir: {}
+      replicas: {{ .Values.spec.nodes.coordinators.hpAutoscaler.minReplicas }}
+      resources: {{ toYaml .Values.spec.nodes.coordinators.resources | nindent 8 }}
+      affinity: {{ toYaml .Values.spec.nodes.coordinators.affinity | nindent 8 }}
+      podDisruptionBudgetSpec:
+        maxUnavailable: {{ .Values.spec.nodes.coordinators.podDisruptionBudgetSpec.maxUnavailable }}
+      hpAutoscaler:
+        minReplicas: {{ .Values.spec.nodes.coordinators.hpAutoscaler.minReplicas }}
+        maxReplicas: {{ .Values.spec.nodes.coordinators.hpAutoscaler.maxReplicas }}
+        scaleTargetRef:
+          apiVersion: apps/v1
+          kind: StatefulSet
+          name: druid-cluster-coordinators
+        metrics: {{ toYaml .Values.spec.nodes.coordinators.hpAutoscaler.metrics | nindent 10 }}
+
+    overlords:
+      nodeType: overlord
+      druid.port: 8081
+      nodeConfigMountPath: /opt/druid/conf/druid/cluster/master/overlord
+      runtime.properties: {{ toYaml .Values.spec.nodes.overlords.runtimeProperties | nindent 8 }}
+      extra.jvm.options: {{ toYaml .Values.spec.nodes.overlords.extraJvmOptions | nindent 8 }}
+      services:
+        - metadata:
+            name: "%s"
+          spec:
+            clusterIP: None
+            ports:
+              -
+                name: tcp-service-port
+                port: 8081
+                targetPort: 8081
+            type: ClusterIP
+      volumeClaimTemplates:
+        - metadata:
+            name: data-volume
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 5Gi
+            storageClassName: standard
+      volumeMounts:
+        - mountPath: /druid/data
+          name: data-volume
+      livenessProbe:
+        initialDelaySeconds: 30
+        httpGet:
+          path: /status/health
+          port: 8081
+      readinessProbe:
+        initialDelaySeconds: 30
+        httpGet:
+          path: /status/health
+          port: 8081
+      resources: {{ toYaml .Values.spec.nodes.overlords.resources | nindent 8 }}
+      affinity: {{ toYaml .Values.spec.nodes.overlords.affinity | nindent 8 }}
+      podDisruptionBudgetSpec:
+        maxUnavailable: {{ .Values.spec.nodes.overlords.podDisruptionBudgetSpec.maxUnavailable }}
+      replicas: {{ .Values.spec.nodes.overlords.hpAutoscaler.minReplicas }}
+      hpAutoscaler:
+        minReplicas: {{ .Values.spec.nodes.overlords.hpAutoscaler.minReplicas }}
+        maxReplicas: {{ .Values.spec.nodes.overlords.hpAutoscaler.maxReplicas }}
+        scaleTargetRef:
+          apiVersion: apps/v1
+          kind: StatefulSet
+          name: druid-cluster-overlords
+        metrics: {{ toYaml .Values.spec.nodes.overlords.hpAutoscaler.metrics | nindent 10 }}
+
+    historicals:
+      nodeType: "historical"
+      nodeConfigMountPath: "/opt/druid/conf/druid/cluster/data/historical"
+      runtime.properties: {{ toYaml .Values.spec.nodes.historicals.runtimeProperties | nindent 8 }}
+      extra.jvm.options: {{ toYaml .Values.spec.nodes.historicals.extraJvmOptions | nindent 8 }}
+      druid.port: 8088
+      volumeClaimTemplates: {{ toYaml .Values.spec.nodes.historicals.volumeClaimTemplates | nindent 8 }}
+      volumeMounts: {{ toYaml .Values.spec.nodes.historicals.volumeMounts | nindent 8 }}
+      resources: {{ toYaml .Values.spec.nodes.historicals.resources | nindent 8 }}
+      podDisruptionBudgetSpec:
+        maxUnavailable: {{ .Values.spec.nodes.overlords.podDisruptionBudgetSpec.maxUnavailable }}
+      replicas: {{ .Values.spec.nodes.historicals.hpAutoscaler.minReplicas }}
+      hpAutoscaler:
+        minReplicas: {{ .Values.spec.nodes.historicals.hpAutoscaler.minReplicas }}
+        maxReplicas: {{ .Values.spec.nodes.historicals.hpAutoscaler.maxReplicas }}
+        scaleTargetRef:
+          apiVersion: apps/v1
+          kind: StatefulSet
+          name: druid-cluster-historicals
+        metrics: {{ toYaml .Values.spec.nodes.historicals.hpAutoscaler.metrics | nindent 10 }}
+
+    middlemanagers:
+      nodeType: middleManager
+      nodeConfigMountPath: /opt/druid/conf/druid/cluster/data/middleManager
+      runtime.properties: {{ toYaml .Values.spec.nodes.middlemanagers.runtimeProperties | nindent 8 }}
+      extra.jvm.options: {{ toYaml .Values.spec.nodes.middlemanagers.extraJvmOptions | nindent 8 }}
+      druid.port: 8091
+      ports:
+        - containerPort: 8100
+          name: peon-0-pt
+        - containerPort: 8101
+          name: peon-1-pt
+        - containerPort: 8102
+          name: peon-2-pt
+        - containerPort: 8103
+          name: peon-3-pt
+        - containerPort: 8104
+          name: peon-4-pt
+        - containerPort: 8105
+          name: peon-5-pt
+        - containerPort: 8106
+          name: peon-6-pt
+        - containerPort: 8107
+          name: peon-7-pt
+        - containerPort: 8108
+          name: peon-8-pt
+        - containerPort: 8109
+          name: peon-9-pt
+      services:
+        - spec:
+            clusterIP: None
+            ports:
+              - name: tcp-service-port
+                port: 8091
+                targetPort: 8091
+              - name: peon-port-0
+                port: 8100
+                targetPort: 8100
+              - name: peon-port-1
+                port: 8101
+                targetPort: 8101
+              - name: peon-port-2
+                port: 8102
+                targetPort: 8102
+              - name: peon-port-3
+                port: 8103
+                targetPort: 8103
+              - name: peon-port-4
+                port: 8104
+                targetPort: 8104
+              - name: peon-port-5
+                port: 8105
+                targetPort: 8105
+              - name: peon-port-6
+                port: 8106
+                targetPort: 8106
+              - name: peon-port-7
+                port: 8107
+                targetPort: 8107
+              - name: peon-port-8
+                port: 8108
+                targetPort: 8108
+              - name: peon-port-9
+                port: 8109
+                targetPort: 8109
+            type: ClusterIP
+      volumeClaimTemplates: {{ toYaml .Values.spec.nodes.middlemanagers.volumeClaimTemplates | nindent 8 }}
+      volumeMounts:
+        - mountPath: /druid/data
+          name: data-volume
+      livenessProbe:
+        initialDelaySeconds: 30
+        httpGet:
+          path: /status/health
+          port: 8091
+      readinessProbe:
+        initialDelaySeconds: 30
+        httpGet:
+          path: /status/health
+          port: 8091
+      resources: {{ toYaml .Values.spec.nodes.middlemanagers.resources | nindent 8 }}
+      podDisruptionBudgetSpec:
+        maxUnavailable: {{ .Values.spec.nodes.middlemanagers.podDisruptionBudgetSpec.maxUnavailable }}
+      replicas: {{ .Values.spec.nodes.middlemanagers.hpAutoscaler.minReplicas }}
+      hpAutoscaler:
+        minReplicas: {{ .Values.spec.nodes.middlemanagers.hpAutoscaler.minReplicas }}
+        maxReplicas: {{ .Values.spec.nodes.middlemanagers.hpAutoscaler.maxReplicas }}
+        scaleTargetRef:
+          apiVersion: apps/v1
+          kind: StatefulSet
+          name: druid-cluster-middlemanagers
+        metrics: {{ toYaml .Values.spec.nodes.middlemanagers.hpAutoscaler.metrics | nindent 10 }}
+
+    routers:
+      nodeType: router
+      nodeConfigMountPath: /opt/druid/conf/druid/cluster/query/router
+      runtime.properties: {{ toYaml .Values.spec.nodes.routers.runtimeProperties | nindent 8 }}
+      extra.jvm.options: {{ toYaml .Values.spec.nodes.routers.extraJvmOptions | nindent 8 }}
+      druid.port: 8888
+      services:
+        - metadata:
+            name: "%s"
+          spec:
+            clusterIP: None
+            ports:
+              - name: tcp-service-port
+                port: 8888
+                targetPort: 8888
+            type: ClusterIP
+      volumeMounts:
+        - mountPath: /druid/data
+          name: data-volume
+      volumes:
+        - name: data-volume
+          emptyDir: {}
+      resources: {{ toYaml .Values.spec.nodes.routers.resources | nindent 8 }}
+      affinity: {{ toYaml .Values.spec.nodes.routers.affinity | nindent 8 }}
+      podDisruptionBudgetSpec:
+        maxUnavailable: {{ .Values.spec.nodes.routers.podDisruptionBudgetSpec.maxUnavailable }}
+      replicas: {{ .Values.spec.nodes.routers.hpAutoscaler.minReplicas }}
+      hpAutoscaler:
+        minReplicas: {{ .Values.spec.nodes.routers.hpAutoscaler.minReplicas }}
+        maxReplicas: {{ .Values.spec.nodes.routers.hpAutoscaler.maxReplicas }}
+        scaleTargetRef:
+          apiVersion: apps/v1
+          kind: StatefulSet
+          name: druid-cluster-routers
+        metrics: {{ toYaml .Values.spec.nodes.routers.hpAutoscaler.metrics | nindent 10 }}
+{{- end }}

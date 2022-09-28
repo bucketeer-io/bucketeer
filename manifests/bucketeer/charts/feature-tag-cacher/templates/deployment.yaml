@@ -1,0 +1,161 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "feature-tag-cacher.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "feature-tag-cacher.name" . }}
+    chart: {{ template "feature-tag-cacher.chart" . }}
+    release: {{ template "feature-tag-cacher.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "feature-tag-cacher.name" . }}
+      release: {{ template "feature-tag-cacher.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "feature-tag-cacher.name" . }}
+        release: {{ template "feature-tag-cacher.fullname" . }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: {{ template "feature-tag-cacher.fullname" . }}-envoy-config
+        - name: service-cert-secret
+          secret:
+            secretName: {{ template "service-cert-secret" . }}
+        - name: service-token-secret
+          secret:
+            secretName: {{ template "service-token-secret" . }} 
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["tag-cacher"]
+          env:
+            - name: BUCKETEER_FEATURE_PROJECT
+              value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_FEATURE_FEATURE_SERVICE
+              value: "{{ .Values.env.featureService }}"
+            - name: BUCKETEER_FEATURE_TOPIC
+              value: "{{ .Values.env.topic }}"
+            - name: BUCKETEER_FEATURE_SUBSCRIPTION
+              value: "{{ .Values.env.subscription }}"
+            - name: BUCKETEER_FEATURE_MAX_MPS
+              value: "{{ .Values.env.maxMps }}"
+            - name: BUCKETEER_FEATURE_NUM_WORKERS
+              value: "{{ .Values.env.numWorkers }}"
+            - name: BUCKETEER_FEATURE_FLUSH_SIZE
+              value: "{{ .Values.env.flushSize }}"
+            - name: BUCKETEER_FEATURE_FLUSH_INTERVAL
+              value: "{{ .Values.env.flushInterval }}"
+            - name: BUCKETEER_FEATURE_PULLER_NUM_GOROUTINES
+              value: "{{ .Values.env.pullerNumGoroutines }}"
+            - name: BUCKETEER_FEATURE_PULLER_MAX_OUTSTANDING_MESSAGES
+              value: "{{ .Values.env.pullerMaxOutstandingMessages }}"
+            - name: BUCKETEER_FEATURE_PULLER_MAX_OUTSTANDING_BYTES
+              value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
+            - name: BUCKETEER_FEATURE_REDIS_SERVER_NAME
+              value: "{{ .Values.env.redis.serverName }}"
+            - name: BUCKETEER_FEATURE_REDIS_ADDR
+              value: "{{ .Values.env.redis.addr }}"
+            - name: BUCKETEER_FEATURE_PORT
+              value: "{{ .Values.env.port }}"
+            - name: BUCKETEER_FEATURE_METRICS_PORT
+              value: "{{ .Values.env.metricsPort }}"
+            - name: BUCKETEER_FEATURE_LOG_LEVEL
+              value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_FEATURE_SERVICE_TOKEN
+              value: /usr/local/service-token/token
+            - name: BUCKETEER_FEATURE_CERT
+              value: /usr/local/certs/service/tls.crt
+            - name: BUCKETEER_FEATURE_KEY
+              value: /usr/local/certs/service/tls.key
+          volumeMounts:
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+            - name: service-token-secret
+              mountPath: /usr/local/service-token
+              readOnly: true
+          ports:
+            - name: service
+              containerPort: {{ .Values.env.port }}
+            - name: metrics
+              containerPort: {{ .Values.env.metricsPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+        - name: envoy
+          image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+          command: ["envoy"]
+          args:
+            - "-c"
+            - "/usr/local/conf/config.yaml"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /usr/local/conf/
+              readOnly: true
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+          ports:
+            - name: envoy
+              containerPort: {{ .Values.envoy.port }}
+            - name: admin
+              containerPort: {{ .Values.envoy.adminPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.envoy.resources | indent 12 }}
+  strategy:
+    type: RollingUpdate

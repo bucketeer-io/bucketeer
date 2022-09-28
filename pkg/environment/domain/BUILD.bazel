@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "environment.go",
+        "project.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/environment/domain",
+    visibility = ["//visibility:public"],
+    deps = ["//proto/environment:go_default_library"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "environment_test.go",
+        "project_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = ["@com_github_stretchr_testify//assert:go_default_library"],
+)

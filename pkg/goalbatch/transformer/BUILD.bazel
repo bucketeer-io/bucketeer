@@ -1,0 +1,52 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "metrics.go",
+        "transformer.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/goalbatch/transformer",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/errgroup:go_default_library",
+        "//pkg/health:go_default_library",
+        "//pkg/metrics:go_default_library",
+        "//pkg/pubsub/publisher:go_default_library",
+        "//pkg/pubsub/puller:go_default_library",
+        "//pkg/pubsub/puller/codes:go_default_library",
+        "//pkg/user/client:go_default_library",
+        "//pkg/user/domain:go_default_library",
+        "//pkg/uuid:go_default_library",
+        "//proto/event/client:go_default_library",
+        "//proto/user:go_default_library",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_golang_protobuf//ptypes:go_default_library_gen",
+        "@com_github_prometheus_client_golang//prometheus:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["transformer_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//pkg/health:go_default_library",
+        "//pkg/log:go_default_library",
+        "//pkg/pubsub/publisher/mock:go_default_library",
+        "//pkg/pubsub/puller/mock:go_default_library",
+        "//pkg/user/client/mock:go_default_library",
+        "//proto/event/client:go_default_library",
+        "//proto/user:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+        "@com_github_golang_protobuf//ptypes:go_default_library_gen",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@io_bazel_rules_go//proto/wkt:any_go_proto",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+    ],
+)

@@ -1,0 +1,2 @@
+The Druid Operator has been installed. Check its status by running:
+  kubectl --namespace {{ .Release.Namespace }} get pods -l "app={{ template "druid-operator.name" . }},release={{ .Release.Name }}"

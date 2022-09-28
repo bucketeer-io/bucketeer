@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "feature_last_used_info_test.go",
+        "feature_test.go",
+        "segment_test.go",
+        "segment_user_test.go",
+        "tag_test.go",
+        "user_evaluations_test.go",
+    ],
+    deps = [
+        "//pkg/feature/client:go_default_library",
+        "//pkg/feature/domain:go_default_library",
+        "//pkg/gateway/client:go_default_library",
+        "//pkg/rpc/client:go_default_library",
+        "//pkg/uuid:go_default_library",
+        "//proto/event/client:go_default_library",
+        "//proto/feature:go_default_library",
+        "//proto/gateway:go_default_library",
+        "//proto/user:go_default_library",
+        "//test/e2e/util:go_default_library",
+        "//test/util:go_default_library",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_golang_protobuf//ptypes:go_default_library_gen",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@io_bazel_rules_go//proto/wkt:any_go_proto",
+        "@io_bazel_rules_go//proto/wkt:wrappers_go_proto",
+        "@org_golang_google_protobuf//encoding/protojson:go_default_library",
+    ],
+)

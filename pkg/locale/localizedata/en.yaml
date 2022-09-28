@@ -1,0 +1,8 @@
+# Nouns
+FeatureFlagID: "feature flag ID"
+
+# Error sentences
+RequiredField: "{{ .Field_1 }} is required"
+InternalServerError: "An internal error has occurred"
+WebhookNotFoundError: "The requested {{ .Field_1 }} is not found"
+InvalidArgumentError: "The argument {{ .Field_1 }} is invalid"

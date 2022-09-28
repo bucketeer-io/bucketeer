@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "puller.go",
+        "rate_limited_puller.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_cloud_go_pubsub//:go_default_library",
+        "@org_golang_x_time//rate:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)

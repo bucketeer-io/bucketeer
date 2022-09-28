@@ -1,0 +1,68 @@
+image:
+  repository: ghcr.io/bucketeer-io/bucketeer-auditlog
+  pullPolicy: IfNotPresent
+
+fullnameOverride: "auditlog-persister"
+
+namespace:
+
+env:
+  project:
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
+  topic:
+  subscription:
+  maxMps: "1000"
+  numWorkers: 2
+  flushSize: 100
+  flushInterval: 2s
+  pullerNumGoroutines: 5
+  pullerMaxOutstandingMessages: "1000"
+  pullerMaxOutstandingBytes: "1000000000"
+  logLevel: info
+  port: 9090
+  metricsPort: 9002
+
+affinity: {}
+
+nodeSelector: {}
+
+hpa:
+  enabled:
+  namespace:
+  minReplicas:
+  maxReplicas:
+  metrics:
+    cpu:
+      targetAverageUtilization:
+
+envoy:
+  image:
+    repository: envoyproxy/envoy-alpine
+    tag: v1.21.1
+    pullPolicy: IfNotPresent
+  config:
+  port: 9000
+  adminPort: 8001
+  resources: {}
+
+tls:
+  service:
+    secret:
+    cert:
+    key:
+
+service:
+  type: ClusterIP
+  clusterIP: None
+  externalPort: 9000
+
+health:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 10
+
+resources: {}

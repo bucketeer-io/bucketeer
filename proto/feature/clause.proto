@@ -1,0 +1,38 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.feature;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
+
+message Clause {
+  enum Operator {
+    EQUALS = 0;
+    IN = 1;
+    ENDS_WITH = 2;
+    STARTS_WITH = 3;
+    SEGMENT = 4;
+    GREATER = 5;
+    GREATER_OR_EQUAL = 6;
+    LESS = 7;
+    LESS_OR_EQUAL = 8;
+    BEFORE = 9;
+    AFTER = 10;
+  }
+  string id = 1;
+  string attribute = 2;
+  Operator operator = 3;
+  repeated string values = 4;
+}

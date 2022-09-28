@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["migration.go"],
+    importpath = "github.com/bucketeer-io/bucketeer/cmd/migration",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//pkg/cli:go_default_library",
+        "//pkg/migration/cmd/mysqlserver:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "migration",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
+
+go_image(
+    name = "migration_image",
+    binary = ":migration",
+)
+
+alias(
+    name = "migration_image_tar",
+    actual = ":migration_image.tar",
+)

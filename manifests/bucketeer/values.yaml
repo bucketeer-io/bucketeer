@@ -1,0 +1,2437 @@
+global:
+  image:
+    tag:
+    imagePullSecrets:
+  project:
+  tls:
+    cert:
+    key:
+  druid:
+    enabled: true
+  kafka:
+    enabled: true
+
+account:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-account
+    pullPolicy: IfNotPresent
+  fullnameOverride: "account"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    topic: bucketeer-domain-events
+    environmentService: localhost:9001
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+account-apikey-cacher:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-account
+    pullPolicy: IfNotPresent
+  fullnameOverride: "account-apikey-cacher"
+  namespace: default
+  env:
+    project:
+    accountService: localhost:9001
+    environmentService: localhost:9001
+    maxMps: "1000"
+    numWorkers: 2
+    flushSize: 100
+    flushInterval: 2s
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    redis:
+      serverName: bucketeer-redis
+      addr:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    topic: bucketeer-domain-events
+    subscription: bucketeer-domain-events-account-apikey-cacher
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+api-gateway:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-gateway
+    pullPolicy: IfNotPresent
+  fullnameOverride: "api-gateway"
+  namespace: default
+  env:
+    project:
+    bigtableInstance: bucketeer-cbt
+    goalTopic: bucketeer-goal-events
+    goalBatchTopic: bucketeer-goal-batch-events
+    evaluationTopic: bucketeer-evaluation-events
+    userTopic: bucketeer-user-events
+    metricsTopic: bucketeer-metrics-events
+    publishNumGoroutines: 200
+    publishTimeout: 1m
+    redis:
+      serverName: bucketeer-redis
+      addr: bucketeer-redis.bucketeer.private:6379
+      poolMaxIdle: 50
+      poolMaxActive: 200
+    oldestEventTimestamp: "168h"
+    furthestEventTimestamp:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    featureService: localhost:9001
+    accountService: localhost:9001
+    traceSamplingProbability: 0.0001
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 20%
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    bucketeerJP:
+      secrets:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    externalPort: 9000
+  ingress:
+    host:
+    staticIPName:
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+auditlog:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-auditlog
+    pullPolicy: IfNotPresent
+  fullnameOverride: "auditlog"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    accountService: localhost:9001
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  serviceToken:
+    secret:
+    token:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+auditlog-persister:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-auditlog
+    pullPolicy: IfNotPresent
+  fullnameOverride: "auditlog-persister"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    topic: bucketeer-domain-events
+    subscription: bucketeer-domain-events-auditlog-persister
+    maxMps: "1000"
+    numWorkers: 2
+    flushSize: 100
+    flushInterval: 2s
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+auth:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-auth
+    pullPolicy: IfNotPresent
+  fullnameOverride: "auth"
+  namespace: default
+  env:
+    accountService: localhost:9001
+    emailFilter: "^[a-zA-Z0-9_.+-]+@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\\.)+[a-zA-Z]{2,}$"
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+    issuer:
+      secret:
+      cert:
+  oauth:
+    key:
+      secret:
+      private:
+    clientId:
+    clientSecret:
+    redirectUrls:
+    issuer:
+  serviceToken:
+    secret:
+    token:
+
+  webhook:
+    kmsResourceName:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+auto-ops:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-auto-ops
+    pullPolicy: IfNotPresent
+  fullnameOverride: "auto-ops"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    domainEventTopic: bucketeer-domain-events
+    accountService: localhost:9001
+    featureService: localhost:9001
+    experimentService: localhost:9001
+    authService: localhost:9001
+  webhook:
+    baseURL:
+    kmsResourceName:
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  serviceToken:
+    secret:
+    token:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+calculator:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-calculator
+    pullPolicy: IfNotPresent
+  fullnameOverride: "calculator"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    environmentService: localhost:9001
+    experimentService: localhost:9001
+    eventCounterService: localhost:9001
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    traceSamplingProbability: 0.001
+  affinity: {}
+  nodeSelector:
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    periodSeconds: 10
+    failureThreshold: 10
+    # It is necessary to wait for the model compilation to be done.
+    # The duration is up to resources.
+    # cf. CPU: 500m, MEM: 3Gi -> 280sec
+    initialDelaySeconds:
+  resources: {}
+
+dex:
+  replicaCount: 1
+  image:
+    repository: dexidp/dex
+    tag: v2.27.0
+    pullPolicy: IfNotPresent
+  fullnameOverride: "dex"
+  namespace: default
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  service:
+    name: dex
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+    internalPort: 9000
+    dexPort: 5556
+  tls:
+    cert:
+    key:
+  envoy:
+    adminPort: 8001
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+  health:
+    initialDelaySeconds: 10
+  resources: {}
+  config:
+    issuer:
+    client:
+      id: bucketeer
+      name: Bucketeer
+      secret:
+      redirectURIs:
+    google:
+      issuer:
+      clientID:
+      clientSecret:
+      redirectURIs:
+
+druid:
+  druid-cluster:
+    namespace: default
+    spec:
+      imagePullSecrets:
+      image: ghcr.io/bucketeer-io/druid:0.5.0
+      nodeSelector: {}
+      jvmOptions: |-
+        -server
+        -XX:MaxDirectMemorySize=10240g
+        -Duser.timezone=UTC
+        -Dfile.encoding=UTF-8
+        -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
+        -Dorg.jboss.logging.provider=slf4j
+        -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.SLF4JLogger
+        -Dlog4j.shutdownCallbackRegistry=org.apache.druid.common.config.Log4jShutdown
+        -Dlog4j.shutdownHookEnabled=true
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -XX:+ExitOnOutOfMemoryError
+      log4jConfig: |-
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <Configuration status="WARN">
+            <Appenders>
+                <Console name="Console" target="SYSTEM_OUT">
+                    <PatternLayout pattern="%d{ISO8601} %p [%t] %c - %m%n"/>
+                </Console>
+            </Appenders>
+            <Loggers>
+                <Root level="info">
+                    <AppenderRef ref="Console"/>
+                </Root>
+            </Loggers>
+        </Configuration>
+      commonRuntimeProperties: |
+        druid.indexing.doubleStorage=double
+        # Extensions
+        druid.extensions.loadList=["druid-basic-security","druid-datasketches","druid-distinctcount","druid-google-extensions","druid-kafka-indexing-service","druid-stats","mysql-metadata-storage"]
+        # Service discovery
+        druid.router.defaultBrokerServiceName=druid/broker
+        druid.selectors.indexing.serviceName=druid/overlord
+        druid.selectors.coordinator.serviceName=druid/coordinator
+        druid.sql.enable=true
+        # Authenticator
+        druid.auth.authenticatorChain=["BasicMetadataAuthenticator"]
+        druid.auth.authenticator.BasicMetadataAuthenticator.type=basic
+        druid.auth.authenticator.BasicMetadataAuthenticator.initialAdminPassword=password
+        druid.auth.authenticator.BasicMetadataAuthenticator.initialInternalClientPassword=password
+        druid.auth.authenticator.BasicMetadataAuthenticator.credentialsValidator.type=metadata
+        druid.auth.authenticator.BasicMetadataAuthenticator.skipOnFailure=false
+        druid.auth.authenticator.BasicMetadataAuthenticator.authorizerName=BasicMetadataAuthorizer
+        # Escalator
+        druid.escalator.type=basic
+        druid.escalator.internalClientUsername=username
+        druid.escalator.internalClientPassword=password
+        druid.escalator.authorizerName=BasicMetadataAuthorizer
+        # Authorizer
+        druid.auth.authorizers=["BasicMetadataAuthorizer"]
+        druid.auth.authorizer.BasicMetadataAuthorizer.type=basic
+        # Monitoring
+        druid.monitoring.monitors=[]
+        druid.emitter.http.recipientBaseUrl=http://druid-exporter.monitoring.svc.cluster.local:8080/druid
+        druid.emitter=http
+      deepStorage:
+        spec:
+          properties: |-
+            druid.storage.type=google
+            druid.google.bucket=example-druid-deep-storage
+        type: default
+      metadataStore:
+        spec:
+          properties: |-
+            druid.metadata.storage.type=mysql
+            druid.metadata.storage.connector.connectURI=jdbc:mysql://druid-mysql.example.com/druid
+            druid.metadata.storage.connector.user=user
+            druid.metadata.storage.connector.password=password
+            druid.metadata.storage.connector.createTables=true
+        type: default
+      zookeeper:
+        spec:
+          properties: |-
+            druid.zk.service.host=druid-zookeeper-client.druid.svc.cluster.local
+            druid.zk.paths.base=/druid
+        type: default
+      env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/token
+      volumeMounts:
+        - name: google-cloud-key
+          mountPath: /var/secrets/google
+      volumes:
+        - name: google-cloud-key
+          secret:
+            secretName: druid-gcp-sa-key
+      nodes:
+        brokers:
+          runtimeProperties: |
+            druid.service=druid/broker
+            # HTTP server threads
+            druid.broker.http.numConnections=5
+            druid.server.http.numThreads=10
+            # Processing threads and buffers
+            druid.processing.buffer.sizeBytes=1000
+            druid.processing.numMergeBuffers=1
+            druid.processing.numThreads=1
+            # Monitoring
+            druid.monitoring.monitors=["org.apache.druid.server.metrics.QueryCountStatsMonitor"]
+          extraJvmOptions: |-
+            -Xmx1G
+            -Xms1G
+          resources: {}
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - topologyKey: "kubernetes.io/hostname"
+                  labelSelector:
+                    matchLabels:
+                      nodeSpecUniqueStr: druid-cluster-brokers
+          podDisruptionBudgetSpec:
+            maxUnavailable: 1
+          hpAutoscaler:
+            minReplicas: 1
+            maxReplicas: 1
+            metrics:
+              - type: Resource
+                resource:
+                  name: cpu
+                  targetAverageUtilization: 50
+        coordinators:
+          runtimeProperties: |
+            druid.service=druid/coordinator
+            # HTTP server threads
+            druid.coordinator.startDelay=PT30S
+            druid.coordinator.period=PT30S
+            # Configure this coordinator to also run as Overlord
+            druid.coordinator.asOverlord.enable=false
+            # druid.coordinator.asOverlord.overlordService=druid/overlord
+            druid.indexer.queue.startDelay=PT30S
+            druid.indexer.runner.type=local
+          extraJvmOptions: |-
+            -Xmx1G
+            -Xms1G
+          resources: {}
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - topologyKey: "kubernetes.io/hostname"
+                  labelSelector:
+                    matchLabels:
+                      nodeSpecUniqueStr: druid-cluster-coordinators
+          podDisruptionBudgetSpec:
+            maxUnavailable: 1
+          hpAutoscaler:
+            minReplicas: 2
+            maxReplicas: 2
+            metrics:
+              - type: Resource
+                resource:
+                  name: cpu
+                  targetAverageUtilization: 60
+        overlords:
+          nodeConfigMountPath: /opt/druid/conf/druid/cluster/master/overlord
+          runtimeProperties: |-
+            druid.service=druid/overlord
+            druid.indexer.queue.startDelay=PT30S
+            druid.indexer.runner.type=remote
+            druid.indexer.storage.type=metadata
+            # Monitoring
+            druid.monitoring.monitors=["org.apache.druid.server.metrics.TaskCountStatsMonitor"]
+          extraJvmOptions: |-
+            -Xmx4G
+            -Xms4G
+          resources: {}
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - topologyKey: "kubernetes.io/hostname"
+                  labelSelector:
+                    matchLabels:
+                      nodeSpecUniqueStr: druid-cluster-overlords
+          podDisruptionBudgetSpec:
+            maxUnavailable: 1
+          hpAutoscaler:
+            maxReplicas: 2
+            minReplicas: 2
+            metrics:
+              - type: Resource
+                resource:
+                  name: cpu
+                  targetAverageUtilization: 60
+              - type: Resource
+                resource:
+                  name: memory
+                  targetAverageUtilization: 60
+        historicals:
+          runtimeProperties: |
+            druid.service=druid/historical
+            druid.server.http.numThreads=5
+            # Memory tuning and resource limits for groupBy v2
+            druid.processing.buffer.sizeBytes=1000
+            druid.query.groupBy.maxOnDiskStorage=100000
+            druid.processing.numMergeBuffers=1
+            druid.processing.numThreads=1
+            # Segment storage
+            druid.segmentCache.locations=[{\"path\":\"/druid/data/segments\",\"maxSize\":10737418240}]
+            druid.server.maxSize=10737418240
+            # Monitoring
+            druid.monitoring.monitors=["org.apache.druid.server.metrics.HistoricalMetricsMonitor"]
+          extraJvmOptions: |-
+            -Xmx1G
+            -Xms1G
+          volumeClaimTemplates: {}
+          volumeMounts:
+            - mountPath: /druid/data
+              name: data-volume
+          resources: {}
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - topologyKey: "kubernetes.io/hostname"
+                  labelSelector:
+                    matchLabels:
+                      nodeSpecUniqueStr: druid-cluster-historicals
+          podDisruptionBudgetSpec:
+            maxUnavailable: 1
+          hpAutoscaler:
+            maxReplicas: 1
+            minReplicas: 1
+            metrics:
+              - type: Resource
+                resource:
+                  name: cpu
+                  targetAverageUtilization: 60
+              - type: Resource
+                resource:
+                  name: memory
+                  targetAverageUtilization: 60
+        middlemanagers:
+          runtimeProperties: |
+            druid.service=druid/middleManager
+            druid.worker.capacity=3
+            druid.server.http.numThreads=10
+            druid.processing.buffer.sizebytes=536870912
+            # Resources for peons
+            druid.indexer.runner.javaOpts=-server -Xms1G -Xmx1G -XX:MaxDirectMemorySize=10g -Duser.timezone=UTC -Dfile.encoding=UTF-8 -Djava.io.tmpdir=/druid/data/tmp -XX:+UnlockDiagnosticVMOptions -XX:+PrintSafepointStatistics -XX:PrintSafepointStatisticsCount=1 -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCApplicationConcurrentTime -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:+UseG1GC
+            druid.indexer.task.baseTaskDir=/druid/data/baseTaskDir
+            # Peon properties
+            druid.indexer.fork.property.druid.processing.numThreads=1
+            druid.indexer.fork.property.druid.processing.numMergeBuffers=2
+            druid.indexer.fork.property.druid.processing.buffer.sizeBytes=536870912
+          extraJvmOptions: |-
+            -Xmx4G
+            -Xms4G
+          volumeClaimTemplates:
+            - metadata:
+                name: data-volume
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 5Gi
+                storageClassName: standard
+          resources: {}
+          podDisruptionBudgetSpec:
+            maxUnavailable: 1
+          hpAutoscaler:
+            maxReplicas: 1
+            minReplicas: 1
+            metrics:
+              - type: Resource
+                resource:
+                  name: cpu
+                  targetAverageUtilization: 60
+              - type: Resource
+                resource:
+                  name: memory
+                  targetAverageUtilization: 60
+        routers:
+          nodeConfigMountPath: /opt/druid/conf/druid/cluster/query/router
+          runtimeProperties: |
+            druid.service=druid/router
+            druid.plaintextPort=8888
+            # HTTP proxy
+            druid.router.http.numConnections=50
+            druid.router.http.readTimeout=PT5M
+            druid.router.http.numMaxThreads=100
+            druid.server.http.numThreads=100
+            # Service discovery
+            druid.router.defaultBrokerServiceName=druid/broker
+            druid.router.coordinatorServiceName=druid/coordinator
+            # Management proxy to coordinator / overlord: required for unified web console.
+            druid.router.managementProxy.enabled=true
+          extraJvmOptions: |-
+            -Xmx512m
+            -Xms512m
+          resources: {}
+          affinity: {}
+
+  druid-operator:
+    fullnameOverride: druid-operator
+    namespace: default
+    image:
+      repository: druidio/druid-operator
+      tag: 0.0.4
+    nodeSelector: {}
+    resources: {}
+
+  zookeeper-operator:
+    global:
+      imagePullSecrets:
+    namespace: default
+    fullnameOverride: "druid-zookeeper-operator"
+    annotations:
+      "helm.sh/resource-policy": keep
+    image:
+      repository: ghcr.io/bucketeer-io/pravega/zookeeper-operator
+      tag: 0.2.9-13
+    watchNamespace: "druid"
+    resources: {}
+    nodeSelector: {}
+
+  zookeeper:
+    namespace: default
+    fullnameOverride: "druid-zookeeper"
+    replicas: 3
+    domainName:
+    labels: {}
+    ports: []
+    kubernetesClusterDomain: "cluster.local"
+    probes:
+      readiness:
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        failureThreshold: 3
+        successThreshold: 1
+        timeoutSeconds: 10
+      liveness:
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        failureThreshold: 3
+        timeoutSeconds: 10
+    pod:
+      nodeSelector: {}
+      affinity: {}
+      resources: {}
+      env:
+        - name: SERVER_JVMFLAGS
+          value: "-Djute.maxbuffer=10485760"
+      annotations:
+        "helm.sh/resource-policy": keep
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: zookeeper
+    config: {}
+    storageType: persistence
+    persistence:
+      storageClassName: standard
+      reclaimPolicy: Retain
+      volumeSize: 5Gi
+    ephemeral:
+      emptydirvolumesource:
+        medium: ""
+        sizeLimit: 20Gi
+    hooks:
+      image:
+        repository: lachlanevenson/k8s-kubectl
+        tag: v1.16.10
+      backoffLimit: 10
+    containers: []
+    volumes: []
+
+environment:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-environment
+    pullPolicy: IfNotPresent
+  fullnameOverride: "environment"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    defaultDataset: bucketeer
+    location: us-central1
+    domainEventTopic: bucketeer-domain-events
+    accountService: localhost:9001
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  serviceToken:
+    secret:
+    token:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+event-counter:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-event-counter
+    pullPolicy: IfNotPresent
+  fullnameOverride: "event-counter"
+  namespace: default
+  env:
+    project:
+    experimentService: localhost:9001
+    featureService: localhost:9001
+    accountService: localhost:9001
+    druidUrl: druid-cluster-brokers.default.svc.cluster.local:8088
+    druidDatasourcePrefix: bucketeer
+    druidUsername:
+    druidPassword:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+event-persister-evaluation-events-kafka:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-event-persister
+    pullPolicy: IfNotPresent
+  nameOverride: "event-persister"
+  fullnameOverride: "event-persister-evaluation-events-kafka"
+  namespace: default
+  env:
+    project:
+    featureService: localhost:9001
+    bigtableInstance: bucketeer
+    location: us-central1
+    topic: bucketeer-evaluation-events
+    subscription: bucketeer-evaluation-events-event-persister-kafka
+    writer: kafka
+    kafkaUrl: kafka-kafka-bootstrap.default.svc.cluster.local:9092
+    kafkaTopicPrefix: bucketeer
+    kafkaTopicDataType: evaluation-events
+    kafkaUsername:
+    kafkaPassword:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    maxMps: "1000"
+    numWorkers: 5
+    numWriters: 2
+    flushSize: 100
+    flushInterval: 2s
+    redis:
+      serverName: bucketeer-redis
+      addr: bucketeer-redis.bucketeer.private:6379
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    alloyDBRegion:
+    alloyDBClusterId:
+    alloyDBInstanceId:
+    alloyDBUser:
+    alloyDBPass:
+    alloyDBName:
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+
+event-persister-goal-events-kafka:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-event-persister
+    pullPolicy: IfNotPresent
+  nameOverride: "event-persister"
+  fullnameOverride: "event-persister-goal-events-kafka"
+  namespace: default
+  env:
+    project:
+    featureService: localhost:9001
+    bigtableInstance: bucketeer
+    location: us-central1
+    topic: bucketeer-goal-events
+    subscription: bucketeer-goal-events-event-persister-kafka
+    writer: kafka
+    kafkaUrl: kafka-kafka-bootstrap.default.svc.cluster.local:9092
+    kafkaTopicPrefix: bucketeer
+    kafkaTopicDataType: goal-events
+    kafkaUsername:
+    kafkaPassword:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    maxMps: "1000"
+    numWorkers: 5
+    numWriters: 2
+    flushSize: 100
+    flushInterval: 2s
+    redis:
+      serverName: bucketeer-redis
+      addr: bucketeer-redis.bucketeer.private:6379
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    alloyDBRegion:
+    alloyDBClusterId:
+    alloyDBInstanceId:
+    alloyDBUser:
+    alloyDBPass:
+    alloyDBName:
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+
+event-persister-user-events-kafka:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-event-persister
+    pullPolicy: IfNotPresent
+  nameOverride: "event-persister"
+  fullnameOverride: "event-persister-user-events-kafka"
+  namespace: default
+  env:
+    project:
+    featureService: localhost:9001
+    bigtableInstance: bucketeer-cbt
+    location: us-central1-a
+    table: user-events
+    subscription: bucketeer-user-events-event-persister-kafka
+    writer: kafka
+    kafkaUrl: kafka-kafka-bootstrap.default.svc.cluster.local:9092
+    kafkaTopicPrefix: bucketeer
+    kafkaTopicDataType: user-events
+    kafkaUsername:
+    kafkaPassword:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    maxMps: "1000"
+    numWorkers: 5
+    numWriters: 2
+    flushSize: 100
+    flushInterval: 2s
+    redis:
+      serverName: bucketeer-redis
+      addr: bucketeer-redis.bucketeer.private:6379
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    alloyDBRegion:
+    alloyDBClusterId:
+    alloyDBInstanceId:
+    alloyDBUser:
+    alloyDBPass:
+    alloyDBName:
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+
+experiment:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-experiment
+    pullPolicy: IfNotPresent
+  fullnameOverride: "experiment"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    topic: bucketeer-domain-events
+    featureService: localhost:9001
+    accountService: localhost:9001
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  serviceToken:
+    secret:
+    token:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+feature:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-feature
+    pullPolicy: IfNotPresent
+  fullnameOverride: "feature"
+  namespace: default
+  env:
+    project:
+    database: bucketeer
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    bigtableInstance: bucketeer-cbt
+    accountService: localhost:9001
+    experimentService: localhost:9001
+    redis:
+      serverName: bucketeer-redis
+      poolMaxIdle: 50
+      poolMaxActive: 200
+      addr:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    bulkSegmentUsersReceivedEventTopic: bucketeer-bulk-segment-users-received-events
+    domainEventTopic: bucketeer-domain-events
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+feature-recorder:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-feature
+    pullPolicy: IfNotPresent
+  fullnameOverride: "feature-recorder"
+  namespace: default
+  env:
+    project:
+    featureService: localhost:9001
+    database: bucketeer
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    topic: bucketeer-evaluation-events
+    subscription: bucketeer-evaluation-events-event-feature-recorder
+    maxMps: "1000"
+    numWorkers: "2"
+    pullerNumGoroutines: "5"
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    flushInterval: 1m
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  vpa:
+    enabled: false
+    namespace:
+    updateMode:
+    resourcePolicy: {}
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+feature-segment-persister:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-feature
+    pullPolicy: IfNotPresent
+  fullnameOverride: "feature-segment-persister"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    bulkSegmentUsersReceivedEventTopic: bucketeer-bulk-segment-users-received-events
+    bulkSegmentUsersReceivedEventSubscription: bucketeer-bulk-segment-users-received-events-feature-segment-persister
+    domainEventTopic: bucketeer-domain-events
+    maxMps: "100"
+    numWorkers: 2
+    flushSize: 2
+    flushInterval: 10s
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    redis:
+      serverName: non-persistent-redis
+      poolMaxIdle: 50
+      poolMaxActive: 200
+      addr:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+feature-tag-cacher:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-feature
+    pullPolicy: IfNotPresent
+  fullnameOverride: "feature-tag-cacher"
+  namespace: default
+  env:
+    project:
+    featureService: localhost:9001
+    maxMps: "1000"
+    numWorkers: 2
+    flushSize: 100
+    flushInterval: 2s
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    redis:
+      serverName: bucketeer-redis
+      addr: bucketeer-redis.bucketeer.private:6379
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    topic: bucketeer-domain-events
+    subscription: bucketeer-domain-events-tag-cacher
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+goal-batch-transformer:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-goal-batch
+    pullPolicy: IfNotPresent
+  fullnameOverride: "goal-batch-transformer"
+  namespace: default
+  env:
+    port: 9090
+    metricsPort: 9002
+    project:
+    featureService: localhost:9001
+    userService: localhost:9001
+    goalBatchTopic: bucketeer-goal-batch-events
+    goalBatchSubscription: bucketeer-goal-batch-events-goal-batch-transformer
+    goalTopic: bucketeer-goal-events
+    maxMps: 100
+    numWorkers: 10
+    pullerNumGoroutines: "5"
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    logLevel: info
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+kafka:
+  kafka-cluster:
+    namespace: default
+    metadata:
+      name: kafka
+    spec:
+      kafka:
+        version: 2.8.0
+        replicas: 1
+        resources: {}
+        jvmOptions: {}
+        config:
+          auto.create.topics.enable: "false"
+          offsets.topic.replication.factor: 1
+          transaction.state.log.replication.factor: 1
+          transaction.state.log.min.isr: 1
+          log.retention.hours: 12
+        storage: {}
+        rack:
+          # This will be deprecated from 0.17.0. Instead, Use topology.kubernetes.io/zone.
+          topologyKey: failure-domain.beta.kubernetes.io/zone
+        affinity: {}
+        metrics:
+          # Inspired by config from Kafka 2.0.0 example rules:
+          # https://github.com/prometheus/jmx_exporter/blob/master/example_configs/kafka-2_0_0.yml
+          lowercaseOutputName: true
+          rules:
+            # Special cases and very specific rules
+            - pattern: kafka.server<type=(.+), name=(.+), clientId=(.+), topic=(.+), partition=(.*)><>Value
+              name: kafka_server_$1_$2
+              type: GAUGE
+              labels:
+                clientId: "$3"
+                topic: "$4"
+                partition: "$5"
+            - pattern: kafka.server<type=(.+), name=(.+), clientId=(.+), brokerHost=(.+), brokerPort=(.+)><>Value
+              name: kafka_server_$1_$2
+              type: GAUGE
+              labels:
+                clientId: "$3"
+                broker: "$4:$5"
+            # Some percent metrics use MeanRate attribute
+            # Ex) kafka.server<type=(KafkaRequestHandlerPool), name=(RequestHandlerAvgIdlePercent)><>MeanRate
+            - pattern: kafka.(\w+)<type=(.+), name=(.+)Percent\w*><>MeanRate
+              name: kafka_$1_$2_$3_percent
+              type: GAUGE
+            # Generic gauges for percents
+            - pattern: kafka.(\w+)<type=(.+), name=(.+)Percent\w*><>Value
+              name: kafka_$1_$2_$3_percent
+              type: GAUGE
+            - pattern: kafka.(\w+)<type=(.+), name=(.+)Percent\w*, (.+)=(.+)><>Value
+              name: kafka_$1_$2_$3_percent
+              type: GAUGE
+              labels:
+                "$4": "$5"
+            # Generic per-second counters with 0-2 key/value pairs
+            - pattern: kafka.(\w+)<type=(.+), name=(.+)PerSec\w*, (.+)=(.+), (.+)=(.+)><>Count
+              name: kafka_$1_$2_$3_total
+              type: COUNTER
+              labels:
+                "$4": "$5"
+                "$6": "$7"
+            - pattern: kafka.(\w+)<type=(.+), name=(.+)PerSec\w*, (.+)=(.+)><>Count
+              name: kafka_$1_$2_$3_total
+              type: COUNTER
+              labels:
+                "$4": "$5"
+            - pattern: kafka.(\w+)<type=(.+), name=(.+)PerSec\w*><>Count
+              name: kafka_$1_$2_$3_total
+              type: COUNTER
+            # Generic gauges with 0-2 key/value pairs
+            - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+), (.+)=(.+)><>Value
+              name: kafka_$1_$2_$3
+              type: GAUGE
+              labels:
+                "$4": "$5"
+                "$6": "$7"
+            - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+)><>Value
+              name: kafka_$1_$2_$3
+              type: GAUGE
+              labels:
+                "$4": "$5"
+            - pattern: kafka.(\w+)<type=(.+), name=(.+)><>Value
+              name: kafka_$1_$2_$3
+              type: GAUGE
+            # Emulate Prometheus 'Summary' metrics for the exported 'Histogram's.
+            # Note that these are missing the '_sum' metric!
+            - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+), (.+)=(.+)><>Count
+              name: kafka_$1_$2_$3_count
+              type: COUNTER
+              labels:
+                "$4": "$5"
+                "$6": "$7"
+            - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.*), (.+)=(.+)><>(\d+)thPercentile
+              name: kafka_$1_$2_$3
+              type: GAUGE
+              labels:
+                "$4": "$5"
+                "$6": "$7"
+                quantile: "0.$8"
+            - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+)><>Count
+              name: kafka_$1_$2_$3_count
+              type: COUNTER
+              labels:
+                "$4": "$5"
+            - pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.*)><>(\d+)thPercentile
+              name: kafka_$1_$2_$3
+              type: GAUGE
+              labels:
+                "$4": "$5"
+                quantile: "0.$6"
+            - pattern: kafka.(\w+)<type=(.+), name=(.+)><>Count
+              name: kafka_$1_$2_$3_count
+              type: COUNTER
+            - pattern: kafka.(\w+)<type=(.+), name=(.+)><>(\d+)thPercentile
+              name: kafka_$1_$2_$3
+              type: GAUGE
+              labels:
+                quantile: "0.$4"
+      zookeeper:
+        replicas:
+        resources: {}
+        affinity: {}
+        jvmOptions: {}
+        storage: {}
+        metrics:
+          # Inspired by Zookeeper rules
+          # https://github.com/prometheus/jmx_exporter/blob/master/example_configs/zookeeper.yaml
+          lowercaseOutputName: true
+          rules:
+            # replicated Zookeeper
+            - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+)><>(\\w+)"
+              name: "zookeeper_$2"
+              type: GAUGE
+            - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+)><>(\\w+)"
+              name: "zookeeper_$3"
+              type: GAUGE
+              labels:
+                replicaId: "$2"
+            - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+), name2=(\\w+)><>(Packets\\w+)"
+              name: "zookeeper_$4"
+              type: COUNTER
+              labels:
+                replicaId: "$2"
+                memberType: "$3"
+            - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+), name2=(\\w+)><>(\\w+)"
+              name: "zookeeper_$4"
+              type: GAUGE
+              labels:
+                replicaId: "$2"
+                memberType: "$3"
+            - pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+), name2=(\\w+), name3=(\\w+)><>(\\w+)"
+              name: "zookeeper_$4_$5"
+              type: GAUGE
+              labels:
+                replicaId: "$2"
+                memberType: "$3"
+            # standalone Zookeeper
+            - pattern: "org.apache.ZooKeeperService<name0=StandaloneServer_port(\\d+)><>(\\w+)"
+              type: GAUGE
+              name: "zookeeper_$2"
+            - pattern: "org.apache.ZooKeeperService<name0=StandaloneServer_port(\\d+), name1=InMemoryDataTree><>(\\w+)"
+              type: GAUGE
+              name: "zookeeper_$2"
+      entityOperator:
+        affinity: {}
+        userOperator:
+          resources: {}
+      kafkaExporter:
+        affinity: {}
+        resources: {}
+    users: {}
+    topics: {}
+
+  strimzi-kafka-operator:
+    namespace: default
+    watchNamespaces: ["default"]
+    nodeSelector: {}
+    resources: {}
+
+metrics-event-persister:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-metrics-event
+    pullPolicy: IfNotPresent
+  fullnameOverride: "metrics-event-persister"
+  namespace: default
+  env:
+    project:
+    topic: bucketeer-metrics-events
+    subscription: bucketeer-metrics-events-metrics-event-persister
+    maxMps: "1500"
+    numWorkers: 2
+    flushSize: 100
+    flushInterval: 2s
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+migration-mysql:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-migration
+    pullPolicy: IfNotPresent
+  fullnameOverride: "migration-mysql"
+  namespace: default
+  env:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    githubUser:
+    githubMigrationSourcePath:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+notification:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-notification
+    pullPolicy: IfNotPresent
+  fullnameOverride: "notification"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    domainEventTopic:
+    accountService: localhost:9001
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  serviceToken:
+    secret:
+    token:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+notification-sender:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-notification
+    pullPolicy: IfNotPresent
+  fullnameOverride: "notification-sender"
+  namespace: default
+  env:
+    project:
+    domainTopic: bucketeer-domain-events
+    domainSubscription: bucketeer-domain-events-notification-sender
+    notificationService: localhost:9001
+    environmentService: localhost:9001
+    experimentService: localhost:9001
+    eventCounterService: localhost:9001
+    featureService: localhost:9001
+    scheduleFeatureStaleWatcher: "0 0 1 * * MON"
+    scheduleExperimentRunningWatcher: "0 0 1 * * *"
+    scheduleMauCountWatcher: "0 0 1 1 * *"
+    webURL:
+    maxMps: "1000"
+    numWorkers: 1
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  replicaCount: 1
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+ops-event-batch:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-ops-event
+    pullPolicy: IfNotPresent
+  fullnameOverride: "ops-event-batch"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    autoOpsService: localhost:9001
+    environmentService: localhost:9001
+    eventCounterService: localhost:9001
+    featureService: localhost:9001
+    refreshInterval: 10m
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    scheduleCountWatcher: "0,10,20,30,40,50 * * * * *"
+    scheduleDatetimeWatcher: "0,10,20,30,40,50 * * * * *"
+  affinity: {}
+  nodeSelector: {}
+  replicaCount: 1
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  resources: {}
+
+push:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-push
+    pullPolicy: IfNotPresent
+  fullnameOverride: "push"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    domainEventTopic:
+    accountService: localhost:9001
+    featureService: localhost:9001
+    experimentService: localhost:9001
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  serviceToken:
+    secret:
+    token:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+push-sender:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-push
+    pullPolicy: IfNotPresent
+  fullnameOverride: "push-sender"
+  namespace: default
+  env:
+    project:
+    domainTopic: bucketeer-domain-events
+    domainSubscription: bucketeer-domain-events-push-sender
+    pushService: localhost:9001
+    featureService: localhost:9001
+    maxMps: "1000"
+    numWorkers: 2
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    redis:
+      serverName: bucketeer-redis
+      addr: bucketeer-redis.bucketeer.private:6379
+      poolMaxIdle: 5
+      poolMaxActive: 20
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  replicaCount: 1
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+user:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-user
+    pullPolicy: IfNotPresent
+  fullnameOverride: "user"
+  namespace:
+  env:
+    project:
+    database: bucketeer
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    accountService: localhost:9001
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  oauth:
+    key:
+      secret:
+      public:
+    clientId:
+    issuer:
+  serviceToken:
+    secret:
+    token:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+user-persister:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-user
+    pullPolicy: IfNotPresent
+  fullnameOverride: "user-persister"
+  namespace: default
+  env:
+    project:
+    mysqlUser:
+    mysqlPass:
+    mysqlHost:
+    mysqlPort: 3306
+    mysqlDbName:
+    topic: bucketeer-user-events
+    subscription: bucketeer-user-events-user-persister
+    maxMps: "1000"
+    numWorkers: 2
+    flushSize: 100
+    flushInterval: 2s
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    featureService: localhost:9001
+  affinity: {}
+  nodeSelector: {}
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    config:
+    port: 9000
+    adminPort: 8001
+    resources: {}
+  tls:
+    service:
+      secret:
+      cert:
+      key:
+  serviceToken:
+    secret:
+    token:
+  service:
+    type: ClusterIP
+    clusterIP: None
+    externalPort: 9000
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+
+web:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-web-v2
+    pullPolicy: Always
+  fullnameOverride: "web"
+  namespace: default
+  nginx:
+    config:
+  tls:
+    secret:
+    cert:
+    key:
+  service:
+    type: ClusterIP
+    clusterIP: None
+    port: 443
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tolerations: []
+
+web-gateway:
+  fullnameOverride: "web-gateway"
+  namespace: default
+  tls:
+    bucketeerJP:
+      secret:
+      cert:
+      key:
+    service:
+      secret:
+      cert:
+      key:
+  envoy:
+    image:
+      repository: envoyproxy/envoy-alpine
+      tag: v1.21.1
+      pullPolicy: IfNotPresent
+    serviceCluster: bucketeer
+    adminPort: 8001
+    config:
+  service:
+    type: LoadBalancer
+    loadBalancerIP:
+    port: 443
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+  resources: {}
+  affinity: {}
+  nodeSelector: {}
+  pdb:
+    enabled:
+    maxUnavailable: 50%
+  hpa:
+    enabled: false
+    namespace:
+    minReplicas:
+    maxReplicas:
+    metrics: {}
+  tolerations: []

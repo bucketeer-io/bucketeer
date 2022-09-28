@@ -1,0 +1,66 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.feature;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
+
+import "proto/feature/rule.proto";
+import "proto/feature/target.proto";
+import "proto/feature/variation.proto";
+import "proto/feature/strategy.proto";
+import "proto/feature/feature_last_used_info.proto";
+import "proto/feature/prerequisite.proto";
+
+message Feature {
+  enum VariationType {
+    STRING = 0;
+    BOOLEAN = 1;
+    NUMBER = 2;
+    JSON = 3;
+  }
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  bool enabled = 4;
+  bool deleted = 5;
+  bool evaluation_undelayable = 6 [deprecated = true];
+  int32 ttl = 7;
+  int32 version = 8;
+  int64 created_at = 9;
+  int64 updated_at = 10;
+  repeated Variation variations = 11;
+  repeated Target targets = 12;
+  repeated Rule rules = 13;
+  Strategy default_strategy = 14;
+  string off_variation = 15;
+  repeated string tags = 16;
+  FeatureLastUsedInfo last_used_info = 17;
+  string maintainer = 18;
+  VariationType variation_type = 19;
+  bool archived = 20;
+  repeated Prerequisite prerequisites = 21;
+  string sampling_seed = 22;
+}
+
+message Features {
+  repeated Feature features = 1;
+}
+
+message Tag {
+  string id = 1;
+  int64 created_at = 2;
+  int64 updated_at = 3;
+}

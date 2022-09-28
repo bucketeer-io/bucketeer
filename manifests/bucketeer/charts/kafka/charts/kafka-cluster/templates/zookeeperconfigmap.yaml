@@ -1,0 +1,10 @@
+{{- if .Values.global.kafka.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-zookeeper-jmx-exporter-configuration
+  namespace: {{ .Values.namespace }}
+data:
+  kafka-zookeeper-jmx-exporter-configuration.yaml: |
+{{ toYaml .Values.spec.zookeeper.metrics | indent 4 }}
+{{- end }}

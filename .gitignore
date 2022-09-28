@@ -1,0 +1,17 @@
+.artifacts
+/build
+/bazel-bin
+/bazel-bucketeer
+/bazel-genfiles
+/bazel-out
+/bazel-proto
+/bazel-testlogs
+.DS_Store
+/vendor
+/proto/**/*.pb.go
+/proto/**/*.py
+/proto/swift_output
+node_modules
+telepresence.log
+venv
+*.swp

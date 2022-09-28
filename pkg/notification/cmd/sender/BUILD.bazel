@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["sender.go"],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/notification/cmd/sender",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/cli:go_default_library",
+        "//pkg/environment/client:go_default_library",
+        "//pkg/eventcounter/client:go_default_library",
+        "//pkg/experiment/client:go_default_library",
+        "//pkg/feature/client:go_default_library",
+        "//pkg/health:go_default_library",
+        "//pkg/metrics:go_default_library",
+        "//pkg/notification/client:go_default_library",
+        "//pkg/notification/sender:go_default_library",
+        "//pkg/notification/sender/informer/batch:go_default_library",
+        "//pkg/notification/sender/informer/batch/job:go_default_library",
+        "//pkg/notification/sender/informer/domainevent:go_default_library",
+        "//pkg/notification/sender/notifier:go_default_library",
+        "//pkg/pubsub:go_default_library",
+        "//pkg/pubsub/puller:go_default_library",
+        "//pkg/rpc:go_default_library",
+        "//pkg/rpc/client:go_default_library",
+        "@in_gopkg_alecthomas_kingpin_v2//:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)

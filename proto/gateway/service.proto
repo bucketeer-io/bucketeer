@@ -1,0 +1,94 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.gateway;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/gateway";
+
+import "google/api/annotations.proto";
+
+import "proto/user/user.proto";
+import "proto/feature/evaluation.proto";
+import "proto/event/client/event.proto";
+
+message PingRequest {}
+
+message PingResponse {
+  int64 time = 1;
+}
+
+message GetEvaluationsRequest {
+  string tag = 1;
+  user.User user = 2;
+  string user_evaluations_id = 3;
+  string feature_id = 4 [deprecated = true];  // instead, use GetEvaluation API
+  bucketeer.event.client.SourceId source_id = 5;
+}
+
+message GetEvaluationsResponse {
+  feature.UserEvaluations.State state = 1;
+  feature.UserEvaluations evaluations = 2;
+  string user_evaluations_id = 3;
+}
+
+message GetEvaluationRequest {
+  string tag = 1;
+  user.User user = 2;
+  string feature_id = 3;
+  bucketeer.event.client.SourceId source_id = 4;
+}
+
+message GetEvaluationResponse {
+  feature.Evaluation evaluation = 1;
+}
+
+message RegisterEventsRequest {
+  repeated bucketeer.event.client.Event events = 1;
+}
+
+message RegisterEventsResponse {
+  message Error {
+    bool retriable = 1;
+    string message = 2;
+  }
+  map<string, Error> errors = 1;
+}
+
+service Gateway {
+  rpc Ping(PingRequest) returns (PingResponse) {
+    option (google.api.http) = {
+      post: "/ping"
+      body: "*"
+    };
+  }
+  rpc GetEvaluations(GetEvaluationsRequest) returns (GetEvaluationsResponse) {
+    option (google.api.http) = {
+      post: "/get_evaluations"
+      body: "*"
+    };
+  }
+  rpc GetEvaluation(GetEvaluationRequest) returns (GetEvaluationResponse) {
+    option (google.api.http) = {
+      post: "/get_evaluation"
+      body: "*"
+    };
+  }
+  rpc RegisterEvents(RegisterEventsRequest) returns (RegisterEventsResponse) {
+    option (google.api.http) = {
+      post: "/register_events"
+      body: "*"
+    };
+  }
+}

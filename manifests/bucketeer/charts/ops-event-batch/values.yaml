@@ -1,0 +1,62 @@
+image:
+  repository: ghcr.io/bucketeer-io/bucketeer-ops-event
+  pullPolicy: IfNotPresent
+
+fullnameOverride: "ops-event-batch"
+
+namespace:
+
+env:
+  project:
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
+  autoOpsService: localhost:9001
+  environmentService: localhost:9001
+  eventCounterService: localhost:9001
+  featureService: localhost:9001
+  refreshInterval: 10m
+  logLevel: info
+  port: 9090
+  metricsPort: 9002
+  scheduleCountWatcher: "0,10,20,30,40,50 * * * * *"
+  scheduleDatetimeWatcher: "0,10,20,30,40,50 * * * * *"
+
+affinity: {}
+
+nodeSelector: {}
+
+replicaCount: 1
+
+envoy:
+  image:
+    repository: envoyproxy/envoy-alpine
+    tag: v1.21.1
+    pullPolicy: IfNotPresent
+  config:
+  port: 9000
+  adminPort: 8001
+  resources: {}
+
+tls:
+  service:
+    secret:
+    cert:
+    key:
+
+serviceToken:
+  secret:
+  token:
+
+service:
+  type: ClusterIP
+  clusterIP: None
+  externalPort: 9000
+
+health:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+resources: {}

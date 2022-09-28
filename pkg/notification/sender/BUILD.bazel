@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "metrics.go",
+        "sender.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/notification/sender",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/metrics:go_default_library",
+        "//pkg/notification/client:go_default_library",
+        "//pkg/notification/sender/notifier:go_default_library",
+        "//proto/notification:go_default_library",
+        "//proto/notification/sender:go_default_library",
+        "@com_github_prometheus_client_golang//prometheus:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["sender_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//pkg/log:go_default_library",
+        "//pkg/notification/client/mock:go_default_library",
+        "//pkg/notification/sender/notifier:go_default_library",
+        "//pkg/notification/sender/notifier/mock:go_default_library",
+        "//pkg/storage:go_default_library",
+        "//proto/notification:go_default_library",
+        "//proto/notification/sender:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

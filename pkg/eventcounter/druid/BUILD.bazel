@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "querier.go",
+        "query.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/eventcounter/druid",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/storage/druid:go_default_library",
+        "//proto/eventcounter:go_default_library",
+        "@com_github_ca_dp_godruid//:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "querier_test.go",
+        "query_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//proto/eventcounter:go_default_library",
+        "@com_github_ca_dp_godruid//:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

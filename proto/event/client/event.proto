@@ -1,0 +1,113 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.event.client;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/event/client";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
+
+import "proto/feature/evaluation.proto";
+import "proto/feature/reason.proto";
+import "proto/user/user.proto";
+
+message Event {
+  string id = 1;
+  google.protobuf.Any event = 2;
+  string environment_namespace =
+      3;  // SDK doens't need to set this field. It's set by gateway service.
+}
+
+message EvaluationEvent {
+  int64 timestamp = 1;
+  string feature_id = 2;
+  int32 feature_version = 3;
+  string user_id = 4;
+  string variation_id = 5;
+  bucketeer.user.User user = 6;
+  bucketeer.feature.Reason reason = 7;
+  string tag = 8;
+  SourceId source_id = 9;
+}
+
+message GoalEvent {
+  int64 timestamp = 1;
+  string goal_id = 2;
+  string user_id = 3;
+  double value = 4;
+  bucketeer.user.User user = 5;
+  repeated bucketeer.feature.Evaluation evaluations = 6 [deprecated = true];
+  string tag = 7;
+  SourceId source_id = 8;
+}
+
+enum SourceId {
+  UNKNOWN = 0;
+  ANDROID = 1;
+  IOS = 2;
+  WEB = 3;
+  GOAL_BATCH = 4;
+  GO_SERVER = 5;
+  NODE_SERVER = 6;
+}
+
+message MetricsEvent {
+  int64 timestamp = 1;
+  google.protobuf.Any event = 2;
+}
+
+message GetEvaluationLatencyMetricsEvent {
+  map<string, string> labels = 1;
+  google.protobuf.Duration duration = 2;
+}
+
+message GetEvaluationSizeMetricsEvent {
+  map<string, string> labels = 1;
+  int32 size_byte = 2;
+}
+
+message TimeoutErrorCountMetricsEvent {
+  string tag = 1;
+}
+
+message InternalErrorCountMetricsEvent {
+  string tag = 1;
+}
+
+message OpsEvent {
+  int64 timestamp = 1;
+  string feature_id = 2;
+  int32 feature_version = 3;
+  string variation_id = 4;
+  string goal_id = 5;
+  string user_id = 6;
+}
+
+message GoalBatchEvent {
+  string user_id = 1;
+  repeated UserGoalEventsOverTag user_goal_events_over_tags = 2;
+}
+
+message UserGoalEventsOverTag {
+  string tag = 1;
+  repeated UserGoalEvent user_goal_events = 2;
+}
+
+message UserGoalEvent {
+  int64 timestamp = 1;
+  string goal_id = 2;
+  double value = 3;
+}

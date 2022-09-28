@@ -1,0 +1,67 @@
+replicaCount: 2
+
+image:
+  repository: dexidp/dex
+  tag: v2.27.0
+  pullPolicy: IfNotPresent
+
+namespace:
+
+affinity: {}
+
+nodeSelector: {}
+
+pdb:
+  enabled:
+  maxUnavailable: 50%
+
+service:
+  name: dex
+  type: ClusterIP
+  clusterIP: None
+  externalPort: 9000
+  internalPort: 9000
+  dexPort: 5556
+
+tls:
+  cert:
+  key:
+
+envoy:
+  adminPort: 8001
+  image:
+    repository: envoyproxy/envoy-alpine
+    tag: v1.21.1
+    pullPolicy: IfNotPresent
+  config:
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+health:
+  initialDelaySeconds: 10
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 64Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
+
+config:
+  issuer:
+  client:
+    id:
+    name:
+    secret:
+    redirectURIs:
+  google:
+    issuer:
+    clientID:
+    clientSecret:
+    redirectURIs:

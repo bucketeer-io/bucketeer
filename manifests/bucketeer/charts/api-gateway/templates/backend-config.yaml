@@ -1,0 +1,9 @@
+apiVersion: cloud.google.com/v1beta1
+kind: BackendConfig
+metadata:
+  name: {{ template "api-gateway.fullname" . }}
+  namespace: {{ .Values.namespace }}
+spec:
+  timeoutSec: 40
+  connectionDraining:
+    drainingTimeoutSec: 60

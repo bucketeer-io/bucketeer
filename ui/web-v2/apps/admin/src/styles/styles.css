@@ -1,0 +1,89 @@
+/* For base styles (check out normalize.css) */
+@tailwind base;
+/* Simple reusable components provided by tailwind */
+@tailwind components;
+/* utility classes generated based on our tailwind.config.js */
+@tailwind utilities;
+
+html {
+  height: 100%;
+}
+body {
+  height: 100%;
+  @apply text-gray-700;
+}
+#app {
+  height: 100%;
+}
+
+h1 {
+  @apply font-medium;
+}
+
+.link {
+  @apply text-primary underline;
+}
+
+.input-checkbox {
+  @apply h-4 w-4 text-primary border-gray-300 rounded focus:ring-0;
+}
+
+.input-text {
+  @apply disabled:bg-gray-100 disabled:text-gray-500 text-sm min-h-[2.5rem] m-0 px-2 py-1 focus:border-indigo-500 border-gray-300 text-gray-700 rounded;
+}
+
+.input-file {
+  @apply disabled:cursor-auto disabled:pointer-events-none cursor-pointer opacity-0 w-full h-full;
+}
+
+.input-checkbox {
+  @apply disabled:opacity-50 focus:ring-indigo-500 h-4 w-4 text-primary border-gray-300 rounded;
+}
+
+.minus-circle-icon {
+  @apply disabled:text-gray-300 disabled:pointer-events-none w-5 h-5 text-gray-500;
+}
+
+.x-icon {
+  @apply disabled:text-gray-300 disabled:pointer-events-none w-5 h-5 text-gray-500;
+}
+
+.input-textarea {
+  @apply disabled:bg-gray-100 disabled:text-gray-500 text-sm focus:border-indigo-500 border-gray-300 text-gray-700 rounded;
+}
+
+.input-label {
+  @apply text-sm text-gray-700;
+}
+
+.input-section-label {
+  @apply text-gray-700;
+}
+
+.input-label-optional {
+  @apply text-xs text-gray-500;
+}
+
+.input-error {
+  @apply text-red-500;
+}
+
+.btn-submit {
+  @apply disabled:opacity-50 disabled:cursor-auto disabled:pointer-events-none inline-flex justify-center py-2 px-4 border border-transparent shadow-md text-sm font-medium rounded-md text-white bg-primary hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-600;
+}
+
+.btn-cancel {
+  @apply disabled:opacity-50 disabled:cursor-auto disabled:pointer-events-none inline-flex justify-center py-2 px-4 border border-gray-300 shadow-md text-sm font-medium rounded-md text-gray-500 bg-white hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
+}
+
+.sidemenu-item.active {
+  @apply bg-purple-400 text-white;
+}
+
+.sidemenu-item {
+  @apply hover:bg-purple-600 text-white;
+}
+
+.tab-item.active {
+  @apply border-primary text-primary;
+}

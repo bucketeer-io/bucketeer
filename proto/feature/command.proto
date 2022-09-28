@@ -1,0 +1,229 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.feature;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
+
+import "proto/feature/clause.proto";
+import "proto/feature/feature.proto";
+import "proto/feature/rule.proto";
+import "proto/feature/variation.proto";
+import "proto/feature/strategy.proto";
+import "proto/feature/segment.proto";
+import "proto/feature/prerequisite.proto";
+
+message Command {
+  google.protobuf.Any command = 1;
+}
+
+message CreateFeatureCommand {
+  string id = 1;
+  string name = 2;
+  string description = 3;  // This is an optional field
+  repeated Variation variations = 4;
+  repeated string tags = 5;
+  google.protobuf.Int32Value default_on_variation_index = 6;
+  google.protobuf.Int32Value default_off_variation_index = 7;
+  Feature.VariationType variation_type = 8;
+}
+
+message ArchiveFeatureCommand {}
+
+message UnarchiveFeatureCommand {}
+
+message DeleteFeatureCommand {}
+
+message RenameFeatureCommand {
+  string name = 1;
+}
+
+message ChangeDescriptionCommand {
+  string description = 1;
+}
+
+message ChangeBulkUploadSegmentUsersStatusCommand {
+  Segment.Status status = 1;
+  SegmentUser.State state = 2;
+  int64 count = 3;
+}
+
+message AddTagCommand {
+  string tag = 1;
+}
+
+message RemoveTagCommand {
+  string tag = 1;
+}
+
+message EnableFeatureCommand {}
+
+message DisableFeatureCommand {}
+
+message AddVariationCommand {
+  string value = 1;
+  string name = 2;
+  string description = 3;  // This is an optional field
+}
+
+message RemoveVariationCommand {
+  string id = 1;
+}
+
+message ChangeVariationValueCommand {
+  string id = 1;
+  string value = 2;
+}
+
+message ChangeVariationNameCommand {
+  string id = 1;
+  string name = 2;
+}
+
+message ChangeVariationDescriptionCommand {
+  string id = 1;
+  string description = 2;
+}
+
+message ChangeOffVariationCommand {
+  string id = 1;
+}
+
+message AddUserToVariationCommand {
+  string id = 1;
+  string user = 2;
+}
+
+message RemoveUserFromVariationCommand {
+  string id = 1;
+  string user = 2;
+}
+
+message ChangeDefaultStrategyCommand {
+  Strategy strategy = 1;
+}
+
+message AddRuleCommand {
+  Rule rule = 1;
+}
+
+message ChangeRuleStrategyCommand {
+  string id = 1;
+  string rule_id = 2;
+  Strategy strategy = 3;
+}
+
+message DeleteRuleCommand {
+  string id = 1;
+}
+
+message AddClauseCommand {
+  string rule_id = 1;
+  Clause clause = 2;
+}
+
+message DeleteClauseCommand {
+  string id = 1;
+  string rule_id = 2;
+}
+
+message ChangeClauseAttributeCommand {
+  string id = 1;
+  string rule_id = 2;
+  string attribute = 3;
+}
+
+message ChangeClauseOperatorCommand {
+  string id = 1;
+  string rule_id = 2;
+  Clause.Operator operator = 3;
+}
+
+message AddClauseValueCommand {
+  string id = 1;
+  string rule_id = 2;
+  string value = 3;
+}
+
+message RemoveClauseValueCommand {
+  string id = 1;
+  string rule_id = 2;
+  string value = 3;
+}
+
+message ChangeFixedStrategyCommand {
+  string id = 1;
+  string rule_id = 2;
+  FixedStrategy strategy = 3;
+}
+
+message ChangeRolloutStrategyCommand {
+  string id = 1;
+  string rule_id = 2;
+  RolloutStrategy strategy = 3;
+}
+
+message CreateSegmentCommand {
+  string name = 1;
+  string description = 2;
+}
+
+message DeleteSegmentCommand {}
+
+message ChangeSegmentNameCommand {
+  string name = 1;
+}
+
+message ChangeSegmentDescriptionCommand {
+  string description = 1;
+}
+
+message AddSegmentUserCommand {
+  repeated string user_ids = 1;
+  bucketeer.feature.SegmentUser.State state = 2;
+}
+
+message DeleteSegmentUserCommand {
+  repeated string user_ids = 1;
+  bucketeer.feature.SegmentUser.State state = 2;
+}
+
+message BulkUploadSegmentUsersCommand {
+  bytes data = 1;  // segment user ids separated by comma or new line
+  SegmentUser.State state = 2;
+}
+
+message IncrementFeatureVersionCommand {}
+
+message CloneFeatureCommand {
+  string environment_namespace = 1;
+}
+
+message ResetSamplingSeedCommand {}
+
+message AddPrerequisiteCommand {
+  Prerequisite prerequisite = 1;
+}
+
+message RemovePrerequisiteCommand {
+  string feature_id = 1;
+}
+
+message ChangePrerequisiteVariationCommand {
+  Prerequisite prerequisite = 1;
+}

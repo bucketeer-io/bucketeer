@@ -1,0 +1,117 @@
+{{- if .Values.global.druid.enabled }}
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "zookeeper.fullname" . }}-post-install-upgrade
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded, before-hook-creation, hook-failed
+rules:
+- apiGroups:
+  - zookeeper.pravega.io
+  resources:
+  - "*"
+  verbs:
+  - get
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ template "zookeeper.fullname" . }}-post-install-upgrade
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded, before-hook-creation, hook-failed
+subjects:
+- kind: ServiceAccount
+  name: {{ template "zookeeper.fullname" . }}-post-install-upgrade
+  namespace: {{.Values.namespace}}
+roleRef:
+  kind: Role
+  name: {{ template "zookeeper.fullname" . }}-post-install-upgrade
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ template "zookeeper.fullname" . }}-post-install-upgrade
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded, before-hook-creation, hook-failed
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "zookeeper.fullname" . }}-post-install-upgrade
+  namespace: {{ .Values.namespace }}
+  annotations:
+      "helm.sh/hook": post-install, post-upgrade
+      "helm.sh/hook-weight": "1"
+      "helm.sh/hook-delete-policy": hook-succeeded, before-hook-creation, hook-failed
+data:
+  validations.sh: |
+    #!/bin/sh
+    set -e
+    sleep 30
+
+    replicas=`kubectl get zk -n {{ .Release.Namespace }} {{ template "zookeeper.fullname" . }} -o jsonpath='{.status.replicas}'`
+    readyReplicas=`kubectl get zk -n {{ .Release.Namespace }} {{ template "zookeeper.fullname" . }} -o jsonpath='{.status.readyReplicas}'`
+    currentVersion=`kubectl get zk -n {{ .Release.Namespace }} {{ template "zookeeper.fullname" . }} -o jsonpath='{.status.currentVersion}'`
+    targetVersion=`kubectl get zk -n {{ .Release.Namespace }} {{ template "zookeeper.fullname" . }} -o jsonpath='{.spec.image.tag}'`
+
+    echo "ZookeeperCluster replicas: $currentReplicas"
+    echo "ZookeeperCluster readyReplicas: $readyReplicas"
+    echo "ZookeeperCluster currentVersion: $currentVersion"
+    echo "ZookeeperCluster targetVersion: $targetVersion"
+
+    if [ $readyReplicas != $replicas ]; then
+        exit 1
+    fi
+
+    if [ $currentVersion != $targetVersion ]; then
+        exit 2
+    fi
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "zookeeper.fullname" . }}-post-install-upgrade
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": hook-succeeded, before-hook-creation, hook-failed
+spec:
+  backoffLimit: {{ .Values.hooks.backoffLimit }}
+  template:
+    metadata:
+      name: {{ template "zookeeper.fullname" . }}-post-install-upgrade
+    spec:
+      serviceAccountName: {{ template "zookeeper.fullname" . }}-post-install-upgrade
+      restartPolicy: Never
+      containers:
+      - name: post-install-upgrade-job
+        image: "{{ .Values.hooks.image.repository }}:{{ .Values.hooks.image.tag }}"
+        command:
+          - /scripts/validations.sh
+        volumeMounts:
+          - name: sh
+            mountPath: /scripts
+            readOnly: true
+      volumes:
+        - name: sh
+          configMap:
+            name: {{ template "zookeeper.fullname" . }}-post-install-upgrade
+            defaultMode: 0555
+{{- end }}

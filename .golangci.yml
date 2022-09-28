@@ -1,0 +1,25 @@
+run:
+  tests: false
+linters-settings:
+  goimports:
+    # put imports beginning with prefix after 3rd-party packages;
+    # it's a comma-separated list of prefixes
+    local-prefixes: github.com/bucketeer-io/bucketeer
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    # Since we got the following error, staticcheck is disabled. After solving it, we'll enable it.
+    # pkg/account/apikeycacher/apikeycacher.go:284:12: SA1019: ptypes.UnmarshalAny is deprecated: Call the any.UnmarshalTo method instead. (staticcheck)
+    # - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+    - gofmt
+    - goimports
+    - lll

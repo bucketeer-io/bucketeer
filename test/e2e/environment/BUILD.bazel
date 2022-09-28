@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "environment_test.go",
+        "project_test.go",
+    ],
+    deps = [
+        "//pkg/environment/client:go_default_library",
+        "//pkg/rpc/client:go_default_library",
+        "//proto/environment:go_default_library",
+    ],
+)
