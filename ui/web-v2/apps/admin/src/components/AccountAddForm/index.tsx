@@ -1,12 +1,12 @@
+import { Select } from '@/components/Select';
+import { intl } from '@/lang';
+import { messages } from '@/lang/messages';
+import { Account } from '@/proto/account/account_pb';
 import { Dialog } from '@headlessui/react';
 import React, { FC, memo } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
-import { intl } from '../../lang';
-import { messages } from '../../lang/messages';
-import { Account } from '../../proto/account/account_pb';
-import { Select } from '../Select';
 
 export interface AccountAddFormProps {
   onSubmit: () => void;
