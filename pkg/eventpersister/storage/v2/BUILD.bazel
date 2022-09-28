@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["persister.go"],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/eventpersister/storage/v2",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/storage/v2/postgres:go_default_library",
+        "//proto/event/client:go_default_library",
+        "//proto/event/service:go_default_library",
+    ],
+)

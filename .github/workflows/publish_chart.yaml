@@ -1,0 +1,62 @@
+name: publish-chart
+
+on:
+  workflow_dispatch:
+    inputs:
+      bucketeer_version:
+        description: "Bucketeer version"
+        required: false
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+    paths:
+      - "!**/**.md"
+      - "CHANGELOG.md" # DO NOT remove this line. Otherwise, the publish chart won't start.
+
+env:
+  REGISTRY: ghcr.io
+  HELM_VERSION: 3.8.2
+
+jobs:
+  artifacts:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      checks: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          # This is a workaround to ensure the publish_chart won't start before the release workflow.
+          # Because the version is based on the tag, if the publish_chart starts before
+          # the release workflow, it will create a chart with an old version.
+      - name: Wait for release note to succeed
+        uses: lewagon/wait-on-check-action@v1.0.0
+        with:
+          ref: ${{ github.ref }}
+          # DO NOT CHANGE the check-name. This name is based on the workflow name defined in the release.yaml
+          check-name: "Release Please"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+      - name: Determine version
+        run: |
+          if [ ! -z ${{ github.event.inputs.bucketeer_version }} ]; then
+            echo "BUCKETEER_VERSION=${{ github.event.inputs.bucketeer_version }}" >> $GITHUB_ENV
+          else
+            echo "BUCKETEER_VERSION=$(git describe --tags --always --abbrev=7)" >> $GITHUB_ENV
+          fi
+      - name: Install helm
+        uses: Azure/setup-helm@v1
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: Login to OCI using Helm
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} --username ${{ github.repository_owner }} --password-stdin
+      - name: Publish helm chart
+        run: |
+          make build-chart VERSION=${{ env.BUCKETEER_VERSION }}
+          helm push .artifacts/bucketeer-${{ env.BUCKETEER_VERSION }}.tgz oci://${{ env.REGISTRY }}/bucketeer-io/chart

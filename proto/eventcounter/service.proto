@@ -1,0 +1,159 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.eventcounter;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/eventcounter";
+
+import "google/protobuf/wrappers.proto";
+
+import "proto/eventcounter/evaluation_count.proto";
+import "proto/eventcounter/experiment_count.proto";
+import "proto/eventcounter/experiment_result.proto";
+import "proto/eventcounter/filter.proto";
+import "proto/eventcounter/table.proto";
+import "proto/eventcounter/timeseries.proto";
+
+message GetEvaluationCountV2Request {
+  string environment_namespace = 1;
+  int64 start_at = 2;
+  int64 end_at = 3;
+  string feature_id = 4;
+  int32 feature_version = 5;
+  repeated string variation_ids = 6;
+}
+
+message GetEvaluationCountV2Response {
+  EvaluationCount count = 1;
+}
+
+message GetEvaluationTimeseriesCountRequest {
+  string environment_namespace = 1;
+  string feature_id = 2;
+}
+
+message GetEvaluationTimeseriesCountResponse {
+  repeated VariationTimeseries user_counts = 1;
+  repeated VariationTimeseries event_counts = 2;
+}
+
+message GetExperimentResultRequest {
+  string environment_namespace = 1;
+  string experiment_id = 2;
+}
+
+message GetExperimentResultResponse {
+  ExperimentResult experiment_result = 1;
+}
+
+message ListExperimentResultsRequest {
+  string feature_id = 1;
+  google.protobuf.Int32Value feature_version = 2;
+  string environment_namespace = 3;
+}
+
+message ListExperimentResultsResponse {
+  map<string, ExperimentResult> results = 1;
+}
+
+message ListUserDataKeysRequest {
+  string environment_namespace = 1;
+}
+
+message ListUserDataKeysResponse {
+  repeated string keys = 1;
+}
+
+message ListUserDataValuesRequest {
+  string environment_namespace = 1;
+  string key = 2;
+}
+
+message ListUserDataValuesResponse {
+  repeated string values = 1;
+}
+
+message GetGoalCountRequest {
+  string environment_namespace = 1;
+  string feature_id = 2;
+  int32 feature_version = 3;
+  string goal_id = 4;
+  int64 start_at = 5;
+  int64 end_at = 6;
+  repeated Filter filters = 7;
+  repeated string segments = 8;
+  string reason = 9;
+}
+
+message GetGoalCountResponse {
+  Row headers = 1;
+  repeated Row rows = 2;
+}
+
+message GetGoalCountV2Request {
+  string environment_namespace = 1;
+  int64 start_at = 2;
+  int64 end_at = 3;
+  string goal_id = 4;
+  string feature_id = 5;
+  int32 feature_version = 6;
+  repeated string variation_ids = 7;
+}
+
+message GetGoalCountV2Response {
+  GoalCounts goal_counts = 1;
+}
+
+message GetUserCountV2Request {
+  string environment_namespace = 1;
+  int64 start_at = 2;
+  int64 end_at = 3;
+}
+
+message GetUserCountV2Response {
+  int64 event_count = 1;
+  int64 user_count = 2;
+}
+
+message ListUserMetadataRequest {
+  string environment_namespace = 1;
+}
+
+message ListUserMetadataResponse {
+  repeated string data = 1;
+}
+
+service EventCounterService {
+  rpc GetEvaluationCountV2(GetEvaluationCountV2Request)
+      returns (GetEvaluationCountV2Response) {}
+
+  rpc GetEvaluationTimeseriesCount(GetEvaluationTimeseriesCountRequest)
+      returns (GetEvaluationTimeseriesCountResponse) {}
+
+  rpc GetExperimentResult(GetExperimentResultRequest)
+      returns (GetExperimentResultResponse) {}
+
+  rpc ListExperimentResults(ListExperimentResultsRequest)
+      returns (ListExperimentResultsResponse) {}
+
+  rpc GetGoalCount(GetGoalCountRequest) returns (GetGoalCountResponse) {}
+
+  rpc GetGoalCountV2(GetGoalCountV2Request) returns (GetGoalCountV2Response) {}
+
+  rpc GetUserCountV2(GetUserCountV2Request) returns (GetUserCountV2Response) {}
+
+  rpc ListUserMetadata(ListUserMetadataRequest)
+      returns (ListUserMetadataResponse) {}
+}

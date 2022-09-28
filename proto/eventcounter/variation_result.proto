@@ -1,0 +1,47 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.eventcounter;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/eventcounter";
+
+import "proto/eventcounter/variation_count.proto";
+import "proto/eventcounter/distribution_summary.proto";
+import "proto/eventcounter/timeseries.proto";
+
+message VariationResult {
+  string variation_id = 1;
+  VariationCount experiment_count = 2;
+  VariationCount evaluation_count = 3;
+  DistributionSummary cvr_prob_best = 4;
+  DistributionSummary cvr_prob_beat_baseline = 5;
+  DistributionSummary cvr_prob = 6;
+  Timeseries evaluation_user_count_timeseries = 7;
+  Timeseries evaluation_event_count_timeseries = 8;
+  Timeseries goal_user_count_timeseries = 9;
+  Timeseries goal_event_count_timeseries = 10;
+  Timeseries goal_value_sum_timeseries = 11;
+  Timeseries cvr_median_timeseries = 12;
+  Timeseries cvr_percentile025_timeseries = 13;
+  Timeseries cvr_percentile975_timeseries = 14;
+  Timeseries cvr_timeseries = 15;
+  Timeseries goal_value_sum_per_user_timeseries = 16;
+  DistributionSummary goal_value_sum_per_user_prob = 17;
+  DistributionSummary goal_value_sum_per_user_prob_best = 18;
+  DistributionSummary goal_value_sum_per_user_prob_beat_baseline = 19;
+  Timeseries goal_value_sum_per_user_median_timeseries = 20;
+  Timeseries goal_value_sum_per_user_percentile025_timeseries = 21;
+  Timeseries goal_value_sum_per_user_percentile975_timeseries = 22;
+}

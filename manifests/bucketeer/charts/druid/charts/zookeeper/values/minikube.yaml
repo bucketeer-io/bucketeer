@@ -1,0 +1,8 @@
+replicas: 1
+
+persistence:
+  storageClassName: standard
+  ## specifying reclaim policy for PersistentVolumes
+  ## accepted values - Delete / Retain
+  reclaimPolicy: Delete
+  volumeSize: 10Gi

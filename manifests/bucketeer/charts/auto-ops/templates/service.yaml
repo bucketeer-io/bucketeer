@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "auto-ops.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "auto-ops.name" . }}
+    chart: {{ template "auto-ops.chart" . }}
+    release: {{ template "auto-ops.fullname" . }}
+    heritage: {{ .Release.Service }}
+    envoy: "true"
+    metrics: "true"
+spec:
+  type: {{ .Values.service.type }}
+  clusterIP: {{ .Values.service.clusterIP }}
+  ports:
+    - name: service
+      port: {{ .Values.service.externalPort }}
+      targetPort: envoy
+      protocol: TCP
+    - name: metrics
+      port: {{ .Values.env.metricsPort }}
+      protocol: TCP
+    - name: admin
+      port: {{ .Values.envoy.adminPort }}
+      protocol: TCP
+  selector:
+    app: {{ template "auto-ops.name" . }}
+    release: {{ template "auto-ops.fullname" . }}
+    

@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "admin_subscription_test.go",
+        "subscription_test.go",
+    ],
+    deps = [
+        "//pkg/notification/client:go_default_library",
+        "//pkg/notification/domain:go_default_library",
+        "//pkg/rpc/client:go_default_library",
+        "//pkg/uuid:go_default_library",
+        "//proto/notification:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+    ],
+)

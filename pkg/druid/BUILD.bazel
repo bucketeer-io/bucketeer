@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "supervisor.go",
+        "supervisor_creator.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/druid",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/storage/druid:go_default_library",
+        "//pkg/storage/kafka:go_default_library",
+        "@com_github_ca_dp_godruid//:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)

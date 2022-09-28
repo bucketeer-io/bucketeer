@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "broker_client.go",
+        "coordinator_client.go",
+        "druid.go",
+        "overlord_client.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/storage/druid",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_ca_dp_godruid//:go_default_library"],
+)

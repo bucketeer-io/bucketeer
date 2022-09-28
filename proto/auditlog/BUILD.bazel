@@ -1,0 +1,51 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+load("//proto:proto_descriptor.bzl", "proto_descriptor")
+
+proto_library(
+    name = "auditlog_proto",
+    srcs = [
+        "auditlog.proto",
+        "service.proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proto/event/domain:domain_proto",
+        "@com_google_protobuf//:any_proto",
+        "@com_google_protobuf//:wrappers_proto",
+    ],
+)
+
+go_proto_library(
+    name = "auditlog_go_proto",
+    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    importpath = "github.com/bucketeer-io/bucketeer/proto/auditlog",
+    proto = ":auditlog_proto",
+    visibility = ["//visibility:public"],
+    deps = ["//proto/event/domain:go_default_library"],
+)
+
+go_library(
+    name = "go_default_library",
+    embed = [":auditlog_go_proto"],
+    importpath = "github.com/bucketeer-io/bucketeer/proto/auditlog",
+    visibility = ["//visibility:public"],
+)
+
+proto_descriptor(
+    name = "proto_descriptor",
+    srcs = ["service.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":auditlog_proto",
+        "//proto/account:account_proto",
+        "//proto/autoops:autoops_proto",
+        "//proto/environment:environment_proto",
+        "//proto/event/domain:domain_proto",
+        "//proto/feature:feature_proto",
+        "//proto/notification:notification_proto",
+        "@com_google_protobuf//:any_proto",
+        "@com_google_protobuf//:wrappers_proto",
+    ],
+)

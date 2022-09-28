@@ -1,0 +1,106 @@
+{
+  "version": 2,
+  "cli": {
+    "defaultCollection": "@nrwl/react"
+  },
+  "defaultProject": "admin",
+  "generators": {
+    "@nrwl/react": {
+      "application": {
+        "style": "@emotion/styled",
+        "linter": "eslint",
+        "babel": true
+      },
+      "component": {
+        "style": "@emotion/styled"
+      },
+      "library": {
+        "style": "@emotion/styled",
+        "linter": "eslint"
+      }
+    }
+  },
+  "projects": {
+    "admin": {
+      "root": "apps/admin",
+      "sourceRoot": "apps/admin/src",
+      "projectType": "application",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/web:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/admin",
+            "index": "apps/admin/src/index.html",
+            "main": "apps/admin/src/main.tsx",
+            "polyfills": "apps/admin/src/polyfills.ts",
+            "tsConfig": "apps/admin/tsconfig.app.json",
+            "assets": ["apps/admin/src/favicon.ico", "apps/admin/src/assets"],
+            "styles": [],
+            "scripts": [],
+            "webpackConfig": "apps/admin/webpack-config"
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "apps/admin/src/environments/environment.ts",
+                  "with": "apps/admin/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/web:dev-server",
+          "options": {
+            "buildTarget": "admin:build"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "admin:build:production"
+            }
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/admin/**/*.{ts,tsx,js,jsx}"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/admin"],
+          "options": {
+            "jestConfig": "apps/admin/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "translate": {
+          "executor": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "yarn formatjs extract '{apps/admin,libs}/src/**/*.{ts,tsx}' --ignore apps/admin/src/proto --ignore apps/admin/src/types --out-file apps/admin/src/lang/extracted-messages.json",
+              "yarn formatjs compile apps/admin/src/lang/extracted-messages.json --out-file apps/admin/src/assets/lang/en.json"
+            ],
+            "parallel": false
+          }
+        }
+      }
+    }
+  }
+}

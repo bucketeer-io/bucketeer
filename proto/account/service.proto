@@ -1,0 +1,281 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.account;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/account";
+
+import "google/protobuf/wrappers.proto";
+
+import "proto/account/account.proto";
+import "proto/account/api_key.proto";
+import "proto/account/command.proto";
+
+// account is retrieved by IDToken.
+// it's called from WebUI.
+message GetMeRequest {}
+
+// account is retrieved by email.
+// it's called from another microservice.
+message GetMeByEmailRequest {
+  string email = 1;
+}
+
+message GetMeResponse {
+  Account account = 1 [deprecated = true];
+  string email = 2;
+  bool is_admin = 3;
+  Account.Role admin_role = 4 [deprecated = true];
+  bool disabled = 5 [deprecated = true];
+  repeated EnvironmentRole environment_roles = 6;
+  bool deleted = 7 [deprecated = true];
+}
+
+message CreateAdminAccountRequest {
+  CreateAdminAccountCommand command = 1;
+}
+
+message CreateAdminAccountResponse {}
+
+message EnableAdminAccountRequest {
+  string id = 1;
+  EnableAdminAccountCommand command = 2;
+}
+
+message EnableAdminAccountResponse {}
+
+message DisableAdminAccountRequest {
+  string id = 1;
+  DisableAdminAccountCommand command = 2;
+}
+
+message DisableAdminAccountResponse {}
+
+message GetAdminAccountRequest {
+  string email = 1;
+}
+
+message GetAdminAccountResponse {
+  Account account = 1;
+}
+
+message ListAdminAccountsRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    EMAIL = 1;
+    CREATED_AT = 2;
+    UPDATED_AT = 3;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  OrderBy order_by = 3;
+  OrderDirection order_direction = 4;
+  string search_keyword = 5;
+  google.protobuf.BoolValue disabled = 6;
+}
+
+message ListAdminAccountsResponse {
+  repeated Account accounts = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message ConvertAccountRequest {
+  string id = 1;
+  ConvertAccountCommand command = 2;
+}
+
+message ConvertAccountResponse {}
+
+message CreateAccountRequest {
+  CreateAccountCommand command = 1;
+  string environment_namespace = 2;
+}
+
+message CreateAccountResponse {}
+
+message EnableAccountRequest {
+  string id = 1;
+  EnableAccountCommand command = 2;
+  string environment_namespace = 3;
+}
+
+message EnableAccountResponse {}
+
+message DisableAccountRequest {
+  string id = 1;
+  DisableAccountCommand command = 2;
+  string environment_namespace = 3;
+}
+
+message DisableAccountResponse {}
+
+message ChangeAccountRoleRequest {
+  string id = 1;
+  ChangeAccountRoleCommand command = 2;
+  string environment_namespace = 3;
+}
+
+message ChangeAccountRoleResponse {}
+
+message GetAccountRequest {
+  string email = 1;
+  string environment_namespace = 2;
+}
+
+message GetAccountResponse {
+  Account account = 1;
+}
+
+message ListAccountsRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    EMAIL = 1;
+    CREATED_AT = 2;
+    UPDATED_AT = 3;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  string environment_namespace = 3;
+  OrderBy order_by = 4;
+  OrderDirection order_direction = 5;
+  string search_keyword = 6;
+  google.protobuf.BoolValue disabled = 7;
+  google.protobuf.Int32Value role = 8;
+}
+
+message ListAccountsResponse {
+  repeated Account accounts = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message CreateAPIKeyRequest {
+  CreateAPIKeyCommand command = 1;
+  string environment_namespace = 2;
+}
+
+message CreateAPIKeyResponse {
+  APIKey api_key = 1;
+}
+
+message ChangeAPIKeyNameRequest {
+  string id = 1;
+  ChangeAPIKeyNameCommand command = 2;
+  string environment_namespace = 3;
+}
+
+message ChangeAPIKeyNameResponse {}
+
+message EnableAPIKeyRequest {
+  string id = 1;
+  EnableAPIKeyCommand command = 2;
+  string environment_namespace = 3;
+}
+
+message EnableAPIKeyResponse {}
+
+message DisableAPIKeyRequest {
+  string id = 1;
+  DisableAPIKeyCommand command = 2;
+  string environment_namespace = 3;
+}
+
+message DisableAPIKeyResponse {}
+
+message GetAPIKeyRequest {
+  string id = 1;
+  string environment_namespace = 2;
+}
+
+message GetAPIKeyResponse {
+  APIKey api_key = 1;
+}
+
+message ListAPIKeysRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    NAME = 1;
+    CREATED_AT = 2;
+    UPDATED_AT = 3;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  string environment_namespace = 3;
+  OrderBy order_by = 4;
+  OrderDirection order_direction = 5;
+  string search_keyword = 6;
+  google.protobuf.BoolValue disabled = 7;
+}
+
+message ListAPIKeysResponse {
+  repeated APIKey api_keys = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message GetAPIKeyBySearchingAllEnvironmentsRequest {
+  string id = 1;
+}
+
+message GetAPIKeyBySearchingAllEnvironmentsResponse {
+  EnvironmentAPIKey environment_api_key = 1;
+}
+
+service AccountService {
+  rpc GetMe(GetMeRequest) returns (GetMeResponse);
+  rpc GetMeByEmail(GetMeByEmailRequest) returns (GetMeResponse);
+  rpc CreateAdminAccount(CreateAdminAccountRequest)
+      returns (CreateAdminAccountResponse);
+  rpc EnableAdminAccount(EnableAdminAccountRequest)
+      returns (EnableAdminAccountResponse);
+  rpc DisableAdminAccount(DisableAdminAccountRequest)
+      returns (DisableAdminAccountResponse);
+  rpc GetAdminAccount(GetAdminAccountRequest) returns (GetAdminAccountResponse);
+  rpc ListAdminAccounts(ListAdminAccountsRequest)
+      returns (ListAdminAccountsResponse);
+  rpc ConvertAccount(ConvertAccountRequest) returns (ConvertAccountResponse);
+
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+  rpc EnableAccount(EnableAccountRequest) returns (EnableAccountResponse);
+  rpc DisableAccount(DisableAccountRequest) returns (DisableAccountResponse);
+  rpc ChangeAccountRole(ChangeAccountRoleRequest)
+      returns (ChangeAccountRoleResponse);
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
+  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
+
+  rpc CreateAPIKey(CreateAPIKeyRequest) returns (CreateAPIKeyResponse);
+  rpc ChangeAPIKeyName(ChangeAPIKeyNameRequest)
+      returns (ChangeAPIKeyNameResponse);
+  rpc EnableAPIKey(EnableAPIKeyRequest) returns (EnableAPIKeyResponse);
+  rpc DisableAPIKey(DisableAPIKeyRequest) returns (DisableAPIKeyResponse);
+  rpc GetAPIKey(GetAPIKeyRequest) returns (GetAPIKeyResponse);
+  rpc ListAPIKeys(ListAPIKeysRequest) returns (ListAPIKeysResponse);
+  rpc GetAPIKeyBySearchingAllEnvironments(
+      GetAPIKeyBySearchingAllEnvironmentsRequest)
+      returns (GetAPIKeyBySearchingAllEnvironmentsResponse);
+}

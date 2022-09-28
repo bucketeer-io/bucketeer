@@ -1,0 +1,27 @@
+name: release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  release_please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v3.5.0
+        with:
+          changelog-types: |
+            [
+              {"type":"build","section":"Build System","hidden":false},
+              {"type":"chore","section":"Miscellaneous","hidden":false},
+              {"type":"feat","section":"Features","hidden":false},
+              {"type":"fix","section":"Bug Fixes","hidden":false},
+              {"type":"perf","section":"Performance Improvements","hidden":false},
+              {"type":"revert","section":"Reverts","hidden":false}
+            ]
+          release-type: simple
+          package-name: release-please-action
+          bump-minor-pre-major: true

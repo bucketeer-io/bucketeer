@@ -1,0 +1,49 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.notification;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/notification";
+
+import "proto/notification/recipient.proto";
+
+message Subscription {
+  enum SourceType {
+    DOMAIN_EVENT_FEATURE = 0;
+    DOMAIN_EVENT_GOAL = 1;
+    DOMAIN_EVENT_EXPERIMENT = 2;
+    DOMAIN_EVENT_ACCOUNT = 3;
+    DOMAIN_EVENT_APIKEY = 4;
+    DOMAIN_EVENT_SEGMENT = 5;
+    DOMAIN_EVENT_ENVIRONMENT = 6;
+    DOMAIN_EVENT_ADMIN_ACCOUNT = 7;
+    DOMAIN_EVENT_AUTOOPS_RULE = 8;
+    DOMAIN_EVENT_PUSH = 9;
+    DOMAIN_EVENT_SUBSCRIPTION = 10;
+    DOMAIN_EVENT_ADMIN_SUBSCRIPTION = 11;
+    DOMAIN_EVENT_PROJECT = 12;
+    DOMAIN_EVENT_WEBHOOK = 13;
+    FEATURE_STALE = 100;
+    EXPERIMENT_RUNNING = 200;
+    MAU_COUNT = 300;
+  }
+  string id = 1;
+  int64 created_at = 2;
+  int64 updated_at = 3;
+  bool disabled = 4;
+  repeated SourceType source_types = 5;
+  Recipient recipient = 6;
+  string name = 7;
+}

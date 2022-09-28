@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["migrate.go"],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/migration/mysql/migrate/mock",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/migration/mysql/migrate:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+    ],
+)

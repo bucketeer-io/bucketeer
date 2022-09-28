@@ -1,0 +1,83 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.autoops;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
+
+import "proto/autoops/auto_ops_rule.proto";
+import "proto/autoops/clause.proto";
+
+message CreateAutoOpsRuleCommand {
+  string feature_id = 1;
+  OpsType ops_type = 2;
+  repeated OpsEventRateClause ops_event_rate_clauses = 3;
+  repeated DatetimeClause datetime_clauses = 4;
+  repeated WebhookClause webhook_clauses = 5;
+}
+
+message ChangeAutoOpsRuleOpsTypeCommand {
+  OpsType ops_type = 1;
+}
+
+message DeleteAutoOpsRuleCommand {}
+
+message ChangeAutoOpsRuleTriggeredAtCommand {}
+
+message AddOpsEventRateClauseCommand {
+  OpsEventRateClause ops_event_rate_clause = 1;
+}
+
+message ChangeOpsEventRateClauseCommand {
+  string id = 1;
+  OpsEventRateClause ops_event_rate_clause = 2;
+}
+
+message DeleteClauseCommand {
+  string id = 1;
+}
+
+message AddDatetimeClauseCommand {
+  DatetimeClause datetime_clause = 1;
+}
+
+message ChangeDatetimeClauseCommand {
+  string id = 1;
+  DatetimeClause datetime_clause = 2;
+}
+
+message CreateWebhookCommand {
+  string name = 1;
+  string description = 2;
+}
+
+message ChangeWebhookNameCommand {
+  string name = 1;
+}
+
+message ChangeWebhookDescriptionCommand {
+  string description = 1;
+}
+
+message DeleteWebhookCommand {}
+
+message AddWebhookClauseCommand {
+  WebhookClause webhook_clause = 1;
+}
+
+message ChangeWebhookClauseCommand {
+  string id = 1;
+  WebhookClause webhook_clause = 2;
+}

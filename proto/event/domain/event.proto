@@ -1,0 +1,876 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.event.domain;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/event/domain";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/wrappers.proto";
+
+import "proto/feature/clause.proto";
+import "proto/feature/feature.proto";
+import "proto/feature/rule.proto";
+import "proto/feature/variation.proto";
+import "proto/feature/strategy.proto";
+import "proto/feature/segment.proto";
+import "proto/feature/target.proto";
+import "proto/account/account.proto";
+import "proto/account/api_key.proto";
+import "proto/autoops/auto_ops_rule.proto";
+import "proto/autoops/clause.proto";
+import "proto/notification/subscription.proto";
+import "proto/notification/recipient.proto";
+import "proto/feature/prerequisite.proto";
+
+message Event {
+  enum EntityType {
+    FEATURE = 0;
+    GOAL = 1;
+    EXPERIMENT = 2;
+    ACCOUNT = 3;
+    APIKEY = 4;
+    SEGMENT = 5;
+    ENVIRONMENT = 6;
+    ADMIN_ACCOUNT = 7;
+    AUTOOPS_RULE = 8;
+    PUSH = 9;
+    SUBSCRIPTION = 10;
+    ADMIN_SUBSCRIPTION = 11;
+    PROJECT = 12;
+    WEBHOOK = 13;
+  }
+  enum Type {
+    UNKNOWN = 0;
+    FEATURE_CREATED = 1;
+    FEATURE_RENAMED = 2;
+    FEATURE_ENABLED = 3;
+    FEATURE_DISABLED = 4;
+    FEATURE_DELETED = 5;
+    FEATURE_EVALUATION_DELAYABLE_SET = 6;
+    FEATURE_EVALUATION_UNDELAYABLE_SET = 7;
+    FEATURE_DESCRIPTION_CHANGED = 8;
+    FEATURE_VARIATION_ADDED = 9;
+    FEATURE_VARIATION_REMOVED = 10;
+    FEATURE_OFF_VARIATION_CHANGED = 11;
+    VARIATION_VALUE_CHANGED = 12;
+    VARIATION_NAME_CHANGED = 13;
+    VARIATION_DESCRIPTION_CHANGED = 14;
+    VARIATION_USER_ADDED = 15;
+    VARIATION_USER_REMOVED = 16;
+    FEATURE_RULE_ADDED = 17;
+    FEATURE_RULE_STRATEGY_CHANGED = 18;
+    FEATURE_RULE_DELETED = 19;
+    RULE_CLAUSE_ADDED = 20;
+    RULE_CLAUSE_DELETED = 21;
+    RULE_FIXED_STRATEGY_CHANGED = 22;
+    RULE_ROLLOUT_STRATEGY_CHANGED = 23;
+    CLAUSE_ATTRIBUTE_CHANGED = 24;
+    CLAUSE_OPERATOR_CHANGED = 25;
+    CLAUSE_VALUE_ADDED = 26;
+    CLAUSE_VALUE_REMOVED = 27;
+    FEATURE_DEFAULT_STRATEGY_CHANGED = 28;
+    FEATURE_TAG_ADDED = 29;
+    FEATURE_TAG_REMOVED = 30;
+    FEATURE_VERSION_INCREMENTED = 31;
+    FEATURE_ARCHIVED = 32;
+    FEATURE_CLONED = 33;
+    FEATURE_UNARCHIVED = 35;
+    SAMPLING_SEED_RESET = 34;
+    PREREQUISITE_ADDED = 36;
+    PREREQUISITE_REMOVED = 37;
+    PREREQUISITE_VARIATION_CHANGED = 38;
+    GOAL_CREATED = 100;
+    GOAL_RENAMED = 101;
+    GOAL_DESCRIPTION_CHANGED = 102;
+    GOAL_DELETED = 103;
+    GOAL_ARCHIVED = 104;
+    EXPERIMENT_CREATED = 200;
+    EXPERIMENT_STOPPED = 201;
+    EXPERIMENT_START_AT_CHANGED = 202;
+    EXPERIMENT_STOP_AT_CHANGED = 203;
+    EXPERIMENT_DELETED = 204;
+    EXPERIMENT_PERIOD_CHANGED = 205;
+    EXPERIMENT_NAME_CHANGED = 206;
+    EXPERIMENT_DESCRIPTION_CHANGED = 207;
+    EXPERIMENT_STARTED = 208;
+    EXPERIMENT_FINISHED = 209;
+    EXPERIMENT_ARCHIVED = 210;
+    ACCOUNT_CREATED = 300;
+    ACCOUNT_ROLE_CHANGED = 301;
+    ACCOUNT_ENABLED = 302;
+    ACCOUNT_DISABLED = 303;
+    ACCOUNT_DELETED = 304;
+    APIKEY_CREATED = 400;
+    APIKEY_NAME_CHANGED = 401;
+    APIKEY_ENABLED = 402;
+    APIKEY_DISABLED = 403;
+    SEGMENT_CREATED = 500;
+    SEGMENT_DELETED = 501;
+    SEGMENT_NAME_CHANGED = 502;
+    SEGMENT_DESCRIPTION_CHANGED = 503;
+    SEGMENT_RULE_ADDED = 504;
+    SEGMENT_RULE_DELETED = 505;
+    SEGMENT_RULE_CLAUSE_ADDED = 506;
+    SEGMENT_RULE_CLAUSE_DELETED = 507;
+    SEGMENT_CLAUSE_ATTRIBUTE_CHANGED = 508;
+    SEGMENT_CLAUSE_OPERATOR_CHANGED = 509;
+    SEGMENT_CLAUSE_VALUE_ADDED = 510;
+    SEGMENT_CLAUSE_VALUE_REMOVED = 511;
+    SEGMENT_USER_ADDED = 512;
+    SEGMENT_USER_DELETED = 513;
+    SEGMENT_BULK_UPLOAD_USERS = 514;
+    SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED = 515;
+    ENVIRONMENT_CREATED = 600;
+    ENVIRONMENT_RENAMED = 601;
+    ENVIRONMENT_DESCRIPTION_CHANGED = 602;
+    ENVIRONMENT_DELETED = 603;
+    ADMIN_ACCOUNT_CREATED = 700;
+    ADMIN_ACCOUNT_ENABLED = 702;
+    ADMIN_ACCOUNT_DISABLED = 703;
+    AUTOOPS_RULE_CREATED = 800;
+    AUTOOPS_RULE_DELETED = 801;
+    AUTOOPS_RULE_OPS_TYPE_CHANGED = 802;
+    AUTOOPS_RULE_CLAUSE_DELETED = 803;
+    AUTOOPS_RULE_TRIGGERED_AT_CHANGED = 804;
+    OPS_EVENT_RATE_CLAUSE_ADDED = 805;
+    OPS_EVENT_RATE_CLAUSE_CHANGED = 806;
+    DATETIME_CLAUSE_ADDED = 807;
+    DATETIME_CLAUSE_CHANGED = 808;
+    PUSH_CREATED = 900;
+    PUSH_DELETED = 901;
+    PUSH_TAGS_ADDED = 902;
+    PUSH_TAGS_DELETED = 903;
+    PUSH_RENAMED = 904;
+    SUBSCRIPTION_CREATED = 1000;
+    SUBSCRIPTION_DELETED = 1001;
+    SUBSCRIPTION_ENABLED = 1002;
+    SUBSCRIPTION_DISABLED = 1003;
+    SUBSCRIPTION_SOURCE_TYPE_ADDED = 1004;
+    SUBSCRIPTION_SOURCE_TYPE_DELETED = 1005;
+    SUBSCRIPTION_RENAMED = 1006;
+    ADMIN_SUBSCRIPTION_CREATED = 1100;
+    ADMIN_SUBSCRIPTION_DELETED = 1101;
+    ADMIN_SUBSCRIPTION_ENABLED = 1102;
+    ADMIN_SUBSCRIPTION_DISABLED = 1103;
+    ADMIN_SUBSCRIPTION_SOURCE_TYPE_ADDED = 1104;
+    ADMIN_SUBSCRIPTION_SOURCE_TYPE_DELETED = 1105;
+    ADMIN_SUBSCRIPTION_RENAMED = 1106;
+    PROJECT_CREATED = 1200;
+    PROJECT_DESCRIPTION_CHANGED = 1201;
+    PROJECT_ENABLED = 1202;
+    PROJECT_DISABLED = 1203;
+    PROJECT_TRIAL_CREATED = 1204;
+    PROJECT_TRIAL_CONVERTED = 1205;
+    WEBHOOK_CREATED = 1300;
+    WEBHOOK_DELETED = 1301;
+    WEBHOOK_NAME_CHANGED = 1302;
+    WEBHOOK_DESCRIPTION_CHANGED = 1303;
+    WEBHOOK_CLAUSE_ADDED = 1304;
+    WEBHOOK_CLAUSE_CHANGED = 1305;
+  }
+  string id = 1;
+  int64 timestamp = 2;
+  EntityType entity_type = 3;
+  string entity_id = 4;
+  Type type = 5;
+  Editor editor = 6;
+  google.protobuf.Any data = 7;
+  string environment_namespace = 8;
+  bool is_admin_event = 9;  // if true, it's stored in AdminDomainEvent table
+                            // and AdminAuditLog table.
+  Options options = 10;     // optional
+}
+
+message Editor {
+  string email = 1;
+  bucketeer.account.Account.Role role = 2;
+  bool is_admin = 3;
+}
+
+message Options {
+  string comment = 1;
+  int32 new_version = 2;
+}
+
+message FeatureCreatedEvent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string user = 4;
+  repeated bucketeer.feature.Variation variations = 5;
+  google.protobuf.Int32Value default_on_variation_index = 6;
+  google.protobuf.Int32Value default_off_variation_index = 7;
+  bucketeer.feature.Feature.VariationType variation_type = 8;
+}
+
+message FeatureEnabledEvent {
+  string id = 1;
+}
+
+message FeatureDisabledEvent {
+  string id = 1;
+}
+
+message FeatureArchivedEvent {
+  string id = 1;
+}
+
+message FeatureUnarchivedEvent {
+  string id = 1;
+}
+
+message FeatureDeletedEvent {
+  string id = 1;
+}
+
+message EvaluationDelayableSetEvent {
+  string id = 1;
+}
+
+message EvaluationUndelayableSetEvent {
+  string id = 1;
+}
+
+message FeatureRenamedEvent {
+  string id = 1;
+  string name = 2;
+}
+
+message FeatureDescriptionChangedEvent {
+  string id = 1;
+  string description = 2;
+}
+
+message FeatureOffVariationChangedEvent {
+  string id = 1;
+  string off_variation = 2;
+}
+
+message FeatureVariationAddedEvent {
+  string id = 1;
+  bucketeer.feature.Variation variation = 2;
+}
+
+message FeatureVariationRemovedEvent {
+  string id = 1;
+  string variation_id = 2;
+}
+
+message VariationValueChangedEvent {
+  string feature_id = 1;
+  string id = 2;
+  string value = 3;
+}
+
+message VariationNameChangedEvent {
+  string feature_id = 1;
+  string id = 2;
+  string name = 3;
+}
+
+message VariationDescriptionChangedEvent {
+  string feature_id = 1;
+  string id = 2;
+  string description = 3;
+}
+
+message VariationUserAddedEvent {
+  string feature_id = 1;
+  string id = 2;
+  string user = 3;
+}
+
+message VariationUserRemovedEvent {
+  string feature_id = 1;
+  string id = 2;
+  string user = 3;
+}
+
+message FeatureRuleAddedEvent {
+  string id = 1;
+  bucketeer.feature.Rule rule = 2;
+}
+
+message FeatureChangeRuleStrategyEvent {
+  string feature_id = 1;
+  string rule_id = 2;
+  bucketeer.feature.Strategy strategy = 3;
+}
+
+message FeatureRuleDeletedEvent {
+  string id = 1;
+  string rule_id = 2;
+}
+
+message FeatureFixedStrategyChangedEvent {
+  string feature_id = 1;
+  string rule_id = 2;
+  bucketeer.feature.FixedStrategy strategy = 3;
+}
+
+message FeatureRolloutStrategyChangedEvent {
+  string feature_id = 1;
+  string rule_id = 2;
+  bucketeer.feature.RolloutStrategy strategy = 3;
+}
+
+message RuleClauseAddedEvent {
+  string feature_id = 1;
+  string rule_id = 2;
+  bucketeer.feature.Clause clause = 3;
+}
+
+message RuleClauseDeletedEvent {
+  string feature_id = 1;
+  string rule_id = 2;
+  string id = 3;
+}
+
+message ClauseAttributeChangedEvent {
+  string feature_id = 1;
+  string rule_id = 2;
+  string id = 3;
+  string attribute = 4;
+}
+
+message ClauseOperatorChangedEvent {
+  string feature_id = 1;
+  string rule_id = 2;
+  string id = 3;
+  bucketeer.feature.Clause.Operator operator = 4;
+}
+
+message ClauseValueAddedEvent {
+  string feature_id = 1;
+  string rule_id = 2;
+  string id = 3;
+  string value = 4;
+}
+
+message ClauseValueRemovedEvent {
+  string feature_id = 1;
+  string rule_id = 2;
+  string id = 3;
+  string value = 4;
+}
+
+message FeatureDefaultStrategyChangedEvent {
+  string id = 1;
+  bucketeer.feature.Strategy strategy = 2;
+}
+
+message FeatureTagAddedEvent {
+  string id = 1;
+  string tag = 2;
+}
+
+message FeatureTagRemovedEvent {
+  string id = 1;
+  string tag = 2;
+}
+
+message FeatureVersionIncrementedEvent {
+  string id = 1;
+  int32 version = 2;
+}
+
+message FeatureClonedEvent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  repeated bucketeer.feature.Variation variations = 4;
+  repeated bucketeer.feature.Target targets = 5;
+  repeated bucketeer.feature.Rule rules = 6;
+  bucketeer.feature.Strategy default_strategy = 7;
+  string off_variation = 8;
+  repeated string tags = 9;
+  string maintainer = 10;
+  bucketeer.feature.Feature.VariationType variation_type = 11;
+}
+
+message FeatureSamplingSeedResetEvent {
+  string sampling_seed = 1;
+}
+
+message GoalCreatedEvent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  bool deleted = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+}
+
+message GoalRenamedEvent {
+  string id = 1;
+  string name = 2;
+}
+
+message GoalDescriptionChangedEvent {
+  string id = 1;
+  string description = 2;
+}
+
+message GoalArchivedEvent {
+  string id = 1;
+}
+
+message GoalDeletedEvent {
+  string id = 1;
+}
+
+message ExperimentCreatedEvent {
+  string id = 1;
+  string feature_id = 2;
+  int32 feature_version = 3;
+  repeated bucketeer.feature.Variation variations = 4;
+  string goal_id = 5 [deprecated = true];
+  int64 start_at = 6;
+  int64 stop_at = 7;
+  bool stopped = 8;
+  int64 stopped_at = 9;
+  int64 created_at = 10;
+  int64 updated_at = 11;
+  repeated string goal_ids = 12;
+  string name = 13;
+  string description = 14;
+  string base_variation_id = 15;
+}
+
+message ExperimentStoppedEvent {
+  string id = 1;
+  int64 stopped_at = 2;
+}
+
+message ExperimentArchivedEvent {
+  string id = 1;
+}
+
+message ExperimentDeletedEvent {
+  string id = 1;
+}
+
+message ExperimentStartAtChangedEvent {
+  string id = 1;
+  int64 start_at = 2;
+}
+
+message ExperimentStopAtChangedEvent {
+  string id = 1;
+  int64 stop_at = 2;
+}
+
+message ExperimentPeriodChangedEvent {
+  string id = 1;
+  int64 start_at = 2;
+  int64 stop_at = 3;
+}
+
+message ExperimentNameChangedEvent {
+  string id = 1;
+  string name = 2;
+}
+
+message ExperimentDescriptionChangedEvent {
+  string id = 1;
+  string description = 2;
+}
+
+message ExperimentStartedEvent {}
+
+message ExperimentFinishedEvent {}
+
+message AccountCreatedEvent {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  bucketeer.account.Account.Role role = 4;
+  bool disabled = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+}
+
+message AccountRoleChangedEvent {
+  string id = 1;
+  bucketeer.account.Account.Role role = 2;
+}
+
+message AccountEnabledEvent {
+  string id = 1;
+}
+
+message AccountDisabledEvent {
+  string id = 1;
+}
+
+message AccountDeletedEvent {
+  string id = 1;
+}
+
+message APIKeyCreatedEvent {
+  string id = 1;
+  string name = 2;
+  bucketeer.account.APIKey.Role role = 3;
+  bool disabled = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+}
+
+message APIKeyNameChangedEvent {
+  string id = 1;
+  string name = 2;
+}
+
+message APIKeyEnabledEvent {
+  string id = 1;
+}
+
+message APIKeyDisabledEvent {
+  string id = 1;
+}
+
+message SegmentCreatedEvent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message SegmentDeletedEvent {
+  string id = 1;
+}
+
+message SegmentNameChangedEvent {
+  string id = 1;
+  string name = 2;
+}
+
+message SegmentDescriptionChangedEvent {
+  string id = 1;
+  string description = 2;
+}
+
+message SegmentRuleAddedEvent {
+  string id = 1;
+  bucketeer.feature.Rule rule = 2;
+}
+
+message SegmentRuleDeletedEvent {
+  string id = 1;
+  string rule_id = 2;
+}
+
+message SegmentRuleClauseAddedEvent {
+  string segment_id = 1;
+  string rule_id = 2;
+  bucketeer.feature.Clause clause = 3;
+}
+
+message SegmentRuleClauseDeletedEvent {
+  string segment_id = 1;
+  string rule_id = 2;
+  string clause_id = 3;
+}
+
+message SegmentClauseAttributeChangedEvent {
+  string segment_id = 1;
+  string rule_id = 2;
+  string clause_id = 3;
+  string attribute = 4;
+}
+
+message SegmentClauseOperatorChangedEvent {
+  string segment_id = 1;
+  string rule_id = 2;
+  string clause_id = 3;
+  bucketeer.feature.Clause.Operator operator = 4;
+}
+
+message SegmentClauseValueAddedEvent {
+  string segment_id = 1;
+  string rule_id = 2;
+  string clause_id = 3;
+  string value = 4;
+}
+
+message SegmentClauseValueRemovedEvent {
+  string segment_id = 1;
+  string rule_id = 2;
+  string clause_id = 3;
+  string value = 4;
+}
+
+message SegmentUserAddedEvent {
+  string segment_id = 1;
+  repeated string user_ids = 2;
+  bucketeer.feature.SegmentUser.State state = 3;
+}
+
+message SegmentUserDeletedEvent {
+  string segment_id = 1;
+  repeated string user_ids = 2;
+  bucketeer.feature.SegmentUser.State state = 3;
+}
+
+message SegmentBulkUploadUsersEvent {
+  string segment_id = 1;
+  bucketeer.feature.Segment.Status status = 2;
+  bucketeer.feature.SegmentUser.State state = 3;
+}
+
+message SegmentBulkUploadUsersStatusChangedEvent {
+  string segment_id = 1;
+  bucketeer.feature.Segment.Status status = 2;
+  bucketeer.feature.SegmentUser.State state = 3;
+  int64 count = 4;
+}
+
+message EnvironmentCreatedEvent {
+  string id = 1;
+  string namespace = 2;
+  string name = 3;
+  string description = 4;
+  bool deleted = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+  string project_id = 8;
+}
+
+message EnvironmentRenamedEvent {
+  string id = 1;
+  string name = 2;
+}
+
+message EnvironmentDescriptionChangedEvent {
+  string id = 1;
+  string description = 2;
+}
+
+message EnvironmentDeletedEvent {
+  string id = 1;
+  string namespace = 2;
+}
+
+message AdminAccountCreatedEvent {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  bucketeer.account.Account.Role role = 4;
+  bool disabled = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+}
+
+message AdminAccountEnabledEvent {
+  string id = 1;
+}
+
+message AdminAccountDisabledEvent {
+  string id = 1;
+}
+
+message AdminAccountDeletedEvent {
+  string id = 1;
+}
+
+message AutoOpsRuleCreatedEvent {
+  string feature_id = 1;
+  bucketeer.autoops.OpsType ops_type = 2;
+  repeated bucketeer.autoops.Clause clauses = 3;
+  int64 triggered_at = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+}
+
+message AutoOpsRuleDeletedEvent {}
+
+message AutoOpsRuleOpsTypeChangedEvent {
+  bucketeer.autoops.OpsType ops_type = 1;
+}
+
+message AutoOpsRuleTriggeredAtChangedEvent {}
+
+message OpsEventRateClauseAddedEvent {
+  string clause_id = 1;
+  bucketeer.autoops.OpsEventRateClause ops_event_rate_clause = 2;
+}
+
+message OpsEventRateClauseChangedEvent {
+  string clause_id = 1;
+  bucketeer.autoops.OpsEventRateClause ops_event_rate_clause = 2;
+}
+
+message AutoOpsRuleClauseDeletedEvent {
+  string clause_id = 1;
+}
+
+message DatetimeClauseAddedEvent {
+  string clause_id = 1;
+  bucketeer.autoops.DatetimeClause datetime_clause = 2;
+}
+
+message DatetimeClauseChangedEvent {
+  string clause_id = 1;
+  bucketeer.autoops.DatetimeClause datetime_clause = 2;
+}
+
+message PushCreatedEvent {
+  string fcm_api_key = 2;
+  repeated string tags = 3;
+  string name = 4;
+}
+
+message PushDeletedEvent {}
+
+message PushTagsAddedEvent {
+  repeated string tags = 2;
+}
+
+message PushTagsDeletedEvent {
+  repeated string tags = 2;
+}
+
+message PushRenamedEvent {
+  string name = 2;
+}
+
+message SubscriptionCreatedEvent {
+  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
+  bucketeer.notification.Recipient recipient = 2;
+  string name = 3;
+}
+
+message SubscriptionDeletedEvent {}
+
+message SubscriptionEnabledEvent {}
+
+message SubscriptionDisabledEvent {}
+
+message SubscriptionSourceTypesAddedEvent {
+  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
+}
+
+message SubscriptionSourceTypesDeletedEvent {
+  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
+}
+
+message SubscriptionRenamedEvent {
+  string name = 1;
+}
+
+message AdminSubscriptionCreatedEvent {
+  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
+  bucketeer.notification.Recipient recipient = 2;
+  string name = 3;
+}
+
+message AdminSubscriptionDeletedEvent {}
+
+message AdminSubscriptionEnabledEvent {}
+
+message AdminSubscriptionDisabledEvent {}
+
+message AdminSubscriptionSourceTypesAddedEvent {
+  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
+}
+
+message AdminSubscriptionSourceTypesDeletedEvent {
+  repeated bucketeer.notification.Subscription.SourceType source_types = 1;
+}
+
+message AdminSubscriptionRenamedEvent {
+  string name = 1;
+}
+
+message ProjectCreatedEvent {
+  string id = 1;
+  string description = 2;
+  bool disabled = 3;
+  bool trial = 4;
+  string creator_email = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+}
+
+message ProjectDescriptionChangedEvent {
+  string id = 1;
+  string description = 2;
+}
+
+message ProjectEnabledEvent {
+  string id = 1;
+}
+
+message ProjectDisabledEvent {
+  string id = 1;
+}
+
+message ProjectTrialCreatedEvent {
+  string id = 1;
+  string description = 2;
+  bool disabled = 3;
+  bool trial = 4;
+  string creator_email = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+}
+
+message ProjectTrialConvertedEvent {
+  string id = 1;
+}
+
+message PrerequisiteAddedEvent {
+  bucketeer.feature.Prerequisite prerequisite = 1;
+}
+
+message PrerequisiteVariationChangedEvent {
+  bucketeer.feature.Prerequisite prerequisite = 1;
+}
+
+message PrerequisiteRemovedEvent {
+  string feature_id = 1;
+}
+
+message WebhookCreatedEvent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int64 created_at = 4;
+  int64 updated_at = 5;
+}
+
+message WebhookDeletedEvent {
+  string id = 1;
+}
+
+message WebhookNameChangedEvent {
+  string id = 1;
+  string name = 2;
+}
+
+message WebhookDescriptionChangedEvent {
+  string id = 1;
+  string description = 2;
+}
+
+message WebhookClauseAddedEvent {
+  string clause_id = 1;
+  bucketeer.autoops.WebhookClause webhook_clause = 2;
+}
+
+message WebhookClauseChangedEvent {
+  string clause_id = 1;
+  bucketeer.autoops.WebhookClause webhook_clause = 2;
+}

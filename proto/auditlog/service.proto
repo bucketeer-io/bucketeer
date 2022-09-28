@@ -1,0 +1,107 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.auditlog;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/auditlog";
+
+import "google/protobuf/wrappers.proto";
+
+import "proto/auditlog/auditlog.proto";
+
+message ListAuditLogsRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    TIMESTAMP = 1;
+  }
+  enum OrderDirection {
+    DESC = 0;
+    ASC = 1;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  string environment_namespace = 3;
+  OrderBy order_by = 4;
+  OrderDirection order_direction = 5;
+  string search_keyword = 6;
+  int64 from = 7;
+  int64 to = 8;
+  google.protobuf.Int32Value entity_type = 9;
+}
+
+message ListAuditLogsResponse {
+  repeated AuditLog audit_logs = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message ListAdminAuditLogsRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    TIMESTAMP = 1;
+  }
+  enum OrderDirection {
+    DESC = 0;
+    ASC = 1;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  OrderBy order_by = 3;
+  OrderDirection order_direction = 4;
+  string search_keyword = 5;
+  int64 from = 6;
+  int64 to = 7;
+  google.protobuf.Int32Value entity_type = 8;
+}
+
+message ListAdminAuditLogsResponse {
+  repeated AuditLog audit_logs = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message ListFeatureHistoryRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    TIMESTAMP = 1;
+  }
+  enum OrderDirection {
+    DESC = 0;
+    ASC = 1;
+  }
+  string feature_id = 1;
+  int64 page_size = 2;
+  string cursor = 3;
+  string environment_namespace = 4;
+  OrderBy order_by = 5;
+  OrderDirection order_direction = 6;
+  string search_keyword = 7;
+  int64 from = 8;
+  int64 to = 9;
+}
+
+message ListFeatureHistoryResponse {
+  repeated AuditLog audit_logs = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+service AuditLogService {
+  rpc ListAuditLogs(ListAuditLogsRequest) returns (ListAuditLogsResponse) {}
+  rpc ListAdminAuditLogs(ListAdminAuditLogsRequest)
+      returns (ListAdminAuditLogsResponse) {}
+  rpc ListFeatureHistory(ListFeatureHistoryRequest)
+      returns (ListFeatureHistoryResponse) {}
+}

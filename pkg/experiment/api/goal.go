@@ -1,0 +1,381 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package api
+
+import (
+	"context"
+	"regexp"
+	"strconv"
+
+	"go.uber.org/zap"
+
+	"github.com/bucketeer-io/bucketeer/pkg/experiment/command"
+	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
+	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
+)
+
+var goalIDRegex = regexp.MustCompile("^[a-zA-Z0-9-]+$")
+
+func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalRequest) (*proto.GetGoalResponse, error) {
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	if err != nil {
+		return nil, err
+	}
+	if req.Id == "" {
+		return nil, localizedError(statusGoalIDRequired, locale.JaJP)
+	}
+	goal, err := s.getGoalMySQL(ctx, req.Id, req.EnvironmentNamespace)
+	if err != nil {
+		if err == v2es.ErrGoalNotFound {
+			return nil, localizedError(statusNotFound, locale.JaJP)
+		}
+		return nil, localizedError(statusInternal, locale.JaJP)
+	}
+	return &proto.GetGoalResponse{Goal: goal.Goal}, nil
+}
+
+func (s *experimentService) getGoalMySQL(
+	ctx context.Context,
+	goalID, environmentNamespace string,
+) (*domain.Goal, error) {
+	goalStorage := v2es.NewGoalStorage(s.mysqlClient)
+	goal, err := goalStorage.GetGoal(ctx, goalID, environmentNamespace)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get goal",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("goalId", goalID),
+			)...,
+		)
+	}
+	return goal, err
+}
+
+func (s *experimentService) ListGoals(
+	ctx context.Context,
+	req *proto.ListGoalsRequest,
+) (*proto.ListGoalsResponse, error) {
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	if err != nil {
+		return nil, err
+	}
+	whereParts := []mysql.WherePart{
+		mysql.NewFilter("deleted", "=", false),
+		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+	}
+	if req.Archived != nil {
+		whereParts = append(whereParts, mysql.NewFilter("archived", "=", req.Archived.Value))
+	}
+	if req.SearchKeyword != "" {
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, req.SearchKeyword))
+	}
+	orders, err := s.newGoalListOrders(req.OrderBy, req.OrderDirection)
+	if err != nil {
+		s.logger.Error(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+	limit := int(req.PageSize)
+	cursor := req.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	offset, err := strconv.Atoi(cursor)
+	if err != nil {
+		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+	}
+	var isInUseStatus *bool
+	if req.IsInUseStatus != nil {
+		isInUseStatus = &req.IsInUseStatus.Value
+	}
+	goalStorage := v2es.NewGoalStorage(s.mysqlClient)
+	goals, nextCursor, totalCount, err := goalStorage.ListGoals(
+		ctx,
+		whereParts,
+		orders,
+		limit,
+		offset,
+		isInUseStatus,
+		req.EnvironmentNamespace,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list goals",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		return nil, localizedError(statusInternal, locale.JaJP)
+	}
+	return &proto.ListGoalsResponse{
+		Goals:      goals,
+		Cursor:     strconv.Itoa(nextCursor),
+		TotalCount: totalCount,
+	}, nil
+}
+
+func (s *experimentService) newGoalListOrders(
+	orderBy proto.ListGoalsRequest_OrderBy,
+	orderDirection proto.ListGoalsRequest_OrderDirection,
+) ([]*mysql.Order, error) {
+	var column string
+	switch orderBy {
+	case proto.ListGoalsRequest_DEFAULT,
+		proto.ListGoalsRequest_NAME:
+		column = "name"
+	case proto.ListGoalsRequest_CREATED_AT:
+		column = "created_at"
+	case proto.ListGoalsRequest_UPDATED_AT:
+		column = "updated_at"
+	default:
+		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+	}
+	direction := mysql.OrderDirectionAsc
+	if orderDirection == proto.ListGoalsRequest_DESC {
+		direction = mysql.OrderDirectionDesc
+	}
+	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
+}
+
+func (s *experimentService) CreateGoal(
+	ctx context.Context,
+	req *proto.CreateGoalRequest,
+) (*proto.CreateGoalResponse, error) {
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateCreateGoalRequest(req); err != nil {
+		return nil, err
+	}
+	goal, err := domain.NewGoal(req.Command.Id, req.Command.Name, req.Command.Description)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create a new goal",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		return nil, localizedError(statusInternal, locale.JaJP)
+	}
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, localizedError(statusInternal, locale.JaJP)
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		goalStorage := v2es.NewGoalStorage(tx)
+		handler := command.NewGoalCommandHandler(editor, goal, s.publisher, req.EnvironmentNamespace)
+		if err := handler.Handle(ctx, req.Command); err != nil {
+			return err
+		}
+		return goalStorage.CreateGoal(ctx, goal, req.EnvironmentNamespace)
+	})
+	if err != nil {
+		if err == v2es.ErrGoalAlreadyExists {
+			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+		}
+		s.logger.Error(
+			"Failed to create goal",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		return nil, localizedError(statusInternal, locale.JaJP)
+	}
+	return &proto.CreateGoalResponse{}, nil
+}
+
+func validateCreateGoalRequest(req *proto.CreateGoalRequest) error {
+	if req.Command == nil {
+		return localizedError(statusNoCommand, locale.JaJP)
+	}
+	if req.Command.Id == "" {
+		return localizedError(statusGoalIDRequired, locale.JaJP)
+	}
+	if !goalIDRegex.MatchString(req.Command.Id) {
+		return localizedError(statusInvalidGoalID, locale.JaJP)
+	}
+	if req.Command.Name == "" {
+		return localizedError(statusGoalNameRequired, locale.JaJP)
+	}
+	return nil
+}
+
+func (s *experimentService) UpdateGoal(
+	ctx context.Context,
+	req *proto.UpdateGoalRequest,
+) (*proto.UpdateGoalResponse, error) {
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	if err != nil {
+		return nil, err
+	}
+	if req.Id == "" {
+		return nil, localizedError(statusGoalIDRequired, locale.JaJP)
+	}
+	commands := make([]command.Command, 0)
+	if req.RenameCommand != nil {
+		commands = append(commands, req.RenameCommand)
+	}
+	if req.ChangeDescriptionCommand != nil {
+		commands = append(commands, req.ChangeDescriptionCommand)
+	}
+	if len(commands) == 0 {
+		return nil, localizedError(statusNoCommand, locale.JaJP)
+	}
+	err = s.updateGoal(
+		ctx,
+		editor,
+		req.EnvironmentNamespace,
+		req.Id,
+		commands,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to update goal",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		return nil, err
+	}
+	return &proto.UpdateGoalResponse{}, nil
+}
+
+func (s *experimentService) ArchiveGoal(
+	ctx context.Context,
+	req *proto.ArchiveGoalRequest,
+) (*proto.ArchiveGoalResponse, error) {
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	if err != nil {
+		return nil, err
+	}
+	if req.Id == "" {
+		return nil, localizedError(statusGoalIDRequired, locale.JaJP)
+	}
+	if req.Command == nil {
+		return nil, localizedError(statusNoCommand, locale.JaJP)
+	}
+	err = s.updateGoal(
+		ctx,
+		editor,
+		req.EnvironmentNamespace,
+		req.Id,
+		[]command.Command{req.Command},
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to archive goal",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		return nil, err
+	}
+	return &proto.ArchiveGoalResponse{}, nil
+}
+
+func (s *experimentService) DeleteGoal(
+	ctx context.Context,
+	req *proto.DeleteGoalRequest,
+) (*proto.DeleteGoalResponse, error) {
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	if err != nil {
+		return nil, err
+	}
+	if req.Id == "" {
+		return nil, localizedError(statusGoalIDRequired, locale.JaJP)
+	}
+	if req.Command == nil {
+		return nil, localizedError(statusNoCommand, locale.JaJP)
+	}
+	err = s.updateGoal(
+		ctx,
+		editor,
+		req.EnvironmentNamespace,
+		req.Id,
+		[]command.Command{req.Command},
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to delete goal",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		return nil, err
+	}
+	return &proto.DeleteGoalResponse{}, nil
+}
+
+func (s *experimentService) updateGoal(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	environmentNamespace, goalID string,
+	commands []command.Command,
+) error {
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return localizedError(statusInternal, locale.JaJP)
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		goalStorage := v2es.NewGoalStorage(tx)
+		goal, err := goalStorage.GetGoal(ctx, goalID, environmentNamespace)
+		if err != nil {
+			return err
+		}
+		handler := command.NewGoalCommandHandler(editor, goal, s.publisher, environmentNamespace)
+		for _, command := range commands {
+			if err := handler.Handle(ctx, command); err != nil {
+				return err
+			}
+		}
+		return goalStorage.UpdateGoal(ctx, goal, environmentNamespace)
+	})
+	if err != nil {
+		if err == v2es.ErrGoalNotFound || err == v2es.ErrGoalUnexpectedAffectedRows {
+			return localizedError(statusNotFound, locale.JaJP)
+		}
+		return localizedError(statusInternal, locale.JaJP)
+	}
+	return nil
+}

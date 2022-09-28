@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "app.go",
+        "cmd.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/cli",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/log:go_default_library",
+        "//pkg/metrics:go_default_library",
+        "//pkg/trace:go_default_library",
+        "@com_google_cloud_go_profiler//:go_default_library",
+        "@in_gopkg_alecthomas_kingpin_v2//:go_default_library",
+        "@io_opencensus_go//trace:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)

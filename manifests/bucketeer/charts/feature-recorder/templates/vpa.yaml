@@ -1,0 +1,19 @@
+{{ if .Values.vpa.enabled }}
+apiVersion: autoscaling.k8s.io/v1beta2
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ template "feature-recorder.fullname" . }}
+  namespace: {{ .Values.namespace }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ template "feature-recorder.fullname" . }}
+  updatePolicy:
+    updateMode: "{{ .Values.vpa.updateMode }}"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: feature-recorder
+      minAllowed:
+        cpu: {{ .Values.vpa.resourcePolicy.containerPolicies.minAllowed.cpu }}
+{{ end }}

@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "event.go",
+        "metrics.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/metricsevent/storage",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/metrics:go_default_library",
+        "@com_github_prometheus_client_golang//prometheus:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["event_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//pkg/log:go_default_library",
+        "//pkg/metrics/mock:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

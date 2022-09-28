@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "dex.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "dex.name" . }}
+    chart: {{ template "dex.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "dex.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "dex.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      affinity: {{ toYaml .Values.affinity | nindent 8 }}
+      nodeSelector: {{ toYaml .Values.nodeSelector | indent 8 }}
+      containers:
+        - name: envoy
+          image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+          command: ["envoy"]
+          args:
+            - "-c"
+            - "/usr/local/conf/config.yaml"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /usr/local/conf/
+              readOnly: true
+            - name: cert
+              mountPath: /etc/dex/tls
+              readOnly: true
+          resources:
+{{ toYaml .Values.envoy.resources | indent 12 }}
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "sleep 10;"
+          args:
+            - serve
+            - /etc/dex/config/config.yaml
+          env:
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "dex.fullname" . }}
+                  key: google-client-id
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "dex.fullname" . }}
+                  key: google-client-secret
+            - name: KUBERNETES_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: config
+              mountPath: /etc/dex/config
+            - name: secret
+              mountPath: /etc/dex/secret
+              readOnly: true
+            - name: cert
+              mountPath: /etc/dex/tls
+              readOnly: true
+            - name: db
+              mountPath: /etc/dex/db
+          ports:
+            - name: https
+              containerPort: {{ .Values.service.internalPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: {{ .Values.service.internalPort }}
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: {{ .Values.service.internalPort }}
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "dex.fullname" . }}
+        - name: secret
+          secret:
+            secretName: {{ template "dex.fullname" . }}
+        - name: cert
+          secret:
+            secretName: {{ template "dex.fullname" . }}-cert
+        - name: envoy-config
+          configMap:
+            name: {{ template "dex.fullname" . }}-envoy-config
+        - name: db
+          emptyDir: {}

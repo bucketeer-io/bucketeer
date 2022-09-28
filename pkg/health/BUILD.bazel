@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "grpc_health.go",
+        "health.go",
+        "rest_health.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/health",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//health/grpc_health_v1:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["health_test.go"],
+    embed = [":go_default_library"],
+    deps = ["@org_golang_google_grpc//health/grpc_health_v1:go_default_library"],
+)

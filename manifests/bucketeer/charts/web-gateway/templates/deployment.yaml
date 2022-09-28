@@ -1,0 +1,171 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "web-gateway.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "web-gateway.name" . }}
+    chart: {{ template "web-gateway.chart" . }}
+    release: {{ template "web-gateway.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "web-gateway.name" . }}
+      release: {{ template "web-gateway.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "web-gateway.name" . }}
+        release: {{ template "web-gateway.fullname" . }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
+    spec:
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: {{ template "web-gateway.fullname" . }}-envoy-config
+        - name: envoy-account-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-account
+        - name: envoy-auditlog-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-auditlog
+        - name: envoy-auth-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-auth
+        - name: envoy-autoops-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-autoops
+        - name: envoy-environment-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-environment
+        - name: envoy-eventcounter-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-eventcounter
+        - name: envoy-experiment-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-experiment
+        - name: envoy-feature-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-feature
+        - name: envoy-notification-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-notification
+        - name: envoy-push-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-push
+        - name: envoy-user-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-user
+        - name: envoy-migration-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-migration
+        - name: service-cert-secret
+          secret:
+            secretName: {{ template "service-cert-secret" . }}
+        - name: bucketeer-jp-cert-secret
+          secret:
+            secretName: {{ template "bucketeer-jp-cert-secret" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+                  - "sleep 10;"
+          command: ["envoy"]
+          args:
+            - "-c"
+            - "/usr/local/conf/config.yaml"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /usr/local/conf
+              readOnly: true
+            - name: envoy-account-descriptor-secret
+              mountPath: /usr/local/account-secret
+              readOnly: true
+            - name: envoy-auditlog-descriptor-secret
+              mountPath: /usr/local/auditlog-secret
+              readOnly: true
+            - name: envoy-auth-descriptor-secret
+              mountPath: /usr/local/auth-secret
+              readOnly: true
+            - name: envoy-autoops-descriptor-secret
+              mountPath: /usr/local/autoops-secret
+              readOnly: true
+            - name: envoy-environment-descriptor-secret
+              mountPath: /usr/local/environment-secret
+              readOnly: true
+            - name: envoy-eventcounter-descriptor-secret
+              mountPath: /usr/local/eventcounter-secret
+              readOnly: true
+            - name: envoy-experiment-descriptor-secret
+              mountPath: /usr/local/experiment-secret
+              readOnly: true
+            - name: envoy-feature-descriptor-secret
+              mountPath: /usr/local/feature-secret
+              readOnly: true
+            - name: envoy-notification-descriptor-secret
+              mountPath: /usr/local/notification-secret
+              readOnly: true
+            - name: envoy-push-descriptor-secret
+              mountPath: /usr/local/push-secret
+              readOnly: true
+            - name: envoy-user-descriptor-secret
+              mountPath: /usr/local/user-secret
+              readOnly: true
+            - name: envoy-migration-descriptor-secret
+              mountPath: /usr/local/migration-secret
+              readOnly: true
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+            - name: bucketeer-jp-cert-secret
+              mountPath: /usr/local/certs/bucketeer-jp
+              readOnly: true
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+            - name: admin
+              containerPort: {{ .Values.envoy.adminPort }}
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /server_info
+              port: admin
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /server_info
+              port: admin
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+  strategy:
+    type: RollingUpdate

@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["server.go"],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/auditlog/cmd/server",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/account/client:go_default_library",
+        "//pkg/auditlog/api:go_default_library",
+        "//pkg/cli:go_default_library",
+        "//pkg/health:go_default_library",
+        "//pkg/metrics:go_default_library",
+        "//pkg/rpc:go_default_library",
+        "//pkg/rpc/client:go_default_library",
+        "//pkg/storage/v2/mysql:go_default_library",
+        "//pkg/token:go_default_library",
+        "@in_gopkg_alecthomas_kingpin_v2//:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)

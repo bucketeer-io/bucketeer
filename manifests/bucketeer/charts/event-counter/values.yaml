@@ -1,0 +1,79 @@
+image:
+  repository: ghcr.io/bucketeer-io/bucketeer-event-counter
+  pullPolicy: IfNotPresent
+
+fullnameOverride: "event-counter"
+
+namespace:
+
+env:
+  project:
+  experimentService: localhost:9001
+  featureService: localhost:9001
+  accountService: localhost:9001
+  druidUrl:
+  druidDatasourcePrefix:
+  druidUsername:
+  druidPassword:
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
+  port: 9090
+  metricsPort: 9002
+
+affinity: {}
+
+nodeSelector: {}
+
+pdb:
+  enabled:
+  maxUnavailable: 50%
+
+hpa:
+  enabled:
+  minReplicas:
+  maxReplicas:
+  metrics:
+    cpu:
+      targetAverageUtilization:
+
+tls:
+  service:
+    secret:
+    cert:
+    key:
+
+serviceToken:
+  secret:
+  token:
+
+oauth:
+  key:
+    secret:
+    public:
+  clientId:
+  issuer:
+
+envoy:
+  image:
+    repository: envoyproxy/envoy-alpine
+    tag: v1.21.1
+    pullPolicy: IfNotPresent
+  config:
+  port: 9000
+  adminPort: 8001
+  resources: {}
+
+service:
+  type: ClusterIP
+  clusterIP: None
+  externalPort: 9000
+
+health:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 10
+
+resources: {}

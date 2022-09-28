@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "auto_ops_rule.go",
+        "command.go",
+        "webhook.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/autoops/command",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/autoops/domain:go_default_library",
+        "//pkg/domainevent/domain:go_default_library",
+        "//pkg/pubsub/publisher:go_default_library",
+        "//proto/autoops:go_default_library",
+        "//proto/event/domain:go_default_library",
+        "@com_github_golang_protobuf//proto:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["auto_ops_rule_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//pkg/autoops/domain:go_default_library",
+        "//pkg/pubsub/publisher:go_default_library",
+        "//pkg/pubsub/publisher/mock:go_default_library",
+        "//proto/account:go_default_library",
+        "//proto/autoops:go_default_library",
+        "//proto/event/domain:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+    ],
+)

@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["executor.go"],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/autoops/client:go_default_library",
+        "//proto/autoops:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["executor_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//pkg/autoops/client/mock:go_default_library",
+        "//pkg/log:go_default_library",
+        "//proto/autoops:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+    ],
+)

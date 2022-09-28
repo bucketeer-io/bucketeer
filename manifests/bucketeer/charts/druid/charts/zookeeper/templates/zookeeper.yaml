@@ -1,0 +1,148 @@
+{{- if .Values.global.druid.enabled }}
+{{- $storageType := .Values.storageType | default "persistence" -}}
+apiVersion: "zookeeper.pravega.io/v1beta1"
+kind: "ZookeeperCluster"
+metadata:
+  name: {{ template "zookeeper.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "zookeeper.commonLabels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  image:
+    repository: {{ .Values.image.repository }}
+    tag: {{ .Values.image.tag }}
+    pullPolicy: {{ .Values.image.pullPolicy }}
+  {{- if .Values.domainName }}
+  domainName: {{ .Values.domainName }}
+  {{- end }}
+  kubernetesClusterDomain: {{ default "cluster.local" .Values.kubernetesClusterDomain }}
+  {{- if .Values.containers }}
+  containers:
+{{ toYaml .Values.containers | indent 4 }}
+  {{- end }}
+  {{- if .Values.volumes }}
+  volumes:
+{{ toYaml .Values.volumes | indent 4 }}
+  {{- end }}
+  labels:
+{{ toYaml .Values.labels | indent 4 }}
+  ports:
+{{ toYaml .Values.ports | indent 4 }}
+  pod:
+    {{- if .Values.pod.labels }}
+    labels:
+{{ toYaml .Values.pod.labels | indent 6 }}
+    {{- end }}
+    {{- if .Values.pod.nodeSelector }}
+    nodeSelector:
+{{ toYaml .Values.pod.nodeSelector | indent 6 }}
+    {{- end }}
+    {{- if .Values.pod.affinity }}
+    affinity:
+{{ toYaml .Values.pod.affinity | indent 6 }}
+    {{- end }}
+    {{- if .Values.pod.resources }}
+    resources:
+{{ toYaml .Values.pod.resources | indent 6 }}
+    {{- end }}
+    {{- if .Values.pod.tolerations }}
+    tolerations:
+{{ toYaml .Values.pod.tolerations | indent 6 }}
+    {{- end }}
+    {{- if .Values.pod.env }}
+    env:
+{{ toYaml .Values.pod.env | indent 6 }}
+    {{- end }}
+    {{- if .Values.pod.annotations }}
+    annotations:
+{{ toYaml .Values.pod.annotations | indent 6 }}
+    {{- end }}
+    {{- if .Values.pod.securityContext }}
+    securityContext:
+{{ toYaml .Values.pod.securityContext | indent 6 }}
+    {{- end }}
+    {{- if .Values.pod.terminationGracePeriodSeconds }}
+    terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds }}
+    {{- end }}
+    serviceAccountName: {{ default "zookeeper" .Values.pod.serviceAccountName }}
+  {{- if .Values.config }}
+  config:
+    {{- if .Values.config.initLimit }}
+    initLimit: {{ .Values.config.initLimit }}
+    {{- end }}
+    {{- if .Values.config.tickTime }}
+    tickTime: {{ .Values.config.tickTime }}
+    {{- end }}
+    {{- if .Values.config.syncLimit }}
+    syncLimit: {{ .Values.config.syncLimit }}
+    {{- end }}
+    {{- if .Values.config.globalOutstandingLimit }}
+    globalOutstandingLimit: {{ .Values.config.globalOutstandingLimit }}
+    {{- end }}
+    {{- if .Values.config.preAllocSize }}
+    preAllocSize: {{ .Values.config.preAllocSize }}
+    {{- end }}
+    {{- if .Values.config.snapCount }}
+    snapCount: {{ .Values.config.snapCount }}
+    {{- end }}
+    {{- if .Values.config.commitLogCount }}
+    commitLogCount: {{ .Values.config.commitLogCount }}
+    {{- end }}
+    {{- if .Values.config.snapSizeLimitInKb }}
+    snapSizeLimitInKb: {{ .Values.snapSizeLimitInKb }}
+    {{- end }}
+    {{- if .Values.config.maxCnxns }}
+    maxCnxns: {{ .Values.maxCnxns }}
+    {{- end }}
+    {{- if .Values.config.maxClientCnxns }}
+    maxClientCnxns: {{ .Values.maxClientCnxns }}
+    {{- end }}
+    {{- if .Values.config.minSessionTimeout }}
+    minSessionTimeout: {{ .Values.minSessionTimeout }}
+    {{- end }}
+    {{- if .Values.config.maxSessionTimeout }}
+    maxSessionTimeout: {{ .Values.maxSessionTimeout }}
+    {{- end }}
+    {{- if .Values.config.autoPurgeSnapRetainCount }}
+    autoPurgeSnapRetainCount: {{ .Values.autoPurgeSnapRetainCount }}
+    {{- end }}
+    {{- if .Values.config.autoPurgePurgeInterval }}
+    autoPurgePurgeInterval: {{ .Values.config.autoPurgePurgeInterval }}
+    {{- end }}
+    {{- if .Values.config.quorumListenOnAllIPs }}
+    quorumListenOnAllIPs: {{ .Values.config.quorumListenOnAllIPs }}
+    {{- end }}
+  {{- end }}
+  storageType: {{ $storageType }}
+  {{- if eq $storageType "ephemeral" }}
+  ephemeral:
+    {{- if .Values.ephemeral.emptydirvolumesource }}
+    emptydirvolumesource:
+      {{- if .Values.ephemeral.emptydirvolumesource.medium }}
+      medium: {{ .Values.ephemeral.emptydirvolumesource.medium }}
+      {{- end }}
+      {{- if .Values.ephemeral.emptydirvolumesource.sizeLimit }}
+      sizeLimit: {{ .Values.ephemeral.emptydirvolumesource.sizeLimit }}
+      {{- end }}
+    {{- end }}
+  {{- else }}
+  persistence:
+    reclaimPolicy: {{ .Values.persistence.reclaimPolicy }}
+    {{- if .Values.persistence.annotations }}
+    annotations:
+{{ toYaml .Values.persistence.annotations | indent 6 }}
+    {{- end }}
+    {{- if or .Values.persistence.storageClassName .Values.persistence.volumeSize }}
+    spec:
+      {{- if .Values.persistence.storageClassName }}
+      storageClassName: {{ .Values.persistence.storageClassName }}
+      {{- end }}
+      {{- if .Values.persistence.volumeSize }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.volumeSize }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}

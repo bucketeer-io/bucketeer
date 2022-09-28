@@ -1,0 +1,33 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.event.service;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/event/service";
+
+import "proto/event/client/event.proto";
+
+message UserEvent {
+  string id = 1;
+  reserved 2;  // bucketeer.user.User user = 2 [deprecated = true];
+  reserved 3;  // repeated bucketeer.feature.Feature features = 3 [deprecated =
+               // true];
+  string environment_namespace = 4;
+  string tag = 5;
+  string user_id = 6;
+  int64 last_seen = 7;
+  map<string, string> data = 8;
+  bucketeer.event.client.SourceId source_id = 9;
+}

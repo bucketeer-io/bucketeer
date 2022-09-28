@@ -1,0 +1,167 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "feature-segment-persister.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "feature-segment-persister.name" . }}
+    chart: {{ template "feature-segment-persister.chart" . }}
+    release: {{ template "feature-segment-persister.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "feature-segment-persister.name" . }}
+      release: {{ template "feature-segment-persister.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "feature-segment-persister.name" . }}
+        release: {{ template "feature-segment-persister.fullname" . }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: {{ template "feature-segment-persister.fullname" . }}-envoy-config
+        - name: service-cert-secret
+          secret:
+            secretName: {{ template "service-cert-secret" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["segment-persister"]
+          env:
+            - name: BUCKETEER_FEATURE_PROJECT
+              value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_FEATURE_MYSQL_USER
+              value: "{{ .Values.env.mysqlUser }}"
+            - name: BUCKETEER_FEATURE_MYSQL_PASS
+              value: "{{ .Values.env.mysqlPass }}"
+            - name: BUCKETEER_FEATURE_MYSQL_HOST
+              value: "{{ .Values.env.mysqlHost }}"
+            - name: BUCKETEER_FEATURE_MYSQL_PORT
+              value: "{{ .Values.env.mysqlPort }}"
+            - name: BUCKETEER_FEATURE_MYSQL_DB_NAME
+              value: "{{ .Values.env.mysqlDbName }}"
+            - name: BUCKETEER_FEATURE_BULK_SEGMENT_USERS_RECEIVED_EVENT_TOPIC
+              value: "{{ .Values.env.bulkSegmentUsersReceivedEventTopic }}"
+            - name: BUCKETEER_FEATURE_BULK_SEGMENT_USERS_RECEIVED_EVENT_SUBSCRIPTION
+              value: "{{ .Values.env.bulkSegmentUsersReceivedEventSubscription }}"
+            - name: BUCKETEER_FEATURE_DOMAIN_EVENT_TOPIC
+              value: "{{ .Values.env.domainEventTopic }}"
+            - name: BUCKETEER_FEATURE_MAX_MPS
+              value: "{{ .Values.env.maxMps }}"
+            - name: BUCKETEER_FEATURE_NUM_WORKERS
+              value: "{{ .Values.env.numWorkers }}"
+            - name: BUCKETEER_FEATURE_FLUSH_SIZE
+              value: "{{ .Values.env.flushSize }}"
+            - name: BUCKETEER_FEATURE_FLUSH_INTERVAL
+              value: "{{ .Values.env.flushInterval }}"
+            - name: BUCKETEER_FEATURE_PULLER_NUM_GOROUTINES
+              value: "{{ .Values.env.pullerNumGoroutines }}"
+            - name: BUCKETEER_FEATURE_PULLER_MAX_OUTSTANDING_MESSAGES
+              value: "{{ .Values.env.pullerMaxOutstandingMessages }}"
+            - name: BUCKETEER_FEATURE_PULLER_MAX_OUTSTANDING_BYTES
+              value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
+            - name: BUCKETEER_FEATURE_REDIS_SERVER_NAME
+              value: "{{ .Values.env.redis.serverName }}"
+            - name: BUCKETEER_FEATURE_REDIS_ADDR
+              value: "{{ .Values.env.redis.addr }}"
+            - name: BUCKETEER_FEATURE_REDIS_POOL_MAX_IDLE
+              value: "{{ .Values.env.redis.poolMaxIdle }}"
+            - name: BUCKETEER_FEATURE_REDIS_POOL_MAX_ACTIVE
+              value: "{{ .Values.env.redis.poolMaxActive }}"
+            - name: BUCKETEER_FEATURE_PORT
+              value: "{{ .Values.env.port }}"
+            - name: BUCKETEER_FEATURE_METRICS_PORT
+              value: "{{ .Values.env.metricsPort }}"
+            - name: BUCKETEER_FEATURE_LOG_LEVEL
+              value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_FEATURE_CERT
+              value: /usr/local/certs/service/tls.crt
+            - name: BUCKETEER_FEATURE_KEY
+              value: /usr/local/certs/service/tls.key
+          volumeMounts:
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+          ports:
+            - name: service
+              containerPort: {{ .Values.env.port }}
+            - name: metrics
+              containerPort: {{ .Values.env.metricsPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+        - name: envoy
+          image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+          command: ["envoy"]
+          args:
+            - "-c"
+            - "/usr/local/conf/config.yaml"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /usr/local/conf/
+              readOnly: true
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+          ports:
+            - name: envoy
+              containerPort: {{ .Values.envoy.port }}
+            - name: admin
+              containerPort: {{ .Values.envoy.adminPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.envoy.resources | indent 12 }}
+  strategy:
+    type: RollingUpdate

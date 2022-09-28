@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "cloudkmscrypto.go",
+        "crypto.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/crypto",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_cloud_go_kms//apiv1:go_default_library",
+        "@go_googleapis//google/cloud/kms/v1:kms_go_proto",
+    ],
+)

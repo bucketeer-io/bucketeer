@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "web.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "web.name" . }}
+    chart: {{ template "web.chart" . }}
+    release: {{ template "web.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "web.name" . }}
+      release: {{ template "web.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "web.name" . }}
+        release: {{ template "web.fullname" . }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "web.fullname" . }}
+        - name: certs
+          secret:
+            secretName: {{ template "cert-secret" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "sleep 5 && /usr/sbin/nginx -s quit"
+          volumeMounts:
+            - name: config
+              mountPath: /var/nginx
+              readOnly: true
+            - name: certs
+              mountPath: /usr/local/certs
+              readOnly: true
+          ports:
+            - name: https
+              containerPort: 443
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /alive
+              port: https
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /alive
+              port: https
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+  strategy:
+    type: RollingUpdate

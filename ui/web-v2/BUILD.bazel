@@ -1,0 +1,31 @@
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@npm-v2//nx:index.bzl", "nx")
+
+package(default_visibility = ["//visibility:public"])
+
+nx(
+    name = "bundle",
+    args = [
+        "build",
+        "--outputPath=../../$(@D)",
+    ],
+    chdir = "ui/web-v2",
+    configuration_env_vars = ["RELEASE_CHANNEL"],
+    data = [
+        "babel.config.json",
+        "nx.json",
+        "tsconfig.base.json",
+        "package.json",
+        "workspace.json",
+        "@npm-v2//:node_modules",
+    ] + glob(["apps/admin/**/*"]),
+    output_dir = True,
+)
+
+container_image(
+    name = "bundle-image",
+    base = "@bucketeer-web-nginx//image",
+    data_path = "/ui/web-v2/bundle",
+    directory = "/var/www",
+    files = [":bundle"],
+)

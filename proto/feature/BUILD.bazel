@@ -1,0 +1,57 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+load("//proto:proto_descriptor.bzl", "proto_descriptor")
+
+proto_library(
+    name = "feature_proto",
+    srcs = [
+        "clause.proto",
+        "command.proto",
+        "evaluation.proto",
+        "feature.proto",
+        "feature_last_used_info.proto",
+        "prerequisite.proto",
+        "reason.proto",
+        "rule.proto",
+        "segment.proto",
+        "service.proto",
+        "strategy.proto",
+        "target.proto",
+        "variation.proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proto/user:user_proto",
+        "@com_google_protobuf//:any_proto",
+        "@com_google_protobuf//:wrappers_proto",
+    ],
+)
+
+go_proto_library(
+    name = "feature_go_proto",
+    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    importpath = "github.com/bucketeer-io/bucketeer/proto/feature",
+    proto = ":feature_proto",
+    visibility = ["//visibility:public"],
+    deps = ["//proto/user:go_default_library"],
+)
+
+go_library(
+    name = "go_default_library",
+    embed = [":feature_go_proto"],
+    importpath = "github.com/bucketeer-io/bucketeer/proto/feature",
+    visibility = ["//visibility:public"],
+)
+
+proto_descriptor(
+    name = "proto_descriptor",
+    srcs = ["service.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":feature_proto",
+        "//proto/user:user_proto",
+        "@com_google_protobuf//:any_proto",
+        "@com_google_protobuf//:wrappers_proto",
+    ],
+)

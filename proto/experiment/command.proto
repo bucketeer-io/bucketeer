@@ -1,0 +1,70 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.experiment;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/experiment";
+
+message CreateGoalCommand {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message RenameGoalCommand {
+  string name = 1;
+}
+
+message ChangeDescriptionGoalCommand {
+  string description = 1;
+}
+
+message ArchiveGoalCommand {}
+
+message DeleteGoalCommand {}
+
+message CreateExperimentCommand {
+  string feature_id = 1;
+  reserved 2;  // string goal_id = 2 [deprecated = true];
+  int64 start_at = 3;
+  int64 stop_at = 4;
+  repeated string goal_ids = 5;
+  string name = 6;
+  string description = 7;
+  string base_variation_id = 8;
+}
+
+message ChangeExperimentPeriodCommand {
+  int64 start_at = 1;
+  int64 stop_at = 2;
+}
+
+message ChangeExperimentNameCommand {
+  string name = 1;
+}
+
+message ChangeExperimentDescriptionCommand {
+  string description = 1;
+}
+
+message StopExperimentCommand {}
+
+message ArchiveExperimentCommand {}
+
+message DeleteExperimentCommand {}
+
+message StartExperimentCommand {}
+
+message FinishExperimentCommand {}

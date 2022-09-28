@@ -1,0 +1,82 @@
+image:
+  repository: ghcr.io/bucketeer-io/bucketeer-auto-ops
+  pullPolicy: IfNotPresent
+
+fullnameOverride: "auto-ops"
+
+namespace:
+
+env:
+  project:
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
+  logLevel: info
+  port: 9090
+  metricsPort: 9002
+  domainEventTopic:
+  accountService: localhost:9001
+  featureService: localhost:9001
+  experimentService: localhost:9001
+  authService: localhost:9001
+
+webhook:
+  baseURL:
+  kmsResourceName:
+
+affinity: {}
+
+nodeSelector: {}
+
+pdb:
+  enabled:
+  maxUnavailable: 50%
+
+hpa:
+  enabled: true
+  minReplicas:
+  maxReplicas:
+  metrics:
+    cpu:
+      targetAverageUtilization: 75
+
+tls:
+  service:
+    secret:
+    cert:
+    key:
+
+oauth:
+  key:
+    secret:
+    public:
+  clientId:
+  issuer:
+
+serviceToken:
+  secret:
+  token:
+
+envoy:
+  image:
+    repository: envoyproxy/envoy-alpine
+    tag: v1.21.1
+    pullPolicy: IfNotPresent
+  config:
+  port: 9000
+  adminPort: 8001
+  resources: {}
+
+service:
+  type: ClusterIP
+  clusterIP: None
+  externalPort: 9000
+
+health:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 10
+
+resources: {}

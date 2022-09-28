@@ -1,0 +1,34 @@
+# Nouns
+FeatureFlagID: "フィーチャーフラグID"
+
+# Error sentences
+RequiredField: "{{ .Field_1 }}は必須です"
+InternalServerError: "内部エラーが発生しました"
+NotFoundError: "リクエストされた{{ .Field_1 }}が見つかりません"
+InvalidArgumentError: "不正な{{ .Field_1 }}です"
+Unauthenticated: "認証されていません"
+PermissionDenied: "権限がありません"
+ExceededMaxError: "{{ .Field_1 }} の最大値 ({{ .Field_2 }}) を超えています"
+AlreadyExistsError: "同じデータが既に存在しています"
+AlreadyDeletedError: "データがすでに削除済みです"
+
+# feature error
+DifferentVariationsSize: "featureのvariationsとrolloutのvariationsの数が異なります"
+IncorrectVariationWeight: "weightは0から{{ .Field_1 }}の間である必要があります"
+NothingChange: "変更点がありません"
+SegmentUsersAlreadyUploading: "segment userのリストはすでにアップロード中です"
+SegmentStatusNotSuceeded: "segmentのstatusがsuceededではありません"
+SegmentInUse: "segmentがfeature flagで使用されているため、削除できません"
+WaitingOrRunningExperimentExists: "開始予定、もしくは実行中のExperimentが存在します。更新する場合はExperimentを停止してください。"
+InvalidArchive: 前提条件のフラグとして登録されているフラグをアーカイブすることはできません"
+InvalidChangingVariation: "前提条件のフラグとして登録されているフラグのバリエーションを変更または削除することはできません"
+
+# autoops error
+IncompatibleOpsType: "対象のオペレーションタイプに対応していない自動オペレーションルールがあります"
+
+# eventcounter error
+StartAtIsAfterEnd: "start at はend at以前を指定してください。"
+PeroidOutOfRange: "期間は過去30日以内を選択してください。"
+
+# environment error
+ProjectDisabled: "projectのデータが無効化されています"

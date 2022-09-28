@@ -1,0 +1,48 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "clause_evaluator.go",
+        "evaluation.go",
+        "feature.go",
+        "feature_last_used_info.go",
+        "rule_evaluator.go",
+        "segment.go",
+        "segment_evaluator.go",
+        "segment_user.go",
+        "strategy_evaluator.go",
+        "tag.go",
+        "user_evaluations.go",
+    ],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/feature/domain",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/uuid:go_default_library",
+        "//proto/feature:go_default_library",
+        "//proto/user:go_default_library",
+        "@com_github_blang_semver//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "clause_evaluator_test.go",
+        "evaluation_test.go",
+        "feature_last_used_info_test.go",
+        "feature_test.go",
+        "rule_evaluator_test.go",
+        "segment_test.go",
+        "user_evaluations_test.go",
+    ],
+    embed = [":go_default_library"],
+    importpath = "github.com/bucketeer-io/bucketeer/pkg/feature/domain",
+    deps = [
+        "//proto/feature:go_default_library",
+        "//proto/user:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@org_golang_google_protobuf//proto:go_default_library",
+    ],
+)

@@ -1,0 +1,53 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.experiment;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/experiment";
+
+import "proto/feature/variation.proto";
+
+message Experiment {
+  enum Status {
+    WAITING = 0;
+    RUNNING = 1;
+    STOPPED = 2;
+    FORCE_STOPPED = 3;
+  }
+  string id = 1;
+  string goal_id = 2 [deprecated = true];
+  string feature_id = 3;
+  int32 feature_version = 4;
+  repeated bucketeer.feature.Variation variations = 5;
+  int64 start_at = 6;
+  int64 stop_at = 7;
+  bool stopped = 8 [deprecated = true];
+  int64 stopped_at = 9 [jstype = JS_STRING];
+  int64 created_at = 10;
+  int64 updated_at = 11;
+  bool deleted = 12;
+  repeated string goal_ids = 13;
+  string name = 14;
+  string description = 15;
+  string base_variation_id = 16;
+  reserved 17;  // bucketeer.feature.Feature current_feature = 17
+  Status status = 18;
+  string maintainer = 19;
+  bool archived = 20;
+}
+
+message Experiments {
+  repeated Experiment experiments = 1;
+}

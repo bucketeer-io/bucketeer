@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["experiment.go"],
+    importpath = "github.com/bucketeer-io/bucketeer/cmd/experiment",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//pkg/cli:go_default_library",
+        "//pkg/experiment/cmd/batch:go_default_library",
+        "//pkg/experiment/cmd/server:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "experiment",
+    embed = [":go_default_library"],
+    pure = "on",
+    visibility = ["//visibility:public"],
+)
+
+go_image(
+    name = "experiment_image",
+    binary = ":experiment",
+)
+
+alias(
+    name = "experiment_image_tar",
+    actual = ":experiment_image.tar",
+)

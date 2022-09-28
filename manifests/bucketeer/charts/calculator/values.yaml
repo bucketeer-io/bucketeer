@@ -1,0 +1,73 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/bucketeer-io/bucketeer-calculator
+  pullPolicy: IfNotPresent
+
+fullnameOverride: "calculator"
+
+namespace:
+
+env:
+  project:
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
+  environmentService: localhost:9001
+  experimentService: localhost:9001
+  eventCounterService: localhost:9001
+  logLevel: info
+  port: 9090
+  metricsPort: 9002
+  traceSamplingProbability: 0.001
+
+affinity: {}
+
+nodeSelector:
+
+hpa:
+  enabled:
+  minReplicas:
+  maxReplicas:
+  metrics:
+    cpu:
+      targetAverageUtilization:
+    memory:
+      targetAverageUtilization:
+
+envoy:
+  image:
+    repository: envoyproxy/envoy-alpine
+    tag: v1.21.1
+    pullPolicy: IfNotPresent
+  config:
+  port: 9000
+  adminPort: 8001
+  resources: {}
+
+tls:
+  service:
+    secret:
+    cert:
+    key:
+
+serviceToken:
+  secret:
+  token:
+
+service:
+  type: ClusterIP
+  clusterIP: None
+  externalPort: 9000
+
+health:
+  periodSeconds: 10
+  failureThreshold: 10
+  # It is necessary to wait for the model compilation to be done.
+  # The duration is up to resources.
+  # cf. CPU: 500m, MEM: 3Gi -> 280sec
+  initialDelaySeconds:
+
+resources: {}
