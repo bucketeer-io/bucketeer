@@ -6,7 +6,6 @@ workspace(
 )
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 ###############################################################################
 # Go
@@ -50,6 +49,18 @@ go_repositories()
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
 gazelle_dependencies()
+
+###############################################################################
+# Bazel build tools
+###############################################################################
+http_archive(
+    name = "com_github_bazelbuild_buildtools",
+    sha256 = "e3bb0dc8b0274ea1aca75f1f8c0c835adbe589708ea89bf698069d0790701ea3",
+    strip_prefix = "buildtools-5.1.0",
+    urls = [
+        "https://github.com/bazelbuild/buildtools/archive/refs/tags/5.1.0.tar.gz",
+    ],
+)
 
 ###############################################################################
 # NodeJS
