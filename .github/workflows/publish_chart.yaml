@@ -11,9 +11,11 @@ on:
       - main
     tags:
       - "v*"
-    paths:
-      - "!**/**.md"
-      - "CHANGELOG.md" # DO NOT remove this line. Otherwise, the publish chart won't start.
+    paths-ignore:
+      - "README.md"
+      - "ui/web-v2/README.md"
+      - "CONTRIBUTING.md"
+      - "DEPLOYMENT.md"
 
 env:
   REGISTRY: ghcr.io
