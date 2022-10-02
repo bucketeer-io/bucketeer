@@ -21,7 +21,7 @@ proto_descriptor = rule(
         "deps": attr.label_list(allow_files = True),
         "compiler": attr.label(
             executable = True,
-            cfg = "host",
+            cfg = "exec",
             allow_files = True,
             default = Label("@com_google_protobuf//:protoc"),
         ),

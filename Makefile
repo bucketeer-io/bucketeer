@@ -52,7 +52,6 @@ local-deps:
 	go install github.com/golang/mock/mockgen@v1.6.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/nilslice/protolock/...@v0.15.0; \
-	go install github.com/bazelbuild/buildtools/buildifier@5.1.0; \
 	go get github.com/googleapis/googleapis;
 
 .PHONY: gazelle
@@ -162,16 +161,12 @@ build-chart:
 #############################
 
 .PHONY: buildifier
-buildifier:
-	buildifier --lint=fix \
-		--warnings=-function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-module-docstring,-skylark-docstring,-rule-impl-return \
-		$$(find . -type d -name node_modules -prune -or -type f \( -iname '*.bazel' -or -iname '*.bzl' \)  -print)
+buildifier-fix:
+	bazelisk run //:buildifier-fix
 
 .PHONY: buildifier-check
 buildifier-check:
-	buildifier --mode=check --lint=warn \
-		--warnings=-function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-module-docstring,-skylark-docstring,-rule-impl-return \
-		$$(find . -type d -name node_modules -prune -or -type f \( -iname '*.bazel' -or -iname '*.bzl' \)  -print)
+	bazelisk run //:buildifier-check
 
 #############################
 # E2E for backend

@@ -1,4 +1,5 @@
 load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
 
 # gazelle:exclude vendor
 # gazelle:exclude proto/external
@@ -8,4 +9,34 @@ gazelle(
     name = "gazelle",
     command = "fix",
     prefix = "github.com/bucketeer-io/bucketeer",
+)
+
+BUILDIFIER_LINT_WARNINGS = [
+    "-function-docstring",
+    "-function-docstring-header",
+    "-function-docstring-args",
+    "-function-docstring-return",
+    "-module-docstring",
+    "-skylark-docstring",
+    "-rule-impl-return",
+]
+
+buildifier(
+    name = "buildifier-check",
+    exclude_patterns = [
+        "./.git/**/*",
+        "**/node_modules/*",
+    ],
+    lint_mode = "warn",
+    lint_warnings = BUILDIFIER_LINT_WARNINGS,
+    mode = "check",
+)
+
+buildifier(
+    name = "buildifier-fix",
+    exclude_patterns = [
+        "./.git/**/*",
+        "**/node_modules/*",
+    ],
+    lint_mode = "fix",
 )
