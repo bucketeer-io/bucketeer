@@ -14,8 +14,11 @@ on:
     paths-ignore:
       - "README.md"
       - "ui/web-v2/README.md"
+      - "python/README.md"
+      - "CLA.md"
       - "CONTRIBUTING.md"
       - "DEPLOYMENT.md"
+      - ".github/**"
 
 env:
   REGISTRY: ghcr.io
