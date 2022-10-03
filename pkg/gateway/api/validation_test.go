@@ -16,199 +16,50 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
-
-const (
-	oldestTimestampDuration   = 24 * time.Hour
-	furthestTimestampDuration = 24 * time.Hour
-)
-
-func TestNewEventValidator(t *testing.T) {
-	t.Parallel()
-	bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{})
-	if err != nil {
-		t.Fatal("could not serialize evaluation event")
-	}
-	bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{})
-	if err != nil {
-		t.Fatal("could not serialize goal event")
-	}
-	bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{})
-	if err != nil {
-		t.Fatal("could not serialize goal batch event")
-	}
-	bMetricsEvent, err := proto.Marshal(&eventproto.MetricsEvent{})
-	if err != nil {
-		t.Fatal("could not serialize metrics event")
-	}
-	patterns := map[string]struct {
-		input    *eventproto.Event
-		expected eventValidator
-	}{
-		"evaluationValidator": {
-			input: &eventproto.Event{
-				Id: newUUID(t),
-				Event: &any.Any{
-					TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-					Value:   bEvaluationEvent,
-				},
-			},
-			expected: &eventEvaluationValidator{},
-		},
-		"GoalValidator": {
-			input: &eventproto.Event{
-				Id: newUUID(t),
-				Event: &any.Any{
-					TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalEvent",
-					Value:   bGoalEvent,
-				},
-			},
-			expected: &eventGoalValidator{},
-		},
-		"GoalBatchValidator": {
-			input: &eventproto.Event{
-				Id: newUUID(t),
-				Event: &any.Any{
-					TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalBatchEvent",
-					Value:   bGoalBatchEvent,
-				},
-			},
-			expected: &eventGoalBatchValidator{},
-		},
-		"MetricsEvent": {
-			input: &eventproto.Event{
-				Id: newUUID(t),
-				Event: &any.Any{
-					TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.MetricsEvent",
-					Value:   bMetricsEvent,
-				},
-			},
-			expected: &eventMetricsValidator{},
-		},
-	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
-			logger, _ := log.NewLogger()
-			actual := newEventValidator(p.input, oldestTimestampDuration, furthestTimestampDuration, logger)
-			assert.IsType(t, p.expected, actual)
-		})
-	}
-}
-
-func TestValidateTimestamp(t *testing.T) {
-	testcases := []struct {
-		timestamp int64
-		expected  bool
-	}{
-		{
-			timestamp: time.Now().Unix(),
-			expected:  true,
-		},
-		{
-			timestamp: time.Now().AddDate(0, 0, -2).Unix(),
-			expected:  false,
-		},
-		{
-			timestamp: time.Now().AddDate(0, 0, 2).Unix(),
-			expected:  false,
-		},
-	}
-	for i, tc := range testcases {
-		des := fmt.Sprintf("index %d", i)
-		res := validateTimestamp(tc.timestamp, oldestTimestampDuration, furthestTimestampDuration)
-		assert.Equal(t, tc.expected, res, des)
-	}
-}
 
 func TestValidateGoalEvent(t *testing.T) {
 	t.Parallel()
+	logger, _ := log.NewLogger()
+	now := time.Now().Unix()
+	ctx := context.TODO()
 	patterns := map[string]struct {
-		inputFunc   func() *eventproto.Event
-		expected    string
-		expectedErr error
+		id           string
+		timestamp    int64
+		expectedCode string
+		expectedErr  error
 	}{
-		"invalid uuid": {
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-				}
-			},
-			expected:    codeInvalidID,
-			expectedErr: errInvalidIDFormat,
+		"err: invalid uuid": {
+			id:           "0efe416e 2fd2 4996 c5c3 194f05444f1f",
+			timestamp:    now,
+			expectedCode: codeInvalidID,
+			expectedErr:  errInvalidIDFormat,
 		},
-		"unmarshal fails": {
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-				}
-			},
-			expected:    codeUnmarshalFailed,
-			expectedErr: errUnmarshalFailed,
-		},
-		"invalid timestamp": {
-			inputFunc: func() *eventproto.Event {
-				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
-					Timestamp: int64(999999999999999),
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalEvent",
-						Value:   bGoalEvent,
-					},
-				}
-			},
-			expected:    codeInvalidTimestamp,
-			expectedErr: errInvalidTimestamp,
+		"err: invalid timestamp": {
+			id:           newUUID(t),
+			timestamp:    int64(999999999999999),
+			expectedCode: codeInvalidTimestamp,
+			expectedErr:  errInvalidTimestamp,
 		},
 		"success": {
-			inputFunc: func() *eventproto.Event {
-				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
-					Timestamp: time.Now().Unix(),
-					Evaluations: []*feature.Evaluation{
-						{
-							Id: "evaluation-id",
-						},
-					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalEvent",
-						Value:   bGoalEvent,
-					},
-				}
-			},
+			id:           newUUID(t),
+			timestamp:    now,
+			expectedCode: "",
+			expectedErr:  nil,
 		},
 	}
 	for msg, p := range patterns {
 		t.Run(msg, func(t *testing.T) {
-			logger, _ := log.NewLogger()
-			v := &eventGoalValidator{
-				event:                     p.inputFunc(),
-				logger:                    logger,
-				oldestTimestampDuration:   24 * time.Hour,
-				furthestTimestampDuration: 24 * time.Hour,
-			}
-			actual, err := v.validate(context.Background())
-			assert.Equal(t, p.expected, actual)
+			gs := &gatewayService{logger: logger, opts: &defaultOptions}
+			errCode, err := gs.validateGoalEvent(ctx, p.id, p.timestamp)
+			assert.Equal(t, p.expectedCode, errCode)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -216,262 +67,144 @@ func TestValidateGoalEvent(t *testing.T) {
 
 func TestValidateGoalBatchEvent(t *testing.T) {
 	t.Parallel()
+	ctx := context.TODO()
+	logger, _ := log.NewLogger()
 	patterns := map[string]struct {
-		inputFunc   func() *eventproto.Event
-		expected    string
-		expectedErr error
+		id           string
+		event        *eventproto.GoalBatchEvent
+		expectedCode string
+		expectedErr  error
 	}{
 		"err: invalid uuid": {
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-				}
-			},
-			expected:    codeInvalidID,
-			expectedErr: errInvalidIDFormat,
-		},
-		"err: unmarshal failed": {
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-				}
-			},
-			expected:    codeUnmarshalFailed,
-			expectedErr: errUnmarshalFailed,
-		},
-		"err: empty user id": {
-			inputFunc: func() *eventproto.Event {
-				bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{
-					UserId: "",
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalBatchEvent",
-						Value:   bGoalBatchEvent,
+			id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
+			event: &eventproto.GoalBatchEvent{
+				UserId: newUUID(t),
+				UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
+					{
+						Tag: "tag",
 					},
-				}
+				},
 			},
-			expected:    codeEmptyUserID,
-			expectedErr: errEmptyUserID,
+			expectedCode: codeInvalidID,
+			expectedErr:  errInvalidIDFormat,
+		},
+		"err: empty userid": {
+			id: newUUID(t),
+			event: &eventproto.GoalBatchEvent{
+				UserId: "",
+				UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
+					{
+						Tag: "tag",
+					},
+				},
+			},
+			expectedCode: codeEmptyUserID,
+			expectedErr:  errEmptyUserID,
 		},
 		"err: empty tag": {
-			inputFunc: func() *eventproto.Event {
-				bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{
-					UserId: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
-						{
-							Tag: "",
-						},
+			id: newUUID(t),
+			event: &eventproto.GoalBatchEvent{
+				UserId: newUUID(t),
+				UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
+					{
+						Tag: "",
 					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalBatchEvent",
-						Value:   bGoalBatchEvent,
-					},
-				}
+				},
 			},
-			expected:    codeEmptyTag,
-			expectedErr: errEmptyTag,
+			expectedCode: codeEmptyTag,
+			expectedErr:  errEmptyTag,
 		},
 		"success": {
-			inputFunc: func() *eventproto.Event {
-				bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{
-					UserId: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
-						{
-							Tag: "tag",
-						},
+			id: newUUID(t),
+			event: &eventproto.GoalBatchEvent{
+				UserId: newUUID(t),
+				UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
+					{
+						Tag: "tag",
 					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalBatchEvent",
-						Value:   bGoalBatchEvent,
-					},
-				}
+				},
 			},
+			expectedCode: "",
+			expectedErr:  nil,
 		},
 	}
+
 	for msg, p := range patterns {
 		t.Run(msg, func(t *testing.T) {
-			logger, _ := log.NewLogger()
-			v := &eventGoalBatchValidator{
-				event:                     p.inputFunc(),
-				logger:                    logger,
-				oldestTimestampDuration:   24 * time.Hour,
-				furthestTimestampDuration: 24 * time.Hour,
-			}
-			actual, err := v.validate(context.Background())
-			assert.Equal(t, p.expected, actual)
-			assert.Equal(t, p.expectedErr, err)
+			gs := gatewayService{logger: logger}
+			errCode, err := gs.validateGoalBatchEvent(ctx, p.id, p.event)
+			assert.Equal(t, errCode, p.expectedCode)
+			assert.Equal(t, err, p.expectedErr)
 		})
 	}
 }
 
 func TestValidateEvaluationEvent(t *testing.T) {
 	t.Parallel()
+	logger, _ := log.NewLogger()
+	now := time.Now().Unix()
+	ctx := context.TODO()
 	patterns := map[string]struct {
-		inputFunc   func() *eventproto.Event
-		expected    string
-		expectedErr error
+		id           string
+		timestamp    int64
+		expectedCode string
+		expectedErr  error
 	}{
-		"invalid uuid": {
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-				}
-			},
-			expected:    codeInvalidID,
-			expectedErr: errInvalidIDFormat,
+		"err: invalid uuid": {
+			id:           "0efe416e 2fd2 4996 c5c3 194f05444f1f",
+			timestamp:    now,
+			expectedCode: codeInvalidID,
+			expectedErr:  errInvalidIDFormat,
 		},
-		"unmarshal fails": {
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-				}
-			},
-			expected:    codeUnmarshalFailed,
-			expectedErr: errUnmarshalFailed,
-		},
-		"invalid timestamp": {
-			inputFunc: func() *eventproto.Event {
-				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp: int64(999999999999999),
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-						Value:   bEvaluationEvent,
-					},
-				}
-			},
-			expected:    codeInvalidTimestamp,
-			expectedErr: errInvalidTimestamp,
+		"err: invalid timestamp": {
+			id:           newUUID(t),
+			timestamp:    int64(999999999999999),
+			expectedCode: codeInvalidTimestamp,
+			expectedErr:  errInvalidTimestamp,
 		},
 		"success": {
-			inputFunc: func() *eventproto.Event {
-				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp: time.Now().Unix(),
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-						Value:   bEvaluationEvent,
-					},
-				}
-			},
+			id:           newUUID(t),
+			timestamp:    now,
+			expectedCode: "",
+			expectedErr:  nil,
 		},
 	}
 	for msg, p := range patterns {
 		t.Run(msg, func(t *testing.T) {
-			logger, _ := log.NewLogger()
-			v := &eventEvaluationValidator{
-				event:                     p.inputFunc(),
-				logger:                    logger,
-				oldestTimestampDuration:   24 * time.Hour,
-				furthestTimestampDuration: 24 * time.Hour,
-			}
-			actual, err := v.validate(context.Background())
-			assert.Equal(t, p.expected, actual)
+			gs := &gatewayService{logger: logger, opts: &defaultOptions}
+			errCode, err := gs.validateEvaluationEvent(ctx, p.id, p.timestamp)
+			assert.Equal(t, p.expectedCode, errCode)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
 
-func TestValidateMetrics(t *testing.T) {
+func TestValidateMetricsEvent(t *testing.T) {
 	t.Parallel()
+	logger, _ := log.NewLogger()
+	ctx := context.TODO()
 	patterns := map[string]struct {
-		inputFunc   func() *eventproto.Event
-		expected    string
-		expectedErr error
+		id           string
+		expectedCode string
+		expectedErr  error
 	}{
-		"invalid uuid": {
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-				}
-			},
-			expected:    codeInvalidID,
-			expectedErr: errInvalidIDFormat,
-		},
-		"unmarshal fails": {
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-				}
-			},
-			expected:    codeUnmarshalFailed,
-			expectedErr: errUnmarshalFailed,
-		},
-		"invalid timestamp": {
-			inputFunc: func() *eventproto.Event {
-				b, err := proto.Marshal(&eventproto.MetricsEvent{
-					Timestamp: int64(999999999999999),
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.MetricsEvent",
-						Value:   b,
-					},
-				}
-			},
-			expected:    "",
-			expectedErr: nil,
+		"err: invalid uuid": {
+			id:           "0efe416e 2fd2 4996 c5c3 194f05444f1f",
+			expectedCode: codeInvalidID,
+			expectedErr:  errInvalidIDFormat,
 		},
 		"success": {
-			inputFunc: func() *eventproto.Event {
-				b, err := proto.Marshal(&eventproto.MetricsEvent{
-					Timestamp: time.Now().Unix(),
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.MetricsEvent",
-						Value:   b,
-					},
-				}
-			},
+			id:           newUUID(t),
+			expectedCode: "",
+			expectedErr:  nil,
 		},
 	}
+
 	for msg, p := range patterns {
 		t.Run(msg, func(t *testing.T) {
-			logger, _ := log.NewLogger()
-			v := &eventMetricsValidator{
-				event:                     p.inputFunc(),
-				oldestTimestampDuration:   oldestTimestampDuration,
-				furthestTimestampDuration: furthestTimestampDuration,
-				logger:                    logger,
-			}
-			actual, err := v.validate(context.Background())
-			assert.Equal(t, p.expected, actual)
+			gs := &gatewayService{logger: logger}
+			errCode, err := gs.validateMetricsEvent(ctx, p.id)
+			assert.Equal(t, p.expectedCode, errCode)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
