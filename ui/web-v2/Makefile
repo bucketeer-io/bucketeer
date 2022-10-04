@@ -1,3 +1,6 @@
+.PHONY: all
+all: install buildifier-check lint gen_proto build
+
 ####################################
 # Yarn
 ####################################
@@ -17,6 +20,18 @@ start:
 .PHONY: lint
 lint:
 	yarn lint
+
+####################################
+# Bazel
+####################################
+
+.PHONY: buildifier
+buildifier-fix:
+	bazelisk run //:buildifier-fix
+
+.PHONY: buildifier-check
+buildifier-check:
+	bazelisk run //:buildifier-check
 
 ####################################
 # Generate proto definition files
