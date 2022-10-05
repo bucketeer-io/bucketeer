@@ -1624,6 +1624,11 @@ func TestValidateVariation(t *testing.T) {
 			value:         `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
 			expected:      nil,
 		},
+		"valid json array": {
+			variationType: feature.Feature_JSON,
+			value:         `[{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}]`,
+			expected:      nil,
+		},
 		"valid string": {
 			variationType: feature.Feature_STRING,
 			value:         `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
