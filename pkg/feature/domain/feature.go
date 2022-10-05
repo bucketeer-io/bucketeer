@@ -478,9 +478,11 @@ func validateVariation(variationType feature.Feature_VariationType, value string
 		}
 	case feature.Feature_JSON:
 		var js map[string]interface{}
-		if json.Unmarshal([]byte(value), &js) != nil {
-			return errVariationTypeUnmatched
+		var jsArray []interface{}
+		if json.Unmarshal([]byte(value), &js) == nil || json.Unmarshal([]byte(value), &jsArray) == nil {
+			return nil
 		}
+		return errVariationTypeUnmatched
 	}
 	return nil
 }
