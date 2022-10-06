@@ -103,7 +103,7 @@ jobs:
       - name: Generate proto files
         run: make gen_proto
       - name: Build
-        run: make build
+        run: make build-ui-web-v2
 
   buildifier-check:
     runs-on: ubuntu-latest
