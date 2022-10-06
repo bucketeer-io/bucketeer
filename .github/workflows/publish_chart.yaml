@@ -55,7 +55,7 @@ jobs:
             echo "BUCKETEER_VERSION=$(git describe --tags --always --abbrev=7)" >> $GITHUB_ENV
           fi
       - name: Install helm
-        uses: Azure/setup-helm@v1
+        uses: Azure/setup-helm@18bc76811624f360dbd7f18c2d4ecb32c7b87bab #v1
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Login to OCI using Helm
