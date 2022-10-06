@@ -30,7 +30,7 @@ const idSchema = yup
   .matches(regex, intl.formatMessage(messages.input.error.invalidId))
   .max(FEATURE_ID_MAX_LENGTH);
 
-const nameSchema = yup.string().max(FEATURE_NAME_MAX_LENGTH);
+const nameSchema = yup.string().max(FEATURE_NAME_MAX_LENGTH).required();
 const descriptionSchema = yup.string().max(FEATURE_DESCRIPTION_MAX_LENGTH);
 const commentSchema = yup.string().required();
 const variationTypeSchema = yup.string();
