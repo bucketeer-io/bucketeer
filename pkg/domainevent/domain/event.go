@@ -25,11 +25,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
-var defaultOptions = domain.Options{
-	Comment:    "",
-	NewVersion: 1,
-}
-
 type Option func(*domain.Options)
 
 func WithComment(c string) Option {
@@ -77,7 +72,10 @@ func newEvent(
 	isAdminEvent bool,
 	opts ...Option,
 ) (*domain.Event, error) {
-	options := defaultOptions
+	options := domain.Options{
+		Comment:    "",
+		NewVersion: 1,
+	}
 	for _, opt := range opts {
 		opt(&options)
 	}

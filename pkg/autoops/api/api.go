@@ -203,7 +203,9 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(req *autoopsproto.Crea
 	if req.Command.FeatureId == "" {
 		return localizedError(statusFeatureIDRequired, locale.JaJP)
 	}
-	if len(req.Command.OpsEventRateClauses) == 0 && len(req.Command.DatetimeClauses) == 0 && len(req.Command.WebhookClauses) == 0 {
+	if len(req.Command.OpsEventRateClauses) == 0 &&
+		len(req.Command.DatetimeClauses) == 0 &&
+		len(req.Command.WebhookClauses) == 0 {
 		return localizedError(statusClauseRequired, locale.JaJP)
 	}
 	if req.Command.OpsType == autoopsproto.OpsType_ENABLE_FEATURE && len(req.Command.OpsEventRateClauses) > 0 {

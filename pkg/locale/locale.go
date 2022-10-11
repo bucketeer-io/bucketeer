@@ -21,7 +21,6 @@ const (
 
 type locale struct {
 	locale string
-	langs  []string
 }
 
 type Locale interface {

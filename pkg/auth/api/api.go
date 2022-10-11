@@ -29,12 +29,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
 type options struct {
@@ -294,76 +292,4 @@ func (s *authService) maybeCheckEmail(ctx context.Context, email string) error {
 		log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", email))...,
 	)
 	return localizedError(statusAccessDeniedEmail, locale.JaJP)
-}
-
-func (s *authService) checkAdminRole(ctx context.Context) (*eventproto.Editor, error) {
-	editor, err := role.CheckAdminRole(ctx)
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Info(
-				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, localizedError(statusUnauthenticated, locale.JaJP)
-		case codes.PermissionDenied:
-			s.logger.Info(
-				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, localizedError(statusPermissionDenied, locale.JaJP)
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, localizedError(statusInternal, locale.JaJP)
-		}
-	}
-	return editor, nil
-}
-
-func (s *authService) checkRole(
-	ctx context.Context,
-	requiredRole accountproto.Account_Role,
-	environmentNamespace string,
-) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(ctx, requiredRole, func(email string) (*accountproto.GetAccountResponse, error) {
-		return s.accountClient.GetAccount(ctx, &accountproto.GetAccountRequest{
-			Email:                email,
-			EnvironmentNamespace: environmentNamespace,
-		})
-	})
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Info(
-				"Unauthenticated",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
-				)...,
-			)
-			return nil, localizedError(statusUnauthenticated, locale.JaJP)
-		case codes.PermissionDenied:
-			s.logger.Info(
-				"Permission denied",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
-				)...,
-			)
-			return nil, localizedError(statusPermissionDenied, locale.JaJP)
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
-				)...,
-			)
-			return nil, localizedError(statusInternal, locale.JaJP)
-		}
-	}
-	return editor, nil
 }

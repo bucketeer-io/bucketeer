@@ -269,6 +269,7 @@ var (
 			Message: "ウェブフックルールのconditionのfilterは必須です",
 		},
 	)
+	// nolint:deadcode,unused,varcheck
 	errWebhookClauseConditionValueRequiredJaJP = status.MustWithDetails(
 		statusWebhookClauseConditionValueRequired,
 		&errdetails.LocalizedMessage{

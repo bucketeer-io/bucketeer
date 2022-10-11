@@ -119,7 +119,10 @@ func (h *webhookCommandHandler) ChangeWebhookName(ctx context.Context, cmd *auto
 	return h.publisher.Publish(ctx, event)
 }
 
-func (h *webhookCommandHandler) ChangeWebhookDescription(ctx context.Context, cmd *autoopspb.ChangeWebhookDescriptionCommand) error {
+func (h *webhookCommandHandler) ChangeWebhookDescription(
+	ctx context.Context,
+	cmd *autoopspb.ChangeWebhookDescriptionCommand,
+) error {
 	if err := h.webhook.ChangeDescription(cmd.Description); err != nil {
 		return err
 	}
