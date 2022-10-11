@@ -15,6 +15,7 @@
 package locale
 
 import (
+	"embed"
 	"fmt"
 	"strconv"
 
@@ -25,6 +26,9 @@ import (
 
 var (
 	bundle *i18n.Bundle
+
+	//go:embed localizedata
+	localizedata embed.FS
 )
 
 const (
@@ -43,9 +47,8 @@ func init() {
 		"ja.yaml",
 	}
 	for _, f := range files {
-		//nolint:typecheck
-		data, ok := Data[f]
-		if !ok {
+		data, err := localizedata.ReadFile(fmt.Sprintf("localizedata/%s", f))
+		if err != nil {
 			panic(fmt.Errorf("Failed to load translation data: %s", f))
 		}
 		bundle.MustParseMessageFileBytes(data, f)
