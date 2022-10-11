@@ -58,9 +58,13 @@ local-deps:
 gazelle: proto-go
 	bazelisk run ${BUILD_FLAGS} //:gazelle
 
+.PHONY: gazelle-check
+gazelle-check:
+	bazelisk run //:gazelle -- -mode diff
+
 .PHONY: lint
-lint: proto-go vendor
-	golangci-lint run ./cmd/... ./pkg/... ./hack/... ./test/...
+lint:
+	golangci-lint run --timeout 3m0s ./cmd/... ./pkg/... ./hack/... ./test/...
 
 .PHONY: build
 build:
@@ -116,11 +120,11 @@ mockgen: proto-go
 	make gofmt
 
 .PHONY: vendor
-vendor: tidy-deps
+vendor:
 	go mod vendor
 
 .PHONY: update-repos
-update-repos: tidy-deps
+update-repos: tidy-deps vendor
 	bazelisk run ${BUILD_FLAGS} //:gazelle -- update-repos -from_file=go.mod -to_macro=repositories.bzl%go_repositories -prune=true
 
 .PHONY: update-repos-check
