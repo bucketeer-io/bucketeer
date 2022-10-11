@@ -27,6 +27,8 @@ I plan to add the following metrics event type.
 
 ### 1. Do we need Labels field?
 
+We can divide Labels field into some fields.
+
 #### Plan A
 
 ```go
