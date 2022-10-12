@@ -90,9 +90,9 @@ type SizeMetricsEvent struct {
 
 ```go
 type MetricsEvent struct {
-    Event string
-    Labels   map[string]string
-	MetaData map[string]string   
+    Event string // GetEvaluations, GetEvaluation, ...
+    Type string // Size or Latency, ...
+	Labels map[string]string   
 }
 ```
 
@@ -118,7 +118,22 @@ type TimeoutErrorCountMetricsEvent struct {
 type ErrorMetricsEvent struct {
     Event string
     Error string
-    Tag string
-    MetaData map[string]string 
+    Labels map[string]string 
 }
 ```
+
+## Conclustion
+
+## About 1
+
+We decided to A because of following reasons:
+
+* There is a possiblity that Tag field and Status field are chage
+
+## About 2 and 3
+
+WIP
+
+## Other
+
+We change Labels field to Metadata field.
