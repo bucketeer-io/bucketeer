@@ -48,7 +48,7 @@ local-deps:
 	cd ~/go-tools; \
 	if [ ! -e go.mod ]; then go mod init go-tools; fi; \
 	go install golang.org/x/tools/cmd/goimports@latest; \
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.39.0; \
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.47.2; \
 	go install github.com/golang/mock/mockgen@v1.6.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/nilslice/protolock/...@v0.15.0; \
@@ -58,9 +58,13 @@ local-deps:
 gazelle: proto-go
 	bazelisk run ${BUILD_FLAGS} //:gazelle
 
+.PHONY: gazelle-check
+gazelle-check:
+	bazelisk run //:gazelle -- -mode diff
+
 .PHONY: lint
-lint: proto-go vendor
-	golangci-lint run ./cmd/... ./pkg/... ./hack/... ./test/...
+lint:
+	golangci-lint run --timeout 3m0s ./cmd/... ./pkg/... ./hack/... ./test/...
 
 .PHONY: build
 build:
@@ -116,11 +120,11 @@ mockgen: proto-go
 	make gofmt
 
 .PHONY: vendor
-vendor: tidy-deps
+vendor:
 	go mod vendor
 
 .PHONY: update-repos
-update-repos: tidy-deps
+update-repos: tidy-deps vendor
 	bazelisk run ${BUILD_FLAGS} //:gazelle -- update-repos -from_file=go.mod -to_macro=repositories.bzl%go_repositories -prune=true
 
 .PHONY: update-repos-check

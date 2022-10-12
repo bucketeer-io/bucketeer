@@ -1,15 +1,18 @@
 PROTO_FOLDERS := $(filter-out ./external%, $(shell find . -name '*.proto' -print0 | xargs -0 -n1 dirname | sort --unique))
-GIT_TOP_DIR := $(shell realpath ..)
-PROTOBUF_INCLUDE_DIR := $(GIT_TOP_DIR)/proto/external/protocolbuffers/protobuf/v3.18.1
+GIT_TOP_DIR := $(shell cd .. ; pwd)
+PROTOBUF_INCLUDE_DIR := ./external/protocolbuffers/protobuf/v3.18.1
+GOOGLEAPIS := ${GOPATH}/src/github.com/googleapis/googleapis
 
 .PHONY: go
 go: remove-go
 	for f in ${PROTO_FOLDERS}; do \
-		protoc -I"$(GIT_TOP_DIR)" \
-			-I"$(PROTOBUF_INCLUDE_DIR)" \
-			-I"${GOPATH}/src/github.com/googleapis/googleapis" \
-			--go_out=plugins=grpc:${GOPATH}/src \
-			$(GIT_TOP_DIR)/proto/$$f/*.proto; \
+		protoc \
+			--proto_path=${GIT_TOP_DIR} \
+			--proto_path=${PROTOBUF_INCLUDE_DIR} \
+			--proto_path=${GOOGLEAPIS} \
+			--go_out=plugins=grpc:${GIT_TOP_DIR} \
+			--go_opt=paths=source_relative \
+			${GIT_TOP_DIR}/proto/$$f/*.proto; \
 	done
 
 .PHONY: remove-go
