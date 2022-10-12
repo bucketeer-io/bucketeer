@@ -48,7 +48,7 @@ local-deps:
 	cd ~/go-tools; \
 	if [ ! -e go.mod ]; then go mod init go-tools; fi; \
 	go install golang.org/x/tools/cmd/goimports@latest; \
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.39.0; \
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.47.2; \
 	go install github.com/golang/mock/mockgen@v1.6.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/nilslice/protolock/...@v0.15.0; \
