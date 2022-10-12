@@ -1,5 +1,4 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
-load("@io_bazel_rules_go//extras:embed_data.bzl", "go_embed_data")
 
 go_library(
     name = "go_default_library",
@@ -7,8 +6,8 @@ go_library(
         "locale.go",
         "localizer.go",
         "options.go",
-        ":embed",  # keep
     ],
+    embedsrcs = glob(["localizedata/*.yaml"]),
     importpath = "github.com/bucketeer-io/bucketeer/pkg/locale",
     visibility = ["//visibility:public"],
     deps = [
@@ -16,14 +15,6 @@ go_library(
         "@in_gopkg_yaml_v2//:go_default_library",
         "@org_golang_x_text//language:go_default_library",
     ],
-)
-
-go_embed_data(
-    name = "embed",
-    srcs = glob(["localizedata/*.yaml"]),
-    flatten = True,
-    package = "locale",
-    visibility = ["//visibility:public"],
 )
 
 go_test(
