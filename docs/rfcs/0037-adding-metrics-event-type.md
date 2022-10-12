@@ -96,7 +96,7 @@ type MetricsEvent struct {
 }
 ```
 
-### 3. How far should we abstruct event type?
+### 3. How far should we abstruct error event type?
 
 #### Plan A
 
