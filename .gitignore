@@ -1,4 +1,5 @@
 .artifacts
+/bin
 /build
 /bazel-bin
 /bazel-bucketeer
