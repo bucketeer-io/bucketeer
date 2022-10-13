@@ -77,21 +77,21 @@ func TestSplitURLPath(t *testing.T) {
 		expectedApiName string
 	}{
 		{
-			desc:                 "error: wrong path format",
+			desc:                "error: wrong path format",
 			input:               "scheme://host/api_version/service_name/api_name/api/",
 			expectedApiVersion:  "unknown",
 			expectedServiceName: "unknown",
 			expectedApiName:     "unknown",
 		},
 		{
-			desc:                 "error: using slash in the end of the path",
+			desc:                "error: using slash in the end of the path",
 			input:               "scheme://host/api_version/service_name/api_name/",
 			expectedApiVersion:  "unknown",
 			expectedServiceName: "unknown",
 			expectedApiName:     "unknown",
 		},
 		{
-			desc:                 "sucess",
+			desc:                "sucess",
 			input:               "scheme://host/api_version/service_name/api_name",
 			expectedApiVersion:  "api_version",
 			expectedServiceName: "service_name",
