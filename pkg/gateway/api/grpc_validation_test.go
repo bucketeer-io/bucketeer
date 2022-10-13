@@ -123,12 +123,12 @@ func TestValidateTimestamp(t *testing.T) {
 			expected:  true,
 		},
 		{
-			desc:      "fail: invalid past",
+			desc:      "fail: invalid past time",
 			timestamp: time.Now().AddDate(0, 0, -2).Unix(),
 			expected:  false,
 		},
 		{
-			desc:      "fail: invalid future",
+			desc:      "fail: invalid future time",
 			timestamp: time.Now().AddDate(0, 0, 2).Unix(),
 			expected:  false,
 		},
