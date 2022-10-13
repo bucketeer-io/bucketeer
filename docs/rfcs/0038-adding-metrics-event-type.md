@@ -5,7 +5,7 @@
 Currently, Bucketeer has [several metrics event type](https://github.com/bucketeer-io/bucketeer/blob/main/proto/event/client/event.proto). However, there are some problems as follows:
 
 * It doesn't report each event's internal error and timeout error. Thus, we can't check which event has a problem when error occurs.
-* It doesn't report any metics about latency and size except for register events.
+* It doesn't report any metrics about latency and size except for register events.
 
 Therefore, we need to fix the above problems.
 
@@ -68,7 +68,7 @@ type SizeMetricsEvent struct {
 
 ```
 
-### 2. How far should we abstruct event type?
+### 2. How far should we abstract event type?
 
 #### Plan A
 
@@ -96,7 +96,7 @@ type MetricsEvent struct {
 }
 ```
 
-### 3. How far should we abstruct error event type?
+### 3. How far should we abstract error event type?
 
 #### Plan A
 
@@ -128,7 +128,7 @@ type ErrorMetricsEvent struct {
 
 We decided A because of following reasons:
 
-* There is a possiblity that Tag field and Status field are chage
+* We may remove Tag field and Status field.
 
 ## About 2 and 3
 
