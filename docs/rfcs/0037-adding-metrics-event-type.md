@@ -126,13 +126,42 @@ type ErrorMetricsEvent struct {
 
 ## About 1
 
-We decided to A because of following reasons:
+We decided A because of following reasons:
 
 * There is a possiblity that Tag field and Status field are chage
 
 ## About 2 and 3
 
-WIP
+We decided A.
+Personally, I prefer to B because we can simplify the logic around JSON. However, we can't decide it because we released new version in go server SDK and Android SDK in the previous format.
+
+## Summary
+
+As a summary, we decided the following format:
+
+```go
+type LatencyMetricsEvent struct {
+    Event string
+	Metadata   map[string]string
+	Duration time.Duration    
+}
+
+type SizeMetricsEvent struct {
+    Event string
+	Metadata   map[string]string
+	SizeByte int32
+}
+
+type InternalErrorCountMetricsEvent struct {
+    Event string
+    Metadata   map[string]string
+}
+
+type TimeoutErrorCountMetricsEvent struct {
+    Event string
+    Metadata   map[string]string
+}
+```
 
 ## Other
 
