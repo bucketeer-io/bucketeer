@@ -1,7 +1,7 @@
 PROTO_FOLDERS := $(filter-out ./external%, $(shell find . -name '*.proto' -print0 | xargs -0 -n1 dirname | sort --unique))
 GIT_TOP_DIR := $(shell cd .. ; pwd)
 PROTOBUF_INCLUDE_DIR := ./external/protocolbuffers/protobuf/v3.18.1
-GOOGLEAPIS := ${GOPATH}/src/github.com/googleapis/googleapis
+GOOGLEAPIS := ./external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974
 
 .PHONY: go
 go: remove-go

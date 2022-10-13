@@ -51,8 +51,7 @@ local-deps:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.47.2; \
 	go install github.com/golang/mock/mockgen@v1.6.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
-	go install github.com/nilslice/protolock/...@v0.15.0; \
-	go get github.com/googleapis/googleapis;
+	go install github.com/nilslice/protolock/...@v0.15.0;
 
 .PHONY: gazelle
 gazelle: proto-go

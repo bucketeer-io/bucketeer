@@ -1,11 +1,11 @@
 PY_FILES := $$(find . -iname '*.py' -not -path "./.venv/*")
 GIT_TOP_DIR := $(shell git rev-parse --show-toplevel)
-PROTOBUF_INCLUDE_DIR := $(GIT_TOP_DIR)/proto/external/protocolbuffers/protobuf/v3.9.0
 PROTO_FOLDERS := $(filter-out $(GIT_TOP_DIR)/proto/external%, $(shell find $(GIT_TOP_DIR)/proto -name '*.proto' -print0 | xargs -0 -n1 dirname | sort --unique))
+PROTO_SERVICE_FOLDERS := $(filter-out $(GIT_TOP_DIR)/proto/external%, $(shell find $(GIT_TOP_DIR)/proto -name '*service.proto' -print0 | xargs -0 -n1 dirname | sort --unique))
 
 .PHONY: init
 init:
-	poetry install
+	poetry install --no-interaction --no-root
 
 .PHONY: test
 test:
@@ -31,17 +31,18 @@ gen:
 	for f in ${PROTO_FOLDERS}; do \
 		poetry run python -m grpc_tools.protoc \
 			-I"$(GIT_TOP_DIR)" \
-			-I"$(PROTOBUF_INCLUDE_DIR)" \
-			-I"${GOPATH}/src/github.com/googleapis/googleapis" \
+			-I"$(GIT_TOP_DIR)/proto/external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974" \
 			--python_out=$(GIT_TOP_DIR)/python/src \
 			$$f/*.proto; \
+	done
+
+	for f in ${PROTO_SERVICE_FOLDERS}; do \
 		poetry run python -m grpc_tools.protoc \
 			-I"$(GIT_TOP_DIR)" \
-			-I"$(PROTOBUF_INCLUDE_DIR)" \
-			-I"${GOPATH}/src/github.com/googleapis/googleapis" \
+			-I"$(GIT_TOP_DIR)/proto/external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974" \
 			--grpc_python_out=$(GIT_TOP_DIR)/python/src \
 			$$f/*service.proto; \
-	done \
+	done
 
 .PHONY: docker-build-dev
 docker-build-dev:
