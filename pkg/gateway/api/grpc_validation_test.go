@@ -340,7 +340,7 @@ func TestGrpcValidateGoalBatchEvent(t *testing.T) {
 func TestGrpcValidateEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc string
+		desc        string
 		inputFunc   func() *eventproto.Event
 		expected    string
 		expectedErr error
