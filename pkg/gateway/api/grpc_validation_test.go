@@ -113,18 +113,22 @@ func TestNewEventValidator(t *testing.T) {
 
 func TestValidateTimestamp(t *testing.T) {
 	testcases := []struct {
+		desc      string
 		timestamp int64
 		expected  bool
 	}{
 		{
+			desc:      "success",
 			timestamp: time.Now().Unix(),
 			expected:  true,
 		},
 		{
+			desc:      "fail: invalid past",
 			timestamp: time.Now().AddDate(0, 0, -2).Unix(),
 			expected:  false,
 		},
 		{
+			desc:      "fail: invalid future",
 			timestamp: time.Now().AddDate(0, 0, 2).Unix(),
 			expected:  false,
 		},
