@@ -83,17 +83,20 @@ func TestHandle(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*transformer)
 		input       *clienteventproto.GoalBatchEvent
 		expectedErr error
 	}{
-		"error: transform": {
+		{
+			desc:        "error: transform",
 			setup:       nil,
 			input:       &clienteventproto.GoalBatchEvent{UserId: "uid-0"},
 			expectedErr: nil,
 		},
-		"internal error": {
+		{
+			desc: "internal error",
 			setup: func(t *transformer) {
 				t.userClient.(*ucmock.MockClient).EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("internal error"))
@@ -111,7 +114,8 @@ func TestHandle(t *testing.T) {
 			},
 			expectedErr: errors.New("internal error"),
 		},
-		"user not found": {
+		{
+			desc: "user not found",
 			setup: func(t *transformer) {
 				t.userClient.(*ucmock.MockClient).EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.NotFound, "user: not found"))
@@ -129,7 +133,8 @@ func TestHandle(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(t *transformer) {
 				t.userClient.(*ucmock.MockClient).EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(
 					&userproto.GetUserResponse{User: &userproto.User{
@@ -155,8 +160,8 @@ func TestHandle(t *testing.T) {
 		},
 	}
 
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			tf := newTransformer(t, mockController)
 			if p.setup != nil {
 				p.setup(tf)
@@ -198,13 +203,15 @@ func TestTransform(t *testing.T) {
 	goalEventAny, err := ptypes.MarshalAny(goalEvent)
 	require.NoError(t, err)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*transformer)
 		input       *clienteventproto.GoalBatchEvent
 		expected    []*clienteventproto.Event
 		expectedErr error
 	}{
-		"no UserGoalEventsOverTags": {
+		{
+			desc:  "no UserGoalEventsOverTags",
 			setup: nil,
 			input: &clienteventproto.GoalBatchEvent{
 				UserId: "uid-0",
@@ -212,7 +219,8 @@ func TestTransform(t *testing.T) {
 			expected:    nil,
 			expectedErr: nil,
 		},
-		"fail: getUser": {
+		{
+			desc: "fail: getUser",
 			setup: func(t *transformer) {
 				t.userClient.(*ucmock.MockClient).EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("internal error"))
@@ -231,7 +239,8 @@ func TestTransform(t *testing.T) {
 			expected:    nil,
 			expectedErr: errors.New("internal error"),
 		},
-		"not found: getUser": {
+		{
+			desc: "not found: getUser",
 			setup: func(t *transformer) {
 				t.userClient.(*ucmock.MockClient).EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.NotFound, "user: not found"))
@@ -250,7 +259,8 @@ func TestTransform(t *testing.T) {
 			expected:    nil,
 			expectedErr: nil,
 		},
-		"tagged data not found": {
+		{
+			desc: "tagged data not found",
 			setup: func(t *transformer) {
 				t.userClient.(*ucmock.MockClient).EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(
 					&userproto.GetUserResponse{User: &userproto.User{
@@ -279,7 +289,8 @@ func TestTransform(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(t *transformer) {
 				t.userClient.(*ucmock.MockClient).EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(
 					&userproto.GetUserResponse{User: &userproto.User{
@@ -309,8 +320,8 @@ func TestTransform(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			tf := newTransformer(t, mockController)
 			if p.setup != nil {
 				p.setup(tf)

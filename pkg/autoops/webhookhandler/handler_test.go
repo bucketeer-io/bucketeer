@@ -53,27 +53,31 @@ func TestNewHandler(t *testing.T) {
 	defer mockController.Finish()
 	issuer := "test_issuer"
 	clientID := "test_client_id"
-	testcases := map[string]struct {
+	testcases := []struct {
+		desc       string
 		rawIDToken string
 		valid      bool
 	}{
-		"err: malformed jwt": {
+		{
+			desc:       "err: malformed jwt",
 			rawIDToken: "",
 			valid:      false,
 		},
-		"err: invalid jwt": {
+		{
+			desc:       "err: invalid jwt",
 			rawIDToken: "testdata/invalid-token",
 			valid:      false,
 		},
-		"success": {
+		{
+			desc:       "success",
 			rawIDToken: "testdata/valid-token",
 			valid:      true,
 		},
 	}
 	verifier, err := token.NewVerifier("testdata/valid-public.pem", issuer, clientID)
 	require.NoError(t, err)
-	for msg, p := range testcases {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range testcases {
+		t.Run(p.desc, func(t *testing.T) {
 			h, err := NewHandler(
 				mysqlmock.NewMockClient(mockController),
 				authclientmock.NewMockClient(mockController),
@@ -107,24 +111,28 @@ func TestServeHTTP(t *testing.T) {
 		webhookCryptoUtil: &dummyWebhookCryptoUtil{},
 		logger:            logger,
 	}
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		setup    func(*testing.T, *handler)
 		input    *http.Request
 		expected int
 	}{
-		"fail: bad params": {
+		{
+			desc: "fail: bad params",
 			input: httptest.NewRequest("POST",
 				"/hook?foo=bar",
 				nil),
 			expected: http.StatusBadRequest,
 		},
-		"fail: auth error": {
+		{
+			desc: "fail: auth error",
 			input: httptest.NewRequest("POST",
 				"/hook?auth=secret",
 				nil),
 			expected: http.StatusInternalServerError,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(t *testing.T, h *handler) {
 				h.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				h.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
@@ -141,8 +149,8 @@ func TestServeHTTP(t *testing.T) {
 		},
 	}
 
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			if p.setup != nil {
 				p.setup(t, h)
 			}
@@ -549,17 +557,19 @@ func TestAuthWebhook(t *testing.T) {
 	}
 	ctx := context.TODO()
 
-	testcases := map[string]struct {
+	testcases := []struct {
+		desc                 string
 		id                   string
 		environmentNamespace string
 	}{
-		"success": {
+		{
+			desc:                 "success",
 			id:                   "id-1",
 			environmentNamespace: "ns-1",
 		},
 	}
-	for msg, p := range testcases {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range testcases {
+		t.Run(p.desc, func(t *testing.T) {
 			ws := autoopsdomain.NewWebhookSecret(p.id, p.environmentNamespace)
 			encoded, err := json.Marshal(ws)
 			require.NoError(t, err)

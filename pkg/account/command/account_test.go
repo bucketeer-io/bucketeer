@@ -38,12 +38,14 @@ func TestHandle(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*accountCommandHandler)
 		input       Command
 		expectedErr error
 	}{
-		"CreateAccountCommand: success": {
+		{
+			desc: "CreateAccountCommand: success",
 			setup: func(h *accountCommandHandler) {
 				a, err := domain.NewAccount("email", accountproto.Account_VIEWER)
 				require.NoError(t, err)
@@ -53,7 +55,8 @@ func TestHandle(t *testing.T) {
 			input:       &accountproto.CreateAccountCommand{},
 			expectedErr: nil,
 		},
-		"ChangeAccountRoleCommand: success": {
+		{
+			desc: "ChangeAccountRoleCommand: success",
 			setup: func(h *accountCommandHandler) {
 				a, err := domain.NewAccount("email", accountproto.Account_VIEWER)
 				require.NoError(t, err)
@@ -63,7 +66,8 @@ func TestHandle(t *testing.T) {
 			input:       &accountproto.ChangeAccountRoleCommand{},
 			expectedErr: nil,
 		},
-		"EnableAccountCommand: success": {
+		{
+			desc: "EnableAccountCommand: success",
 			setup: func(h *accountCommandHandler) {
 				a, err := domain.NewAccount("email", accountproto.Account_VIEWER)
 				require.NoError(t, err)
@@ -73,7 +77,8 @@ func TestHandle(t *testing.T) {
 			input:       &accountproto.EnableAccountCommand{},
 			expectedErr: nil,
 		},
-		"DisableAccountCommand: success": {
+		{
+			desc: "DisableAccountCommand: success",
 			setup: func(h *accountCommandHandler) {
 				a, err := domain.NewAccount("email", accountproto.Account_VIEWER)
 				require.NoError(t, err)
@@ -83,18 +88,19 @@ func TestHandle(t *testing.T) {
 			input:       &accountproto.DisableAccountCommand{},
 			expectedErr: nil,
 		},
-		"ErrBadCommand": {
+		{
+			desc:        "ErrBadCommand",
 			input:       nil,
 			expectedErr: ErrBadCommand,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		h := newAccountCommandHandlerWithMock(t, mockController)
 		if p.setup != nil {
 			p.setup(h)
 		}
 		err := h.Handle(context.Background(), p.input)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 

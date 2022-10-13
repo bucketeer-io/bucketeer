@@ -79,12 +79,14 @@ func TestListEnvironments(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*targetStore)
 		expected    []*environmentproto.Environment
 		expectedErr error
 	}{
-		"enable": {
+		{
+			desc: "enable",
 			setup: func(ts *targetStore) {
 				ts.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListEnvironmentsResponse{Environments: []*environmentproto.Environment{
@@ -93,7 +95,8 @@ func TestListEnvironments(t *testing.T) {
 			},
 			expected: []*environmentproto.Environment{{Id: "ns0", Namespace: "ns0"}},
 		},
-		"list environments fails": {
+		{
+			desc: "list environments fails",
 			setup: func(ts *targetStore) {
 				ts.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.Unknown, "test"))
@@ -101,8 +104,8 @@ func TestListEnvironments(t *testing.T) {
 			expectedErr: status.Errorf(codes.Unknown, "test"),
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newTargetStoreWithMock(t, mockController)
 			p.setup(s)
 			actual, err := s.listEnvironments(context.Background())
@@ -119,13 +122,15 @@ func TestListAutoOpsRules(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*targetStore)
 		environmentNamespace string
 		expected             []*autoopsproto.AutoOpsRule
 		expectedErr          error
 	}{
-		"success": {
+		{
+			desc: "success",
 			setup: func(ts *targetStore) {
 				ts.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListAutoOpsRules(gomock.Any(), gomock.Any()).Return(
 					&autoopsproto.ListAutoOpsRulesResponse{AutoOpsRules: []*autoopsproto.AutoOpsRule{
@@ -138,7 +143,8 @@ func TestListAutoOpsRules(t *testing.T) {
 			},
 			expected: []*autoopsproto.AutoOpsRule{{Id: "id-0", FeatureId: "fid-0", Clauses: []*autoopsproto.Clause{}}},
 		},
-		"failure": {
+		{
+			desc: "failure",
 			setup: func(ts *targetStore) {
 				ts.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListAutoOpsRules(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.Unknown, "test"))
@@ -146,8 +152,8 @@ func TestListAutoOpsRules(t *testing.T) {
 			expectedErr: status.Errorf(codes.Unknown, "test"),
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newTargetStoreWithMock(t, mockController)
 			p.setup(s)
 			actual, err := s.listAutoOpsRules(context.Background(), p.environmentNamespace)
@@ -164,11 +170,13 @@ func TestRefreshEnvironments(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		setup    func(*targetStore)
 		expected []*environmentdomain.Environment
 	}{
-		"enable": {
+		{
+			desc: "enable",
 			setup: func(ts *targetStore) {
 				ts.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListEnvironmentsResponse{Environments: []*environmentproto.Environment{
@@ -182,8 +190,8 @@ func TestRefreshEnvironments(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newTargetStoreWithMock(t, mockController)
 			p.setup(s)
 			_ = s.refreshEnvironments(context.Background())
@@ -199,11 +207,13 @@ func TestRefreshAutoOpsRules(t *testing.T) {
 	defer mockController.Finish()
 
 	c1, c2, c3 := newOpsEventRateClauses(t)
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		setup    func(*targetStore)
 		expected []*autoopsdomain.AutoOpsRule
 	}{
-		"enable": {
+		{
+			desc: "enable",
 			setup: func(ts *targetStore) {
 				ts.environments.Store([]*environmentdomain.Environment{{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}}})
 				ts.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListAutoOpsRules(gomock.Any(), gomock.Any()).Return(
@@ -223,8 +233,8 @@ func TestRefreshAutoOpsRules(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newTargetStoreWithMock(t, mockController)
 			p.setup(s)
 			_ = s.refreshAutoOpsRules(context.Background())

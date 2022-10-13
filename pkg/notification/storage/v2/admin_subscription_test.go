@@ -40,12 +40,14 @@ func TestCreateAdminSubscription(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*adminSubscriptionStorage)
 		input       *domain.Subscription
 		expectedErr error
 	}{
-		"ErrAdminSubscriptionAlreadyExists": {
+		{
+			desc: "ErrAdminSubscriptionAlreadyExists",
 			setup: func(s *adminSubscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -56,7 +58,8 @@ func TestCreateAdminSubscription(t *testing.T) {
 			},
 			expectedErr: ErrAdminSubscriptionAlreadyExists,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminSubscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -68,7 +71,8 @@ func TestCreateAdminSubscription(t *testing.T) {
 			},
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminSubscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -80,8 +84,8 @@ func TestCreateAdminSubscription(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminSubscriptionStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -96,12 +100,14 @@ func TestUpdateAdminSubscription(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*adminSubscriptionStorage)
 		input       *domain.Subscription
 		expectedErr error
 	}{
-		"ErrAdminSubscriptionUnexpectedAffectedRows": {
+		{
+			desc: "ErrAdminSubscriptionUnexpectedAffectedRows",
 			setup: func(s *adminSubscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -114,7 +120,8 @@ func TestUpdateAdminSubscription(t *testing.T) {
 			},
 			expectedErr: ErrAdminSubscriptionUnexpectedAffectedRows,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminSubscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -126,7 +133,8 @@ func TestUpdateAdminSubscription(t *testing.T) {
 			},
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminSubscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
@@ -140,8 +148,8 @@ func TestUpdateAdminSubscription(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminSubscriptionStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -156,12 +164,14 @@ func TestDeleteAdminSubscription(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*adminSubscriptionStorage)
 		id          string
 		expectedErr error
 	}{
-		"ErrAdminSubscriptionUnexpectedAffectedRows": {
+		{
+			desc: "ErrAdminSubscriptionUnexpectedAffectedRows",
 			setup: func(s *adminSubscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -172,7 +182,8 @@ func TestDeleteAdminSubscription(t *testing.T) {
 			id:          "id-0",
 			expectedErr: ErrAdminSubscriptionUnexpectedAffectedRows,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminSubscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -182,7 +193,8 @@ func TestDeleteAdminSubscription(t *testing.T) {
 			id:          "id-0",
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminSubscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
@@ -194,8 +206,8 @@ func TestDeleteAdminSubscription(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminSubscriptionStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -210,12 +222,14 @@ func TestGetAdminSubscription(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*adminSubscriptionStorage)
 		id          string
 		expectedErr error
 	}{
-		"ErrAdminSubscriptionNotFound": {
+		{
+			desc: "ErrAdminSubscriptionNotFound",
 			setup: func(s *adminSubscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -226,7 +240,8 @@ func TestGetAdminSubscription(t *testing.T) {
 			id:          "id-0",
 			expectedErr: ErrAdminSubscriptionNotFound,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminSubscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -238,7 +253,8 @@ func TestGetAdminSubscription(t *testing.T) {
 			id:          "id-0",
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminSubscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -250,8 +266,8 @@ func TestGetAdminSubscription(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminSubscriptionStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -266,7 +282,8 @@ func TestListAdminSubscriptions(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		setup          func(*adminSubscriptionStorage)
 		whereParts     []mysql.WherePart
 		orders         []*mysql.Order
@@ -276,7 +293,8 @@ func TestListAdminSubscriptions(t *testing.T) {
 		expectedCursor int
 		expectedErr    error
 	}{
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminSubscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -290,7 +308,8 @@ func TestListAdminSubscriptions(t *testing.T) {
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminSubscriptionStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -318,8 +337,8 @@ func TestListAdminSubscriptions(t *testing.T) {
 			expectedErr:    nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminSubscriptionStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)

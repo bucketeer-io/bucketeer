@@ -40,18 +40,21 @@ func TestExecute(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*autoOpsExecutor)
 		expectedErr error
 	}{
-		"error: ExecuteAutoOps fails": {
+		{
+			desc: "error: ExecuteAutoOps fails",
 			setup: func(e *autoOpsExecutor) {
 				e.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ExecuteAutoOps(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.Internal, "internal error"))
 			},
 			expectedErr: status.Errorf(codes.Internal, "internal error"),
 		},
-		"success: AlreadyTriggered: true": {
+		{
+			desc: "success: AlreadyTriggered: true",
 			setup: func(e *autoOpsExecutor) {
 				e.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ExecuteAutoOps(gomock.Any(), gomock.Any()).Return(
 					&autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true},
@@ -60,7 +63,8 @@ func TestExecute(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: AlreadyTriggered: false": {
+		{
+			desc: "success: AlreadyTriggered: false",
 			setup: func(e *autoOpsExecutor) {
 				e.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ExecuteAutoOps(gomock.Any(), gomock.Any()).Return(
 					&autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: false},
@@ -70,8 +74,8 @@ func TestExecute(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			e := newNewAutoOpsExecutor(t, mockController)
 			if p.setup != nil {
 				p.setup(e)

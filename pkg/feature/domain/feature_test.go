@@ -265,10 +265,12 @@ func TestAddVariation(t *testing.T) {
 		}
 		return f
 	}
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc  string
 		input string
 	}{
-		"Add D": {
+		{
+			desc:  "Add D",
 			input: "variation-D",
 		},
 	}
@@ -1551,12 +1553,14 @@ func TestIsStale(t *testing.T) {
 	require.NoError(t, err)
 	t3, err := time.Parse(layout, "2014-04-01 0:00:00 +0000 UTC")
 	require.NoError(t, err)
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		feature  *Feature
 		input    time.Time
 		expected bool
 	}{
-		"false": {
+		{
+			desc: "false",
 			feature: &Feature{Feature: &proto.Feature{
 				LastUsedInfo: &proto.FeatureLastUsedInfo{
 					LastUsedAt: t1.Unix(),
@@ -1565,7 +1569,8 @@ func TestIsStale(t *testing.T) {
 			input:    t2,
 			expected: false,
 		},
-		"true": {
+		{
+			desc: "true",
 			feature: &Feature{Feature: &proto.Feature{
 				LastUsedInfo: &proto.FeatureLastUsedInfo{
 					LastUsedAt: t1.Unix(),
@@ -1575,8 +1580,8 @@ func TestIsStale(t *testing.T) {
 			expected: true,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			assert.Equal(t, p.expected, p.feature.IsStale(p.input))
 		})
 	}
@@ -1584,59 +1589,69 @@ func TestIsStale(t *testing.T) {
 
 func TestValidateVariation(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc          string
 		variationType feature.Feature_VariationType
 		value         string
 		expected      error
 	}{
-		"invalid bool": {
+		{
+			desc:          "invalid bool",
 			variationType: feature.Feature_BOOLEAN,
 			value:         "hoge",
 			expected:      errVariationTypeUnmatched,
 		},
-		"invalid number": {
+		{
+			desc:          "invalid number",
 			variationType: feature.Feature_NUMBER,
 			value:         `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
 			expected:      errVariationTypeUnmatched,
 		},
-		"invalid json": {
+		{
+			desc:          "invalid json",
 			variationType: feature.Feature_JSON,
 			value:         "true",
 			expected:      errVariationTypeUnmatched,
 		},
-		"valid bool": {
+		{
+			desc:          "valid bool",
 			variationType: feature.Feature_BOOLEAN,
 			value:         "true",
 			expected:      nil,
 		},
-		"valid number float": {
+		{
+			desc:          "valid number float",
 			variationType: feature.Feature_NUMBER,
 			value:         "1.23",
 			expected:      nil,
 		},
-		"valid number int": {
+		{
+			desc:          "valid number int",
 			variationType: feature.Feature_NUMBER,
 			value:         "123",
 			expected:      nil,
 		},
-		"valid json": {
+		{
+			desc:          "valid json",
 			variationType: feature.Feature_JSON,
 			value:         `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
 			expected:      nil,
 		},
-		"valid json array": {
+		{
+			desc:          "valid json array",
 			variationType: feature.Feature_JSON,
 			value:         `[{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}]`,
 			expected:      nil,
 		},
-		"valid string": {
+		{
+			desc:          "valid string",
 			variationType: feature.Feature_STRING,
 			value:         `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
 			expected:      nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			assert.Equal(t, p.expected, validateVariation(p.variationType, p.value))
 		})
 	}

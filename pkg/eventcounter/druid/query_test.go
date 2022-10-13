@@ -37,13 +37,15 @@ func TestQuerySegmentMetadata(t *testing.T) {
 	t2, err := time.Parse(layout, "2014-01-18 23:02:03 +0000 UTC")
 	require.NoError(t, err)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc            string
 		inputDatasource string
 		inputStartAt    time.Time
 		inputEndAt      time.Time
 		expected        *godruid.QuerySegmentMetadata
 	}{
-		"success": {
+		{
+			desc:            "success",
 			inputDatasource: "ds",
 			inputStartAt:    t1,
 			inputEndAt:      t2,
@@ -55,8 +57,8 @@ func TestQuerySegmentMetadata(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := querySegmentMetadata(p.inputDatasource, p.inputStartAt, p.inputEndAt)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -73,7 +75,8 @@ func TestQueryGoalGroupBy(t *testing.T) {
 	t2, err := time.Parse(layout, "2014-01-18 23:02:03 +0000 UTC")
 	require.NoError(t, err)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                      string
 		inputDatasource           string
 		inputStartAt              time.Time
 		inputEndAt                time.Time
@@ -86,7 +89,8 @@ func TestQueryGoalGroupBy(t *testing.T) {
 		inputFilters              []*ecproto.Filter
 		expected                  *godruid.QueryGroupBy
 	}{
-		"no feature, no segments": {
+		{
+			desc:                      "no feature, no segments",
 			inputDatasource:           "ds",
 			inputStartAt:              t1,
 			inputEndAt:                t2,
@@ -127,7 +131,8 @@ func TestQueryGoalGroupBy(t *testing.T) {
 				},
 			},
 		},
-		"no feature, segments": {
+		{
+			desc:                      "no feature, segments",
 			inputDatasource:           "ds",
 			inputStartAt:              t1,
 			inputEndAt:                t2,
@@ -177,7 +182,8 @@ func TestQueryGoalGroupBy(t *testing.T) {
 				},
 			},
 		},
-		"feature, no segments": {
+		{
+			desc:                      "feature, no segments",
 			inputDatasource:           "ds",
 			inputStartAt:              t1,
 			inputEndAt:                t2,
@@ -236,7 +242,8 @@ func TestQueryGoalGroupBy(t *testing.T) {
 				},
 			},
 		},
-		"feature, segments": {
+		{
+			desc:                      "feature, segments",
 			inputDatasource:           "ds",
 			inputStartAt:              t1,
 			inputEndAt:                t2,
@@ -312,7 +319,8 @@ func TestQueryGoalGroupBy(t *testing.T) {
 				},
 			},
 		},
-		"feature, reason, segments": {
+		{
+			desc:                      "feature, reason, segments",
 			inputDatasource:           "ds",
 			inputStartAt:              t1,
 			inputEndAt:                t2,
@@ -390,8 +398,8 @@ func TestQueryGoalGroupBy(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := queryGoalGroupBy(
 				p.inputDatasource,
 				p.inputStartAt,
@@ -418,7 +426,8 @@ func TestQueryEvaluationGroupBy(t *testing.T) {
 	t2, err := time.Parse(layout, "2014-01-18 23:02:03 +0000 UTC")
 	require.NoError(t, err)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                      string
 		inputDatasource           string
 		inputStartAt              time.Time
 		inputEndAt                time.Time
@@ -431,7 +440,8 @@ func TestQueryEvaluationGroupBy(t *testing.T) {
 		inputFilters              []*ecproto.Filter
 		expected                  *godruid.QueryGroupBy
 	}{
-		"feature, no segments": {
+		{
+			desc:                      "feature, no segments",
 			inputDatasource:           "ds",
 			inputStartAt:              t1,
 			inputEndAt:                t2,
@@ -461,7 +471,8 @@ func TestQueryEvaluationGroupBy(t *testing.T) {
 				},
 			},
 		},
-		"feature, segments": {
+		{
+			desc:                      "feature, segments",
 			inputDatasource:           "ds",
 			inputStartAt:              t1,
 			inputEndAt:                t2,
@@ -503,7 +514,8 @@ func TestQueryEvaluationGroupBy(t *testing.T) {
 				},
 			},
 		},
-		"feature, reason, segments": {
+		{
+			desc:                      "feature, reason, segments",
 			inputDatasource:           "ds",
 			inputStartAt:              t1,
 			inputEndAt:                t2,
@@ -548,8 +560,8 @@ func TestQueryEvaluationGroupBy(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := queryEvaluationGroupBy(
 				p.inputDatasource,
 				p.inputStartAt,
@@ -575,7 +587,8 @@ func TestQueryUserGroupBy(t *testing.T) {
 	require.NoError(t, err)
 	t2, err := time.Parse(layout, "2014-01-18 23:02:03 +0000 UTC")
 	require.NoError(t, err)
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                      string
 		inputDatasource           string
 		inputStartAt              time.Time
 		inputEndAt                time.Time
@@ -583,7 +596,8 @@ func TestQueryUserGroupBy(t *testing.T) {
 		inputFilters              []*ecproto.Filter
 		expected                  *godruid.QueryGroupBy
 	}{
-		"success": {
+		{
+			desc:                      "success",
 			inputDatasource:           "ds",
 			inputStartAt:              t1,
 			inputEndAt:                t2,
@@ -617,8 +631,8 @@ func TestQueryUserGroupBy(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := queryUserGroupBy(
 				p.inputDatasource,
 				p.inputEnvironmentNamespace,
@@ -639,7 +653,8 @@ func TestQueryEvaluationTimeseries(t *testing.T) {
 	require.NoError(t, err)
 	t2, err := time.Parse(layout, "2014-01-18 23:02:03 +0000 UTC")
 	require.NoError(t, err)
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                      string
 		inputDatasource           string
 		inputStartAt              time.Time
 		inputEndAt                time.Time
@@ -649,7 +664,8 @@ func TestQueryEvaluationTimeseries(t *testing.T) {
 		inputVariationID          string
 		expected                  *godruid.QueryTimeseries
 	}{
-		"success": {
+		{
+			desc:                      "success",
 			inputDatasource:           "ds",
 			inputStartAt:              t1,
 			inputEndAt:                t2,
@@ -676,8 +692,8 @@ func TestQueryEvaluationTimeseries(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := queryEvaluationTimeseries(
 				p.inputDatasource,
 				p.inputStartAt,

@@ -35,11 +35,13 @@ func TestCreateNotification(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*testing.T, *featureWatcher)
 		expectedErr error
 	}{
-		"no featres": {
+		{
+			desc: "no featres",
 			setup: func(t *testing.T, w *featureWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
@@ -54,7 +56,8 @@ func TestCreateNotification(t *testing.T) {
 					}, nil)
 			},
 		},
-		"no stale featres": {
+		{
+			desc: "no stale featres",
 			setup: func(t *testing.T, w *featureWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
@@ -76,7 +79,8 @@ func TestCreateNotification(t *testing.T) {
 					}, nil)
 			},
 		},
-		"stale exists": {
+		{
+			desc: "stale exists",
 			setup: func(t *testing.T, w *featureWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
@@ -108,8 +112,8 @@ func TestCreateNotification(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			w := newFeatureWatcherWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(t, w)

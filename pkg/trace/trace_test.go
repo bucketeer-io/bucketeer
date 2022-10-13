@@ -24,12 +24,14 @@ import (
 func TestSampler(t *testing.T) {
 	t.Parallel()
 	filteringSpanName := "span-name"
-	testcases := map[string]struct {
+	testcases := []struct {
+		desc     string
 		sampler  trace.Sampler
 		name     string
 		expected bool
 	}{
-		"false: filteringSpanName NeverSample": {
+		{
+			desc: "false: filteringSpanName NeverSample",
 			sampler: NewSampler(
 				WithDefaultProbability(1.0),
 				WithFilteringSampler(filteringSpanName, trace.NeverSample()),
@@ -37,7 +39,8 @@ func TestSampler(t *testing.T) {
 			name:     filteringSpanName,
 			expected: false,
 		},
-		"false: filteringSpanName Probability=0.0": {
+		{
+			desc: "false: filteringSpanName Probability=0.0",
 			sampler: NewSampler(
 				WithDefaultProbability(1.0),
 				WithFilteringSampler(filteringSpanName, trace.ProbabilitySampler(0.0)),
@@ -45,7 +48,8 @@ func TestSampler(t *testing.T) {
 			name:     filteringSpanName,
 			expected: false,
 		},
-		"true: filteringSpanName Probability=1.0": {
+		{
+			desc: "true: filteringSpanName Probability=1.0",
 			sampler: NewSampler(
 				WithDefaultProbability(0.0),
 				WithFilteringSampler(filteringSpanName, trace.ProbabilitySampler(1.0)),
@@ -53,7 +57,8 @@ func TestSampler(t *testing.T) {
 			name:     filteringSpanName,
 			expected: true,
 		},
-		"false: default Probability=0.0": {
+		{
+			desc: "false: default Probability=0.0",
 			sampler: NewSampler(
 				WithDefaultProbability(0.0),
 				WithFilteringSampler(filteringSpanName, trace.ProbabilitySampler(1.0)),
@@ -61,7 +66,8 @@ func TestSampler(t *testing.T) {
 			name:     "default",
 			expected: false,
 		},
-		"true: default Probability=1.0": {
+		{
+			desc: "true: default Probability=1.0",
 			sampler: NewSampler(
 				WithDefaultProbability(1.0),
 				WithFilteringSampler(filteringSpanName, trace.ProbabilitySampler(0.0)),
@@ -70,8 +76,8 @@ func TestSampler(t *testing.T) {
 			expected: true,
 		},
 	}
-	for msg, tc := range testcases {
-		t.Run(msg, func(t *testing.T) {
+	for _, tc := range testcases {
+		t.Run(tc.desc, func(t *testing.T) {
 			decision := tc.sampler(trace.SamplingParameters{
 				Name: tc.name,
 			})

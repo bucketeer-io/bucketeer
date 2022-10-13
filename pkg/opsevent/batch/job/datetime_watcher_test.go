@@ -57,11 +57,13 @@ func TestRunDatetimeWatcher(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*datetimeWatcher)
 		expectedErr error
 	}{
-		"success: assess: false": {
+		{
+			desc: "success: assess: false",
 			setup: func(w *datetimeWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{
@@ -83,7 +85,8 @@ func TestRunDatetimeWatcher(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: assess: true": {
+		{
+			desc: "success: assess: true",
 			setup: func(w *datetimeWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{
@@ -107,8 +110,8 @@ func TestRunDatetimeWatcher(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			w := newNewDatetimeWatcherWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(w)
@@ -123,19 +126,22 @@ func TestDatetimeWatcherAssessRule(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		datetimeClause *autoopsproto.DatetimeClause
 		nowTimestamp   int64
 		expected       bool
 	}{
-		"false": {
+		{
+			desc: "false",
 			datetimeClause: &autoopsproto.DatetimeClause{
 				Time: 1000000001,
 			},
 			nowTimestamp: 1000000000,
 			expected:     false,
 		},
-		"true": {
+		{
+			desc: "true",
 			datetimeClause: &autoopsproto.DatetimeClause{
 				Time: 1000000000,
 			},
@@ -143,8 +149,8 @@ func TestDatetimeWatcherAssessRule(t *testing.T) {
 			expected:     true,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			w := newNewDatetimeWatcherWithMock(t, mockController)
 			actual := w.assessRule(p.datetimeClause, p.nowTimestamp)
 			assert.Equal(t, p.expected, actual)

@@ -24,22 +24,26 @@ import (
 
 func TestXGetRequestIDFromIncomingContext(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		ctx      context.Context
 		expected string
 	}{
-		"metadata doesn't exist": {
+		{
+			desc:     "metadata doesn't exist",
 			ctx:      context.Background(),
 			expected: "",
 		},
-		"xRequestIDKey doesn't exist": {
+		{
+			desc: "xRequestIDKey doesn't exist",
 			ctx: gmetadata.NewIncomingContext(
 				context.Background(),
 				gmetadata.Pairs(),
 			),
 			expected: "",
 		},
-		"success": {
+		{
+			desc: "success",
 			ctx: gmetadata.NewIncomingContext(
 				context.Background(),
 				gmetadata.Pairs(xRequestIDKey, "request-id-1"),
@@ -48,8 +52,8 @@ func TestXGetRequestIDFromIncomingContext(t *testing.T) {
 		},
 	}
 
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := GetXRequestIDFromIncomingContext(p.ctx)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -58,22 +62,26 @@ func TestXGetRequestIDFromIncomingContext(t *testing.T) {
 
 func TestXGetRequestIDFromOutgoingContext(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		ctx      context.Context
 		expected string
 	}{
-		"metadata doesn't exist": {
+		{
+			desc:     "metadata doesn't exist",
 			ctx:      context.Background(),
 			expected: "",
 		},
-		"xRequestIDKey doesn't exist": {
+		{
+			desc: "xRequestIDKey doesn't exist",
 			ctx: gmetadata.NewOutgoingContext(
 				context.Background(),
 				gmetadata.Pairs(),
 			),
 			expected: "",
 		},
-		"success": {
+		{
+			desc: "success",
 			ctx: gmetadata.NewOutgoingContext(
 				context.Background(),
 				gmetadata.Pairs(xRequestIDKey, "request-id-1"),
@@ -82,8 +90,8 @@ func TestXGetRequestIDFromOutgoingContext(t *testing.T) {
 		},
 	}
 
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := GetXRequestIDFromOutgoingContext(p.ctx)
 			assert.Equal(t, p.expected, actual)
 		})

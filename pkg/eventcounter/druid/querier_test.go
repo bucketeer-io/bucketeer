@@ -26,12 +26,14 @@ import (
 func TestConvToEnvSegments(t *testing.T) {
 	t.Parallel()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		inputNamespace string
 		inputSegments  []string
 		expected       []string
 	}{
-		"empty environment namespace": {
+		{
+			desc:           "empty environment namespace",
 			inputNamespace: "",
 			inputSegments: []string{
 				"tag",
@@ -42,7 +44,8 @@ func TestConvToEnvSegments(t *testing.T) {
 				"user.data.sgmt",
 			},
 		},
-		"non empty environment namespace": {
+		{
+			desc:           "non empty environment namespace",
 			inputNamespace: "ns",
 			inputSegments: []string{
 				"tag",
@@ -54,8 +57,8 @@ func TestConvToEnvSegments(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := convToEnvSegments(p.inputNamespace, p.inputSegments)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -65,12 +68,14 @@ func TestConvToEnvSegments(t *testing.T) {
 func TestConvToEnvFilters(t *testing.T) {
 	t.Parallel()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		inputNamespace string
 		inputFilters   []*ecproto.Filter
 		expected       []*ecproto.Filter
 	}{
-		"empty environment namespace": {
+		{
+			desc:           "empty environment namespace",
 			inputNamespace: "",
 			inputFilters: []*ecproto.Filter{
 				{Key: "tag", Operator: ecproto.Filter_EQUALS, Values: []string{"t0"}},
@@ -81,7 +86,8 @@ func TestConvToEnvFilters(t *testing.T) {
 				{Key: "user.data.sgmt", Operator: ecproto.Filter_EQUALS, Values: []string{"d0"}},
 			},
 		},
-		"non empty environment namespace": {
+		{
+			desc:           "non empty environment namespace",
 			inputNamespace: "ns",
 			inputFilters: []*ecproto.Filter{
 				{Key: "tag", Operator: ecproto.Filter_EQUALS, Values: []string{"t0"}},
@@ -93,8 +99,8 @@ func TestConvToEnvFilters(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := convToEnvFilters(p.inputNamespace, p.inputFilters)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -104,21 +110,24 @@ func TestConvToEnvFilters(t *testing.T) {
 func TestUserDataPattern(t *testing.T) {
 	t.Parallel()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		inputNamespace string
 		expected       string
 	}{
-		"empty environment namespace": {
+		{
+			desc:           "empty environment namespace",
 			inputNamespace: "",
 			expected:       `^user\.data\.(.*)$`,
 		},
-		"non empty environment namespace": {
+		{
+			desc:           "non empty environment namespace",
 			inputNamespace: "ns",
 			expected:       `^ns\.user\.data\.(.*)$`,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := userDataPattern(p.inputNamespace)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -128,24 +137,27 @@ func TestUserDataPattern(t *testing.T) {
 func TestRemoveEnvFromUserData(t *testing.T) {
 	t.Parallel()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		inputKey    string
 		inputRegexp *regexp.Regexp
 		expected    string
 	}{
-		"empty environment namespace": {
+		{
+			desc:        "empty environment namespace",
 			inputKey:    "user.data.attr",
 			inputRegexp: regexp.MustCompile(userDataPattern("")),
 			expected:    "user.data.attr",
 		},
-		"non empty environment namespace": {
+		{
+			desc:        "non empty environment namespace",
 			inputKey:    "ns.user.data.attr",
 			inputRegexp: regexp.MustCompile(userDataPattern("ns")),
 			expected:    "user.data.attr",
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := removeEnvFromUserData(p.inputKey, p.inputRegexp)
 			assert.Equal(t, p.expected, actual)
 		})

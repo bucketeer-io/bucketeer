@@ -242,18 +242,21 @@ func TestRemoveDuplicated(t *testing.T) {
 
 func TestStartExperiment(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]*struct {
+	patterns := []struct {
+		desc        string
 		input       *Experiment
 		expectedErr error
 	}{
-		"error not waiting": {
+		{
+			desc: "error not waiting",
 			input: &Experiment{&experimentproto.Experiment{
 				Id:     "eID",
 				Status: experimentproto.Experiment_RUNNING,
 			}},
 			expectedErr: ErrExperimentStatusInvalid,
 		},
-		"error before start at": {
+		{
+			desc: "error before start at",
 			input: &Experiment{&experimentproto.Experiment{
 				Id:      "eID",
 				Status:  experimentproto.Experiment_WAITING,
@@ -261,7 +264,8 @@ func TestStartExperiment(t *testing.T) {
 			}},
 			expectedErr: ErrExperimentBeforeStart,
 		},
-		"success": {
+		{
+			desc: "success",
 			input: &Experiment{&experimentproto.Experiment{
 				Id:      "eID",
 				Status:  experimentproto.Experiment_WAITING,
@@ -270,8 +274,8 @@ func TestStartExperiment(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			err := p.input.Start()
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -285,18 +289,21 @@ func TestStartExperiment(t *testing.T) {
 
 func TestFinishExperiment(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]*struct {
+	patterns := []struct {
+		desc        string
 		input       *Experiment
 		expectedErr error
 	}{
-		"error invalid status": {
+		{
+			desc: "error invalid status",
 			input: &Experiment{&experimentproto.Experiment{
 				Id:     "eID",
 				Status: experimentproto.Experiment_STOPPED,
 			}},
 			expectedErr: ErrExperimentStatusInvalid,
 		},
-		"error before stop at": {
+		{
+			desc: "error before stop at",
 			input: &Experiment{&experimentproto.Experiment{
 				Id:     "eID",
 				Status: experimentproto.Experiment_RUNNING,
@@ -304,7 +311,8 @@ func TestFinishExperiment(t *testing.T) {
 			}},
 			expectedErr: ErrExperimentBeforeStop,
 		},
-		"success: waiting": {
+		{
+			desc: "success: waiting",
 			input: &Experiment{&experimentproto.Experiment{
 				Id:     "eID",
 				Status: experimentproto.Experiment_WAITING,
@@ -312,7 +320,8 @@ func TestFinishExperiment(t *testing.T) {
 			}},
 			expectedErr: nil,
 		},
-		"success: running": {
+		{
+			desc: "success: running",
 			input: &Experiment{&experimentproto.Experiment{
 				Id:     "eID",
 				Status: experimentproto.Experiment_RUNNING,
@@ -321,8 +330,8 @@ func TestFinishExperiment(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			err := p.input.Finish()
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -406,12 +415,14 @@ func TestIsNotFinished(t *testing.T) {
 	require.NoError(t, err)
 	t4, err := time.Parse(layout, "2014-01-20 23:02:03 +0000 UTC")
 	require.NoError(t, err)
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc       string
 		experiment *Experiment
 		input      time.Time
 		expected   bool
 	}{
-		"before StartAt": {
+		{
+			desc: "before StartAt",
 			experiment: &Experiment{Experiment: &experimentproto.Experiment{
 				Deleted:   false,
 				StartAt:   t2.Unix(),
@@ -421,7 +432,8 @@ func TestIsNotFinished(t *testing.T) {
 			input:    t1,
 			expected: true,
 		},
-		"running": {
+		{
+			desc: "running",
 			experiment: &Experiment{Experiment: &experimentproto.Experiment{
 				Deleted:   false,
 				StartAt:   t1.Unix(),
@@ -431,7 +443,8 @@ func TestIsNotFinished(t *testing.T) {
 			input:    t2,
 			expected: true,
 		},
-		"after StoppedAt, before StoppAt": {
+		{
+			desc: "after StoppedAt, before StoppAt",
 			experiment: &Experiment{Experiment: &experimentproto.Experiment{
 				Deleted:   false,
 				StartAt:   t1.Unix(),
@@ -441,7 +454,8 @@ func TestIsNotFinished(t *testing.T) {
 			input:    t3,
 			expected: false,
 		},
-		"after StopAt and StoppedAt": {
+		{
+			desc: "after StopAt and StoppedAt",
 			experiment: &Experiment{Experiment: &experimentproto.Experiment{
 				Deleted:   false,
 				StartAt:   t1.Unix(),
@@ -451,7 +465,8 @@ func TestIsNotFinished(t *testing.T) {
 			input:    t4,
 			expected: false,
 		},
-		"Deleted": {
+		{
+			desc: "Deleted",
 			experiment: &Experiment{Experiment: &experimentproto.Experiment{
 				Deleted:   true,
 				StartAt:   t1.Unix(),
@@ -462,8 +477,8 @@ func TestIsNotFinished(t *testing.T) {
 			expected: false,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			assert.Equal(t, p.expected, p.experiment.IsNotFinished(p.input))
 		})
 	}

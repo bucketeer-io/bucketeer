@@ -24,25 +24,29 @@ import (
 
 func TestConvertPostgresError(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		input    error
 		expected error
 	}{
-		"nil": {
+		{
+			desc:     "nil",
 			input:    nil,
 			expected: nil,
 		},
-		"mysql error: ErrDuplicateEntry": {
+		{
+			desc:     "mysql error: ErrDuplicateEntry",
 			input:    &pq.Error{Code: uniqueViolation},
 			expected: ErrDuplicateEntry,
 		},
-		"non mysql error": {
+		{
+			desc:     "non mysql error",
 			input:    errors.New("non postgres error"),
 			expected: errors.New("non postgres error"),
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := convertPostgresError(p.input)
 			assert.Equal(t, p.expected, actual)
 		})

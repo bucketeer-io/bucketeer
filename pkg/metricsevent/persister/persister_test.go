@@ -83,11 +83,13 @@ func TestUnmarshalMessage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*testing.T) (*clientevent.MetricsEvent, *puller.Message)
 		expectedErr bool
 	}{
-		"getEvaluationLatencyMetricsEvent: success": {
+		{
+			desc: "getEvaluationLatencyMetricsEvent: success",
 			setup: func(t *testing.T) (*clientevent.MetricsEvent, *puller.Message) {
 				e, err := ptypes.MarshalAny(&clientevent.GetEvaluationLatencyMetricsEvent{
 					Labels:   map[string]string{"tag": "test", "status": "success"},
@@ -107,7 +109,8 @@ func TestUnmarshalMessage(t *testing.T) {
 			},
 			expectedErr: false,
 		},
-		"getEvaluationLatencyMetricsEvent: invalid message data": {
+		{
+			desc: "getEvaluationLatencyMetricsEvent: invalid message data",
 			setup: func(t *testing.T) (*clientevent.MetricsEvent, *puller.Message) {
 				me := &clientevent.GoalEvent{}
 				data, err := proto.Marshal(me)
@@ -116,7 +119,8 @@ func TestUnmarshalMessage(t *testing.T) {
 			},
 			expectedErr: true,
 		},
-		"getEvaluationLatencyMetricsEvent: invalid metrics event": {
+		{
+			desc: "getEvaluationLatencyMetricsEvent: invalid metrics event",
 			setup: func(t *testing.T) (*clientevent.MetricsEvent, *puller.Message) {
 				me := &clientevent.GoalEvent{}
 				any, err := ptypes.MarshalAny(me)
@@ -129,8 +133,8 @@ func TestUnmarshalMessage(t *testing.T) {
 			expectedErr: true,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			pst := newPersister(t, mockController)
 			expected, input := p.setup(t)
 			e, err := pst.unmarshalMessage(input)
@@ -161,11 +165,13 @@ func TestSaveMetrics(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*testing.T, *persister) *clientevent.MetricsEvent
 		expectedErr error
 	}{
-		"error: unknown event": {
+		{
+			desc: "error: unknown event",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
 				e, err := ptypes.MarshalAny(&clientevent.GoalEvent{})
 				require.NoError(t, err)
@@ -176,7 +182,8 @@ func TestSaveMetrics(t *testing.T) {
 			},
 			expectedErr: ErrUnknownEvent,
 		},
-		"getEvaluationLatencyMetricsEvent: error: invalid duration": {
+		{
+			desc: "getEvaluationLatencyMetricsEvent: error: invalid duration",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
 				e, err := ptypes.MarshalAny(&clientevent.GetEvaluationLatencyMetricsEvent{
 					Labels:   map[string]string{"tag": "test", "state": "FULL"},
@@ -190,7 +197,8 @@ func TestSaveMetrics(t *testing.T) {
 			},
 			expectedErr: ErrInvalidDuration,
 		},
-		"getEvaluationLatencyMetricsEvent: success": {
+		{
+			desc: "getEvaluationLatencyMetricsEvent: success",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
 				pst.storage.(*storagemock.MockStorage).EXPECT().SaveGetEvaluationLatencyMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.GetEvaluationLatencyMetricsEvent{
@@ -205,7 +213,8 @@ func TestSaveMetrics(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"getEvaluationSizeMetricsEvent: success": {
+		{
+			desc: "getEvaluationSizeMetricsEvent: success",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
 				pst.storage.(*storagemock.MockStorage).EXPECT().SaveGetEvaluationSizeMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.GetEvaluationSizeMetricsEvent{
@@ -220,7 +229,8 @@ func TestSaveMetrics(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"TimeoutErrorCountMetricsEvent: success": {
+		{
+			desc: "TimeoutErrorCountMetricsEvent: success",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
 				pst.storage.(*storagemock.MockStorage).EXPECT().SaveTimeoutErrorCountMetricsEvent(gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.TimeoutErrorCountMetricsEvent{
@@ -234,7 +244,8 @@ func TestSaveMetrics(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"InternalErrorCountMetricsEvent: success": {
+		{
+			desc: "InternalErrorCountMetricsEvent: success",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
 				pst.storage.(*storagemock.MockStorage).EXPECT().SaveInternalErrorCountMetricsEvent(gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.InternalErrorCountMetricsEvent{
@@ -249,8 +260,8 @@ func TestSaveMetrics(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			pst := newPersister(t, mockController)
 			input := p.setup(t, pst)
 			err := pst.saveMetrics(input)

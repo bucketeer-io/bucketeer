@@ -66,26 +66,30 @@ func TestCreatePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*PushService)
 		req         *pushproto.CreatePushRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			req: &pushproto.CreatePushRequest{
 				Command: nil,
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrFCMAPIKeyRequired": {
+		{
+			desc:  "err: ErrFCMAPIKeyRequired",
 			setup: nil,
 			req: &pushproto.CreatePushRequest{
 				Command: &pushproto.CreatePushCommand{},
 			},
 			expectedErr: localizedError(statusFCMAPIKeyRequired, locale.JaJP),
 		},
-		"err: ErrTagsRequired": {
+		{
+			desc:  "err: ErrTagsRequired",
 			setup: nil,
 			req: &pushproto.CreatePushRequest{
 				Command: &pushproto.CreatePushCommand{
@@ -94,7 +98,8 @@ func TestCreatePushMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusTagsRequired, locale.JaJP),
 		},
-		"err: ErrNameRequired": {
+		{
+			desc:  "err: ErrNameRequired",
 			setup: nil,
 			req: &pushproto.CreatePushRequest{
 				Command: &pushproto.CreatePushCommand{
@@ -104,7 +109,8 @@ func TestCreatePushMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNameRequired, locale.JaJP),
 		},
-		"err: ErrAlreadyExists": {
+		{
+			desc: "err: ErrAlreadyExists",
 			setup: func(s *PushService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -133,7 +139,8 @@ func TestCreatePushMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusAlreadyExists, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *PushService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -163,8 +170,8 @@ func TestCreatePushMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newPushServiceWithMock(t, mockController, nil)
 			if p.setup != nil {
@@ -181,43 +188,50 @@ func TestUpdatePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*PushService)
 		req         *pushproto.UpdatePushRequest
 		expectedErr error
 	}{
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			req:         &pushproto.UpdatePushRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc: "err: ErrNoCommand",
 			req: &pushproto.UpdatePushRequest{
 				Id: "key-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrTagsRequired: delete": {
+		{
+			desc: "err: ErrTagsRequired: delete",
 			req: &pushproto.UpdatePushRequest{
 				Id:                    "key-0",
 				DeletePushTagsCommand: &pushproto.DeletePushTagsCommand{Tags: []string{}},
 			},
 			expectedErr: localizedError(statusTagsRequired, locale.JaJP),
 		},
-		"err: ErrTagsRequired: add": {
+		{
+			desc: "err: ErrTagsRequired: add",
 			req: &pushproto.UpdatePushRequest{
 				Id:                 "key-0",
 				AddPushTagsCommand: &pushproto.AddPushTagsCommand{Tags: []string{}},
 			},
 			expectedErr: localizedError(statusTagsRequired, locale.JaJP),
 		},
-		"err: ErrNameRequired: add": {
+		{
+			desc: "err: ErrNameRequired: add",
 			req: &pushproto.UpdatePushRequest{
 				Id:                "key-0",
 				RenamePushCommand: &pushproto.RenamePushCommand{Name: ""},
 			},
 			expectedErr: localizedError(statusNameRequired, locale.JaJP),
 		},
-		"err: ErrNotFound": {
+		{
+			desc: "err: ErrNotFound",
 			setup: func(s *PushService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -242,7 +256,8 @@ func TestUpdatePushMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"success: rename": {
+		{
+			desc: "success: rename",
 			setup: func(s *PushService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -256,7 +271,8 @@ func TestUpdatePushMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: deletePushTags": {
+		{
+			desc: "success: deletePushTags",
 			setup: func(s *PushService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -270,7 +286,8 @@ func TestUpdatePushMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: addPushTags": {
+		{
+			desc: "success: addPushTags",
 			setup: func(s *PushService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -296,7 +313,8 @@ func TestUpdatePushMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *PushService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -325,8 +343,8 @@ func TestUpdatePushMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newPushServiceWithMock(t, mockController, nil)
 			if p.setup != nil {
@@ -343,22 +361,26 @@ func TestDeletePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*PushService)
 		req         *pushproto.DeletePushRequest
 		expectedErr error
 	}{
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			req:         &pushproto.DeletePushRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc: "err: ErrNoCommand",
 			req: &pushproto.DeletePushRequest{
 				Id: "key-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrNotFound": {
+		{
+			desc: "err: ErrNotFound",
 			setup: func(s *PushService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -372,7 +394,8 @@ func TestDeletePushMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *PushService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -387,8 +410,8 @@ func TestDeletePushMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newPushServiceWithMock(t, mockController, nil)
 			if p.setup != nil {
@@ -405,19 +428,22 @@ func TestListPushesMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*PushService)
 		input       *pushproto.ListPushesRequest
 		expected    *pushproto.ListPushesResponse
 		expectedErr error
 	}{
-		"err: ErrInvalidCursor": {
+		{
+			desc:        "err: ErrInvalidCursor",
 			setup:       nil,
 			input:       &pushproto.ListPushesRequest{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: localizedError(statusInvalidCursor, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *PushService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -427,7 +453,8 @@ func TestListPushesMySQL(t *testing.T) {
 			expected:    nil,
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *PushService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -447,8 +474,8 @@ func TestListPushesMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newPushServiceWithMock(t, mockController, storagetesting.NewInMemoryStorage())
 			if p.setup != nil {
 				p.setup(s)

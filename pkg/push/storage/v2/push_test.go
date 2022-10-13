@@ -40,13 +40,15 @@ func TestCreatePush(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*pushStorage)
 		input                *domain.Push
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrPushAlreadyExists": {
+		{
+			desc: "ErrPushAlreadyExists",
 			setup: func(s *pushStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -58,7 +60,8 @@ func TestCreatePush(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          ErrPushAlreadyExists,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *pushStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -71,7 +74,8 @@ func TestCreatePush(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *pushStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -84,8 +88,8 @@ func TestCreatePush(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newpushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -100,13 +104,15 @@ func TestUpdatePush(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*pushStorage)
 		input                *domain.Push
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrPushUnexpectedAffectedRows": {
+		{
+			desc: "ErrPushUnexpectedAffectedRows",
 			setup: func(s *pushStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -120,7 +126,8 @@ func TestUpdatePush(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          ErrPushUnexpectedAffectedRows,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *pushStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -133,7 +140,8 @@ func TestUpdatePush(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *pushStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
@@ -148,8 +156,8 @@ func TestUpdatePush(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newpushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -164,13 +172,15 @@ func TestGetPush(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*pushStorage)
 		id                   string
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrPushNotFound": {
+		{
+			desc: "ErrPushNotFound",
 			setup: func(s *pushStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -182,7 +192,8 @@ func TestGetPush(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          ErrPushNotFound,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *pushStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -195,7 +206,8 @@ func TestGetPush(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *pushStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -208,8 +220,8 @@ func TestGetPush(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newpushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -224,7 +236,8 @@ func TestListPushs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		setup          func(*pushStorage)
 		whereParts     []mysql.WherePart
 		orders         []*mysql.Order
@@ -234,7 +247,8 @@ func TestListPushs(t *testing.T) {
 		expectedCursor int
 		expectedErr    error
 	}{
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *pushStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -248,7 +262,8 @@ func TestListPushs(t *testing.T) {
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *pushStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -276,8 +291,8 @@ func TestListPushs(t *testing.T) {
 			expectedErr:    nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newpushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)

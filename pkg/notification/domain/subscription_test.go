@@ -61,13 +61,15 @@ func TestEnable(t *testing.T) {
 
 func TestAddSourceTypes(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		origin      *Subscription
 		input       []proto.Subscription_SourceType
 		expectedErr error
 		expected    []proto.Subscription_SourceType
 	}{
-		"success: one": {
+		{
+			desc: "success: one",
 			origin: &Subscription{&proto.Subscription{SourceTypes: []proto.Subscription_SourceType{
 				proto.Subscription_DOMAIN_EVENT_ACCOUNT,
 				proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
@@ -81,8 +83,8 @@ func TestAddSourceTypes(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			err := p.origin.AddSourceTypes(p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, p.origin.SourceTypes)

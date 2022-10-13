@@ -64,26 +64,30 @@ func TestGetEvaluationCountV2(t *testing.T) {
 	defer mockController.Finish()
 	now := time.Now()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*eventCounterService)
 		input       *ecproto.GetEvaluationCountV2Request
 		expected    *ecproto.GetEvaluationCountV2Response
 		expectedErr error
 	}{
-		"error: ErrStartAtRequired": {
+		{
+			desc: "error: ErrStartAtRequired",
 			input: &ecproto.GetEvaluationCountV2Request{
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
 		},
-		"error: ErrEndAtRequired": {
+		{
+			desc: "error: ErrEndAtRequired",
 			input: &ecproto.GetEvaluationCountV2Request{
 				EnvironmentNamespace: "ns0",
 				StartAt:              now.Add(-7 * 24 * time.Hour).Unix(),
 			},
 			expectedErr: localizedError(statusEndAtRequired, locale.JaJP),
 		},
-		"error: ErrStartAtIsAfterEndAt": {
+		{
+			desc: "error: ErrStartAtIsAfterEndAt",
 			input: &ecproto.GetEvaluationCountV2Request{
 				EnvironmentNamespace: "ns0",
 				StartAt:              now.Unix(),
@@ -91,7 +95,8 @@ func TestGetEvaluationCountV2(t *testing.T) {
 			},
 			expectedErr: localizedError(statusStartAtIsAfterEndAt, locale.JaJP),
 		},
-		"error: ErrFeatureIDRequired": {
+		{
+			desc: "error: ErrFeatureIDRequired",
 			input: &ecproto.GetEvaluationCountV2Request{
 				EnvironmentNamespace: "ns0",
 				StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
@@ -99,7 +104,8 @@ func TestGetEvaluationCountV2(t *testing.T) {
 			},
 			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
 		},
-		"success: one variation": {
+		{
+			desc: "success: one variation",
 			setup: func(s *eventCounterService) {
 				s.druidQuerier.(*dmock.MockQuerier).EXPECT().QueryEvaluationCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					&ecproto.Row{Cells: []*ecproto.Cell{
@@ -144,7 +150,8 @@ func TestGetEvaluationCountV2(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: all variations": {
+		{
+			desc: "success: all variations",
 			setup: func(s *eventCounterService) {
 				s.druidQuerier.(*dmock.MockQuerier).EXPECT().QueryEvaluationCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					&ecproto.Row{Cells: []*ecproto.Cell{
@@ -195,14 +202,14 @@ func TestGetEvaluationCountV2(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newEventCounterService(t, mockController)
 		if p.setup != nil {
 			p.setup(gs)
 		}
 		actual, err := gs.GetEvaluationCountV2(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
-		assert.Equal(t, p.expected, actual, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -211,7 +218,8 @@ func TestListExperiments(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*eventCounterService)
 		inputFeatureID       string
 		inputFeatureVersion  *wrappers.Int32Value
@@ -219,7 +227,8 @@ func TestListExperiments(t *testing.T) {
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"no error": {
+		{
+			desc: "no error",
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), &experimentproto.ListExperimentsRequest{
 					FeatureId:            "fid",
@@ -235,7 +244,8 @@ func TestListExperiments(t *testing.T) {
 			expected:             []*experimentproto.Experiment{},
 			expectedErr:          nil,
 		},
-		"error": {
+		{
+			desc: "error",
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), &experimentproto.ListExperimentsRequest{
 					FeatureId:            "fid",
@@ -252,8 +262,8 @@ func TestListExperiments(t *testing.T) {
 			expectedErr:          errors.New("test"),
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEventCounterService(t, mockController)
 			p.setup(s)
 			actual, err := s.listExperiments(context.Background(), p.inputFeatureID, p.inputFeatureVersion, p.environmentNamespace)
@@ -268,16 +278,19 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*eventCounterService)
 		input       *ecproto.GetExperimentResultRequest
 		expectedErr error
 	}{
-		"error: ErrExperimentIDRequired": {
+		{
+			desc:        "error: ErrExperimentIDRequired",
 			input:       &ecproto.GetExperimentResultRequest{EnvironmentNamespace: "ns0"},
 			expectedErr: localizedError(statusExperimentIDRequired, locale.JaJP),
 		},
-		"err: ErrNotFound": {
+		{
+			desc: "err: ErrNotFound",
 			setup: func(s *eventCounterService) {
 				s.mysqlExperimentResultStorage.(*v2ecsmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -289,7 +302,8 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"success: get the result from storage": {
+		{
+			desc: "success: get the result from storage",
 			setup: func(s *eventCounterService) {
 				s.mysqlExperimentResultStorage.(*v2ecsmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -302,13 +316,13 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newEventCounterService(t, mockController)
 		if p.setup != nil {
 			p.setup(gs)
 		}
 		actual, err := gs.GetExperimentResult(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		if err == nil {
 			assert.NotNil(t, actual)
 		}
@@ -320,17 +334,20 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*eventCounterService)
 		input       *ecproto.ListExperimentResultsRequest
 		expected    *ecproto.ListExperimentResultsResponse
 		expectedErr error
 	}{
-		"error: ErrFeatureIDRequired": {
+		{
+			desc:        "error: ErrFeatureIDRequired",
 			input:       &ecproto.ListExperimentResultsRequest{EnvironmentNamespace: "ns0"},
 			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
 		},
-		"err: ErrNotFound": {
+		{
+			desc: "err: ErrNotFound",
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
 					gomock.Any(), gomock.Any(),
@@ -343,7 +360,8 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			expected:    nil,
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
 					gomock.Any(), gomock.Any(),
@@ -357,7 +375,8 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			expected:    nil,
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success: no results": {
+		{
+			desc: "success: no results",
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
 					gomock.Any(), gomock.Any(),
@@ -388,7 +407,8 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: get results from storage": {
+		{
+			desc: "success: get results from storage",
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
 					gomock.Any(), gomock.Any(),
@@ -433,8 +453,8 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
@@ -452,20 +472,23 @@ func TestGetGoalCount(t *testing.T) {
 	defer mockController.Finish()
 	now := time.Now()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*eventCounterService)
 		input       *ecproto.GetGoalCountRequest
 		expected    *ecproto.GetGoalCountResponse
 		expectedErr error
 	}{
-		"error: ErrStartAtRequired": {
+		{
+			desc: "error: ErrStartAtRequired",
 			input: &ecproto.GetGoalCountRequest{
 				EnvironmentNamespace: "ns0",
 				GoalId:               "gid",
 			},
 			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
 		},
-		"error: ErrEndAtRequired": {
+		{
+			desc: "error: ErrEndAtRequired",
 			input: &ecproto.GetGoalCountRequest{
 				EnvironmentNamespace: "ns0",
 				GoalId:               "gid",
@@ -473,7 +496,8 @@ func TestGetGoalCount(t *testing.T) {
 			},
 			expectedErr: localizedError(statusEndAtRequired, locale.JaJP),
 		},
-		"error: ErrStartAtIsAfterEndAt": {
+		{
+			desc: "error: ErrStartAtIsAfterEndAt",
 			input: &ecproto.GetGoalCountRequest{
 				EnvironmentNamespace: "ns0",
 				GoalId:               "gid",
@@ -482,7 +506,8 @@ func TestGetGoalCount(t *testing.T) {
 			},
 			expectedErr: localizedError(statusStartAtIsAfterEndAt, locale.JaJP),
 		},
-		"error: ErrPeriodOutOfRange": {
+		{
+			desc: "error: ErrPeriodOutOfRange",
 			input: &ecproto.GetGoalCountRequest{
 				EnvironmentNamespace: "ns0",
 				GoalId:               "gid",
@@ -491,7 +516,8 @@ func TestGetGoalCount(t *testing.T) {
 			},
 			expectedErr: localizedError(statusPeriodOutOfRange, locale.JaJP),
 		},
-		"error: ErrGoalIDRequired": {
+		{
+			desc: "error: ErrGoalIDRequired",
 			input: &ecproto.GetGoalCountRequest{
 				EnvironmentNamespace: "ns0",
 				StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
@@ -499,7 +525,8 @@ func TestGetGoalCount(t *testing.T) {
 			},
 			expectedErr: localizedError(statusGoalIDRequired, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *eventCounterService) {
 				s.druidQuerier.(*dmock.MockQuerier).EXPECT().QueryCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					&ecproto.Row{Cells: []*ecproto.Cell{{Value: "val"}}}, []*ecproto.Row{{Cells: []*ecproto.Cell{{Value: "123"}}}}, nil)
@@ -517,8 +544,8 @@ func TestGetGoalCount(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
@@ -536,20 +563,23 @@ func TestGetGoalCountV2(t *testing.T) {
 	defer mockController.Finish()
 	now := time.Now()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*eventCounterService)
 		input       *ecproto.GetGoalCountV2Request
 		expected    *ecproto.GetGoalCountV2Response
 		expectedErr error
 	}{
-		"error: ErrStartAtRequired": {
+		{
+			desc: "error: ErrStartAtRequired",
 			input: &ecproto.GetGoalCountV2Request{
 				EnvironmentNamespace: "ns0",
 				GoalId:               "gid",
 			},
 			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
 		},
-		"error: ErrEndAtRequired": {
+		{
+			desc: "error: ErrEndAtRequired",
 			input: &ecproto.GetGoalCountV2Request{
 				EnvironmentNamespace: "ns0",
 				GoalId:               "gid",
@@ -557,7 +587,8 @@ func TestGetGoalCountV2(t *testing.T) {
 			},
 			expectedErr: localizedError(statusEndAtRequired, locale.JaJP),
 		},
-		"error: ErrStartAtIsAfterEndAt": {
+		{
+			desc: "error: ErrStartAtIsAfterEndAt",
 			input: &ecproto.GetGoalCountV2Request{
 				EnvironmentNamespace: "ns0",
 				GoalId:               "gid",
@@ -566,7 +597,8 @@ func TestGetGoalCountV2(t *testing.T) {
 			},
 			expectedErr: localizedError(statusStartAtIsAfterEndAt, locale.JaJP),
 		},
-		"error: ErrGoalIDRequired": {
+		{
+			desc: "error: ErrGoalIDRequired",
 			input: &ecproto.GetGoalCountV2Request{
 				EnvironmentNamespace: "ns0",
 				StartAt:              now.Add(-31 * 24 * time.Hour).Unix(),
@@ -574,7 +606,8 @@ func TestGetGoalCountV2(t *testing.T) {
 			},
 			expectedErr: localizedError(statusGoalIDRequired, locale.JaJP),
 		},
-		"success: one variation": {
+		{
+			desc: "success: one variation",
 			setup: func(s *eventCounterService) {
 				s.druidQuerier.(*dmock.MockQuerier).EXPECT().QueryGoalCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					&ecproto.Row{Cells: []*ecproto.Cell{
@@ -631,7 +664,8 @@ func TestGetGoalCountV2(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: all variations": {
+		{
+			desc: "success: all variations",
 			setup: func(s *eventCounterService) {
 				s.druidQuerier.(*dmock.MockQuerier).EXPECT().QueryGoalCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					&ecproto.Row{Cells: []*ecproto.Cell{
@@ -697,8 +731,8 @@ func TestGetGoalCountV2(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
@@ -716,26 +750,30 @@ func TestGetUserCountV2(t *testing.T) {
 	defer mockController.Finish()
 	now := time.Now()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*eventCounterService)
 		input       *ecproto.GetUserCountV2Request
 		expected    *ecproto.GetUserCountV2Response
 		expectedErr error
 	}{
-		"error: ErrStartAtRequired": {
+		{
+			desc: "error: ErrStartAtRequired",
 			input: &ecproto.GetUserCountV2Request{
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
 		},
-		"error: ErrEndAtRequired": {
+		{
+			desc: "error: ErrEndAtRequired",
 			input: &ecproto.GetUserCountV2Request{
 				EnvironmentNamespace: "ns0",
 				StartAt:              now.Add(-7 * 24 * time.Hour).Unix(),
 			},
 			expectedErr: localizedError(statusEndAtRequired, locale.JaJP),
 		},
-		"error: ErrStartAtIsAfterEndAt": {
+		{
+			desc: "error: ErrStartAtIsAfterEndAt",
 			input: &ecproto.GetUserCountV2Request{
 				EnvironmentNamespace: "ns0",
 				StartAt:              now.Unix(),
@@ -743,7 +781,8 @@ func TestGetUserCountV2(t *testing.T) {
 			},
 			expectedErr: localizedError(statusStartAtIsAfterEndAt, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *eventCounterService) {
 				s.druidQuerier.(*dmock.MockQuerier).EXPECT().QueryUserCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					&ecproto.Row{Cells: []*ecproto.Cell{
@@ -770,8 +809,8 @@ func TestGetUserCountV2(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
@@ -788,13 +827,15 @@ func TestListUserMetadata(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*eventCounterService)
 		input       *ecproto.ListUserMetadataRequest
 		expected    *ecproto.ListUserMetadataResponse
 		expectedErr error
 	}{
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *eventCounterService) {
 				s.druidQuerier.(*dmock.MockQuerier).EXPECT().QuerySegmentMetadata(gomock.Any(), gomock.Any(), gomock.Any()).Return([]string{"d1", "d2"}, nil)
 			},
@@ -807,8 +848,8 @@ func TestListUserMetadata(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
@@ -822,21 +863,24 @@ func TestListUserMetadata(t *testing.T) {
 
 func TestGenInterval(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc              string
 		inputLocation     *time.Location
 		inputEndAt        time.Time
 		inputDurationDays int
 		expected          time.Time
 		expectedErr       error
 	}{
-		"success": {
+		{
+			desc:              "success",
 			inputLocation:     jpLocation,
 			inputEndAt:        time.Date(2020, 12, 25, 0, 0, 0, 0, time.UTC),
 			inputDurationDays: 10,
 			expected:          time.Date(2020, 12, 15, 0, 0, 0, 0, jpLocation),
 			expectedErr:       nil,
 		},
-		"over prime meridian": {
+		{
+			desc:              "over prime meridian",
 			inputLocation:     jpLocation,
 			inputEndAt:        time.Date(2020, 12, 25, 23, 0, 0, 0, time.UTC),
 			inputDurationDays: 10,
@@ -844,8 +888,8 @@ func TestGenInterval(t *testing.T) {
 			expectedErr:       nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual, err := genInterval(p.inputLocation, p.inputEndAt, p.inputDurationDays)
 			assert.Equal(t, p.expected.Unix(), actual.Unix())
 			assert.Equal(t, p.expectedErr, err)
@@ -858,19 +902,22 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*eventCounterService)
 		input       *ecproto.GetEvaluationTimeseriesCountRequest
 		expected    *ecproto.GetEvaluationTimeseriesCountResponse
 		expectedErr error
 	}{
-		"error: ErrFeatureIDRequired": {
+		{
+			desc: "error: ErrFeatureIDRequired",
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(gomock.Any(), gomock.Any()).Return(
 					&featureproto.GetFeatureResponse{
@@ -955,8 +1002,8 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)

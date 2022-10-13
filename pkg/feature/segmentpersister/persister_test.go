@@ -70,14 +70,16 @@ func TestHandleEventMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc          string
 		setup         func(*Persister)
 		event         *serviceevent.BulkSegmentUsersReceivedEvent
 		segment       *domain.Segment
 		expectedCount int64
 		expectedErr   error
 	}{
-		"err: ErrSegmentNotFound": {
+		{
+			desc: "err: ErrSegmentNotFound",
 			setup: func(p *Persister) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -91,7 +93,8 @@ func TestHandleEventMySQL(t *testing.T) {
 			},
 			expectedErr: v2fs.ErrSegmentNotFound,
 		},
-		"err: errExceededMaxUserIDLength": {
+		{
+			desc: "err: errExceededMaxUserIDLength",
 			setup: func(p *Persister) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -107,7 +110,8 @@ func TestHandleEventMySQL(t *testing.T) {
 			},
 			expectedErr: errExceededMaxUserIDLength,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(p *Persister) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -132,8 +136,8 @@ func TestHandleEventMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, pat := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, pat := range patterns {
+		t.Run(pat.desc, func(t *testing.T) {
 			persister := newPersister(t, mockController)
 			if pat.setup != nil {
 				pat.setup(persister)

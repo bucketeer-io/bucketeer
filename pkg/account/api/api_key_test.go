@@ -33,27 +33,31 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		ctxRole     accountproto.Account_Role
 		req         *accountproto.CreateAPIKeyRequest
 		expectedErr error
 	}{
-		"errNoCommand": {
+		{
+			desc:    "errNoCommand",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAPIKeyRequest{
 				Command: nil,
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"errMissingAPIKeyName": {
+		{
+			desc:    "errMissingAPIKeyName",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAPIKeyRequest{
 				Command: &accountproto.CreateAPIKeyCommand{Name: ""},
 			},
 			expectedErr: localizedError(statusMissingAPIKeyName, locale.JaJP),
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -69,7 +73,8 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -86,15 +91,15 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithDefaultToken(t, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			_, err := service.CreateAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}
 }
@@ -104,20 +109,23 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		ctxRole     accountproto.Account_Role
 		req         *accountproto.ChangeAPIKeyNameRequest
 		expectedErr error
 	}{
-		"errMissingAPIKeyID": {
+		{
+			desc:    "errMissingAPIKeyID",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.ChangeAPIKeyNameRequest{
 				Id: "",
 			},
 			expectedErr: localizedError(statusMissingAPIKeyID, locale.JaJP),
 		},
-		"errNoCommand": {
+		{
+			desc:    "errNoCommand",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.ChangeAPIKeyNameRequest{
 				Id:      "id",
@@ -125,7 +133,8 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"errNotFound": {
+		{
+			desc: "errNotFound",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -141,7 +150,8 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -157,7 +167,8 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -174,15 +185,15 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithDefaultToken(t, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			_, err := service.ChangeAPIKeyName(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}
 }
@@ -192,20 +203,23 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		ctxRole     accountproto.Account_Role
 		req         *accountproto.EnableAPIKeyRequest
 		expectedErr error
 	}{
-		"errMissingAPIKeyID": {
+		{
+			desc:    "errMissingAPIKeyID",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAPIKeyRequest{
 				Id: "",
 			},
 			expectedErr: localizedError(statusMissingAPIKeyID, locale.JaJP),
 		},
-		"errNoCommand": {
+		{
+			desc:    "errNoCommand",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAPIKeyRequest{
 				Id:      "id",
@@ -213,7 +227,8 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"errNotFound": {
+		{
+			desc: "errNotFound",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -227,7 +242,8 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -241,7 +257,8 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -256,15 +273,15 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithDefaultToken(t, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			_, err := service.EnableAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}
 }
@@ -274,20 +291,23 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		ctxRole     accountproto.Account_Role
 		req         *accountproto.DisableAPIKeyRequest
 		expectedErr error
 	}{
-		"errMissingAPIKeyID": {
+		{
+			desc:    "errMissingAPIKeyID",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAPIKeyRequest{
 				Id: "",
 			},
 			expectedErr: localizedError(statusMissingAPIKeyID, locale.JaJP),
 		},
-		"errNoCommand": {
+		{
+			desc:    "errNoCommand",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAPIKeyRequest{
 				Id:      "id",
@@ -295,7 +315,8 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"errNotFound": {
+		{
+			desc: "errNotFound",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -309,7 +330,8 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -323,7 +345,8 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -338,15 +361,15 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithDefaultToken(t, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			_, err := service.DisableAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}
 }
@@ -356,16 +379,19 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		setup    func(*AccountService)
 		req      *accountproto.GetAPIKeyRequest
 		expected error
 	}{
-		"errMissingAPIKeyID": {
+		{
+			desc:     "errMissingAPIKeyID",
 			req:      &accountproto.GetAPIKeyRequest{Id: ""},
 			expected: localizedError(statusMissingAPIKeyID, locale.JaJP),
 		},
-		"errNotFound": {
+		{
+			desc: "errNotFound",
 			setup: func(s *AccountService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -376,7 +402,8 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			req:      &accountproto.GetAPIKeyRequest{Id: "id"},
 			expected: localizedError(statusNotFound, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -388,8 +415,8 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			expected: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithDefaultToken(t, accountproto.Account_OWNER)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
@@ -409,18 +436,21 @@ func TestListAPIKeysMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		input       *accountproto.ListAPIKeysRequest
 		expected    *accountproto.ListAPIKeysResponse
 		expectedErr error
 	}{
-		"errInvalidCursor": {
+		{
+			desc:        "errInvalidCursor",
 			input:       &accountproto.ListAPIKeysRequest{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: localizedError(statusInvalidCursor, locale.JaJP),
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -430,7 +460,8 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			expected:    nil,
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -450,16 +481,16 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithDefaultToken(t, accountproto.Account_OWNER)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			actual, err := service.ListAPIKeys(ctx, p.input)
-			assert.Equal(t, p.expectedErr, err, msg)
-			assert.Equal(t, p.expected, actual, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+			assert.Equal(t, p.expected, actual, p.desc)
 		})
 	}
 }

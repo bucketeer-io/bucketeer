@@ -40,13 +40,15 @@ func TestCreateAPIKey(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*apiKeyStorage)
 		input                *domain.APIKey
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrAPIKeyAlreadyExists": {
+		{
+			desc: "ErrAPIKeyAlreadyExists",
 			setup: func(s *apiKeyStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -58,7 +60,8 @@ func TestCreateAPIKey(t *testing.T) {
 			environmentNamespace: "ns0",
 			expectedErr:          ErrAPIKeyAlreadyExists,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *apiKeyStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -70,7 +73,8 @@ func TestCreateAPIKey(t *testing.T) {
 			environmentNamespace: "ns0",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *apiKeyStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -83,8 +87,8 @@ func TestCreateAPIKey(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAPIKeyStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -99,13 +103,15 @@ func TestUpdateAPIKey(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*apiKeyStorage)
 		input                *domain.APIKey
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrAPIKeyUnexpectedAffectedRows": {
+		{
+			desc: "ErrAPIKeyUnexpectedAffectedRows",
 			setup: func(s *apiKeyStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -119,7 +125,8 @@ func TestUpdateAPIKey(t *testing.T) {
 			environmentNamespace: "ns0",
 			expectedErr:          ErrAPIKeyUnexpectedAffectedRows,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *apiKeyStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -131,7 +138,8 @@ func TestUpdateAPIKey(t *testing.T) {
 			environmentNamespace: "ns0",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *apiKeyStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
@@ -146,8 +154,8 @@ func TestUpdateAPIKey(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAPIKeyStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -162,13 +170,15 @@ func TestGetAPIKey(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*apiKeyStorage)
 		id                   string
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrAPIKeyNotFound": {
+		{
+			desc: "ErrAPIKeyNotFound",
 			setup: func(s *apiKeyStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -180,7 +190,8 @@ func TestGetAPIKey(t *testing.T) {
 			environmentNamespace: "ns0",
 			expectedErr:          ErrAPIKeyNotFound,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *apiKeyStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -193,7 +204,8 @@ func TestGetAPIKey(t *testing.T) {
 			environmentNamespace: "ns0",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *apiKeyStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -206,8 +218,8 @@ func TestGetAPIKey(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAPIKeyStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -222,7 +234,8 @@ func TestListAPIKeys(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		setup          func(*apiKeyStorage)
 		whereParts     []mysql.WherePart
 		orders         []*mysql.Order
@@ -232,7 +245,8 @@ func TestListAPIKeys(t *testing.T) {
 		expectedCursor int
 		expectedErr    error
 	}{
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *apiKeyStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -246,7 +260,8 @@ func TestListAPIKeys(t *testing.T) {
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *apiKeyStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -274,8 +289,8 @@ func TestListAPIKeys(t *testing.T) {
 			expectedErr:    nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAPIKeyStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)

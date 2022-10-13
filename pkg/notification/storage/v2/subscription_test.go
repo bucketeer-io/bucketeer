@@ -40,13 +40,15 @@ func TestCreateSubscription(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*subscriptionStorage)
 		input                *domain.Subscription
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrSubscriptionAlreadyExists": {
+		{
+			desc: "ErrSubscriptionAlreadyExists",
 			setup: func(s *subscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -58,7 +60,8 @@ func TestCreateSubscription(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          ErrSubscriptionAlreadyExists,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *subscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -71,7 +74,8 @@ func TestCreateSubscription(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *subscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -84,8 +88,8 @@ func TestCreateSubscription(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newsubscriptionStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -100,13 +104,15 @@ func TestUpdateSubscription(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*subscriptionStorage)
 		input                *domain.Subscription
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrSubscriptionUnexpectedAffectedRows": {
+		{
+			desc: "ErrSubscriptionUnexpectedAffectedRows",
 			setup: func(s *subscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -120,7 +126,8 @@ func TestUpdateSubscription(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          ErrSubscriptionUnexpectedAffectedRows,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *subscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -133,7 +140,8 @@ func TestUpdateSubscription(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *subscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
@@ -148,8 +156,8 @@ func TestUpdateSubscription(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newsubscriptionStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -164,13 +172,15 @@ func TestDeleteSubscription(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*subscriptionStorage)
 		id                   string
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrSubscriptionUnexpectedAffectedRows": {
+		{
+			desc: "ErrSubscriptionUnexpectedAffectedRows",
 			setup: func(s *subscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -182,7 +192,8 @@ func TestDeleteSubscription(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          ErrSubscriptionUnexpectedAffectedRows,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *subscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -193,7 +204,8 @@ func TestDeleteSubscription(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *subscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
@@ -206,8 +218,8 @@ func TestDeleteSubscription(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newsubscriptionStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -222,13 +234,15 @@ func TestGetSubscription(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*subscriptionStorage)
 		id                   string
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrSubscriptionNotFound": {
+		{
+			desc: "ErrSubscriptionNotFound",
 			setup: func(s *subscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -240,7 +254,8 @@ func TestGetSubscription(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          ErrSubscriptionNotFound,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *subscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -253,7 +268,8 @@ func TestGetSubscription(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *subscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -266,8 +282,8 @@ func TestGetSubscription(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newsubscriptionStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -282,7 +298,8 @@ func TestListSubscriptions(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		setup          func(*subscriptionStorage)
 		whereParts     []mysql.WherePart
 		orders         []*mysql.Order
@@ -292,7 +309,8 @@ func TestListSubscriptions(t *testing.T) {
 		expectedCursor int
 		expectedErr    error
 	}{
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *subscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -306,7 +324,8 @@ func TestListSubscriptions(t *testing.T) {
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *subscriptionStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -334,8 +353,8 @@ func TestListSubscriptions(t *testing.T) {
 			expectedErr:    nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newsubscriptionStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)

@@ -81,14 +81,16 @@ func TestUpsert(t *testing.T) {
 	uuid, err := uuid.NewUUID()
 	require.NoError(t, err)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc               string
 		setup              func(*persister)
 		input              *eventproto.UserEvent
 		expectedOK         bool
 		expectedRepeatable bool
 		expected           *userproto.User
 	}{
-		"get user error": {
+		{
+			desc: "get user error",
 			setup: func(p *persister) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("internal"))
@@ -108,7 +110,8 @@ func TestUpsert(t *testing.T) {
 				LastSeen: 3,
 			},
 		},
-		"upsert error": {
+		{
+			desc: "upsert error",
 			setup: func(p *persister) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -131,7 +134,8 @@ func TestUpsert(t *testing.T) {
 				LastSeen: 3,
 			},
 		},
-		"upsert success": {
+		{
+			desc: "upsert success",
 			setup: func(p *persister) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -155,8 +159,8 @@ func TestUpsert(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			pst := newPersisterWithMock(t, mockController, now, uuid)
 			if p.setup != nil {
 				p.setup(pst)
@@ -170,12 +174,14 @@ func TestUpsert(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc         string
 		inputExist   *userproto.User
 		inputEvent   *eventproto.UserEvent
 		expectedUser *userproto.User
 	}{
-		"not exist": {
+		{
+			desc:       "not exist",
 			inputExist: nil,
 			inputEvent: &eventproto.UserEvent{
 				UserId:   "uid-0",
@@ -190,7 +196,8 @@ func TestUpdateUser(t *testing.T) {
 				LastSeen:   int64(1),
 			},
 		},
-		"exists overriding data": {
+		{
+			desc: "exists overriding data",
 			inputExist: &userproto.User{
 				Id:         "uid-0",
 				TaggedData: map[string]*userproto.User_Data{"t-0": {Value: map[string]string{"d-0": "v-0"}}},
@@ -208,7 +215,8 @@ func TestUpdateUser(t *testing.T) {
 				LastSeen:   int64(1),
 			},
 		},
-		"exists appending data": {
+		{
+			desc: "exists appending data",
 			inputExist: &userproto.User{
 				Id:         "uid-0",
 				TaggedData: map[string]*userproto.User_Data{"t-0": {Value: map[string]string{"d-0": "v-0"}}},
@@ -230,11 +238,11 @@ func TestUpdateUser(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			pst := &persister{opts: defaultOptions, logger: defaultOptions.logger.Named("persister")}
 			actualUser, _ := pst.updateUser(p.inputExist, p.inputEvent)
-			if msg == "not exist" {
+			if p.desc == "not exist" {
 				assert.Equal(t, actualUser.User.Id, p.expectedUser.Id)
 				assert.True(t, len(actualUser.User.Data) == 0)
 				assert.Equal(t, actualUser.User.TaggedData, p.expectedUser.TaggedData)

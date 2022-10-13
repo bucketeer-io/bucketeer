@@ -38,13 +38,15 @@ func TestGetExperimentResult(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*experimentResultStorage)
 		id                   string
 		environmentNamespace string
 		expectedErr          error
 	}{
-		"ErrExperimentResultNotFound": {
+		{
+			desc: "ErrExperimentResultNotFound",
 			setup: func(s *experimentResultStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -56,7 +58,8 @@ func TestGetExperimentResult(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          ErrExperimentResultNotFound,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *experimentResultStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -69,7 +72,8 @@ func TestGetExperimentResult(t *testing.T) {
 			environmentNamespace: "ns",
 			expectedErr:          errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *experimentResultStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -82,8 +86,8 @@ func TestGetExperimentResult(t *testing.T) {
 			expectedErr:          nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newExperimentResultStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)

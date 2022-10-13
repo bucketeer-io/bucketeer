@@ -40,12 +40,14 @@ func TestCreateAdminAccount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*adminAccountStorage)
 		input       *domain.Account
 		expectedErr error
 	}{
-		"ErrAdminAccountAlreadyExists": {
+		{
+			desc: "ErrAdminAccountAlreadyExists",
 			setup: func(s *adminAccountStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -56,7 +58,8 @@ func TestCreateAdminAccount(t *testing.T) {
 			},
 			expectedErr: ErrAdminAccountAlreadyExists,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminAccountStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -67,7 +70,8 @@ func TestCreateAdminAccount(t *testing.T) {
 			},
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminAccountStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -79,8 +83,8 @@ func TestCreateAdminAccount(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminAccountStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -95,12 +99,14 @@ func TestUpdateAdminAccount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*adminAccountStorage)
 		input       *domain.Account
 		expectedErr error
 	}{
-		"ErrAdminAccountUnexpectedAffectedRows": {
+		{
+			desc: "ErrAdminAccountUnexpectedAffectedRows",
 			setup: func(s *adminAccountStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -113,7 +119,8 @@ func TestUpdateAdminAccount(t *testing.T) {
 			},
 			expectedErr: ErrAdminAccountUnexpectedAffectedRows,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminAccountStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -124,7 +131,8 @@ func TestUpdateAdminAccount(t *testing.T) {
 			},
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminAccountStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
@@ -138,8 +146,8 @@ func TestUpdateAdminAccount(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminAccountStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -154,12 +162,14 @@ func TestGetAdminAccount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*adminAccountStorage)
 		id          string
 		expectedErr error
 	}{
-		"ErrAdminAccountNotFound": {
+		{
+			desc: "ErrAdminAccountNotFound",
 			setup: func(s *adminAccountStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -170,7 +180,8 @@ func TestGetAdminAccount(t *testing.T) {
 			id:          "id-0",
 			expectedErr: ErrAdminAccountNotFound,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminAccountStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -182,7 +193,8 @@ func TestGetAdminAccount(t *testing.T) {
 			id:          "id-0",
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminAccountStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -194,8 +206,8 @@ func TestGetAdminAccount(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminAccountStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -210,7 +222,8 @@ func TestListAdminAccounts(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		setup          func(*adminAccountStorage)
 		whereParts     []mysql.WherePart
 		orders         []*mysql.Order
@@ -220,7 +233,8 @@ func TestListAdminAccounts(t *testing.T) {
 		expectedCursor int
 		expectedErr    error
 	}{
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminAccountStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -234,7 +248,8 @@ func TestListAdminAccounts(t *testing.T) {
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminAccountStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -262,8 +277,8 @@ func TestListAdminAccounts(t *testing.T) {
 			expectedErr:    nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminAccountStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)

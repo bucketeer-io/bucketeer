@@ -40,12 +40,14 @@ func TestCreateEnvironment(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*environmentStorage)
 		input       *domain.Environment
 		expectedErr error
 	}{
-		"ErrEnvironmentAlreadyExists": {
+		{
+			desc: "ErrEnvironmentAlreadyExists",
 			setup: func(s *environmentStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -56,7 +58,8 @@ func TestCreateEnvironment(t *testing.T) {
 			},
 			expectedErr: ErrEnvironmentAlreadyExists,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *environmentStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -67,7 +70,8 @@ func TestCreateEnvironment(t *testing.T) {
 			},
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *environmentStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -79,8 +83,8 @@ func TestCreateEnvironment(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newEnvironmentStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -95,12 +99,14 @@ func TestUpdateEnvironment(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*environmentStorage)
 		input       *domain.Environment
 		expectedErr error
 	}{
-		"ErrEnvironmentUnexpectedAffectedRows": {
+		{
+			desc: "ErrEnvironmentUnexpectedAffectedRows",
 			setup: func(s *environmentStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -113,7 +119,8 @@ func TestUpdateEnvironment(t *testing.T) {
 			},
 			expectedErr: ErrEnvironmentUnexpectedAffectedRows,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *environmentStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -124,7 +131,8 @@ func TestUpdateEnvironment(t *testing.T) {
 			},
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *environmentStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
@@ -138,8 +146,8 @@ func TestUpdateEnvironment(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newEnvironmentStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -154,12 +162,14 @@ func TestGetEnvironment(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*environmentStorage)
 		id          string
 		expectedErr error
 	}{
-		"ErrEnvironmentNotFound": {
+		{
+			desc: "ErrEnvironmentNotFound",
 			setup: func(s *environmentStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -170,7 +180,8 @@ func TestGetEnvironment(t *testing.T) {
 			id:          "id-0",
 			expectedErr: ErrEnvironmentNotFound,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *environmentStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -182,7 +193,8 @@ func TestGetEnvironment(t *testing.T) {
 			id:          "id-0",
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *environmentStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -194,8 +206,8 @@ func TestGetEnvironment(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newEnvironmentStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -210,13 +222,15 @@ func TestGetEnvironmentByNamespace(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*environmentStorage)
 		ns          string
 		deleted     bool
 		expectedErr error
 	}{
-		"ErrEnvironmentNotFound": {
+		{
+			desc: "ErrEnvironmentNotFound",
 			setup: func(s *environmentStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -228,7 +242,8 @@ func TestGetEnvironmentByNamespace(t *testing.T) {
 			deleted:     false,
 			expectedErr: ErrEnvironmentNotFound,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *environmentStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -241,7 +256,8 @@ func TestGetEnvironmentByNamespace(t *testing.T) {
 			deleted:     false,
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *environmentStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -254,8 +270,8 @@ func TestGetEnvironmentByNamespace(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newEnvironmentStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -270,7 +286,8 @@ func TestListEnvironments(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		setup          func(*environmentStorage)
 		whereParts     []mysql.WherePart
 		orders         []*mysql.Order
@@ -280,7 +297,8 @@ func TestListEnvironments(t *testing.T) {
 		expectedCursor int
 		expectedErr    error
 	}{
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *environmentStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -294,7 +312,8 @@ func TestListEnvironments(t *testing.T) {
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *environmentStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -322,8 +341,8 @@ func TestListEnvironments(t *testing.T) {
 			expectedErr:    nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newEnvironmentStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)

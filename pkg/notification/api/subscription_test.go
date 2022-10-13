@@ -32,19 +32,22 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		input       *proto.CreateSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			input: &proto.CreateSubscriptionRequest{
 				Command: nil,
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrSourceTypesRequired": {
+		{
+			desc: "err: ErrSourceTypesRequired",
 			input: &proto.CreateSubscriptionRequest{
 				Command: &proto.CreateSubscriptionCommand{
 					Name: "sname",
@@ -56,7 +59,8 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusSourceTypesRequired, locale.JaJP),
 		},
-		"err: ErrRecipientRequired": {
+		{
+			desc: "err: ErrRecipientRequired",
 			input: &proto.CreateSubscriptionRequest{
 				Command: &proto.CreateSubscriptionCommand{
 					Name: "sname",
@@ -68,7 +72,8 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusRecipientRequired, locale.JaJP),
 		},
-		"err: ErrSlackRecipientRequired": {
+		{
+			desc: "err: ErrSlackRecipientRequired",
 			input: &proto.CreateSubscriptionRequest{
 				Command: &proto.CreateSubscriptionCommand{
 					Name: "sname",
@@ -83,7 +88,8 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusSlackRecipientRequired, locale.JaJP),
 		},
-		"err: ErrSlackRecipientWebhookURLRequired": {
+		{
+			desc: "err: ErrSlackRecipientWebhookURLRequired",
 			input: &proto.CreateSubscriptionRequest{
 				Command: &proto.CreateSubscriptionCommand{
 					Name: "sname",
@@ -99,7 +105,8 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusSlackRecipientWebhookURLRequired, locale.JaJP),
 		},
-		"err: ErrNameRequired": {
+		{
+			desc: "err: ErrNameRequired",
 			input: &proto.CreateSubscriptionRequest{
 				Command: &proto.CreateSubscriptionCommand{
 					SourceTypes: []proto.Subscription_SourceType{
@@ -114,7 +121,8 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNameRequired, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -140,8 +148,8 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t, createAdminToken(t))
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
@@ -158,36 +166,42 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		input       *proto.UpdateSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			input:       &proto.UpdateSubscriptionRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc: "err: ErrNoCommand",
 			input: &proto.UpdateSubscriptionRequest{
 				Id: "key-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: add notification types: ErrSourceTypesRequired": {
+		{
+			desc: "err: add notification types: ErrSourceTypesRequired",
 			input: &proto.UpdateSubscriptionRequest{
 				Id:                    "key-0",
 				AddSourceTypesCommand: &proto.AddSourceTypesCommand{},
 			},
 			expectedErr: localizedError(statusSourceTypesRequired, locale.JaJP),
 		},
-		"err: delete notification types: ErrSourceTypesRequired": {
+		{
+			desc: "err: delete notification types: ErrSourceTypesRequired",
 			input: &proto.UpdateSubscriptionRequest{
 				Id:                       "key-0",
 				DeleteSourceTypesCommand: &proto.DeleteSourceTypesCommand{},
 			},
 			expectedErr: localizedError(statusSourceTypesRequired, locale.JaJP),
 		},
-		"err: ErrNotFound": {
+		{
+			desc: "err: ErrNotFound",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -205,7 +219,8 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"success: addSourceTypes": {
+		{
+			desc: "success: addSourceTypes",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -225,7 +240,8 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: deleteSourceTypes": {
+		{
+			desc: "success: deleteSourceTypes",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -245,7 +261,8 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: all commands": {
+		{
+			desc: "success: all commands",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -274,8 +291,8 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t, createAdminToken(t))
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
@@ -292,22 +309,26 @@ func TestEnableSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		input       *proto.EnableSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			input:       &proto.EnableSubscriptionRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc: "err: ErrNoCommand",
 			input: &proto.EnableSubscriptionRequest{
 				Id: "key-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -324,8 +345,8 @@ func TestEnableSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t, createAdminToken(t))
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
@@ -342,22 +363,26 @@ func TestDisableSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		input       *proto.DisableSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			input:       &proto.DisableSubscriptionRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc: "err: ErrNoCommand",
 			input: &proto.DisableSubscriptionRequest{
 				Id: "key-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -374,8 +399,8 @@ func TestDisableSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t, createAdminToken(t))
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
@@ -392,22 +417,26 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		input       *proto.DeleteSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			input:       &proto.DeleteSubscriptionRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc: "err: ErrNoCommand",
 			input: &proto.DeleteSubscriptionRequest{
 				Id: "key-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -424,8 +453,8 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t, createAdminToken(t))
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
@@ -442,16 +471,19 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		input       *proto.GetSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			input:       &proto.GetSubscriptionRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -463,8 +495,8 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -484,13 +516,15 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		input       *proto.ListSubscriptionsRequest
 		expected    *proto.ListSubscriptionsResponse
 		expectedErr error
 	}{
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -517,8 +551,8 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
@@ -536,13 +570,15 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		input       *proto.ListEnabledSubscriptionsRequest
 		expected    *proto.ListEnabledSubscriptionsResponse
 		expectedErr error
 	}{
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -569,8 +605,8 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(s)

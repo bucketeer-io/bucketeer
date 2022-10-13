@@ -34,12 +34,14 @@ func TestUpdateStatus(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		setup    func(t *testing.T, u *experimentStatusUpdater)
 		input    *experimentproto.Experiment
 		expected error
 	}{
-		"error: StartExperiment fails": {
+		{
+			desc: "error: StartExperiment fails",
 			setup: func(t *testing.T, u *experimentStatusUpdater) {
 				u.experimentClient.(*ecmock.MockClient).EXPECT().StartExperiment(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
@@ -51,7 +53,8 @@ func TestUpdateStatus(t *testing.T) {
 			},
 			expected: errors.New("test"),
 		},
-		"error: FinishExperiment fails": {
+		{
+			desc: "error: FinishExperiment fails",
 			setup: func(t *testing.T, u *experimentStatusUpdater) {
 				u.experimentClient.(*ecmock.MockClient).EXPECT().FinishExperiment(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
@@ -63,7 +66,8 @@ func TestUpdateStatus(t *testing.T) {
 			},
 			expected: errors.New("test"),
 		},
-		"success: no update waiting": {
+		{
+			desc: "success: no update waiting",
 			input: &experimentproto.Experiment{
 				Id:      "eid",
 				Status:  experimentproto.Experiment_WAITING,
@@ -71,7 +75,8 @@ func TestUpdateStatus(t *testing.T) {
 			},
 			expected: nil,
 		},
-		"success: update waiting to running": {
+		{
+			desc: "success: update waiting to running",
 			setup: func(t *testing.T, u *experimentStatusUpdater) {
 				u.experimentClient.(*ecmock.MockClient).EXPECT().StartExperiment(gomock.Any(), gomock.Any()).Return(
 					&experimentproto.StartExperimentResponse{}, nil)
@@ -83,7 +88,8 @@ func TestUpdateStatus(t *testing.T) {
 			},
 			expected: nil,
 		},
-		"success: no update running": {
+		{
+			desc: "success: no update running",
 			input: &experimentproto.Experiment{
 				Id:     "eid",
 				Status: experimentproto.Experiment_RUNNING,
@@ -91,7 +97,8 @@ func TestUpdateStatus(t *testing.T) {
 			},
 			expected: nil,
 		},
-		"success: update running to stopped": {
+		{
+			desc: "success: update running to stopped",
 			setup: func(t *testing.T, u *experimentStatusUpdater) {
 				u.experimentClient.(*ecmock.MockClient).EXPECT().FinishExperiment(gomock.Any(), gomock.Any()).Return(
 					&experimentproto.FinishExperimentResponse{}, nil)
@@ -106,8 +113,8 @@ func TestUpdateStatus(t *testing.T) {
 		},
 	}
 
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			updater := newMockExperimentStatusUpdater(t, mockController)
 			if p.setup != nil {
 				p.setup(t, updater)

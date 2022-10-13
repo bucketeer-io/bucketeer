@@ -22,30 +22,35 @@ import (
 )
 
 func TestLastDays(t *testing.T) {
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		inputNow time.Time
 		expected int
 	}{
-		"now is after stopAt": {
+		{
+			desc:     "now is after stopAt",
 			inputNow: time.Date(2019, 12, 26, 00, 00, 00, 0, time.UTC),
 			expected: 0,
 		},
-		"now equals to stopAt": {
+		{
+			desc:     "now equals to stopAt",
 			inputNow: time.Date(2019, 12, 25, 23, 59, 59, 0, time.UTC),
 			expected: 0,
 		},
-		"0": {
+		{
+			desc:     "0",
 			inputNow: time.Date(2019, 12, 25, 23, 00, 00, 0, time.UTC),
 			expected: 0,
 		},
-		"1": {
+		{
+			desc:     "1",
 			inputNow: time.Date(2019, 12, 24, 00, 00, 00, 0, time.UTC),
 			expected: 1,
 		},
 	}
 	stopAt := time.Date(2019, 12, 25, 23, 59, 59, 0, time.UTC)
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := lastDays(p.inputNow, stopAt)
 			assert.Equal(t, p.expected, actual)
 		})

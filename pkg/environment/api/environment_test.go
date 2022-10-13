@@ -35,17 +35,20 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		id          string
 		expectedErr error
 	}{
-		"err: ErrEnvironmentIDRequired": {
+		{
+			desc:        "err: ErrEnvironmentIDRequired",
 			setup:       nil,
 			id:          "",
 			expectedErr: localizedError(statusEnvironmentIDRequired, locale.JaJP),
 		},
-		"err: ErrEnvironmentNotFound": {
+		{
+			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -56,7 +59,8 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 			id:          "id-0",
 			expectedErr: localizedError(statusEnvironmentNotFound, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -67,7 +71,8 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 			id:          "id-1",
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -79,8 +84,8 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(s)
@@ -100,12 +105,14 @@ func TestGetEnvironmentByNamespaceMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		namespace   string
 		expectedErr error
 	}{
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -116,7 +123,8 @@ func TestGetEnvironmentByNamespaceMySQL(t *testing.T) {
 			namespace:   "ns-0",
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"err: ErrEnvironmentNotFound": {
+		{
+			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -127,7 +135,8 @@ func TestGetEnvironmentByNamespaceMySQL(t *testing.T) {
 			namespace:   "ns-1",
 			expectedErr: localizedError(statusEnvironmentNotFound, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -139,8 +148,8 @@ func TestGetEnvironmentByNamespaceMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(s)
@@ -160,19 +169,22 @@ func TestListEnvironmentsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		input       *proto.ListEnvironmentsRequest
 		expected    *proto.ListEnvironmentsResponse
 		expectedErr error
 	}{
-		"err: ErrInvalidCursor": {
+		{
+			desc:        "err: ErrInvalidCursor",
 			setup:       nil,
 			input:       &proto.ListEnvironmentsRequest{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: localizedError(statusInvalidCursor, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -182,7 +194,8 @@ func TestListEnvironmentsMySQL(t *testing.T) {
 			expected:    nil,
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -202,8 +215,8 @@ func TestListEnvironmentsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(s)
@@ -220,47 +233,54 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.CreateEnvironmentRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			req: &proto.CreateEnvironmentRequest{
 				Command: nil,
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrInvalidEnvironmentID: empty id": {
+		{
+			desc:  "err: ErrInvalidEnvironmentID: empty id",
 			setup: nil,
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: ""},
 			},
 			expectedErr: localizedError(statusInvalidEnvironmentID, locale.JaJP),
 		},
-		"err: ErrInvalidEnvironmentID: can't use uppercase": {
+		{
+			desc:  "err: ErrInvalidEnvironmentID: can't use uppercase",
 			setup: nil,
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: "NS-1"},
 			},
 			expectedErr: localizedError(statusInvalidEnvironmentID, locale.JaJP),
 		},
-		"err: ErrInvalidEnvironmentID: max id length exceeded": {
+		{
+			desc:  "err: ErrInvalidEnvironmentID: max id length exceeded",
 			setup: nil,
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: strings.Repeat("a", 51)},
 			},
 			expectedErr: localizedError(statusInvalidEnvironmentID, locale.JaJP),
 		},
-		"err: ErrProjectIDRequired": {
+		{
+			desc:  "err: ErrProjectIDRequired",
 			setup: nil,
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: "ns-0", ProjectId: ""},
 			},
 			expectedErr: localizedError(statusProjectIDRequired, locale.JaJP),
 		},
-		"err: ErrProjectNotFound": {
+		{
+			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -273,7 +293,8 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusProjectNotFound, locale.JaJP),
 		},
-		"err: ErrEnvironmentAlreadyExists": {
+		{
+			desc: "err: ErrEnvironmentAlreadyExists",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -290,7 +311,8 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusEnvironmentAlreadyExists, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -303,7 +325,8 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -321,8 +344,8 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
@@ -339,26 +362,30 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.UpdateEnvironmentRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			req: &proto.UpdateEnvironmentRequest{
 				Id: "ns0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrEnvironmentIDRequired": {
+		{
+			desc:  "err: ErrEnvironmentIDRequired",
 			setup: nil,
 			req: &proto.UpdateEnvironmentRequest{
 				RenameCommand: &proto.RenameEnvironmentCommand{Name: "name-0"},
 			},
 			expectedErr: localizedError(statusEnvironmentIDRequired, locale.JaJP),
 		},
-		"err: ErrEnvironmentNotFound": {
+		{
+			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -371,7 +398,8 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusEnvironmentNotFound, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -384,7 +412,8 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -399,8 +428,8 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
@@ -417,24 +446,28 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.DeleteEnvironmentRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:        "err: ErrNoCommand",
 			setup:       nil,
 			req:         &proto.DeleteEnvironmentRequest{},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrEnvironmentIDRequired": {
+		{
+			desc:  "err: ErrEnvironmentIDRequired",
 			setup: nil,
 			req: &proto.DeleteEnvironmentRequest{
 				Command: &proto.DeleteEnvironmentCommand{},
 			},
 			expectedErr: localizedError(statusEnvironmentIDRequired, locale.JaJP),
 		},
-		"err: ErrEnvironmentNotFound": {
+		{
+			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -447,7 +480,8 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusEnvironmentNotFound, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -460,7 +494,8 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -474,8 +509,8 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
@@ -492,25 +527,29 @@ func TestEnvironmentPermissionDeniedMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		action   func(context.Context, *EnvironmentService) error
 		expected error
 	}{
-		"CreateEnvironment": {
+		{
+			desc: "CreateEnvironment",
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.CreateEnvironment(ctx, &proto.CreateEnvironmentRequest{})
 				return err
 			},
 			expected: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"UpdateEnvironment": {
+		{
+			desc: "UpdateEnvironment",
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.UpdateEnvironment(ctx, &proto.UpdateEnvironmentRequest{})
 				return err
 			},
 			expected: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"DeleteEnvironment": {
+		{
+			desc: "DeleteEnvironment",
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.DeleteEnvironment(ctx, &proto.DeleteEnvironmentRequest{})
 				return err
@@ -518,8 +557,8 @@ func TestEnvironmentPermissionDeniedMySQL(t *testing.T) {
 			expected: localizedError(statusPermissionDenied, locale.JaJP),
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithTokenRoleUnassigned(t)
 			service := newEnvironmentService(t, mockController, nil)
 			actual := p.action(ctx, service)

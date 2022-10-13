@@ -33,13 +33,15 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		token       *token.IDToken
 		input       *proto.CreateAdminSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrUnauthenticated": {
+		{
+			desc:  "err: ErrUnauthenticated",
 			setup: nil,
 			token: createOwnerToken(t),
 			input: &proto.CreateAdminSubscriptionRequest{
@@ -47,7 +49,8 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			token: createAdminToken(t),
 			input: &proto.CreateAdminSubscriptionRequest{
@@ -55,7 +58,8 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrSourceTypesRequired": {
+		{
+			desc:  "err: ErrSourceTypesRequired",
 			token: createAdminToken(t),
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
@@ -68,7 +72,8 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusSourceTypesRequired, locale.JaJP),
 		},
-		"err: ErrRecipientRequired": {
+		{
+			desc:  "err: ErrRecipientRequired",
 			token: createAdminToken(t),
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
@@ -81,7 +86,8 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusRecipientRequired, locale.JaJP),
 		},
-		"err: ErrSlackRecipientRequired": {
+		{
+			desc:  "err: ErrSlackRecipientRequired",
 			token: createAdminToken(t),
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
@@ -97,7 +103,8 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusSlackRecipientRequired, locale.JaJP),
 		},
-		"err: ErrSlackRecipientWebhookURLRequired": {
+		{
+			desc:  "err: ErrSlackRecipientWebhookURLRequired",
 			token: createAdminToken(t),
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
@@ -114,7 +121,8 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusSlackRecipientWebhookURLRequired, locale.JaJP),
 		},
-		"err: ErrNameRequired": {
+		{
+			desc:  "err: ErrNameRequired",
 			token: createAdminToken(t),
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
@@ -130,7 +138,8 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNameRequired, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -157,8 +166,8 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t, p.token)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
@@ -175,30 +184,35 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		token       *token.IDToken
 		input       *proto.UpdateAdminSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrPermissionDenied": {
+		{
+			desc:        "err: ErrPermissionDenied",
 			token:       createOwnerToken(t),
 			input:       &proto.UpdateAdminSubscriptionRequest{},
 			expectedErr: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			token:       createAdminToken(t),
 			input:       &proto.UpdateAdminSubscriptionRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			token: createAdminToken(t),
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: add notification types: ErrSourceTypesRequired": {
+		{
+			desc:  "err: add notification types: ErrSourceTypesRequired",
 			token: createAdminToken(t),
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id:                    "key-0",
@@ -206,7 +220,8 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusSourceTypesRequired, locale.JaJP),
 		},
-		"err: delete notification types: ErrSourceTypesRequired": {
+		{
+			desc:  "err: delete notification types: ErrSourceTypesRequired",
 			token: createAdminToken(t),
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id:                       "key-0",
@@ -214,7 +229,8 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusSourceTypesRequired, locale.JaJP),
 		},
-		"err: ErrNotFound": {
+		{
+			desc: "err: ErrNotFound",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -233,7 +249,8 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"success: addSourceTypes": {
+		{
+			desc: "success: addSourceTypes",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -254,7 +271,8 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: deleteSourceTypes": {
+		{
+			desc: "success: deleteSourceTypes",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -275,7 +293,8 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: all commands": {
+		{
+			desc: "success: all commands",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -305,8 +324,8 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t, p.token)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
@@ -323,30 +342,35 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		token       *token.IDToken
 		input       *proto.EnableAdminSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrPermissionDenied": {
+		{
+			desc:        "err: ErrPermissionDenied",
 			token:       createOwnerToken(t),
 			input:       &proto.EnableAdminSubscriptionRequest{},
 			expectedErr: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			token:       createAdminToken(t),
 			input:       &proto.EnableAdminSubscriptionRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			token: createAdminToken(t),
 			input: &proto.EnableAdminSubscriptionRequest{
 				Id: "key-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -364,8 +388,8 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t, p.token)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
@@ -382,25 +406,29 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		token       *token.IDToken
 		input       *proto.DisableAdminSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			token:       createAdminToken(t),
 			input:       &proto.DisableAdminSubscriptionRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			token: createAdminToken(t),
 			input: &proto.DisableAdminSubscriptionRequest{
 				Id: "key-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -418,8 +446,8 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t, p.token)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
@@ -436,25 +464,29 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		token       *token.IDToken
 		input       *proto.DeleteAdminSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			token:       createAdminToken(t),
 			input:       &proto.DeleteAdminSubscriptionRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			token: createAdminToken(t),
 			input: &proto.DeleteAdminSubscriptionRequest{
 				Id: "key-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -472,8 +504,8 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t, p.token)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
@@ -490,23 +522,27 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		token       *token.IDToken
 		input       *proto.GetAdminSubscriptionRequest
 		expectedErr error
 	}{
-		"err: ErrPermissionDenied": {
+		{
+			desc:        "err: ErrPermissionDenied",
 			token:       createOwnerToken(t),
 			input:       &proto.GetAdminSubscriptionRequest{},
 			expectedErr: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"err: ErrIDRequired": {
+		{
+			desc:        "err: ErrIDRequired",
 			token:       createAdminToken(t),
 			input:       &proto.GetAdminSubscriptionRequest{},
 			expectedErr: localizedError(statusIDRequired, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -519,8 +555,8 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -540,21 +576,24 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		token       *token.IDToken
 		input       *proto.ListAdminSubscriptionsRequest
 		expected    *proto.ListAdminSubscriptionsResponse
 		expectedErr error
 	}{
-		"err: ErrPermissionDenied": {
+		{
+			desc:        "err: ErrPermissionDenied",
 			setup:       nil,
 			token:       createOwnerToken(t),
 			input:       &proto.ListAdminSubscriptionsRequest{PageSize: 2, Cursor: ""},
 			expected:    nil,
 			expectedErr: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -582,8 +621,8 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
@@ -601,21 +640,24 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*NotificationService)
 		token       *token.IDToken
 		input       *proto.ListEnabledAdminSubscriptionsRequest
 		expected    *proto.ListEnabledAdminSubscriptionsResponse
 		expectedErr error
 	}{
-		"err: ErrPermissionDenied": {
+		{
+			desc:        "err: ErrPermissionDenied",
 			setup:       nil,
 			token:       createOwnerToken(t),
 			input:       &proto.ListEnabledAdminSubscriptionsRequest{PageSize: 2, Cursor: ""},
 			expected:    nil,
 			expectedErr: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *NotificationService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -643,8 +685,8 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(s)

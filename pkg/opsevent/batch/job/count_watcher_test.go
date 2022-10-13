@@ -67,11 +67,13 @@ func TestRunCountWatcher(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*testing.T, *countWatcher)
 		expectedErr error
 	}{
-		"error: GetFeature fails": {
+		{
+			desc: "error: GetFeature fails",
 			setup: func(t *testing.T, w *countWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{
@@ -95,7 +97,8 @@ func TestRunCountWatcher(t *testing.T) {
 			},
 			expectedErr: status.Errorf(codes.Internal, "test"),
 		},
-		"error: GetEvaluationRealtimeCount fails": {
+		{
+			desc: "error: GetEvaluationRealtimeCount fails",
 			setup: func(t *testing.T, w *countWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{
@@ -125,7 +128,8 @@ func TestRunCountWatcher(t *testing.T) {
 			},
 			expectedErr: status.Errorf(codes.NotFound, "test"),
 		},
-		"error: GetOpsRealtimeVariationCount fails": {
+		{
+			desc: "error: GetOpsRealtimeVariationCount fails",
 			setup: func(t *testing.T, w *countWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{
@@ -160,8 +164,8 @@ func TestRunCountWatcher(t *testing.T) {
 			expectedErr: status.Errorf(codes.NotFound, "test"),
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newNewCountWatcherWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(t, s)
@@ -177,13 +181,15 @@ func TestCountWatcherAssessRule(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc               string
 		opsEventRateClause *autoopsproto.OpsEventRateClause
 		evaluationCount    *ecproto.VariationCount
 		opsCount           *ecproto.VariationCount
 		expected           bool
 	}{
-		"GREATER_OR_EQUAL: false: not enough count": {
+		{
+			desc: "GREATER_OR_EQUAL: false: not enough count",
 			opsEventRateClause: &autoopsproto.OpsEventRateClause{
 				VariationId:     "vid1",
 				GoalId:          "gid1",
@@ -195,7 +201,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 			opsCount:        &ecproto.VariationCount{UserCount: 4},
 			expected:        false,
 		},
-		"GREATER_OR_EQUAL: false: less than": {
+		{
+			desc: "GREATER_OR_EQUAL: false: less than",
 			opsEventRateClause: &autoopsproto.OpsEventRateClause{
 				VariationId:     "vid1",
 				GoalId:          "gid1",
@@ -207,7 +214,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 			opsCount:        &ecproto.VariationCount{UserCount: 5},
 			expected:        false,
 		},
-		"GREATER_OR_EQUAL: true: equal": {
+		{
+			desc: "GREATER_OR_EQUAL: true: equal",
 			opsEventRateClause: &autoopsproto.OpsEventRateClause{
 				VariationId:     "vid1",
 				GoalId:          "gid1",
@@ -219,7 +227,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 			opsCount:        &ecproto.VariationCount{UserCount: 5},
 			expected:        true,
 		},
-		"GREATER_OR_EQUAL: true: greater": {
+		{
+			desc: "GREATER_OR_EQUAL: true: greater",
 			opsEventRateClause: &autoopsproto.OpsEventRateClause{
 				VariationId:     "vid1",
 				GoalId:          "gid1",
@@ -231,7 +240,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 			opsCount:        &ecproto.VariationCount{UserCount: 6},
 			expected:        true,
 		},
-		"LESS_OR_EQUAL: false: not enough count": {
+		{
+			desc: "LESS_OR_EQUAL: false: not enough count",
 			opsEventRateClause: &autoopsproto.OpsEventRateClause{
 				VariationId:     "vid1",
 				GoalId:          "gid1",
@@ -243,7 +253,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 			opsCount:        &ecproto.VariationCount{UserCount: 4},
 			expected:        false,
 		},
-		"LESS_OR_EQUAL: false: greater than": {
+		{
+			desc: "LESS_OR_EQUAL: false: greater than",
 			opsEventRateClause: &autoopsproto.OpsEventRateClause{
 				VariationId:     "vid1",
 				GoalId:          "gid1",
@@ -255,7 +266,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 			opsCount:        &ecproto.VariationCount{UserCount: 6},
 			expected:        false,
 		},
-		"LESS_OR_EQUAL: true: equal": {
+		{
+			desc: "LESS_OR_EQUAL: true: equal",
 			opsEventRateClause: &autoopsproto.OpsEventRateClause{
 				VariationId:     "vid1",
 				GoalId:          "gid1",
@@ -267,7 +279,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 			opsCount:        &ecproto.VariationCount{UserCount: 5},
 			expected:        true,
 		},
-		"LESS_OR_EQUAL: true: less": {
+		{
+			desc: "LESS_OR_EQUAL: true: less",
 			opsEventRateClause: &autoopsproto.OpsEventRateClause{
 				VariationId:     "vid1",
 				GoalId:          "gid1",
@@ -280,8 +293,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 			expected:        true,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newNewCountWatcherWithMock(t, mockController)
 			actual := s.assessRule(p.opsEventRateClause, p.evaluationCount, p.opsCount)
 			assert.Equal(t, p.expected, actual)

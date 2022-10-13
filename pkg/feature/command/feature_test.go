@@ -172,12 +172,14 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			},
 		},
 	}
-	patterns := map[string]*struct {
+	patterns := []struct {
+		desc     string
 		ruleID   string
 		strategy *proto.Strategy
 		expected error
 	}{
-		"success": {
+		{
+			desc:     "success",
 			ruleID:   rID,
 			strategy: expected,
 			expected: nil,
@@ -187,8 +189,8 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 		feature:      f,
 		eventFactory: makeEventFactory(f),
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			cmd := &proto.ChangeRuleStrategyCommand{
 				RuleId:   p.ruleID,
 				Strategy: p.strategy,
@@ -280,11 +282,13 @@ func TestChangeRolloutStrategy(t *testing.T) {
 }
 
 func TestChangeDefaultStrategy(t *testing.T) {
-	patterns := map[string]*struct {
+	patterns := []struct {
+		desc        string
 		strategy    *proto.Strategy
 		expectedErr error
 	}{
-		"success": {
+		{
+			desc: "success",
 			strategy: &proto.Strategy{
 				Type: proto.Strategy_ROLLOUT,
 				RolloutStrategy: &proto.RolloutStrategy{
@@ -303,8 +307,8 @@ func TestChangeDefaultStrategy(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			f := makeFeature("feature-id")
 			targetingCmd := &FeatureCommandHandler{
 				feature:      f,
@@ -379,17 +383,19 @@ func TestDisableFeature(t *testing.T) {
 func TestResetSamplingSeed(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		cmd      *proto.ResetSamplingSeedCommand
 		expected error
 	}{
-		"success": {
+		{
+			desc:     "success",
 			cmd:      &proto.ResetSamplingSeedCommand{},
 			expected: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			f := makeFeature("fid")
 			assert.Empty(t, f.Feature.SamplingSeed)
 			cmd := &FeatureCommandHandler{
@@ -406,11 +412,13 @@ func TestResetSamplingSeed(t *testing.T) {
 func TestAddPrerequisite(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		cmd      *proto.AddPrerequisiteCommand
 		expected error
 	}{
-		"success": {
+		{
+			desc: "success",
 			cmd: &proto.AddPrerequisiteCommand{
 				Prerequisite: &proto.Prerequisite{
 					FeatureId:   "test-feature2",
@@ -420,8 +428,8 @@ func TestAddPrerequisite(t *testing.T) {
 			expected: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			f := makeFeature("fid")
 			assert.Empty(t, f.Feature.Prerequisites)
 			cmd := &FeatureCommandHandler{
@@ -438,12 +446,14 @@ func TestAddPrerequisite(t *testing.T) {
 func TestRemovePrerequisite(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc         string
 		cmd          *proto.RemovePrerequisiteCommand
 		prerequisite []*proto.Prerequisite
 		expected     error
 	}{
-		"success": {
+		{
+			desc: "success",
 			cmd: &proto.RemovePrerequisiteCommand{
 				FeatureId: "test-feature2",
 			},
@@ -456,8 +466,8 @@ func TestRemovePrerequisite(t *testing.T) {
 			expected: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			f := makeFeature("fid")
 			f.Prerequisites = p.prerequisite
 			assert.NotEmpty(t, f.Feature.Prerequisites)
@@ -475,13 +485,15 @@ func TestRemovePrerequisite(t *testing.T) {
 func TestChangePrerequisiteVariation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc              string
 		cmd               *proto.ChangePrerequisiteVariationCommand
 		prerequisite      []*proto.Prerequisite
 		expectedErr       error
 		expectedVariation string
 	}{
-		"success": {
+		{
+			desc: "success",
 			cmd: &proto.ChangePrerequisiteVariationCommand{
 				Prerequisite: &proto.Prerequisite{
 					FeatureId:   "test-feature2",
@@ -498,8 +510,8 @@ func TestChangePrerequisiteVariation(t *testing.T) {
 			expectedVariation: "variation A",
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			f := makeFeature("fid")
 			f.Prerequisites = p.prerequisite
 			assert.NotEmpty(t, f.Feature.Prerequisites)
