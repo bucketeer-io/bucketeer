@@ -51,7 +51,7 @@ gen_proto: clean_proto
 	--ts_out=service=grpc-web:$(SRC_DIR) \
 	-I $(ROOT_DIR) \
 	-I $(PROTOBUF_INCLUDE_DIR) \
-	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/gateway/*.proto" -not -path "**/google/protobuf/*.proto")
+	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/gateway/*.proto" -not -path "**/google/protobuf/*.proto" -not -path "**/google/api/*.proto")
 
 .PHONY: clean_proto
 clean_proto:
