@@ -51,6 +51,7 @@ go_test(
     srcs = [
         "api_grpc_test.go",
         "api_test.go",
+        "grpc_validation_test.go",
         "trackhandler_test.go",
         "validation_test.go",
     ],
