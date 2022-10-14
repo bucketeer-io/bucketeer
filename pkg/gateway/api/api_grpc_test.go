@@ -145,13 +145,15 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*grpcGatewayService)
 		ctx         context.Context
 		expected    *accountproto.EnvironmentAPIKey
 		expectedErr error
 	}{
-		"exists in redis": {
+		{
+			desc: "exists in redis",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -168,7 +170,8 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"ErrInvalidAPIKey": {
+		{
+			desc: "ErrInvalidAPIKey",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
@@ -181,7 +184,8 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 			expected:    nil,
 			expectedErr: ErrInvalidAPIKey,
 		},
-		"ErrInternal": {
+		{
+			desc: "ErrInternal",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
@@ -194,7 +198,8 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 			expected:    nil,
 			expectedErr: ErrInternal,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
@@ -215,12 +220,12 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
 		actual, err := gs.getEnvironmentAPIKey(p.ctx)
-		assert.Equal(t, p.expected, actual, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -229,19 +234,22 @@ func TestGrpcGetEnvironmentAPIKeyFromCache(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*cachev3mock.MockEnvironmentAPIKeyCache)
 		expected    *accountproto.EnvironmentAPIKey
 		expectedErr error
 	}{
-		"no error": {
+		{
+			desc: "no error",
 			setup: func(mtf *cachev3mock.MockEnvironmentAPIKeyCache) {
 				mtf.EXPECT().Get(gomock.Any()).Return(&accountproto.EnvironmentAPIKey{}, nil)
 			},
 			expected:    &accountproto.EnvironmentAPIKey{},
 			expectedErr: nil,
 		},
-		"error": {
+		{
+			desc: "error",
 			setup: func(mtf *cachev3mock.MockEnvironmentAPIKeyCache) {
 				mtf.EXPECT().Get(gomock.Any()).Return(nil, cache.ErrNotFound)
 			},
@@ -249,12 +257,12 @@ func TestGrpcGetEnvironmentAPIKeyFromCache(t *testing.T) {
 			expectedErr: cache.ErrNotFound,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		mock := cachev3mock.NewMockEnvironmentAPIKeyCache(mockController)
 		p.setup(mock)
 		actual, err := getEnvironmentAPIKeyFromCache(context.Background(), "id", mock, "caller", "layer")
-		assert.Equal(t, p.expected, actual, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -263,12 +271,14 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		inputEnvAPIKey *accountproto.EnvironmentAPIKey
 		inputRole      accountproto.APIKey_Role
 		expected       error
 	}{
-		"ErrBadRole": {
+		{
+			desc: "ErrBadRole",
 			inputEnvAPIKey: &accountproto.EnvironmentAPIKey{
 				EnvironmentNamespace: "ns0",
 				ApiKey: &accountproto.APIKey{
@@ -280,7 +290,8 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 			inputRole: accountproto.APIKey_SDK,
 			expected:  ErrBadRole,
 		},
-		"ErrDisabledAPIKey: environment disabled": {
+		{
+			desc: "ErrDisabledAPIKey: environment disabled",
 			inputEnvAPIKey: &accountproto.EnvironmentAPIKey{
 				EnvironmentNamespace: "ns0",
 				ApiKey: &accountproto.APIKey{
@@ -293,7 +304,8 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 			inputRole: accountproto.APIKey_SDK,
 			expected:  ErrDisabledAPIKey,
 		},
-		"ErrDisabledAPIKey: api key disabled": {
+		{
+			desc: "ErrDisabledAPIKey: api key disabled",
 			inputEnvAPIKey: &accountproto.EnvironmentAPIKey{
 				EnvironmentNamespace: "ns0",
 				ApiKey: &accountproto.APIKey{
@@ -306,7 +318,8 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 			inputRole: accountproto.APIKey_SDK,
 			expected:  ErrDisabledAPIKey,
 		},
-		"no error": {
+		{
+			desc: "no error",
 			inputEnvAPIKey: &accountproto.EnvironmentAPIKey{
 				EnvironmentNamespace: "ns0",
 				ApiKey: &accountproto.APIKey{
@@ -319,37 +332,42 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 			expected:  nil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		actual := checkEnvironmentAPIKey(p.inputEnvAPIKey, p.inputRole)
-		assert.Equal(t, p.expected, actual, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
 	}
 }
 
 func TestGrpcValidateGetEvaluationsRequest(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		input    *gwproto.GetEvaluationsRequest
 		expected error
 	}{
-		"tag is empty": {
+		{
+			desc:     "tag is empty",
 			input:    &gwproto.GetEvaluationsRequest{},
 			expected: ErrTagRequired,
 		},
-		"user is empty": {
+		{
+			desc:     "user is empty",
 			input:    &gwproto.GetEvaluationsRequest{Tag: "test"},
 			expected: ErrUserRequired,
 		},
-		"user ID is empty": {
+		{
+			desc:     "user ID is empty",
 			input:    &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{}},
 			expected: ErrUserIDRequired,
 		},
-		"pass": {
+		{
+			desc:  "pass",
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id"}},
 		},
 	}
 	gs := grpcGatewayService{}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := gs.validateGetEvaluationsRequest(p.input)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -358,33 +376,39 @@ func TestGrpcValidateGetEvaluationsRequest(t *testing.T) {
 
 func TestGrpcValidateGetEvaluationRequest(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		input    *gwproto.GetEvaluationRequest
 		expected error
 	}{
-		"tag is empty": {
+		{
+			desc:     "tag is empty",
 			input:    &gwproto.GetEvaluationRequest{},
 			expected: ErrTagRequired,
 		},
-		"user is empty": {
+		{
+			desc:     "user is empty",
 			input:    &gwproto.GetEvaluationRequest{Tag: "test"},
 			expected: ErrUserRequired,
 		},
-		"user ID is empty": {
+		{
+			desc:     "user ID is empty",
 			input:    &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{}},
 			expected: ErrUserIDRequired,
 		},
-		"feature ID is empty": {
+		{
+			desc:     "feature ID is empty",
 			input:    &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "id"}},
 			expected: ErrFeatureIDRequired,
 		},
-		"pass": {
+		{
+			desc:  "pass",
 			input: &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "id"}, FeatureId: "id"},
 		},
 	}
 	gs := grpcGatewayService{}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := gs.validateGetEvaluationRequest(p.input)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -396,13 +420,15 @@ func TestGrpcGetFeaturesFromCache(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*cachev3mock.MockFeaturesCache)
 		environmentNamespace string
 		expected             *featureproto.Features
 		expectedErr          error
 	}{
-		"no error": {
+		{
+			desc: "no error",
 			setup: func(mtf *cachev3mock.MockFeaturesCache) {
 				mtf.EXPECT().Get(gomock.Any()).Return(&featureproto.Features{}, nil)
 			},
@@ -410,7 +436,8 @@ func TestGrpcGetFeaturesFromCache(t *testing.T) {
 			expected:             &featureproto.Features{},
 			expectedErr:          nil,
 		},
-		"error": {
+		{
+			desc: "error",
 			setup: func(mtf *cachev3mock.MockFeaturesCache) {
 				mtf.EXPECT().Get(gomock.Any()).Return(nil, cache.ErrNotFound)
 			},
@@ -419,13 +446,13 @@ func TestGrpcGetFeaturesFromCache(t *testing.T) {
 			expectedErr:          cache.ErrNotFound,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		mtfc := cachev3mock.NewMockFeaturesCache(mockController)
 		p.setup(mtfc)
 		gs := grpcGatewayService{featuresCache: mtfc}
 		actual, err := gs.getFeaturesFromCache(context.Background(), p.environmentNamespace)
-		assert.Equal(t, p.expected, actual, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -434,13 +461,15 @@ func TestGrpcGetFeatures(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                 string
 		setup                func(*grpcGatewayService)
 		environmentNamespace string
 		expected             []*featureproto.Feature
 		expectedErr          error
 	}{
-		"exists in redis": {
+		{
+			desc: "exists in redis",
 			setup: func(gs *grpcGatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -451,7 +480,8 @@ func TestGrpcGetFeatures(t *testing.T) {
 			expectedErr:          nil,
 			expected:             []*featureproto.Feature{{}},
 		},
-		"listFeatures fails": {
+		{
+			desc: "listFeatures fails",
 			setup: func(gs *grpcGatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
@@ -462,7 +492,8 @@ func TestGrpcGetFeatures(t *testing.T) {
 			expected:             nil,
 			expectedErr:          ErrInternal,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(gs *grpcGatewayService) {
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
@@ -486,12 +517,12 @@ func TestGrpcGetFeatures(t *testing.T) {
 		},
 		// TODO: add test for off-variation features
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
 		actual, err := gs.getFeatures(context.Background(), p.environmentNamespace)
-		assert.Equal(t, p.expected, actual, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -499,23 +530,26 @@ func TestGrpcGetEvaluationsContextCanceled(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		cancel      bool
 		expected    *gwproto.GetEvaluationsResponse
 		expectedErr error
 	}{
-		"error: context canceled": {
+		{
+			desc:        "error: context canceled",
 			cancel:      true,
 			expected:    nil,
 			expectedErr: ErrContextCanceled,
 		},
-		"error: missing API key": {
+		{
+			desc:        "error: missing API key",
 			cancel:      false,
 			expected:    nil,
 			expectedErr: ErrMissingAPIKey,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		ctx, cancel := context.WithCancel(context.Background())
 		if p.cancel {
@@ -524,8 +558,8 @@ func TestGrpcGetEvaluationsContextCanceled(t *testing.T) {
 			defer cancel()
 		}
 		actual, err := gs.GetEvaluations(ctx, &gwproto.GetEvaluationsRequest{})
-		assert.Equal(t, p.expected, actual, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -534,13 +568,15 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*grpcGatewayService)
 		input       *gwproto.GetEvaluationsRequest
 		expected    *gwproto.GetEvaluationsResponse
 		expectedErr error
 	}{
-		"missing tag": {
+		{
+			desc: "missing tag",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -556,7 +592,8 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 			expected:    nil,
 			expectedErr: ErrTagRequired,
 		},
-		"missing user id": {
+		{
+			desc: "missing user id",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -572,7 +609,8 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 			expected:    nil,
 			expectedErr: ErrUserRequired,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -598,15 +636,15 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
 		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 			"authorization": []string{"test-key"},
 		})
 		actual, err := gs.GetEvaluations(ctx, p.input)
-		assert.Equal(t, p.expected, actual, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -615,13 +653,15 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*grpcGatewayService)
 		input       *gwproto.GetEvaluationsRequest
 		expected    *gwproto.GetEvaluationsResponse
 		expectedErr error
 	}{
-		"zero feature": {
+		{
+			desc: "zero feature",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -647,17 +687,17 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
 		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 			"authorization": []string{"test-key"},
 		})
 		actual, err := gs.GetEvaluations(ctx, p.input)
-		assert.Equal(t, p.expected, actual, "%s", msg)
-		assert.Equal(t, p.expected.State, actual.State, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
-		assert.Empty(t, actual.UserEvaluationsId, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		assert.Empty(t, actual.UserEvaluationsId, "%s", p.desc)
 	}
 }
 
@@ -808,14 +848,16 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 	ueid := featuredomain.UserEvaluationsID(userID, nil, features)
 	ueidWithData := featuredomain.UserEvaluationsID(userID, userMetadata, features)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc                      string
 		setup                     func(*grpcGatewayService)
 		input                     *gwproto.GetEvaluationsRequest
 		expected                  *gwproto.GetEvaluationsResponse
 		expectedErr               error
 		expectedEvaluationsAssert func(assert.TestingT, interface{}, ...interface{}) bool
 	}{
-		"user evaluations id not set": {
+		{
+			desc: "user evaluations id not set",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -846,7 +888,8 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			expectedErr:               nil,
 			expectedEvaluationsAssert: assert.NotNil,
 		},
-		"user evaluations id is the same": {
+		{
+			desc: "user evaluations id is the same",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -878,7 +921,8 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			expectedErr:               nil,
 			expectedEvaluationsAssert: assert.Nil,
 		},
-		"user evaluations id is different": {
+		{
+			desc: "user evaluations id is different",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -910,7 +954,8 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			expectedErr:               nil,
 			expectedEvaluationsAssert: assert.NotNil,
 		},
-		"user_with_no_metadata_and_the_id_is_same": {
+		{
+			desc: "user_with_no_metadata_and_the_id_is_same",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -939,7 +984,8 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			expectedErr:               nil,
 			expectedEvaluationsAssert: assert.Nil,
 		},
-		"user_with_no_metadata_and_the_id_is_different": {
+		{
+			desc: "user_with_no_metadata_and_the_id_is_different",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -969,17 +1015,17 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			expectedEvaluationsAssert: assert.NotNil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
 		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 			"authorization": []string{"test-key"},
 		})
 		actual, err := gs.GetEvaluations(ctx, p.input)
-		assert.Equal(t, p.expected.State, actual.State, "%s", msg)
-		assert.Equal(t, p.expected.UserEvaluationsId, actual.UserEvaluationsId, "%s", msg)
-		p.expectedEvaluationsAssert(t, actual.Evaluations, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
+		assert.Equal(t, p.expected.UserEvaluationsId, actual.UserEvaluationsId, "%s", p.desc)
+		p.expectedEvaluationsAssert(t, actual.Evaluations, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -992,13 +1038,15 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 	vID3 := newUUID(t)
 	vID4 := newUUID(t)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*grpcGatewayService)
 		input       *gwproto.GetEvaluationsRequest
 		expected    *gwproto.GetEvaluationsResponse
 		expectedErr error
 	}{
-		"state: full": {
+		{
+			desc: "state: full",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1113,7 +1161,7 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
 		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
@@ -1122,11 +1170,11 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 		actual, err := gs.GetEvaluations(ctx, p.input)
 		ev := p.expected.Evaluations.Evaluations
 		av := actual.Evaluations.Evaluations
-		assert.Equal(t, len(ev), len(av), "%s", msg)
-		assert.Equal(t, p.expected.State, actual.State, "%s", msg)
-		assert.Equal(t, ev[0].VariationId, av[0].VariationId, "%s", msg)
-		assert.Equal(t, ev[1].VariationId, av[1].VariationId, "%s", msg)
-		assert.NotEmpty(t, actual.UserEvaluationsId, "%s", msg)
+		assert.Equal(t, len(ev), len(av), "%s", p.desc)
+		assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
+		assert.Equal(t, ev[0].VariationId, av[0].VariationId, "%s", p.desc)
+		assert.Equal(t, ev[1].VariationId, av[1].VariationId, "%s", p.desc)
+		assert.NotEmpty(t, actual.UserEvaluationsId, "%s", p.desc)
 		require.NoError(t, err)
 	}
 }
@@ -1136,13 +1184,15 @@ func TestGrpcGetEvaluationsEvaluteFeatures(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*grpcGatewayService)
 		input       *gwproto.GetEvaluationsRequest
 		expected    *gwproto.GetEvaluationsResponse
 		expectedErr error
 	}{
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1209,7 +1259,8 @@ func TestGrpcGetEvaluationsEvaluteFeatures(t *testing.T) {
 			expected:    nil,
 			expectedErr: ErrInternal,
 		},
-		"state: full, evaluate features list segment from cache": {
+		{
+			desc: "state: full, evaluate features list segment from cache",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1303,7 +1354,8 @@ func TestGrpcGetEvaluationsEvaluteFeatures(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"state: full, evaluate features list segment from storage": {
+		{
+			desc: "state: full, evaluate features list segment from storage",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1383,7 +1435,8 @@ func TestGrpcGetEvaluationsEvaluteFeatures(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"state: full, evaluate features": {
+		{
+			desc: "state: full, evaluate features",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1438,7 +1491,7 @@ func TestGrpcGetEvaluationsEvaluteFeatures(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
 		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
@@ -1446,14 +1499,14 @@ func TestGrpcGetEvaluationsEvaluteFeatures(t *testing.T) {
 		})
 		actual, err := gs.GetEvaluations(ctx, p.input)
 		if err != nil {
-			assert.Equal(t, p.expected, actual, "%s", msg)
-			assert.Equal(t, p.expectedErr, err, "%s", msg)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		} else {
-			assert.Equal(t, len(p.expected.Evaluations.Evaluations), 1, "%s", msg)
-			assert.Equal(t, p.expected.State, actual.State, "%s", msg)
-			assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationId, "variation-b", "%s", msg)
-			assert.Equal(t, p.expected.Evaluations.Evaluations[0].Reason, actual.Evaluations.Evaluations[0].Reason, msg)
-			assert.NotEmpty(t, actual.UserEvaluationsId, "%s", msg)
+			assert.Equal(t, len(p.expected.Evaluations.Evaluations), 1, "%s", p.desc)
+			assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
+			assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationId, "variation-b", "%s", p.desc)
+			assert.Equal(t, p.expected.Evaluations.Evaluations[0].Reason, actual.Evaluations.Evaluations[0].Reason, p.desc)
+			assert.NotEmpty(t, actual.UserEvaluationsId, "%s", p.desc)
 			require.NoError(t, err)
 		}
 	}
@@ -1464,13 +1517,15 @@ func TestGrpcGetEvaluation(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc              string
 		setup             func(*grpcGatewayService)
 		input             *gwproto.GetEvaluationRequest
 		expectedFeatureID string
 		expectedErr       error
 	}{
-		"errFeatureNotFound": {
+		{
+			desc: "errFeatureNotFound",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1533,7 +1588,8 @@ func TestGrpcGetEvaluation(t *testing.T) {
 			expectedFeatureID: "",
 			expectedErr:       ErrFeatureNotFound,
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1621,7 +1677,8 @@ func TestGrpcGetEvaluation(t *testing.T) {
 			expectedFeatureID: "",
 			expectedErr:       ErrInternal,
 		},
-		"error while trying to upsert the user evaluation": {
+		{
+			desc: "error while trying to upsert the user evaluation",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1690,7 +1747,8 @@ func TestGrpcGetEvaluation(t *testing.T) {
 			expectedFeatureID: "",
 			expectedErr:       ErrInternal,
 		},
-		"return evaluation": {
+		{
+			desc: "return evaluation",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1760,8 +1818,8 @@ func TestGrpcGetEvaluation(t *testing.T) {
 			expectedErr:       nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			gs := newGrpcGatewayServiceWithMock(t, mockController)
 			p.setup(gs)
 			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
@@ -1780,23 +1838,26 @@ func TestGrpcRegisterEventsContextCanceled(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		cancel      bool
 		expected    *gwproto.RegisterEventsResponse
 		expectedErr error
 	}{
-		"error: context canceled": {
+		{
+			desc:        "error: context canceled",
 			cancel:      true,
 			expected:    nil,
 			expectedErr: ErrContextCanceled,
 		},
-		"error: missing API key": {
+		{
+			desc:        "error: missing API key",
 			cancel:      false,
 			expected:    nil,
 			expectedErr: ErrMissingAPIKey,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		ctx, cancel := context.WithCancel(context.Background())
 		if p.cancel {
@@ -1805,8 +1866,8 @@ func TestGrpcRegisterEventsContextCanceled(t *testing.T) {
 			defer cancel()
 		}
 		actual, err := gs.RegisterEvents(ctx, &gwproto.RegisterEventsRequest{})
-		assert.Equal(t, p.expected, actual, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -1847,13 +1908,15 @@ func TestGrcpRegisterEvents(t *testing.T) {
 	uuid2 := newUUID(t)
 	uuid3 := newUUID(t)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*grpcGatewayService)
 		input       *gwproto.RegisterEventsRequest
 		expected    *gwproto.RegisterEventsResponse
 		expectedErr error
 	}{
-		"error: zero event": {
+		{
+			desc: "error: zero event",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1868,7 +1931,8 @@ func TestGrcpRegisterEvents(t *testing.T) {
 			input:       &gwproto.RegisterEventsRequest{},
 			expectedErr: ErrMissingEvents,
 		},
-		"error: ErrMissingEventID": {
+		{
+			desc: "error: ErrMissingEventID",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1889,7 +1953,8 @@ func TestGrcpRegisterEvents(t *testing.T) {
 			},
 			expectedErr: ErrMissingEventID,
 		},
-		"error: invalid message type": {
+		{
+			desc: "error: invalid message type",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1930,7 +1995,8 @@ func TestGrcpRegisterEvents(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"error while trying to upsert the user evaluation": {
+		{
+			desc: "error while trying to upsert the user evaluation",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1998,7 +2064,8 @@ func TestGrcpRegisterEvents(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -2060,15 +2127,15 @@ func TestGrcpRegisterEvents(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
 		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 			"authorization": []string{"test-key"},
 		})
 		actual, err := gs.RegisterEvents(ctx, p.input)
-		assert.Equal(t, p.expected, actual, "%s", msg)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -2178,11 +2245,13 @@ func TestGrpcContainsInvalidTimestampError(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		errs     map[string]*gwproto.RegisterEventsResponse_Error
 		expected bool
 	}{
-		"error: invalid timestamp": {
+		{
+			desc: "error: invalid timestamp",
 			errs: map[string]*gwproto.RegisterEventsResponse_Error{
 				"id-test": {
 					Retriable: false,
@@ -2191,7 +2260,8 @@ func TestGrpcContainsInvalidTimestampError(t *testing.T) {
 			},
 			expected: true,
 		},
-		"error: different error": {
+		{
+			desc: "error: different error",
 			errs: map[string]*gwproto.RegisterEventsResponse_Error{
 				"id-test": {
 					Retriable: true,
@@ -2200,15 +2270,16 @@ func TestGrpcContainsInvalidTimestampError(t *testing.T) {
 			},
 			expected: false,
 		},
-		"error: empty": {
+		{
+			desc:     "error: empty",
 			errs:     make(map[string]*gwproto.RegisterEventsResponse_Error),
 			expected: false,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		actual := gs.containsInvalidTimestampError(p.errs)
-		assert.Equal(t, p.expected, actual, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
 	}
 }
 

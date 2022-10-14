@@ -44,12 +44,14 @@ func TestAPIKeyHandle(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*apiKeyCommandHandler)
 		input       Command
 		expectedErr error
 	}{
-		"CreateAPIKeyCommand: success": {
+		{
+			desc: "CreateAPIKeyCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
 				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK)
 				require.NoError(t, err)
@@ -59,7 +61,8 @@ func TestAPIKeyHandle(t *testing.T) {
 			input:       &accountproto.CreateAPIKeyCommand{},
 			expectedErr: nil,
 		},
-		"ChangeAPIKeyNameCommand: success": {
+		{
+			desc: "ChangeAPIKeyNameCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
 				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK)
 				require.NoError(t, err)
@@ -69,7 +72,8 @@ func TestAPIKeyHandle(t *testing.T) {
 			input:       &accountproto.ChangeAPIKeyNameCommand{},
 			expectedErr: nil,
 		},
-		"EnableAPIKeyCommand: success": {
+		{
+			desc: "EnableAPIKeyCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
 				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK)
 				require.NoError(t, err)
@@ -79,7 +83,8 @@ func TestAPIKeyHandle(t *testing.T) {
 			input:       &accountproto.EnableAPIKeyCommand{},
 			expectedErr: nil,
 		},
-		"DisableAPIKeyCommand: success": {
+		{
+			desc: "DisableAPIKeyCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
 				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK)
 				require.NoError(t, err)
@@ -89,17 +94,18 @@ func TestAPIKeyHandle(t *testing.T) {
 			input:       &accountproto.DisableAPIKeyCommand{},
 			expectedErr: nil,
 		},
-		"ErrBadCommand": {
+		{
+			desc:        "ErrBadCommand",
 			input:       nil,
 			expectedErr: ErrBadCommand,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		h := newAPIKeyCommandHandlerWithMock(t, mockController)
 		if p.setup != nil {
 			p.setup(h)
 		}
 		err := h.Handle(context.Background(), p.input)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }

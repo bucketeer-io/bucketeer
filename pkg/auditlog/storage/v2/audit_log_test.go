@@ -40,12 +40,14 @@ func TestCreateAuditLogs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*auditLogStorage)
 		input       []*domain.AuditLog
 		expectedErr error
 	}{
-		"ErrAuditLogAlreadyExists": {
+		{
+			desc: "ErrAuditLogAlreadyExists",
 			setup: func(s *auditLogStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -57,7 +59,8 @@ func TestCreateAuditLogs(t *testing.T) {
 			},
 			expectedErr: ErrAuditLogAlreadyExists,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *auditLogStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -69,12 +72,14 @@ func TestCreateAuditLogs(t *testing.T) {
 			},
 			expectedErr: errors.New("error"),
 		},
-		"Success: len == 0": {
+		{
+			desc:        "Success: len == 0",
 			setup:       nil,
 			input:       nil,
 			expectedErr: nil,
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *auditLogStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -87,8 +92,8 @@ func TestCreateAuditLogs(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAuditLogStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -103,7 +108,8 @@ func TestListAuditLogs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		setup          func(*auditLogStorage)
 		whereParts     []mysql.WherePart
 		orders         []*mysql.Order
@@ -113,7 +119,8 @@ func TestListAuditLogs(t *testing.T) {
 		expectedCursor int
 		expectedErr    error
 	}{
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *auditLogStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -127,7 +134,8 @@ func TestListAuditLogs(t *testing.T) {
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *auditLogStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -153,8 +161,8 @@ func TestListAuditLogs(t *testing.T) {
 			expectedErr:    nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAuditLogStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)

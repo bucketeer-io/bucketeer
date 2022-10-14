@@ -40,12 +40,14 @@ func TestCreateProject(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*projectStorage)
 		input       *domain.Project
 		expectedErr error
 	}{
-		"ErrProjectAlreadyExists": {
+		{
+			desc: "ErrProjectAlreadyExists",
 			setup: func(s *projectStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -56,7 +58,8 @@ func TestCreateProject(t *testing.T) {
 			},
 			expectedErr: ErrProjectAlreadyExists,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *projectStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -67,7 +70,8 @@ func TestCreateProject(t *testing.T) {
 			},
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *projectStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -79,8 +83,8 @@ func TestCreateProject(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newProjectStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -95,12 +99,14 @@ func TestUpdateProject(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*projectStorage)
 		input       *domain.Project
 		expectedErr error
 	}{
-		"ErrProjectUnexpectedAffectedRows": {
+		{
+			desc: "ErrProjectUnexpectedAffectedRows",
 			setup: func(s *projectStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
@@ -113,7 +119,8 @@ func TestUpdateProject(t *testing.T) {
 			},
 			expectedErr: ErrProjectUnexpectedAffectedRows,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *projectStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -124,7 +131,8 @@ func TestUpdateProject(t *testing.T) {
 			},
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *projectStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
@@ -138,8 +146,8 @@ func TestUpdateProject(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newProjectStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -154,12 +162,14 @@ func TestGetProject(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*projectStorage)
 		id          string
 		expectedErr error
 	}{
-		"ErrProjectNotFound": {
+		{
+			desc: "ErrProjectNotFound",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -170,7 +180,8 @@ func TestGetProject(t *testing.T) {
 			id:          "id-0",
 			expectedErr: ErrProjectNotFound,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -182,7 +193,8 @@ func TestGetProject(t *testing.T) {
 			id:          "id-0",
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -194,8 +206,8 @@ func TestGetProject(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newProjectStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -210,14 +222,16 @@ func TestGetTrialProjectByEmail(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*projectStorage)
 		email       string
 		disabled    bool
 		trial       bool
 		expectedErr error
 	}{
-		"ErrProjectNotFound": {
+		{
+			desc: "ErrProjectNotFound",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -230,7 +244,8 @@ func TestGetTrialProjectByEmail(t *testing.T) {
 			trial:       false,
 			expectedErr: ErrProjectNotFound,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -244,7 +259,8 @@ func TestGetTrialProjectByEmail(t *testing.T) {
 			trial:       false,
 			expectedErr: errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *projectStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -258,8 +274,8 @@ func TestGetTrialProjectByEmail(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newProjectStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -274,7 +290,8 @@ func TestListProjects(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		setup          func(*projectStorage)
 		whereParts     []mysql.WherePart
 		orders         []*mysql.Order
@@ -284,7 +301,8 @@ func TestListProjects(t *testing.T) {
 		expectedCursor int
 		expectedErr    error
 	}{
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *projectStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -298,7 +316,8 @@ func TestListProjects(t *testing.T) {
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *projectStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -326,8 +345,8 @@ func TestListProjects(t *testing.T) {
 			expectedErr:    nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newProjectStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)

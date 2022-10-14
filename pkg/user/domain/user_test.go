@@ -25,13 +25,15 @@ import (
 
 func TestUpdateMe(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		origin      *User
 		input       *User
 		expected    *User
 		expectedErr error
 	}{
-		"update without data": {
+		{
+			desc: "update without data",
 			origin: &User{
 				User: &userproto.User{
 					Id:       "hoge",
@@ -52,7 +54,8 @@ func TestUpdateMe(t *testing.T) {
 				},
 			},
 		},
-		"update overriding data": {
+		{
+			desc: "update overriding data",
 			origin: &User{
 				User: &userproto.User{
 					Id:         "id",
@@ -75,7 +78,8 @@ func TestUpdateMe(t *testing.T) {
 				},
 			},
 		},
-		"update appending data": {
+		{
+			desc: "update appending data",
 			origin: &User{
 				User: &userproto.User{
 					Id: "id",
@@ -109,7 +113,8 @@ func TestUpdateMe(t *testing.T) {
 				},
 			},
 		},
-		"err: id not same": {
+		{
+			desc: "err: id not same",
 			origin: &User{
 				User: &userproto.User{
 					Id:       "foo",
@@ -130,7 +135,8 @@ func TestUpdateMe(t *testing.T) {
 			},
 			expectedErr: ErrNotSameID,
 		},
-		"err: id not later": {
+		{
+			desc: "err: id not later",
 			origin: &User{
 				User: &userproto.User{
 					Id:       "foo",
@@ -152,8 +158,8 @@ func TestUpdateMe(t *testing.T) {
 			expectedErr: ErrNotLater,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			err := p.origin.UpdateMe(p.input)
 			assert.True(t, proto.Equal(p.expected, p.origin))
 			assert.Equal(t, p.expectedErr, err)
@@ -163,12 +169,14 @@ func TestUpdateMe(t *testing.T) {
 
 func TestData(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		origin   *User
 		input    string
 		expected map[string]string
 	}{
-		"no data": {
+		{
+			desc: "no data",
 			origin: &User{
 				User: &userproto.User{
 					TaggedData: map[string]*userproto.User_Data{
@@ -179,7 +187,8 @@ func TestData(t *testing.T) {
 			input:    "t1",
 			expected: nil,
 		},
-		"hit": {
+		{
+			desc: "hit",
 			origin: &User{
 				User: &userproto.User{
 					TaggedData: map[string]*userproto.User_Data{
@@ -194,8 +203,8 @@ func TestData(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := p.origin.Data(p.input)
 			assert.Equal(t, p.expected, actual)
 		})

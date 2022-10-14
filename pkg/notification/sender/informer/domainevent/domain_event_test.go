@@ -31,13 +31,15 @@ func TestCreateNotificationEvent(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc          string
 		input         *domaineventproto.Event
 		environmentID string
 		expected      *senderproto.NotificationEvent
 		expectedErr   error
 	}{
-		"success: DomainEvent": {
+		{
+			desc: "success: DomainEvent",
 			input: &domaineventproto.Event{
 				Id:                   "did",
 				EntityType:           domaineventproto.Event_FEATURE,
@@ -66,7 +68,8 @@ func TestCreateNotificationEvent(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: Admin DomainEvent": {
+		{
+			desc: "success: Admin DomainEvent",
 			input: &domaineventproto.Event{
 				Id:                   "did",
 				EntityType:           domaineventproto.Event_PROJECT,
@@ -96,8 +99,8 @@ func TestCreateNotificationEvent(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			i := newDomainEventInformer(t, mockController)
 			actual, err := i.createNotificationEvent(p.input, p.environmentID, p.input.IsAdminEvent)
 			assert.Equal(t, p.expectedErr, err)

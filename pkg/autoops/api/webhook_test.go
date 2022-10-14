@@ -52,23 +52,27 @@ func TestCreateWebhook(t *testing.T) {
 		).Return(nil)
 	}
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AutoOpsService)
 		req         *autoopspb.CreateWebhookRequest
 		resp        *autoopspb.CreateWebhookResponse
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:        "err: ErrNoCommand",
 			req:         &autoopspb.CreateWebhookRequest{},
 			expectedErr: createError(localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
-		"err: ErrWebhookNameRequired": {
+		{
+			desc: "err: ErrWebhookNameRequired",
 			req: &autoopspb.CreateWebhookRequest{
 				Command: &autoopspb.CreateWebhookCommand{},
 			},
 			expectedErr: createError(localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook name")),
 		},
-		"success": {
+		{
+			desc:  "success",
 			setup: baseSetup,
 			req: &autoopspb.CreateWebhookRequest{
 				Command: &autoopspb.CreateWebhookCommand{
@@ -85,8 +89,8 @@ func TestCreateWebhook(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := createAutoOpsService(mockController, nil)
 			if p.setup != nil {
 				p.setup(s)
@@ -117,19 +121,22 @@ func TestGetWebhook(t *testing.T) {
 	ctx := createContextWithTokenRoleOwner(t)
 	service := createAutoOpsService(mockController, nil)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AutoOpsService)
 		req         *autoopspb.GetWebhookRequest
 		res         *autoopspb.GetWebhookResponse
 		expectedErr error
 	}{
-		"err: ErrNoId": {
+		{
+			desc: "err: ErrNoId",
 			req: &autoopspb.GetWebhookRequest{
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: createError(localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -151,8 +158,8 @@ func TestGetWebhook(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -182,13 +189,15 @@ func TestListWebhooks(t *testing.T) {
 	}
 	service := createAutoOpsService(mockController, nil)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AutoOpsService)
 		req         *autoopspb.ListWebhooksRequest
 		res         *autoopspb.ListWebhooksResponse
 		expectedErr error
 	}{
-		"err: ErrInvalidArgument": {
+		{
+			desc: "err: ErrInvalidArgument",
 			req: &autoopspb.ListWebhooksRequest{
 				EnvironmentNamespace: "ns0",
 				PageSize:             int64(500),
@@ -199,7 +208,8 @@ func TestListWebhooks(t *testing.T) {
 			},
 			expectedErr: createError(localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AutoOpsService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -230,8 +240,8 @@ func TestListWebhooks(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -258,27 +268,31 @@ func TestUpdateWebhook(t *testing.T) {
 	ctx := createContextWithTokenRoleOwner(t)
 	service := createAutoOpsService(mockController, nil)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AutoOpsService)
 		req         *autoopspb.UpdateWebhookRequest
 		res         *autoopspb.UpdateWebhookResponse
 		expectedErr error
 	}{
-		"err: ErrNoId": {
+		{
+			desc: "err: ErrNoId",
 			req: &autoopspb.UpdateWebhookRequest{
 				EnvironmentNamespace:            "ns0",
 				ChangeWebhookDescriptionCommand: &autoopspb.ChangeWebhookDescriptionCommand{},
 			},
 			expectedErr: createError(localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc: "err: ErrNoCommand",
 			req: &autoopspb.UpdateWebhookRequest{
 				Id:                   "id-0",
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: createError(localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
-		"err: ErrNoName": {
+		{
+			desc: "err: ErrNoName",
 			req: &autoopspb.UpdateWebhookRequest{
 				Id:                       "id-0",
 				EnvironmentNamespace:     "ns0",
@@ -286,7 +300,8 @@ func TestUpdateWebhook(t *testing.T) {
 			},
 			expectedErr: createError(localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook name")),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -305,8 +320,8 @@ func TestUpdateWebhook(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -333,13 +348,15 @@ func TestDeleteWebhook(t *testing.T) {
 	ctx := createContextWithTokenRoleOwner(t)
 	service := createAutoOpsService(mockController, nil)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AutoOpsService)
 		req         *autoopspb.DeleteWebhookRequest
 		res         *autoopspb.DeleteWebhookResponse
 		expectedErr error
 	}{
-		"err: ErrNoId": {
+		{
+			desc: "err: ErrNoId",
 			req: &autoopspb.DeleteWebhookRequest{
 				EnvironmentNamespace: "ns0",
 				Command:              &autoopspb.DeleteWebhookCommand{},
@@ -349,7 +366,8 @@ func TestDeleteWebhook(t *testing.T) {
 				statusInvalidRequest,
 			),
 		},
-		"err: ErrNoCommand": {
+		{
+			desc: "err: ErrNoCommand",
 			req: &autoopspb.DeleteWebhookRequest{
 				Id:                   "id-0",
 				EnvironmentNamespace: "ns0",
@@ -359,7 +377,8 @@ func TestDeleteWebhook(t *testing.T) {
 				statusInvalidRequest,
 			),
 		},
-		"err: InternalErr": {
+		{
+			desc: "err: InternalErr",
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -376,7 +395,8 @@ func TestDeleteWebhook(t *testing.T) {
 				statusInternal,
 			),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -392,8 +412,8 @@ func TestDeleteWebhook(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -416,17 +436,19 @@ func TestGenerateWebhookSecret(t *testing.T) {
 	service := createAutoOpsService(mockController, nil)
 	ctx := context.TODO()
 
-	testcases := map[string]struct {
+	testcases := []struct {
+		desc                 string
 		id                   string
 		environmentNamespace string
 	}{
-		"success": {
+		{
+			desc:                 "success",
 			id:                   "id-1",
 			environmentNamespace: "ns-1",
 		},
 	}
-	for msg, p := range testcases {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range testcases {
+		t.Run(p.desc, func(t *testing.T) {
 			secret, err := service.generateWebhookSecret(ctx, p.id, p.environmentNamespace)
 			require.NoError(t, err)
 			ws := dummyWebhookSecret{}

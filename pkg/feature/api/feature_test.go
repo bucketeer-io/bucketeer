@@ -41,16 +41,19 @@ func TestGetFeatureMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		setup    func(*FeatureService)
 		input    string
 		expected error
 	}{
-		"error: id is empty": {
+		{
+			desc:     "error: id is empty",
 			input:    "",
 			expected: errMissingIDJaJP,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *FeatureService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -69,8 +72,8 @@ func TestGetFeatureMySQL(t *testing.T) {
 			expected: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken()
 			fs := createFeatureServiceNew(mockController)
 			if p.setup != nil {
@@ -91,20 +94,24 @@ func TestGetFeaturesMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		setup    func(*FeatureService)
 		input    []string
 		expected error
 	}{
-		"error: id is nil": {
+		{
+			desc:     "error: id is nil",
 			input:    nil,
 			expected: errMissingIDsJaJP,
 		},
-		"error: contains empty id": {
+		{
+			desc:     "error: contains empty id",
 			input:    []string{"id", ""},
 			expected: errMissingIDsJaJP,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *FeatureService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -123,8 +130,8 @@ func TestGetFeaturesMySQL(t *testing.T) {
 			expected: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken()
 			fs := createFeatureServiceNew(mockController)
 			if p.setup != nil {
@@ -456,31 +463,36 @@ func TestEvaluateFeatures(t *testing.T) {
 	vID3 := newUUID(t)
 	vID4 := newUUID(t)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*FeatureService)
 		input       *featureproto.EvaluateFeaturesRequest
 		expected    *featureproto.EvaluateFeaturesResponse
 		expectedErr error
 	}{
-		"fail: ErrMissingUser": {
+		{
+			desc:        "fail: ErrMissingUser",
 			setup:       nil,
 			input:       &featureproto.EvaluateFeaturesRequest{},
 			expected:    nil,
 			expectedErr: errMissingUserJaJP,
 		},
-		"fail: ErrMissingUserID": {
+		{
+			desc:        "fail: ErrMissingUserID",
 			setup:       nil,
 			input:       &featureproto.EvaluateFeaturesRequest{User: &userproto.User{}},
 			expected:    nil,
 			expectedErr: errMissingUserIDJaJP,
 		},
-		"fail: ErrMissingFeatureTag": {
+		{
+			desc:        "fail: ErrMissingFeatureTag",
 			setup:       nil,
 			input:       &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0"},
 			expected:    nil,
 			expectedErr: errMissingFeatureTagJaJP,
 		},
-		"fail: return errInternal when getting features": {
+		{
+			desc: "fail: return errInternal when getting features",
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
@@ -492,7 +504,8 @@ func TestEvaluateFeatures(t *testing.T) {
 			expected:    nil,
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success: get from cache": {
+		{
+			desc: "success: get from cache",
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -616,7 +629,8 @@ func TestEvaluateFeatures(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: get from cache and filter by tag: return empty": {
+		{
+			desc: "success: get from cache and filter by tag: return empty",
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -731,7 +745,8 @@ func TestEvaluateFeatures(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: get features from storage": {
+		{
+			desc: "success: get features from storage",
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
@@ -756,7 +771,8 @@ func TestEvaluateFeatures(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"fail: return errInternal when getting segment users": {
+		{
+			desc: "fail: return errInternal when getting segment users",
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -812,7 +828,8 @@ func TestEvaluateFeatures(t *testing.T) {
 			expected:    nil,
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success: get users from storage": {
+		{
+			desc: "success: get users from storage",
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -885,7 +902,7 @@ func TestEvaluateFeatures(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		ctx := createContextWithToken()
 		service := createFeatureService(mockController)
 		if p.setup != nil {
@@ -894,15 +911,15 @@ func TestEvaluateFeatures(t *testing.T) {
 		resp, err := service.EvaluateFeatures(ctx, p.input)
 		if err == nil {
 			if len(resp.UserEvaluations.Evaluations) > 0 {
-				assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].VariationId, resp.UserEvaluations.Evaluations[0].VariationId, msg)
+				assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].VariationId, resp.UserEvaluations.Evaluations[0].VariationId, p.desc)
 				assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].Reason, resp.UserEvaluations.Evaluations[0].Reason)
 			} else {
-				assert.Equal(t, p.expected.UserEvaluations.Evaluations, resp.UserEvaluations.Evaluations, msg)
+				assert.Equal(t, p.expected.UserEvaluations.Evaluations, resp.UserEvaluations.Evaluations, p.desc)
 			}
 		} else {
-			assert.Equal(t, p.expected, resp, msg)
+			assert.Equal(t, p.expected, resp, p.desc)
 		}
-		assert.Equal(t, p.expectedErr, err, msg)
+		assert.Equal(t, p.expectedErr, err, p.desc)
 	}
 }
 
@@ -914,39 +931,45 @@ func TestUnauthenticated(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	service := createFeatureService(mockController)
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		action   func(context.Context, *FeatureService) error
 		expected error
 	}{
-		"GetFeature": {
+		{
+			desc: "GetFeature",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.GetFeature(ctx, &featureproto.GetFeatureRequest{})
 				return err
 			},
 			expected: errUnauthenticatedJaJP,
 		},
-		"GetFeatures": {
+		{
+			desc: "GetFeatures",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.GetFeatures(ctx, &featureproto.GetFeaturesRequest{})
 				return err
 			},
 			expected: errUnauthenticatedJaJP,
 		},
-		"ListFeatures": {
+		{
+			desc: "ListFeatures",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.ListFeatures(ctx, &featureproto.ListFeaturesRequest{})
 				return err
 			},
 			expected: errUnauthenticatedJaJP,
 		},
-		"ListFeaturesEnabled": {
+		{
+			desc: "ListFeaturesEnabled",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.ListEnabledFeatures(ctx, &featureproto.ListEnabledFeaturesRequest{})
 				return err
 			},
 			expected: errUnauthenticatedJaJP,
 		},
-		"EvaluateFeatures": {
+		{
+			desc: "EvaluateFeatures",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.EvaluateFeatures(ctx, &featureproto.EvaluateFeaturesRequest{})
 				return err
@@ -954,9 +977,9 @@ func TestUnauthenticated(t *testing.T) {
 			expected: errUnauthenticatedJaJP,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		actual := p.action(ctx, service)
-		assert.Equal(t, p.expected, actual, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
 	}
 }
 
@@ -967,18 +990,21 @@ func TestPermissionDenied(t *testing.T) {
 
 	ctx := createContextWithTokenRoleUnassigned()
 	service := createFeatureService(mockController)
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		action   func(context.Context, *FeatureService) error
 		expected error
 	}{
-		"CreateFeature": {
+		{
+			desc: "CreateFeature",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.CreateFeature(ctx, &featureproto.CreateFeatureRequest{})
 				return err
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"EnableFeature": {
+		{
+			desc: "EnableFeature",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.EnableFeature(ctx, &featureproto.EnableFeatureRequest{
 					Id:      "id",
@@ -988,7 +1014,8 @@ func TestPermissionDenied(t *testing.T) {
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"DisableFeature": {
+		{
+			desc: "DisableFeature",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.DisableFeature(ctx, &featureproto.DisableFeatureRequest{
 					Id:      "id",
@@ -998,7 +1025,8 @@ func TestPermissionDenied(t *testing.T) {
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"UnarchiveFeature": {
+		{
+			desc: "UnarchiveFeature",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.UnarchiveFeature(ctx, &featureproto.UnarchiveFeatureRequest{
 					Id:      "id",
@@ -1008,7 +1036,8 @@ func TestPermissionDenied(t *testing.T) {
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"DeleteFeature": {
+		{
+			desc: "DeleteFeature",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.DeleteFeature(ctx, &featureproto.DeleteFeatureRequest{
 					Id:      "id",
@@ -1018,21 +1047,24 @@ func TestPermissionDenied(t *testing.T) {
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"UpdateFeatureVariations": {
+		{
+			desc: "UpdateFeatureVariations",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.UpdateFeatureVariations(ctx, &featureproto.UpdateFeatureVariationsRequest{})
 				return err
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"UpdateFeatureTargeting": {
+		{
+			desc: "UpdateFeatureTargeting",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.UpdateFeatureTargeting(ctx, &featureproto.UpdateFeatureTargetingRequest{})
 				return err
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"CloneFeature": {
+		{
+			desc: "CloneFeature",
 			action: func(ctx context.Context, fs *FeatureService) error {
 				_, err := fs.CloneFeature(ctx, &featureproto.CloneFeatureRequest{
 					Id: "id",
@@ -1046,9 +1078,9 @@ func TestPermissionDenied(t *testing.T) {
 			expected: errPermissionDeniedJaJP,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		actual := p.action(ctx, service)
-		assert.Equal(t, p.expected, actual, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
 	}
 }
 
@@ -1882,22 +1914,26 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			},
 		},
 	}
-	patterns := map[string]*struct {
+	patterns := []struct {
+		desc     string
 		ruleID   string
 		strategy *featureproto.Strategy
 		expected error
 	}{
-		"fail: errMissingRuleID": {
+		{
+			desc:     "fail: errMissingRuleID",
 			ruleID:   "",
 			strategy: expected,
 			expected: localizedError(statusMissingRuleID, locale.JaJP),
 		},
-		"fail: errMissingRuleStrategy": {
+		{
+			desc:     "fail: errMissingRuleStrategy",
 			ruleID:   rID,
 			strategy: nil,
 			expected: localizedError(statusMissingRuleStrategy, locale.JaJP),
 		},
-		"fail: errDifferentVariationsSizeJaJP": {
+		{
+			desc:   "fail: errDifferentVariationsSizeJaJP",
 			ruleID: rID,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
@@ -1912,7 +1948,8 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			},
 			expected: localizedError(statusDifferentVariationsSize, locale.JaJP),
 		},
-		"fail: errMissingVariationIDJaJP: idx-0": {
+		{
+			desc:   "fail: errMissingVariationIDJaJP: idx-0",
 			ruleID: rID,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
@@ -1931,7 +1968,8 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			},
 			expected: localizedError(statusMissingVariationID, locale.JaJP),
 		},
-		"fail: errMissingVariationIDJaJP: idx-1": {
+		{
+			desc:   "fail: errMissingVariationIDJaJP: idx-1",
 			ruleID: rID,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
@@ -1950,7 +1988,8 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			},
 			expected: localizedError(statusMissingVariationID, locale.JaJP),
 		},
-		"fail: errIncorrectVariationWeightJaJP: idx-0": {
+		{
+			desc:   "fail: errIncorrectVariationWeightJaJP: idx-0",
 			ruleID: rID,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
@@ -1969,7 +2008,8 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			},
 			expected: localizedError(statusIncorrectVariationWeight, locale.JaJP),
 		},
-		"fail: errIncorrectVariationWeightJaJP: idx-1": {
+		{
+			desc:   "fail: errIncorrectVariationWeightJaJP: idx-1",
 			ruleID: rID,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
@@ -1988,7 +2028,8 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			},
 			expected: localizedError(statusIncorrectVariationWeight, locale.JaJP),
 		},
-		"fail: errIncorrectVariationWeightJaJP: more than total weight": {
+		{
+			desc:   "fail: errIncorrectVariationWeightJaJP: more than total weight",
 			ruleID: rID,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
@@ -2007,7 +2048,8 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			},
 			expected: localizedError(statusExceededMaxVariationWeight, locale.JaJP),
 		},
-		"fail: errIncorrectVariationWeightJaJP: less than total weight": {
+		{
+			desc:   "fail: errIncorrectVariationWeightJaJP: less than total weight",
 			ruleID: rID,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
@@ -2026,14 +2068,15 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			},
 			expected: localizedError(statusExceededMaxVariationWeight, locale.JaJP),
 		},
-		"success": {
+		{
+			desc:     "success",
 			ruleID:   rID,
 			strategy: expected,
 			expected: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			cmd := &featureproto.ChangeRuleStrategyCommand{
 				RuleId:   p.ruleID,
 				Strategy: p.strategy,
@@ -2227,15 +2270,18 @@ func TestChangeRolloutStrategy(t *testing.T) {
 func TestChangeDefaultStrategy(t *testing.T) {
 	t.Parallel()
 	f := makeFeature("feature-id")
-	patterns := map[string]*struct {
+	patterns := []struct {
+		desc        string
 		strategy    *featureproto.Strategy
 		expectedErr error
 	}{
-		"fail: errMissingRuleStrategy": {
+		{
+			desc:        "fail: errMissingRuleStrategy",
 			strategy:    nil,
 			expectedErr: localizedError(statusMissingRuleStrategy, locale.JaJP),
 		},
-		"fail: errIncorrectVariationWeightJaJP: more than total weight": {
+		{
+			desc: "fail: errIncorrectVariationWeightJaJP: more than total weight",
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
@@ -2253,7 +2299,8 @@ func TestChangeDefaultStrategy(t *testing.T) {
 			},
 			expectedErr: localizedError(statusExceededMaxVariationWeight, locale.JaJP),
 		},
-		"fail: errIncorrectVariationWeightJaJP: less than total weight": {
+		{
+			desc: "fail: errIncorrectVariationWeightJaJP: less than total weight",
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
@@ -2271,7 +2318,8 @@ func TestChangeDefaultStrategy(t *testing.T) {
 			},
 			expectedErr: localizedError(statusExceededMaxVariationWeight, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
@@ -2290,8 +2338,8 @@ func TestChangeDefaultStrategy(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			cmd := &featureproto.ChangeDefaultStrategyCommand{
 				Strategy: p.strategy,
 			}

@@ -53,19 +53,22 @@ func TestListAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*auditlogService)
 		input       *proto.ListAuditLogsRequest
 		expected    *proto.ListAuditLogsResponse
 		expectedErr error
 	}{
-		"err: ErrInvalidCursor": {
+		{
+			desc:        "err: ErrInvalidCursor",
 			setup:       nil,
 			input:       &proto.ListAuditLogsRequest{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: errInvalidCursorJaJP,
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -75,7 +78,8 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			expected:    nil,
 			expectedErr: errInternalJaJP,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -86,8 +90,8 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newAuditLogService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
@@ -104,19 +108,22 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*auditlogService)
 		input       *proto.ListAdminAuditLogsRequest
 		expected    *proto.ListAdminAuditLogsResponse
 		expectedErr error
 	}{
-		"err: ErrInvalidCursor": {
+		{
+			desc:        "err: ErrInvalidCursor",
 			setup:       nil,
 			input:       &proto.ListAdminAuditLogsRequest{Cursor: "invalid"},
 			expected:    nil,
 			expectedErr: errInvalidCursorJaJP,
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *auditlogService) {
 				s.mysqlAdminStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -126,7 +133,8 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			expected:    nil,
 			expectedErr: errInternalJaJP,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *auditlogService) {
 				s.mysqlAdminStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -137,8 +145,8 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newAuditLogService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
@@ -155,19 +163,22 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*auditlogService)
 		input       *proto.ListFeatureHistoryRequest
 		expected    *proto.ListFeatureHistoryResponse
 		expectedErr error
 	}{
-		"err: ErrInvalidCursor": {
+		{
+			desc:        "err: ErrInvalidCursor",
 			setup:       nil,
 			input:       &proto.ListFeatureHistoryRequest{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: errInvalidCursorJaJP,
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -177,7 +188,8 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			expected:    nil,
 			expectedErr: errInternalJaJP,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -190,8 +202,8 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newAuditLogService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)

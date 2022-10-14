@@ -35,12 +35,14 @@ func TestChangeBulkUploadSegmentUsersStatus(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*segmentCommandHandler)
 		cmd         *featureproto.ChangeBulkUploadSegmentUsersStatusCommand
 		expectedErr error
 	}{
-		"succeeded included": {
+		{
+			desc: "succeeded included",
 			setup: func(s *segmentCommandHandler) {
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
@@ -52,14 +54,14 @@ func TestChangeBulkUploadSegmentUsersStatus(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			segment, err := domain.NewSegment("test-name", "test-description")
 			assert.NoError(t, err)
 			handler := newMockSegmentCommandHandler(t, mockController, segment)
 			p.setup(handler)
 			err = handler.Handle(ctx, p.cmd)
-			assert.Equal(t, p.expectedErr, err, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
 			assert.Equal(t, segment.Status, p.cmd.Status)
 			switch p.cmd.State {
 			case featureproto.SegmentUser_INCLUDED:

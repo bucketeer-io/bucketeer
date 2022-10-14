@@ -24,17 +24,19 @@ import (
 
 func TestURL(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc            string
 		inputEntityType proto.Event_EntityType
 		expected        string
 	}{
-		"feature": {
+		{
+			desc:            "feature",
 			inputEntityType: proto.Event_FEATURE,
 			expected:        "url/env/features/id",
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual, err := URL(p.inputEntityType, "url", "env", "id")
 			assert.NoError(t, err)
 			assert.Equal(t, p.expected, actual)

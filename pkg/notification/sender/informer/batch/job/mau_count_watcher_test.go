@@ -36,11 +36,13 @@ func TestCreateMAUNotification(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	errInternal := errors.New("internal error")
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*testing.T, *mauCountWatcher)
 		expectedErr error
 	}{
-		"err project": {
+		{
+			desc: "err project",
 			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
@@ -53,7 +55,8 @@ func TestCreateMAUNotification(t *testing.T) {
 			},
 			expectedErr: errInternal,
 		},
-		"no projects": {
+		{
+			desc: "no projects",
 			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
@@ -66,7 +69,8 @@ func TestCreateMAUNotification(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"err environments": {
+		{
+			desc: "err environments",
 			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
@@ -83,7 +87,8 @@ func TestCreateMAUNotification(t *testing.T) {
 			},
 			expectedErr: errInternal,
 		},
-		"no environments": {
+		{
+			desc: "no environments",
 			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
@@ -100,7 +105,8 @@ func TestCreateMAUNotification(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"err counts": {
+		{
+			desc: "err counts",
 			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
@@ -121,7 +127,8 @@ func TestCreateMAUNotification(t *testing.T) {
 			},
 			expectedErr: errInternal,
 		},
-		"err sender": {
+		{
+			desc: "err sender",
 			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
@@ -145,7 +152,8 @@ func TestCreateMAUNotification(t *testing.T) {
 			},
 			expectedErr: errInternal,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(t *testing.T, w *mauCountWatcher) {
 				// list projects
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
@@ -188,8 +196,8 @@ func TestCreateMAUNotification(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			w := newMAUCountWatcherWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(t, w)

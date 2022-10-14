@@ -25,18 +25,21 @@ import (
 
 func TestLocalizedMessage(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		inputEventType proto.Event_Type
 		expected       *proto.LocalizedMessage
 	}{
-		"unknown match": {
+		{
+			desc:           "unknown match",
 			inputEventType: proto.Event_UNKNOWN,
 			expected: &proto.LocalizedMessage{
 				Locale:  locale.JaJP,
 				Message: "不明な操作を実行しました",
 			},
 		},
-		"unmatch": {
+		{
+			desc:           "unmatch",
 			inputEventType: proto.Event_Type(-1),
 			expected: &proto.LocalizedMessage{
 				Locale:  locale.JaJP,
@@ -44,8 +47,8 @@ func TestLocalizedMessage(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := LocalizedMessage(p.inputEventType, locale.JaJP)
 			assert.Equal(t, p.expected, actual)
 		})

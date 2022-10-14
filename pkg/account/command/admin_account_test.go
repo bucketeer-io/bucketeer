@@ -38,12 +38,14 @@ func TestHandleAdmin(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*adminAccountCommandHandler)
 		input       Command
 		expectedErr error
 	}{
-		"CreateAdminAccountCommand: success": {
+		{
+			desc: "CreateAdminAccountCommand: success",
 			setup: func(h *adminAccountCommandHandler) {
 				a, err := domain.NewAccount("email", accountproto.Account_VIEWER)
 				require.NoError(t, err)
@@ -53,7 +55,8 @@ func TestHandleAdmin(t *testing.T) {
 			input:       &accountproto.CreateAdminAccountCommand{},
 			expectedErr: nil,
 		},
-		"EnableAdminAccountCommand: success": {
+		{
+			desc: "EnableAdminAccountCommand: success",
 			setup: func(h *adminAccountCommandHandler) {
 				a, err := domain.NewAccount("email", accountproto.Account_VIEWER)
 				require.NoError(t, err)
@@ -63,18 +66,19 @@ func TestHandleAdmin(t *testing.T) {
 			input:       &accountproto.EnableAdminAccountCommand{},
 			expectedErr: nil,
 		},
-		"ErrBadCommand": {
+		{
+			desc:        "ErrBadCommand",
 			input:       nil,
 			expectedErr: ErrBadCommand,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		h := newAdminAccountCommandHandlerWithMock(t, mockController)
 		if p.setup != nil {
 			p.setup(h)
 		}
 		err := h.Handle(context.Background(), p.input)
-		assert.Equal(t, p.expectedErr, err, "%s", msg)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 

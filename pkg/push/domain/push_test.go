@@ -51,27 +51,30 @@ func TestSetDeleted(t *testing.T) {
 
 func TestAddTags(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		origin      *Push
 		input       []string
 		expectedErr error
 		expected    []string
 	}{
-		"success: one": {
+		{
+			desc:        "success: one",
 			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
 			input:       []string{"tag-2"},
 			expectedErr: nil,
 			expected:    []string{"tag-0", "tag-1", "tag-2"},
 		},
-		"success: two": {
+		{
+			desc:        "success: two",
 			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
 			input:       []string{"tag-2", "tag-3"},
 			expectedErr: nil,
 			expected:    []string{"tag-0", "tag-1", "tag-2", "tag-3"},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			err := p.origin.AddTags(p.input)
 			assert.Equal(t, p.expectedErr, err)
 			sort.Strings(p.expected)
@@ -83,39 +86,44 @@ func TestAddTags(t *testing.T) {
 
 func TestDeleteTags(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		origin      *Push
 		input       []string
 		expectedErr error
 		expected    []string
 	}{
-		"success: one": {
+		{
+			desc:        "success: one",
 			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
 			input:       []string{"tag-1"},
 			expectedErr: nil,
 			expected:    []string{"tag-0"},
 		},
-		"success: two": {
+		{
+			desc:        "success: two",
 			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
 			input:       []string{"tag-0", "tag-1"},
 			expectedErr: nil,
 			expected:    []string{},
 		},
-		"fail: not found: one": {
+		{
+			desc:        "fail: not found: one",
 			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
 			input:       []string{"tag-2"},
 			expectedErr: ErrTagNotFound,
 			expected:    []string{"tag-0", "tag-1"},
 		},
-		"fail: not found: two": {
+		{
+			desc:        "fail: not found: two",
 			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
 			input:       []string{"tag-0", "tag-2"},
 			expectedErr: ErrTagNotFound,
 			expected:    []string{"tag-0", "tag-1"},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			err := p.origin.DeleteTags(p.input)
 			assert.Equal(t, p.expectedErr, err)
 			sort.Strings(p.expected)
@@ -127,29 +135,33 @@ func TestDeleteTags(t *testing.T) {
 
 func TestExistTag(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		origin   *Push
 		input    string
 		expected bool
 	}{
-		"true": {
+		{
+			desc:     "true",
 			origin:   &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
 			input:    "tag-1",
 			expected: true,
 		},
-		"false: no tags": {
+		{
+			desc:     "false: no tags",
 			origin:   &Push{&pushproto.Push{}},
 			input:    "tag-1",
 			expected: false,
 		},
-		"false: not found": {
+		{
+			desc:     "false: not found",
 			origin:   &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
 			input:    "tag-2",
 			expected: false,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := p.origin.ExistTag(p.input)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -158,21 +170,23 @@ func TestExistTag(t *testing.T) {
 
 func TestRename(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		origin      *Push
 		input       string
 		expectedErr error
 		expected    string
 	}{
-		"success": {
+		{
+			desc:        "success",
 			origin:      &Push{&pushproto.Push{Name: "a"}},
 			input:       "b",
 			expectedErr: nil,
 			expected:    "b",
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			err := p.origin.Rename(p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, p.origin.Name)

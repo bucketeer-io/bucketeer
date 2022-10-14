@@ -328,19 +328,22 @@ func TestStartExperimentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*experimentService)
 		req         *experimentproto.StartExperimentRequest
 		expectedErr error
 	}{
-		"error id required": {
+		{
+			desc:  "error id required",
 			setup: nil,
 			req: &experimentproto.StartExperimentRequest{
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: errExperimentIDRequiredJaJP,
 		},
-		"error no command": {
+		{
+			desc:  "error no command",
 			setup: nil,
 			req: &experimentproto.StartExperimentRequest{
 				Id:                   "eid",
@@ -348,7 +351,8 @@ func TestStartExperimentMySQL(t *testing.T) {
 			},
 			expectedErr: errNoCommandJaJP,
 		},
-		"error not found": {
+		{
+			desc: "error not found",
 			setup: func(s *experimentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -362,7 +366,8 @@ func TestStartExperimentMySQL(t *testing.T) {
 			},
 			expectedErr: errNotFoundJaJP,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *experimentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -377,8 +382,8 @@ func TestStartExperimentMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken()
 			service := createExperimentService(mockController, nil)
 			if p.setup != nil {
@@ -395,19 +400,22 @@ func TestFinishExperimentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*experimentService)
 		req         *experimentproto.FinishExperimentRequest
 		expectedErr error
 	}{
-		"error id required": {
+		{
+			desc:  "error id required",
 			setup: nil,
 			req: &experimentproto.FinishExperimentRequest{
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: errExperimentIDRequiredJaJP,
 		},
-		"error no command": {
+		{
+			desc:  "error no command",
 			setup: nil,
 			req: &experimentproto.FinishExperimentRequest{
 				Id:                   "eid",
@@ -415,7 +423,8 @@ func TestFinishExperimentMySQL(t *testing.T) {
 			},
 			expectedErr: errNoCommandJaJP,
 		},
-		"error not found": {
+		{
+			desc: "error not found",
 			setup: func(s *experimentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -429,7 +438,8 @@ func TestFinishExperimentMySQL(t *testing.T) {
 			},
 			expectedErr: errNotFoundJaJP,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *experimentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -444,8 +454,8 @@ func TestFinishExperimentMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken()
 			service := createExperimentService(mockController, nil)
 			if p.setup != nil {
@@ -659,32 +669,37 @@ func TestExperimentPermissionDenied(t *testing.T) {
 	ctx := createContextWithTokenRoleUnassigned()
 	s := storagetesting.NewInMemoryStorage()
 	service := createExperimentService(mockController, s)
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		action   func(context.Context, *experimentService) error
 		expected error
 	}{
-		"CreateExperiment": {
+		{
+			desc: "CreateExperiment",
 			action: func(ctx context.Context, es *experimentService) error {
 				_, err := es.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{})
 				return err
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"UpdateExperiment": {
+		{
+			desc: "UpdateExperiment",
 			action: func(ctx context.Context, es *experimentService) error {
 				_, err := es.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{})
 				return err
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"StopExperiment": {
+		{
+			desc: "StopExperiment",
 			action: func(ctx context.Context, es *experimentService) error {
 				_, err := es.StopExperiment(ctx, &experimentproto.StopExperimentRequest{})
 				return err
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"DeleteExperiment": {
+		{
+			desc: "DeleteExperiment",
 			action: func(ctx context.Context, es *experimentService) error {
 				_, err := es.DeleteExperiment(ctx, &experimentproto.DeleteExperimentRequest{})
 				return err
@@ -692,8 +707,8 @@ func TestExperimentPermissionDenied(t *testing.T) {
 			expected: errPermissionDeniedJaJP,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		actual := p.action(ctx, service)
-		assert.Equal(t, p.expected, actual, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
 	}
 }

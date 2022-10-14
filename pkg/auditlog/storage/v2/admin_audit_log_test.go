@@ -40,12 +40,14 @@ func TestCreateAdminAuditLogs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*adminAuditLogStorage)
 		input       []*domain.AuditLog
 		expectedErr error
 	}{
-		"ErrAdminAuditLogAlreadyExists": {
+		{
+			desc: "ErrAdminAuditLogAlreadyExists",
 			setup: func(s *adminAuditLogStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -57,7 +59,8 @@ func TestCreateAdminAuditLogs(t *testing.T) {
 			},
 			expectedErr: ErrAdminAuditLogAlreadyExists,
 		},
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminAuditLogStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -69,12 +72,14 @@ func TestCreateAdminAuditLogs(t *testing.T) {
 			},
 			expectedErr: errors.New("error"),
 		},
-		"Success: len == 0": {
+		{
+			desc:        "Success: len == 0",
 			setup:       nil,
 			input:       nil,
 			expectedErr: nil,
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminAuditLogStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -87,8 +92,8 @@ func TestCreateAdminAuditLogs(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminAuditLogStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
@@ -103,7 +108,8 @@ func TestListAdminAuditLogs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		setup          func(*adminAuditLogStorage)
 		whereParts     []mysql.WherePart
 		orders         []*mysql.Order
@@ -113,7 +119,8 @@ func TestListAdminAuditLogs(t *testing.T) {
 		expectedCursor int
 		expectedErr    error
 	}{
-		"Error": {
+		{
+			desc: "Error",
 			setup: func(s *adminAuditLogStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -127,7 +134,8 @@ func TestListAdminAuditLogs(t *testing.T) {
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *adminAuditLogStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -153,8 +161,8 @@ func TestListAdminAuditLogs(t *testing.T) {
 			expectedErr:    nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			storage := newAdminAuditLogStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)

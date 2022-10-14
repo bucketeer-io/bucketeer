@@ -35,7 +35,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	testcases := map[string]struct {
+	testcases := []struct {
+		desc                 string
 		setup                func(*FeatureService)
 		environmentNamespace string
 		role                 accountproto.Account_Role
@@ -43,7 +44,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 		cmd                  *featureproto.BulkUploadSegmentUsersCommand
 		expectedErr          error
 	}{
-		"ErrMissingSegmentID": {
+		{
+			desc:                 "ErrMissingSegmentID",
 			setup:                nil,
 			environmentNamespace: "ns0",
 			role:                 accountproto.Account_OWNER,
@@ -51,7 +53,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			cmd:                  nil,
 			expectedErr:          errMissingSegmentIDJaJP,
 		},
-		"ErrMissingCommand": {
+		{
+			desc:                 "ErrMissingCommand",
 			setup:                nil,
 			environmentNamespace: "ns0",
 			role:                 accountproto.Account_OWNER,
@@ -59,7 +62,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			cmd:                  nil,
 			expectedErr:          errMissingCommandJaJP,
 		},
-		"ErrMissingSegmentUsersData": {
+		{
+			desc:                 "ErrMissingSegmentUsersData",
 			setup:                nil,
 			environmentNamespace: "ns0",
 			role:                 accountproto.Account_OWNER,
@@ -67,7 +71,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			cmd:                  &featureproto.BulkUploadSegmentUsersCommand{},
 			expectedErr:          errMissingSegmentUsersDataJaJP,
 		},
-		"ErrExceededMaxSegmentUsersDataSize": {
+		{
+			desc:                 "ErrExceededMaxSegmentUsersDataSize",
 			setup:                nil,
 			environmentNamespace: "ns0",
 			role:                 accountproto.Account_OWNER,
@@ -77,7 +82,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			},
 			expectedErr: errExceededMaxSegmentUsersDataSizeJaJP,
 		},
-		"ErrUnknownSegmentUserState": {
+		{
+			desc:                 "ErrUnknownSegmentUserState",
 			setup:                nil,
 			environmentNamespace: "ns0",
 			role:                 accountproto.Account_OWNER,
@@ -88,7 +94,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			},
 			expectedErr: errUnknownSegmentUserStateJaJP,
 		},
-		"ErrSegmentNotFound": {
+		{
+			desc: "ErrSegmentNotFound",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -104,7 +111,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			},
 			expectedErr: errSegmentNotFoundJaJP,
 		},
-		"ErrSegmentUsersAlreadyUploading": {
+		{
+			desc: "ErrSegmentUsersAlreadyUploading",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -120,7 +128,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			},
 			expectedErr: errSegmentUsersAlreadyUploadingJaJP,
 		},
-		"Success": {
+		{
+			desc: "Success",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -138,8 +147,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 		},
 	}
 
-	for msg, tc := range testcases {
-		t.Run(msg, func(t *testing.T) {
+	for _, tc := range testcases {
+		t.Run(tc.desc, func(t *testing.T) {
 			service := createFeatureService(mockController)
 			if tc.setup != nil {
 				tc.setup(service)
@@ -161,28 +170,32 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	testcases := map[string]struct {
+	testcases := []struct {
+		desc                 string
 		setup                func(*FeatureService)
 		environmentNamespace string
 		segmentID            string
 		state                featureproto.SegmentUser_State
 		expectedErr          error
 	}{
-		"ErrMissingSegmentID": {
+		{
+			desc:                 "ErrMissingSegmentID",
 			setup:                nil,
 			environmentNamespace: "ns0",
 			segmentID:            "",
 			state:                featureproto.SegmentUser_INCLUDED,
 			expectedErr:          errMissingSegmentIDJaJP,
 		},
-		"ErrUnknownSegmentUserState": {
+		{
+			desc:                 "ErrUnknownSegmentUserState",
 			setup:                nil,
 			environmentNamespace: "ns0",
 			segmentID:            "id",
 			state:                featureproto.SegmentUser_State(99),
 			expectedErr:          errUnknownSegmentUserStateJaJP,
 		},
-		"ErrSegmentNotFound": {
+		{
+			desc: "ErrSegmentNotFound",
 			setup: func(s *FeatureService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -195,7 +208,8 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			state:                featureproto.SegmentUser_INCLUDED,
 			expectedErr:          errSegmentNotFoundJaJP,
 		},
-		"ErrSegmentStatusNotSuceeded": {
+		{
+			desc: "ErrSegmentStatusNotSuceeded",
 			setup: func(s *FeatureService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -209,8 +223,8 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			expectedErr:          errSegmentStatusNotSuceededJaJP,
 		},
 	}
-	for msg, tc := range testcases {
-		t.Run(msg, func(t *testing.T) {
+	for _, tc := range testcases {
+		t.Run(tc.desc, func(t *testing.T) {
 			service := createFeatureService(mockController)
 			if tc.setup != nil {
 				tc.setup(service)

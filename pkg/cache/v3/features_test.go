@@ -42,31 +42,35 @@ func TestGetFeatures(t *testing.T) {
 	dataFeatures := marshalMessage(t, features)
 	key := fmt.Sprintf("%s:%s", environmentNamespace, featuresKind)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*featuresCache)
 		expectedErr error
 	}{
-		"error_get_not_found": {
+		{
+			desc: "error_get_not_found",
 			setup: func(tf *featuresCache) {
 				tf.cache.(*cachemock.MockMultiGetCache).EXPECT().Get(key).Return(nil, cache.ErrNotFound)
 			},
 			expectedErr: cache.ErrNotFound,
 		},
-		"error_invalid_type": {
+		{
+			desc: "error_invalid_type",
 			setup: func(tf *featuresCache) {
 				tf.cache.(*cachemock.MockMultiGetCache).EXPECT().Get(key).Return("test", nil)
 			},
 			expectedErr: cache.ErrInvalidType,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(tf *featuresCache) {
 				tf.cache.(*cachemock.MockMultiGetCache).EXPECT().Get(key).Return(dataFeatures, nil)
 			},
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			tf := newFeaturesCache(t, mockController)
 			p.setup(tf)
 			features, err := tf.Get(environmentNamespace)
@@ -88,17 +92,20 @@ func TestPutFeatures(t *testing.T) {
 	dataFeatures := marshalMessage(t, features)
 	key := fmt.Sprintf("%s:%s", environmentNamespace, featuresKind)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*featuresCache)
 		input       *featureproto.Features
 		expectedErr error
 	}{
-		"error_proto_message_nil": {
+		{
+			desc:        "error_proto_message_nil",
 			setup:       nil,
 			input:       nil,
 			expectedErr: proto.ErrNil,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(tf *featuresCache) {
 				tf.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataFeatures).Return(nil)
 			},
@@ -106,8 +113,8 @@ func TestPutFeatures(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			tf := newFeaturesCache(t, mockController)
 			if p.setup != nil {
 				p.setup(tf)

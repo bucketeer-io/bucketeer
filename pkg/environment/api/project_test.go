@@ -39,17 +39,20 @@ func TestGetProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		id          string
 		expectedErr error
 	}{
-		"err: ErrProjectIDRequired": {
+		{
+			desc:        "err: ErrProjectIDRequired",
 			setup:       nil,
 			id:          "",
 			expectedErr: localizedError(statusProjectIDRequired, locale.JaJP),
 		},
-		"err: ErrProjectNotFound": {
+		{
+			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -60,7 +63,8 @@ func TestGetProjectMySQL(t *testing.T) {
 			id:          "err-id-0",
 			expectedErr: localizedError(statusProjectNotFound, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -71,7 +75,8 @@ func TestGetProjectMySQL(t *testing.T) {
 			id:          "err-id-1",
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -83,8 +88,8 @@ func TestGetProjectMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(s)
@@ -104,19 +109,22 @@ func TestListProjectsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		input       *proto.ListProjectsRequest
 		expected    *proto.ListProjectsResponse
 		expectedErr error
 	}{
-		"err: ErrInvalidCursor": {
+		{
+			desc:        "err: ErrInvalidCursor",
 			setup:       nil,
 			input:       &proto.ListProjectsRequest{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: localizedError(statusInvalidCursor, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -126,7 +134,8 @@ func TestListProjectsMySQL(t *testing.T) {
 			expected:    nil,
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -146,8 +155,8 @@ func TestListProjectsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(s)
@@ -164,40 +173,46 @@ func TestCreateProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.CreateProjectRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
 				Command: nil,
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrInvalidProjectID: empty id": {
+		{
+			desc:  "err: ErrInvalidProjectID: empty id",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{Id: ""},
 			},
 			expectedErr: localizedError(statusInvalidProjectID, locale.JaJP),
 		},
-		"err: ErrInvalidProjectID: can't use uppercase": {
+		{
+			desc:  "err: ErrInvalidProjectID: can't use uppercase",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{Id: "ID-1"},
 			},
 			expectedErr: localizedError(statusInvalidProjectID, locale.JaJP),
 		},
-		"err: ErrInvalidProjectID: max id length exceeded": {
+		{
+			desc:  "err: ErrInvalidProjectID: max id length exceeded",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{Id: strings.Repeat("a", 51)},
 			},
 			expectedErr: localizedError(statusInvalidProjectID, locale.JaJP),
 		},
-		"err: ErrProjectAlreadyExists: duplicate id": {
+		{
+			desc: "err: ErrProjectAlreadyExists: duplicate id",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -209,7 +224,8 @@ func TestCreateProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusProjectAlreadyExists, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -221,7 +237,8 @@ func TestCreateProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -234,8 +251,8 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
@@ -252,47 +269,54 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.CreateTrialProjectRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
 				Command: nil,
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrInvalidProjectID: empty id": {
+		{
+			desc:  "err: ErrInvalidProjectID: empty id",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Id: ""},
 			},
 			expectedErr: localizedError(statusInvalidProjectID, locale.JaJP),
 		},
-		"err: ErrInvalidProjectID: can't use uppercase": {
+		{
+			desc:  "err: ErrInvalidProjectID: can't use uppercase",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Id: "ID-1"},
 			},
 			expectedErr: localizedError(statusInvalidProjectID, locale.JaJP),
 		},
-		"err: ErrInvalidProjectID: max id length exceeded": {
+		{
+			desc:  "err: ErrInvalidProjectID: max id length exceeded",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Id: strings.Repeat("a", 51)},
 			},
 			expectedErr: localizedError(statusInvalidProjectID, locale.JaJP),
 		},
-		"err: ErrInvalidProjectCreatorEmail": {
+		{
+			desc:  "err: ErrInvalidProjectCreatorEmail",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Id: "id-0", Email: "email"},
 			},
 			expectedErr: localizedError(statusInvalidProjectCreatorEmail, locale.JaJP),
 		},
-		"err: ErrProjectAlreadyExists: trial exists": {
+		{
+			desc: "err: ErrProjectAlreadyExists: trial exists",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -305,7 +329,8 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusProjectAlreadyExists, locale.JaJP),
 		},
-		"err: ErrProjectAlreadyExists: duplicated id": {
+		{
+			desc: "err: ErrProjectAlreadyExists: duplicated id",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -322,7 +347,8 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusProjectAlreadyExists, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -335,7 +361,8 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -357,8 +384,8 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
@@ -375,26 +402,30 @@ func TestUpdateProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.UpdateProjectRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			req: &proto.UpdateProjectRequest{
 				Id: "id-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrProjectIDRequired": {
+		{
+			desc:  "err: ErrProjectIDRequired",
 			setup: nil,
 			req: &proto.UpdateProjectRequest{
 				ChangeDescriptionCommand: &proto.ChangeDescriptionProjectCommand{Description: "desc"},
 			},
 			expectedErr: localizedError(statusProjectIDRequired, locale.JaJP),
 		},
-		"err: ErrProjectNotFound": {
+		{
+			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -407,7 +438,8 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusProjectNotFound, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -420,7 +452,8 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -434,8 +467,8 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
@@ -452,26 +485,30 @@ func TestEnableProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.EnableProjectRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			req: &proto.EnableProjectRequest{
 				Id: "id-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrProjectIDRequired": {
+		{
+			desc:  "err: ErrProjectIDRequired",
 			setup: nil,
 			req: &proto.EnableProjectRequest{
 				Command: &proto.EnableProjectCommand{},
 			},
 			expectedErr: localizedError(statusProjectIDRequired, locale.JaJP),
 		},
-		"err: ErrProjectNotFound": {
+		{
+			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -484,7 +521,8 @@ func TestEnableProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusProjectNotFound, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -497,7 +535,8 @@ func TestEnableProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -511,8 +550,8 @@ func TestEnableProjectMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
@@ -529,26 +568,30 @@ func TestDisableProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.DisableProjectRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			req: &proto.DisableProjectRequest{
 				Id: "id-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrProjectIDRequired": {
+		{
+			desc:  "err: ErrProjectIDRequired",
 			setup: nil,
 			req: &proto.DisableProjectRequest{
 				Command: &proto.DisableProjectCommand{},
 			},
 			expectedErr: localizedError(statusProjectIDRequired, locale.JaJP),
 		},
-		"err: ErrProjectNotFound": {
+		{
+			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -561,7 +604,8 @@ func TestDisableProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusProjectNotFound, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -574,7 +618,8 @@ func TestDisableProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -588,8 +633,8 @@ func TestDisableProjectMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
@@ -606,26 +651,30 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.ConvertTrialProjectRequest
 		expectedErr error
 	}{
-		"err: ErrNoCommand": {
+		{
+			desc:  "err: ErrNoCommand",
 			setup: nil,
 			req: &proto.ConvertTrialProjectRequest{
 				Id: "id-0",
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"err: ErrProjectIDRequired": {
+		{
+			desc:  "err: ErrProjectIDRequired",
 			setup: nil,
 			req: &proto.ConvertTrialProjectRequest{
 				Command: &proto.ConvertTrialProjectCommand{},
 			},
 			expectedErr: localizedError(statusProjectIDRequired, locale.JaJP),
 		},
-		"err: ErrProjectNotFound": {
+		{
+			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -638,7 +687,8 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusProjectNotFound, locale.JaJP),
 		},
-		"err: ErrInternal": {
+		{
+			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -651,7 +701,8 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -665,8 +716,8 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
@@ -683,39 +734,45 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		action   func(context.Context, *EnvironmentService) error
 		expected error
 	}{
-		"CreateProject": {
+		{
+			desc: "CreateProject",
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.CreateProject(ctx, &proto.CreateProjectRequest{})
 				return err
 			},
 			expected: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"CreateTrialProject": {
+		{
+			desc: "CreateTrialProject",
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.CreateTrialProject(ctx, &proto.CreateTrialProjectRequest{})
 				return err
 			},
 			expected: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"UpdateProject": {
+		{
+			desc: "UpdateProject",
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.UpdateProject(ctx, &proto.UpdateProjectRequest{})
 				return err
 			},
 			expected: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"EnableProject": {
+		{
+			desc: "EnableProject",
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.EnableProject(ctx, &proto.EnableProjectRequest{})
 				return err
 			},
 			expected: localizedError(statusPermissionDenied, locale.JaJP),
 		},
-		"DisableProject": {
+		{
+			desc: "DisableProject",
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.DisableProject(ctx, &proto.DisableProjectRequest{})
 				return err
@@ -723,8 +780,8 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 			expected: localizedError(statusPermissionDenied, locale.JaJP),
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithTokenRoleUnassigned(t)
 			service := newEnvironmentService(t, mockController, nil)
 			actual := p.action(ctx, service)

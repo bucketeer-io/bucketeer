@@ -45,18 +45,21 @@ func TestServeHTTP(t *testing.T) {
 	defer mockController.Finish()
 	now := time.Now()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		setup    func(*testing.T, *TrackHandler)
 		input    *http.Request
 		expected int
 	}{
-		"fail: bad params": {
+		{
+			desc: "fail: bad params",
 			input: httptest.NewRequest("GET",
 				"/track?apikey=akey&userid=uid&goalid=gid&tag=t&timestamp=abc",
 				nil),
 			expected: http.StatusBadRequest,
 		},
-		"fail: publish error": {
+		{
+			desc: "fail: publish error",
 			setup: func(t *testing.T, h *TrackHandler) {
 				h.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -74,7 +77,8 @@ func TestServeHTTP(t *testing.T) {
 				nil),
 			expected: http.StatusInternalServerError,
 		},
-		"success: without value": {
+		{
+			desc: "success: without value",
 			setup: func(t *testing.T, h *TrackHandler) {
 				h.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -92,7 +96,8 @@ func TestServeHTTP(t *testing.T) {
 				nil),
 			expected: http.StatusOK,
 		},
-		"success: with value": {
+		{
+			desc: "success: with value",
 			setup: func(t *testing.T, h *TrackHandler) {
 				h.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -111,8 +116,8 @@ func TestServeHTTP(t *testing.T) {
 			expected: http.StatusOK,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			h := newTrackHandlerWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(t, h)
@@ -130,68 +135,78 @@ func TestValidateParams(t *testing.T) {
 	defer mockController.Finish()
 	now := time.Now()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		input       *http.Request
 		expected    *params
 		expectedErr error
 	}{
-		"err: errAPIKeyEmpty": {
+		{
+			desc: "err: errAPIKeyEmpty",
 			input: httptest.NewRequest("GET",
 				fmt.Sprintf("/track?userid=uid&goalid=gid&tag=t&timestamp=%d&value=1.234", now.Unix()),
 				nil),
 			expected:    nil,
 			expectedErr: errAPIKeyEmpty,
 		},
-		"err: errUserIDEmpty": {
+		{
+			desc: "err: errUserIDEmpty",
 			input: httptest.NewRequest("GET",
 				fmt.Sprintf("/track?apikey=akey&goalid=gid&tag=t&timestamp=%d&value=1.234", now.Unix()),
 				nil),
 			expected:    nil,
 			expectedErr: errUserIDEmpty,
 		},
-		"err: errGoalIDEmpty": {
+		{
+			desc: "err: errGoalIDEmpty",
 			input: httptest.NewRequest("GET",
 				fmt.Sprintf("/track?apikey=akey&userid=uid&tag=t&timestamp=%d&value=1.234", now.Unix()),
 				nil),
 			expected:    nil,
 			expectedErr: errGoalIDEmpty,
 		},
-		"err: errTagEmpty": {
+		{
+			desc: "err: errTagEmpty",
 			input: httptest.NewRequest("GET",
 				fmt.Sprintf("/track?apikey=akey&userid=uid&goalid=gid&timestamp=%d&value=1.234", now.Unix()),
 				nil),
 			expected:    nil,
 			expectedErr: errTagEmpty,
 		},
-		"err: errTimestampEmpty": {
+		{
+			desc: "err: errTimestampEmpty",
 			input: httptest.NewRequest("GET",
 				"/track?apikey=akey&userid=uid&goalid=gid&tag=t&value=1.234",
 				nil),
 			expected:    nil,
 			expectedErr: errTimestampEmpty,
 		},
-		"err: errTimestampInvalid": {
+		{
+			desc: "err: errTimestampInvalid",
 			input: httptest.NewRequest("GET",
 				"/track?apikey=akey&userid=uid&goalid=gid&tag=t&timestamp=abc&value=1.234",
 				nil),
 			expected:    nil,
 			expectedErr: errTimestampInvalid,
 		},
-		"err: errTimestampInvalid: out of window": {
+		{
+			desc: "err: errTimestampInvalid: out of window",
 			input: httptest.NewRequest("GET",
 				fmt.Sprintf("/track?apikey=akey&userid=uid&goalid=gid&tag=t&timestamp=%d&value=1.234", now.AddDate(0, 0, 2).Unix()),
 				nil),
 			expected:    nil,
 			expectedErr: errTimestampInvalid,
 		},
-		"err: errValueInvalid": {
+		{
+			desc: "err: errValueInvalid",
 			input: httptest.NewRequest("GET",
 				fmt.Sprintf("/track?apikey=akey&userid=uid&goalid=gid&tag=t&timestamp=%d&value=abc", now.Unix()),
 				nil),
 			expected:    nil,
 			expectedErr: errValueInvalid,
 		},
-		"success: without value": {
+		{
+			desc: "success: without value",
 			input: httptest.NewRequest("GET",
 				fmt.Sprintf("/track?apikey=akey&userid=uid&goalid=gid&tag=t&timestamp=%d", now.Unix()),
 				nil),
@@ -205,7 +220,8 @@ func TestValidateParams(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		"success: with value": {
+		{
+			desc: "success: with value",
 			input: httptest.NewRequest("GET",
 				fmt.Sprintf("/track?apikey=akey&userid=uid&goalid=gid&tag=t&timestamp=%d&value=1.234", now.Unix()),
 				nil),
@@ -220,8 +236,8 @@ func TestValidateParams(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			h := newTrackHandlerWithMock(t, mockController)
 			actual, err := h.validateParams(p.input)
 			assert.Equal(t, p.expected, actual)

@@ -39,12 +39,14 @@ func TestHandle(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		setup    func(t *testing.T, s *sender)
 		input    *senderproto.NotificationEvent
 		expected error
 	}{
-		"error: list subscriptions": {
+		{
+			desc: "error: list subscriptions",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
@@ -61,7 +63,8 @@ func TestHandle(t *testing.T) {
 			},
 			expected: errors.New("test"),
 		},
-		"success: 0 subscription": {
+		{
+			desc: "success: 0 subscription",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{}, nil)
@@ -78,7 +81,8 @@ func TestHandle(t *testing.T) {
 			},
 			expected: nil,
 		},
-		"success: 0 admin subscription": {
+		{
+			desc: "success: 0 admin subscription",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledAdminSubscriptionsResponse{}, nil)
@@ -95,7 +99,8 @@ func TestHandle(t *testing.T) {
 			},
 			expected: nil,
 		},
-		"error: notify": {
+		{
+			desc: "error: notify",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
@@ -115,7 +120,8 @@ func TestHandle(t *testing.T) {
 			},
 			expected: errors.New("test"),
 		},
-		"success: 1 subscription": {
+		{
+			desc: "success: 1 subscription",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
@@ -135,7 +141,8 @@ func TestHandle(t *testing.T) {
 			},
 			expected: nil,
 		},
-		"success: 2 subscription": {
+		{
+			desc: "success: 2 subscription",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
@@ -155,7 +162,8 @@ func TestHandle(t *testing.T) {
 			},
 			expected: nil,
 		},
-		"success: 1 admin subscription": {
+		{
+			desc: "success: 1 admin subscription",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledAdminSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
@@ -175,7 +183,8 @@ func TestHandle(t *testing.T) {
 			},
 			expected: nil,
 		},
-		"success: 2 admin subscription": {
+		{
+			desc: "success: 2 admin subscription",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledAdminSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
@@ -197,8 +206,8 @@ func TestHandle(t *testing.T) {
 		},
 	}
 
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			sender := createSender(t, mockController)
 			if p.setup != nil {
 				p.setup(t, sender)
@@ -214,13 +223,15 @@ func TestListEnabledSubscriptions(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(t *testing.T, s *sender)
 		input       notificationproto.Subscription_SourceType
 		expected    []*notificationproto.Subscription
 		expectedErr error
 	}{
-		"error": {
+		{
+			desc: "error",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), &notificationproto.ListEnabledSubscriptionsRequest{
 					EnvironmentNamespace: "ns0",
@@ -233,7 +244,8 @@ func TestListEnabledSubscriptions(t *testing.T) {
 			expected:    nil,
 			expectedErr: errors.New("test"),
 		},
-		"success: 0 entity": {
+		{
+			desc: "success: 0 entity",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), &notificationproto.ListEnabledSubscriptionsRequest{
 					EnvironmentNamespace: "ns0",
@@ -247,7 +259,8 @@ func TestListEnabledSubscriptions(t *testing.T) {
 			expected:    []*notificationproto.Subscription{},
 			expectedErr: nil,
 		},
-		"success: 1 entity": {
+		{
+			desc: "success: 1 entity",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), &notificationproto.ListEnabledSubscriptionsRequest{
 					EnvironmentNamespace: "ns0",
@@ -263,7 +276,8 @@ func TestListEnabledSubscriptions(t *testing.T) {
 			expected:    []*notificationproto.Subscription{{Id: "sid0"}},
 			expectedErr: nil,
 		},
-		"success: listRequestSize + 1 entity": {
+		{
+			desc: "success: listRequestSize + 1 entity",
 			setup: func(t *testing.T, s *sender) {
 				subs := createSubscriptions(t, listRequestSize+1)
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), &notificationproto.ListEnabledSubscriptionsRequest{
@@ -285,8 +299,8 @@ func TestListEnabledSubscriptions(t *testing.T) {
 		},
 	}
 
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			sender := createSender(t, mockController)
 			if p.setup != nil {
 				p.setup(t, sender)
@@ -303,13 +317,15 @@ func TestListEnabledAdminSubscriptions(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(t *testing.T, s *sender)
 		input       notificationproto.Subscription_SourceType
 		expected    []*notificationproto.Subscription
 		expectedErr error
 	}{
-		"error": {
+		{
+			desc: "error",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), &notificationproto.ListEnabledAdminSubscriptionsRequest{
 					SourceTypes: []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
@@ -321,7 +337,8 @@ func TestListEnabledAdminSubscriptions(t *testing.T) {
 			expected:    nil,
 			expectedErr: errors.New("test"),
 		},
-		"success: 0 entity": {
+		{
+			desc: "success: 0 entity",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), &notificationproto.ListEnabledAdminSubscriptionsRequest{
 					SourceTypes: []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
@@ -334,7 +351,8 @@ func TestListEnabledAdminSubscriptions(t *testing.T) {
 			expected:    []*notificationproto.Subscription{},
 			expectedErr: nil,
 		},
-		"success: 1 entity": {
+		{
+			desc: "success: 1 entity",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), &notificationproto.ListEnabledAdminSubscriptionsRequest{
 					SourceTypes: []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
@@ -349,7 +367,8 @@ func TestListEnabledAdminSubscriptions(t *testing.T) {
 			expected:    []*notificationproto.Subscription{{Id: "sid0"}},
 			expectedErr: nil,
 		},
-		"success: listRequestSize + 1 entity": {
+		{
+			desc: "success: listRequestSize + 1 entity",
 			setup: func(t *testing.T, s *sender) {
 				subs := createSubscriptions(t, listRequestSize+1)
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), &notificationproto.ListEnabledAdminSubscriptionsRequest{
@@ -369,8 +388,8 @@ func TestListEnabledAdminSubscriptions(t *testing.T) {
 		},
 	}
 
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			sender := createSender(t, mockController)
 			if p.setup != nil {
 				p.setup(t, sender)

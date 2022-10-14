@@ -50,12 +50,14 @@ func TestMigrateAllMasterSchema(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*MySQLService)
 		req         *proto.MigrateAllMasterSchemaRequest
 		expectedErr error
 	}{
-		"err: failed to new migrate client": {
+		{
+			desc: "err: failed to new migrate client",
 			setup: func(ms *MySQLService) {
 				cf := mock.NewMockClientFactory(mockController)
 				cf.EXPECT().New().Return(nil, errors.New("error"))
@@ -64,7 +66,8 @@ func TestMigrateAllMasterSchema(t *testing.T) {
 			req:         &proto.MigrateAllMasterSchemaRequest{},
 			expectedErr: errInternal,
 		},
-		"err: failed to run migration": {
+		{
+			desc: "err: failed to run migration",
 			setup: func(ms *MySQLService) {
 				c := mock.NewMockClient(mockController)
 				c.EXPECT().Up().Return(errors.New("error"))
@@ -75,7 +78,8 @@ func TestMigrateAllMasterSchema(t *testing.T) {
 			req:         &proto.MigrateAllMasterSchemaRequest{},
 			expectedErr: errInternal,
 		},
-		"success: no change": {
+		{
+			desc: "success: no change",
 			setup: func(ms *MySQLService) {
 				c := mock.NewMockClient(mockController)
 				c.EXPECT().Up().Return(libmigrate.ErrNoChange)
@@ -86,7 +90,8 @@ func TestMigrateAllMasterSchema(t *testing.T) {
 			req:         &proto.MigrateAllMasterSchemaRequest{},
 			expectedErr: nil,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(ms *MySQLService) {
 				c := mock.NewMockClient(mockController)
 				c.EXPECT().Up().Return(nil)
@@ -98,8 +103,8 @@ func TestMigrateAllMasterSchema(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newMySQLService(t)
 			p.setup(service)
@@ -114,12 +119,14 @@ func TestRollbackMasterSchema(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*MySQLService, int64)
 		req         *proto.RollbackMasterSchemaRequest
 		expectedErr error
 	}{
-		"err: failed to new migrate client": {
+		{
+			desc: "err: failed to new migrate client",
 			setup: func(ms *MySQLService, step int64) {
 				cf := mock.NewMockClientFactory(mockController)
 				cf.EXPECT().New().Return(nil, errors.New("error"))
@@ -128,7 +135,8 @@ func TestRollbackMasterSchema(t *testing.T) {
 			req:         &proto.RollbackMasterSchemaRequest{},
 			expectedErr: errInternal,
 		},
-		"err: failed to run migration": {
+		{
+			desc: "err: failed to run migration",
 			setup: func(ms *MySQLService, step int64) {
 				c := mock.NewMockClient(mockController)
 				c.EXPECT().Steps(-int(step)).Return(errors.New("error"))
@@ -139,7 +147,8 @@ func TestRollbackMasterSchema(t *testing.T) {
 			req:         &proto.RollbackMasterSchemaRequest{Step: 1},
 			expectedErr: errInternal,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(ms *MySQLService, step int64) {
 				c := mock.NewMockClient(mockController)
 				c.EXPECT().Steps(-int(step)).Return(nil)
@@ -151,8 +160,8 @@ func TestRollbackMasterSchema(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithToken(t)
 			service := newMySQLService(t)
 			p.setup(service, p.req.Step)
@@ -164,18 +173,21 @@ func TestRollbackMasterSchema(t *testing.T) {
 
 func TestMySQLServicePermissionDenied(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		action   func(context.Context, *MySQLService) error
 		expected error
 	}{
-		"MigrateAllMasterSchema": {
+		{
+			desc: "MigrateAllMasterSchema",
 			action: func(ctx context.Context, ms *MySQLService) error {
 				_, err := ms.MigrateAllMasterSchema(ctx, &proto.MigrateAllMasterSchemaRequest{})
 				return err
 			},
 			expected: errPermissionDenied,
 		},
-		"RollbackMasterSchema": {
+		{
+			desc: "RollbackMasterSchema",
 			action: func(ctx context.Context, ms *MySQLService) error {
 				_, err := ms.RollbackMasterSchema(ctx, &proto.RollbackMasterSchemaRequest{})
 				return err
@@ -183,8 +195,8 @@ func TestMySQLServicePermissionDenied(t *testing.T) {
 			expected: errPermissionDenied,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithTokenRoleUnassigned(t)
 			service := newMySQLService(t)
 			actual := p.action(ctx, service)

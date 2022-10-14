@@ -55,27 +55,31 @@ func TestVerify(t *testing.T) {
 		Email:    "test@email",
 		Expiry:   time.Now().Add(time.Hour),
 	}
-	testcases := map[string]struct {
+	testcases := []struct {
+		desc       string
 		rawIDToken string
 		valid      bool
 	}{
-		"err: malformed jwt": {
+		{
+			desc:       "err: malformed jwt",
 			rawIDToken: "",
 			valid:      false,
 		},
-		"err: invalid jwt": {
+		{
+			desc:       "err: invalid jwt",
 			rawIDToken: createInvalidRawIDToken(t, signer, idToken),
 			valid:      false,
 		},
-		"success": {
+		{
+			desc:       "success",
 			rawIDToken: createValidRawIDToken(t, signer, idToken),
 			valid:      true,
 		},
 	}
 	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, clientID)
 	require.NoError(t, err)
-	for msg, p := range testcases {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range testcases {
+		t.Run(p.desc, func(t *testing.T) {
 			actualToken, err := verifier.Verify(p.rawIDToken)
 			if p.valid {
 				assert.NotNil(t, actualToken)

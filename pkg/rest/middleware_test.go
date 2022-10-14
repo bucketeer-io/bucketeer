@@ -70,28 +70,28 @@ func TestHandle(t *testing.T) {
 func TestSplitURLPath(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		msg,
+		desc,
 		input,
 		expectedApiVersion,
 		expectedServiceName,
 		expectedApiName string
 	}{
 		{
-			msg:                 "error: wrong path format",
+			desc:                "error: wrong path format",
 			input:               "scheme://host/api_version/service_name/api_name/api/",
 			expectedApiVersion:  "unknown",
 			expectedServiceName: "unknown",
 			expectedApiName:     "unknown",
 		},
 		{
-			msg:                 "error: using slash in the end of the path",
+			desc:                "error: using slash in the end of the path",
 			input:               "scheme://host/api_version/service_name/api_name/",
 			expectedApiVersion:  "unknown",
 			expectedServiceName: "unknown",
 			expectedApiName:     "unknown",
 		},
 		{
-			msg:                 "sucess",
+			desc:                "sucess",
 			input:               "scheme://host/api_version/service_name/api_name",
 			expectedApiVersion:  "api_version",
 			expectedServiceName: "service_name",
@@ -102,8 +102,8 @@ func TestSplitURLPath(t *testing.T) {
 		url, err := url.Parse(p.input)
 		assert.NoError(t, err)
 		apiVersion, serviceName, apiName := splitURLPath(url.Path)
-		assert.Equal(t, apiVersion, p.expectedApiVersion, p.msg)
-		assert.Equal(t, serviceName, p.expectedServiceName, p.msg)
-		assert.Equal(t, apiName, p.expectedApiName, p.msg)
+		assert.Equal(t, apiVersion, p.expectedApiVersion, p.desc)
+		assert.Equal(t, serviceName, p.expectedServiceName, p.desc)
+		assert.Equal(t, apiName, p.expectedApiName, p.desc)
 	}
 }

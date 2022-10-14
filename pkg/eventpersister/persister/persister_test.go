@@ -47,14 +47,16 @@ func TestMarshaEvent(t *testing.T) {
 	layout := "2006-01-02 15:04:05 -0700 MST"
 	t1, err := time.Parse(layout, "2014-01-17 23:02:03 +0000 UTC")
 	require.NoError(t, err)
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc               string
 		setup              func(context.Context, *Persister)
 		input              interface{}
 		expected           string
 		expectedErr        error
 		expectedRepeatable bool
 	}{
-		"success: user event": {
+		{
+			desc:  "success: user event",
 			setup: nil,
 			input: &esproto.UserEvent{
 				UserId:   "uid",
@@ -72,7 +74,8 @@ func TestMarshaEvent(t *testing.T) {
 			expectedErr:        nil,
 			expectedRepeatable: false,
 		},
-		"success evaluation event": {
+		{
+			desc:  "success evaluation event",
 			setup: nil,
 			input: &eventproto.EvaluationEvent{
 				Tag:            "tag",
@@ -103,7 +106,8 @@ func TestMarshaEvent(t *testing.T) {
 			expectedErr:        nil,
 			expectedRepeatable: false,
 		},
-		"err goal batch event: internal error from bigtable": {
+		{
+			desc: "err goal batch event: internal error from bigtable",
 			setup: func(ctx context.Context, p *Persister) {
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
 					ctx,
@@ -129,7 +133,8 @@ func TestMarshaEvent(t *testing.T) {
 			expectedErr:        btstorage.ErrInternal,
 			expectedRepeatable: true,
 		},
-		"success goal batch event: getting evaluations from bigtable": {
+		{
+			desc: "success goal batch event: getting evaluations from bigtable",
 			setup: func(ctx context.Context, p *Persister) {
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
 					ctx,
@@ -179,7 +184,8 @@ func TestMarshaEvent(t *testing.T) {
 			expectedErr:        nil,
 			expectedRepeatable: false,
 		},
-		"success goal batch event: getting evaluations from evaluate process with segment users": {
+		{
+			desc: "success goal batch event: getting evaluations from evaluate process with segment users",
 			setup: func(ctx context.Context, p *Persister) {
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
 					ctx,
@@ -241,7 +247,8 @@ func TestMarshaEvent(t *testing.T) {
 			expectedErr:        nil,
 			expectedRepeatable: false,
 		},
-		"err goal batch event: internal error from feature api": {
+		{
+			desc: "err goal batch event: internal error from feature api",
 			setup: func(ctx context.Context, p *Persister) {
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
 					ctx,
@@ -280,7 +287,8 @@ func TestMarshaEvent(t *testing.T) {
 			expectedErr:        btstorage.ErrInternal,
 			expectedRepeatable: false,
 		},
-		"success goal event: no tag info": {
+		{
+			desc:  "success goal event: no tag info",
 			setup: nil,
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
@@ -323,7 +331,8 @@ func TestMarshaEvent(t *testing.T) {
 			expectedErr:        nil,
 			expectedRepeatable: false,
 		},
-		"err goal event: internal": {
+		{
+			desc: "err goal event: internal",
 			setup: func(ctx context.Context, p *Persister) {
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
 					ctx,
@@ -349,7 +358,8 @@ func TestMarshaEvent(t *testing.T) {
 			expectedErr:        btstorage.ErrInternal,
 			expectedRepeatable: true,
 		},
-		"success goal event: key not found not in bigtable": {
+		{
+			desc: "success goal event: key not found not in bigtable",
 			setup: func(ctx context.Context, p *Persister) {
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
 					ctx,
@@ -386,7 +396,8 @@ func TestMarshaEvent(t *testing.T) {
 			expectedErr:        nil,
 			expectedRepeatable: false,
 		},
-		"success goal event: getting evaluations from bigtable": {
+		{
+			desc: "success goal event: getting evaluations from bigtable",
 			setup: func(ctx context.Context, p *Persister) {
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
 					ctx,
@@ -436,15 +447,16 @@ func TestMarshaEvent(t *testing.T) {
 			expectedErr:        nil,
 			expectedRepeatable: false,
 		},
-		"err: ErrUnexpectedMessageType": {
+		{
+			desc:               "err: ErrUnexpectedMessageType",
 			input:              "",
 			expected:           "",
 			expectedErr:        ErrUnexpectedMessageType,
 			expectedRepeatable: false,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			persister := newPersister(mockController)
 			if p.setup != nil {
 				p.setup(persister.ctx, persister)

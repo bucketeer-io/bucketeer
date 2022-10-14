@@ -33,13 +33,15 @@ func TestCreateAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		ctxRole     accountproto.Account_Role
 		req         *accountproto.CreateAccountRequest
 		expectedErr error
 	}{
-		"errNoCommand": {
+		{
+			desc:    "errNoCommand",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAccountRequest{
 				Command:              nil,
@@ -47,7 +49,8 @@ func TestCreateAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"errInvalidIsEmpty": {
+		{
+			desc:    "errInvalidIsEmpty",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAccountRequest{
 				Command:              &accountproto.CreateAccountCommand{Email: ""},
@@ -55,7 +58,8 @@ func TestCreateAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusEmailIsEmpty, locale.JaJP),
 		},
-		"errInvalidEmail": {
+		{
+			desc:    "errInvalidEmail",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAccountRequest{
 				Command:              &accountproto.CreateAccountCommand{Email: "bucketeer@"},
@@ -63,7 +67,8 @@ func TestCreateAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInvalidEmail, locale.JaJP),
 		},
-		"errAlreadyExists_AdminAccount": {
+		{
+			desc: "errAlreadyExists_AdminAccount",
 			setup: func(s *AccountService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -78,7 +83,8 @@ func TestCreateAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusAlreadyExists, locale.JaJP),
 		},
-		"errAlreadyExists_EnvironmentAccount": {
+		{
+			desc: "errAlreadyExists_EnvironmentAccount",
 			setup: func(s *AccountService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -97,7 +103,8 @@ func TestCreateAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusAlreadyExists, locale.JaJP),
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(s *AccountService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
@@ -115,7 +122,8 @@ func TestCreateAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -138,15 +146,15 @@ func TestCreateAccountMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithDefaultToken(t, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			_, err := service.CreateAccount(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}
 }
@@ -156,13 +164,15 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		ctxRole     accountproto.Account_Role
 		req         *accountproto.ChangeAccountRoleRequest
 		expectedErr error
 	}{
-		"errMissingAccountID": {
+		{
+			desc:    "errMissingAccountID",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.ChangeAccountRoleRequest{
 				Id:                   "",
@@ -170,7 +180,8 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusMissingAccountID, locale.JaJP),
 		},
-		"errNoCommand": {
+		{
+			desc:    "errNoCommand",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.ChangeAccountRoleRequest{
 				Id:                   "id",
@@ -179,7 +190,8 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"errNotFound": {
+		{
+			desc: "errNotFound",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -196,7 +208,8 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -213,7 +226,8 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -231,15 +245,15 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithDefaultToken(t, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			_, err := service.ChangeAccountRole(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}
 }
@@ -249,13 +263,15 @@ func TestEnableAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		ctxRole     accountproto.Account_Role
 		req         *accountproto.EnableAccountRequest
 		expectedErr error
 	}{
-		"errMissingAccountID": {
+		{
+			desc:    "errMissingAccountID",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountRequest{
 				Id:                   "",
@@ -263,7 +279,8 @@ func TestEnableAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusMissingAccountID, locale.JaJP),
 		},
-		"errNoCommand": {
+		{
+			desc:    "errNoCommand",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountRequest{
 				Id:                   "id",
@@ -272,7 +289,8 @@ func TestEnableAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"errNotFound": {
+		{
+			desc: "errNotFound",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -287,7 +305,8 @@ func TestEnableAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -302,7 +321,8 @@ func TestEnableAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -318,15 +338,15 @@ func TestEnableAccountMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithDefaultToken(t, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			_, err := service.EnableAccount(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}
 }
@@ -336,13 +356,15 @@ func TestDisableAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		ctxRole     accountproto.Account_Role
 		req         *accountproto.DisableAccountRequest
 		expectedErr error
 	}{
-		"errMissingAccountID": {
+		{
+			desc:    "errMissingAccountID",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountRequest{
 				Id:                   "",
@@ -350,7 +372,8 @@ func TestDisableAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusMissingAccountID, locale.JaJP),
 		},
-		"errNoCommand": {
+		{
+			desc:    "errNoCommand",
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountRequest{
 				Id:                   "id",
@@ -359,7 +382,8 @@ func TestDisableAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNoCommand, locale.JaJP),
 		},
-		"errNotFound": {
+		{
+			desc: "errNotFound",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -374,7 +398,8 @@ func TestDisableAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -389,7 +414,8 @@ func TestDisableAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -405,15 +431,15 @@ func TestDisableAccountMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			ctx := createContextWithDefaultToken(t, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			_, err := service.DisableAccount(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}
 }
@@ -423,26 +449,30 @@ func TestGetAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		req         *accountproto.GetAccountRequest
 		expectedErr error
 	}{
-		"errMissingAccountID": {
+		{
+			desc: "errMissingAccountID",
 			req: &accountproto.GetAccountRequest{
 				Email:                "",
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: localizedError(statusEmailIsEmpty, locale.JaJP),
 		},
-		"errInvalidEmail": {
+		{
+			desc: "errInvalidEmail",
 			req: &accountproto.GetAccountRequest{
 				Email:                "bucketeer@",
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: localizedError(statusInvalidEmail, locale.JaJP),
 		},
-		"errNotFound": {
+		{
+			desc: "errNotFound",
 			setup: func(s *AccountService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -456,7 +486,8 @@ func TestGetAccountMySQL(t *testing.T) {
 			},
 			expectedErr: localizedError(statusNotFound, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -472,8 +503,8 @@ func TestGetAccountMySQL(t *testing.T) {
 		},
 	}
 	ctx := createContextWithDefaultToken(t, accountproto.Account_OWNER)
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -491,19 +522,22 @@ func TestListAccountsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*AccountService)
 		input       *accountproto.ListAccountsRequest
 		expected    *accountproto.ListAccountsResponse
 		expectedErr error
 	}{
-		"errInvalidCursor": {
+		{
+			desc:        "errInvalidCursor",
 			setup:       nil,
 			input:       &accountproto.ListAccountsRequest{EnvironmentNamespace: "ns0", Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: localizedError(statusInvalidCursor, locale.JaJP),
 		},
-		"errInternal": {
+		{
+			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -513,7 +547,8 @@ func TestListAccountsMySQL(t *testing.T) {
 			expected:    nil,
 			expectedErr: localizedError(statusInternal, locale.JaJP),
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(s *AccountService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -534,15 +569,15 @@ func TestListAccountsMySQL(t *testing.T) {
 		},
 	}
 	ctx := createContextWithDefaultToken(t, accountproto.Account_OWNER)
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
 			actual, err := service.ListAccounts(ctx, p.input)
-			assert.Equal(t, p.expectedErr, err, msg)
-			assert.Equal(t, p.expected, actual, msg)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+			assert.Equal(t, p.expected, actual, p.desc)
 		})
 	}
 }

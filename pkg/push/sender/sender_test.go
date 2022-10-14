@@ -25,13 +25,15 @@ import (
 
 func TestIsFeaturesLatest(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc           string
 		features       *featureproto.Features
 		featureID      string
 		featureVersion int32
 		expected       bool
 	}{
-		"no feature": {
+		{
+			desc: "no feature",
 			features: &featureproto.Features{
 				Features: []*featureproto.Feature{{Id: "wrong", Version: int32(1)}},
 			},
@@ -39,7 +41,8 @@ func TestIsFeaturesLatest(t *testing.T) {
 			featureVersion: int32(1),
 			expected:       false,
 		},
-		"not the latest version": {
+		{
+			desc: "not the latest version",
 			features: &featureproto.Features{
 				Features: []*featureproto.Feature{{Id: "fid", Version: int32(1)}},
 			},
@@ -47,7 +50,8 @@ func TestIsFeaturesLatest(t *testing.T) {
 			featureVersion: int32(2),
 			expected:       false,
 		},
-		"the latest version": {
+		{
+			desc: "the latest version",
 			features: &featureproto.Features{
 				Features: []*featureproto.Feature{{Id: "fid", Version: int32(2)}},
 			},
@@ -56,8 +60,8 @@ func TestIsFeaturesLatest(t *testing.T) {
 			expected:       true,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := &sender{}
 			actual := s.isFeaturesLatest(p.features, p.featureID, p.featureVersion)
 			assert.Equal(t, p.expected, actual)
@@ -67,12 +71,14 @@ func TestIsFeaturesLatest(t *testing.T) {
 
 func TestExtractFeatureID(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc             string
 		input            *domaineventproto.Event
 		expectedID       string
 		expectedIsTarget bool
 	}{
-		"not feature entity": {
+		{
+			desc: "not feature entity",
 			input: &domaineventproto.Event{
 				EntityType: domaineventproto.Event_EXPERIMENT,
 				EntityId:   "fid",
@@ -81,7 +87,8 @@ func TestExtractFeatureID(t *testing.T) {
 			expectedID:       "",
 			expectedIsTarget: false,
 		},
-		"not version incremented": {
+		{
+			desc: "not version incremented",
 			input: &domaineventproto.Event{
 				EntityType: domaineventproto.Event_EXPERIMENT,
 				EntityId:   "fid",
@@ -90,7 +97,8 @@ func TestExtractFeatureID(t *testing.T) {
 			expectedID:       "",
 			expectedIsTarget: false,
 		},
-		"is target": {
+		{
+			desc: "is target",
 			input: &domaineventproto.Event{
 				EntityType: domaineventproto.Event_FEATURE,
 				EntityId:   "fid",
@@ -100,8 +108,8 @@ func TestExtractFeatureID(t *testing.T) {
 			expectedIsTarget: true,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			s := &sender{}
 			actualID, actualIsTarget := s.extractFeatureID(p.input)
 			assert.Equal(t, p.expectedID, actualID)

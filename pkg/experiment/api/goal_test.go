@@ -402,25 +402,29 @@ func TestGoalPermissionDenied(t *testing.T) {
 	ctx := createContextWithTokenRoleUnassigned()
 	s := storeclient.NewInMemoryStorage()
 	service := createExperimentService(mockController, s)
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		action   func(context.Context, *experimentService) error
 		expected error
 	}{
-		"CreateGoal": {
+		{
+			desc: "CreateGoal",
 			action: func(ctx context.Context, es *experimentService) error {
 				_, err := es.CreateGoal(ctx, &experimentproto.CreateGoalRequest{})
 				return err
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"UpdateGoal": {
+		{
+			desc: "UpdateGoal",
 			action: func(ctx context.Context, es *experimentService) error {
 				_, err := es.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{})
 				return err
 			},
 			expected: errPermissionDeniedJaJP,
 		},
-		"DeleteGoal": {
+		{
+			desc: "DeleteGoal",
 			action: func(ctx context.Context, es *experimentService) error {
 				_, err := es.DeleteGoal(ctx, &experimentproto.DeleteGoalRequest{})
 				return err
@@ -428,8 +432,8 @@ func TestGoalPermissionDenied(t *testing.T) {
 			expected: errPermissionDeniedJaJP,
 		},
 	}
-	for msg, p := range patterns {
+	for _, p := range patterns {
 		actual := p.action(ctx, service)
-		assert.Equal(t, p.expected, actual, "%s", msg)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
 	}
 }

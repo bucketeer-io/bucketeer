@@ -40,31 +40,35 @@ func TestGetSegmentUser(t *testing.T) {
 	dataSegmentUsers := marshalMessage(t, segmentUsers)
 	key := cache.MakeKey(segmentUsersKind, segmentID, environmentNamespace)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*segmentUsersCache)
 		expectedErr error
 	}{
-		"error_get_not_found": {
+		{
+			desc: "error_get_not_found",
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Get(key).Return(nil, cache.ErrNotFound)
 			},
 			expectedErr: cache.ErrNotFound,
 		},
-		"error_invalid_type": {
+		{
+			desc: "error_invalid_type",
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Get(key).Return("test", nil)
 			},
 			expectedErr: cache.ErrInvalidType,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Get(key).Return(dataSegmentUsers, nil)
 			},
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			sc := newSegmentUsersCache(t, mockController)
 			p.setup(sc)
 			cache, err := sc.Get(segmentID, environmentNamespace)
@@ -97,18 +101,21 @@ func TestGetAllSegmentUser(t *testing.T) {
 	key := keyPrefix + "*"
 	var cursor uint64
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*segmentUsersCache)
 		expectedErr error
 	}{
-		"error_scan_not_found": {
+		{
+			desc: "error_scan_not_found",
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
 					cursor, nil, cache.ErrNotFound)
 			},
 			expectedErr: cache.ErrNotFound,
 		},
-		"error_get_multi_not_found": {
+		{
+			desc: "error_get_multi_not_found",
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
 					cursor, keys, nil)
@@ -116,7 +123,8 @@ func TestGetAllSegmentUser(t *testing.T) {
 			},
 			expectedErr: cache.ErrNotFound,
 		},
-		"error_invalid_type": {
+		{
+			desc: "error_invalid_type",
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
 					cursor, keys, nil)
@@ -124,7 +132,8 @@ func TestGetAllSegmentUser(t *testing.T) {
 			},
 			expectedErr: cache.ErrInvalidType,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
 					cursor, keys, nil)
@@ -133,8 +142,8 @@ func TestGetAllSegmentUser(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			sc := newSegmentUsersCache(t, mockController)
 			p.setup(sc)
 			allUsers, err := sc.GetAll(environmentNamespace)
@@ -163,17 +172,20 @@ func TestPutSegmentUser(t *testing.T) {
 	dataSegmentUsers := marshalMessage(t, segmentUsers)
 	key := cache.MakeKey(segmentUsersKind, segmentID, environmentNamespace)
 
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		setup       func(*segmentUsersCache)
 		input       *featureproto.SegmentUsers
 		expectedErr error
 	}{
-		"error_proto_message_nil": {
+		{
+			desc:        "error_proto_message_nil",
 			setup:       nil,
 			input:       nil,
 			expectedErr: proto.ErrNil,
 		},
-		"success": {
+		{
+			desc: "success",
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataSegmentUsers).Return(nil)
 			},
@@ -181,8 +193,8 @@ func TestPutSegmentUser(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			sc := newSegmentUsersCache(t, mockController)
 			if p.setup != nil {
 				p.setup(sc)

@@ -52,11 +52,13 @@ func TestNewEventValidator(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not serialize metrics event")
 	}
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		input    *eventproto.Event
 		expected eventValidator
 	}{
-		"evaluationValidator": {
+		{
+			desc: "evaluationValidator",
 			input: &eventproto.Event{
 				Id: newUUID(t),
 				Event: &any.Any{
@@ -66,7 +68,8 @@ func TestNewEventValidator(t *testing.T) {
 			},
 			expected: &eventEvaluationValidator{},
 		},
-		"GoalValidator": {
+		{
+			desc: "GoalValidator",
 			input: &eventproto.Event{
 				Id: newUUID(t),
 				Event: &any.Any{
@@ -76,7 +79,8 @@ func TestNewEventValidator(t *testing.T) {
 			},
 			expected: &eventGoalValidator{},
 		},
-		"GoalBatchValidator": {
+		{
+			desc: "GoalBatchValidator",
 			input: &eventproto.Event{
 				Id: newUUID(t),
 				Event: &any.Any{
@@ -86,7 +90,8 @@ func TestNewEventValidator(t *testing.T) {
 			},
 			expected: &eventGoalBatchValidator{},
 		},
-		"MetricsEvent": {
+		{
+			desc: "MetricsEvent",
 			input: &eventproto.Event{
 				Id: newUUID(t),
 				Event: &any.Any{
@@ -97,8 +102,8 @@ func TestNewEventValidator(t *testing.T) {
 			expected: &eventMetricsValidator{},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			logger, _ := log.NewLogger()
 			actual := newEventValidator(p.input, oldestTimestampDuration, furthestTimestampDuration, logger)
 			assert.IsType(t, p.expected, actual)
@@ -133,12 +138,14 @@ func TestValidateTimestamp(t *testing.T) {
 
 func TestValidateGoalEvent(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		inputFunc   func() *eventproto.Event
 		expected    string
 		expectedErr error
 	}{
-		"invalid uuid": {
+		{
+			desc: "invalid uuid",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
 					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
@@ -147,7 +154,8 @@ func TestValidateGoalEvent(t *testing.T) {
 			expected:    codeInvalidID,
 			expectedErr: errInvalidIDFormat,
 		},
-		"unmarshal fails": {
+		{
+			desc: "unmarshal fails",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
@@ -156,7 +164,8 @@ func TestValidateGoalEvent(t *testing.T) {
 			expected:    codeUnmarshalFailed,
 			expectedErr: errUnmarshalFailed,
 		},
-		"invalid timestamp": {
+		{
+			desc: "invalid timestamp",
 			inputFunc: func() *eventproto.Event {
 				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
 					Timestamp: int64(999999999999999),
@@ -175,7 +184,8 @@ func TestValidateGoalEvent(t *testing.T) {
 			expected:    codeInvalidTimestamp,
 			expectedErr: errInvalidTimestamp,
 		},
-		"success": {
+		{
+			desc: "success",
 			inputFunc: func() *eventproto.Event {
 				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
 					Timestamp: time.Now().Unix(),
@@ -198,8 +208,8 @@ func TestValidateGoalEvent(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			logger, _ := log.NewLogger()
 			v := &eventGoalValidator{
 				event:                     p.inputFunc(),
@@ -216,12 +226,14 @@ func TestValidateGoalEvent(t *testing.T) {
 
 func TestValidateGoalBatchEvent(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		inputFunc   func() *eventproto.Event
 		expected    string
 		expectedErr error
 	}{
-		"err: invalid uuid": {
+		{
+			desc: "err: invalid uuid",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
 					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
@@ -230,7 +242,8 @@ func TestValidateGoalBatchEvent(t *testing.T) {
 			expected:    codeInvalidID,
 			expectedErr: errInvalidIDFormat,
 		},
-		"err: unmarshal failed": {
+		{
+			desc: "err: unmarshal failed",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
@@ -239,7 +252,8 @@ func TestValidateGoalBatchEvent(t *testing.T) {
 			expected:    codeUnmarshalFailed,
 			expectedErr: errUnmarshalFailed,
 		},
-		"err: empty user id": {
+		{
+			desc: "err: empty user id",
 			inputFunc: func() *eventproto.Event {
 				bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{
 					UserId: "",
@@ -258,7 +272,8 @@ func TestValidateGoalBatchEvent(t *testing.T) {
 			expected:    codeEmptyUserID,
 			expectedErr: errEmptyUserID,
 		},
-		"err: empty tag": {
+		{
+			desc: "err: empty tag",
 			inputFunc: func() *eventproto.Event {
 				bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{
 					UserId: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
@@ -282,7 +297,8 @@ func TestValidateGoalBatchEvent(t *testing.T) {
 			expected:    codeEmptyTag,
 			expectedErr: errEmptyTag,
 		},
-		"success": {
+		{
+			desc: "success",
 			inputFunc: func() *eventproto.Event {
 				bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{
 					UserId: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
@@ -305,8 +321,8 @@ func TestValidateGoalBatchEvent(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			logger, _ := log.NewLogger()
 			v := &eventGoalBatchValidator{
 				event:                     p.inputFunc(),
@@ -323,12 +339,14 @@ func TestValidateGoalBatchEvent(t *testing.T) {
 
 func TestValidateEvaluationEvent(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		inputFunc   func() *eventproto.Event
 		expected    string
 		expectedErr error
 	}{
-		"invalid uuid": {
+		{
+			desc: "invalid uuid",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
 					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
@@ -337,7 +355,8 @@ func TestValidateEvaluationEvent(t *testing.T) {
 			expected:    codeInvalidID,
 			expectedErr: errInvalidIDFormat,
 		},
-		"unmarshal fails": {
+		{
+			desc: "unmarshal fails",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
@@ -346,7 +365,8 @@ func TestValidateEvaluationEvent(t *testing.T) {
 			expected:    codeUnmarshalFailed,
 			expectedErr: errUnmarshalFailed,
 		},
-		"invalid timestamp": {
+		{
+			desc: "invalid timestamp",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
 					Timestamp: int64(999999999999999),
@@ -365,7 +385,8 @@ func TestValidateEvaluationEvent(t *testing.T) {
 			expected:    codeInvalidTimestamp,
 			expectedErr: errInvalidTimestamp,
 		},
-		"success": {
+		{
+			desc: "success",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
 					Timestamp: time.Now().Unix(),
@@ -383,8 +404,8 @@ func TestValidateEvaluationEvent(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			logger, _ := log.NewLogger()
 			v := &eventEvaluationValidator{
 				event:                     p.inputFunc(),
@@ -401,12 +422,14 @@ func TestValidateEvaluationEvent(t *testing.T) {
 
 func TestValidateMetrics(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		inputFunc   func() *eventproto.Event
 		expected    string
 		expectedErr error
 	}{
-		"invalid uuid": {
+		{
+			desc: "invalid uuid",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
 					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
@@ -415,7 +438,8 @@ func TestValidateMetrics(t *testing.T) {
 			expected:    codeInvalidID,
 			expectedErr: errInvalidIDFormat,
 		},
-		"unmarshal fails": {
+		{
+			desc: "unmarshal fails",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
@@ -424,7 +448,8 @@ func TestValidateMetrics(t *testing.T) {
 			expected:    codeUnmarshalFailed,
 			expectedErr: errUnmarshalFailed,
 		},
-		"invalid timestamp": {
+		{
+			desc: "invalid timestamp",
 			inputFunc: func() *eventproto.Event {
 				b, err := proto.Marshal(&eventproto.MetricsEvent{
 					Timestamp: int64(999999999999999),
@@ -443,7 +468,8 @@ func TestValidateMetrics(t *testing.T) {
 			expected:    "",
 			expectedErr: nil,
 		},
-		"success": {
+		{
+			desc: "success",
 			inputFunc: func() *eventproto.Event {
 				b, err := proto.Marshal(&eventproto.MetricsEvent{
 					Timestamp: time.Now().Unix(),
@@ -461,8 +487,8 @@ func TestValidateMetrics(t *testing.T) {
 			},
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			logger, _ := log.NewLogger()
 			v := &eventMetricsValidator{
 				event:                     p.inputFunc(),

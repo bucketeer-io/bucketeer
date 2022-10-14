@@ -25,25 +25,29 @@ import (
 
 func TestConvertMySQLError(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc     string
 		input    error
 		expected error
 	}{
-		"nil": {
+		{
+			desc:     "nil",
 			input:    nil,
 			expected: nil,
 		},
-		"mysql error: ErrDuplicateEntry": {
+		{
+			desc:     "mysql error: ErrDuplicateEntry",
 			input:    &libmysql.MySQLError{Number: mysqlerr.ER_DUP_ENTRY},
 			expected: ErrDuplicateEntry,
 		},
-		"non mysql error": {
+		{
+			desc:     "non mysql error",
 			input:    errors.New("non mysql error"),
 			expected: errors.New("non mysql error"),
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			actual := convertMySQLError(p.input)
 			assert.Equal(t, p.expected, actual)
 		})

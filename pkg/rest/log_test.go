@@ -25,22 +25,26 @@ import (
 
 func TestDecodeBody(t *testing.T) {
 	t.Parallel()
-	patterns := map[string]struct {
+	patterns := []struct {
+		desc        string
 		body        io.Reader
 		expected    interface{}
 		expectedErr bool
 	}{
-		"err: not json": {
+		{
+			desc:        "err: not json",
 			body:        strings.NewReader(`{tag: "ios", user: {id: "pingdom", data: {foo: "bar"}}}`),
 			expected:    nil,
 			expectedErr: true,
 		},
-		"success: nil": {
+		{
+			desc:        "success: nil",
 			body:        bytes.NewReader(nil),
 			expected:    nil,
 			expectedErr: false,
 		},
-		"success: json": {
+		{
+			desc: "success: json",
 			body: strings.NewReader(`{"tag":"ios","user":{"id":"pingdom","data":{"foo":"bar"}}}`),
 			expected: map[string]interface{}{
 				"tag": "ios",
@@ -54,8 +58,8 @@ func TestDecodeBody(t *testing.T) {
 			expectedErr: false,
 		},
 	}
-	for msg, p := range patterns {
-		t.Run(msg, func(t *testing.T) {
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
 			decoded, err := decodeBody(p.body)
 			assert.Equal(t, p.expected, decoded)
 			assert.Equal(t, p.expectedErr, err != nil)
