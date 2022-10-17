@@ -3607,6 +3607,26 @@
                 "integer": 6
               }
             ]
+          },
+          {
+            "name": "APIId",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN_API"
+              },
+              {
+                "name": "GET_EVALUATION",
+                "integer": 1
+              },
+              {
+                "name": "GET_EVALUATIONS",
+                "integer": 2
+              },
+              {
+                "name": "REGISTER_EVENTS",
+                "integer": 3
+              }
+            ]
           }
         ],
         "messages": [
@@ -3788,6 +3808,56 @@
             ]
           },
           {
+            "name": "LatencyMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "APIId"
+              },
+              {
+                "id": 3,
+                "name": "duration",
+                "type": "google.protobuf.Duration"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "SizeMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "APIId"
+              },
+              {
+                "id": 3,
+                "name": "size_byte",
+                "type": "int32"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
             "name": "TimeoutErrorCountMetricsEvent",
             "fields": [
               {
@@ -3804,6 +3874,68 @@
                 "id": 1,
                 "name": "tag",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "TimeoutErrorNumberMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "APIId"
+              },
+              {
+                "id": 2,
+                "name": "tag",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 3,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "InternalErrorNumberMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "APIId"
+              },
+              {
+                "id": 2,
+                "name": "tag",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 3,
+                  "name": "labels",
+                  "type": "string"
+                }
               }
             ]
           },

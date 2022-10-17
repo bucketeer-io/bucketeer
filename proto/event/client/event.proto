@@ -69,22 +69,57 @@ message MetricsEvent {
   google.protobuf.Any event = 2;
 }
 
+// TODO: Remove this event after grpc server is removed.
 message GetEvaluationLatencyMetricsEvent {
   map<string, string> labels = 1;
   google.protobuf.Duration duration = 2;
 }
 
+// TODO: Remove this event after grpc server is removed.
 message GetEvaluationSizeMetricsEvent {
   map<string, string> labels = 1;
   int32 size_byte = 2;
 }
 
+enum APIId {
+  UNKNOWN_API = 0;
+  GET_EVALUATION = 1;
+  GET_EVALUATIONS = 2;
+  REGISTER_EVENTS = 3;
+}
+
+message LatencyMetricsEvent {
+  APIId api_id = 1;
+  map<string, string> labels = 2;
+  google.protobuf.Duration duration = 3;
+}
+
+message SizeMetricsEvent {
+  APIId api_id = 1;
+  map<string, string> labels = 2;
+  int32 size_byte = 3;
+}
+
+// TODO: Remove this event after grpc server is removed.
 message TimeoutErrorCountMetricsEvent {
   string tag = 1;
 }
 
+// TODO: Remove this event after grpc server is removed.
 message InternalErrorCountMetricsEvent {
   string tag = 1;
+}
+
+message TimeoutErrorNumberMetricsEvent {
+  APIId api_id = 1;
+  string tag = 2 [deprecated = true];
+  map<string, string> labels = 3;
+}
+
+message InternalErrorNumberMetricsEvent {
+  APIId api_id = 1;
+  string tag = 2 [deprecated = true];
+  map<string, string> labels = 3;
 }
 
 message OpsEvent {
