@@ -23,7 +23,7 @@ ifndef GOOS
 endif
 
 ifndef GOARCH
-	GOARCH=$(shell go env GOARCH)
+	GOARCH := $(shell go env GOARCH)
 endif
 
 #############################
@@ -156,11 +156,11 @@ $(GO_APP_BUILD_TARGETS): build-%:
 		go build -ldflags "-s -w" \
 		-o bin/$* -mod=vendor cmd/$*/$*.go
 
-.PHONY: build-go-apps
-build-go-apps: $(GO_APP_BUILD_TARGETS)
+.PHONY: build-go
+build-go: $(GO_APP_BUILD_TARGETS)
 
-.PHONY: test-go-apps
-test-go-apps:
+.PHONY: test-go
+test-go:
 	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/...
 
 #############################
