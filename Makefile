@@ -14,6 +14,18 @@ endif
 DELETED_PACKAGES := //proto/external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974/google/rpc,//proto/external/protocolbuffers/protobuf/v3.18.1/google/protobuf
 LOCAL_IMPORT_PATH := github.com/bucketeer-io/bucketeer
 
+# go applications
+GO_APP_DIRS := $(wildcard cmd/*)
+GO_APP_BUILD_TARGETS := $(addprefix build-,$(notdir $(GO_APP_DIRS)))
+
+ifndef GOOS
+	GOOS := $(shell go env GOOS)
+endif
+
+ifndef GOARCH
+	GOARCH := $(shell go env GOARCH)
+endif
+
 #############################
 # All
 #############################
@@ -136,6 +148,19 @@ diff-check:
 .PHONY: tidy-deps
 tidy-deps:
 	go mod tidy
+
+.PHONY: $(GO_APP_BUILD_TARGETS)
+$(GO_APP_BUILD_TARGETS): build-%:
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) \
+		go build -ldflags "-s -w" \
+		-o bin/$* -mod=vendor cmd/$*/$*.go
+
+.PHONY: build-go
+build-go: $(GO_APP_BUILD_TARGETS)
+
+.PHONY: test-go
+test-go:
+	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/...
 
 #############################
 # UI/WEB
