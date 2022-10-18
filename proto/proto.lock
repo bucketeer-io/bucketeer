@@ -3609,7 +3609,7 @@
             ]
           },
           {
-            "name": "APIId",
+            "name": "ApiId",
             "enum_fields": [
               {
                 "name": "UNKNOWN_API"
@@ -3825,7 +3825,7 @@
               {
                 "id": 1,
                 "name": "api_id",
-                "type": "APIId"
+                "type": "ApiId"
               },
               {
                 "id": 3,
@@ -3850,7 +3850,7 @@
               {
                 "id": 1,
                 "name": "api_id",
-                "type": "APIId"
+                "type": "ApiId"
               },
               {
                 "id": 3,
@@ -3907,7 +3907,7 @@
               {
                 "id": 1,
                 "name": "api_id",
-                "type": "APIId"
+                "type": "ApiId"
               }
             ],
             "maps": [
@@ -3927,7 +3927,7 @@
               {
                 "id": 1,
                 "name": "api_id",
-                "type": "APIId"
+                "type": "ApiId"
               }
             ],
             "maps": [

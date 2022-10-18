@@ -81,7 +81,7 @@ message GetEvaluationSizeMetricsEvent {
   int32 size_byte = 2;
 }
 
-enum APIId {
+enum ApiId {
   UNKNOWN_API = 0;
   GET_EVALUATION = 1;
   GET_EVALUATIONS = 2;
@@ -89,13 +89,13 @@ enum APIId {
 }
 
 message LatencyMetricsEvent {
-  APIId api_id = 1;
+  ApiId api_id = 1;
   map<string, string> labels = 2;
   google.protobuf.Duration duration = 3;
 }
 
 message SizeMetricsEvent {
-  APIId api_id = 1;
+  ApiId api_id = 1;
   map<string, string> labels = 2;
   int32 size_byte = 3;
 }
@@ -111,12 +111,12 @@ message InternalErrorCountMetricsEvent {
 }
 
 message TimeoutErrorMetricsEvent {
-  APIId api_id = 1;
+  ApiId api_id = 1;
   map<string, string> labels = 3;
 }
 
 message InternalErrorMetricsEvent {
-  APIId api_id = 1;
+  ApiId api_id = 1;
   map<string, string> labels = 3;
 }
 
