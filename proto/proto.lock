@@ -3703,6 +3703,16 @@
                 "name": "sdk_version",
                 "type": "string"
               }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 11,
+                  "name": "metadata",
+                  "type": "string"
+                }
+              }
             ]
           },
           {
@@ -3759,6 +3769,16 @@
                 "id": 9,
                 "name": "sdk_version",
                 "type": "string"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 10,
+                  "name": "metadata",
+                  "type": "string"
+                }
               }
             ]
           },
