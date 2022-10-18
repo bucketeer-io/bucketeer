@@ -21,6 +21,7 @@ import (
 )
 
 var (
+	// TODO: Remove this event after grpc server is removed.
 	sdkGetEvaluationsLatencyHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
@@ -30,6 +31,7 @@ var (
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"tag", "state"})
 
+	// TODO: Remove this event after grpc server is removed.
 	sdkGetEvaluationsSizeHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
@@ -39,6 +41,7 @@ var (
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"tag", "state"})
 
+	// TODO: Remove this event after grpc server is removed.
 	sdkTimeoutErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -47,6 +50,7 @@ var (
 			Help:      "Total number of sdk timeout errors",
 		}, []string{"tag"})
 
+	// TODO: Remove this event after grpc server is removed.
 	sdkInternalErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -54,6 +58,41 @@ var (
 			Name:      "sdk_internal_error_total",
 			Help:      "Total number of sdk internal errors",
 		}, []string{"tag"})
+
+	// We added prefix "sdk_api" because of avoiding name collision
+	sdkLatencyHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_api_handling_seconds",
+			Help:      "Histogram of get evaluations response latency (seconds).",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"tag", "state", "api"})
+
+	sdkSizeHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_api_size",
+			Help:      "Histogram of get evaluations response size (byte).",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"tag", "state", "api"})
+
+	sdkTimeoutErrorNumber = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_api_timeout_error_total",
+			Help:      "Total number of sdk timeout errors",
+		}, []string{"tag", "api"})
+
+	sdkInternalErrorNumber = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_api_internal_error_total",
+			Help:      "Total number of sdk internal errors",
+		}, []string{"tag", "api"})
 )
 
 func registerMetrics(r metrics.Registerer) {
@@ -62,5 +101,9 @@ func registerMetrics(r metrics.Registerer) {
 		sdkGetEvaluationsSizeHistogram,
 		sdkTimeoutErrorCounter,
 		sdkInternalErrorCounter,
+		sdkLatencyHistogram,
+		sdkSizeHistogram,
+		sdkTimeoutErrorNumber,
+		sdkInternalErrorNumber,
 	)
 }

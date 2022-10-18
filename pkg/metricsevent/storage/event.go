@@ -28,6 +28,10 @@ type Storage interface {
 	SaveGetEvaluationSizeMetricsEvent(tag, status string, sizeByte int32)
 	SaveTimeoutErrorCountMetricsEvent(tag string)
 	SaveInternalErrorCountMetricsEvent(tag string)
+	SaveLatencyMetricsEvent(tag, status, api string, duration time.Duration)
+	SaveSizeMetricsEvent(tag, status, api string, sizeByte int32)
+	SaveTimeoutErrorNumberMetricsEvent(tag, api string)
+	SaveInternalErrorNumberMetricsEvent(tag, api string)
 }
 
 type storage struct {
@@ -53,4 +57,20 @@ func (s *storage) SaveTimeoutErrorCountMetricsEvent(tag string) {
 
 func (s *storage) SaveInternalErrorCountMetricsEvent(tag string) {
 	sdkInternalErrorCounter.WithLabelValues(tag).Inc()
+}
+
+func (s *storage) SaveLatencyMetricsEvent(tag, status, api string, duration time.Duration) {
+	sdkLatencyHistogram.WithLabelValues(tag, status, api).Observe(duration.Seconds())
+}
+
+func (s *storage) SaveSizeMetricsEvent(tag, status, api string, sizeByte int32) {
+	sdkSizeHistogram.WithLabelValues(tag, status, api).Observe(float64(sizeByte))
+}
+
+func (s *storage) SaveTimeoutErrorNumberMetricsEvent(tag, api string) {
+	sdkTimeoutErrorNumber.WithLabelValues(tag, api).Inc()
+}
+
+func (s *storage) SaveInternalErrorNumberMetricsEvent(tag, api string) {
+	sdkTimeoutErrorNumber.WithLabelValues(tag, api).Inc()
 }
