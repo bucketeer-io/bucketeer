@@ -21,19 +21,20 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
 type Storage interface {
-	SaveGetEvaluationLatencyMetricsEvent(tag, status string, duration time.Duration)
-	SaveGetEvaluationSizeMetricsEvent(tag, status string, sizeByte int32)
-	SaveTimeoutErrorCountMetricsEvent(tag string)
-	SaveInternalErrorCountMetricsEvent(tag string)
-	SaveLatencyMetricsEvent(tag, status, api string, duration time.Duration)
-	SaveSizeMetricsEvent(tag, status, api string, sizeByte int32)
-	SaveTimeoutErrorMetricsEvent(tag, api string)
-	SaveInternalErrorMetricsEvent(tag, api string)
-	SaveNetworkErrorMetricsEvent(tag, api string)
-	SaveInternalSdkErrorMetricsEvent(tag, api string)
+    SaveGetEvaluationLatencyMetricsEvent(tag, status string, duration time.Duration)
+    SaveGetEvaluationSizeMetricsEvent(tag, status string, sizeByte int32)
+    SaveTimeoutErrorCountMetricsEvent(tag string)
+    SaveInternalErrorCountMetricsEvent(tag string)
+	SaveLatencyMetricsEvent(tag, status string, api eventproto.ApiId, duration time.Duration)
+	SaveSizeMetricsEvent(tag, status string, api eventproto.ApiId, sizeByte int32)
+	SaveTimeoutErrorMetricsEvent(tag string, api eventproto.ApiId)
+	SaveInternalErrorMetricsEvent(tag string, api eventproto.ApiId)
+	SaveNetworkErrorMetricsEvent(tag string, api eventproto.ApiId)
+	SaveInternalSdkErrorMetricsEvent(tag string, api eventproto.ApiId)
 }
 
 type storage struct {
@@ -61,26 +62,26 @@ func (s *storage) SaveInternalErrorCountMetricsEvent(tag string) {
 	sdkInternalErrorCounter.WithLabelValues(tag).Inc()
 }
 
-func (s *storage) SaveLatencyMetricsEvent(tag, status, api string, duration time.Duration) {
-	sdkLatencyHistogram.WithLabelValues(tag, status, api).Observe(duration.Seconds())
+func (s *storage) SaveLatencyMetricsEvent(tag, status string, api eventproto.ApiId, duration time.Duration) {
+	sdkLatencyHistogram.WithLabelValues(tag, status, api.String()).Observe(duration.Seconds())
 }
 
-func (s *storage) SaveSizeMetricsEvent(tag, status, api string, sizeByte int32) {
-	sdkSizeHistogram.WithLabelValues(tag, status, api).Observe(float64(sizeByte))
+func (s *storage) SaveSizeMetricsEvent(tag, status string, api eventproto.ApiId, sizeByte int32) {
+	sdkSizeHistogram.WithLabelValues(tag, status, api.String()).Observe(float64(sizeByte))
 }
 
-func (s *storage) SaveTimeoutErrorMetricsEvent(tag, api string) {
-	sdkTimeoutError.WithLabelValues(tag, api).Inc()
+func (s *storage) SaveTimeoutErrorMetricsEvent(tag string, api eventproto.ApiId) {
+	sdkTimeoutError.WithLabelValues(tag, api.String()).Inc()
 }
 
-func (s *storage) SaveInternalErrorMetricsEvent(tag, api string) {
-	sdkInternalError.WithLabelValues(tag, api).Inc()
+func (s *storage) SaveInternalErrorMetricsEvent(tag string, api eventproto.ApiId) {
+	sdkInternalError.WithLabelValues(tag, api.String()).Inc()
 }
 
-func (s *storage) SaveNetworkErrorMetricsEvent(tag, api string) {
-	sdkNetworkError.WithLabelValues(tag, api).Inc()
+func (s *storage) SaveNetworkErrorMetricsEvent(tag string, api eventproto.ApiId) {
+	sdkNetworkError.WithLabelValues(tag, api.String()).Inc()
 }
 
-func (s *storage) SaveInternalSdkErrorMetricsEvent(tag, api string) {
-	sdkInternalSdkError.WithLabelValues(tag, api).Inc()
+func (s *storage) SaveInternalSdkErrorMetricsEvent(tag string, api eventproto.ApiId) {
+	sdkInternalSdkError.WithLabelValues(tag, api.String()).Inc()
 }

@@ -9,6 +9,8 @@ import (
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
+
+	client "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
 // MockStorage is a mock of Storage interface.
@@ -71,7 +73,7 @@ func (mr *MockStorageMockRecorder) SaveInternalErrorCountMetricsEvent(arg0 inter
 }
 
 // SaveInternalErrorMetricsEvent mocks base method.
-func (m *MockStorage) SaveInternalErrorMetricsEvent(tag, api string) {
+func (m *MockStorage) SaveInternalErrorMetricsEvent(tag string, api client.ApiId) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SaveInternalErrorMetricsEvent", tag, api)
 }
@@ -83,7 +85,7 @@ func (mr *MockStorageMockRecorder) SaveInternalErrorMetricsEvent(tag, api interf
 }
 
 // SaveInternalSdkErrorMetricsEvent mocks base method.
-func (m *MockStorage) SaveInternalSdkErrorMetricsEvent(tag, api string) {
+func (m *MockStorage) SaveInternalSdkErrorMetricsEvent(tag string, api client.ApiId) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SaveInternalSdkErrorMetricsEvent", tag, api)
 }
@@ -95,7 +97,7 @@ func (mr *MockStorageMockRecorder) SaveInternalSdkErrorMetricsEvent(tag, api int
 }
 
 // SaveLatencyMetricsEvent mocks base method.
-func (m *MockStorage) SaveLatencyMetricsEvent(tag, status, api string, duration time.Duration) {
+func (m *MockStorage) SaveLatencyMetricsEvent(tag, status string, api client.ApiId, duration time.Duration) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SaveLatencyMetricsEvent", tag, status, api, duration)
 }
@@ -107,7 +109,7 @@ func (mr *MockStorageMockRecorder) SaveLatencyMetricsEvent(tag, status, api, dur
 }
 
 // SaveNetworkErrorMetricsEvent mocks base method.
-func (m *MockStorage) SaveNetworkErrorMetricsEvent(tag, api string) {
+func (m *MockStorage) SaveNetworkErrorMetricsEvent(tag string, api client.ApiId) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SaveNetworkErrorMetricsEvent", tag, api)
 }
@@ -119,7 +121,7 @@ func (mr *MockStorageMockRecorder) SaveNetworkErrorMetricsEvent(tag, api interfa
 }
 
 // SaveSizeMetricsEvent mocks base method.
-func (m *MockStorage) SaveSizeMetricsEvent(tag, status, api string, sizeByte int32) {
+func (m *MockStorage) SaveSizeMetricsEvent(tag, status string, api client.ApiId, sizeByte int32) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SaveSizeMetricsEvent", tag, status, api, sizeByte)
 }
@@ -143,7 +145,7 @@ func (mr *MockStorageMockRecorder) SaveTimeoutErrorCountMetricsEvent(arg0 interf
 }
 
 // SaveTimeoutErrorMetricsEvent mocks base method.
-func (m *MockStorage) SaveTimeoutErrorMetricsEvent(tag, api string) {
+func (m *MockStorage) SaveTimeoutErrorMetricsEvent(tag string, api client.ApiId) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SaveTimeoutErrorMetricsEvent", tag, api)
 }
