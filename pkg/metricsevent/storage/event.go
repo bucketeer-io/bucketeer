@@ -24,10 +24,10 @@ import (
 )
 
 type Storage interface {
-	SaveGetEvaluationLatencyMetricsEvent(string, string, time.Duration)
-	SaveGetEvaluationSizeMetricsEvent(string, string, int32)
-	SaveTimeoutErrorCountMetricsEvent(string)
-	SaveInternalErrorCountMetricsEvent(string)
+	SaveGetEvaluationLatencyMetricsEvent(tag, status string, duration time.Duration)
+	SaveGetEvaluationSizeMetricsEvent(tag, status string, sizeByte int32)
+	SaveTimeoutErrorCountMetricsEvent(tag string)
+	SaveInternalErrorCountMetricsEvent(tag string)
 }
 
 type storage struct {
