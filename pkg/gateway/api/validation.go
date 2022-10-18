@@ -135,7 +135,11 @@ func (s *gatewayService) validateMetricsEvent(ctx context.Context, id string) (s
 	return "", nil
 }
 
-func (s *gatewayService) validateLatencyMetricsEvent(ctx context.Context, apiID eventproto.ApiId, duration time.Duration) (string, error) {
+func (s *gatewayService) validateLatencyMetricsEvent(
+	ctx context.Context,
+	apiID eventproto.ApiId,
+	duration time.Duration,
+) (string, error) {
 	if apiID == eventproto.ApiId_UNKNOWN_API {
 		s.logger.Warn(
 			"Failed to validate latencyMetrics event. Unkonown API id",
@@ -174,7 +178,10 @@ func (s *gatewayService) validateTimeoutErrorMetricsEvent(ctx context.Context, a
 	return "", nil
 }
 
-func (s *gatewayService) validateInternalErrorMetricsEvent(ctx context.Context, apiID eventproto.ApiId) (string, error) {
+func (s *gatewayService) validateInternalErrorMetricsEvent(
+	ctx context.Context,
+	apiID eventproto.ApiId,
+) (string, error) {
 	if apiID == eventproto.ApiId_UNKNOWN_API {
 		s.logger.Warn(
 			"Failed to validate latencyMetrics event. Unkonown API id",
@@ -194,7 +201,10 @@ func (s *gatewayService) validateNetworkErrorMetricsEvent(ctx context.Context, a
 	return "", nil
 }
 
-func (s *gatewayService) validateInternalSdkErrorMetricsEvent(ctx context.Context, apiID eventproto.ApiId) (string, error) {
+func (s *gatewayService) validateInternalSdkErrorMetricsEvent(
+	ctx context.Context,
+	apiID eventproto.ApiId,
+) (string, error) {
 	if apiID == eventproto.ApiId_UNKNOWN_API {
 		s.logger.Warn(
 			"Failed to validate latencyMetrics event. Unkonown API id",
