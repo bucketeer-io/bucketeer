@@ -3697,6 +3697,11 @@
                 "id": 9,
                 "name": "source_id",
                 "type": "SourceId"
+              },
+              {
+                "id": 10,
+                "name": "sdk_version",
+                "type": "string"
               }
             ]
           },
@@ -3749,6 +3754,11 @@
                 "id": 8,
                 "name": "source_id",
                 "type": "SourceId"
+              },
+              {
+                "id": 9,
+                "name": "sdk_version",
+                "type": "string"
               }
             ]
           },
@@ -3764,6 +3774,11 @@
                 "id": 2,
                 "name": "event",
                 "type": "google.protobuf.Any"
+              },
+              {
+                "id": 3,
+                "name": "sdk_version",
+                "type": "string"
               }
             ]
           },
