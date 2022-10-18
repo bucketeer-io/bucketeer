@@ -30,8 +30,10 @@ type Storage interface {
 	SaveInternalErrorCountMetricsEvent(tag string)
 	SaveLatencyMetricsEvent(tag, status, api string, duration time.Duration)
 	SaveSizeMetricsEvent(tag, status, api string, sizeByte int32)
-	SaveTimeoutErrorNumberMetricsEvent(tag, api string)
-	SaveInternalErrorNumberMetricsEvent(tag, api string)
+	SaveTimeoutErrorMetricsEvent(tag, api string)
+	SaveInternalErrorMetricsEvent(tag, api string)
+	SaveNetworkErrorMetricsEvent(tag, api string)
+	SaveInternalSdkErrorMetricsEvent(tag, api string)
 }
 
 type storage struct {
