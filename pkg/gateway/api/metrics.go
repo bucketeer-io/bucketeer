@@ -56,6 +56,8 @@ const (
 	codeNonRepeatableError         = "NonRepeatableError"
 	codeRepeatableError            = "RepeatableError"
 	codeInvalidURLParams           = "InvalidURLParams"
+	codeUnknownAPIID               = "UnknownAPIID"
+	codeInvalidDuration            = "InvalidDuration"
 )
 
 var (
