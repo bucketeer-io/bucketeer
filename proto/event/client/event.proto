@@ -112,12 +112,22 @@ message InternalErrorCountMetricsEvent {
 
 message TimeoutErrorMetricsEvent {
   ApiId api_id = 1;
-  map<string, string> labels = 3;
+  map<string, string> labels = 2;
 }
 
 message InternalErrorMetricsEvent {
   ApiId api_id = 1;
-  map<string, string> labels = 3;
+  map<string, string> labels = 2;
+}
+
+message NetworkErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+message InternalSdkErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
 }
 
 message OpsEvent {
