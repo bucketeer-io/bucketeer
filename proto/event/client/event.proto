@@ -70,21 +70,64 @@ message MetricsEvent {
 }
 
 message GetEvaluationLatencyMetricsEvent {
+  option deprecated = true;
   map<string, string> labels = 1;
   google.protobuf.Duration duration = 2;
 }
 
 message GetEvaluationSizeMetricsEvent {
+  option deprecated = true;
   map<string, string> labels = 1;
   int32 size_byte = 2;
 }
 
+enum ApiId {
+  UNKNOWN_API = 0;
+  GET_EVALUATION = 1;
+  GET_EVALUATIONS = 2;
+  REGISTER_EVENTS = 3;
+}
+
+message LatencyMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+  google.protobuf.Duration duration = 3;
+}
+
+message SizeMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+  int32 size_byte = 3;
+}
+
 message TimeoutErrorCountMetricsEvent {
+  option deprecated = true;
   string tag = 1;
 }
 
 message InternalErrorCountMetricsEvent {
+  option deprecated = true;
   string tag = 1;
+}
+
+message TimeoutErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+message InternalErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+message NetworkErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+message InternalSdkErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
 }
 
 message OpsEvent {

@@ -3607,6 +3607,26 @@
                 "integer": 6
               }
             ]
+          },
+          {
+            "name": "ApiId",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN_API"
+              },
+              {
+                "name": "GET_EVALUATION",
+                "integer": 1
+              },
+              {
+                "name": "GET_EVALUATIONS",
+                "integer": 2
+              },
+              {
+                "name": "REGISTER_EVENTS",
+                "integer": 3
+              }
+            ]
           }
         ],
         "messages": [
@@ -3765,6 +3785,12 @@
                   "type": "string"
                 }
               }
+            ],
+            "options": [
+              {
+                "name": "deprecated",
+                "value": "true"
+              }
             ]
           },
           {
@@ -3785,6 +3811,62 @@
                   "type": "string"
                 }
               }
+            ],
+            "options": [
+              {
+                "name": "deprecated",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "LatencyMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "ApiId"
+              },
+              {
+                "id": 3,
+                "name": "duration",
+                "type": "google.protobuf.Duration"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "SizeMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "ApiId"
+              },
+              {
+                "id": 3,
+                "name": "size_byte",
+                "type": "int32"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
             ]
           },
           {
@@ -3795,6 +3877,12 @@
                 "name": "tag",
                 "type": "string"
               }
+            ],
+            "options": [
+              {
+                "name": "deprecated",
+                "value": "true"
+              }
             ]
           },
           {
@@ -3804,6 +3892,92 @@
                 "id": 1,
                 "name": "tag",
                 "type": "string"
+              }
+            ],
+            "options": [
+              {
+                "name": "deprecated",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "TimeoutErrorMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "ApiId"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "InternalErrorMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "ApiId"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "NetworkErrorMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "ApiId"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "InternalSdkErrorMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "ApiId"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
               }
             ]
           },
