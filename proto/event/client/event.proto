@@ -69,14 +69,14 @@ message MetricsEvent {
   google.protobuf.Any event = 2;
 }
 
-// TODO: Remove this event after grpc server is removed.
 message GetEvaluationLatencyMetricsEvent {
+  option deprecated = true;
   map<string, string> labels = 1;
   google.protobuf.Duration duration = 2;
 }
 
-// TODO: Remove this event after grpc server is removed.
 message GetEvaluationSizeMetricsEvent {
+  option deprecated = true;
   map<string, string> labels = 1;
   int32 size_byte = 2;
 }
@@ -100,25 +100,23 @@ message SizeMetricsEvent {
   int32 size_byte = 3;
 }
 
-// TODO: Remove this event after grpc server is removed.
 message TimeoutErrorCountMetricsEvent {
+  option deprecated = true;
   string tag = 1;
 }
 
-// TODO: Remove this event after grpc server is removed.
 message InternalErrorCountMetricsEvent {
+  option deprecated = true;
   string tag = 1;
 }
 
-message TimeoutErrorNumberMetricsEvent {
+message TimeoutErrorMetricsEvent {
   APIId api_id = 1;
-  string tag = 2 [deprecated = true];
   map<string, string> labels = 3;
 }
 
-message InternalErrorNumberMetricsEvent {
+message InternalErrorMetricsEvent {
   APIId api_id = 1;
-  string tag = 2 [deprecated = true];
   map<string, string> labels = 3;
 }
 

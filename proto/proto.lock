@@ -3785,6 +3785,12 @@
                   "type": "string"
                 }
               }
+            ],
+            "options": [
+              {
+                "name": "deprecated",
+                "value": "true"
+              }
             ]
           },
           {
@@ -3804,6 +3810,12 @@
                   "name": "labels",
                   "type": "string"
                 }
+              }
+            ],
+            "options": [
+              {
+                "name": "deprecated",
+                "value": "true"
               }
             ]
           },
@@ -3865,6 +3877,12 @@
                 "name": "tag",
                 "type": "string"
               }
+            ],
+            "options": [
+              {
+                "name": "deprecated",
+                "value": "true"
+              }
             ]
           },
           {
@@ -3875,26 +3893,21 @@
                 "name": "tag",
                 "type": "string"
               }
+            ],
+            "options": [
+              {
+                "name": "deprecated",
+                "value": "true"
+              }
             ]
           },
           {
-            "name": "TimeoutErrorNumberMetricsEvent",
+            "name": "TimeoutErrorMetricsEvent",
             "fields": [
               {
                 "id": 1,
                 "name": "api_id",
                 "type": "APIId"
-              },
-              {
-                "id": 2,
-                "name": "tag",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
               }
             ],
             "maps": [
@@ -3909,23 +3922,12 @@
             ]
           },
           {
-            "name": "InternalErrorNumberMetricsEvent",
+            "name": "InternalErrorMetricsEvent",
             "fields": [
               {
                 "id": 1,
                 "name": "api_id",
                 "type": "APIId"
-              },
-              {
-                "id": 2,
-                "name": "tag",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
               }
             ],
             "maps": [
