@@ -67,10 +67,18 @@ func (s *storage) SaveSizeMetricsEvent(tag, status, api string, sizeByte int32) 
 	sdkSizeHistogram.WithLabelValues(tag, status, api).Observe(float64(sizeByte))
 }
 
-func (s *storage) SaveTimeoutErrorNumberMetricsEvent(tag, api string) {
-	sdkTimeoutErrorNumber.WithLabelValues(tag, api).Inc()
+func (s *storage) SaveTimeoutErrorMetricsEvent(tag, api string) {
+	sdkTimeoutError.WithLabelValues(tag, api).Inc()
 }
 
-func (s *storage) SaveInternalErrorNumberMetricsEvent(tag, api string) {
-	sdkTimeoutErrorNumber.WithLabelValues(tag, api).Inc()
+func (s *storage) SaveInternalErrorMetricsEvent(tag, api string) {
+	sdkInternalError.WithLabelValues(tag, api).Inc()
+}
+
+func (s *storage) SaveNetworkErrorMetricsEvent(tag, api string) {
+	sdkNetworkError.WithLabelValues(tag, api).Inc()
+}
+
+func (s *storage) SaveInternalSdkErrorMetricsEvent(tag, api string) {
+	sdkInternalSdkError.WithLabelValues(tag, api).Inc()
 }
