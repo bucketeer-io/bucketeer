@@ -236,14 +236,14 @@ func TestValidateLatencyMetricsEvent(t *testing.T) {
 		{
 			desc:         "err: invalid api id",
 			id:           eventproto.ApiId_UNKNOWN_API,
-			expectedCode: codeInvalidID,
-			expectedErr:  errInvalidIDFormat,
+			expectedCode: codeUnknownAPIID,
+			expectedErr:  errUnknownAPI,
 		},
 		{
 			desc:         "err: invalid duration",
 			id:           eventproto.ApiId_GET_EVALUATION,
-			expectedCode: codeInvalidID,
-			expectedErr:  errInvalidIDFormat,
+			expectedCode: codeInvalidDuration,
+			expectedErr:  errInvalidDuration,
 		},
 		{
 			desc:         "success",
@@ -277,8 +277,8 @@ func TestValidateSizeMetricsEvent(t *testing.T) {
 		{
 			desc:         "err: invalid api id",
 			id:           eventproto.ApiId_UNKNOWN_API,
-			expectedCode: codeInvalidID,
-			expectedErr:  errInvalidIDFormat,
+			expectedCode: codeUnknownAPIID,
+			expectedErr:  errUnknownAPI,
 		},
 		{
 			desc:         "success",
@@ -311,8 +311,8 @@ func TestValidateTimeoutErrorMetricsEvent(t *testing.T) {
 		{
 			desc:         "err: invalid api id",
 			id:           eventproto.ApiId_UNKNOWN_API,
-			expectedCode: codeInvalidID,
-			expectedErr:  errInvalidIDFormat,
+			expectedCode: codeUnknownAPIID,
+			expectedErr:  errUnknownAPI,
 		},
 		{
 			desc:         "success",
@@ -344,8 +344,8 @@ func TestValidateInternalErrorMetricsEvent(t *testing.T) {
 		{
 			desc:         "err: invalid api id",
 			id:           eventproto.ApiId_UNKNOWN_API,
-			expectedCode: codeInvalidID,
-			expectedErr:  errInvalidIDFormat,
+			expectedCode: codeUnknownAPIID,
+			expectedErr:  errUnknownAPI,
 		},
 		{
 			desc:         "success",
@@ -377,8 +377,8 @@ func TestValidateNetworkErrorMetricsEvent(t *testing.T) {
 		{
 			desc:         "err: invalid api id",
 			id:           eventproto.ApiId_UNKNOWN_API,
-			expectedCode: codeInvalidID,
-			expectedErr:  errInvalidIDFormat,
+			expectedCode: codeUnknownAPIID,
+			expectedErr:  errUnknownAPI,
 		},
 		{
 			desc:         "success",
@@ -410,8 +410,8 @@ func TestValidateInternalSdkErrorMetricsEvent(t *testing.T) {
 		{
 			desc:         "err: invalid api id",
 			id:           eventproto.ApiId_UNKNOWN_API,
-			expectedCode: codeInvalidID,
-			expectedErr:  errInvalidIDFormat,
+			expectedCode: codeUnknownAPIID,
+			expectedErr:  errUnknownAPI,
 		},
 		{
 			desc:         "success",

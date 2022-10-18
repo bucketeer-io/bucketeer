@@ -27,8 +27,8 @@ import (
 )
 
 var (
-	errUnknownAPIFormat = errors.New("gateway: unknown api id")
-	errInvalidDuration  = errors.New("gateway: invalid duration")
+	errUnknownAPI      = errors.New("gateway: unknown api id")
+	errInvalidDuration = errors.New("gateway: invalid duration")
 )
 
 func (s *gatewayService) validateGoalEvent(ctx context.Context, id string, timeStamp int64) (string, error) {
@@ -144,7 +144,7 @@ func (s *gatewayService) validateLatencyMetricsEvent(
 		s.logger.Warn(
 			"Failed to validate latencyMetrics event. Unkonown API id",
 		)
-		return codeUnknownAPIID, errUnknownAPIFormat
+		return codeUnknownAPIID, errUnknownAPI
 	}
 	if duration <= 0 {
 		s.logger.Warn(
@@ -163,7 +163,7 @@ func (s *gatewayService) validateSizeMetricsEvent(ctx context.Context, apiID eve
 		s.logger.Warn(
 			"Failed to validate latencyMetrics event. Unkonown API id",
 		)
-		return codeUnknownAPIID, errUnknownAPIFormat
+		return codeUnknownAPIID, errUnknownAPI
 	}
 	return "", nil
 }
@@ -173,7 +173,7 @@ func (s *gatewayService) validateTimeoutErrorMetricsEvent(ctx context.Context, a
 		s.logger.Warn(
 			"Failed to validate latencyMetrics event. Unkonown API id",
 		)
-		return codeUnknownAPIID, errUnknownAPIFormat
+		return codeUnknownAPIID, errUnknownAPI
 	}
 	return "", nil
 }
@@ -186,7 +186,7 @@ func (s *gatewayService) validateInternalErrorMetricsEvent(
 		s.logger.Warn(
 			"Failed to validate latencyMetrics event. Unkonown API id",
 		)
-		return codeUnknownAPIID, errUnknownAPIFormat
+		return codeUnknownAPIID, errUnknownAPI
 	}
 	return "", nil
 }
@@ -196,7 +196,7 @@ func (s *gatewayService) validateNetworkErrorMetricsEvent(ctx context.Context, a
 		s.logger.Warn(
 			"Failed to validate latencyMetrics event. Unkonown API id",
 		)
-		return codeUnknownAPIID, errUnknownAPIFormat
+		return codeUnknownAPIID, errUnknownAPI
 	}
 	return "", nil
 }
@@ -209,7 +209,7 @@ func (s *gatewayService) validateInternalSdkErrorMetricsEvent(
 		s.logger.Warn(
 			"Failed to validate latencyMetrics event. Unkonown API id",
 		)
-		return codeUnknownAPIID, errUnknownAPIFormat
+		return codeUnknownAPIID, errUnknownAPI
 	}
 	return "", nil
 }
