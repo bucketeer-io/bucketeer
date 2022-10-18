@@ -2006,7 +2006,7 @@ func TestRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not serialize evaluation event")
 	}
-	bLatencyEvent, err := json.Marshal(&getEvaluationLatencyMetricsEvent{
+	bLatencyEvent, err := json.Marshal(&latencyMetricsEvent{
 		Labels:   map[string]string{"tag": "test", "status": "success"},
 		Duration: time.Duration(1),
 	})
@@ -2439,7 +2439,7 @@ func TestGetMetricsEvent(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	bLatencyEvent, err := json.Marshal(&getEvaluationLatencyMetricsEvent{
+	bLatencyEvent, err := json.Marshal(&latencyMetricsEvent{
 		Labels:   map[string]string{"tag": "test", "status": "success"},
 		Duration: time.Duration(1),
 	})
