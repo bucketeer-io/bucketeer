@@ -41,6 +41,7 @@ message EvaluationEvent {
   bucketeer.feature.Reason reason = 7;
   string tag = 8;
   SourceId source_id = 9;
+  string sdk_version = 10;
 }
 
 message GoalEvent {
@@ -52,6 +53,7 @@ message GoalEvent {
   repeated bucketeer.feature.Evaluation evaluations = 6 [deprecated = true];
   string tag = 7;
   SourceId source_id = 8;
+  string sdk_version = 9;
 }
 
 enum SourceId {
@@ -67,6 +69,7 @@ enum SourceId {
 message MetricsEvent {
   int64 timestamp = 1;
   google.protobuf.Any event = 2;
+  string sdk_version = 3;
 }
 
 message GetEvaluationLatencyMetricsEvent {
