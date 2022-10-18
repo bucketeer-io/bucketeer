@@ -219,11 +219,6 @@ type metricsEvent struct {
 	Type      metricsDetailEventType `json:"type,omitempty"`
 }
 
-type getEvaluationLatencyMetricsEvent struct {
-	Labels   map[string]string `json:"labels,omitempty"`
-	Duration time.Duration     `json:"duration,omitempty"`
-}
-
 type latencyMetricsEvent struct {
 	ApiId    eventproto.ApiId  `json:"api_id,omitempty"`
 	Labels   map[string]string `json:"labels,omitempty"`
