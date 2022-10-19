@@ -5,5 +5,8 @@ go_library(
     srcs = ["event.go"],
     importpath = "github.com/bucketeer-io/bucketeer/pkg/metricsevent/storage/mock",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_golang_mock//gomock:go_default_library"],
+    deps = [
+        "//proto/event/client:go_default_library",
+        "@com_github_golang_mock//gomock:go_default_library",
+    ],
 )

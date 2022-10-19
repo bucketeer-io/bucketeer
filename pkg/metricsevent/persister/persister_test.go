@@ -198,6 +198,107 @@ func TestSaveMetrics(t *testing.T) {
 			expectedErr: ErrInvalidDuration,
 		},
 		{
+			desc: "LatencyMetricsEvent: error: invalid duration",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				e, err := ptypes.MarshalAny(&clientevent.LatencyMetricsEvent{
+					ApiId:    clientevent.ApiId_GET_EVALUATION,
+					Labels:   map[string]string{"tag": "test", "state": "FULL"},
+					Duration: nil,
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: ErrInvalidDuration,
+		},
+		{
+			desc: "LatencyMetricsEvent: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				e, err := ptypes.MarshalAny(&clientevent.LatencyMetricsEvent{
+					Labels:   map[string]string{"tag": "test", "state": "FULL"},
+					Duration: &duration.Duration{Seconds: time.Now().Unix()},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: ErrUnknownApiId,
+		},
+		{
+			desc: "SizeMetricsEvent: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				e, err := ptypes.MarshalAny(&clientevent.SizeMetricsEvent{
+					Labels: map[string]string{"tag": "test", "state": "FULL"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: ErrUnknownApiId,
+		},
+		{
+			desc: "TimeoutErrorMetricsEvent: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				e, err := ptypes.MarshalAny(&clientevent.TimeoutErrorMetricsEvent{
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: ErrUnknownApiId,
+		},
+		{
+			desc: "InternalErrorMetricsEvent: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				e, err := ptypes.MarshalAny(&clientevent.InternalErrorMetricsEvent{
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: ErrUnknownApiId,
+		},
+		{
+			desc: "NetworkErrorMetrics: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				e, err := ptypes.MarshalAny(&clientevent.NetworkErrorMetricsEvent{
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: ErrUnknownApiId,
+		},
+		{
+			desc: "InternalSdkErrorMetricsEvent: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				e, err := ptypes.MarshalAny(&clientevent.InternalSdkErrorMetricsEvent{
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: ErrUnknownApiId,
+		},
+		{
 			desc: "getEvaluationLatencyMetricsEvent: success",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
 				pst.storage.(*storagemock.MockStorage).EXPECT().SaveGetEvaluationLatencyMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
@@ -250,6 +351,103 @@ func TestSaveMetrics(t *testing.T) {
 				pst.storage.(*storagemock.MockStorage).EXPECT().SaveInternalErrorCountMetricsEvent(gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.InternalErrorCountMetricsEvent{
 					Tag: "test",
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "LatencyMetricsEvent: success",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveLatencyMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.LatencyMetricsEvent{
+					ApiId:    clientevent.ApiId_GET_EVALUATIONS,
+					Labels:   map[string]string{"tag": "test", "state": "FULL"},
+					Duration: &duration.Duration{Seconds: time.Now().Unix()},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "SizeMetricsEvent: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveSizeMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.SizeMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test", "state": "FULL"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "TimeoutErrorMetricsEvent: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveTimeoutErrorMetricsEvent(gomock.Any(), gomock.Any()).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.TimeoutErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "InternalErrorMetricsEvent: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveInternalErrorMetricsEvent(gomock.Any(), gomock.Any()).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.InternalErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "NetworkErrorMetrics: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveNetworkErrorMetricsEvent(gomock.Any(), gomock.Any()).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.NetworkErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "InternalSdkErrorMetricsEvent: error: unknown api id",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveInternalSdkErrorMetricsEvent(gomock.Any(), gomock.Any()).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.InternalSdkErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
 				})
 				require.NoError(t, err)
 				return &clientevent.MetricsEvent{
