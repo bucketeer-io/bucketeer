@@ -99,7 +99,7 @@ var (
 			Namespace: "bucketeer",
 			Subsystem: "metrics_event",
 			Name:      "sdk_api_network_error_total",
-			Help:      "Total number of sdk timeout errors",
+			Help:      "Total number of sdk network errors",
 		}, []string{"tag", "api"})
 
 	sdkInternalSdkError = prometheus.NewCounterVec(
