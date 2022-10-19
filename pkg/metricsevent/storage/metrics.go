@@ -107,7 +107,7 @@ var (
 			Namespace: "bucketeer",
 			Subsystem: "metrics_event",
 			Name:      "sdk_api_internal_sdk_error_total",
-			Help:      "Total number of sdk internal errors",
+			Help:      "Total number of sdk internal sdk errors",
 		}, []string{"tag", "api"})
 )
 
