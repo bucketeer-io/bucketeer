@@ -1178,10 +1178,6 @@ func (s *gatewayService) getMetricsEvent(
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
 		apiID := getApiID(latency.ApiId)
-		errorCode, err := s.validateLatencyMetricsEvent(ctx, apiID, latency.Duration)
-		if err != nil {
-			return nil, errorCode, err
-		}
 		eventAny, err = ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
 			ApiId:    apiID,
 			Labels:   latency.Labels,
@@ -1203,10 +1199,6 @@ func (s *gatewayService) getMetricsEvent(
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
 		apiID := getApiID(size.ApiId)
-		errorCode, err := s.validateSizeMetricsEvent(ctx, apiID)
-		if err != nil {
-			return nil, errorCode, err
-		}
 		eventAny, err = ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
 			ApiId:    apiID,
 			Labels:   size.Labels,
@@ -1227,10 +1219,6 @@ func (s *gatewayService) getMetricsEvent(
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
-		errorCode, err := s.validateTimeoutErrorMetricsEvent(ctx, timeout.ApiId)
-		if err != nil {
-			return nil, errorCode, err
-		}
 		eventAny, err = ptypes.MarshalAny(&eventproto.TimeoutErrorMetricsEvent{
 			ApiId:  timeout.ApiId,
 			Labels: timeout.Labels,
@@ -1249,10 +1237,6 @@ func (s *gatewayService) getMetricsEvent(
 				)...,
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
-		}
-		errorCode, err := s.validateInternalErrorMetricsEvent(ctx, internal.ApiId)
-		if err != nil {
-			return nil, errorCode, err
 		}
 		eventAny, err = ptypes.MarshalAny(&eventproto.InternalErrorMetricsEvent{
 			ApiId:  internal.ApiId,
@@ -1273,10 +1257,6 @@ func (s *gatewayService) getMetricsEvent(
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
-		errorCode, err := s.validateNetworkErrorMetricsEvent(ctx, network.ApiId)
-		if err != nil {
-			return nil, errorCode, err
-		}
 		eventAny, err = ptypes.MarshalAny(&eventproto.NetworkErrorMetricsEvent{
 			ApiId:  network.ApiId,
 			Labels: network.Labels,
@@ -1295,10 +1275,6 @@ func (s *gatewayService) getMetricsEvent(
 				)...,
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
-		}
-		errorCode, err := s.validateInternalSdkErrorMetricsEvent(ctx, internalSdk.ApiId)
-		if err != nil {
-			return nil, errorCode, err
 		}
 		eventAny, err = ptypes.MarshalAny(&eventproto.InternalErrorMetricsEvent{
 			ApiId:  internalSdk.ApiId,
