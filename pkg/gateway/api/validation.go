@@ -161,7 +161,7 @@ func (s *gatewayService) validateLatencyMetricsEvent(
 func (s *gatewayService) validateSizeMetricsEvent(ctx context.Context, apiID eventproto.ApiId) (string, error) {
 	if apiID == eventproto.ApiId_UNKNOWN_API {
 		s.logger.Warn(
-			"Failed to validate latencyMetrics event. Unkonown API id",
+			"Failed to validate sizeMetrics event. Unkonown API id",
 		)
 		return codeUnknownAPIID, errUnknownAPI
 	}
@@ -171,7 +171,7 @@ func (s *gatewayService) validateSizeMetricsEvent(ctx context.Context, apiID eve
 func (s *gatewayService) validateTimeoutErrorMetricsEvent(ctx context.Context, apiID eventproto.ApiId) (string, error) {
 	if apiID == eventproto.ApiId_UNKNOWN_API {
 		s.logger.Warn(
-			"Failed to validate latencyMetrics event. Unkonown API id",
+			"Failed to validate timeoutErrorMetrics event. Unkonown API id",
 		)
 		return codeUnknownAPIID, errUnknownAPI
 	}
@@ -184,7 +184,7 @@ func (s *gatewayService) validateInternalErrorMetricsEvent(
 ) (string, error) {
 	if apiID == eventproto.ApiId_UNKNOWN_API {
 		s.logger.Warn(
-			"Failed to validate latencyMetrics event. Unkonown API id",
+			"Failed to validate internalErrorMetrics event. Unkonown API id",
 		)
 		return codeUnknownAPIID, errUnknownAPI
 	}
@@ -194,7 +194,7 @@ func (s *gatewayService) validateInternalErrorMetricsEvent(
 func (s *gatewayService) validateNetworkErrorMetricsEvent(ctx context.Context, apiID eventproto.ApiId) (string, error) {
 	if apiID == eventproto.ApiId_UNKNOWN_API {
 		s.logger.Warn(
-			"Failed to validate latencyMetrics event. Unkonown API id",
+			"Failed to validate networkErrorMetrics event. Unkonown API id",
 		)
 		return codeUnknownAPIID, errUnknownAPI
 	}
@@ -207,7 +207,7 @@ func (s *gatewayService) validateInternalSdkErrorMetricsEvent(
 ) (string, error) {
 	if apiID == eventproto.ApiId_UNKNOWN_API {
 		s.logger.Warn(
-			"Failed to validate latencyMetrics event. Unkonown API id",
+			"Failed to validate internalSdkErrorMetrics event. Unkonown API id",
 		)
 		return codeUnknownAPIID, errUnknownAPI
 	}
