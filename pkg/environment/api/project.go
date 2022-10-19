@@ -21,6 +21,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -164,6 +165,7 @@ func (s *EnvironmentService) CreateProject(
 	ctx context.Context,
 	req *environmentproto.CreateProjectRequest,
 ) (*environmentproto.CreateProjectResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	editor, err := s.checkAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -172,7 +174,7 @@ func (s *EnvironmentService) CreateProject(
 		return nil, err
 	}
 	project := domain.NewProject(req.Command.Id, req.Command.Description, editor.Email, false)
-	if err := s.createProject(ctx, req.Command, project, editor); err != nil {
+	if err := s.createProject(ctx, req.Command, project, editor, localizer); err != nil {
 		return nil, err
 	}
 	return &environmentproto.CreateProjectResponse{}, nil
@@ -193,6 +195,7 @@ func (s *EnvironmentService) createProject(
 	cmd command.Command,
 	project *domain.Project,
 	editor *eventproto.Editor,
+	localizer locale.Localizer,
 ) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -202,7 +205,14 @@ func (s *EnvironmentService) createProject(
 				zap.Error(err),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		projectStorage := v2es.NewProjectStorage(tx)
@@ -220,7 +230,14 @@ func (s *EnvironmentService) createProject(
 			"Failed to create project",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -229,6 +246,7 @@ func (s *EnvironmentService) CreateTrialProject(
 	ctx context.Context,
 	req *environmentproto.CreateTrialProjectRequest,
 ) (*environmentproto.CreateTrialProjectResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	_, err := s.checkAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -249,10 +267,10 @@ func (s *EnvironmentService) CreateTrialProject(
 		return nil, localizedError(statusProjectAlreadyExists, locale.JaJP)
 	}
 	project := domain.NewProject(req.Command.Id, "", editor.Email, true)
-	if err := s.createProject(ctx, req.Command, project, editor); err != nil {
+	if err := s.createProject(ctx, req.Command, project, editor, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.createTrialEnvironmentsAndAccounts(ctx, project, editor); err != nil {
+	if err := s.createTrialEnvironmentsAndAccounts(ctx, project, editor, localizer); err != nil {
 		return nil, err
 	}
 	return &environmentproto.CreateTrialProjectResponse{}, nil
@@ -290,13 +308,21 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 	ctx context.Context,
 	project *domain.Project,
 	editor *eventproto.Editor,
+	localizer locale.Localizer,
 ) error {
 	getAdminAccountReq := &accountproto.GetAdminAccountRequest{
 		Email: editor.Email,
 	}
 	getAdminAccountRes, err := s.accountClient.GetAdminAccount(ctx, getAdminAccountReq)
 	if err != nil && status.Code(err) != codes.NotFound {
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	adminAccountExists := false
 	if getAdminAccountRes != nil && getAdminAccountRes.Account != nil {
@@ -314,7 +340,7 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 			Description: "",
 		}
 		env := domain.NewEnvironment(envID, "", project.Id)
-		if err := s.createEnvironment(ctx, createEnvCmd, env, editor); err != nil {
+		if err := s.createEnvironment(ctx, createEnvCmd, env, editor, localizer); err != nil {
 			return err
 		}
 		if !adminAccountExists {
@@ -326,7 +352,14 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 				EnvironmentNamespace: env.Namespace,
 			}
 			if _, err := s.accountClient.CreateAccount(ctx, createAccountReq); err != nil {
-				return localizedError(statusInternal, locale.JaJP)
+				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.InternalServerError),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
 			}
 		}
 	}
@@ -337,6 +370,7 @@ func (s *EnvironmentService) UpdateProject(
 	ctx context.Context,
 	req *environmentproto.UpdateProjectRequest,
 ) (*environmentproto.UpdateProjectResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	editor, err := s.checkAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -345,7 +379,7 @@ func (s *EnvironmentService) UpdateProject(
 	if err := validateUpdateProjectRequest(req.Id, commands); err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, req.Id, editor, commands...); err != nil {
+	if err := s.updateProject(ctx, req.Id, editor, localizer, commands...); err != nil {
 		return nil, err
 	}
 	return &environmentproto.UpdateProjectResponse{}, nil
@@ -373,6 +407,7 @@ func (s *EnvironmentService) updateProject(
 	ctx context.Context,
 	id string,
 	editor *eventproto.Editor,
+	localizer locale.Localizer,
 	commands ...command.Command,
 ) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -383,7 +418,14 @@ func (s *EnvironmentService) updateProject(
 				zap.Error(err),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		projectStorage := v2es.NewProjectStorage(tx)
@@ -407,7 +449,14 @@ func (s *EnvironmentService) updateProject(
 			"Failed to update project",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -416,6 +465,7 @@ func (s *EnvironmentService) EnableProject(
 	ctx context.Context,
 	req *environmentproto.EnableProjectRequest,
 ) (*environmentproto.EnableProjectResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	editor, err := s.checkAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -423,7 +473,7 @@ func (s *EnvironmentService) EnableProject(
 	if err := validateEnableProjectRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, req.Id, editor, req.Command); err != nil {
+	if err := s.updateProject(ctx, req.Id, editor, localizer, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.EnableProjectResponse{}, nil
@@ -443,6 +493,7 @@ func (s *EnvironmentService) DisableProject(
 	ctx context.Context,
 	req *environmentproto.DisableProjectRequest,
 ) (*environmentproto.DisableProjectResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	editor, err := s.checkAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -450,7 +501,7 @@ func (s *EnvironmentService) DisableProject(
 	if err := validateDisableProjectRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, req.Id, editor, req.Command); err != nil {
+	if err := s.updateProject(ctx, req.Id, editor, localizer, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.DisableProjectResponse{}, nil
@@ -470,6 +521,7 @@ func (s *EnvironmentService) ConvertTrialProject(
 	ctx context.Context,
 	req *environmentproto.ConvertTrialProjectRequest,
 ) (*environmentproto.ConvertTrialProjectResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	editor, err := s.checkAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -477,7 +529,7 @@ func (s *EnvironmentService) ConvertTrialProject(
 	if err := validateConvertTrialProjectRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateProject(ctx, req.Id, editor, req.Command); err != nil {
+	if err := s.updateProject(ctx, req.Id, editor, localizer, req.Command); err != nil {
 		return nil, err
 	}
 	return &environmentproto.ConvertTrialProjectResponse{}, nil

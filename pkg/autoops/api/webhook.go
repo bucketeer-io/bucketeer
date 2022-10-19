@@ -43,11 +43,11 @@ func (s *AutoOpsService) CreateWebhook(
 	ctx context.Context,
 	req *autoopspb.CreateWebhookRequest,
 ) (*autoopspb.CreateWebhookResponse, error) {
-	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	status, err := validateCreateWebhook(req, localizer)
 	if err != nil {
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentNamespace, localizer)
@@ -161,11 +161,11 @@ func (s *AutoOpsService) GetWebhook(
 	ctx context.Context,
 	req *autoopspb.GetWebhookRequest,
 ) (*autoopspb.GetWebhookResponse, error) {
-	_, err := s.checkRole(ctx, accountpb.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountpb.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	status, err := validateGetWebhookRequest(req, localizer)
 	if err != nil {
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentNamespace, localizer)
@@ -230,11 +230,11 @@ func (s *AutoOpsService) ListWebhooks(
 	ctx context.Context,
 	req *autoopspb.ListWebhooksRequest,
 ) (*autoopspb.ListWebhooksResponse, error) {
-	_, err := s.checkRole(ctx, accountpb.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountpb.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
 	}
@@ -328,11 +328,11 @@ func (s *AutoOpsService) UpdateWebhook(
 	ctx context.Context,
 	req *autoopspb.UpdateWebhookRequest,
 ) (*autoopspb.UpdateWebhookResponse, error) {
-	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	status, err := validateUpdateWebhookRequest(req, localizer)
 	if err != nil {
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentNamespace, localizer)
@@ -430,11 +430,11 @@ func (s *AutoOpsService) DeleteWebhook(
 	ctx context.Context,
 	req *autoopspb.DeleteWebhookRequest,
 ) (*autoopspb.DeleteWebhookResponse, error) {
-	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	status, err := validateDeleteWebhookRequest(req, localizer)
 	if err != nil {
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentNamespace, localizer)

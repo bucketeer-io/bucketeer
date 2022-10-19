@@ -19,6 +19,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -35,7 +36,8 @@ func (s *FeatureService) CreateSegment(
 	ctx context.Context,
 	req *featureproto.CreateSegmentRequest,
 ) (*featureproto.CreateSegmentResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +124,8 @@ func (s *FeatureService) DeleteSegment(
 	ctx context.Context,
 	req *featureproto.DeleteSegmentRequest,
 ) (*featureproto.DeleteSegmentResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +139,7 @@ func (s *FeatureService) DeleteSegment(
 		)
 		return nil, err
 	}
-	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentNamespace); err != nil {
+	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentNamespace, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateSegment(
@@ -145,13 +148,18 @@ func (s *FeatureService) DeleteSegment(
 		[]command.Command{req.Command},
 		req.Id,
 		req.EnvironmentNamespace,
+		localizer,
 	); err != nil {
 		return nil, err
 	}
 	return &featureproto.DeleteSegmentResponse{}, nil
 }
 
-func (s *FeatureService) checkSegmentInUse(ctx context.Context, segmentID, environmentNamespace string) error {
+func (s *FeatureService) checkSegmentInUse(
+	ctx context.Context,
+	segmentID, environmentNamespace string,
+	localizer locale.Localizer,
+) error {
 	features := []*featureproto.Feature{}
 	var cursor string
 	for {
@@ -176,7 +184,14 @@ func (s *FeatureService) checkSegmentInUse(ctx context.Context, segmentID, envir
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
-			return localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		features = append(features, f...)
 		size := len(f)
@@ -218,7 +233,8 @@ func (s *FeatureService) UpdateSegment(
 	ctx context.Context,
 	req *featureproto.UpdateSegmentRequest,
 ) (*featureproto.UpdateSegmentResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		s.logger.Info(
 			"Permission denied",
@@ -254,7 +270,7 @@ func (s *FeatureService) UpdateSegment(
 		)
 		return nil, err
 	}
-	if err := s.updateSegment(ctx, editor, commands, req.Id, req.EnvironmentNamespace); err != nil {
+	if err := s.updateSegment(ctx, editor, commands, req.Id, req.EnvironmentNamespace, localizer); err != nil {
 		return nil, err
 	}
 	return &featureproto.UpdateSegmentResponse{}, nil
@@ -265,6 +281,7 @@ func (s *FeatureService) updateSegment(
 	editor *eventproto.Editor,
 	commands []command.Command,
 	segmentID, environmentNamespace string,
+	localizer locale.Localizer,
 ) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -274,7 +291,14 @@ func (s *FeatureService) updateSegment(
 				zap.Error(err),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
@@ -320,7 +344,14 @@ func (s *FeatureService) updateSegment(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -329,7 +360,8 @@ func (s *FeatureService) GetSegment(
 	ctx context.Context,
 	req *featureproto.GetSegmentRequest,
 ) (*featureproto.GetSegmentResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +398,8 @@ func (s *FeatureService) ListSegments(
 	ctx context.Context,
 	req *featureproto.ListSegmentsRequest,
 ) (*featureproto.ListSegmentsResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}

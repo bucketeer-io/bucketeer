@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -41,7 +42,8 @@ func (s *FeatureService) AddSegmentUser(
 	ctx context.Context,
 	req *featureproto.AddSegmentUserRequest,
 ) (*featureproto.AddSegmentUserResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +76,7 @@ func (s *FeatureService) AddSegmentUser(
 		false,
 		req.Command,
 		req.EnvironmentNamespace,
+		localizer,
 	); err != nil {
 		return nil, err
 	}
@@ -84,7 +87,8 @@ func (s *FeatureService) DeleteSegmentUser(
 	ctx context.Context,
 	req *featureproto.DeleteSegmentUserRequest,
 ) (*featureproto.DeleteSegmentUserResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +121,7 @@ func (s *FeatureService) DeleteSegmentUser(
 		true,
 		req.Command,
 		req.EnvironmentNamespace,
+		localizer,
 	); err != nil {
 		return nil, err
 	}
@@ -132,6 +137,7 @@ func (s *FeatureService) updateSegmentUser(
 	deleted bool,
 	cmd command.Command,
 	environmentNamespace string,
+	localizer locale.Localizer,
 ) error {
 	segmentUsers := make([]*featureproto.SegmentUser, 0, len(userIDs))
 	for _, userID := range userIDs {
@@ -147,7 +153,14 @@ func (s *FeatureService) updateSegmentUser(
 				zap.Error(err),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
@@ -205,7 +218,14 @@ func (s *FeatureService) updateSegmentUser(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -214,7 +234,8 @@ func (s *FeatureService) GetSegmentUser(
 	ctx context.Context,
 	req *featureproto.GetSegmentUserRequest,
 ) (*featureproto.GetSegmentUserResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +274,8 @@ func (s *FeatureService) ListSegmentUsers(
 	ctx context.Context,
 	req *featureproto.ListSegmentUsersRequest,
 ) (*featureproto.ListSegmentUsersResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +337,8 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	ctx context.Context,
 	req *featureproto.BulkUploadSegmentUsersRequest,
 ) (*featureproto.BulkUploadSegmentUsersResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -435,7 +458,8 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	ctx context.Context,
 	req *featureproto.BulkDownloadSegmentUsersRequest,
 ) (*featureproto.BulkDownloadSegmentUsersResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}

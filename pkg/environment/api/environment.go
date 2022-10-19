@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -182,6 +183,7 @@ func (s *EnvironmentService) CreateEnvironment(
 	ctx context.Context,
 	req *environmentproto.CreateEnvironmentRequest,
 ) (*environmentproto.CreateEnvironmentResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	editor, err := s.checkAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -193,7 +195,7 @@ func (s *EnvironmentService) CreateEnvironment(
 		return nil, err
 	}
 	newEnvironment := domain.NewEnvironment(req.Command.Id, req.Command.Description, req.Command.ProjectId)
-	if err := s.createEnvironment(ctx, req.Command, newEnvironment, editor); err != nil {
+	if err := s.createEnvironment(ctx, req.Command, newEnvironment, editor, localizer); err != nil {
 		return nil, err
 	}
 	return &environmentproto.CreateEnvironmentResponse{}, nil
@@ -204,6 +206,7 @@ func (s *EnvironmentService) createEnvironment(
 	cmd command.Command,
 	environment *domain.Environment,
 	editor *eventproto.Editor,
+	localizer locale.Localizer,
 ) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -213,7 +216,14 @@ func (s *EnvironmentService) createEnvironment(
 				zap.Error(err),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		environmentStorage := v2es.NewEnvironmentStorage(tx)
@@ -231,7 +241,14 @@ func (s *EnvironmentService) createEnvironment(
 			"Failed to create environment",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }

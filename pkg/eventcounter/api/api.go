@@ -90,7 +90,8 @@ func (s *eventCounterService) GetEvaluationCountV2(
 	ctx context.Context,
 	req *ecproto.GetEvaluationCountV2Request,
 ) (*ecproto.GetEvaluationCountV2Response, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +215,8 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	ctx context.Context,
 	req *ecproto.GetEvaluationTimeseriesCountRequest,
 ) (*ecproto.GetEvaluationTimeseriesCountResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +288,8 @@ func (s *eventCounterService) GetExperimentResult(
 	ctx context.Context,
 	req *ecproto.GetExperimentResultRequest,
 ) (*ecproto.GetExperimentResultResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +320,8 @@ func (s *eventCounterService) ListExperimentResults(
 	ctx context.Context,
 	req *ecproto.ListExperimentResultsRequest,
 ) (*ecproto.ListExperimentResultsResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -400,7 +404,8 @@ func (s *eventCounterService) GetGoalCount(
 	ctx context.Context,
 	req *ecproto.GetGoalCountRequest,
 ) (*ecproto.GetGoalCountResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -462,7 +467,8 @@ func (s *eventCounterService) GetGoalCountV2(
 	ctx context.Context,
 	req *ecproto.GetGoalCountV2Request,
 ) (*ecproto.GetGoalCountV2Response, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -528,7 +534,8 @@ func (s *eventCounterService) GetUserCountV2(
 	ctx context.Context,
 	req *ecproto.GetUserCountV2Request,
 ) (*ecproto.GetUserCountV2Response, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -588,7 +595,8 @@ func (s *eventCounterService) ListUserMetadata(
 	ctx context.Context,
 	req *ecproto.ListUserMetadataRequest,
 ) (*ecproto.ListUserMetadataResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -631,6 +639,7 @@ func (s *eventCounterService) checkRole(
 	ctx context.Context,
 	requiredRole accountproto.Account_Role,
 	environmentNamespace string,
+	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckRole(ctx, requiredRole, func(email string) (*accountproto.GetAccountResponse, error) {
 		return s.accountClient.GetAccount(ctx, &accountproto.GetAccountRequest{

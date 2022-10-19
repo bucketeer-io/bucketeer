@@ -17,6 +17,8 @@ package api
 import (
 	"regexp"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -499,6 +501,7 @@ func validateFeatureTargetingCommand(
 	fs []*featureproto.Feature,
 	tarF *featureproto.Feature,
 	cmd command.Command,
+	localizer locale.Localizer,
 ) error {
 	switch c := cmd.(type) {
 	case *featureproto.AddRuleCommand:
@@ -512,7 +515,7 @@ func validateFeatureTargetingCommand(
 	case *featureproto.ChangeRolloutStrategyCommand:
 		return validateChangeRolloutStrategy(tarF.Variations, c)
 	case *featureproto.AddPrerequisiteCommand:
-		return validateAddPrerequisite(fs, tarF, c.Prerequisite)
+		return validateAddPrerequisite(fs, tarF, c.Prerequisite, localizer)
 	case *featureproto.ChangePrerequisiteVariationCommand:
 		return validateChangePrerequisiteVariation(fs, c.Prerequisite)
 	default:
@@ -615,6 +618,7 @@ func validateAddPrerequisite(
 	fs []*featureproto.Feature,
 	tarF *featureproto.Feature,
 	p *featureproto.Prerequisite,
+	localizer locale.Localizer,
 ) error {
 	if tarF.Id == p.FeatureId {
 		return localizedError(statusInvalidPrerequisite, locale.JaJP)
@@ -633,7 +637,14 @@ func validateAddPrerequisite(
 		if err == domain.ErrCycleExists {
 			return localizedError(statusCycleExists, locale.JaJP)
 		}
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
