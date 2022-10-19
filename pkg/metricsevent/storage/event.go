@@ -25,10 +25,10 @@ import (
 )
 
 type Storage interface {
-    SaveGetEvaluationLatencyMetricsEvent(tag, status string, duration time.Duration)
-    SaveGetEvaluationSizeMetricsEvent(tag, status string, sizeByte int32)
-    SaveTimeoutErrorCountMetricsEvent(tag string)
-    SaveInternalErrorCountMetricsEvent(tag string)
+	SaveGetEvaluationLatencyMetricsEvent(tag, status string, duration time.Duration)
+	SaveGetEvaluationSizeMetricsEvent(tag, status string, sizeByte int32)
+	SaveTimeoutErrorCountMetricsEvent(tag string)
+	SaveInternalErrorCountMetricsEvent(tag string)
 	SaveLatencyMetricsEvent(tag, status string, api eventproto.ApiId, duration time.Duration)
 	SaveSizeMetricsEvent(tag, status string, api eventproto.ApiId, sizeByte int32)
 	SaveTimeoutErrorMetricsEvent(tag string, api eventproto.ApiId)
