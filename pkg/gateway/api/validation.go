@@ -16,19 +16,12 @@ package api
 
 import (
 	"context"
-	"errors"
-	"time"
 
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-)
-
-var (
-	errUnknownAPI      = errors.New("gateway: unknown api id")
-	errInvalidDuration = errors.New("gateway: invalid duration")
 )
 
 func (s *gatewayService) validateGoalEvent(ctx context.Context, id string, timeStamp int64) (string, error) {
@@ -131,85 +124,6 @@ func (s *gatewayService) validateMetricsEvent(ctx context.Context, id string) (s
 			)...,
 		)
 		return codeInvalidID, errInvalidIDFormat
-	}
-	return "", nil
-}
-
-func (s *gatewayService) validateLatencyMetricsEvent(
-	ctx context.Context,
-	apiID eventproto.ApiId,
-	duration time.Duration,
-) (string, error) {
-	if apiID == eventproto.ApiId_UNKNOWN_API {
-		s.logger.Warn(
-			"Failed to validate latencyMetrics event. Unkonown API id",
-		)
-		return codeUnknownAPIID, errUnknownAPI
-	}
-	if duration <= 0 {
-		s.logger.Warn(
-			"Failed to validate latencyMetrics event. Invalid duration",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("duration", duration.String()),
-			)...,
-		)
-		return codeInvalidDuration, errInvalidDuration
-	}
-	return "", nil
-}
-
-func (s *gatewayService) validateSizeMetricsEvent(ctx context.Context, apiID eventproto.ApiId) (string, error) {
-	if apiID == eventproto.ApiId_UNKNOWN_API {
-		s.logger.Warn(
-			"Failed to validate sizeMetrics event. Unkonown API id",
-		)
-		return codeUnknownAPIID, errUnknownAPI
-	}
-	return "", nil
-}
-
-func (s *gatewayService) validateTimeoutErrorMetricsEvent(ctx context.Context, apiID eventproto.ApiId) (string, error) {
-	if apiID == eventproto.ApiId_UNKNOWN_API {
-		s.logger.Warn(
-			"Failed to validate timeoutErrorMetrics event. Unkonown API id",
-		)
-		return codeUnknownAPIID, errUnknownAPI
-	}
-	return "", nil
-}
-
-func (s *gatewayService) validateInternalErrorMetricsEvent(
-	ctx context.Context,
-	apiID eventproto.ApiId,
-) (string, error) {
-	if apiID == eventproto.ApiId_UNKNOWN_API {
-		s.logger.Warn(
-			"Failed to validate internalErrorMetrics event. Unkonown API id",
-		)
-		return codeUnknownAPIID, errUnknownAPI
-	}
-	return "", nil
-}
-
-func (s *gatewayService) validateNetworkErrorMetricsEvent(ctx context.Context, apiID eventproto.ApiId) (string, error) {
-	if apiID == eventproto.ApiId_UNKNOWN_API {
-		s.logger.Warn(
-			"Failed to validate networkErrorMetrics event. Unkonown API id",
-		)
-		return codeUnknownAPIID, errUnknownAPI
-	}
-	return "", nil
-}
-
-func (s *gatewayService) validateInternalSdkErrorMetricsEvent(
-	ctx context.Context,
-	apiID eventproto.ApiId,
-) (string, error) {
-	if apiID == eventproto.ApiId_UNKNOWN_API {
-		s.logger.Warn(
-			"Failed to validate internalSdkErrorMetrics event. Unkonown API id",
-		)
-		return codeUnknownAPIID, errUnknownAPI
 	}
 	return "", nil
 }
