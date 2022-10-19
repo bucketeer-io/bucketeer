@@ -73,7 +73,7 @@ var (
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
 			Subsystem: "metrics_event",
-			Name:      "sdk_api_byte_size",
+			Name:      "sdk_api_response_size",
 			Help:      "Histogram of get evaluations response size (byte).",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"tag", "state", "api"})
