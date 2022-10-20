@@ -133,7 +133,7 @@ func TestUpsertTags(t *testing.T) {
 			expectedErr: internalErr,
 		},
 		{
-			desc:        "success: tag consisting only of whitespace is not be inserted into DB",
+			desc:        "success: tag with whitespaces",
 			tags:        []string{" "},
 			expectedErr: nil,
 		},
