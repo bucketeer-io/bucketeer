@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -136,10 +137,11 @@ func (s *FeatureService) upsertTags(
 ) error {
 	tagStorage := v2fs.NewTagStorage(tx)
 	for _, tag := range tags {
-		if tag == "" {
+		trimed := strings.TrimSpace(tag)
+		if trimed == "" {
 			continue
 		}
-		t := domain.NewTag(tag)
+		t := domain.NewTag(trimed)
 		if err := tagStorage.UpsertTag(ctx, t, environmentNamespace); err != nil {
 			s.logger.Error(
 				"Failed to store tag",

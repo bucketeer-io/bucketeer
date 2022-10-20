@@ -118,11 +118,13 @@ func TestUpsertTags(t *testing.T) {
 	internalErr := errors.New("test")
 	patterns := []struct {
 		desc        string
+		tags        []string
 		setup       func(*mysqlmock.MockTransaction)
 		expectedErr error
 	}{
 		{
 			desc: "error: internal error when creating tag",
+			tags: []string{"tag"},
 			setup: func(mt *mysqlmock.MockTransaction) {
 				mt.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -131,7 +133,13 @@ func TestUpsertTags(t *testing.T) {
 			expectedErr: internalErr,
 		},
 		{
+			desc:        "success: tag with whitespaces",
+			tags:        []string{" "},
+			expectedErr: nil,
+		},
+		{
 			desc: "success: create new tag",
+			tags: []string{"tag"},
 			setup: func(mt *mysqlmock.MockTransaction) {
 				mt.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -143,9 +151,11 @@ func TestUpsertTags(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			p.setup(transaction)
-			err := service.upsertTags(ctx, transaction, []string{"tag"}, environmentNamespace)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if p.setup != nil {
+				p.setup(transaction)
+			}
+			err := service.upsertTags(ctx, transaction, p.tags, environmentNamespace)
+			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
