@@ -382,6 +382,7 @@ func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	patterns := []struct {
 		setup                func(*FeatureService)
 		input                []*featureproto.Feature
@@ -411,13 +412,14 @@ func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
 	for _, p := range patterns {
 		fs := createFeatureServiceNew(mockController)
 		p.setup(fs)
-		err := fs.setLastUsedInfosToFeatureByChunk(context.Background(), p.input, p.environmentNamespace)
+		err := fs.setLastUsedInfosToFeatureByChunk(context.Background(), p.input, p.environmentNamespace, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }
 
 func TestConvUpdateFeatureError(t *testing.T) {
 	t.Parallel()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	patterns := []struct {
 		input       error
 		expectedErr error
@@ -449,7 +451,7 @@ func TestConvUpdateFeatureError(t *testing.T) {
 	}
 	for _, p := range patterns {
 		fs := &FeatureService{}
-		err := fs.convUpdateFeatureError(p.input)
+		err := fs.convUpdateFeatureError(p.input, localizer)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -2475,6 +2477,7 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 
 func TestValidateAddPrerequisite(t *testing.T) {
 	t.Parallel()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	fID0 := "fID-0"
 	fID1 := "fID-1"
 	fID2 := "fID-2"
@@ -2753,7 +2756,7 @@ func TestValidateAddPrerequisite(t *testing.T) {
 		},
 	}
 	for _, p := range pattens {
-		err := validateAddPrerequisite(p.fs, p.fs[0], p.prerequisite)
+		err := validateAddPrerequisite(p.fs, p.fs[0], p.prerequisite, localizer)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }

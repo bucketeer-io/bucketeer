@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -99,7 +100,8 @@ func (s *PushService) CreatePush(
 	ctx context.Context,
 	req *pushproto.CreatePushRequest,
 ) (*pushproto.CreatePushResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -198,11 +200,12 @@ func (s *PushService) UpdatePush(
 	ctx context.Context,
 	req *pushproto.UpdatePushRequest,
 ) (*pushproto.UpdatePushResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateUpdatePushRequest(ctx, req); err != nil {
+	if err := s.validateUpdatePushRequest(ctx, req, localizer); err != nil {
 		return nil, err
 	}
 	commands := s.createUpdatePushCommands(req)
@@ -247,7 +250,11 @@ func (s *PushService) UpdatePush(
 	return &pushproto.UpdatePushResponse{}, nil
 }
 
-func (s *PushService) validateUpdatePushRequest(ctx context.Context, req *pushproto.UpdatePushRequest) error {
+func (s *PushService) validateUpdatePushRequest(
+	ctx context.Context,
+	req *pushproto.UpdatePushRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
 		return localizedError(statusIDRequired, locale.JaJP)
 	}
@@ -257,7 +264,7 @@ func (s *PushService) validateUpdatePushRequest(ctx context.Context, req *pushpr
 	if req.DeletePushTagsCommand != nil && len(req.DeletePushTagsCommand.Tags) == 0 {
 		return localizedError(statusTagsRequired, locale.JaJP)
 	}
-	if err := s.validateAddPushTagsCommand(ctx, req); err != nil {
+	if err := s.validateAddPushTagsCommand(ctx, req, localizer); err != nil {
 		return err
 	}
 	if req.RenamePushCommand != nil && req.RenamePushCommand.Name == "" {
@@ -266,7 +273,11 @@ func (s *PushService) validateUpdatePushRequest(ctx context.Context, req *pushpr
 	return nil
 }
 
-func (s *PushService) validateAddPushTagsCommand(ctx context.Context, req *pushproto.UpdatePushRequest) error {
+func (s *PushService) validateAddPushTagsCommand(
+	ctx context.Context,
+	req *pushproto.UpdatePushRequest,
+	localizer locale.Localizer,
+) error {
 	if req.AddPushTagsCommand == nil {
 		return nil
 	}
@@ -275,7 +286,14 @@ func (s *PushService) validateAddPushTagsCommand(ctx context.Context, req *pushp
 	}
 	pushes, err := s.listAllPushes(ctx, req.EnvironmentNamespace)
 	if err != nil {
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	err = s.containsTags(ctx, pushes, req.AddPushTagsCommand.Tags)
 	if err != nil {
@@ -291,7 +309,14 @@ func (s *PushService) validateAddPushTagsCommand(ctx context.Context, req *pushp
 				zap.Strings("tags", req.AddPushTagsCommand.Tags),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -306,7 +331,8 @@ func (s *PushService) DeletePush(
 	ctx context.Context,
 	req *pushproto.DeletePushRequest,
 ) (*pushproto.DeletePushResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -443,7 +469,8 @@ func (s *PushService) ListPushes(
 	ctx context.Context,
 	req *pushproto.ListPushesRequest,
 ) (*pushproto.ListPushesResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -544,6 +571,7 @@ func (s *PushService) checkRole(
 	ctx context.Context,
 	requiredRole accountproto.Account_Role,
 	environmentNamespace string,
+	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckRole(ctx, requiredRole, func(email string) (*accountproto.GetAccountResponse, error) {
 		return s.accountClient.GetAccount(ctx, &accountproto.GetAccountRequest{

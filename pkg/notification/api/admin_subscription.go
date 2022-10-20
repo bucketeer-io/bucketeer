@@ -19,6 +19,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -123,6 +124,7 @@ func (s *NotificationService) UpdateAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.UpdateAdminSubscriptionRequest,
 ) (*notificationproto.UpdateAdminSubscriptionResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	editor, err := s.checkAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -131,7 +133,7 @@ func (s *NotificationService) UpdateAdminSubscription(
 		return nil, err
 	}
 	commands := s.createUpdateAdminSubscriptionCommands(req)
-	if err := s.updateAdminSubscription(ctx, commands, req.Id, editor); err != nil {
+	if err := s.updateAdminSubscription(ctx, commands, req.Id, editor, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to update feature",
@@ -179,6 +181,7 @@ func (s *NotificationService) EnableAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.EnableAdminSubscriptionRequest,
 ) (*notificationproto.EnableAdminSubscriptionResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	editor, err := s.checkAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -186,7 +189,7 @@ func (s *NotificationService) EnableAdminSubscription(
 	if err := s.validateEnableAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateAdminSubscription(ctx, []command.Command{req.Command}, req.Id, editor); err != nil {
+	if err := s.updateAdminSubscription(ctx, []command.Command{req.Command}, req.Id, editor, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to enable feature",
@@ -216,6 +219,7 @@ func (s *NotificationService) DisableAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.DisableAdminSubscriptionRequest,
 ) (*notificationproto.DisableAdminSubscriptionResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	editor, err := s.checkAdminRole(ctx)
 	if err != nil {
 		return nil, err
@@ -223,7 +227,7 @@ func (s *NotificationService) DisableAdminSubscription(
 	if err := s.validateDisableAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateAdminSubscription(ctx, []command.Command{req.Command}, req.Id, editor); err != nil {
+	if err := s.updateAdminSubscription(ctx, []command.Command{req.Command}, req.Id, editor, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to disable feature",
@@ -254,6 +258,7 @@ func (s *NotificationService) updateAdminSubscription(
 	commands []command.Command,
 	id string,
 	editor *eventproto.Editor,
+	localizer locale.Localizer,
 ) error {
 	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -264,7 +269,14 @@ func (s *NotificationService) updateAdminSubscription(
 				zap.Error(err),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(tx)
@@ -294,7 +306,14 @@ func (s *NotificationService) updateAdminSubscription(
 				zap.String("id", id),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
@@ -304,7 +323,14 @@ func (s *NotificationService) updateAdminSubscription(
 				zap.String("id", id),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }

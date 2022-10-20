@@ -22,6 +22,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -48,7 +49,8 @@ func (s *FeatureService) GetFeature(
 	ctx context.Context,
 	req *featureproto.GetFeatureRequest,
 ) (*featureproto.GetFeatureResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +77,7 @@ func (s *FeatureService) GetFeature(
 		ctx,
 		[]*featureproto.Feature{feature.Feature},
 		req.EnvironmentNamespace,
+		localizer,
 	); err != nil {
 		return nil, err
 	}
@@ -85,7 +88,8 @@ func (s *FeatureService) GetFeatures(
 	ctx context.Context,
 	req *featureproto.GetFeaturesRequest,
 ) (*featureproto.GetFeaturesResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +131,8 @@ func (s *FeatureService) ListFeatures(
 	ctx context.Context,
 	req *featureproto.ListFeaturesRequest,
 ) (*featureproto.ListFeaturesResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -187,6 +192,7 @@ func (s *FeatureService) listFeatures(
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
 	environmentNamespace string,
 ) ([]*featureproto.Feature, string, int64, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
 		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
@@ -250,7 +256,7 @@ func (s *FeatureService) listFeatures(
 		)
 		return nil, "", 0, err
 	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentNamespace); err != nil {
+	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentNamespace, localizer); err != nil {
 		return nil, "", 0, err
 	}
 	return features, strconv.Itoa(nextCursor), totalCount, nil
@@ -270,6 +276,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	hasExperiment bool,
 	environmentNamespace string,
 ) ([]*featureproto.Feature, string, int64, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("feature.deleted", "=", false),
 		mysql.NewFilter("experiment.deleted", "=", false),
@@ -335,7 +342,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 		)
 		return nil, "", 0, err
 	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentNamespace); err != nil {
+	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentNamespace, localizer); err != nil {
 		return nil, "", 0, err
 	}
 	return features, strconv.Itoa(nextCursor), totalCount, nil
@@ -372,7 +379,8 @@ func (s *FeatureService) ListEnabledFeatures(
 	ctx context.Context,
 	req *featureproto.ListEnabledFeaturesRequest,
 ) (*featureproto.ListEnabledFeaturesResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +427,7 @@ func (s *FeatureService) ListEnabledFeatures(
 		)
 		return nil, err
 	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, req.EnvironmentNamespace); err != nil {
+	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, req.EnvironmentNamespace, localizer); err != nil {
 		return nil, err
 	}
 	return &featureproto.ListEnabledFeaturesResponse{
@@ -432,7 +440,8 @@ func (s *FeatureService) CreateFeature(
 	ctx context.Context,
 	req *featureproto.CreateFeatureRequest,
 ) (*featureproto.CreateFeatureResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -523,7 +532,8 @@ func (s *FeatureService) UpdateFeatureDetails(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureDetailsRequest,
 ) (*featureproto.UpdateFeatureDetailsResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -700,10 +710,11 @@ func (s *FeatureService) EnableFeature(
 	ctx context.Context,
 	req *featureproto.EnableFeatureRequest,
 ) (*featureproto.EnableFeatureResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	if err := validateEnableFeatureRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment); err != nil {
+	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to enable feature",
@@ -724,10 +735,11 @@ func (s *FeatureService) DisableFeature(
 	ctx context.Context,
 	req *featureproto.DisableFeatureRequest,
 ) (*featureproto.DisableFeatureResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	if err := validateDisableFeatureRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment); err != nil {
+	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to disable feature",
@@ -746,6 +758,7 @@ func (s *FeatureService) ArchiveFeature(
 	ctx context.Context,
 	req *featureproto.ArchiveFeatureRequest,
 ) (*featureproto.ArchiveFeatureResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("archived", "=", false),
 		mysql.NewFilter("deleted", "=", false),
@@ -772,7 +785,7 @@ func (s *FeatureService) ArchiveFeature(
 	if err := validateArchiveFeatureRequest(req, features); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment); err != nil {
+	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to archive feature",
@@ -791,10 +804,11 @@ func (s *FeatureService) UnarchiveFeature(
 	ctx context.Context,
 	req *featureproto.UnarchiveFeatureRequest,
 ) (*featureproto.UnarchiveFeatureResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	if err := validateUnarchiveFeatureRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment); err != nil {
+	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to unarchive feature",
@@ -813,10 +827,11 @@ func (s *FeatureService) DeleteFeature(
 	ctx context.Context,
 	req *featureproto.DeleteFeatureRequest,
 ) (*featureproto.DeleteFeatureResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	if err := validateDeleteFeatureRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment); err != nil {
+	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to delete feature",
@@ -835,8 +850,9 @@ func (s *FeatureService) updateFeature(
 	ctx context.Context,
 	cmd command.Command,
 	id, environmentNamespace, comment string,
+	localizer locale.Localizer,
 ) error {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, environmentNamespace)
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, environmentNamespace, localizer)
 	if err != nil {
 		return err
 	}
@@ -848,7 +864,14 @@ func (s *FeatureService) updateFeature(
 	}
 	runningExperimentExists, err := s.existsRunningExperiment(ctx, id, environmentNamespace)
 	if err != nil {
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if runningExperimentExists {
 		return localizedError(statusWaitingOrRunningExperimentExists, locale.JaJP)
@@ -862,7 +885,14 @@ func (s *FeatureService) updateFeature(
 				zap.Error(err),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
@@ -912,7 +942,7 @@ func (s *FeatureService) updateFeature(
 		return nil
 	})
 	if err != nil {
-		return s.convUpdateFeatureError(err)
+		return s.convUpdateFeatureError(err, localizer)
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
@@ -922,12 +952,19 @@ func (s *FeatureService) updateFeature(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func (s *FeatureService) convUpdateFeatureError(err error) error {
+func (s *FeatureService) convUpdateFeatureError(err error, localizer locale.Localizer) error {
 	switch err {
 	case v2fs.ErrFeatureNotFound,
 		v2fs.ErrFeatureUnexpectedAffectedRows,
@@ -938,7 +975,14 @@ func (s *FeatureService) convUpdateFeatureError(err error) error {
 	case domain.ErrAlreadyEnabled:
 		return localizedError(statusNothingChange, locale.JaJP)
 	default:
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 }
 
@@ -946,7 +990,8 @@ func (s *FeatureService) UpdateFeatureVariations(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureVariationsRequest,
 ) (*featureproto.UpdateFeatureVariationsResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1101,7 +1146,8 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureTargetingRequest,
 ) (*featureproto.UpdateFeatureTargetingResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1183,7 +1229,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			return err
 		}
 		for _, cmd := range commands {
-			if err := validateFeatureTargetingCommand(features, f, cmd); err != nil {
+			if err := validateFeatureTargetingCommand(features, f, cmd, localizer); err != nil {
 				s.logger.Info(
 					"Invalid argument",
 					log.FieldsFromImcomingContext(ctx).AddFields(
@@ -1441,13 +1487,14 @@ func (s *FeatureService) setLastUsedInfosToFeatureByChunk(
 	ctx context.Context,
 	features []*featureproto.Feature,
 	environmentNamespace string,
+	localizer locale.Localizer,
 ) error {
 	for i := 0; i < len(features); i += getMultiChunkSize {
 		end := i + getMultiChunkSize
 		if end > len(features) {
 			end = len(features)
 		}
-		if err := s.setLastUsedInfosToFeature(ctx, features[i:end], environmentNamespace); err != nil {
+		if err := s.setLastUsedInfosToFeature(ctx, features[i:end], environmentNamespace, localizer); err != nil {
 			return err
 		}
 	}
@@ -1458,6 +1505,7 @@ func (s *FeatureService) setLastUsedInfosToFeature(
 	ctx context.Context,
 	features []*featureproto.Feature,
 	environmentNamespace string,
+	localizer locale.Localizer,
 ) error {
 	ids := make([]string, 0, len(features))
 	for _, f := range features {
@@ -1473,7 +1521,14 @@ func (s *FeatureService) setLastUsedInfosToFeature(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	for _, f := range fluiList {
 		for _, feature := range features {
@@ -1490,7 +1545,8 @@ func (s *FeatureService) EvaluateFeatures(
 	ctx context.Context,
 	req *featureproto.EvaluateFeaturesRequest,
 ) (*featureproto.EvaluateFeaturesResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1547,10 +1603,11 @@ func (s *FeatureService) CloneFeature(
 	ctx context.Context,
 	req *featureproto.CloneFeatureRequest,
 ) (*featureproto.CloneFeatureResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	if err := validateCloneFeatureRequest(req); err != nil {
 		return nil, err
 	}
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.Command.EnvironmentNamespace)
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.Command.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}

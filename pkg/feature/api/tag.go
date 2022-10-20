@@ -35,11 +35,11 @@ func (s *FeatureService) ListTags(
 	ctx context.Context,
 	req *featureproto.ListTagsRequest,
 ) (*featureproto.ListTagsResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
 	}

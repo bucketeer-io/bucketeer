@@ -19,6 +19,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -43,7 +44,8 @@ func (s *experimentService) GetExperiment(
 	ctx context.Context,
 	req *proto.GetExperimentRequest,
 ) (*proto.GetExperimentResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +76,8 @@ func (s *experimentService) ListExperiments(
 	ctx context.Context,
 	req *proto.ListExperimentsRequest,
 ) (*proto.ListExperimentsResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +184,8 @@ func (s *experimentService) CreateExperiment(
 	ctx context.Context,
 	req *proto.CreateExperimentRequest,
 ) (*proto.CreateExperimentResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +315,8 @@ func (s *experimentService) UpdateExperiment(
 	ctx context.Context,
 	req *proto.UpdateExperimentRequest,
 ) (*proto.UpdateExperimentResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -414,14 +419,15 @@ func (s *experimentService) StartExperiment(
 	ctx context.Context,
 	req *proto.StartExperimentRequest,
 ) (*proto.StartExperimentResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateStartExperimentRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace, localizer); err != nil {
 		return nil, err
 	}
 	return &proto.StartExperimentResponse{}, nil
@@ -441,14 +447,15 @@ func (s *experimentService) FinishExperiment(
 	ctx context.Context,
 	req *proto.FinishExperimentRequest,
 ) (*proto.FinishExperimentResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateFinishExperimentRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace, localizer); err != nil {
 		return nil, err
 	}
 	return &proto.FinishExperimentResponse{}, nil
@@ -468,14 +475,15 @@ func (s *experimentService) StopExperiment(
 	ctx context.Context,
 	req *proto.StopExperimentRequest,
 ) (*proto.StopExperimentResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateStopExperimentRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace, localizer); err != nil {
 		return nil, err
 	}
 	return &proto.StopExperimentResponse{}, nil
@@ -495,7 +503,8 @@ func (s *experimentService) ArchiveExperiment(
 	ctx context.Context,
 	req *proto.ArchiveExperimentRequest,
 ) (*proto.ArchiveExperimentResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -511,6 +520,7 @@ func (s *experimentService) ArchiveExperiment(
 		req.Command,
 		req.Id,
 		req.EnvironmentNamespace,
+		localizer,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -529,14 +539,15 @@ func (s *experimentService) DeleteExperiment(
 	ctx context.Context,
 	req *proto.DeleteExperimentRequest,
 ) (*proto.DeleteExperimentResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateDeleteExperimentRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace, localizer); err != nil {
 		return nil, err
 	}
 	return &proto.DeleteExperimentResponse{}, nil
@@ -557,6 +568,7 @@ func (s *experimentService) updateExperiment(
 	editor *eventproto.Editor,
 	cmd command.Command,
 	id, environmentNamespace string,
+	localizer locale.Localizer,
 ) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -566,7 +578,14 @@ func (s *experimentService) updateExperiment(
 				zap.Error(err),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		experimentStorage := v2es.NewExperimentStorage(tx)
@@ -605,7 +624,14 @@ func (s *experimentService) updateExperiment(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }

@@ -96,7 +96,8 @@ func (s *auditlogService) ListAuditLogs(
 	ctx context.Context,
 	req *proto.ListAuditLogsRequest,
 ) (*proto.ListAuditLogsResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +261,8 @@ func (s *auditlogService) ListFeatureHistory(
 	ctx context.Context,
 	req *proto.ListFeatureHistoryRequest,
 ) (*proto.ListFeatureHistoryResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -346,6 +348,7 @@ func (s *auditlogService) checkRole(
 	ctx context.Context,
 	requiredRole accountproto.Account_Role,
 	environmentNamespace string,
+	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckRole(ctx, requiredRole, func(email string) (*accountproto.GetAccountResponse, error) {
 		return s.accountClient.GetAccount(ctx, &accountproto.GetAccountRequest{

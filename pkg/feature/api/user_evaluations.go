@@ -29,7 +29,8 @@ func (s *FeatureService) GetUserEvaluations(
 	ctx context.Context,
 	req *featureproto.GetUserEvaluationsRequest,
 ) (*featureproto.GetUserEvaluationsResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,8 @@ func (s *FeatureService) UpsertUserEvaluation(
 	ctx context.Context,
 	req *featureproto.UpsertUserEvaluationRequest,
 ) (*featureproto.UpsertUserEvaluationResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}

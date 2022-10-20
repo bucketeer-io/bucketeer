@@ -81,6 +81,7 @@ func (s *userService) checkRole(
 	ctx context.Context,
 	requiredRole accountproto.Account_Role,
 	environmentNamespace string,
+	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckRole(ctx, requiredRole, func(email string) (*accountproto.GetAccountResponse, error) {
 		return s.accountClient.GetAccount(ctx, &accountproto.GetAccountRequest{

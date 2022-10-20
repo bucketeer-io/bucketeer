@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
@@ -35,7 +36,8 @@ import (
 var goalIDRegex = regexp.MustCompile("^[a-zA-Z0-9-]+$")
 
 func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalRequest) (*proto.GetGoalResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +77,8 @@ func (s *experimentService) ListGoals(
 	ctx context.Context,
 	req *proto.ListGoalsRequest,
 ) (*proto.ListGoalsResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +167,8 @@ func (s *experimentService) CreateGoal(
 	ctx context.Context,
 	req *proto.CreateGoalRequest,
 ) (*proto.CreateGoalResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +240,8 @@ func (s *experimentService) UpdateGoal(
 	ctx context.Context,
 	req *proto.UpdateGoalRequest,
 ) (*proto.UpdateGoalResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -259,6 +264,7 @@ func (s *experimentService) UpdateGoal(
 		req.EnvironmentNamespace,
 		req.Id,
 		commands,
+		localizer,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -277,7 +283,8 @@ func (s *experimentService) ArchiveGoal(
 	ctx context.Context,
 	req *proto.ArchiveGoalRequest,
 ) (*proto.ArchiveGoalResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -293,6 +300,7 @@ func (s *experimentService) ArchiveGoal(
 		req.EnvironmentNamespace,
 		req.Id,
 		[]command.Command{req.Command},
+		localizer,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -311,7 +319,8 @@ func (s *experimentService) DeleteGoal(
 	ctx context.Context,
 	req *proto.DeleteGoalRequest,
 ) (*proto.DeleteGoalResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -327,6 +336,7 @@ func (s *experimentService) DeleteGoal(
 		req.EnvironmentNamespace,
 		req.Id,
 		[]command.Command{req.Command},
+		localizer,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -346,6 +356,7 @@ func (s *experimentService) updateGoal(
 	editor *eventproto.Editor,
 	environmentNamespace, goalID string,
 	commands []command.Command,
+	localizer locale.Localizer,
 ) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -355,7 +366,14 @@ func (s *experimentService) updateGoal(
 				zap.Error(err),
 			)...,
 		)
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		goalStorage := v2es.NewGoalStorage(tx)
@@ -375,7 +393,14 @@ func (s *experimentService) updateGoal(
 		if err == v2es.ErrGoalNotFound || err == v2es.ErrGoalUnexpectedAffectedRows {
 			return localizedError(statusNotFound, locale.JaJP)
 		}
-		return localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
