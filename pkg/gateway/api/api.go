@@ -115,10 +115,12 @@ const (
 )
 
 const (
-	getEvaluationLatencyMetricsEventType metricsDetailEventType = iota + 1
-	getEvaluationSizeMetricsEventType
-	timeoutErrorCountMetricsEventType
-	internalErrorCountMetricsEventType
+	latencyMetricsEventType metricsDetailEventType = iota + 1
+	sizeMetricsEventType
+	timeoutErrorMetricsEventType
+	internalErrorMetricsEventType
+	networkErrorMetricsEventType
+	internalSdkErrorMetricsEventType
 )
 
 const (
@@ -217,9 +219,36 @@ type metricsEvent struct {
 	Type      metricsDetailEventType `json:"type,omitempty"`
 }
 
-type getEvaluationLatencyMetricsEvent struct {
+type latencyMetricsEvent struct {
+	ApiId    eventproto.ApiId  `json:"api_id,omitempty"`
 	Labels   map[string]string `json:"labels,omitempty"`
 	Duration time.Duration     `json:"duration,omitempty"`
+}
+
+type sizeMetricsEvent struct {
+	ApiId    eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels   map[string]string `json:"labels,omitempty"`
+	SizeByte int32             `json:"size_byte,omitempty"`
+}
+
+type timeoutErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type internalErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type networkErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type internalSdkErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 func (s *gatewayService) ping(w http.ResponseWriter, req *http.Request) {
@@ -1136,11 +1165,11 @@ func (s *gatewayService) getMetricsEvent(
 	}
 	var eventAny *anypb.Any
 	switch metricsEvt.Type {
-	case getEvaluationLatencyMetricsEventType:
-		latency := &getEvaluationLatencyMetricsEvent{}
+	case latencyMetricsEventType:
+		latency := &latencyMetricsEvent{}
 		if err := json.Unmarshal(metricsEvt.Event, latency); err != nil {
 			s.logger.Error(
-				"Failed to extract getEvaluationLatencyMetrics event",
+				"Failed to extract latencyMetrics event",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", event.ID),
@@ -1148,18 +1177,20 @@ func (s *gatewayService) getMetricsEvent(
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
-		eventAny, err = ptypes.MarshalAny(&eventproto.GetEvaluationLatencyMetricsEvent{
+		apiID := getApiID(latency.ApiId)
+		eventAny, err = ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
+			ApiId:    apiID,
 			Labels:   latency.Labels,
 			Duration: ptypes.DurationProto(latency.Duration),
 		})
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case getEvaluationSizeMetricsEventType:
-		size := &eventproto.GetEvaluationSizeMetricsEvent{}
-		if err := protojson.Unmarshal(metricsEvt.Event, size); err != nil {
+	case sizeMetricsEventType:
+		size := &sizeMetricsEvent{}
+		if err := json.Unmarshal(metricsEvt.Event, size); err != nil {
 			s.logger.Error(
-				"Failed to extract getEvaluationSizeMetrics event",
+				"Failed to extract sizeMetrics event",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", event.ID),
@@ -1167,15 +1198,20 @@ func (s *gatewayService) getMetricsEvent(
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
-		eventAny, err = ptypes.MarshalAny(size)
+		apiID := getApiID(size.ApiId)
+		eventAny, err = ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
+			ApiId:    apiID,
+			Labels:   size.Labels,
+			SizeByte: size.SizeByte,
+		})
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case timeoutErrorCountMetricsEventType:
-		timeout := &eventproto.TimeoutErrorCountMetricsEvent{}
-		if err := protojson.Unmarshal(metricsEvt.Event, timeout); err != nil {
+	case timeoutErrorMetricsEventType:
+		timeout := &timeoutErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, timeout); err != nil {
 			s.logger.Error(
-				"Failed to extract timeoutErrorCountMetrics event",
+				"Failed to extract timeoutErrorMetrics event",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", event.ID),
@@ -1183,15 +1219,18 @@ func (s *gatewayService) getMetricsEvent(
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
-		eventAny, err = ptypes.MarshalAny(timeout)
+		eventAny, err = ptypes.MarshalAny(&eventproto.TimeoutErrorMetricsEvent{
+			ApiId:  timeout.ApiId,
+			Labels: timeout.Labels,
+		})
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case internalErrorCountMetricsEventType:
-		internal := &eventproto.InternalErrorCountMetricsEvent{}
-		if err := protojson.Unmarshal(metricsEvt.Event, internal); err != nil {
+	case internalErrorMetricsEventType:
+		internal := &internalErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, internal); err != nil {
 			s.logger.Error(
-				"Failed to extract internalErrorCountMetrics event",
+				"Failed to extract internalErrorMetrics event",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", event.ID),
@@ -1199,7 +1238,48 @@ func (s *gatewayService) getMetricsEvent(
 			)
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
-		eventAny, err = ptypes.MarshalAny(internal)
+		eventAny, err = ptypes.MarshalAny(&eventproto.InternalErrorMetricsEvent{
+			ApiId:  internal.ApiId,
+			Labels: internal.Labels,
+		})
+		if err != nil {
+			return nil, codeMarshalAnyFailed, err
+		}
+	case networkErrorMetricsEventType:
+		network := &networkErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, network); err != nil {
+			s.logger.Error(
+				"Failed to extract networkErrorMetrics event",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", event.ID),
+				)...,
+			)
+			return nil, codeUnmarshalFailed, errUnmarshalFailed
+		}
+		eventAny, err = ptypes.MarshalAny(&eventproto.NetworkErrorMetricsEvent{
+			ApiId:  network.ApiId,
+			Labels: network.Labels,
+		})
+		if err != nil {
+			return nil, codeMarshalAnyFailed, err
+		}
+	case internalSdkErrorMetricsEventType:
+		internalSdk := &internalSdkErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, internalSdk); err != nil {
+			s.logger.Error(
+				"Failed to extract internalSdkErrorMetrics event",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", event.ID),
+				)...,
+			)
+			return nil, codeUnmarshalFailed, errUnmarshalFailed
+		}
+		eventAny, err = ptypes.MarshalAny(&eventproto.InternalErrorMetricsEvent{
+			ApiId:  internalSdk.ApiId,
+			Labels: internalSdk.Labels,
+		})
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
@@ -1211,6 +1291,14 @@ func (s *gatewayService) getMetricsEvent(
 		Timestamp: metricsEvt.Timestamp,
 		Event:     eventAny,
 	}, "", nil
+}
+
+// TODO: Remove this assignment after updating current SDK
+func getApiID(apiID eventproto.ApiId) eventproto.ApiId {
+	if apiID == eventproto.ApiId_UNKNOWN_API {
+		return eventproto.ApiId_GET_EVALUATION
+	}
+	return apiID
 }
 
 func (s *gatewayService) checkRegisterEvents(

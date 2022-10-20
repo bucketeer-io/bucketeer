@@ -2006,7 +2006,7 @@ func TestRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not serialize evaluation event")
 	}
-	bLatencyEvent, err := json.Marshal(&getEvaluationLatencyMetricsEvent{
+	bLatencyEvent, err := json.Marshal(&latencyMetricsEvent{
 		Labels:   map[string]string{"tag": "test", "status": "success"},
 		Duration: time.Duration(1),
 	})
@@ -2016,7 +2016,7 @@ func TestRegisterEvents(t *testing.T) {
 	bMetricsEvent, err := json.Marshal(&metricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     json.RawMessage(string(bLatencyEvent)),
-		Type:      getEvaluationLatencyMetricsEventType,
+		Type:      latencyMetricsEventType,
 	})
 	if err != nil {
 		t.Fatal("could not serialize metrics event")
@@ -2439,7 +2439,7 @@ func TestGetMetricsEvent(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	bLatencyEvent, err := json.Marshal(&getEvaluationLatencyMetricsEvent{
+	bLatencyEvent, err := json.Marshal(&latencyMetricsEvent{
 		Labels:   map[string]string{"tag": "test", "status": "success"},
 		Duration: time.Duration(1),
 	})
@@ -2463,20 +2463,11 @@ func TestGetMetricsEvent(t *testing.T) {
 			expectedErr: errInvalidType,
 		},
 		{
-			desc: "error: failed to unmarshal",
-			input: metricsEvent{
-				Timestamp: time.Now().Unix(),
-				Event:     json.RawMessage(string(bLatencyEvent)),
-				Type:      getEvaluationSizeMetricsEventType,
-			},
-			expectedErr: errUnmarshalFailed,
-		},
-		{
 			desc: "success",
 			input: metricsEvent{
 				Timestamp: time.Now().Unix(),
 				Event:     json.RawMessage(string(bLatencyEvent)),
-				Type:      getEvaluationLatencyMetricsEventType,
+				Type:      latencyMetricsEventType,
 			},
 			expected: &eventproto.MetricsEvent{
 				Timestamp: time.Now().Unix(),
