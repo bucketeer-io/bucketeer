@@ -37,7 +37,8 @@ func (s *NotificationService) CreateAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.CreateAdminSubscriptionRequest,
 ) (*notificationproto.CreateAdminSubscriptionResponse, error) {
-	editor, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,14 @@ func (s *NotificationService) CreateAdminSubscription(
 				zap.Any("recipient", req.Command.Recipient),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -65,7 +73,14 @@ func (s *NotificationService) CreateAdminSubscription(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(tx)
@@ -88,7 +103,14 @@ func (s *NotificationService) CreateAdminSubscription(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
@@ -97,7 +119,14 @@ func (s *NotificationService) CreateAdminSubscription(
 				zap.Any("errors", errs),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &notificationproto.CreateAdminSubscriptionResponse{}, nil
 }
@@ -125,7 +154,7 @@ func (s *NotificationService) UpdateAdminSubscription(
 	req *notificationproto.UpdateAdminSubscriptionRequest,
 ) (*notificationproto.UpdateAdminSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	editor, err := s.checkAdminRole(ctx)
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +211,7 @@ func (s *NotificationService) EnableAdminSubscription(
 	req *notificationproto.EnableAdminSubscriptionRequest,
 ) (*notificationproto.EnableAdminSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	editor, err := s.checkAdminRole(ctx)
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +249,7 @@ func (s *NotificationService) DisableAdminSubscription(
 	req *notificationproto.DisableAdminSubscriptionRequest,
 ) (*notificationproto.DisableAdminSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	editor, err := s.checkAdminRole(ctx)
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +368,8 @@ func (s *NotificationService) DeleteAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.DeleteAdminSubscriptionRequest,
 ) (*notificationproto.DeleteAdminSubscriptionResponse, error) {
-	editor, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +385,14 @@ func (s *NotificationService) DeleteAdminSubscription(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(tx)
@@ -383,7 +420,14 @@ func (s *NotificationService) DeleteAdminSubscription(
 				zap.String("id", req.Id),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
@@ -393,7 +437,14 @@ func (s *NotificationService) DeleteAdminSubscription(
 				zap.String("id", req.Id),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &notificationproto.DeleteAdminSubscriptionResponse{}, nil
 }
@@ -428,7 +479,8 @@ func (s *NotificationService) GetAdminSubscription(
 	ctx context.Context,
 	req *notificationproto.GetAdminSubscriptionRequest,
 ) (*notificationproto.GetAdminSubscriptionResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +500,14 @@ func (s *NotificationService) GetAdminSubscription(
 				zap.String("id", req.Id),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &notificationproto.GetAdminSubscriptionResponse{Subscription: subscription.Subscription}, nil
 }
@@ -464,7 +523,8 @@ func (s *NotificationService) ListAdminSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListAdminSubscriptionsRequest,
 ) (*notificationproto.ListAdminSubscriptionsResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -499,6 +559,7 @@ func (s *NotificationService) ListAdminSubscriptions(
 		orders,
 		req.PageSize,
 		req.Cursor,
+		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -537,7 +598,8 @@ func (s *NotificationService) ListEnabledAdminSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListEnabledAdminSubscriptionsRequest,
 ) (*notificationproto.ListEnabledAdminSubscriptionsResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -559,6 +621,7 @@ func (s *NotificationService) ListEnabledAdminSubscriptions(
 		nil,
 		req.PageSize,
 		req.Cursor,
+		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -575,6 +638,7 @@ func (s *NotificationService) listAdminSubscriptionsMySQL(
 	orders []*mysql.Order,
 	pageSize int64,
 	cursor string,
+	localizer locale.Localizer,
 ) ([]*notificationproto.Subscription, string, int64, error) {
 	limit := int(pageSize)
 	if cursor == "" {
@@ -599,7 +663,14 @@ func (s *NotificationService) listAdminSubscriptionsMySQL(
 				zap.Error(err),
 			)...,
 		)
-		return nil, "", 0, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, "", 0, statusInternal.Err()
+		}
+		return nil, "", 0, dt.Err()
 	}
 	return subscriptions, strconv.Itoa(nextCursor), totalCount, nil
 }

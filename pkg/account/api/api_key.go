@@ -19,6 +19,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
@@ -34,7 +35,8 @@ func (s *AccountService) CreateAPIKey(
 	ctx context.Context,
 	req *proto.CreateAPIKeyRequest,
 ) (*proto.CreateAPIKeyResponse, error) {
-	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +52,14 @@ func (s *AccountService) CreateAPIKey(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -60,7 +69,14 @@ func (s *AccountService) CreateAPIKey(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		apiKeyStorage := v2as.NewAPIKeyStorage(tx)
@@ -81,7 +97,14 @@ func (s *AccountService) CreateAPIKey(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &proto.CreateAPIKeyResponse{
 		ApiKey: key.APIKey,
@@ -92,7 +115,8 @@ func (s *AccountService) ChangeAPIKeyName(
 	ctx context.Context,
 	req *proto.ChangeAPIKeyNameRequest,
 ) (*proto.ChangeAPIKeyNameResponse, error) {
-	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +143,14 @@ func (s *AccountService) ChangeAPIKeyName(
 				zap.String("name", req.Command.Name),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &proto.ChangeAPIKeyNameResponse{}, nil
 }
@@ -128,7 +159,8 @@ func (s *AccountService) EnableAPIKey(
 	ctx context.Context,
 	req *proto.EnableAPIKeyRequest,
 ) (*proto.EnableAPIKeyResponse, error) {
-	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +186,14 @@ func (s *AccountService) EnableAPIKey(
 				zap.String("id", req.Id),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &proto.EnableAPIKeyResponse{}, nil
 }
@@ -163,7 +202,8 @@ func (s *AccountService) DisableAPIKey(
 	ctx context.Context,
 	req *proto.DisableAPIKeyRequest,
 ) (*proto.DisableAPIKeyResponse, error) {
-	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +229,14 @@ func (s *AccountService) DisableAPIKey(
 				zap.String("id", req.Id),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &proto.DisableAPIKeyResponse{}, nil
 }
@@ -225,7 +272,8 @@ func (s *AccountService) updateAPIKeyMySQL(
 }
 
 func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequest) (*proto.GetAPIKeyResponse, error) {
-	_, err := s.checkRole(ctx, proto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, proto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +294,14 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 				zap.String("id", req.Id),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &proto.GetAPIKeyResponse{ApiKey: apiKey.APIKey}, nil
 }
@@ -255,7 +310,8 @@ func (s *AccountService) ListAPIKeys(
 	ctx context.Context,
 	req *proto.ListAPIKeysRequest,
 ) (*proto.ListAPIKeysResponse, error) {
-	_, err := s.checkRole(ctx, proto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, proto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +357,14 @@ func (s *AccountService) ListAPIKeys(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &proto.ListAPIKeysResponse{
 		ApiKeys:    apiKeys,
@@ -337,7 +400,8 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 	ctx context.Context,
 	req *proto.GetAPIKeyBySearchingAllEnvironmentsRequest,
 ) (*proto.GetAPIKeyBySearchingAllEnvironmentsResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -350,14 +414,28 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 			"Failed to get project list",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if len(projects) == 0 {
 		s.logger.Error(
 			"Could not find any projects",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	environments, err := s.listEnvironments(ctx)
 	if err != nil {
@@ -365,14 +443,28 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 			"Failed to get environment list",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if len(environments) == 0 {
 		s.logger.Error(
 			"Could not find any environments",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	projectSet := s.makeProjectSet(projects)
 	apiKeyStorage := v2as.NewAPIKeyStorage(s.mysqlClient)
@@ -393,7 +485,14 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 					zap.String("id", req.Id),
 				)...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		return &proto.GetAPIKeyBySearchingAllEnvironmentsResponse{
 			EnvironmentApiKey: &proto.EnvironmentAPIKey{EnvironmentNamespace: e.Namespace, ApiKey: apiKey.APIKey},

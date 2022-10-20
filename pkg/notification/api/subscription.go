@@ -57,7 +57,14 @@ func (s *NotificationService) CreateSubscription(
 				zap.Any("recipient", req.Command.Recipient),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	var handler command.Handler = command.NewEmptySubscriptionCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -68,7 +75,14 @@ func (s *NotificationService) CreateSubscription(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
@@ -91,7 +105,14 @@ func (s *NotificationService) CreateSubscription(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
@@ -101,7 +122,14 @@ func (s *NotificationService) CreateSubscription(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &notificationproto.CreateSubscriptionResponse{}, nil
 }
@@ -397,7 +425,14 @@ func (s *NotificationService) DeleteSubscription(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
@@ -425,7 +460,14 @@ func (s *NotificationService) DeleteSubscription(
 				zap.String("id", req.Id),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
 		s.logger.Error(
@@ -436,7 +478,14 @@ func (s *NotificationService) DeleteSubscription(
 				zap.String("id", req.Id),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &notificationproto.DeleteSubscriptionResponse{}, nil
 }
@@ -492,7 +541,14 @@ func (s *NotificationService) GetSubscription(
 				zap.String("id", req.Id),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &notificationproto.GetSubscriptionResponse{Subscription: subscription.Subscription}, nil
 }
@@ -545,6 +601,7 @@ func (s *NotificationService) ListSubscriptions(
 		orders,
 		req.PageSize,
 		req.Cursor,
+		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -610,6 +667,7 @@ func (s *NotificationService) ListEnabledSubscriptions(
 		nil,
 		req.PageSize,
 		req.Cursor,
+		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -626,6 +684,7 @@ func (s *NotificationService) listSubscriptionsMySQL(
 	orders []*mysql.Order,
 	pageSize int64,
 	cursor string,
+	localizer locale.Localizer,
 ) ([]*notificationproto.Subscription, string, int64, error) {
 	limit := int(pageSize)
 	if cursor == "" {
@@ -650,7 +709,14 @@ func (s *NotificationService) listSubscriptionsMySQL(
 				zap.Error(err),
 			)...,
 		)
-		return nil, "", 0, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, "", 0, statusInternal.Err()
+		}
+		return nil, "", 0, dt.Err()
 	}
 	return subscriptions, strconv.Itoa(nextCursor), totalCount, nil
 }
