@@ -190,6 +190,22 @@ func (s *grpcGatewayService) Ping(ctx context.Context, req *gwproto.PingRequest)
 	return &gwproto.PingResponse{Time: time.Now().Unix()}, nil
 }
 
+func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackRequest) (*gwproto.TrackResponse, error) {
+	// TODO: Implement API
+	s.logger.Info(
+		"Track API has been called",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.String("apiKey", req.Apikey),
+			zap.String("userid", req.Userid),
+			zap.String("goalid", req.Goalid),
+			zap.String("tag", req.Tag),
+			zap.Int64("timestamp", req.Timestamp),
+			zap.Float64("value", req.Value),
+		)...,
+	)
+	return &gwproto.TrackResponse{}, nil
+}
+
 func (s *grpcGatewayService) GetEvaluations(
 	ctx context.Context,
 	req *gwproto.GetEvaluationsRequest,
