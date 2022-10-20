@@ -57,7 +57,12 @@ func (s *userService) validateGetUserRequest(req *userproto.GetUserRequest) erro
 	return nil
 }
 
-func (s *userService) getUser(ctx context.Context, userID, environmentNamespace string, localizer locale.Localizer) (*domain.User, error) {
+func (s *userService) getUser(
+	ctx context.Context,
+	userID,
+	environmentNamespace string,
+	localizer locale.Localizer,
+) (*domain.User, error) {
 	userStorage := userstorage.NewUserStorage(s.storageClient)
 	user, err := userStorage.GetUser(ctx, userID, environmentNamespace)
 	if err != nil {

@@ -235,7 +235,11 @@ func validateRefreshTokenRequest(req *authproto.RefreshTokenRequest) error {
 	return nil
 }
 
-func (s *authService) generateToken(ctx context.Context, t *oauth2.Token, localizer locale.Localizer) (*authproto.Token, error) {
+func (s *authService) generateToken(
+	ctx context.Context,
+	t *oauth2.Token,
+	localizer locale.Localizer,
+) (*authproto.Token, error) {
 	rawIDToken := oidc.ExtractRawIDToken(t)
 	if len(rawIDToken) == 0 {
 		s.logger.Error(
