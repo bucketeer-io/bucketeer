@@ -66,6 +66,17 @@ message RegisterEventsResponse {
   map<string, Error> errors = 1;
 }
 
+message TrackRequest {
+  string apikey = 1;
+  string userid = 2;
+  string goalid = 3;
+  string tag = 4;
+  int64 timestamp = 5;
+  double value = 6;
+}
+
+message TrackResponse {}
+
 service Gateway {
   rpc Ping(PingRequest) returns (PingResponse) {
     option (google.api.http) = {
@@ -89,6 +100,11 @@ service Gateway {
     option (google.api.http) = {
       post: "/register_events"
       body: "*"
+    };
+  }
+  rpc Track(TrackRequest) returns (TrackResponse) {
+    option (google.api.http) = {
+      get: "/track"
     };
   }
 }

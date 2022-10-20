@@ -12420,6 +12420,44 @@
                 ]
               }
             ]
+          },
+          {
+            "name": "TrackRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "apikey",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "userid",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "goalid",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "tag",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "timestamp",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "value",
+                "type": "double"
+              }
+            ]
+          },
+          {
+            "name": "TrackResponse"
           }
         ],
         "services": [
@@ -12501,6 +12539,22 @@
                       {
                         "name": "body",
                         "value": "*"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "Track",
+                "in_type": "TrackRequest",
+                "out_type": "TrackResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/track"
                       }
                     ]
                   }
