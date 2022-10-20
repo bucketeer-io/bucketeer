@@ -123,7 +123,7 @@ func (s *eventCounterService) GetEvaluationCountV2(
 				zap.Int32("featureVersion", req.FeatureVersion),
 			)...,
 		)
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -134,7 +134,7 @@ func (s *eventCounterService) GetEvaluationCountV2(
 	}
 	vcs, err := convToVariationCounts(headers, rows, req.VariationIds)
 	if err != nil {
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -251,7 +251,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 				zap.String("featureId", req.FeatureId),
 			)...,
 		)
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -263,7 +263,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	endAt := time.Now()
 	startAt, err := genInterval(jpLocation, endAt, 30)
 	if err != nil {
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -297,14 +297,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 					zap.String("variationId", variation.Id),
 				)...,
 			)
-					dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		variationTSEvents = append(variationTSEvents, varTS[ecdruid.ColumnEvaluationTotal])
 		variationTSUsers = append(variationTSUsers, varTS[ecdruid.ColumnEvaluationUser])
@@ -345,7 +345,7 @@ func (s *eventCounterService) GetExperimentResult(
 				zap.String("experimentId", req.ExperimentId),
 			)...,
 		)
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -387,7 +387,7 @@ func (s *eventCounterService) ListExperimentResults(
 			)...,
 		)
 		listExperimentCountsCounter.WithLabelValues(codeFail).Inc()
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -489,7 +489,7 @@ func (s *eventCounterService) GetGoalCount(
 				zap.Strings("segments", req.Segments),
 			)...,
 		)
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -557,7 +557,7 @@ func (s *eventCounterService) GetGoalCountV2(
 				zap.Int32("featureVersion", req.FeatureVersion),
 			)...,
 		)
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -568,7 +568,7 @@ func (s *eventCounterService) GetGoalCountV2(
 	}
 	vcs, err := convToVariationCounts(headers, rows, req.VariationIds)
 	if err != nil {
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -626,7 +626,7 @@ func (s *eventCounterService) GetUserCountV2(
 				zap.Time("endAt", endAt),
 			)...,
 		)
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -687,7 +687,7 @@ func (s *eventCounterService) ListUserMetadata(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
@@ -760,14 +760,14 @@ func (s *eventCounterService) checkRole(
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
-					dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	return editor, nil
