@@ -73,7 +73,11 @@ func (s *AccountService) GetMeByEmail(
 	return s.getMe(ctx, req.Email, localizer)
 }
 
-func (s *AccountService) getMe(ctx context.Context, email string, localizer locale.Localizer) (*accountproto.GetMeResponse, error) {
+func (s *AccountService) getMe(
+	ctx context.Context,
+	email string,
+	localizer locale.Localizer,
+) (*accountproto.GetMeResponse, error) {
 	projects, err := s.listProjects(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -581,7 +585,11 @@ func (s *AccountService) GetAdminAccount(
 	return &accountproto.GetAdminAccountResponse{Account: account.Account}, nil
 }
 
-func (s *AccountService) getAdminAccount(ctx context.Context, email string, localizer locale.Localizer) (*domain.Account, error) {
+func (s *AccountService) getAdminAccount(
+	ctx context.Context,
+	email string,
+	localizer locale.Localizer,
+) (*domain.Account, error) {
 	adminAccountStorage := v2as.NewAdminAccountStorage(s.mysqlClient)
 	account, err := adminAccountStorage.GetAdminAccount(ctx, email)
 	if err != nil {

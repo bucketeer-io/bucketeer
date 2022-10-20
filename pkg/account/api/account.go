@@ -315,7 +315,11 @@ func (s *AccountService) GetAccount(
 	return &accountproto.GetAccountResponse{Account: account.Account}, nil
 }
 
-func (s *AccountService) getAccount(ctx context.Context, email, environmentNamespace string, localizer locale.Localizer) (*domain.Account, error) {
+func (s *AccountService) getAccount(
+	ctx context.Context,
+	email, environmentNamespace string,
+	localizer locale.Localizer,
+) (*domain.Account, error) {
 	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
 	account, err := accountStorage.GetAccount(ctx, email, environmentNamespace)
 	if err != nil {

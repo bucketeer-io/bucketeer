@@ -71,7 +71,11 @@ func validateGetProjectRequest(req *environmentproto.GetProjectRequest) error {
 	return nil
 }
 
-func (s *EnvironmentService) getProject(ctx context.Context, id string, localizer locale.Localizer) (*domain.Project, error) {
+func (s *EnvironmentService) getProject(
+	ctx context.Context,
+	id string,
+	localizer locale.Localizer,
+) (*domain.Project, error) {
 	projectStorage := v2es.NewProjectStorage(s.mysqlClient)
 	project, err := projectStorage.GetProject(ctx, id)
 	if err != nil {

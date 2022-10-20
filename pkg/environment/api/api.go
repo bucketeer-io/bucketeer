@@ -78,7 +78,10 @@ func (s *EnvironmentService) Register(server *grpc.Server) {
 	environmentproto.RegisterEnvironmentServiceServer(server, s)
 }
 
-func (s *EnvironmentService) checkAdminRole(ctx context.Context, localizer locale.Localizer) (*eventproto.Editor, error) {
+func (s *EnvironmentService) checkAdminRole(
+	ctx context.Context,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
 	editor, err := role.CheckAdminRole(ctx)
 	if err != nil {
 		switch status.Code(err) {

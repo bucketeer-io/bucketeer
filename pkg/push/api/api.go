@@ -500,7 +500,11 @@ func (s *PushService) tagMap(pushes []*pushproto.Push) (map[string]struct{}, err
 	return m, nil
 }
 
-func (s *PushService) listAllPushes(ctx context.Context, environmentNamespace string, localizer locale.Localizer) ([]*pushproto.Push, error) {
+func (s *PushService) listAllPushes(
+	ctx context.Context,
+	environmentNamespace string,
+	localizer locale.Localizer,
+) ([]*pushproto.Push, error) {
 	pushes := []*pushproto.Push{}
 	cursor := ""
 	whereParts := []mysql.WherePart{

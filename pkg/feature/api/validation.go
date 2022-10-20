@@ -649,7 +649,11 @@ func validateAddPrerequisite(
 	return nil
 }
 
-func validateChangePrerequisiteVariation(fs []*featureproto.Feature, p *featureproto.Prerequisite, localizer locale.Localizer) error {
+func validateChangePrerequisiteVariation(
+	fs []*featureproto.Feature,
+	p *featureproto.Prerequisite,
+	localizer locale.Localizer,
+) error {
 	if err := validateVariationID(fs, p, localizer); err != nil {
 		return err
 	}

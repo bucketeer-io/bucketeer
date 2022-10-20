@@ -291,7 +291,11 @@ func validateCreateEnvironmentRequest(req *environmentproto.CreateEnvironmentReq
 	return nil
 }
 
-func (s *EnvironmentService) checkProjectExistence(ctx context.Context, projectID string, localizer locale.Localizer) error {
+func (s *EnvironmentService) checkProjectExistence(
+	ctx context.Context,
+	projectID string,
+	localizer locale.Localizer,
+) error {
 	// enabled project must exist
 	existingProject, err := s.getProject(ctx, projectID, localizer)
 	if err != nil {
