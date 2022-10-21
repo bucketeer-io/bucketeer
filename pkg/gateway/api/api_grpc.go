@@ -828,7 +828,11 @@ func (s *grpcGatewayService) checkRequest(ctx context.Context) (*accountproto.En
 		)
 		return nil, ErrContextCanceled
 	}
-	envAPIKey, err := s.getEnvironmentAPIKey(ctx)
+	id, err := s.extractAPIKeyID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	envAPIKey, err := s.getEnvironmentAPIKey(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -838,17 +842,16 @@ func (s *grpcGatewayService) checkRequest(ctx context.Context) (*accountproto.En
 	return envAPIKey, nil
 }
 
-func (s *grpcGatewayService) getEnvironmentAPIKey(ctx context.Context) (*accountproto.EnvironmentAPIKey, error) {
-	id, err := s.extractAPIKeyID(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (s *grpcGatewayService) getEnvironmentAPIKey(
+	ctx context.Context,
+	apiKey string,
+) (*accountproto.EnvironmentAPIKey, error) {
 	k, err, _ := s.flightgroup.Do(
-		environmentAPIKeyFlightID(id),
+		environmentAPIKeyFlightID(apiKey),
 		func() (interface{}, error) {
 			return getEnvironmentAPIKey(
 				ctx,
-				id,
+				apiKey,
 				s.accountClient,
 				s.environmentAPIKeyCache,
 				callerGatewayService,

@@ -223,7 +223,9 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
-		actual, err := gs.getEnvironmentAPIKey(p.ctx)
+		id, err := gs.extractAPIKeyID(p.ctx)
+		assert.NoError(t, err)
+		actual, err := gs.getEnvironmentAPIKey(p.ctx, id)
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
