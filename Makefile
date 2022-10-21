@@ -202,7 +202,7 @@ buildifier-check:
 
 .PHONY: delete-e2e-data-mysql
 delete-e2e-data-mysql:
-	bazelisk ${BZLFLAGS} run ${BUILD_FLAGS} //hack/delete-e2e-data-mysql:delete-e2e-data-mysql -- delete \
+	go run ./hack/delete-e2e-data-mysql delete \
 		--mysql-user=${MYSQL_USER} \
 		--mysql-pass=${MYSQL_PASS} \
 		--mysql-host=mysql-${ENV}.bucketeer.private \
@@ -214,7 +214,7 @@ delete-e2e-data-mysql:
 
 .PHONY: generate-service-token
 generate-service-token:
-	bazelisk ${BZLFLAGS} run ${BUILD_FLAGS} //hack/generate-service-token:generate-service-token -- generate \
+	go run ./hack/generate-service-token generate \
 		--issuer=${ISSUER} \
 		--sub=service \
 		--audience=bucketeer \
@@ -227,7 +227,7 @@ generate-service-token:
 
 .PHONY: create-api-key
 create-api-key:
-	bazelisk ${BZLFLAGS} run ${BUILD_FLAGS} //hack/create-api-key:create-api-key -- create \
+	go run ./hack/create-api-key create \
 		--cert=${WEB_GATEWAY_CERT_PATH} \
 		--web-gateway=${WEB_GATEWAY_URL}:443 \
 		--service-token=${SERVICE_TOKEN_PATH} \
@@ -240,41 +240,31 @@ create-api-key:
 
 .PHONY: e2e-l4
 e2e-l4:
-	bazelisk ${BZLFLAGS} test ${BUILD_FLAGS} \
-		--cache_test_results=no \
-		--test_output=all \
-		--test_timeout=500 \
-		--verbose_test_summary \
-		--test_arg=--web-gateway-addr=${WEB_GATEWAY_URL} \
-		--test_arg=--web-gateway-port=443 \
-		--test_arg=--web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \
-		--test_arg=--api-key=${API_KEY_PATH} \
-		--test_arg=--gateway-addr=${GATEWAY_URL} \
-		--test_arg=--gateway-port=9000 \
-		--test_arg=--gateway-cert=${GATEWAY_CERT_PATH} \
-		--test_arg=--service-token=${SERVICE_TOKEN_PATH} \
-		--test_arg=--environment-namespace=${ENVIRONMENT_NAMESPACE} \
-		--test_arg=--test-id=${TEST_ID} \
-		//test/e2e/autoops:go_default_test //test/e2e/environment:go_default_test //test/e2e/feature:go_default_test //test/e2e/experiment:go_default_test //test/e2e/gateway:go_default_test //test/e2e/eventcounter:go_default_test //test/e2e/user:go_default_test //test/e2e/push:go_default_test //test/e2e/notification:go_default_test
+	go test -v ./test/e2e/... -args \
+		-web-gateway-addr=${WEB_GATEWAY_URL} \
+		-web-gateway-port=443 \
+		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \
+		-api-key=${API_KEY_PATH} \
+		-gateway-addr=${GATEWAY_URL} \
+		-gateway-port=9000 \
+		-gateway-cert=${GATEWAY_CERT_PATH} \
+		-service-token=${SERVICE_TOKEN_PATH} \
+		-environment-namespace=${ENVIRONMENT_NAMESPACE} \
+		-test-id=${TEST_ID}
 
 .PHONY: e2e
 e2e:
-	bazelisk ${BZLFLAGS} test ${BUILD_FLAGS} \
-		--cache_test_results=no \
-		--test_output=all \
-		--test_timeout=500 \
-		--verbose_test_summary \
-		--test_arg=--web-gateway-addr=${WEB_GATEWAY_URL} \
-		--test_arg=--web-gateway-port=443 \
-		--test_arg=--web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \
-		--test_arg=--api-key=${API_KEY_PATH} \
-		--test_arg=--gateway-addr=${GATEWAY_URL} \
-		--test_arg=--gateway-port=443 \
-		--test_arg=--gateway-cert=${GATEWAY_CERT_PATH} \
-		--test_arg=--service-token=${SERVICE_TOKEN_PATH} \
-		--test_arg=--environment-namespace=${ENVIRONMENT_NAMESPACE} \
-		--test_arg=--test-id=${TEST_ID} \
-		//test/e2e/autoops:go_default_test //test/e2e/environment:go_default_test //test/e2e/feature:go_default_test //test/e2e/experiment:go_default_test //test/e2e/gateway:go_default_test //test/e2e/eventcounter:go_default_test //test/e2e/user:go_default_test //test/e2e/push:go_default_test //test/e2e/notification:go_default_test
+	go test -v ./test/e2e/... -args \
+		-web-gateway-addr=${WEB_GATEWAY_URL} \
+		-web-gateway-port=443 \
+		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \
+		-api-key=${API_KEY_PATH} \
+		-gateway-addr=${GATEWAY_URL} \
+		-gateway-port=443 \
+		-gateway-cert=${GATEWAY_CERT_PATH} \
+		-service-token=${SERVICE_TOKEN_PATH} \
+		-environment-namespace=${ENVIRONMENT_NAMESPACE} \
+		-test-id=${TEST_ID}
 
 #############################
 # Chores
@@ -295,24 +285,3 @@ docker-gen: build
 .PHONY: remove-bazel-output
 remove-bazel-output:
 	bazelisk clean --expunge
-
-.PHONY: disable-expired-trial-projects
-disable-expired-trial-projects:
-	bazelisk ${BZLFLAGS} run ${BUILD_FLAGS} //hack/disable-expired-trial-projects:disable-expired-trial-projects -- disable \
-		--cert=${WEB_GATEWAY_CERT_PATH} \
-		--service-token=${SERVICE_TOKEN_PATH} \
-		--web-gateway=${WEB_GATEWAY_ADDR}:443 \
-		--no-profile \
-		--no-gcp-trace-enabled
-
-.PHONY: delete-user-data
-delete-user-data:
-	bazelisk ${BZLFLAGS} run ${BUILD_FLAGS} //hack/delete-user-data:delete-user-data -- delete \
-		--mysql-host=${MYSQL_HOST} \
-		--mysql-port=${MYSQL_PORT} \
-		--mysql-user=${MYSQL_USER} \
-		--mysql-pass=${MYSQL_PASS} \
-		--mysql-db-name=${MYSQL_DB_NAME} \
-		--target-period=${TARGET_PERIOD} \
-		--no-profile \
-		--no-gcp-trace-enabled
