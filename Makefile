@@ -281,7 +281,7 @@ e2e:
 #############################
 
 .PHONY: docker-gen
-docker-gen:
+docker-gen: build
 	rm -fr bazel-proto
 	cp -r $$(bazel info | grep bazel-bin | sed -E 's/bazel-bin: (.+)/\1/')/proto bazel-proto
 	docker run -it --rm \
