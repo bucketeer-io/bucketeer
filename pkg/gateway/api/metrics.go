@@ -24,7 +24,6 @@ import (
 
 const (
 	callerGatewayService = "GatewayService"
-	callerTrackHandler   = "TrackHandler"
 
 	typeFeatures      = "Features"
 	typeSegmentUsers  = "SegmentUsers"
@@ -35,7 +34,7 @@ const (
 	typeGoalBatch     = "GoalBatch"
 	typeMetrics       = "Metrics"
 	typeUnknown       = "Unknown"
-	typeHTTPTrack     = "HTTPTrack"
+	typeTrack         = "Track"
 
 	cacheLayerExternal = "External"
 

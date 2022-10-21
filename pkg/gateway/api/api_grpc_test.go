@@ -340,6 +340,70 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 	}
 }
 
+func TestGrpcValidateTrackRequest(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		desc     string
+		input    *gwproto.TrackRequest
+		expected error
+	}{
+		{
+			desc:     "error: missing api key",
+			input:    &gwproto.TrackRequest{},
+			expected: ErrMissingAPIKey,
+		},
+		{
+			desc:     "error: user ID is requried",
+			input:    &gwproto.TrackRequest{Apikey: "api-key"},
+			expected: ErrUserIDRequired,
+		},
+		{
+			desc:     "error: goal ID is required",
+			input:    &gwproto.TrackRequest{Apikey: "api-key", Userid: "user-id"},
+			expected: ErrGoalIDRequired,
+		},
+		{
+			desc: "error: tag is required",
+			input: &gwproto.TrackRequest{
+				Apikey: "api-key",
+				Userid: "user-id",
+				Goalid: "goal-id",
+			},
+			expected: ErrTagRequired,
+		},
+		{
+			desc: "error: invalid timestamp",
+			input: &gwproto.TrackRequest{
+				Apikey: "api-key",
+				Userid: "user-id",
+				Goalid: "goal-id",
+				Tag:    "tag",
+			},
+			expected: ErrInvalidTimestamp,
+		},
+		{
+			desc: "success",
+			input: &gwproto.TrackRequest{
+				Apikey:    "api-key",
+				Userid:    "user-id",
+				Goalid:    "goal-id",
+				Tag:       "tag",
+				Timestamp: time.Now().Unix(),
+			},
+			expected: nil,
+		},
+	}
+	gs := newGrpcGatewayServiceWithMock(t, mockController)
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := gs.validateTrackRequest(p.input)
+			assert.Equal(t, p.expected, actual)
+		})
+	}
+}
+
 func TestGrpcValidateGetEvaluationsRequest(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
@@ -523,6 +587,74 @@ func TestGrpcGetFeatures(t *testing.T) {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
 		p.setup(gs)
 		actual, err := gs.getFeatures(context.Background(), p.environmentNamespace)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+	}
+}
+
+func TestGrpcTrack(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*grpcGatewayService)
+		input       *gwproto.TrackRequest
+		expected    *gwproto.TrackResponse
+		expectedErr error
+	}{
+		{
+			desc: "error: invalid api key",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetAPIKeyBySearchingAllEnvironments(gomock.Any(), gomock.Any()).Return(
+					nil, status.Errorf(codes.NotFound, "error: apy key not found"))
+			},
+			input: &gwproto.TrackRequest{
+				Apikey:    "api-key",
+				Userid:    "user-id",
+				Goalid:    "goal-id",
+				Tag:       "tag",
+				Timestamp: time.Now().Unix(),
+			},
+			expected:    nil,
+			expectedErr: ErrInvalidAPIKey,
+		},
+		{
+			desc: "success",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						EnvironmentNamespace: "ns0",
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK,
+							Disabled: false,
+						},
+					}, nil)
+				gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+					nil).MaxTimes(1)
+			},
+			input: &gwproto.TrackRequest{
+				Apikey:    "api-key",
+				Userid:    "user-id",
+				Goalid:    "goal-id",
+				Tag:       "tag",
+				Timestamp: time.Now().Unix(),
+			},
+			expected:    &gwproto.TrackResponse{},
+			expectedErr: nil,
+		},
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for _, p := range patterns {
+		gs := newGrpcGatewayServiceWithMock(t, mockController)
+		p.setup(gs)
+		actual, err := gs.Track(ctx, p.input)
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}

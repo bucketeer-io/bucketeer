@@ -12554,7 +12554,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/track_v2"
+                        "value": "/track"
                       }
                     ]
                   }
