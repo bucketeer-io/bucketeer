@@ -842,7 +842,10 @@ func (s *grpcGatewayService) checkRequest(ctx context.Context) (*accountproto.En
 	return envAPIKey, nil
 }
 
-func (s *grpcGatewayService) getEnvironmentAPIKey(ctx context.Context, apiKey string) (*accountproto.EnvironmentAPIKey, error) {
+func (s *grpcGatewayService) getEnvironmentAPIKey(
+	ctx context.Context,
+	apiKey string,
+) (*accountproto.EnvironmentAPIKey, error) {
 	k, err, _ := s.flightgroup.Do(
 		environmentAPIKeyFlightID(apiKey),
 		func() (interface{}, error) {
