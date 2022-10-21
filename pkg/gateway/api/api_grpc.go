@@ -54,10 +54,12 @@ const (
 var (
 	ErrUserRequired      = status.Error(codes.InvalidArgument, "gateway: user is required")
 	ErrUserIDRequired    = status.Error(codes.InvalidArgument, "gateway: user id is required")
+	ErrGoalIDRequired    = status.Error(codes.InvalidArgument, "gateway: goal id is required")
 	ErrFeatureIDRequired = status.Error(codes.InvalidArgument, "gateway: feature id is required")
 	ErrTagRequired       = status.Error(codes.InvalidArgument, "gateway: tag is required")
 	ErrMissingEvents     = status.Error(codes.InvalidArgument, "gateway: missing events")
 	ErrMissingEventID    = status.Error(codes.InvalidArgument, "gateway: missing event id")
+	ErrInvalidTimestamp  = status.Error(codes.InvalidArgument, "gateway: invalid timestamp")
 	ErrContextCanceled   = status.Error(codes.Canceled, "gateway: context canceled")
 	ErrFeatureNotFound   = status.Error(codes.NotFound, "gateway: feature not found")
 	ErrMissingAPIKey     = status.Error(codes.Unauthenticated, "gateway: missing APIKey")
@@ -191,19 +193,103 @@ func (s *grpcGatewayService) Ping(ctx context.Context, req *gwproto.PingRequest)
 }
 
 func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackRequest) (*gwproto.TrackResponse, error) {
-	// TODO: Implement API
-	s.logger.Info(
-		"Track API has been called",
-		log.FieldsFromImcomingContext(ctx).AddFields(
-			zap.String("apiKey", req.Apikey),
-			zap.String("userid", req.Userid),
-			zap.String("goalid", req.Goalid),
-			zap.String("tag", req.Tag),
-			zap.Int64("timestamp", req.Timestamp),
-			zap.Float64("value", req.Value),
-		)...,
-	)
+	if err := s.validateTrackRequest(req); err != nil {
+		eventCounter.WithLabelValues(callerGatewayService, typeTrack, codeInvalidURLParams)
+		s.logger.Warn(
+			"Invalid track url parameters",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+	envAPIKey, err := s.checkTrackRequest(ctx, req.Apikey)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get environment api key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("apiKey", req.Apikey),
+			)...,
+		)
+		return nil, err
+	}
+	goalEvent := &eventproto.GoalEvent{
+		GoalId:    req.Goalid,
+		UserId:    req.Userid,
+		User:      &userproto.User{Id: req.Userid},
+		Value:     req.Value,
+		Timestamp: req.Timestamp,
+		Tag:       req.Tag,
+	}
+	id, err := uuid.NewUUID()
+	if err != nil {
+		s.logger.Error(
+			"Failed to generate uuid for goal event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("goalId", goalEvent.GoalId),
+			)...,
+		)
+		return nil, ErrInternal
+	}
+	goal, err := ptypes.MarshalAny(goalEvent)
+	if err != nil {
+		eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeNonRepeatableError)
+		s.logger.Error(
+			"Failed to marshal goal event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("goalId", goalEvent.GoalId),
+			)...,
+		)
+		return nil, ErrInternal
+	}
+	event := &eventproto.Event{
+		Id:                   id.String(),
+		Event:                goal,
+		EnvironmentNamespace: envAPIKey.EnvironmentNamespace,
+	}
+	if err := s.goalPublisher.Publish(ctx, event); err != nil {
+		if err == publisher.ErrBadMessage {
+			eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeNonRepeatableError)
+		} else {
+			eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeRepeatableError)
+		}
+		s.logger.Error(
+			"Failed to publish goal event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("eventId", event.Id),
+				zap.String("goalId", goalEvent.GoalId),
+			)...,
+		)
+		return nil, ErrInternal
+	}
+	eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeOK)
 	return &gwproto.TrackResponse{}, nil
+}
+
+func (s *grpcGatewayService) validateTrackRequest(req *gwproto.TrackRequest) error {
+	if req.Apikey == "" {
+		return ErrMissingAPIKey
+	}
+	if req.Userid == "" {
+		return ErrUserIDRequired
+	}
+	if req.Goalid == "" {
+		return ErrGoalIDRequired
+	}
+	if req.Tag == "" {
+		return ErrTagRequired
+	}
+	if !validateTimestamp(req.Timestamp, s.opts.oldestEventTimestamp, s.opts.furthestEventTimestamp) {
+		return ErrInvalidTimestamp
+	}
+	return nil
 }
 
 func (s *grpcGatewayService) GetEvaluations(
@@ -818,6 +904,27 @@ func (s *grpcGatewayService) containsInvalidTimestampError(errs map[string]*gwpr
 		}
 	}
 	return false
+}
+
+func (s *grpcGatewayService) checkTrackRequest(
+	ctx context.Context,
+	apiKey string,
+) (*accountproto.EnvironmentAPIKey, error) {
+	if isContextCanceled(ctx) {
+		s.logger.Warn(
+			"Request was canceled",
+			log.FieldsFromImcomingContext(ctx)...,
+		)
+		return nil, ErrContextCanceled
+	}
+	envAPIKey, err := s.getEnvironmentAPIKey(ctx, apiKey)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK); err != nil {
+		return nil, err
+	}
+	return envAPIKey, nil
 }
 
 func (s *grpcGatewayService) checkRequest(ctx context.Context) (*accountproto.EnvironmentAPIKey, error) {

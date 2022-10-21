@@ -274,14 +274,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithLogger(logger),
 	)
 
-	trackHandler := api.NewTrackHandler(
-		accountClient,
-		goalBatchPublisher,
-		redisV3Cache,
-		api.WithMetrics(registerer),
-		api.WithLogger(logger),
-	)
-
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
@@ -294,7 +286,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 		rpc.WithService(healthChecker),
 		rpc.WithHandler("/health", healthChecker),
-		rpc.WithHandler("/track", trackHandler),
 	)
 	defer server.Stop(10 * time.Second)
 	go server.Run()

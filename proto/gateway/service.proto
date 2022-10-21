@@ -104,7 +104,7 @@ service Gateway {
   }
   rpc Track(TrackRequest) returns (TrackResponse) {
     option (google.api.http) = {
-      get: "/track_v2"
+      get: "/track"
     };
   }
 }
