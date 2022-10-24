@@ -18,15 +18,15 @@ go: remove-go
 			${GIT_TOP_DIR}/proto/$$f/*.proto; \
 	done; \
 	for f in ${PROTO_WITH_DESCRIPTOR_FOLDERS}; do \
-    	protoc \
-    		--proto_path=${GIT_TOP_DIR} \
-    		--proto_path=${PROTOBUF_INCLUDE_DIR} \
-    		--proto_path=${GOOGLEAPIS} \
-    		--go_out=plugins=grpc:${GIT_TOP_DIR} \
-    		--go_opt=paths=source_relative \
-    		--descriptor_set_out=${GIT_TOP_DIR}/proto/$$f/proto_descriptor.pb \
-    		${GIT_TOP_DIR}/proto/$$f/*.proto; \
-    done
+		protoc \
+			--proto_path=${GIT_TOP_DIR} \
+			--proto_path=${PROTOBUF_INCLUDE_DIR} \
+			--proto_path=${GOOGLEAPIS} \
+			--go_out=plugins=grpc:${GIT_TOP_DIR} \
+			--go_opt=paths=source_relative \
+			--descriptor_set_out=${GIT_TOP_DIR}/proto/$$f/proto_descriptor.pb \
+			${GIT_TOP_DIR}/proto/$$f/*.proto; \
+	done
 
 .PHONY: remove-go
 remove-go:
