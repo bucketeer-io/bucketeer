@@ -26,6 +26,11 @@ ifndef GOARCH
 	GOARCH := $(shell go env GOARCH)
 endif
 
+LDFLAGS_PACKAGE := github.com/bucketeer-io/bucketeer/pkg/ldflags
+LDFLAGS_VERSION := $(LDFLAGS_PACKAGE).Version
+LDFLAGS_HASH := $(LDFLAGS_PACKAGE).Hash
+LDFLAGS_BUILDDATE := $(LDFLAGS_PACKAGE).BuildDate
+
 #############################
 # All
 #############################
@@ -151,8 +156,11 @@ tidy-deps:
 
 .PHONY: $(GO_APP_BUILD_TARGETS)
 $(GO_APP_BUILD_TARGETS): build-%:
+	$(eval VERSION := $(shell git describe --tags --always --abbrev=7))
+	$(eval HASH := $(shell git rev-parse --verify HEAD))
+	$(eval BUILDDATE := $(shell date '+%Y/%m/%dT%H:%M:%S%Z'))
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) \
-		go build -ldflags "-s -w" \
+		go build -ldflags "-s -w -X $(LDFLAGS_VERSION)=$(VERSION) -X $(LDFLAGS_HASH)=$(HASH) -X $(LDFLAGS_BUILDDATE)=$(BUILDDATE)" \
 		-o bin/$* -mod=vendor cmd/$*/$*.go
 
 .PHONY: build-go
