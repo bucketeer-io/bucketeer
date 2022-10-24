@@ -1,11 +1,14 @@
 PROTO_FOLDERS := $(filter-out ./external%, $(shell find . -name '*.proto' -print0 | xargs -0 -n1 dirname | sort --unique))
+PROTO_WITH_DESCRIPTOR_FOLDERS := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./migration ./notification ./push ./user
+PROTO_WITHOUT_DESCRIPTOR_FOLDERS := $(filter-out $(PROTO_WITH_DESCRIPTOR_FOLDERS), $(PROTO_FOLDERS))
+
 GIT_TOP_DIR := $(shell cd .. ; pwd)
 PROTOBUF_INCLUDE_DIR := ./external/protocolbuffers/protobuf/v3.18.1
 GOOGLEAPIS := ./external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974
 
 .PHONY: go
 go: remove-go
-	for f in ${PROTO_FOLDERS}; do \
+	for f in ${PROTO_WITHOUT_DESCRIPTOR_FOLDERS}; do \
 		protoc \
 			--proto_path=${GIT_TOP_DIR} \
 			--proto_path=${PROTOBUF_INCLUDE_DIR} \
@@ -13,11 +16,22 @@ go: remove-go
 			--go_out=plugins=grpc:${GIT_TOP_DIR} \
 			--go_opt=paths=source_relative \
 			${GIT_TOP_DIR}/proto/$$f/*.proto; \
+	done; \
+	for f in ${PROTO_WITH_DESCRIPTOR_FOLDERS}; do \
+		protoc \
+			--proto_path=${GIT_TOP_DIR} \
+			--proto_path=${PROTOBUF_INCLUDE_DIR} \
+			--proto_path=${GOOGLEAPIS} \
+			--go_out=plugins=grpc:${GIT_TOP_DIR} \
+			--go_opt=paths=source_relative \
+			--descriptor_set_out=${GIT_TOP_DIR}/proto/$$f/proto_descriptor.pb \
+			${GIT_TOP_DIR}/proto/$$f/*.proto; \
 	done
 
 .PHONY: remove-go
 remove-go:
-	find . -name "*.pb.go" -type f -delete
+	find . -name "*.pb.go" -type f -delete; \
+	find . -name "proto_descriptor.pb" -type f -delete
 
 .PHONY: check
 check: fmt-check lock-check
