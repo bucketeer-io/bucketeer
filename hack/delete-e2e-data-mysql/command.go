@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -34,46 +35,49 @@ const (
 
 var (
 	targetEntities = []*mysqlE2EInfo{
-		{table: "subscription", targetField: "name"},
-		{table: "experiment_result", targetField: ""},
-		{table: "push", targetField: "name"},
-		{table: "ops_count", targetField: ""},
-		{table: "auto_ops_rule", targetField: "feature_id"},
-		{table: "segment_user", targetField: "user_id"},
-		{table: "segment", targetField: "name"},
-		{table: "goal", targetField: "id"},
-		{table: "experiment", targetField: "feature_id"},
-		{table: "tag", targetField: ""},
-		{table: "feature", targetField: "id"},
-		{table: "webhook", targetField: "name"},
+		{table: "subscription", targetField: "name", hasCreatedAt: false},
+		{table: "experiment_result", targetField: "", hasCreatedAt: false},
+		{table: "push", targetField: "name", hasCreatedAt: true},
+		{table: "ops_count", targetField: "", hasCreatedAt: false},
+		{table: "auto_ops_rule", targetField: "feature_id", hasCreatedAt: true},
+		{table: "segment_user", targetField: "user_id", hasCreatedAt: false},
+		{table: "segment", targetField: "name", hasCreatedAt: true},
+		{table: "goal", targetField: "id", hasCreatedAt: true},
+		{table: "experiment", targetField: "feature_id", hasCreatedAt: true},
+		{table: "tag", targetField: "", hasCreatedAt: true},
+		{table: "feature", targetField: "id", hasCreatedAt: true},
+		{table: "webhook", targetField: "name", hasCreatedAt: true},
 	}
 )
 
 type mysqlE2EInfo struct {
-	table       string
-	targetField string
+	table        string
+	targetField  string
+	hasCreatedAt bool
 }
 
 type command struct {
 	*kingpin.CmdClause
-	mysqlUser   *string
-	mysqlPass   *string
-	mysqlHost   *string
-	mysqlPort   *int
-	mysqlDBName *string
-	testID      *string
+	mysqlUser        *string
+	mysqlPass        *string
+	mysqlHost        *string
+	mysqlPort        *int
+	mysqlDBName      *string
+	testID           *string
+	retentionSeconds *int
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 	cmd := p.Command("delete", "delete e2e data")
 	command := &command{
-		CmdClause:   cmd,
-		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
-		testID:      cmd.Flag("test-id", "Test ID.").String(),
+		CmdClause:        cmd,
+		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:        cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		testID:           cmd.Flag("test-id", "Test ID.").String(),
+		retentionSeconds: cmd.Flag("retention-seconds", "Test data retention period(seconds)").Int(),
 	}
 	r.RegisterCommand(command)
 	return command
@@ -125,28 +129,29 @@ func (c *command) deleteData(ctx context.Context, client mysql.Client, target *m
 }
 
 func (c *command) constructDeleteQuery(target *mysqlE2EInfo) (query string, args []interface{}) {
-	if target.targetField != "" && *c.testID != "" {
-		query = fmt.Sprintf(`
-			DELETE FROM
-				%s
-			WHERE
-				environment_namespace = ? AND
-				%s LIKE ?
-		`, target.table, target.targetField)
-		args = []interface{}{
-			envNamespace,
-			prefixTestName + "-" + *c.testID + "%",
-		}
-		return
-	}
-	query = fmt.Sprintf(`
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf(`
 		DELETE FROM
 			%s
 		WHERE
 			environment_namespace = ?
-	`, target.table)
+	`, target.table))
 	args = []interface{}{
 		envNamespace,
 	}
+
+	if target.targetField != "" && *c.testID != "" {
+		sb.WriteString("AND " + target.targetField + " LIKE ?\n")
+		targetName := prefixTestName + "-" + *c.testID + "%"
+		args = append(args, targetName)
+	}
+
+	if target.hasCreatedAt && *c.retentionSeconds > 0 {
+		sb.WriteString("AND created_at < ?\n")
+		t := time.Now().Add(-1 * time.Duration(*c.retentionSeconds) * time.Second).Unix()
+		args = append(args, t)
+	}
+
+	query = sb.String()
 	return
 }
