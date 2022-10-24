@@ -17,4 +17,5 @@ package ldflags
 var (
 	Hash      string
 	BuildDate string
+	Version   string
 )
