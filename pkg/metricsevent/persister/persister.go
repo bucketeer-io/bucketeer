@@ -331,7 +331,7 @@ func (p *persister) saveLatencyMetricsEvent(event *eventproto.MetricsEvent) erro
 	if err != nil {
 		return ErrInvalidDuration
 	}
-	p.storage.SaveLatencyMetricsEvent(tag, status, ev.ApiId, dur)
+	p.storage.SaveLatencyMetricsEvent(tag, status, event.SdkVersion, ev.ApiId, dur)
 	return nil
 }
 
@@ -348,7 +348,7 @@ func (p *persister) saveSizeMetricsEvent(event *eventproto.MetricsEvent) error {
 		tag = ev.Labels["tag"]
 		status = ev.Labels["state"]
 	}
-	p.storage.SaveSizeMetricsEvent(tag, status, ev.ApiId, ev.SizeByte)
+	p.storage.SaveSizeMetricsEvent(tag, status, event.SdkVersion, ev.ApiId, ev.SizeByte)
 	return nil
 }
 
@@ -364,7 +364,7 @@ func (p *persister) saveTimeoutError(event *eventproto.MetricsEvent) error {
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
 	}
-	p.storage.SaveTimeoutErrorMetricsEvent(tag, ev.ApiId)
+	p.storage.SaveTimeoutErrorMetricsEvent(tag, event.SdkVersion, ev.ApiId)
 	return nil
 }
 
@@ -380,7 +380,7 @@ func (p *persister) saveInternalError(event *eventproto.MetricsEvent) error {
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
 	}
-	p.storage.SaveInternalErrorMetricsEvent(tag, ev.ApiId)
+	p.storage.SaveInternalErrorMetricsEvent(tag, event.SdkVersion, ev.ApiId)
 	return nil
 }
 
@@ -396,7 +396,7 @@ func (p *persister) saveNetworkError(event *eventproto.MetricsEvent) error {
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
 	}
-	p.storage.SaveNetworkErrorMetricsEvent(tag, ev.ApiId)
+	p.storage.SaveNetworkErrorMetricsEvent(tag, event.SdkVersion, ev.ApiId)
 	return nil
 }
 
@@ -412,6 +412,6 @@ func (p *persister) saveInternalSdkError(event *eventproto.MetricsEvent) error {
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
 	}
-	p.storage.SaveInternalSdkErrorMetricsEvent(tag, ev.ApiId)
+	p.storage.SaveInternalSdkErrorMetricsEvent(tag, event.SdkVersion, ev.ApiId)
 	return nil
 }

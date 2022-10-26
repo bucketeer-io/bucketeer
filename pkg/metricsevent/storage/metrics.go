@@ -67,7 +67,7 @@ var (
 			Name:      "sdk_api_handling_seconds",
 			Help:      "Histogram of get evaluations response latency (seconds).",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"tag", "state", "api"})
+		}, []string{"tag", "state", "api", "sdk_version"})
 
 	sdkSizeHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -76,7 +76,7 @@ var (
 			Name:      "sdk_api_response_size",
 			Help:      "Histogram of get evaluations response size (byte).",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"tag", "state", "api"})
+		}, []string{"tag", "state", "api", "sdk_version"})
 
 	sdkTimeoutError = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -84,7 +84,7 @@ var (
 			Subsystem: "metrics_event",
 			Name:      "sdk_api_timeout_error_total",
 			Help:      "Total number of sdk timeout errors",
-		}, []string{"tag", "api"})
+		}, []string{"tag", "api", "sdk_version"})
 
 	sdkInternalError = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -92,7 +92,7 @@ var (
 			Subsystem: "metrics_event",
 			Name:      "sdk_api_internal_error_total",
 			Help:      "Total number of sdk internal errors",
-		}, []string{"tag", "api"})
+		}, []string{"tag", "api", "sdk_version"})
 
 	sdkNetworkError = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -100,7 +100,7 @@ var (
 			Subsystem: "metrics_event",
 			Name:      "sdk_api_network_error_total",
 			Help:      "Total number of sdk network errors",
-		}, []string{"tag", "api"})
+		}, []string{"tag", "api", "sdk_version"})
 
 	sdkInternalSdkError = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -108,7 +108,7 @@ var (
 			Subsystem: "metrics_event",
 			Name:      "sdk_api_internal_sdk_error_total",
 			Help:      "Total number of sdk internal sdk errors",
-		}, []string{"tag", "api"})
+		}, []string{"tag", "api", "sdk_version"})
 )
 
 func registerMetrics(r metrics.Registerer) {
