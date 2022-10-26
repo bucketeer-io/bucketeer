@@ -192,7 +192,7 @@ In conclusion, we can enable an order guarantee because we can set the key for e
 
 ##### 1. Can we configure Memorystore as optional?
 
-
+Yes. We can configure memory store as a optional in YAML file.
 
 ### Druid (GCS) & Kafka
 
