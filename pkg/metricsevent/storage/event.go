@@ -62,7 +62,11 @@ func (s *storage) SaveInternalErrorCountMetricsEvent(tag string) {
 	sdkInternalErrorCounter.WithLabelValues(tag).Inc()
 }
 
-func (s *storage) SaveLatencyMetricsEvent(tag, status, sdkVersion string, api eventproto.ApiId, duration time.Duration) {
+func (s *storage) SaveLatencyMetricsEvent(
+	tag, status, sdkVersion string,
+	api eventproto.ApiId,
+	duration time.Duration,
+) {
 	sdkLatencyHistogram.WithLabelValues(tag, status, api.String(), sdkVersion).Observe(duration.Seconds())
 }
 
