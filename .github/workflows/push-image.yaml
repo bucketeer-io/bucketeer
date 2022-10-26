@@ -167,7 +167,7 @@ jobs:
           registry: ghcr.io
           username: ca-dp
           password: ${{ secrets.GHCR_PAT }}
-      - name: Build and push python application images
+      - name: Build and push web application images
         run: docker build -t ${{ env.GHCR_REGISTRY }}/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }} --push .
 
   dispatch:
@@ -184,7 +184,7 @@ jobs:
           client-payload: '{"image_tag": "${{ needs.setup.outputs.IMAGE_TAG }}", "committer": "${{ github.event.head_commit.author.name }}",  "commit_message": "${{ github.event.head_commit.message }}",  "commit_url": "${{ github.event.head_commit.url }}"}'
 
   notify-success-to-slack:
-    needs: [setup, go, python, web-v2, dispatch]
+    needs: dispatch
     if: ${{ success() }}
     runs-on: ubuntu-latest
     steps:
