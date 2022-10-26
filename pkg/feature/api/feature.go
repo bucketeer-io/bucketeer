@@ -1032,7 +1032,6 @@ func (s *FeatureService) UpdateFeatureVariations(
 		return nil, localizedError(statusInternal, locale.JaJP)
 	}
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("archived", "=", false),
 		mysql.NewFilter("deleted", "=", false),
 		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
 	}
@@ -1195,7 +1194,6 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		whereParts := []mysql.WherePart{
-			mysql.NewFilter("archived", "=", false),
 			mysql.NewFilter("deleted", "=", false),
 			mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
 		}
