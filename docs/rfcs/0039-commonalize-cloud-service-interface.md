@@ -22,6 +22,65 @@ project: 'foobar'
 
 First, we'll start implementing AWS. Later, we'll support Azure.
 
+## Self-host Bucketeer
+
+### Comparision
+
+**PostHog**
+
+```yaml
+cloud: 'aws'
+ingress:
+    hostname: <your-hostname>
+    nginx:
+        enabled: true
+cert-manager:
+    enabled: true
+```
+
+https://posthog.com/docs/self-host/deploy/aws#chart-configuration
+
+```yaml
+cloud: 'gcp'
+ingress:
+    hostname: <your-hostname>
+```
+
+https://posthog.com/docs/self-host/deploy/gcp#chart-configuration
+
+They use Helm and above YAML file.
+
+https://github.com/PostHog/charts-clickhouse
+
+**PipeCD**
+
+```yaml
+apiVersion: "pipecd.dev/v1beta1"
+kind: ControlPlane
+spec:
+  stateKey: {RANDOM_STRING}
+  datastore:
+    type: FIRESTORE or MySQL
+    config:
+      namespace: pipecd
+      environment: dev
+      project: {YOUR_GCP_PROJECT_NAME}
+      # Must be a service account with "Cloud Datastore User" and "Cloud Datastore Index Admin" roles
+      # since PipeCD needs them to creates the needed Firestore composite indexes in the background.
+      credentialsFile: /etc/pipecd-secret/firestore-service-account
+  filestore:
+    type: GCS or AWS S3 or MINIO
+    config:
+      bucket: {YOUR_BUCKET_NAME}
+      # Must be a service account with "Storage Object Admin (roles/storage.objectAdmin)" role on the given bucket
+      # since PipeCD need to write file object such as deployment log file to that bucket.
+      credentialsFile: /etc/pipecd-secret/gcs-service-account
+```
+
+https://pipecd.dev/docs/installation/install-controlplane/#using-firestore-and-gcs
+
+They use Helm and above YAML file.
+
 ## Current middlewares we use
 
 | Currently used middlewares | Usage                                                 |
@@ -168,4 +227,3 @@ https://aws.amazon.com/kms/sla/
 https://cloud.google.com/kms/sla
 
 https://azure.microsoft.com/ja-jp/updates/akv-sla-raised-to-9999/
-
