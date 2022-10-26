@@ -19,7 +19,7 @@ project: 'foobar'
 1. Decide the interface(common method name) and abstract the around middleware implementation.
 2. (if needed,) Implement GCP middleware part with SDK library.
 3. Implement AWS middleware part with SDK library.
-4. Create Helm file and implement reading YAML file.
+4. Decide YAML interface, then create Helm file and implement reading YAML file.
 
 First, we'll start implementing AWS. Later, we'll support Azure.
 
