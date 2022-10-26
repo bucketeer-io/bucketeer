@@ -19,6 +19,7 @@ project: 'foobar'
 1. Decide the interface(common method name) and abstract the around middleware implementation.
 2. (if needed,) Implement GCP middleware part with SDK library.
 3. Implement AWS middleware part with SDK library.
+4. Create Helm file and implement reading YAML file.
 
 First, we'll start implementing AWS. Later, we'll support Azure.
 
@@ -80,6 +81,36 @@ spec:
 https://pipecd.dev/docs/installation/install-controlplane/#using-firestore-and-gcs
 
 They use Helm and above YAML file.
+
+```yaml
+# docker-compose.yml
+version: "3"
+services:
+  mongo:
+    image: "mongo:latest"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password
+  growthbook:
+    image: "growthbook/growthbook:latest"
+    ports:
+      - "3000:3000"
+      - "3100:3100"
+    depends_on:
+      - mongo
+    environment:
+      - MONGODB_URI=mongodb://root:password@mongo:27017/
+    volumes:
+      - uploads:/usr/local/src/app/packages/back-end/uploads
+volumes:
+  uploads:
+```
+
+https://docs.growthbook.io/self-host#installation
+
+### Conclusion
+
+Since Bucketeer uses Kubernetes, using YAML file and Helm fits into our cases.
 
 ## Current middlewares we use
 
@@ -227,3 +258,4 @@ https://aws.amazon.com/kms/sla/
 https://cloud.google.com/kms/sla
 
 https://azure.microsoft.com/ja-jp/updates/akv-sla-raised-to-9999/
+
