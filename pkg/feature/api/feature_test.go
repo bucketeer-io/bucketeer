@@ -2763,6 +2763,7 @@ func TestValidateAddPrerequisite(t *testing.T) {
 
 func TestValidateChangePrerequisiteVariation(t *testing.T) {
 	t.Parallel()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	fID0 := "fID-0"
 	fID1 := "fID-1"
 	fID2 := "fID-2"
@@ -2876,7 +2877,7 @@ func TestValidateChangePrerequisiteVariation(t *testing.T) {
 		},
 	}
 	for _, p := range pattens {
-		err := validateChangePrerequisiteVariation(p.fs, p.prerequisite)
+		err := validateChangePrerequisiteVariation(p.fs, p.prerequisite, localizer)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }

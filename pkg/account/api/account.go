@@ -19,6 +19,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -36,7 +37,8 @@ func (s *AccountService) CreateAccount(
 	ctx context.Context,
 	req *accountproto.CreateAccountRequest,
 ) (*accountproto.CreateAccountResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -59,15 +61,29 @@ func (s *AccountService) CreateAccount(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	// check if an Admin Account that has the same email already exists
-	_, err = s.getAdminAccount(ctx, account.Id)
+	_, err = s.getAdminAccount(ctx, account.Id, localizer)
 	if status.Code(err) != codes.NotFound {
 		if err == nil {
 			return nil, localizedError(statusAlreadyExists, locale.JaJP)
 		}
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -77,7 +93,14 @@ func (s *AccountService) CreateAccount(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		accountStorage := v2as.NewAccountStorage(tx)
@@ -98,7 +121,14 @@ func (s *AccountService) CreateAccount(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &accountproto.CreateAccountResponse{}, nil
 }
@@ -107,7 +137,8 @@ func (s *AccountService) ChangeAccountRole(
 	ctx context.Context,
 	req *accountproto.ChangeAccountRoleRequest,
 ) (*accountproto.ChangeAccountRoleResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +163,14 @@ func (s *AccountService) ChangeAccountRole(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &accountproto.ChangeAccountRoleResponse{}, nil
 }
@@ -141,7 +179,8 @@ func (s *AccountService) EnableAccount(
 	ctx context.Context,
 	req *accountproto.EnableAccountRequest,
 ) (*accountproto.EnableAccountResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +205,14 @@ func (s *AccountService) EnableAccount(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &accountproto.EnableAccountResponse{}, nil
 }
@@ -175,7 +221,8 @@ func (s *AccountService) DisableAccount(
 	ctx context.Context,
 	req *accountproto.DisableAccountRequest,
 ) (*accountproto.DisableAccountResponse, error) {
-	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +247,14 @@ func (s *AccountService) DisableAccount(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &accountproto.DisableAccountResponse{}, nil
 }
@@ -239,7 +293,8 @@ func (s *AccountService) GetAccount(
 	ctx context.Context,
 	req *accountproto.GetAccountRequest,
 ) (*accountproto.GetAccountResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -253,14 +308,18 @@ func (s *AccountService) GetAccount(
 		)
 		return nil, err
 	}
-	account, err := s.getAccount(ctx, req.Email, req.EnvironmentNamespace)
+	account, err := s.getAccount(ctx, req.Email, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
 	return &accountproto.GetAccountResponse{Account: account.Account}, nil
 }
 
-func (s *AccountService) getAccount(ctx context.Context, email, environmentNamespace string) (*domain.Account, error) {
+func (s *AccountService) getAccount(
+	ctx context.Context,
+	email, environmentNamespace string,
+	localizer locale.Localizer,
+) (*domain.Account, error) {
 	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
 	account, err := accountStorage.GetAccount(ctx, email, environmentNamespace)
 	if err != nil {
@@ -275,7 +334,14 @@ func (s *AccountService) getAccount(ctx context.Context, email, environmentNames
 				zap.String("email", email),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return account, nil
 }
@@ -284,7 +350,8 @@ func (s *AccountService) ListAccounts(
 	ctx context.Context,
 	req *accountproto.ListAccountsRequest,
 ) (*accountproto.ListAccountsResponse, error) {
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +401,14 @@ func (s *AccountService) ListAccounts(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &accountproto.ListAccountsResponse{
 		Accounts:   accounts,

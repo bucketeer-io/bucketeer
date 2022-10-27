@@ -517,7 +517,7 @@ func validateFeatureTargetingCommand(
 	case *featureproto.AddPrerequisiteCommand:
 		return validateAddPrerequisite(fs, tarF, c.Prerequisite, localizer)
 	case *featureproto.ChangePrerequisiteVariationCommand:
-		return validateChangePrerequisiteVariation(fs, c.Prerequisite)
+		return validateChangePrerequisiteVariation(fs, c.Prerequisite, localizer)
 	default:
 		return nil
 	}
@@ -628,7 +628,7 @@ func validateAddPrerequisite(
 			return localizedError(statusInvalidPrerequisite, locale.JaJP)
 		}
 	}
-	if err := validateVariationID(fs, p); err != nil {
+	if err := validateVariationID(fs, p, localizer); err != nil {
 		return err
 	}
 	tarF.Prerequisites = append(tarF.Prerequisites, p)
@@ -649,15 +649,19 @@ func validateAddPrerequisite(
 	return nil
 }
 
-func validateChangePrerequisiteVariation(fs []*featureproto.Feature, p *featureproto.Prerequisite) error {
-	if err := validateVariationID(fs, p); err != nil {
+func validateChangePrerequisiteVariation(
+	fs []*featureproto.Feature,
+	p *featureproto.Prerequisite,
+	localizer locale.Localizer,
+) error {
+	if err := validateVariationID(fs, p, localizer); err != nil {
 		return err
 	}
 	return nil
 }
 
-func validateVariationID(fs []*featureproto.Feature, p *featureproto.Prerequisite) error {
-	f, err := findFeature(fs, p.FeatureId)
+func validateVariationID(fs []*featureproto.Feature, p *featureproto.Prerequisite, localizer locale.Localizer) error {
+	f, err := findFeature(fs, p.FeatureId, localizer)
 	if err != nil {
 		return err
 	}

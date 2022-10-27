@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -132,7 +133,7 @@ func (s *AccountService) listEnvironments(ctx context.Context) ([]*environmentpr
 	}
 }
 
-func (s *AccountService) checkAdminRole(ctx context.Context) (*eventproto.Editor, error) {
+func (s *AccountService) checkAdminRole(ctx context.Context, localizer locale.Localizer) (*eventproto.Editor, error) {
 	editor, err := role.CheckAdminRole(ctx)
 	if err != nil {
 		switch status.Code(err) {
@@ -153,7 +154,14 @@ func (s *AccountService) checkAdminRole(ctx context.Context) (*eventproto.Editor
 				"Failed to check role",
 				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	return editor, nil
@@ -163,9 +171,10 @@ func (s *AccountService) checkRole(
 	ctx context.Context,
 	requiredRole proto.Account_Role,
 	environmentNamespace string,
+	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckRole(ctx, requiredRole, func(email string) (*proto.GetAccountResponse, error) {
-		account, err := s.getAccount(ctx, email, environmentNamespace)
+		account, err := s.getAccount(ctx, email, environmentNamespace, localizer)
 		if err != nil {
 			return nil, err
 		}
@@ -199,7 +208,14 @@ func (s *AccountService) checkRole(
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	return editor, nil

@@ -71,7 +71,14 @@ func (s *FeatureService) GetFeature(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if err := s.setLastUsedInfosToFeatureByChunk(
 		ctx,
@@ -122,7 +129,14 @@ func (s *FeatureService) GetFeatures(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.GetFeaturesResponse{Features: features}, nil
 }
@@ -471,7 +485,14 @@ func (s *FeatureService) CreateFeature(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		if err := s.upsertTags(ctx, tx, req.Command.Tags, req.EnvironmentNamespace); err != nil {
@@ -513,7 +534,14 @@ func (s *FeatureService) CreateFeature(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
@@ -523,7 +551,14 @@ func (s *FeatureService) CreateFeature(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.CreateFeatureResponse{}, nil
 }
@@ -542,7 +577,14 @@ func (s *FeatureService) UpdateFeatureDetails(
 	}
 	runningExperimentExists, err := s.existsRunningExperiment(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if runningExperimentExists {
 		return nil, localizedError(statusWaitingOrRunningExperimentExists, locale.JaJP)
@@ -556,7 +598,14 @@ func (s *FeatureService) UpdateFeatureDetails(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
@@ -670,7 +719,14 @@ func (s *FeatureService) UpdateFeatureDetails(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.UpdateFeatureDetailsResponse{}, nil
 }
@@ -1000,7 +1056,14 @@ func (s *FeatureService) UpdateFeatureVariations(
 	}
 	runningExperimentExists, err := s.existsRunningExperiment(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if runningExperimentExists {
 		return nil, localizedError(statusWaitingOrRunningExperimentExists, locale.JaJP)
@@ -1029,7 +1092,14 @@ func (s *FeatureService) UpdateFeatureVariations(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
@@ -1066,7 +1136,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 				return err
 			}
 		}
-		f, err := findFeature(features, req.Id)
+		f, err := findFeature(features, req.Id, localizer)
 		if err != nil {
 			s.logger.Error(
 				"Failed to find feature",
@@ -1128,7 +1198,14 @@ func (s *FeatureService) UpdateFeatureVariations(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.UpdateFeatureVariationsResponse{}, nil
 }
@@ -1170,7 +1247,14 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	}
 	runningExperimentExists, err := s.existsRunningExperiment(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if runningExperimentExists {
 		return nil, localizedError(statusWaitingOrRunningExperimentExists, locale.JaJP)
@@ -1190,7 +1274,14 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		whereParts := []mysql.WherePart{
@@ -1215,7 +1306,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			)
 			return err
 		}
-		f, err := findFeature(features, req.Id)
+		f, err := findFeature(features, req.Id, localizer)
 		if err != nil {
 			s.logger.Error(
 				"Failed to find feature",
@@ -1294,18 +1385,32 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.UpdateFeatureTargetingResponse{}, nil
 }
 
-func findFeature(fs []*featureproto.Feature, id string) (*featureproto.Feature, error) {
+func findFeature(fs []*featureproto.Feature, id string, localizer locale.Localizer) (*featureproto.Feature, error) {
 	for _, f := range fs {
 		if f.Id == id {
 			return f, nil
 		}
 	}
-	return nil, localizedError(statusInternal, locale.JaJP)
+	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.InternalServerError),
+	})
+	if err != nil {
+		return nil, statusInternal.Err()
+	}
+	return nil, dt.Err()
 }
 
 func (s *FeatureService) evaluateFeatures(
@@ -1313,6 +1418,7 @@ func (s *FeatureService) evaluateFeatures(
 	user *userproto.User,
 	environmentNamespace string,
 	tag string,
+	localizer locale.Localizer,
 ) (*featureproto.UserEvaluations, error) {
 	fs, err, _ := s.flightgroup.Do(
 		environmentNamespace,
@@ -1328,7 +1434,14 @@ func (s *FeatureService) evaluateFeatures(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	features := fs.([]*featureproto.Feature)
 	mapIDs := make(map[string]struct{})
@@ -1558,7 +1671,7 @@ func (s *FeatureService) EvaluateFeatures(
 		)
 		return nil, err
 	}
-	userEvaluations, err := s.evaluateFeatures(ctx, req.User, req.EnvironmentNamespace, req.Tag)
+	userEvaluations, err := s.evaluateFeatures(ctx, req.User, req.EnvironmentNamespace, req.Tag, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
@@ -1567,7 +1680,14 @@ func (s *FeatureService) EvaluateFeatures(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.EvaluateFeaturesResponse{UserEvaluations: userEvaluations}, nil
 }
@@ -1623,7 +1743,14 @@ func (s *FeatureService) CloneFeature(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	domainFeature := &domain.Feature{
 		Feature: f.Feature,
@@ -1641,7 +1768,14 @@ func (s *FeatureService) CloneFeature(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		if err := featureStorage.CreateFeature(ctx, feature, req.Command.EnvironmentNamespace); err != nil {
@@ -1678,7 +1812,14 @@ func (s *FeatureService) CloneFeature(
 				zap.String("environmentNamespace", req.Command.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
 		s.logger.Error(
@@ -1688,7 +1829,14 @@ func (s *FeatureService) CloneFeature(
 				zap.String("environmentNameSpace", req.Command.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.CloneFeatureResponse{}, nil
 }

@@ -19,6 +19,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -38,6 +39,7 @@ func (s *AccountService) GetMe(
 	ctx context.Context,
 	req *accountproto.GetMeRequest,
 ) (*accountproto.GetMeResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	t, ok := rpc.GetIDToken(ctx)
 	if !ok {
 		return nil, localizedError(statusUnauthenticated, locale.JaJP)
@@ -49,14 +51,15 @@ func (s *AccountService) GetMe(
 		)
 		return nil, localizedError(statusInvalidEmail, locale.JaJP)
 	}
-	return s.getMe(ctx, t.Email)
+	return s.getMe(ctx, t.Email, localizer)
 }
 
 func (s *AccountService) GetMeByEmail(
 	ctx context.Context,
 	req *accountproto.GetMeByEmailRequest,
 ) (*accountproto.GetMeResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -67,24 +70,42 @@ func (s *AccountService) GetMeByEmail(
 		)
 		return nil, localizedError(statusInvalidEmail, locale.JaJP)
 	}
-	return s.getMe(ctx, req.Email)
+	return s.getMe(ctx, req.Email, localizer)
 }
 
-func (s *AccountService) getMe(ctx context.Context, email string) (*accountproto.GetMeResponse, error) {
+func (s *AccountService) getMe(
+	ctx context.Context,
+	email string,
+	localizer locale.Localizer,
+) (*accountproto.GetMeResponse, error) {
 	projects, err := s.listProjects(ctx)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get project list",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if len(projects) == 0 {
 		s.logger.Error(
 			"Could not find any projects",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	environments, err := s.listEnvironments(ctx)
 	if err != nil {
@@ -92,22 +113,36 @@ func (s *AccountService) getMe(ctx context.Context, email string) (*accountproto
 			"Failed to get environment list",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if len(environments) == 0 {
 		s.logger.Error(
 			"Could not find any environments",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	// admin account response
-	adminAccount, err := s.getAdminAccount(ctx, email)
+	adminAccount, err := s.getAdminAccount(ctx, email, localizer)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
 	if adminAccount != nil && !adminAccount.Disabled && !adminAccount.Deleted {
-		environmentRoles, err := s.makeAdminEnvironmentRoles(projects, environments, accountproto.Account_OWNER)
+		environmentRoles, err := s.makeAdminEnvironmentRoles(projects, environments, accountproto.Account_OWNER, localizer)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +157,7 @@ func (s *AccountService) getMe(ctx context.Context, email string) (*accountproto
 		}, nil
 	}
 	// environment acccount response
-	environmentRoles, account, err := s.makeEnvironmentRoles(ctx, email, projects, environments)
+	environmentRoles, account, err := s.makeEnvironmentRoles(ctx, email, projects, environments, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -141,6 +176,7 @@ func (s *AccountService) makeAdminEnvironmentRoles(
 	projects []*environmentproto.Project,
 	environments []*environmentproto.Environment,
 	adminRole accountproto.Account_Role,
+	localizer locale.Localizer,
 ) ([]*accountproto.EnvironmentRole, error) {
 	projectSet := s.makeProjectSet(projects)
 	environmentRoles := make([]*accountproto.EnvironmentRole, 0)
@@ -157,7 +193,14 @@ func (s *AccountService) makeAdminEnvironmentRoles(
 		environmentRoles = append(environmentRoles, er)
 	}
 	if len(environmentRoles) == 0 {
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return environmentRoles, nil
 }
@@ -168,6 +211,7 @@ func (s *AccountService) makeEnvironmentRoles(
 	email string,
 	projects []*environmentproto.Project,
 	environments []*environmentproto.Environment,
+	localizer locale.Localizer,
 ) ([]*accountproto.EnvironmentRole, *accountproto.Account, error) {
 	projectSet := s.makeProjectSet(projects)
 	var lastAccount *accountproto.Account
@@ -177,7 +221,7 @@ func (s *AccountService) makeEnvironmentRoles(
 		if !ok || p.Disabled {
 			continue
 		}
-		account, err := s.getAccount(ctx, email, e.Namespace)
+		account, err := s.getAccount(ctx, email, e.Namespace, localizer)
 		if err != nil && status.Code(err) != codes.NotFound {
 			return nil, nil, err
 		}
@@ -202,7 +246,8 @@ func (s *AccountService) CreateAdminAccount(
 	ctx context.Context,
 	req *accountproto.CreateAdminAccountRequest,
 ) (*accountproto.CreateAdminAccountResponse, error) {
-	editor, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +264,14 @@ func (s *AccountService) CreateAdminAccount(
 			"Failed to create a new admin account",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	environments, err := s.listEnvironments(ctx)
 	if err != nil {
@@ -227,7 +279,14 @@ func (s *AccountService) CreateAdminAccount(
 			"Failed to get environment list",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	// check if an Account that has the same email already exists in any environment
 	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
@@ -248,7 +307,14 @@ func (s *AccountService) CreateAdminAccount(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		adminAccountStorage := v2as.NewAdminAccountStorage(tx)
@@ -266,7 +332,14 @@ func (s *AccountService) CreateAdminAccount(
 			"Failed to create admin account",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &accountproto.CreateAdminAccountResponse{}, nil
 }
@@ -275,7 +348,8 @@ func (s *AccountService) EnableAdminAccount(
 	ctx context.Context,
 	req *accountproto.EnableAdminAccountRequest,
 ) (*accountproto.EnableAdminAccountResponse, error) {
-	editor, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +368,14 @@ func (s *AccountService) EnableAdminAccount(
 			"Failed to enable admin account",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &accountproto.EnableAdminAccountResponse{}, nil
 }
@@ -303,7 +384,8 @@ func (s *AccountService) DisableAdminAccount(
 	ctx context.Context,
 	req *accountproto.DisableAdminAccountRequest,
 ) (*accountproto.DisableAdminAccountResponse, error) {
-	editor, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +404,14 @@ func (s *AccountService) DisableAdminAccount(
 			"Failed to disable admin account",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &accountproto.DisableAdminAccountResponse{}, nil
 }
@@ -361,7 +450,8 @@ func (s *AccountService) ConvertAccount(
 	ctx context.Context,
 	req *accountproto.ConvertAccountRequest,
 ) (*accountproto.ConvertAccountResponse, error) {
-	editor, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -378,7 +468,14 @@ func (s *AccountService) ConvertAccount(
 			"Failed to create a new admin account",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	environments, err := s.listEnvironments(ctx)
 	if err != nil {
@@ -386,7 +483,14 @@ func (s *AccountService) ConvertAccount(
 			"Failed to get environment list",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	deleteAccountCommand := &accountproto.DeleteAccountCommand{}
 	createAdminAccountCommand := &accountproto.CreateAdminAccountCommand{Email: req.Id}
@@ -398,7 +502,14 @@ func (s *AccountService) ConvertAccount(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		accountStorage := v2as.NewAccountStorage(tx)
@@ -455,7 +566,8 @@ func (s *AccountService) GetAdminAccount(
 	ctx context.Context,
 	req *accountproto.GetAdminAccountRequest,
 ) (*accountproto.GetAdminAccountResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -466,14 +578,18 @@ func (s *AccountService) GetAdminAccount(
 		)
 		return nil, err
 	}
-	account, err := s.getAdminAccount(ctx, req.Email)
+	account, err := s.getAdminAccount(ctx, req.Email, localizer)
 	if err != nil {
 		return nil, err
 	}
 	return &accountproto.GetAdminAccountResponse{Account: account.Account}, nil
 }
 
-func (s *AccountService) getAdminAccount(ctx context.Context, email string) (*domain.Account, error) {
+func (s *AccountService) getAdminAccount(
+	ctx context.Context,
+	email string,
+	localizer locale.Localizer,
+) (*domain.Account, error) {
 	adminAccountStorage := v2as.NewAdminAccountStorage(s.mysqlClient)
 	account, err := adminAccountStorage.GetAdminAccount(ctx, email)
 	if err != nil {
@@ -487,7 +603,14 @@ func (s *AccountService) getAdminAccount(ctx context.Context, email string) (*do
 				zap.String("email", email),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return account, nil
 }
@@ -496,7 +619,8 @@ func (s *AccountService) ListAdminAccounts(
 	ctx context.Context,
 	req *accountproto.ListAdminAccountsRequest,
 ) (*accountproto.ListAdminAccountsResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -539,7 +663,14 @@ func (s *AccountService) ListAdminAccounts(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &accountproto.ListAdminAccountsResponse{
 		Accounts:   accounts,

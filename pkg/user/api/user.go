@@ -19,6 +19,7 @@ import (
 	"strconv"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -40,7 +41,7 @@ func (s *userService) GetUser(ctx context.Context, req *userproto.GetUserRequest
 	if err := s.validateGetUserRequest(req); err != nil {
 		return nil, err
 	}
-	user, err := s.getUser(ctx, req.UserId, req.EnvironmentNamespace)
+	user, err := s.getUser(ctx, req.UserId, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +57,12 @@ func (s *userService) validateGetUserRequest(req *userproto.GetUserRequest) erro
 	return nil
 }
 
-func (s *userService) getUser(ctx context.Context, userID, environmentNamespace string) (*domain.User, error) {
+func (s *userService) getUser(
+	ctx context.Context,
+	userID,
+	environmentNamespace string,
+	localizer locale.Localizer,
+) (*domain.User, error) {
 	userStorage := userstorage.NewUserStorage(s.storageClient)
 	user, err := userStorage.GetUser(ctx, userID, environmentNamespace)
 	if err != nil {
@@ -71,7 +77,14 @@ func (s *userService) getUser(ctx context.Context, userID, environmentNamespace 
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return user, nil
 }
@@ -129,7 +142,14 @@ func (s *userService) ListUsers(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &userproto.ListUsersResponse{
 		Users:  users,

@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -78,7 +79,10 @@ func (s *NotificationService) Register(server *grpc.Server) {
 	notificationproto.RegisterNotificationServiceServer(server, s)
 }
 
-func (s *NotificationService) checkAdminRole(ctx context.Context) (*eventproto.Editor, error) {
+func (s *NotificationService) checkAdminRole(
+	ctx context.Context,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
 	editor, err := role.CheckAdminRole(ctx)
 	if err != nil {
 		switch status.Code(err) {
@@ -99,7 +103,14 @@ func (s *NotificationService) checkAdminRole(ctx context.Context) (*eventproto.E
 				"Failed to check role",
 				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	return editor, nil
@@ -145,7 +156,14 @@ func (s *NotificationService) checkRole(
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	return editor, nil

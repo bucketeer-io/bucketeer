@@ -60,7 +60,14 @@ func (s *FeatureService) CreateSegment(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -70,7 +77,14 @@ func (s *FeatureService) CreateSegment(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
@@ -113,7 +127,14 @@ func (s *FeatureService) CreateSegment(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.CreateSegmentResponse{
 		Segment: segment.Segment,
@@ -256,7 +277,14 @@ func (s *FeatureService) UpdateSegment(
 					zap.String("environmentNamespace", req.EnvironmentNamespace),
 				)...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		commands = append(commands, cmd)
 	}
@@ -388,7 +416,14 @@ func (s *FeatureService) GetSegment(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.GetSegmentResponse{Segment: segment.Segment}, nil
 
@@ -462,7 +497,14 @@ func (s *FeatureService) ListSegments(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.ListSegmentsResponse{
 		Segments:   segments,

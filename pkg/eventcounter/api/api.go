@@ -22,6 +22,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -122,11 +123,25 @@ func (s *eventCounterService) GetEvaluationCountV2(
 				zap.Int32("featureVersion", req.FeatureVersion),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	vcs, err := convToVariationCounts(headers, rows, req.VariationIds)
 	if err != nil {
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &ecproto.GetEvaluationCountV2Response{
 		Count: &ecproto.EvaluationCount{
@@ -236,12 +251,26 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 				zap.String("featureId", req.FeatureId),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	endAt := time.Now()
 	startAt, err := genInterval(jpLocation, endAt, 30)
 	if err != nil {
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
@@ -268,7 +297,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 					zap.String("variationId", variation.Id),
 				)...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		variationTSEvents = append(variationTSEvents, varTS[ecdruid.ColumnEvaluationTotal])
 		variationTSUsers = append(variationTSUsers, varTS[ecdruid.ColumnEvaluationUser])
@@ -309,7 +345,14 @@ func (s *eventCounterService) GetExperimentResult(
 				zap.String("experimentId", req.ExperimentId),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &ecproto.GetExperimentResultResponse{
 		ExperimentResult: result.ExperimentResult,
@@ -344,7 +387,14 @@ func (s *eventCounterService) ListExperimentResults(
 			)...,
 		)
 		listExperimentCountsCounter.WithLabelValues(codeFail).Inc()
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	results := make(map[string]*ecproto.ExperimentResult, len(experiments))
 	for _, e := range experiments {
@@ -439,7 +489,14 @@ func (s *eventCounterService) GetGoalCount(
 				zap.Strings("segments", req.Segments),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &ecproto.GetGoalCountResponse{Headers: headers, Rows: rows}, nil
 }
@@ -500,11 +557,25 @@ func (s *eventCounterService) GetGoalCountV2(
 				zap.Int32("featureVersion", req.FeatureVersion),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	vcs, err := convToVariationCounts(headers, rows, req.VariationIds)
 	if err != nil {
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &ecproto.GetGoalCountV2Response{
 		GoalCounts: &ecproto.GoalCounts{
@@ -555,7 +626,14 @@ func (s *eventCounterService) GetUserCountV2(
 				zap.Time("endAt", endAt),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	eventCount, userCount := convToUserCount(headers, rows)
 	return &ecproto.GetUserCountV2Response{
@@ -609,7 +687,14 @@ func (s *eventCounterService) ListUserMetadata(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &ecproto.ListUserMetadataResponse{Data: data}, nil
 }
@@ -675,7 +760,14 @@ func (s *eventCounterService) checkRole(
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	return editor, nil

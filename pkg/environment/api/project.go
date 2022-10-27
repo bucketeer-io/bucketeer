@@ -47,14 +47,15 @@ func (s *EnvironmentService) GetProject(
 	ctx context.Context,
 	req *environmentproto.GetProjectRequest,
 ) (*environmentproto.GetProjectResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateGetProjectRequest(req); err != nil {
 		return nil, err
 	}
-	project, err := s.getProject(ctx, req.Id)
+	project, err := s.getProject(ctx, req.Id, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -70,14 +71,25 @@ func validateGetProjectRequest(req *environmentproto.GetProjectRequest) error {
 	return nil
 }
 
-func (s *EnvironmentService) getProject(ctx context.Context, id string) (*domain.Project, error) {
+func (s *EnvironmentService) getProject(
+	ctx context.Context,
+	id string,
+	localizer locale.Localizer,
+) (*domain.Project, error) {
 	projectStorage := v2es.NewProjectStorage(s.mysqlClient)
 	project, err := projectStorage.GetProject(ctx, id)
 	if err != nil {
 		if err == v2es.ErrProjectNotFound {
 			return nil, localizedError(statusProjectNotFound, locale.JaJP)
 		}
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return project, nil
 }
@@ -86,7 +98,8 @@ func (s *EnvironmentService) ListProjects(
 	ctx context.Context,
 	req *environmentproto.ListProjectsRequest,
 ) (*environmentproto.ListProjectsResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +142,14 @@ func (s *EnvironmentService) ListProjects(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &environmentproto.ListProjectsResponse{
 		Projects:   projects,
@@ -166,7 +186,7 @@ func (s *EnvironmentService) CreateProject(
 	req *environmentproto.CreateProjectRequest,
 ) (*environmentproto.CreateProjectResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	editor, err := s.checkAdminRole(ctx)
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +267,7 @@ func (s *EnvironmentService) CreateTrialProject(
 	req *environmentproto.CreateTrialProjectRequest,
 ) (*environmentproto.CreateTrialProjectResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	_, err := s.checkAdminRole(ctx)
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +279,7 @@ func (s *EnvironmentService) CreateTrialProject(
 		Role:    accountproto.Account_UNASSIGNED,
 		IsAdmin: false,
 	}
-	existingProject, err := s.getTrialProjectByEmail(ctx, editor.Email)
+	existingProject, err := s.getTrialProjectByEmail(ctx, editor.Email, localizer)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
@@ -292,6 +312,7 @@ func validateCreateTrialProjectRequest(req *environmentproto.CreateTrialProjectR
 func (s *EnvironmentService) getTrialProjectByEmail(
 	ctx context.Context,
 	email string,
+	localizer locale.Localizer,
 ) (*environmentproto.Project, error) {
 	projectStorage := v2es.NewProjectStorage(s.mysqlClient)
 	project, err := projectStorage.GetTrialProjectByEmail(ctx, email, false, true)
@@ -299,7 +320,14 @@ func (s *EnvironmentService) getTrialProjectByEmail(
 		if err == v2es.ErrProjectNotFound {
 			return nil, localizedError(statusProjectNotFound, locale.JaJP)
 		}
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return project.Project, nil
 }
@@ -371,7 +399,7 @@ func (s *EnvironmentService) UpdateProject(
 	req *environmentproto.UpdateProjectRequest,
 ) (*environmentproto.UpdateProjectResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	editor, err := s.checkAdminRole(ctx)
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -466,7 +494,7 @@ func (s *EnvironmentService) EnableProject(
 	req *environmentproto.EnableProjectRequest,
 ) (*environmentproto.EnableProjectResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	editor, err := s.checkAdminRole(ctx)
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -494,7 +522,7 @@ func (s *EnvironmentService) DisableProject(
 	req *environmentproto.DisableProjectRequest,
 ) (*environmentproto.DisableProjectResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	editor, err := s.checkAdminRole(ctx)
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +550,7 @@ func (s *EnvironmentService) ConvertTrialProject(
 	req *environmentproto.ConvertTrialProjectRequest,
 ) (*environmentproto.ConvertTrialProjectResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	editor, err := s.checkAdminRole(ctx)
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}

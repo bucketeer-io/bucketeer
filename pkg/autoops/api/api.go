@@ -137,7 +137,14 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	opsEventRateClauses, err := autoOpsRule.ExtractOpsEventRateClauses()
 	if err != nil {
@@ -148,12 +155,26 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	for _, c := range opsEventRateClauses {
 		exist, err := s.existGoal(ctx, req.EnvironmentNamespace, c.GoalId)
 		if err != nil {
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		if !exist {
 			s.logger.Error(
@@ -171,7 +192,14 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
@@ -192,7 +220,14 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &autoopsproto.CreateAutoOpsRuleResponse{}, nil
 }
@@ -316,7 +351,14 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
@@ -341,7 +383,14 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &autoopsproto.DeleteAutoOpsRuleResponse{}, nil
 }
@@ -378,7 +427,14 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	for _, c := range opsEventRateClauses {
 		exist, err := s.existGoal(ctx, req.EnvironmentNamespace, c.GoalId)
 		if err != nil {
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		if !exist {
 			s.logger.Error(
@@ -397,7 +453,14 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
@@ -435,7 +498,14 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &autoopsproto.UpdateAutoOpsRuleResponse{}, nil
 }
@@ -570,7 +640,14 @@ func (s *AutoOpsService) GetAutoOpsRule(
 		if err == v2as.ErrAutoOpsRuleNotFound {
 			return nil, localizedError(statusNotFound, locale.JaJP)
 		}
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if autoOpsRule.Deleted {
 		return nil, localizedError(statusAlreadyDeleted, locale.JaJP)
@@ -601,7 +678,9 @@ func (s *AutoOpsService) ListAutoOpsRules(
 		req.PageSize,
 		req.Cursor,
 		req.FeatureIds,
-		req.EnvironmentNamespace)
+		req.EnvironmentNamespace,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -617,6 +696,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 	cursor string,
 	featureIds []string,
 	environmentNamespace string,
+	localizer locale.Localizer,
 ) ([]*autoopsproto.AutoOpsRule, string, error) {
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
@@ -653,7 +733,14 @@ func (s *AutoOpsService) listAutoOpsRules(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return nil, "", localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, "", statusInternal.Err()
+		}
+		return nil, "", dt.Err()
 	}
 	return autoOpsRules, strconv.Itoa(nextCursor), nil
 }
@@ -678,7 +765,14 @@ func (s *AutoOpsService) ExecuteAutoOps(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
@@ -712,7 +806,14 @@ func (s *AutoOpsService) ExecuteAutoOps(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: false}, nil
 }
@@ -742,7 +843,9 @@ func (s *AutoOpsService) ListOpsCounts(
 		req.Cursor,
 		req.EnvironmentNamespace,
 		req.FeatureIds,
-		req.AutoOpsRuleIds)
+		req.AutoOpsRuleIds,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -759,6 +862,7 @@ func (s *AutoOpsService) listOpsCounts(
 	environmentNamespace string,
 	featureIDs []string,
 	autoOpsRuleIDs []string,
+	localizer locale.Localizer,
 ) ([]*autoopsproto.OpsCount, string, error) {
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
@@ -801,7 +905,14 @@ func (s *AutoOpsService) listOpsCounts(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return nil, "", localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, "", statusInternal.Err()
+		}
+		return nil, "", dt.Err()
 	}
 	return opsCounts, strconv.Itoa(nextCursor), nil
 }
@@ -879,7 +990,14 @@ func (s *AutoOpsService) checkRole(
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	return editor, nil

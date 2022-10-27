@@ -38,7 +38,8 @@ func (s *EnvironmentService) GetEnvironment(
 	ctx context.Context,
 	req *environmentproto.GetEnvironmentRequest,
 ) (*environmentproto.GetEnvironmentResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +52,14 @@ func (s *EnvironmentService) GetEnvironment(
 		if err == v2es.ErrEnvironmentNotFound {
 			return nil, localizedError(statusEnvironmentNotFound, locale.JaJP)
 		}
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if environment.Deleted {
 		return nil, localizedError(statusEnvironmentAlreadyDeleted, locale.JaJP)
@@ -72,11 +80,12 @@ func (s *EnvironmentService) GetEnvironmentByNamespace(
 	ctx context.Context,
 	req *environmentproto.GetEnvironmentByNamespaceRequest,
 ) (*environmentproto.GetEnvironmentByNamespaceResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
-	environment, err := s.getEnvironmentByNamespace(ctx, req.Namespace)
+	environment, err := s.getEnvironmentByNamespace(ctx, req.Namespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +97,7 @@ func (s *EnvironmentService) GetEnvironmentByNamespace(
 func (s *EnvironmentService) getEnvironmentByNamespace(
 	ctx context.Context,
 	namespace string,
+	localizer locale.Localizer,
 ) (*environmentproto.Environment, error) {
 	environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
 	environment, err := environmentStorage.GetEnvironmentByNamespace(ctx, namespace, false)
@@ -95,7 +105,14 @@ func (s *EnvironmentService) getEnvironmentByNamespace(
 		if err == v2es.ErrEnvironmentNotFound {
 			return nil, localizedError(statusEnvironmentNotFound, locale.JaJP)
 		}
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return environment.Environment, nil
 }
@@ -104,7 +121,8 @@ func (s *EnvironmentService) ListEnvironments(
 	ctx context.Context,
 	req *environmentproto.ListEnvironmentsRequest,
 ) (*environmentproto.ListEnvironmentsResponse, error) {
-	_, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +165,14 @@ func (s *EnvironmentService) ListEnvironments(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &environmentproto.ListEnvironmentsResponse{
 		Environments: environments,
@@ -184,14 +209,14 @@ func (s *EnvironmentService) CreateEnvironment(
 	req *environmentproto.CreateEnvironmentRequest,
 ) (*environmentproto.CreateEnvironmentResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	editor, err := s.checkAdminRole(ctx)
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateCreateEnvironmentRequest(req); err != nil {
 		return nil, err
 	}
-	if err := s.checkProjectExistence(ctx, req.Command.ProjectId); err != nil {
+	if err := s.checkProjectExistence(ctx, req.Command.ProjectId, localizer); err != nil {
 		return nil, err
 	}
 	newEnvironment := domain.NewEnvironment(req.Command.Id, req.Command.Description, req.Command.ProjectId)
@@ -266,9 +291,13 @@ func validateCreateEnvironmentRequest(req *environmentproto.CreateEnvironmentReq
 	return nil
 }
 
-func (s *EnvironmentService) checkProjectExistence(ctx context.Context, projectID string) error {
+func (s *EnvironmentService) checkProjectExistence(
+	ctx context.Context,
+	projectID string,
+	localizer locale.Localizer,
+) error {
 	// enabled project must exist
-	existingProject, err := s.getProject(ctx, projectID)
+	existingProject, err := s.getProject(ctx, projectID, localizer)
 	if err != nil {
 		return err
 	}
@@ -282,7 +311,8 @@ func (s *EnvironmentService) UpdateEnvironment(
 	ctx context.Context,
 	req *environmentproto.UpdateEnvironmentRequest,
 ) (*environmentproto.UpdateEnvironmentResponse, error) {
-	editor, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +328,14 @@ func (s *EnvironmentService) UpdateEnvironment(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		environmentStorage := v2es.NewEnvironmentStorage(tx)
@@ -322,7 +359,14 @@ func (s *EnvironmentService) UpdateEnvironment(
 			"Failed to update environment",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &environmentproto.UpdateEnvironmentResponse{}, nil
 }
@@ -352,7 +396,8 @@ func (s *EnvironmentService) DeleteEnvironment(
 	ctx context.Context,
 	req *environmentproto.DeleteEnvironmentRequest,
 ) (*environmentproto.DeleteEnvironmentResponse, error) {
-	editor, err := s.checkAdminRole(ctx)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -367,7 +412,14 @@ func (s *EnvironmentService) DeleteEnvironment(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		environmentStorage := v2es.NewEnvironmentStorage(tx)
@@ -389,7 +441,14 @@ func (s *EnvironmentService) DeleteEnvironment(
 			"Failed to update environment",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &environmentproto.DeleteEnvironmentResponse{}, nil
 }

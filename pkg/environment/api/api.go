@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -77,7 +78,10 @@ func (s *EnvironmentService) Register(server *grpc.Server) {
 	environmentproto.RegisterEnvironmentServiceServer(server, s)
 }
 
-func (s *EnvironmentService) checkAdminRole(ctx context.Context) (*eventproto.Editor, error) {
+func (s *EnvironmentService) checkAdminRole(
+	ctx context.Context,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
 	editor, err := role.CheckAdminRole(ctx)
 	if err != nil {
 		switch status.Code(err) {
@@ -98,7 +102,14 @@ func (s *EnvironmentService) checkAdminRole(ctx context.Context) (*eventproto.Ed
 				"Failed to check role",
 				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	return editor, nil

@@ -118,11 +118,25 @@ func (s *PushService) CreatePush(
 				zap.Strings("tags", req.Command.Tags),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
-	pushes, err := s.listAllPushes(ctx, req.EnvironmentNamespace)
+	pushes, err := s.listAllPushes(ctx, req.EnvironmentNamespace, localizer)
 	if err != nil {
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if s.containsFCMKey(ctx, pushes, req.Command.FcmApiKey) {
 		return nil, localizedError(statusFCMKeyAlreadyExists, locale.JaJP)
@@ -140,7 +154,14 @@ func (s *PushService) CreatePush(
 				zap.Strings("tags", req.Command.Tags),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -150,7 +171,14 @@ func (s *PushService) CreatePush(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		pushStorage := v2ps.NewPushStorage(tx)
@@ -175,7 +203,14 @@ func (s *PushService) CreatePush(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &pushproto.CreatePushResponse{}, nil
 }
@@ -217,7 +252,14 @@ func (s *PushService) UpdatePush(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		pushStorage := v2ps.NewPushStorage(tx)
@@ -245,7 +287,14 @@ func (s *PushService) UpdatePush(
 				zap.String("id", req.Id),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &pushproto.UpdatePushResponse{}, nil
 }
@@ -284,7 +333,7 @@ func (s *PushService) validateAddPushTagsCommand(
 	if len(req.AddPushTagsCommand.Tags) == 0 {
 		return localizedError(statusTagsRequired, locale.JaJP)
 	}
-	pushes, err := s.listAllPushes(ctx, req.EnvironmentNamespace)
+	pushes, err := s.listAllPushes(ctx, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -347,7 +396,14 @@ func (s *PushService) DeletePush(
 				zap.Error(err),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		pushStorage := v2ps.NewPushStorage(tx)
@@ -373,7 +429,14 @@ func (s *PushService) DeletePush(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &pushproto.DeletePushResponse{}, nil
 }
@@ -437,7 +500,11 @@ func (s *PushService) tagMap(pushes []*pushproto.Push) (map[string]struct{}, err
 	return m, nil
 }
 
-func (s *PushService) listAllPushes(ctx context.Context, environmentNamespace string) ([]*pushproto.Push, error) {
+func (s *PushService) listAllPushes(
+	ctx context.Context,
+	environmentNamespace string,
+	localizer locale.Localizer,
+) ([]*pushproto.Push, error) {
 	pushes := []*pushproto.Push{}
 	cursor := ""
 	whereParts := []mysql.WherePart{
@@ -452,6 +519,7 @@ func (s *PushService) listAllPushes(ctx context.Context, environmentNamespace st
 			environmentNamespace,
 			whereParts,
 			nil,
+			localizer,
 		)
 		if err != nil {
 			return nil, err
@@ -496,6 +564,7 @@ func (s *PushService) ListPushes(
 		req.EnvironmentNamespace,
 		whereParts,
 		orders,
+		localizer,
 	)
 	if err != nil {
 		return nil, err
@@ -537,6 +606,7 @@ func (s *PushService) listPushes(
 	environmentNamespace string,
 	whereParts []mysql.WherePart,
 	orders []*mysql.Order,
+	localizer locale.Localizer,
 ) ([]*pushproto.Push, string, int64, error) {
 	limit := int(pageSize)
 	if cursor == "" {
@@ -562,7 +632,14 @@ func (s *PushService) listPushes(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return nil, "", 0, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, "", 0, statusInternal.Err()
+		}
+		return nil, "", 0, dt.Err()
 	}
 	return pushes, strconv.Itoa(nextCursor), totalCount, nil
 }
@@ -607,7 +684,14 @@ func (s *PushService) checkRole(
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
-			return nil, localizedError(statusInternal, locale.JaJP)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	return editor, nil

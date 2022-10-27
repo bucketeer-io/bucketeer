@@ -21,6 +21,7 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -101,6 +102,7 @@ func (s *authService) GetAuthCodeURL(
 	ctx context.Context,
 	req *authproto.GetAuthCodeURLRequest,
 ) (*authproto.GetAuthCodeURLResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	// The state parameter is used to help mitigate CSRF attacks.
 	// Before sending a request to get authCodeURL, the client has to generate a random string,
 	// store it in local and set to the state parameter in GetAuthCodeURLRequest.
@@ -119,7 +121,14 @@ func (s *authService) GetAuthCodeURL(
 			"Failed to get auth code url",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &authproto.GetAuthCodeURLResponse{Url: url}, nil
 }
@@ -138,6 +147,7 @@ func (s *authService) ExchangeToken(
 	ctx context.Context,
 	req *authproto.ExchangeTokenRequest,
 ) (*authproto.ExchangeTokenResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	if err := validateExchangeTokenRequest(req); err != nil {
 		return nil, err
 	}
@@ -153,9 +163,16 @@ func (s *authService) ExchangeToken(
 			"Failed to exchange token",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
-	token, err := s.generateToken(ctx, authToken)
+	token, err := s.generateToken(ctx, authToken, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -176,6 +193,7 @@ func (s *authService) RefreshToken(
 	ctx context.Context,
 	req *authproto.RefreshTokenRequest,
 ) (*authproto.RefreshTokenResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	if err := validateRefreshTokenRequest(req); err != nil {
 		return nil, err
 	}
@@ -191,9 +209,16 @@ func (s *authService) RefreshToken(
 			"Failed to refresh token",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
-	token, err := s.generateToken(ctx, authToken)
+	token, err := s.generateToken(ctx, authToken, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -210,14 +235,25 @@ func validateRefreshTokenRequest(req *authproto.RefreshTokenRequest) error {
 	return nil
 }
 
-func (s *authService) generateToken(ctx context.Context, t *oauth2.Token) (*authproto.Token, error) {
+func (s *authService) generateToken(
+	ctx context.Context,
+	t *oauth2.Token,
+	localizer locale.Localizer,
+) (*authproto.Token, error) {
 	rawIDToken := oidc.ExtractRawIDToken(t)
 	if len(rawIDToken) == 0 {
 		s.logger.Error(
 			"Token does not contain id_token",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Any("oauth2Token", t))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	claims, err := s.oidc.Verify(ctx, rawIDToken)
 	if err != nil {
@@ -225,7 +261,14 @@ func (s *authService) generateToken(ctx context.Context, t *oauth2.Token) (*auth
 			"Failed to verify id token",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if err := s.maybeCheckEmail(ctx, claims.Email); err != nil {
 		return nil, err
@@ -248,7 +291,14 @@ func (s *authService) generateToken(ctx context.Context, t *oauth2.Token) (*auth
 				zap.String("email", claims.Email),
 			)...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	adminRole := accountproto.Account_UNASSIGNED
 	if resp.IsAdmin {
@@ -269,7 +319,14 @@ func (s *authService) generateToken(ctx context.Context, t *oauth2.Token) (*auth
 			"Failed to sign id token",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return nil, localizedError(statusInternal, locale.JaJP)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &authproto.Token{
 		AccessToken:  t.AccessToken,
