@@ -7,6 +7,8 @@ RUN apk update \
 
 WORKDIR /etc/nginx
 
+COPY dist/apps/admin/ /var/www/
+
 CMD ["nginx", "-g", "daemon off;"]
 
 EXPOSE 80 443
