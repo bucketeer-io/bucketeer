@@ -363,7 +363,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "LatencyMetricsEvent: success",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
-				pst.storage.(*storagemock.MockStorage).EXPECT().SaveLatencyMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveLatencyMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.LatencyMetricsEvent{
 					ApiId:    clientevent.ApiId_GET_EVALUATIONS,
 					Labels:   map[string]string{"tag": "test", "state": "FULL"},
@@ -380,7 +380,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "SizeMetricsEvent: error: unknown api id",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
-				pst.storage.(*storagemock.MockStorage).EXPECT().SaveSizeMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveSizeMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.SizeMetricsEvent{
 					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "test", "state": "FULL"},
@@ -396,7 +396,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "TimeoutErrorMetricsEvent: error: unknown api id",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
-				pst.storage.(*storagemock.MockStorage).EXPECT().SaveTimeoutErrorMetricsEvent(gomock.Any(), gomock.Any()).Return().Times(1)
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveTimeoutErrorMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.TimeoutErrorMetricsEvent{
 					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "test"},
@@ -412,7 +412,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "InternalErrorMetricsEvent: error: unknown api id",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
-				pst.storage.(*storagemock.MockStorage).EXPECT().SaveInternalErrorMetricsEvent(gomock.Any(), gomock.Any()).Return().Times(1)
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveInternalErrorMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.InternalErrorMetricsEvent{
 					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "test"},
@@ -428,7 +428,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "NetworkErrorMetrics: error: unknown api id",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
-				pst.storage.(*storagemock.MockStorage).EXPECT().SaveNetworkErrorMetricsEvent(gomock.Any(), gomock.Any()).Return().Times(1)
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveNetworkErrorMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.NetworkErrorMetricsEvent{
 					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "test"},
@@ -444,7 +444,7 @@ func TestSaveMetrics(t *testing.T) {
 		{
 			desc: "InternalSdkErrorMetricsEvent: error: unknown api id",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
-				pst.storage.(*storagemock.MockStorage).EXPECT().SaveInternalSdkErrorMetricsEvent(gomock.Any(), gomock.Any()).Return().Times(1)
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveInternalSdkErrorMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.InternalSdkErrorMetricsEvent{
 					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "test"},

@@ -214,9 +214,10 @@ type event struct {
 }
 
 type metricsEvent struct {
-	Timestamp int64                  `json:"timestamp,omitempty"`
-	Event     json.RawMessage        `json:"event,omitempty"`
-	Type      metricsDetailEventType `json:"type,omitempty"`
+	Timestamp  int64                  `json:"timestamp,omitempty"`
+	Event      json.RawMessage        `json:"event,omitempty"`
+	SdkVersion string                 `json:"sdk_version,omitempty"`
+	Type       metricsDetailEventType `json:"type,omitempty"`
 }
 
 type latencyMetricsEvent struct {
@@ -1288,8 +1289,9 @@ func (s *gatewayService) getMetricsEvent(
 	}
 
 	return &eventproto.MetricsEvent{
-		Timestamp: metricsEvt.Timestamp,
-		Event:     eventAny,
+		Timestamp:  metricsEvt.Timestamp,
+		Event:      eventAny,
+		SdkVersion: metricsEvt.SdkVersion,
 	}, "", nil
 }
 
