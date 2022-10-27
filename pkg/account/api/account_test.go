@@ -20,6 +20,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	gstatus "google.golang.org/grpc/status"
 
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -32,6 +35,16 @@ func TestCreateAccountMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc        string
@@ -81,7 +94,7 @@ func TestCreateAccountMySQL(t *testing.T) {
 				Command:              &accountproto.CreateAccountCommand{Email: "bucketeer_admin@example.com"},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusAlreadyExists, locale.JaJP),
+			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
 			desc: "errAlreadyExists_EnvironmentAccount",
@@ -101,7 +114,7 @@ func TestCreateAccountMySQL(t *testing.T) {
 				Command:              &accountproto.CreateAccountCommand{Email: "bucketeer_environment@example.com"},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusAlreadyExists, locale.JaJP),
+			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
 			desc: "errInternal",
@@ -164,6 +177,16 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -206,7 +229,7 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 				},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusNotFound, locale.JaJP),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "errInternal",
@@ -263,6 +286,16 @@ func TestEnableAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -303,7 +336,7 @@ func TestEnableAccountMySQL(t *testing.T) {
 				Command:              &accountproto.EnableAccountCommand{},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusNotFound, locale.JaJP),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "errInternal",
@@ -356,6 +389,16 @@ func TestDisableAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -396,7 +439,7 @@ func TestDisableAccountMySQL(t *testing.T) {
 				Command:              &accountproto.DisableAccountCommand{},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusNotFound, locale.JaJP),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "errInternal",
@@ -449,6 +492,16 @@ func TestGetAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -484,7 +537,7 @@ func TestGetAccountMySQL(t *testing.T) {
 				Email:                "service@example.com",
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusNotFound, locale.JaJP),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "success",

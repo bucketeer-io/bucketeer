@@ -23,6 +23,9 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
@@ -152,6 +155,16 @@ func TestListFeaturesMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		setup                func(*FeatureService)
 		orderBy              featureproto.ListFeaturesRequest_OrderBy
@@ -164,7 +177,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 			orderBy:              featureproto.ListFeaturesRequest_OrderBy(999),
 			hasExperiment:        false,
 			environmentNamespace: "ns0",
-			expected:             errInvalidOrderByJaJP,
+			expected:             createError(statusInvalidOrderBy, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -226,6 +239,16 @@ func TestCreateFeatureMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	variations := createFeatureVariations()
 	tags := createFeatureTags()
@@ -335,7 +358,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
 			environmentNamespace:     "ns0",
-			expected:                 errAlreadyExistsJaJP,
+			expected:                 createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -1472,6 +1495,16 @@ func TestCloneFeatureMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		setup       func(*FeatureService)
 		req         *featureproto.CloneFeatureRequest
@@ -1522,7 +1555,7 @@ func TestCloneFeatureMySQL(t *testing.T) {
 				},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errAlreadyExistsJaJP,
+			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
 			setup: func(s *FeatureService) {

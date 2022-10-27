@@ -47,6 +47,7 @@ go_test(
         "//pkg/account/client/mock:go_default_library",
         "//pkg/experiment/storage/v2:go_default_library",
         "//pkg/feature/client/mock:go_default_library",
+        "//pkg/locale:go_default_library",
         "//pkg/pubsub/publisher/mock:go_default_library",
         "//pkg/rpc:go_default_library",
         "//pkg/storage:go_default_library",
@@ -59,6 +60,9 @@ go_test(
         "//proto/feature:go_default_library",
         "@com_github_golang_mock//gomock:go_default_library",
         "@com_github_stretchr_testify//assert:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@go_googleapis//google/rpc:errdetails_go_proto",
+        "@org_golang_google_grpc//status:go_default_library",
         "@org_uber_go_zap//:go_default_library",
     ],
 )

@@ -237,7 +237,14 @@ func (s *AccountService) makeEnvironmentRoles(
 		environmentRoles = append(environmentRoles, er)
 	}
 	if len(environmentRoles) == 0 {
-		return nil, nil, localizedError(statusNotFound, locale.JaJP)
+		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NotFoundError),
+		})
+		if err != nil {
+			return nil, nil, statusInternal.Err()
+		}
+		return nil, nil, dt.Err()
 	}
 	return environmentRoles, lastAccount, nil
 }
