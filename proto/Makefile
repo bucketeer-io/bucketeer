@@ -24,6 +24,7 @@ go: remove-go
 			--proto_path=${GOOGLEAPIS} \
 			--go_out=plugins=grpc:${GIT_TOP_DIR} \
 			--go_opt=paths=source_relative \
+			--include_imports \
 			--descriptor_set_out=${GIT_TOP_DIR}/proto/$$f/proto_descriptor.pb \
 			${GIT_TOP_DIR}/proto/$$f/*.proto; \
 	done
