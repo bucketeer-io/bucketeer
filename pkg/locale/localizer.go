@@ -37,6 +37,7 @@ const (
 	InternalServerError   = "InternalServerError"
 	NotFoundError         = "NotFoundError"
 	InvalidArgumentError  = "InvalidArgumentError"
+	AlreadyExistsError    = "AlreadyExistsError"
 )
 
 func init() {

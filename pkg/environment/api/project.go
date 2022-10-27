@@ -110,7 +110,7 @@ func (s *EnvironmentService) ListProjects(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "creator_email"}, req.SearchKeyword))
 	}
-	orders, err := s.newProjectListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newProjectListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -125,7 +125,14 @@ func (s *EnvironmentService) ListProjects(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	projectStorage := v2es.NewProjectStorage(s.mysqlClient)
 	projects, nextCursor, totalCount, err := projectStorage.ListProjects(
@@ -161,6 +168,7 @@ func (s *EnvironmentService) ListProjects(
 func (s *EnvironmentService) newProjectListOrders(
 	orderBy environmentproto.ListProjectsRequest_OrderBy,
 	orderDirection environmentproto.ListProjectsRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -172,7 +180,14 @@ func (s *EnvironmentService) newProjectListOrders(
 	case environmentproto.ListProjectsRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == environmentproto.ListProjectsRequest_DESC {

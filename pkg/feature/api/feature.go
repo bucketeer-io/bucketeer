@@ -61,7 +61,14 @@ func (s *FeatureService) GetFeature(
 	feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2fs.ErrFeatureNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get feature",
@@ -233,7 +240,7 @@ func (s *FeatureService) listFeatures(
 	if searchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, searchKeyword))
 	}
-	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection)
+	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -250,7 +257,14 @@ func (s *FeatureService) listFeatures(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, "", 0, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, "", 0, statusInternal.Err()
+		}
+		return nil, "", 0, dt.Err()
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	features, nextCursor, totalCount, err := featureStorage.ListFeatures(
@@ -319,7 +333,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	if searchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, searchKeyword))
 	}
-	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection)
+	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -336,7 +350,14 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, "", 0, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, "", 0, statusInternal.Err()
+		}
+		return nil, "", 0, dt.Err()
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	features, nextCursor, totalCount, err := featureStorage.ListFeaturesFilteredByExperiment(
@@ -365,6 +386,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 func (s *FeatureService) newListFeaturesOrdersMySQL(
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -380,7 +402,14 @@ func (s *FeatureService) newListFeaturesOrdersMySQL(
 	case featureproto.ListFeaturesRequest_ENABLED:
 		column = "feature.enabled"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == featureproto.ListFeaturesRequest_DESC {
@@ -421,7 +450,14 @@ func (s *FeatureService) ListEnabledFeatures(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	features, nextCursor, _, err := featureStorage.ListFeatures(
@@ -525,7 +561,14 @@ func (s *FeatureService) CreateFeature(
 	})
 	if err != nil {
 		if err == v2fs.ErrFeatureAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create feature",
@@ -1733,7 +1776,14 @@ func (s *FeatureService) CloneFeature(
 	f, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2fs.ErrFeatureNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get feature",
@@ -1803,7 +1853,14 @@ func (s *FeatureService) CloneFeature(
 	})
 	if err != nil {
 		if err == v2fs.ErrFeatureAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to clone feature",

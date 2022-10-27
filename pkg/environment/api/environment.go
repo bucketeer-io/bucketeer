@@ -133,7 +133,7 @@ func (s *EnvironmentService) ListEnvironments(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "description"}, req.SearchKeyword))
 	}
-	orders, err := s.newEnvironmentListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newEnvironmentListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -148,7 +148,14 @@ func (s *EnvironmentService) ListEnvironments(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
 	environments, nextCursor, totalCount, err := environmentStorage.ListEnvironments(
@@ -184,6 +191,7 @@ func (s *EnvironmentService) ListEnvironments(
 func (s *EnvironmentService) newEnvironmentListOrders(
 	orderBy environmentproto.ListEnvironmentsRequest_OrderBy,
 	orderDirection environmentproto.ListEnvironmentsRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -195,7 +203,14 @@ func (s *EnvironmentService) newEnvironmentListOrders(
 	case environmentproto.ListEnvironmentsRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == environmentproto.ListEnvironmentsRequest_DESC {

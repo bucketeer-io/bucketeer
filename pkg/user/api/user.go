@@ -67,7 +67,14 @@ func (s *userService) getUser(
 	user, err := userStorage.GetUser(ctx, userID, environmentNamespace)
 	if err != nil {
 		if err == userstorage.ErrUserNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get user",
@@ -110,7 +117,7 @@ func (s *userService) ListUsers(
 	if req.To != 0 {
 		whereParts = append(whereParts, mysql.NewFilter("last_seen", "<=", req.To))
 	}
-	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -130,7 +137,14 @@ func (s *userService) ListUsers(
 	}
 	offset, err := strconv.Atoi(req.Cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	storage := userstorage.NewUserStorage(s.storageClient)
 	users, nextCursor, err := storage.ListUsers(ctx, whereParts, orders, limit, offset)
@@ -160,6 +174,7 @@ func (s *userService) ListUsers(
 func (s *userService) newListOrders(
 	orderBy userproto.ListUsersRequest_OrderBy,
 	orderDirection userproto.ListUsersRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -169,7 +184,14 @@ func (s *userService) newListOrders(
 	case userproto.ListUsersRequest_CREATED_AT:
 		column = "created_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == userproto.ListUsersRequest_DESC {
