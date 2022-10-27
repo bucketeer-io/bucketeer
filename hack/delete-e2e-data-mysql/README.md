@@ -1,7 +1,7 @@
 ## Run Command
 
 ```
-go run ./cmd/delete-e2e-data-mysql delete \
+go run ./hack/delete-e2e-data-mysql delete \
   --mysql-user=<MYSQL_USER> \
   --mysql-pass=<MYSQL_PASS> \
   --mysql-host=<MYSQL_HOST> \
@@ -15,7 +15,7 @@ go run ./cmd/delete-e2e-data-mysql delete \
 Delete data created by the e2e test whose test_id is `example`.
 
 ```
-go run ./cmd/delete-e2e-data-mysql delete \
+go run ./hack/delete-e2e-data-mysql delete \
   --mysql-user=sample \
   --mysql-pass=${MYSQL_PASS} \
   --mysql-host=${MYSQL_HOST} \
