@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - actions-fd868127
     paths-ignore:
       - "README.md"
       - "ui/web-v2/README.md"
