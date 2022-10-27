@@ -538,7 +538,10 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	return &autoopsproto.UpdateAutoOpsRuleResponse{}, nil
 }
 
-func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(req *autoopsproto.UpdateAutoOpsRuleRequest, localizer locale.Localizer) error {
+func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
+	req *autoopsproto.UpdateAutoOpsRuleRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -699,7 +702,10 @@ func (s *AutoOpsService) GetAutoOpsRule(
 	}, nil
 }
 
-func (s *AutoOpsService) validateGetAutoOpsRuleRequest(req *autoopsproto.GetAutoOpsRuleRequest, localizer locale.Localizer) error {
+func (s *AutoOpsService) validateGetAutoOpsRuleRequest(
+	req *autoopsproto.GetAutoOpsRuleRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -874,7 +880,10 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: false}, nil
 }
 
-func (s *AutoOpsService) validateExecuteAutoOpsRequest(req *autoopsproto.ExecuteAutoOpsRequest, localizer locale.Localizer) error {
+func (s *AutoOpsService) validateExecuteAutoOpsRequest(
+	req *autoopsproto.ExecuteAutoOpsRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

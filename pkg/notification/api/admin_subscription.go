@@ -487,7 +487,10 @@ func (s *NotificationService) DeleteAdminSubscription(
 	return &notificationproto.DeleteAdminSubscriptionResponse{}, nil
 }
 
-func validateDeleteAdminSubscriptionRequest(req *notificationproto.DeleteAdminSubscriptionRequest, localizer locale.Localizer) error {
+func validateDeleteAdminSubscriptionRequest(
+	req *notificationproto.DeleteAdminSubscriptionRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -564,7 +567,10 @@ func (s *NotificationService) GetAdminSubscription(
 	return &notificationproto.GetAdminSubscriptionResponse{Subscription: subscription.Subscription}, nil
 }
 
-func validateGetAdminSubscriptionRequest(req *notificationproto.GetAdminSubscriptionRequest, localizer locale.Localizer) error {
+func validateGetAdminSubscriptionRequest(
+	req *notificationproto.GetAdminSubscriptionRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

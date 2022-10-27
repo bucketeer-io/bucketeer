@@ -528,7 +528,10 @@ func (s *NotificationService) DeleteSubscription(
 	return &notificationproto.DeleteSubscriptionResponse{}, nil
 }
 
-func validateDeleteSubscriptionRequest(req *notificationproto.DeleteSubscriptionRequest, localizer locale.Localizer) error {
+func validateDeleteSubscriptionRequest(
+	req *notificationproto.DeleteSubscriptionRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
