@@ -123,6 +123,8 @@ Since Bucketeer uses Kubernetes, using YAML file and Helm fits into our cases.
 
 ### Cloud Pub/Sub & Bigtable
 
+![event-pipeline](./images/0039-image1.png)
+
 #### Comparison Table
 
 |                                    | GCP           | AWS                                                          | Azure                                                        |
@@ -177,6 +179,8 @@ In conclusion, we can enable an order guarantee because we can set the key for e
 
 ### Cloud SQL & Memorystore
 
+![event-pipeline](./images/0039-image3.png)
+
 #### Comparison Table
 
 |      | GCP        | AWS                                                     | Azure                                                      |
@@ -196,11 +200,52 @@ Yes. We can configure memory store as a optional in YAML file.
 
 ### Druid (GCS) & Kafka
 
-WIP
+![data-pipeline](./images/0039-image4.png)
 
+We use Druid as a relay DB and usual DB(fething data directory) and Kafka as an intereface for Druid. The amount of data is a huge and we have to handle them as a high performance when fething data directory.
 
+#### Controversial topic
+
+##### 1. Can we stop using Druid & Kafka?
+
+We have the following problems when using Druid & Kafka.
+
+* It's hard to maintainance self-hosted service.
+* It's hard to solve the problem when something such as error occurs.
+
+Therefore, We have the following options:
+
+**1.  Replace with managed service**
+
+|        | GCP     | AWS           | Azure              |
+| ------ | ------- | ------------- | ------------------ |
+|        | AlloyDB | Amazon Aurora | Azure SQL Database |
+| SLA(%) | >=99.99 | >=99.99       | >=99.995           |
+
+Pros
+
+* If we can use AlloyDB, there is a possibility that we can use single DB.
+
+Cons
+
+* AlloyDB may not match with our use cases. For example, it takes time longer than Druid.
+
+**2.  Preprocess evaluation data** 
+
+![data-pipeline2](./images/0039-image5.png)
+
+Pros
+
+* This architecture can be consistent with Calculator.
+* We don't need high performance DB.
+
+Cons
+
+* It takes time longer than 1.
 
 ### Cloud KMS
+
+![webhook](./images/0039-image2.png)
 
 #### Comparison Table
 
@@ -259,3 +304,10 @@ https://cloud.google.com/kms/sla
 
 https://azure.microsoft.com/ja-jp/updates/akv-sla-raised-to-9999/
 
+
+
+https://azure.microsoft.com/ja-jp/support/legal/sla/azure-sql-database/v1_8/
+
+
+
+https://aws.amazon.com/rds/aurora/sla/
