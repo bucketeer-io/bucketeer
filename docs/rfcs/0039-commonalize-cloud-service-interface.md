@@ -241,7 +241,7 @@ Pros
 
 Cons
 
-* It takes time longer than 1.
+* It takes time longer than 1 to finish this task.
 
 ### Cloud KMS
 
