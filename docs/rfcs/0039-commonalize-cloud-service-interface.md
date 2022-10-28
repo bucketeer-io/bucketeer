@@ -237,6 +237,7 @@ Cons
 Pros
 
 * This architecture can be consistent with Calculator.
+* EventCounter service can access to only single DB.
 * We don't need high performance DB.
 
 Cons
