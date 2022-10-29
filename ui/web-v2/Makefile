@@ -1,5 +1,5 @@
 .PHONY: all
-all: install buildifier-check lint gen_proto build
+all: install lint gen_proto build
 
 ####################################
 # Yarn
@@ -22,18 +22,6 @@ lint:
 	yarn lint
 
 ####################################
-# Bazel
-####################################
-
-.PHONY: buildifier
-buildifier-fix:
-	bazelisk run //:buildifier-fix
-
-.PHONY: buildifier-check
-buildifier-check:
-	bazelisk run //:buildifier-check
-
-####################################
 # Generate proto definition files
 ####################################
 
@@ -41,7 +29,6 @@ ROOT_DIR := $(CURDIR)/../..
 SRC_DIR := $(CURDIR)/apps/admin/src
 PROTOBUF_INCLUDE_DIR := $(ROOT_DIR)/proto/external/protocolbuffers/protobuf/v3.18.1
 NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
-BIN_DIR := bazel-out/darwin-fastbuild/bin
 
 .PHONY: gen_proto
 gen_proto: clean_proto
