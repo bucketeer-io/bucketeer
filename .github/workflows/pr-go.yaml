@@ -30,6 +30,8 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
+      - name: Generate proto go files
+        run: make proto-go
       - name: Download vendor
         run: make vendor
       - name: Run unit test
@@ -43,6 +45,8 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
+      - name: Generate proto go files
+        run: make proto-go
       - name: Download vendor
         run: make vendor
       - name: Build
