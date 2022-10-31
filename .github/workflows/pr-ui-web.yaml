@@ -15,7 +15,6 @@ concurrency:
 env:
   NODE_VERSION: 16
   PROTOC_VERSION: 3.18.1
-  BUILDIFIER_VERSION: 5.1.0
   WEB_DIRECTORY: "ui/web-v2"
 
 jobs:
@@ -104,14 +103,3 @@ jobs:
         run: make gen_proto
       - name: Build
         run: make build
-
-  buildifier-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Check Bazel file formatting
-        uses: thompsonja/bazel-buildifier@v0.4.0
-        with:
-          warnings: -function-docstring,-function-docstring-header,-function-docstring-args,-function-docstring-return,-module-docstring,-skylark-docstring,-rule-impl-return
-          buildifier_version: ${{ env.BUILDIFIER_VERSION }}
-          excludes: ${{ env.WEB_DIRECTORY }}/node_modules
