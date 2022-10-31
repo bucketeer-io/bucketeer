@@ -69,6 +69,7 @@ local-deps:
 	go install github.com/golang/mock/mockgen@v1.6.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/nilslice/protolock/...@v0.15.0;
+	go install github.com/mikefarah/yq/v4@v4.28.2
 
 .PHONY: gazelle
 gazelle: proto-go
@@ -128,6 +129,10 @@ proto-lock-commit-force:
 .PHONY: proto-go
 proto-go:
 	make -C proto go
+
+.PHONY: proto-go-descriptor
+proto-go-descriptor:
+	make -C proto go-descriptor
 
 .PHONY: mockgen
 mockgen: proto-go
@@ -277,18 +282,6 @@ e2e:
 #############################
 # Chores
 #############################
-
-.PHONY: docker-gen
-docker-gen: build
-	rm -fr bazel-proto
-	cp -r $$(bazel info | grep bazel-bin | sed -E 's/bazel-bin: (.+)/\1/')/proto bazel-proto
-	docker run -it --rm \
-		-v ${PWD}:/go/src/github.com/bucketeer-io/bucketeer \
-		-w /go/src/github.com/bucketeer-io/bucketeer \
-		--env DIR=/go/src/github.com/bucketeer-io/bucketeer \
-		--env DESCRIPTOR_PATH=/go/src/github.com/bucketeer-io/bucketeer/bazel-proto \
-		ghcr.io/bucketeer-io/bucketeer-runner:0.1.0 \
-		bash tools/gen/gen.sh
 
 .PHONY: remove-bazel-output
 remove-bazel-output:

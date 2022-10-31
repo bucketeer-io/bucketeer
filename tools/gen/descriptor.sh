@@ -30,7 +30,7 @@ descriptor_file="proto_descriptor.pb"
 # api-gateway
 api_gateway_values_path="./manifests/bucketeer/charts/api-gateway/values.yaml"
 encoded_descriptor=$(cat ${DESCRIPTOR_PATH}/gateway/${descriptor_file} | base64 | tr -d \\n | sed -E "s|\/|\\\/|")
-sed -i -E "s|(descriptor): .+|\1: \"${encoded_descriptor}\"|" ${api_gateway_values_path}
+yq eval ".envoy.descriptor = \"${encoded_descriptor}\"" -i ${api_gateway_values_path}
 
 # web-gateway
 web_gateway_values_path="./manifests/bucketeer/charts/web-gateway/values.yaml"
@@ -38,5 +38,5 @@ proto_descriptor_dirnames=$(find ${DESCRIPTOR_PATH} -name "$descriptor_file" -no
 for service_name in $proto_descriptor_dirnames
 do
   encoded_descriptor=$(cat ${DESCRIPTOR_PATH}/${service_name}/${descriptor_file} | base64 | tr -d \\n | sed -E "s|\/|\\\/|")
-	sed -i -E "s|(${service_name}Descriptor): .+|\1: \"${encoded_descriptor}\"|" ${web_gateway_values_path}
+  yq eval ".envoy.${service_name}Descriptor = \"${encoded_descriptor}\"" -i ${web_gateway_values_path}
 done
