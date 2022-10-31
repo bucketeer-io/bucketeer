@@ -34,6 +34,10 @@ remove-go:
 	find . -name "*.pb.go" -type f -delete; \
 	find . -name "proto_descriptor.pb" -type f -delete
 
+.PHONY: go-descriptor
+go-descriptor:
+	DIR=$(GIT_TOP_DIR) DESCRIPTOR_PATH=$(GIT_TOP_DIR)/proto bash $(GIT_TOP_DIR)/tools/gen/descriptor.sh
+
 .PHONY: check
 check: fmt-check lock-check
 

@@ -69,6 +69,7 @@ local-deps:
 	go install github.com/golang/mock/mockgen@v1.6.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/nilslice/protolock/...@v0.15.0;
+	go install github.com/mikefarah/yq/v4@v4.28.2
 
 .PHONY: gazelle
 gazelle: proto-go
@@ -128,6 +129,10 @@ proto-lock-commit-force:
 .PHONY: proto-go
 proto-go:
 	make -C proto go
+
+.PHONY: proto-go-descriptor
+proto-go-descriptor:
+	make -C proto go-descriptor
 
 .PHONY: mockgen
 mockgen: proto-go
