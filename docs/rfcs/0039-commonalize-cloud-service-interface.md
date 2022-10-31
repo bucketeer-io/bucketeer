@@ -138,7 +138,7 @@ Since Bucketeer uses Kubernetes, using YAML file and Helm fits into our cases.
 | Expiration period in subscription  | 31 days       | 14 days (default is 4 days)                                  | 14 days                                                      |
 | API throttling(Tokyo region)       |               | 1500 transactions per second                                 |                                                              |
 | At-Least-Once                      | ◯             | ◯                                                            | ◯                                                            |
-| SLA(%)                             | >=99.9        | >=99.9                                                       | >=99.9                                                       |
+| SLA(%)                             | >=99.95       | >=99.9                                                       | >=99.9                                                       |
 
 
 
@@ -270,6 +270,8 @@ https://learn.microsoft.com/en-us/azure/service-bus-messaging/message-sessions
 https://devblogs.microsoft.com/premier-developer/ordering-messages-in-azure-service-bus/
 
 https://christina04.hatenablog.com/entry/gcp-cloud-pubsub-ordering-key-concern
+
+
 
 Quotas
 
