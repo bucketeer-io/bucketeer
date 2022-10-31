@@ -1,11 +1,8 @@
 image:
   repository: ghcr.io/bucketeer-io/bucketeer-gateway
   pullPolicy: IfNotPresent
-
 fullnameOverride: "api-gateway"
-
 namespace:
-
 env:
   project:
   bigtableInstance:
@@ -29,15 +26,11 @@ env:
   featureService: localhost:9001
   accountService: localhost:9001
   traceSamplingProbability: 0.0001
-
 affinity: {}
-
 nodeSelector: {}
-
 pdb:
   enabled:
   maxUnavailable: 20%
-
 hpa:
   enabled:
   minReplicas:
@@ -45,7 +38,6 @@ hpa:
   metrics:
     cpu:
       targetAverageUtilization:
-
 tls:
   bucketeerJP:
     secrets:
@@ -53,11 +45,9 @@ tls:
     secret:
     cert:
     key:
-
 serviceToken:
   secret:
   token:
-
 envoy:
   image:
     repository: envoyproxy/envoy-alpine
@@ -68,17 +58,13 @@ envoy:
   port: 9000
   adminPort: 8001
   resources: {}
-
 service:
   externalPort: 9000
-
 ingress:
   host:
   staticIPName:
-
 health:
   initialDelaySeconds: 10
   periodSeconds: 10
   failureThreshold: 10
-
 resources: {}
