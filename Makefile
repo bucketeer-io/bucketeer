@@ -283,18 +283,6 @@ e2e:
 # Chores
 #############################
 
-.PHONY: docker-gen
-docker-gen: build
-	rm -fr bazel-proto
-	cp -r $$(bazel info | grep bazel-bin | sed -E 's/bazel-bin: (.+)/\1/')/proto bazel-proto
-	docker run -it --rm \
-		-v ${PWD}:/go/src/github.com/bucketeer-io/bucketeer \
-		-w /go/src/github.com/bucketeer-io/bucketeer \
-		--env DIR=/go/src/github.com/bucketeer-io/bucketeer \
-		--env DESCRIPTOR_PATH=/go/src/github.com/bucketeer-io/bucketeer/bazel-proto \
-		ghcr.io/bucketeer-io/bucketeer-runner:0.1.0 \
-		bash tools/gen/gen.sh
-
 .PHONY: remove-bazel-output
 remove-bazel-output:
 	bazelisk clean --expunge
