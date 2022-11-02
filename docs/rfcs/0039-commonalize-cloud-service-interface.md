@@ -244,6 +244,46 @@ Cons
 
 * It takes time longer than 1 to finish this task.
 
+##### Conclusion
+
+We decided not to conclude this topic. Instead, we decided to store Evaluation Event to another DB, too. Therefore we can divide features into single feature flag service and A/B test service. 
+
+Because Evaluation Event is a large data, we need to switch MySQL and PostgreSQL. Since PostgreSQL is ORDBMS, we need to define table as follows:
+
+MySQL
+
+```mysql
+CREATE TABLE IF NOT EXISTS `feature` (
+  `id` VARCHAR(255) NOT NULL,
+  `tags` JSON NOT NULL,
+  ...
+  PRIMARY KEY (`id`, `environment_namespace`)
+);
+CREATE TABLE IF NOT EXISTS `tag` (
+  `id` VARCHAR(255) NOT NULL,
+  `created_at` BIGINT(20) NOT NULL,
+  `updated_at` BIGINT(20) NOT NULL,
+  `environment_namespace` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`, `environment_namespace`)
+);
+```
+
+PostgreSQL
+
+```postgresql
+CREATE TABLE IF NOT EXISTS "feature" (
+  "id" VARCHAR(255) NOT NULL,
+  "tags" tags NOT NULL,
+  ...
+  PRIMARY KEY ("id", "environment_namespace")
+);
+
+INSERT INTO feature VALUES ('id', ROW('id', 1667370510, 1667370510, 'production'), ...);
+...
+```
+
+
+
 ### Cloud KMS
 
 ![webhook](./images/0039-image2.png)
