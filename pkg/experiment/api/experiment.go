@@ -56,7 +56,14 @@ func (s *experimentService) GetExperiment(
 	experiment, err := experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2es.ErrExperimentNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -122,7 +129,7 @@ func (s *experimentService) ListExperiments(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name", "description"}, req.SearchKeyword))
 	}
-	orders, err := s.newExperimentListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newExperimentListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -137,7 +144,14 @@ func (s *experimentService) ListExperiments(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
 	experiments, nextCursor, totalCount, err := experimentStorage.ListExperiments(
@@ -174,6 +188,7 @@ func (s *experimentService) ListExperiments(
 func (s *experimentService) newExperimentListOrders(
 	orderBy proto.ListExperimentsRequest_OrderBy,
 	orderDirection proto.ListExperimentsRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -185,7 +200,14 @@ func (s *experimentService) newExperimentListOrders(
 	case proto.ListExperimentsRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == proto.ListExperimentsRequest_DESC {
@@ -307,7 +329,14 @@ func (s *experimentService) CreateExperiment(
 	})
 	if err != nil {
 		if err == v2es.ErrExperimentAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create experiment",
@@ -442,7 +471,14 @@ func (s *experimentService) UpdateExperiment(
 	})
 	if err != nil {
 		if err == v2es.ErrExperimentNotFound || err == v2es.ErrExperimentUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update experiment",

@@ -118,7 +118,14 @@ func (s *FeatureService) CreateSegment(
 	})
 	if err != nil {
 		if err == v2fs.ErrSegmentAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create segment",
@@ -407,7 +414,14 @@ func (s *FeatureService) GetSegment(
 	segment, err := segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get segment",
@@ -458,7 +472,7 @@ func (s *FeatureService) ListSegments(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name", "description"}, req.SearchKeyword))
 	}
-	orders, err := s.newSegmentListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newSegmentListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -473,7 +487,14 @@ func (s *FeatureService) ListSegments(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	var isInUseStatus *bool
 	if req.IsInUseStatus != nil {
@@ -516,6 +537,7 @@ func (s *FeatureService) ListSegments(
 func (s *FeatureService) newSegmentListOrders(
 	orderBy featureproto.ListSegmentsRequest_OrderBy,
 	orderDirection featureproto.ListSegmentsRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -527,7 +549,14 @@ func (s *FeatureService) newSegmentListOrders(
 	case featureproto.ListSegmentsRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == featureproto.ListSegmentsRequest_DESC {

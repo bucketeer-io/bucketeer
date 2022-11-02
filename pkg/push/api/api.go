@@ -194,7 +194,14 @@ func (s *PushService) CreatePush(
 	})
 	if err != nil {
 		if err == v2ps.ErrPushAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create push",
@@ -277,7 +284,14 @@ func (s *PushService) UpdatePush(
 	})
 	if err != nil {
 		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update push",
@@ -305,7 +319,14 @@ func (s *PushService) validateUpdatePushRequest(
 	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if s.isNoUpdatePushCommand(req) {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -385,7 +406,7 @@ func (s *PushService) DeletePush(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeletePushRequest(req); err != nil {
+	if err := validateDeletePushRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -419,7 +440,14 @@ func (s *PushService) DeletePush(
 	})
 	if err != nil {
 		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to delete push",
@@ -441,9 +469,16 @@ func (s *PushService) DeletePush(
 	return &pushproto.DeletePushResponse{}, nil
 }
 
-func validateDeletePushRequest(req *pushproto.DeletePushRequest) error {
+func validateDeletePushRequest(req *pushproto.DeletePushRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -549,7 +584,7 @@ func (s *PushService) ListPushes(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name"}, req.SearchKeyword))
 	}
-	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -579,6 +614,7 @@ func (s *PushService) ListPushes(
 func (s *PushService) newListOrders(
 	orderBy pushproto.ListPushesRequest_OrderBy,
 	orderDirection pushproto.ListPushesRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -590,7 +626,14 @@ func (s *PushService) newListOrders(
 	case pushproto.ListPushesRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == pushproto.ListPushesRequest_DESC {
@@ -614,7 +657,14 @@ func (s *PushService) listPushes(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, "", 0, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, "", 0, statusInternal.Err()
+		}
+		return nil, "", 0, dt.Err()
 	}
 	pushStorage := v2ps.NewPushStorage(s.mysqlClient)
 	pushes, nextCursor, totalCount, err := pushStorage.ListPushes(

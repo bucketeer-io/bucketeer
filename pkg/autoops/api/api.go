@@ -211,7 +211,14 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create autoOps",
@@ -340,7 +347,7 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteAutoOpsRuleRequest(req); err != nil {
+	if err := validateDeleteAutoOpsRuleRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -374,7 +381,14 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound || err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to delete autoOpsRule",
@@ -395,9 +409,16 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	return &autoopsproto.DeleteAutoOpsRuleResponse{}, nil
 }
 
-func validateDeleteAutoOpsRuleRequest(req *autoopsproto.DeleteAutoOpsRuleRequest) error {
+func validateDeleteAutoOpsRuleRequest(req *autoopsproto.DeleteAutoOpsRuleRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -414,7 +435,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateUpdateAutoOpsRuleRequest(req); err != nil {
+	if err := s.validateUpdateAutoOpsRuleRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	opsEventRateClauses := []*autoopsproto.OpsEventRateClause{}
@@ -486,7 +507,14 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound || err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		if status.Code(err) == codes.InvalidArgument {
 			return nil, err
@@ -510,9 +538,19 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	return &autoopsproto.UpdateAutoOpsRuleResponse{}, nil
 }
 
-func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(req *autoopsproto.UpdateAutoOpsRuleRequest) error {
+func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
+	req *autoopsproto.UpdateAutoOpsRuleRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if s.isNoUpdateAutoOpsRuleCommand(req) {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -631,14 +669,21 @@ func (s *AutoOpsService) GetAutoOpsRule(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateGetAutoOpsRuleRequest(req); err != nil {
+	if err := s.validateGetAutoOpsRuleRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
 	autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -657,9 +702,19 @@ func (s *AutoOpsService) GetAutoOpsRule(
 	}, nil
 }
 
-func (s *AutoOpsService) validateGetAutoOpsRuleRequest(req *autoopsproto.GetAutoOpsRuleRequest) error {
+func (s *AutoOpsService) validateGetAutoOpsRuleRequest(
+	req *autoopsproto.GetAutoOpsRuleRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -754,7 +809,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateExecuteAutoOpsRequest(req); err != nil {
+	if err := s.validateExecuteAutoOpsRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -797,7 +852,14 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true}, nil
 		}
 		if err == v2as.ErrAutoOpsRuleNotFound || err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to execute autoOpsRule",
@@ -818,9 +880,19 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: false}, nil
 }
 
-func (s *AutoOpsService) validateExecuteAutoOpsRequest(req *autoopsproto.ExecuteAutoOpsRequest) error {
+func (s *AutoOpsService) validateExecuteAutoOpsRequest(
+	req *autoopsproto.ExecuteAutoOpsRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.ChangeAutoOpsRuleTriggeredAtCommand == nil {
 		return localizedError(statusNoCommand, locale.JaJP)

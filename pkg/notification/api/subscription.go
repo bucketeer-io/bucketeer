@@ -97,7 +97,14 @@ func (s *NotificationService) CreateSubscription(
 	})
 	if err != nil {
 		if err == v2ss.ErrSubscriptionAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create subscription",
@@ -182,7 +189,7 @@ func (s *NotificationService) UpdateSubscription(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateUpdateSubscriptionRequest(req); err != nil {
+	if err := s.validateUpdateSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	commands := s.createUpdateSubscriptionCommands(req)
@@ -211,7 +218,7 @@ func (s *NotificationService) EnableSubscription(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnableSubscriptionRequest(req); err != nil {
+	if err := s.validateEnableSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateSubscription(
@@ -238,9 +245,17 @@ func (s *NotificationService) EnableSubscription(
 
 func (s *NotificationService) validateEnableSubscriptionRequest(
 	req *notificationproto.EnableSubscriptionRequest,
+	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -257,7 +272,7 @@ func (s *NotificationService) DisableSubscription(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateDisableSubscriptionRequest(req); err != nil {
+	if err := s.validateDisableSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateSubscription(
@@ -284,9 +299,17 @@ func (s *NotificationService) DisableSubscription(
 
 func (s *NotificationService) validateDisableSubscriptionRequest(
 	req *notificationproto.DisableSubscriptionRequest,
+	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -379,9 +402,17 @@ func (s *NotificationService) updateSubscription(
 
 func (s *NotificationService) validateUpdateSubscriptionRequest(
 	req *notificationproto.UpdateSubscriptionRequest,
+	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if s.isNoUpdateSubscriptionCommand(req) {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -413,7 +444,7 @@ func (s *NotificationService) DeleteSubscription(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteSubscriptionRequest(req); err != nil {
+	if err := validateDeleteSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	var handler command.Handler = command.NewEmptySubscriptionCommandHandler()
@@ -451,7 +482,14 @@ func (s *NotificationService) DeleteSubscription(
 	})
 	if err != nil {
 		if err == v2ss.ErrSubscriptionNotFound || err == v2ss.ErrSubscriptionUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to delete subscription",
@@ -490,9 +528,19 @@ func (s *NotificationService) DeleteSubscription(
 	return &notificationproto.DeleteSubscriptionResponse{}, nil
 }
 
-func validateDeleteSubscriptionRequest(req *notificationproto.DeleteSubscriptionRequest) error {
+func validateDeleteSubscriptionRequest(
+	req *notificationproto.DeleteSubscriptionRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -525,14 +573,21 @@ func (s *NotificationService) GetSubscription(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetSubscriptionRequest(req); err != nil {
+	if err := validateGetSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
 	subscription, err := subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2ss.ErrSubscriptionNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get subscription",
@@ -553,9 +608,16 @@ func (s *NotificationService) GetSubscription(
 	return &notificationproto.GetSubscriptionResponse{Subscription: subscription.Subscription}, nil
 }
 
-func validateGetSubscriptionRequest(req *notificationproto.GetSubscriptionRequest) error {
+func validateGetSubscriptionRequest(req *notificationproto.GetSubscriptionRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		return localizedError(statusIDRequired, locale.JaJP)
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -587,7 +649,7 @@ func (s *NotificationService) ListSubscriptions(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name"}, req.SearchKeyword))
 	}
-	orders, err := s.newSubscriptionListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newSubscriptionListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -616,6 +678,7 @@ func (s *NotificationService) ListSubscriptions(
 func (s *NotificationService) newSubscriptionListOrders(
 	orderBy notificationproto.ListSubscriptionsRequest_OrderBy,
 	orderDirection notificationproto.ListSubscriptionsRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -627,7 +690,14 @@ func (s *NotificationService) newSubscriptionListOrders(
 	case notificationproto.ListSubscriptionsRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == notificationproto.ListSubscriptionsRequest_DESC {
@@ -692,7 +762,14 @@ func (s *NotificationService) listSubscriptionsMySQL(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, "", 0, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, "", 0, statusInternal.Err()
+		}
+		return nil, "", 0, dt.Err()
 	}
 	subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
 	subscriptions, nextCursor, totalCount, err := subscriptionStorage.ListSubscriptions(

@@ -254,7 +254,14 @@ func (s *FeatureService) GetSegmentUser(
 	user, err := segmentUserStorage.GetSegmentUser(ctx, id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2fs.ErrSegmentUserNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get segment user",
@@ -314,7 +321,14 @@ func (s *FeatureService) ListSegmentUsers(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	segmentUserStorage := v2fs.NewSegmentUserStorage(s.mysqlClient)
 	users, nextCursor, err := segmentUserStorage.ListSegmentUsers(

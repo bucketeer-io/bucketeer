@@ -22,7 +22,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	gstatus "google.golang.org/grpc/status"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
@@ -65,6 +68,16 @@ func TestCreatePushMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc        string
@@ -137,7 +150,7 @@ func TestCreatePushMySQL(t *testing.T) {
 					Name:      "name-1",
 				},
 			},
-			expectedErr: localizedError(statusAlreadyExists, locale.JaJP),
+			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
 			desc: "success",
@@ -187,6 +200,16 @@ func TestUpdatePushMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc        string
@@ -254,7 +277,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 				Id:                 "key-1",
 				AddPushTagsCommand: &pushproto.AddPushTagsCommand{Tags: []string{"tag-1"}},
 			},
-			expectedErr: localizedError(statusNotFound, locale.JaJP),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "success: rename",
@@ -361,6 +384,16 @@ func TestDeletePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*PushService)
@@ -392,7 +425,7 @@ func TestDeletePushMySQL(t *testing.T) {
 				Id:                   "key-1",
 				Command:              &pushproto.DeletePushCommand{},
 			},
-			expectedErr: localizedError(statusNotFound, locale.JaJP),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "success",

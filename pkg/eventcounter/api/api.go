@@ -335,7 +335,14 @@ func (s *eventCounterService) GetExperimentResult(
 	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, req.ExperimentId, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2ecstorage.ErrExperimentResultNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get experiment result",
@@ -375,7 +382,14 @@ func (s *eventCounterService) ListExperimentResults(
 	if err != nil {
 		if err == storage.ErrKeyNotFound {
 			listExperimentCountsCounter.WithLabelValues(codeSuccess).Inc()
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get Experiment list",

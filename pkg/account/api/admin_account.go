@@ -237,7 +237,14 @@ func (s *AccountService) makeEnvironmentRoles(
 		environmentRoles = append(environmentRoles, er)
 	}
 	if len(environmentRoles) == 0 {
-		return nil, nil, localizedError(statusNotFound, locale.JaJP)
+		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NotFoundError),
+		})
+		if err != nil {
+			return nil, nil, statusInternal.Err()
+		}
+		return nil, nil, dt.Err()
 	}
 	return environmentRoles, lastAccount, nil
 }
@@ -293,7 +300,14 @@ func (s *AccountService) CreateAdminAccount(
 	for _, env := range environments {
 		_, err := accountStorage.GetAccount(ctx, account.Id, env.Namespace)
 		if err == nil {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		if err != v2as.ErrAccountNotFound {
 			return nil, err
@@ -326,7 +340,14 @@ func (s *AccountService) CreateAdminAccount(
 	})
 	if err != nil {
 		if err == v2as.ErrAdminAccountAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create admin account",
@@ -362,7 +383,14 @@ func (s *AccountService) EnableAdminAccount(
 	}
 	if err := s.updateAdminAccountMySQL(ctx, editor, req.Id, req.Command); err != nil {
 		if err == v2as.ErrAdminAccountNotFound || err == v2as.ErrAdminAccountUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to enable admin account",
@@ -398,7 +426,14 @@ func (s *AccountService) DisableAdminAccount(
 	}
 	if err := s.updateAdminAccountMySQL(ctx, editor, req.Id, req.Command); err != nil {
 		if err == v2as.ErrAdminAccountNotFound || err == v2as.ErrAdminAccountUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to disable admin account",
@@ -548,10 +583,24 @@ func (s *AccountService) ConvertAccount(
 	})
 	if err != nil {
 		if err == v2as.ErrAccountNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		if err == v2as.ErrAdminAccountAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to convert account",
@@ -594,7 +643,14 @@ func (s *AccountService) getAdminAccount(
 	account, err := adminAccountStorage.GetAdminAccount(ctx, email)
 	if err != nil {
 		if err == v2as.ErrAdminAccountNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get admin account",
@@ -631,7 +687,7 @@ func (s *AccountService) ListAdminAccounts(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"email"}, req.SearchKeyword))
 	}
-	orders, err := s.newAdminAccountListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newAdminAccountListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -646,7 +702,14 @@ func (s *AccountService) ListAdminAccounts(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	adminAccountStorage := v2as.NewAdminAccountStorage(s.mysqlClient)
 	accounts, nextCursor, totalCount, err := adminAccountStorage.ListAdminAccounts(
@@ -682,6 +745,7 @@ func (s *AccountService) ListAdminAccounts(
 func (s *AccountService) newAdminAccountListOrders(
 	orderBy accountproto.ListAdminAccountsRequest_OrderBy,
 	orderDirection accountproto.ListAdminAccountsRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -693,7 +757,14 @@ func (s *AccountService) newAdminAccountListOrders(
 	case accountproto.ListAdminAccountsRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == accountproto.ListAdminAccountsRequest_DESC {

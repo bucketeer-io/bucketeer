@@ -74,7 +74,14 @@ func (s *AccountService) CreateAccount(
 	_, err = s.getAdminAccount(ctx, account.Id, localizer)
 	if status.Code(err) != codes.NotFound {
 		if err == nil {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -112,7 +119,14 @@ func (s *AccountService) CreateAccount(
 	})
 	if err != nil {
 		if err == v2as.ErrAccountAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create account",
@@ -154,7 +168,14 @@ func (s *AccountService) ChangeAccountRole(
 	}
 	if err := s.updateAccountMySQL(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace); err != nil {
 		if err == v2as.ErrAccountNotFound || err == v2as.ErrAccountUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to change account role",
@@ -196,7 +217,14 @@ func (s *AccountService) EnableAccount(
 	}
 	if err := s.updateAccountMySQL(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace); err != nil {
 		if err == v2as.ErrAccountNotFound || err == v2as.ErrAccountUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to enable account",
@@ -238,7 +266,14 @@ func (s *AccountService) DisableAccount(
 	}
 	if err := s.updateAccountMySQL(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace); err != nil {
 		if err == v2as.ErrAccountNotFound || err == v2as.ErrAccountUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to disable account",
@@ -324,7 +359,14 @@ func (s *AccountService) getAccount(
 	account, err := accountStorage.GetAccount(ctx, email, environmentNamespace)
 	if err != nil {
 		if err == v2as.ErrAccountNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get account",
@@ -368,7 +410,7 @@ func (s *AccountService) ListAccounts(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"email"}, req.SearchKeyword))
 	}
-	orders, err := s.newAccountListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newAccountListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -383,7 +425,14 @@ func (s *AccountService) ListAccounts(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
 	accounts, nextCursor, totalCount, err := accountStorage.ListAccounts(
@@ -420,6 +469,7 @@ func (s *AccountService) ListAccounts(
 func (s *AccountService) newAccountListOrders(
 	orderBy accountproto.ListAccountsRequest_OrderBy,
 	orderDirection accountproto.ListAccountsRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -431,7 +481,14 @@ func (s *AccountService) newAccountListOrders(
 	case accountproto.ListAccountsRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == accountproto.ListAccountsRequest_DESC {

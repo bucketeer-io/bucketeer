@@ -20,6 +20,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	gstatus "google.golang.org/grpc/status"
 
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -109,6 +112,16 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -148,7 +161,7 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 					Name: "",
 				},
 			},
-			expectedErr: localizedError(statusNotFound, locale.JaJP),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "errInternal",
@@ -203,6 +216,16 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -240,7 +263,7 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 				Id:      "id",
 				Command: &accountproto.EnableAPIKeyCommand{},
 			},
-			expectedErr: localizedError(statusNotFound, locale.JaJP),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "errInternal",
@@ -291,6 +314,16 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -328,7 +361,7 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 				Id:      "id",
 				Command: &accountproto.DisableAPIKeyCommand{},
 			},
-			expectedErr: localizedError(statusNotFound, locale.JaJP),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "errInternal",
@@ -379,6 +412,16 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc     string
 		setup    func(*AccountService)
@@ -400,7 +443,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req:      &accountproto.GetAPIKeyRequest{Id: "id"},
-			expected: localizedError(statusNotFound, locale.JaJP),
+			expected: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "success",

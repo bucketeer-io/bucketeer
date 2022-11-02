@@ -20,8 +20,12 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	gstatus "google.golang.org/grpc/status"
 
 	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	storeclient "github.com/bucketeer-io/bucketeer/pkg/storage/testing"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
@@ -32,6 +36,16 @@ func TestGetGoalMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		setup                func(*experimentService)
@@ -55,7 +69,7 @@ func TestGetGoalMySQL(t *testing.T) {
 			},
 			id:                   "id-0",
 			environmentNamespace: "ns0",
-			expectedErr:          errNotFoundJaJP,
+			expectedErr:          createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -125,6 +139,16 @@ func TestCreateGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		setup       func(s *experimentService)
 		req         *experimentproto.CreateGoalRequest
@@ -173,7 +197,7 @@ func TestCreateGoalMySQL(t *testing.T) {
 				Command:              &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2019", Name: "name-0"},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errAlreadyExistsJaJP,
+			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
 			setup: func(s *experimentService) {

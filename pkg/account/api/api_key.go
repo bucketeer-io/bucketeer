@@ -88,7 +88,14 @@ func (s *AccountService) CreateAPIKey(
 	})
 	if err != nil {
 		if err == v2as.ErrAPIKeyAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create api key",
@@ -132,7 +139,14 @@ func (s *AccountService) ChangeAPIKeyName(
 	}
 	if err := s.updateAPIKeyMySQL(ctx, editor, req.Id, req.EnvironmentNamespace, req.Command); err != nil {
 		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to change api key name",
@@ -176,7 +190,14 @@ func (s *AccountService) EnableAPIKey(
 	}
 	if err := s.updateAPIKeyMySQL(ctx, editor, req.Id, req.EnvironmentNamespace, req.Command); err != nil {
 		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to enable api key",
@@ -219,7 +240,14 @@ func (s *AccountService) DisableAPIKey(
 	}
 	if err := s.updateAPIKeyMySQL(ctx, editor, req.Id, req.EnvironmentNamespace, req.Command); err != nil {
 		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to disable api key",
@@ -284,7 +312,14 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 	apiKey, err := apiKeyStorage.GetAPIKey(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2as.ErrAPIKeyNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get api key",
@@ -324,7 +359,7 @@ func (s *AccountService) ListAPIKeys(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name"}, req.SearchKeyword))
 	}
-	orders, err := s.newAPIKeyListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newAPIKeyListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -339,7 +374,14 @@ func (s *AccountService) ListAPIKeys(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	apiKeyStorage := v2as.NewAPIKeyStorage(s.mysqlClient)
 	apiKeys, nextCursor, totalCount, err := apiKeyStorage.ListAPIKeys(
@@ -376,6 +418,7 @@ func (s *AccountService) ListAPIKeys(
 func (s *AccountService) newAPIKeyListOrders(
 	orderBy proto.ListAPIKeysRequest_OrderBy,
 	orderDirection proto.ListAPIKeysRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -387,7 +430,14 @@ func (s *AccountService) newAPIKeyListOrders(
 	case proto.ListAPIKeysRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == proto.ListAPIKeysRequest_DESC {
@@ -498,5 +548,12 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 			EnvironmentApiKey: &proto.EnvironmentAPIKey{EnvironmentNamespace: e.Namespace, ApiKey: apiKey.APIKey},
 		}, nil
 	}
-	return nil, localizedError(statusNotFound, locale.JaJP)
+	dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.NotFoundError),
+	})
+	if err != nil {
+		return nil, statusInternal.Err()
+	}
+	return nil, dt.Err()
 }

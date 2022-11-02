@@ -109,7 +109,14 @@ func (s *auditlogService) ListAuditLogs(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
@@ -126,7 +133,7 @@ func (s *auditlogService) ListAuditLogs(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"editor"}, req.SearchKeyword))
 	}
-	orders, err := s.newAuditLogListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -168,6 +175,7 @@ func (s *auditlogService) ListAuditLogs(
 func (s *auditlogService) newAuditLogListOrders(
 	orderBy proto.ListAuditLogsRequest_OrderBy,
 	orderDirection proto.ListAuditLogsRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -175,7 +183,14 @@ func (s *auditlogService) newAuditLogListOrders(
 		proto.ListAuditLogsRequest_TIMESTAMP:
 		column = "timestamp"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionDesc
 	if orderDirection == proto.ListAuditLogsRequest_ASC {
@@ -206,7 +221,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"editor"}, req.SearchKeyword))
 	}
-	orders, err := s.newAdminAuditLogListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newAdminAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -221,7 +236,14 @@ func (s *auditlogService) ListAdminAuditLogs(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	auditlogs, nextCursor, totalCount, err := s.mysqlAdminStorage.ListAdminAuditLogs(
 		ctx,
@@ -257,6 +279,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 func (s *auditlogService) newAdminAuditLogListOrders(
 	orderBy proto.ListAdminAuditLogsRequest_OrderBy,
 	orderDirection proto.ListAdminAuditLogsRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -264,7 +287,14 @@ func (s *auditlogService) newAdminAuditLogListOrders(
 		proto.ListAdminAuditLogsRequest_TIMESTAMP:
 		column = "timestamp"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionDesc
 	if orderDirection == proto.ListAdminAuditLogsRequest_ASC {
@@ -296,7 +326,7 @@ func (s *auditlogService) ListFeatureHistory(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"editor"}, req.SearchKeyword))
 	}
-	orders, err := s.newFeatureHistoryAuditLogListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newFeatureHistoryAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -311,7 +341,14 @@ func (s *auditlogService) ListFeatureHistory(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	auditlogs, nextCursor, totalCount, err := s.mysqlStorage.ListAuditLogs(
 		ctx,
@@ -351,6 +388,7 @@ func (s *auditlogService) ListFeatureHistory(
 func (s *auditlogService) newFeatureHistoryAuditLogListOrders(
 	orderBy proto.ListFeatureHistoryRequest_OrderBy,
 	orderDirection proto.ListFeatureHistoryRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -358,7 +396,14 @@ func (s *auditlogService) newFeatureHistoryAuditLogListOrders(
 		proto.ListFeatureHistoryRequest_TIMESTAMP:
 		column = "timestamp"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionDesc
 	if orderDirection == proto.ListFeatureHistoryRequest_ASC {

@@ -47,7 +47,14 @@ func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalReque
 	goal, err := s.getGoalMySQL(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2es.ErrGoalNotFound {
-			return nil, localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -99,7 +106,7 @@ func (s *experimentService) ListGoals(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, req.SearchKeyword))
 	}
-	orders, err := s.newGoalListOrders(req.OrderBy, req.OrderDirection)
+	orders, err := s.newGoalListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -114,7 +121,14 @@ func (s *experimentService) ListGoals(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	var isInUseStatus *bool
 	if req.IsInUseStatus != nil {
@@ -157,6 +171,7 @@ func (s *experimentService) ListGoals(
 func (s *experimentService) newGoalListOrders(
 	orderBy proto.ListGoalsRequest_OrderBy,
 	orderDirection proto.ListGoalsRequest_OrderDirection,
+	localizer locale.Localizer,
 ) ([]*mysql.Order, error) {
 	var column string
 	switch orderBy {
@@ -168,7 +183,14 @@ func (s *experimentService) newGoalListOrders(
 	case proto.ListGoalsRequest_UPDATED_AT:
 		column = "updated_at"
 	default:
-		return nil, localizedError(statusInvalidOrderBy, locale.JaJP)
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == proto.ListGoalsRequest_DESC {
@@ -234,7 +256,14 @@ func (s *experimentService) CreateGoal(
 	})
 	if err != nil {
 		if err == v2es.ErrGoalAlreadyExists {
-			return nil, localizedError(statusAlreadyExists, locale.JaJP)
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create goal",
