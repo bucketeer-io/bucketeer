@@ -127,18 +127,19 @@ Since Bucketeer uses Kubernetes, using YAML file and Helm fits into our cases.
 
 #### Comparison Table
 
-|                                    | GCP           | AWS                                                          | Azure                                                        |
-| ---------------------------------- | ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-|                                    | Cloud Pub/Sub | Amazon Simple Notification Service（SNS）、Amazon Simple Queueing Service（SQS） | Azure Service Bus Messaging                                  |
-| total size of Publish Request      | 10MB          | 0.25MB                                                       | 0.25MB for [Standard tier](https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-premium-messaging)<br/>100 MB for [Premium tier](https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-premium-messaging). |
-| number of messages per transaction | 1,000         | 10                                                           | 100                                                          |
-| Topic                              | 10,000        | 10,0000                                                      | 10,000                                                       |
-| Subscription per topic             | 10,000        | 12,500,000                                                   | 2,000                                                        |
-| Expiration period in topic         | 31 days       | 4 weeks                                                      | 14 days                                                      |
-| Expiration period in subscription  | 31 days       | 14 days (default is 4 days)                                  | 14 days                                                      |
-| API throttling(Tokyo region)       |               | 1500 transactions per second                                 |                                                              |
-| At-Least-Once                      | ◯             | ◯                                                            | ◯                                                            |
-| SLA(%)                             | >=99.95       | >=99.9                                                       | >=99.9                                                       |
+|                                    | GCP                                                          | AWS                                                          | Azure                                                        |
+| ---------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+|                                    | Cloud Pub/Sub                                                | Amazon Simple Notification Service（SNS）、Amazon Simple Queueing Service（SQS） | Azure Service Bus Messaging                                  |
+| total size of Publish Request      | 10MB                                                         | 0.25MB                                                       | 0.25MB for [Standard tier](https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-premium-messaging)<br/>100 MB for [Premium tier](https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-premium-messaging). |
+| number of messages per transaction | 1,000                                                        | 10                                                           | 100                                                          |
+| Topic                              | 10,000                                                       | 10,0000                                                      | 10,000                                                       |
+| Subscription per topic             | 10,000                                                       | 12,500,000                                                   | 2,000                                                        |
+| Expiration period in topic         | 31 days                                                      | 4 weeks                                                      | 14 days                                                      |
+| Expiration period in subscription  | 31 days                                                      | 14 days (default is 4 days)                                  | 14 days                                                      |
+| API throttling(Tokyo region)       |                                                              | 1500 transactions per second                                 |                                                              |
+| At-Least-Once                      | ◯                                                            | ◯                                                            | ◯                                                            |
+| Retry logic about subscription     | redelivers every subsequent message with the same ordering key, including acknowledged messages | redelivers only the messages                                 | redelivers only the messages                                 |
+| SLA(%)                             | >=99.95                                                      | >=99.9                                                       | >=99.9                                                       |
 
 
 
@@ -354,3 +355,6 @@ https://azure.microsoft.com/ja-jp/support/legal/sla/azure-sql-database/v1_8/
 
 
 https://aws.amazon.com/rds/aurora/sla/
+
+https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues-understanding-logic.html
+
