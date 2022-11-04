@@ -2155,6 +2155,12 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 				).Return(errors.New("storage: internal")).MaxTimes(1)
+				gs.evaluationEventStorage.(*ftsmock.MockEvaluationEventStorage).EXPECT().CreateEvaluationEvent(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				)
 			},
 			input: &gwproto.RegisterEventsRequest{
 				Events: []*eventproto.Event{
@@ -2412,8 +2418,8 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 		segmentUsersCache:      cachev3mock.NewMockSegmentUsersCache(mockController),
 		environmentAPIKeyCache: cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
 		evaluationEventStorage: ftsmock.NewMockEvaluationEventStorage(mockController),
-		opts:   &defaultOptions,
-		logger: logger,
+		opts:                   &defaultOptions,
+		logger:                 logger,
 	}
 }
 
