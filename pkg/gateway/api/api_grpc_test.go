@@ -90,7 +90,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewGrpcGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &grpcGatewayService{}, g)
 }
 
@@ -2290,42 +2290,28 @@ func TestGrpcConvToEvaluation(t *testing.T) {
 		Tag:       tag,
 		Timestamp: time.Now().Unix(),
 	}
-	bEvaluationEventWithTag, err := proto.Marshal(evaluationEvent)
-	evaluationEvent.Tag = ""
-	bEvaluationEventWithoutTag, err := proto.Marshal(evaluationEvent)
-	assert.NoError(t, err)
-	bInvalidEvent, err := proto.Marshal(&any.Any{})
-	assert.NoError(t, err)
+	evaluationEventWithoutTag := &eventproto.EvaluationEvent{
+		FeatureId:      "feature-id",
+		FeatureVersion: 2,
+		UserId:         "user-id",
+		VariationId:    "variation-id",
+		User:           &userproto.User{Id: "user-id"},
+		Reason: &featureproto.Reason{
+			Type: featureproto.Reason_DEFAULT,
+		},
+		Timestamp: time.Now().Unix(),
+	}
 
 	patterns := []struct {
 		desc        string
-		input       *eventproto.Event
+		input       *eventproto.EvaluationEvent
 		expected    *featureproto.Evaluation
 		expectedTag string
 		expectedErr error
 	}{
 		{
-			desc: "error",
-			input: &eventproto.Event{
-				Id: "id",
-				Event: &any.Any{
-					TypeUrl: "github.com/golang/protobuf/ptypes/any",
-					Value:   bInvalidEvent,
-				},
-			},
-			expected:    nil,
-			expectedTag: "",
-			expectedErr: errUnmarshalFailed,
-		},
-		{
-			desc: "success without tag",
-			input: &eventproto.Event{
-				Id: "id",
-				Event: &any.Any{
-					TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-					Value:   bEvaluationEventWithoutTag,
-				},
-			},
+			desc:  "success without tag",
+			input: evaluationEventWithoutTag,
 			expected: &featureproto.Evaluation{
 				Id: featuredomain.EvaluationID(
 					evaluationEvent.FeatureId,
@@ -2342,14 +2328,8 @@ func TestGrpcConvToEvaluation(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success with tag",
-			input: &eventproto.Event{
-				Id: "id",
-				Event: &any.Any{
-					TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-					Value:   bEvaluationEventWithTag,
-				},
-			},
+			desc:  "success with tag",
+			input: evaluationEvent,
 			expected: &featureproto.Evaluation{
 				Id: featuredomain.EvaluationID(
 					evaluationEvent.FeatureId,
@@ -2368,10 +2348,9 @@ func TestGrpcConvToEvaluation(t *testing.T) {
 	}
 	for _, p := range patterns {
 		gs := newGrpcGatewayServiceWithMock(t, mockController)
-		ev, tag, err := gs.convToEvaluation(context.Background(), p.input)
+		ev, tag := gs.convToEvaluation(context.Background(), p.input)
 		assert.True(t, proto.Equal(p.expected, ev), p.desc)
 		assert.Equal(t, p.expectedTag, tag, p.desc)
-		assert.Equal(t, p.expectedErr, err, p.desc)
 	}
 }
 

@@ -983,7 +983,12 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				}
 				continue
 			}
-			if err := s.evaluationEventStorage.CreateEvaluationEvent(req.Context(), eval, event.ID, event.EnvironmentNamespace); err != nil {
+			if err := s.evaluationEventStorage.CreateEvaluationEvent(
+				req.Context(),
+				eval,
+				event.ID,
+				event.EnvironmentNamespace,
+			); err != nil {
 				s.logger.Error(
 					"Failed to insert evaluation event",
 					log.FieldsFromImcomingContext(req.Context()).AddFields(
