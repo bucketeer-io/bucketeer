@@ -2411,8 +2411,9 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 		featuresCache:          cachev3mock.NewMockFeaturesCache(mockController),
 		segmentUsersCache:      cachev3mock.NewMockSegmentUsersCache(mockController),
 		environmentAPIKeyCache: cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
-		opts:                   &defaultOptions,
-		logger:                 logger,
+		evaluationEventStorage: ftsmock.NewMockEvaluationEventStorage(mockController),
+		opts:   &defaultOptions,
+		logger: logger,
 	}
 }
 
