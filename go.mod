@@ -3,7 +3,6 @@ module github.com/bucketeer-io/bucketeer
 go 1.17
 
 require (
-	cloud.google.com/go/alloydbconn v0.2.1
 	cloud.google.com/go/bigtable v1.0.0
 	cloud.google.com/go/kms v1.4.0
 	cloud.google.com/go/profiler v0.3.0
@@ -21,7 +20,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/itchyny/gojq v0.12.5
-	github.com/lib/pq v1.10.2
+	github.com/lib/pq v1.10.7
 	github.com/mna/redisc v1.1.2
 	github.com/nicksnyder/go-i18n/v2 v2.2.0
 	github.com/prometheus/client_golang v1.2.1
@@ -45,6 +44,7 @@ require (
 
 require (
 	cloud.google.com/go v0.103.0 // indirect
+	cloud.google.com/go/alloydbconn v0.2.1 // indirect
 	cloud.google.com/go/compute v1.8.0 // indirect
 	cloud.google.com/go/iam v0.3.0 // indirect
 	cloud.google.com/go/monitoring v1.6.0 // indirect
