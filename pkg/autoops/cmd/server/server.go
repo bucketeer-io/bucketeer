@@ -21,7 +21,6 @@ import (
 	"path"
 	"time"
 
-	kms "cloud.google.com/go/kms/apiv1"
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -46,6 +45,8 @@ import (
 const (
 	command     = "server"
 	webhookPath = "hook"
+	gcp         = "gcp"
+	aws         = "aws"
 )
 
 type server struct {
@@ -188,14 +189,24 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	u.Path = path.Join(u.Path, webhookPath)
 
-	kmsClient, err := kms.NewKeyManagementClient(ctx)
-	if err != nil {
-		return err
+	// TODO: Get cloudService from command-line flags
+	cloudService := "gcp"
+
+	var webhookCryptoUtil crypto.EncrypterDecrypter
+	switch cloudService {
+	case gcp:
+		webhookCryptoUtil, err = crypto.NewCloudKMSCrypto(ctx, *s.webhookKMSResourceName)
+		if err != nil {
+			return err
+		}
+	case aws:
+		// TODO: Get region from command-line flags
+		webhookCryptoUtil, err = crypto.NewAwsKMSCrypto(ctx, *s.webhookKMSResourceName, "ap-northeast-1")
+		if err != nil {
+			return err
+		}
 	}
-	webhookCryptoUtil := crypto.NewCloudKMSCrypto(
-		kmsClient,
-		*s.webhookKMSResourceName,
-	)
+
 	service := api.NewAutoOpsService(
 		mysqlClient,
 		featureClient,
