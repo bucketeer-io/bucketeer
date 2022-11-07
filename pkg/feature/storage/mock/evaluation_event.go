@@ -8,8 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	client "github.com/bucketeer-io/bucketeer/proto/event/client"
 	gomock "github.com/golang/mock/gomock"
+
+	client "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
 // MockEvaluationEventStorage is a mock of EvaluationEventStorage interface.
