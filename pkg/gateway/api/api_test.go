@@ -1983,7 +1983,7 @@ func TestRegisterEventsContextCanceled(t *testing.T) {
 }
 
 func TestRegisterEvents(t *testing.T) {
-	t.Parallel()
+	// 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
@@ -2251,6 +2251,12 @@ func TestRegisterEvents(t *testing.T) {
 				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 				gs.userEvaluationStorage.(*ftsmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Return(nil).MaxTimes(1)
+				gs.evaluationEventStorage.(*ftsmock.MockEvaluationEventStorage).EXPECT().CreateEvaluationEvent(
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
@@ -2573,6 +2579,7 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 		featuresCache:          cachev3mock.NewMockFeaturesCache(mockController),
 		segmentUsersCache:      cachev3mock.NewMockSegmentUsersCache(mockController),
 		environmentAPIKeyCache: cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
+		evaluationEventStorage: ftsmock.NewMockEvaluationEventStorage(mockController),
 		opts:                   &defaultOptions,
 		logger:                 logger,
 	}
