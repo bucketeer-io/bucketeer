@@ -97,7 +97,14 @@ func (s *NotificationService) checkAdminRole(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			return nil, localizedError(statusPermissionDenied, locale.JaJP)
+			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",
@@ -147,7 +154,14 @@ func (s *NotificationService) checkRole(
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
-			return nil, localizedError(statusPermissionDenied, locale.JaJP)
+			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		default:
 			s.logger.Error(
 				"Failed to check role",

@@ -38,6 +38,7 @@ const (
 	NotFoundError         = "NotFoundError"
 	InvalidArgumentError  = "InvalidArgumentError"
 	AlreadyExistsError    = "AlreadyExistsError"
+	PermissionDenied      = "PermissionDenied"
 )
 
 func init() {
