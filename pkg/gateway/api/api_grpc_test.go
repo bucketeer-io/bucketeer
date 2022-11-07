@@ -2155,12 +2155,6 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 				).Return(errors.New("storage: internal")).MaxTimes(1)
-				gs.evaluationEventStorage.(*ftsmock.MockEvaluationEventStorage).EXPECT().CreateEvaluationEvent(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				)
 			},
 			input: &gwproto.RegisterEventsRequest{
 				Events: []*eventproto.Event{
@@ -2225,6 +2219,12 @@ func TestGrcpRegisterEvents(t *testing.T) {
 				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 				gs.userEvaluationStorage.(*ftsmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Return(nil).MaxTimes(1)
+				gs.evaluationEventStorage.(*ftsmock.MockEvaluationEventStorage).EXPECT().CreateEvaluationEvent(
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
