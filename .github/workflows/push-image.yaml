@@ -83,7 +83,7 @@ jobs:
 
   python:
     needs: setup
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: ${{ env.PYTHON_PATH }}
