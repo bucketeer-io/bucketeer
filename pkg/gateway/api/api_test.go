@@ -1983,7 +1983,7 @@ func TestRegisterEventsContextCanceled(t *testing.T) {
 }
 
 func TestRegisterEvents(t *testing.T) {
-	// 	t.Parallel()
+	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
