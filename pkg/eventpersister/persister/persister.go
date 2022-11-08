@@ -27,12 +27,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
+	v2ec "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
-	v2ec "github.com/bucketeer-io/bucketeer/pkg/eventpersister/storage/v2"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
@@ -324,6 +323,7 @@ func (p *Persister) extractEvents(messages map[string]*puller.Message) environme
 func (p *Persister) marshalEvent(event interface{}, environmentNamespace string) (string, bool, error) {
 	switch event := event.(type) {
 	case *eventproto.EvaluationEvent:
+
 		return p.marshalEvaluationEvent(event, environmentNamespace)
 	case *eventproto.GoalEvent:
 		return p.marshalGoalEvent(event, environmentNamespace)
@@ -505,90 +505,14 @@ func (p *Persister) createEvent(event interface{}, id, environmentNamespace stri
 	switch event := event.(type) {
 	case *eventproto.EvaluationEvent:
 		return p.createEvaluationEvent(event, id, environmentNamespace)
-	case *eventproto.GoalEvent:
-		return p.createGoalEvent(event, id, environmentNamespace)
-	case *esproto.UserEvent:
-		return p.createUserEvent(event, id, environmentNamespace)
 	}
-	return ErrUnexpectedMessageType
+	return nil
 }
 
 func (p *Persister) createEvaluationEvent(
 	event *eventproto.EvaluationEvent,
 	id, environmentNamespace string,
 ) error {
-	eventStorage := v2ec.NewEventCreationStorage(p.postgresClient)
-	if err := eventStorage.CreateEvaluationEvent(p.ctx, event, id, environmentNamespace); err != nil {
-		p.logger.Error(
-			"Failed to store evaluation event",
-			log.FieldsFromImcomingContext(p.ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-			)...,
-		)
-		return err
-	}
-	return nil
-}
-
-func (p *Persister) createGoalEvent(
-	event *eventproto.GoalEvent,
-	id, environmentNamespace string,
-) error {
-	ue, _, err := p.getEvaluations(event, environmentNamespace)
-	if err != nil {
-		return err
-	}
-	evaluations := []string{}
-	for _, eval := range ue {
-		reason := ""
-		if eval.Reason != nil {
-			reason = eval.Reason.Type.String()
-		}
-		evaluations = append(
-			evaluations,
-			fmt.Sprintf("%s:%d:%s:%s", eval.FeatureId, eval.FeatureVersion, eval.VariationId, reason),
-		)
-	}
-	if len(evaluations) == 0 {
-		p.logger.Warn(
-			"Goal event has no evaluations",
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.String("sourceId", event.SourceId.String()),
-			zap.String("goalId", event.GoalId),
-			zap.String("userId", event.UserId),
-			zap.String("tag", event.Tag),
-			zap.String("timestamp", time.Unix(event.Timestamp, 0).Format(time.RFC3339)),
-		)
-	}
-	eventStorage := v2ec.NewEventCreationStorage(p.postgresClient)
-	if err := eventStorage.CreateGoalEvent(p.ctx, event, id, environmentNamespace, evaluations); err != nil {
-		p.logger.Error(
-			"Failed to store goal event",
-			log.FieldsFromImcomingContext(p.ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-			)...,
-		)
-		return err
-	}
-	return nil
-}
-
-func (p *Persister) createUserEvent(
-	event *esproto.UserEvent,
-	id, environmentNamespace string,
-) error {
-	eventStorage := v2ec.NewEventCreationStorage(p.postgresClient)
-	if err := eventStorage.CreateUserEvent(p.ctx, event, id, environmentNamespace); err != nil {
-		p.logger.Error(
-			"Failed to store user event",
-			log.FieldsFromImcomingContext(p.ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-			)...,
-		)
-		return err
-	}
-	return nil
+	eventStorage := v2ec.NewEvaluationEventStorage(p.postgresClient)
+	return eventStorage.CreateEvaluationEvent(p.ctx, event, id, environmentNamespace)
 }
