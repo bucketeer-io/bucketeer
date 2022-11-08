@@ -123,6 +123,11 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 		alloyDBUser:       cmd.Flag("alloydb-user", "").Required().String(),
 		alloyDBPass:       cmd.Flag("alloydb-pass", "").Required().String(),
 		alloyDBName:       cmd.Flag("alloydb-name", "").Required().String(),
+		postgresUser:      cmd.Flag("postgres-user", "").String(),
+		postgresPass:      cmd.Flag("postgres-pass", "").String(),
+		postgresHost:      cmd.Flag("postgres-host", "").String(),
+		postgresPort:      cmd.Flag("postgres-port", "").Int(),
+		postgresDbName:    cmd.Flag("allodb-name", "").String(),
 	}
 	r.RegisterCommand(server)
 	return server
