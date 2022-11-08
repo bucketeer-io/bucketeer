@@ -40,6 +40,11 @@ env:
   alloydbUser:
   alloydbPass:
   alloyDBName:
+  postgresUser:
+  postgresPass:
+  postgresHost:
+  postgresPort:
+  postgresDbName:
 
 affinity: {}
 
