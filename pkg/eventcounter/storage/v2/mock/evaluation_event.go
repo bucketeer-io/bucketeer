@@ -13,31 +13,31 @@ import (
 	client "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
-// MockEvaluationEventStorage is a mock of EvaluationEventStorage interface.
-type MockEvaluationEventStorage struct {
+// MockEventStorage is a mock of EventStorage interface.
+type MockEventStorage struct {
 	ctrl     *gomock.Controller
-	recorder *MockEvaluationEventStorageMockRecorder
+	recorder *MockEventStorageMockRecorder
 }
 
-// MockEvaluationEventStorageMockRecorder is the mock recorder for MockEvaluationEventStorage.
-type MockEvaluationEventStorageMockRecorder struct {
-	mock *MockEvaluationEventStorage
+// MockEventStorageMockRecorder is the mock recorder for MockEventStorage.
+type MockEventStorageMockRecorder struct {
+	mock *MockEventStorage
 }
 
-// NewMockEvaluationEventStorage creates a new mock instance.
-func NewMockEvaluationEventStorage(ctrl *gomock.Controller) *MockEvaluationEventStorage {
-	mock := &MockEvaluationEventStorage{ctrl: ctrl}
-	mock.recorder = &MockEvaluationEventStorageMockRecorder{mock}
+// NewMockEventStorage creates a new mock instance.
+func NewMockEventStorage(ctrl *gomock.Controller) *MockEventStorage {
+	mock := &MockEventStorage{ctrl: ctrl}
+	mock.recorder = &MockEventStorageMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockEvaluationEventStorage) EXPECT() *MockEvaluationEventStorageMockRecorder {
+func (m *MockEventStorage) EXPECT() *MockEventStorageMockRecorder {
 	return m.recorder
 }
 
 // CreateEvaluationEvent mocks base method.
-func (m *MockEvaluationEventStorage) CreateEvaluationEvent(ctx context.Context, event *client.EvaluationEvent, id, environmentNamespace string) error {
+func (m *MockEventStorage) CreateEvaluationEvent(ctx context.Context, event *client.EvaluationEvent, id, environmentNamespace string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateEvaluationEvent", ctx, event, id, environmentNamespace)
 	ret0, _ := ret[0].(error)
@@ -45,7 +45,21 @@ func (m *MockEvaluationEventStorage) CreateEvaluationEvent(ctx context.Context, 
 }
 
 // CreateEvaluationEvent indicates an expected call of CreateEvaluationEvent.
-func (mr *MockEvaluationEventStorageMockRecorder) CreateEvaluationEvent(ctx, event, id, environmentNamespace interface{}) *gomock.Call {
+func (mr *MockEventStorageMockRecorder) CreateEvaluationEvent(ctx, event, id, environmentNamespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEvaluationEvent", reflect.TypeOf((*MockEvaluationEventStorage)(nil).CreateEvaluationEvent), ctx, event, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEvaluationEvent", reflect.TypeOf((*MockEventStorage)(nil).CreateEvaluationEvent), ctx, event, id, environmentNamespace)
+}
+
+// CreateGoalEvent mocks base method.
+func (m *MockEventStorage) CreateGoalEvent(ctx context.Context, event *client.GoalEvent, id, environmentNamespace string, evaluations []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateGoalEvent", ctx, event, id, environmentNamespace, evaluations)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateGoalEvent indicates an expected call of CreateGoalEvent.
+func (mr *MockEventStorageMockRecorder) CreateGoalEvent(ctx, event, id, environmentNamespace, evaluations interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGoalEvent", reflect.TypeOf((*MockEventStorage)(nil).CreateGoalEvent), ctx, event, id, environmentNamespace, evaluations)
 }
