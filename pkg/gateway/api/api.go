@@ -42,7 +42,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/postgres"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
@@ -63,7 +62,6 @@ type gatewayService struct {
 	segmentUsersCache      cachev3.SegmentUsersCache
 	featuresCache          cachev3.FeaturesCache
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
-	evaluationEventStorage ftstorage.EvaluationEventStorage
 	flightgroup            singleflight.Group
 	opts                   *options
 	logger                 *zap.Logger
@@ -79,7 +77,6 @@ func NewGatewayService(
 	up publisher.Publisher,
 	mp publisher.Publisher,
 	v3Cache cache.MultiGetCache,
-	qe postgres.Execer,
 	opts ...Option,
 ) *gatewayService {
 	options := defaultOptions
@@ -101,7 +98,6 @@ func NewGatewayService(
 		featuresCache:          cachev3.NewFeaturesCache(v3Cache),
 		segmentUsersCache:      cachev3.NewSegmentUsersCache(v3Cache),
 		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(v3Cache),
-		evaluationEventStorage: ftstorage.NewEvaluationEventStorage(qe),
 		opts:                   &options,
 		logger:                 options.logger.Named("api"),
 	}
@@ -982,20 +978,6 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 					Message:   "Failed to upsert user evaluation",
 				}
 				continue
-			}
-			if err := s.evaluationEventStorage.CreateEvaluationEvent(
-				req.Context(),
-				eval,
-				event.ID,
-				event.EnvironmentNamespace,
-			); err != nil {
-				s.logger.Error(
-					"Failed to insert evaluation event",
-					log.FieldsFromImcomingContext(req.Context()).AddFields(
-						zap.Error(err),
-						zap.String("id", event.ID),
-					)...,
-				)
 			}
 			evalAny, err := ptypes.MarshalAny(eval)
 			if err != nil {

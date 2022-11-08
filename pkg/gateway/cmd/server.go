@@ -35,7 +35,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/postgres"
 )
 
 const command = "server"
@@ -65,11 +64,6 @@ type server struct {
 	redisPoolMaxActive     *int
 	oldestEventTimestamp   *time.Duration
 	furthestEventTimestamp *time.Duration
-	postgresUser           *string
-	postgresPass           *string
-	postgresHost           *string
-	postgresPort           *int
-	postgresDbName         *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -264,20 +258,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
-	postgresClient, err := postgres.NewClient(
-		ctx,
-		*s.postgresUser,
-		*s.postgresPass,
-		*s.postgresHost,
-		*s.postgresPort,
-		*s.postgresDbName,
-		postgres.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer postgresClient.Close()
-
 	service := api.NewGrpcGatewayService(
 		btClient,
 		featureClient,
@@ -288,7 +268,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		userPublisher,
 		metricsPublisher,
 		redisV3Cache,
-		postgresClient,
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -328,7 +307,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		userPublisher,
 		metricsPublisher,
 		redisV3Cache,
-		postgresClient,
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
