@@ -17,20 +17,23 @@ package v2
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/postgres"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
+	"github.com/lib/pq"
 )
 
-type EvaluationEventStorage interface {
+type EventStorage interface {
 	CreateEvaluationEvent(ctx context.Context, event *eventproto.EvaluationEvent, id, environmentNamespace string) error
+	CreateGoalEvent(ctx context.Context, event *eventproto.GoalEvent, id, environmentNamespace string, evaluations []string) error
 }
 
 type eventStorage struct {
 	qe postgres.Execer
 }
 
-func NewEvaluationEventStorage(qe postgres.Execer) EvaluationEventStorage {
+func NewEventStorage(qe postgres.Execer) EventStorage {
 	return &eventStorage{qe: qe}
 }
 
@@ -78,6 +81,52 @@ func (s *eventStorage) CreateEvaluationEvent(
 		event.Tag,
 		event.SourceId.String(),
 		environmentNamespace,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *eventStorage) CreateGoalEvent(
+	ctx context.Context,
+	event *eventproto.GoalEvent,
+	id, environmentNamespace string,
+	evaluations []string,
+) error {
+	query := `
+		INSERT INTO goal_event (
+			id,
+			timestamp,
+			goal_id,
+			value,
+			user_id,
+			user_data,
+			tag,
+			source_id,
+			environment_namespace,
+			evaluations
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+		) ON CONFLICT DO NOTHING
+	`
+	userData := map[string]string{}
+	if event.User != nil {
+		userData = event.User.Data
+	}
+	_, err := s.qe.ExecContext(
+		ctx,
+		query,
+		id,
+		event.Timestamp,
+		event.GoalId,
+		strconv.FormatFloat(event.Value, 'f', -1, 64),
+		event.UserId,
+		postgres.JSONObject{Val: userData},
+		event.Tag,
+		event.SourceId.String(),
+		environmentNamespace,
+		pq.Array(evaluations),
 	)
 	if err != nil {
 		return err

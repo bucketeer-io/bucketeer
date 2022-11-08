@@ -323,7 +323,6 @@ func (p *Persister) extractEvents(messages map[string]*puller.Message) environme
 func (p *Persister) marshalEvent(event interface{}, environmentNamespace string) (string, bool, error) {
 	switch event := event.(type) {
 	case *eventproto.EvaluationEvent:
-
 		return p.marshalEvaluationEvent(event, environmentNamespace)
 	case *eventproto.GoalEvent:
 		return p.marshalGoalEvent(event, environmentNamespace)
@@ -505,6 +504,8 @@ func (p *Persister) createEvent(event interface{}, id, environmentNamespace stri
 	switch event := event.(type) {
 	case *eventproto.EvaluationEvent:
 		return p.createEvaluationEvent(event, id, environmentNamespace)
+	case *eventproto.GoalEvent:
+		return p.createGoalEvent(event, id, environmentNamespace)
 	}
 	return nil
 }
@@ -513,6 +514,40 @@ func (p *Persister) createEvaluationEvent(
 	event *eventproto.EvaluationEvent,
 	id, environmentNamespace string,
 ) error {
-	eventStorage := v2ec.NewEvaluationEventStorage(p.postgresClient)
+	eventStorage := v2ec.NewEventStorage(p.postgresClient)
 	return eventStorage.CreateEvaluationEvent(p.ctx, event, id, environmentNamespace)
+}
+
+func (p *Persister) createGoalEvent(
+	event *eventproto.GoalEvent,
+	id, environmentNamespace string,
+) error {
+	ue, _, err := p.getEvaluations(event, environmentNamespace)
+	if err != nil {
+		return err
+	}
+	evaluations := []string{}
+	for _, eval := range ue {
+		reason := ""
+		if eval.Reason != nil {
+			reason = eval.Reason.Type.String()
+		}
+		evaluations = append(
+			evaluations,
+			fmt.Sprintf("%s:%d:%s:%s", eval.FeatureId, eval.FeatureVersion, eval.VariationId, reason),
+		)
+	}
+	if len(evaluations) == 0 {
+		p.logger.Warn(
+			"Goal event has no evaluations",
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("sourceId", event.SourceId.String()),
+			zap.String("goalId", event.GoalId),
+			zap.String("userId", event.UserId),
+			zap.String("tag", event.Tag),
+			zap.String("timestamp", time.Unix(event.Timestamp, 0).Format(time.RFC3339)),
+		)
+	}
+	eventStorage := v2ec.NewEventStorage(p.postgresClient)
+	return eventStorage.CreateGoalEvent(p.ctx, event, id, environmentNamespace, evaluations)
 }
