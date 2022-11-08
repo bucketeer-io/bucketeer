@@ -73,6 +73,8 @@ type server struct {
 
 	webhookBaseURL         *string
 	webhookKMSResourceName *string
+
+	cloudService *string
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -105,6 +107,7 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"webhook-kms-resource-name",
 			"Cloud KMS resource name to encrypt and decrypt webhook credentials.",
 		).Required().String(),
+		cloudService: cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -189,11 +192,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	u.Path = path.Join(u.Path, webhookPath)
 
-	// TODO: Get cloudService from command-line flags
-	cloudService := "gcp"
-
 	var webhookCryptoUtil crypto.EncrypterDecrypter
-	switch cloudService {
+	switch *s.cloudService {
 	case gcp:
 		webhookCryptoUtil, err = crypto.NewCloudKMSCrypto(ctx, *s.webhookKMSResourceName)
 		if err != nil {
