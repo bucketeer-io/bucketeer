@@ -51,7 +51,7 @@ const dummyURL = "http://example.com"
 
 func TestNewGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &gatewayService{}, g)
 }
 
@@ -2256,12 +2256,6 @@ func TestRegisterEvents(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 				).Return(nil).MaxTimes(1)
-				gs.evaluationEventStorage.(*ftsmock.MockEvaluationEventStorage).EXPECT().CreateEvaluationEvent(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -2579,7 +2573,6 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 		featuresCache:          cachev3mock.NewMockFeaturesCache(mockController),
 		segmentUsersCache:      cachev3mock.NewMockSegmentUsersCache(mockController),
 		environmentAPIKeyCache: cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
-		evaluationEventStorage: ftsmock.NewMockEvaluationEventStorage(mockController),
 		opts:                   &defaultOptions,
 		logger:                 logger,
 	}
