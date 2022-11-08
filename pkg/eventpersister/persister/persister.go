@@ -506,6 +506,8 @@ func (p *Persister) createEvent(event interface{}, id, environmentNamespace stri
 		return p.createEvaluationEvent(event, id, environmentNamespace)
 	case *eventproto.GoalEvent:
 		return p.createGoalEvent(event, id, environmentNamespace)
+	case *esproto.UserEvent:
+		return p.createUserEvent(event, id, environmentNamespace)
 	}
 	return nil
 }
@@ -550,4 +552,12 @@ func (p *Persister) createGoalEvent(
 	}
 	eventStorage := v2ec.NewEventStorage(p.postgresClient)
 	return eventStorage.CreateGoalEvent(p.ctx, event, id, environmentNamespace, evaluations)
+}
+
+func (p *Persister) createUserEvent(
+	event *esproto.UserEvent,
+	id, environmentNamespace string,
+) error {
+	eventStorage := v2ec.NewEventStorage(p.postgresClient)
+	return eventStorage.CreateUserEvent(p.ctx, event, id, environmentNamespace)
 }

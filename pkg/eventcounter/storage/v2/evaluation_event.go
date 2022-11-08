@@ -23,6 +23,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/postgres"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
+	esproto "github.com/bucketeer-io/bucketeer/proto/event/service"
 )
 
 type EventStorage interface {
@@ -32,6 +33,11 @@ type EventStorage interface {
 		event *eventproto.GoalEvent,
 		id, environmentNamespace string,
 		evaluations []string,
+	) error
+	CreateUserEvent(
+		ctx context.Context,
+		event *esproto.UserEvent,
+		id, environmentNamespace string,
 	) error
 }
 
@@ -133,6 +139,39 @@ func (s *eventStorage) CreateGoalEvent(
 		event.SourceId.String(),
 		environmentNamespace,
 		pq.Array(evaluations),
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *eventStorage) CreateUserEvent(
+	ctx context.Context,
+	event *esproto.UserEvent,
+	id, environmentNamespace string,
+) error {
+	query := `
+		INSERT INTO user_event (
+			id,
+			tag,
+			user_id,
+			timestamp,
+			source_id,
+			environment_namespace
+		) VALUES (
+			$1, $2, $3, $4, $5, $6
+		) ON CONFLICT DO NOTHING
+	`
+	_, err := s.qe.ExecContext(
+		ctx,
+		query,
+		id,
+		event.Tag,
+		event.UserId,
+		event.LastSeen,
+		event.SourceId.String(),
+		environmentNamespace,
 	)
 	if err != nil {
 		return err
