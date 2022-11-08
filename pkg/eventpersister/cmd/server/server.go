@@ -33,6 +33,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/kafka"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/postgres"
 )
 
 const (
@@ -70,6 +71,11 @@ type server struct {
 	alloyDBUser                  *string
 	alloyDBPass                  *string
 	alloyDBName                  *string
+	postgresUser                 *string
+	postgresPass                 *string
+	postgresHost                 *string
+	postgresPort                 *int
+	postgresDbName               *string
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -163,14 +169,19 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	// TODO: Return error after postgreSQL is stable.
-	// postgresClient, _ := s.createPostgresqlClient(ctx, logger)
-	// if err != nil {
-	// 	return err
-	// }
-	// if postgresClient != nil {
-	// 	defer postgresClient.Close()
-	// }
+	postgresClient, err := postgres.NewClient(
+		ctx,
+		*s.postgresUser,
+		*s.postgresPass,
+		*s.postgresHost,
+		*s.postgresPort,
+		*s.postgresDbName,
+		postgres.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer postgresClient.Close()
 
 	p := persister.NewPersister(
 		featureClient,
@@ -287,17 +298,3 @@ func (s *server) createBigtableClient(
 		bigtable.WithLogger(logger),
 	)
 }
-
-// func (s *server) createPostgresqlClient(
-// 	ctx context.Context,
-// 	logger *zap.Logger,
-// ) (postgres.Client, error) {
-// 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-// 	defer cancel()
-// 	return postgres.NewClient(
-// 		ctx,
-// 		*s.project, *s.alloyDBRegion, *s.alloyDBClusterID, *s.alloyDBInstanceID,
-// 		*s.alloyDBUser, *s.alloyDBPass, *s.alloyDBName,
-// 		postgres.WithLogger(logger),
-// 	)
-// }
