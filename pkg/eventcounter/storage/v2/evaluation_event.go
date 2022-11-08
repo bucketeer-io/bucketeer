@@ -13,7 +13,7 @@
 // limitations under the License.
 
 //go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
-package storage
+package v2
 
 import (
 	"context"
