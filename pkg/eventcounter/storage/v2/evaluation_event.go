@@ -19,14 +19,20 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/lib/pq"
+
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/postgres"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	"github.com/lib/pq"
 )
 
 type EventStorage interface {
 	CreateEvaluationEvent(ctx context.Context, event *eventproto.EvaluationEvent, id, environmentNamespace string) error
-	CreateGoalEvent(ctx context.Context, event *eventproto.GoalEvent, id, environmentNamespace string, evaluations []string) error
+	CreateGoalEvent(
+		ctx context.Context,
+		event *eventproto.GoalEvent,
+		id, environmentNamespace string,
+		evaluations []string,
+	) error
 }
 
 type eventStorage struct {
