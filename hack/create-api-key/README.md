@@ -1,7 +1,7 @@
 ## Run Command
 
 ```
-bazelisk run //hack/create-api-key:create-api-key -- create \
+go run ./hack/create-api-key create \
   --cert=full-path-to-certificate \
   --web-gateway=web-gateway-address \
   --service-token=full-path-to-service-token-file \

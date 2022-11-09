@@ -1,7 +1,7 @@
 ## Run Command
 
 ```
-bazelisk run //hack/create-account:create-account -- create \
+go run ./hack/create-account create \
   --cert=full-path-to-certificate \
   --web-gateway=web-gateway-address \
   --service-token=full-path-to-service-token-file \

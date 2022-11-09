@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "go_default_library",
-    srcs = ["informer.go"],
-    importpath = "github.com/bucketeer-io/bucketeer/pkg/notification/sender/informer",
-    visibility = ["//visibility:public"],
-    deps = ["//pkg/health:go_default_library"],
-)
