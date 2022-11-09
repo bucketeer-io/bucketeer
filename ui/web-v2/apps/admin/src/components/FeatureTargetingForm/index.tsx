@@ -1,3 +1,4 @@
+import { createVariationLabel } from '@/utils/variation';
 import { MinusCircleIcon, XIcon } from '@heroicons/react/solid';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
@@ -55,7 +56,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const strategyOptions = feature.variationsList.map((v) => {
       return {
         value: v.id,
-        label: v.value,
+        label: createVariationLabel(v),
       };
     });
     strategyOptions.push({
@@ -65,7 +66,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const offVariationOptions = feature.variationsList.map((v) => {
       return {
         value: v.id,
-        label: v.value,
+        label: createVariationLabel(v),
       };
     });
     const isValid = Object.keys(errors).length == 0;
@@ -98,11 +99,11 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                   return (
                     <div key={idx} className="col-span-1">
                       <label htmlFor={`${idx}`} className="input-label">
-                        {`${
+                        {createVariationLabel(
                           feature.variationsList.find(
                             (v) => v.id == t.variationId
-                          )?.value
-                        }`}
+                          )
+                        )}
                       </label>
                       <Controller
                         name={`targets.[${idx}].users`}
@@ -227,7 +228,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
       strategy: {
         option: {
           value: feature.variationsList[0].id,
-          label: feature.variationsList[0].value,
+          label: createVariationLabel(feature.variationsList[0]),
         },
         rolloutStrategy: newRolloutStrategy,
       },
@@ -750,7 +751,7 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
     const strategyOptions = feature.variationsList.map((v) => {
       return {
         value: v.id,
-        label: v.value,
+        label: createVariationLabel(v),
       };
     });
     strategyOptions.push({
@@ -813,7 +814,9 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
                     </span>
                   </div>
                   <label className="inline-flex items-center ml-3 text-sm text-gray-700">
-                    {feature.variationsList.find((v) => v.id == s.id).value}
+                    {createVariationLabel(
+                      feature.variationsList.find((v) => v.id == s.id)
+                    )}
                   </label>
                 </div>
               );

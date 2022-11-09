@@ -1,3 +1,4 @@
+import { createVariationLabel } from '@/utils/variation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
 import deepEqual from 'deep-equal';
@@ -48,7 +49,6 @@ import {
 } from '../../proto/feature/command_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Rule } from '../../proto/feature/rule_pb';
-import { Segment } from '../../proto/feature/segment_pb';
 import {
   FixedStrategy,
   RolloutStrategy,
@@ -146,8 +146,9 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       ),
       offVariation: feature.offVariation && {
         value: feature.offVariation,
-        label: feature.variationsList.find((v) => v.id === feature.offVariation)
-          .value,
+        label: createVariationLabel(
+          feature.variationsList.find((v) => v.id === feature.offVariation)
+        ),
       },
     };
     const methods = useForm({
@@ -259,9 +260,9 @@ const createStrategyDefaultValue = (
       strategy.type === Strategy.Type.FIXED
         ? {
             value: strategy.fixedStrategy.variation,
-            label: variations.find(
-              (v) => v.id === strategy.fixedStrategy.variation
-            ).value,
+            label: createVariationLabel(
+              variations.find((v) => v.id === strategy.fixedStrategy.variation)
+            ),
           }
         : {
             value: Strategy.Type.ROLLOUT,
