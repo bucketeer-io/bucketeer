@@ -1105,6 +1105,12 @@ event-persister-evaluation-events-kafka:
     alloyDBUser:
     alloyDBPass:
     alloyDBName:
+    postgresUser:
+    postgresPass:
+    postgresHost:
+    postgresPort:
+    postgresDbName:
+
   affinity: {}
   nodeSelector: {}
   hpa:
@@ -1180,6 +1186,12 @@ event-persister-goal-events-kafka:
     alloyDBUser:
     alloyDBPass:
     alloyDBName:
+    postgresUser:
+    postgresPass:
+    postgresHost:
+    postgresPort:
+    postgresDbName:
+
   affinity: {}
   nodeSelector: {}
   hpa:
@@ -1255,6 +1267,12 @@ event-persister-user-events-kafka:
     alloyDBUser:
     alloyDBPass:
     alloyDBName:
+    postgresUser:
+    postgresPass:
+    postgresHost:
+    postgresPort:
+    postgresDbName:
+
   affinity: {}
   nodeSelector: {}
   hpa:

@@ -114,6 +114,16 @@ spec:
               value: "{{ .Values.env.alloyDBPass }}"
             - name: BUCKETEER_EVENT_PERSISTER_ALLOYDB_NAME
               value: "{{ .Values.env.alloyDBName }}"
+            - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_USER
+              value: "{{ .Values.env.postgresUser }}"
+            - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_PASS
+              value: "{{ .Values.env.postgresPass}}"
+            - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_HOST
+              value: "{{ .Values.env.postgresHost }}"
+            - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_PORT
+              value: "{{ .Values.env.postgresPort }}"
+            - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_NAME
+              value: "{{ .Values.env.postgresDbName }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
