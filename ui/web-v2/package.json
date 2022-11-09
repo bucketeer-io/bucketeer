@@ -90,7 +90,6 @@
     "@babel/preset-env": "7.14.8",
     "@babel/preset-react": "7.14.5",
     "@babel/preset-typescript": "7.14.5",
-    "@bazel/typescript": "^5.5.1",
     "@emotion/babel-preset-css-prop": "11.0.0",
     "@formatjs/cli": "4.2.33",
     "@nrwl/cli": "12.5.2",

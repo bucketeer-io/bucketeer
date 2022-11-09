@@ -1,12 +1,6 @@
 .artifacts
 /bin
 /build
-/bazel-bin
-/bazel-bucketeer
-/bazel-genfiles
-/bazel-out
-/bazel-proto
-/bazel-testlogs
 .DS_Store
 /vendor
 /proto/**/*.pb.go
