@@ -193,7 +193,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		puller,
 		datastore,
 		btClient,
-		nil, // Disable PostgreSQL temporarily due to instability issues on the Google side.
+		postgresClient,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
