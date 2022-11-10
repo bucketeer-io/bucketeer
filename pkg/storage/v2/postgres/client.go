@@ -18,15 +18,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
-	"cloud.google.com/go/alloydbconn/driver/pgxv4"
+	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
 const (
-	alloydb = "alloydb"
+	postgres = "postgres"
 )
 
 type options struct {
@@ -88,29 +87,21 @@ func WithLogger(logger *zap.Logger) Option {
 
 func NewClient(
 	ctx context.Context,
-	project, region, cluster, instance string,
-	dbUser, dbPass, dbName string,
+	dbUser, dbPass, dbHost string,
+	dbPort int,
+	dbName string,
 	opts ...Option,
 ) (Client, error) {
 	dopts := defaultOptions()
 	for _, opt := range opts {
 		opt(dopts)
 	}
-	logger := dopts.logger.Named("postgres")
-	cleanup, err := pgxv4.RegisterDriver(alloydb)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := cleanup(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	logger := dopts.logger.Named(postgres)
 	dsn := fmt.Sprintf(
-		"host=projects/%s/locations/%s/clusters/%s/instances/%s user=%s password=%s dbname=%s sslmode=disable",
-		project, region, cluster, instance, dbUser, dbPass, dbName,
+		"%s://%s:%s@%s:%d/%s",
+		postgres, dbUser, dbPass, dbHost, dbPort, dbName,
 	)
-	db, err := sql.Open(alloydb, dsn)
+	db, err := sql.Open(postgres, dsn)
 	if err != nil {
 		logger.Error("Failed to open db", zap.Error(err))
 		return nil, err

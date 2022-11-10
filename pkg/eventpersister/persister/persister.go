@@ -27,12 +27,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
+	v2ec "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
-	v2ec "github.com/bucketeer-io/bucketeer/pkg/eventpersister/storage/v2"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
@@ -510,25 +509,15 @@ func (p *Persister) createEvent(event interface{}, id, environmentNamespace stri
 	case *esproto.UserEvent:
 		return p.createUserEvent(event, id, environmentNamespace)
 	}
-	return ErrUnexpectedMessageType
+	return nil
 }
 
 func (p *Persister) createEvaluationEvent(
 	event *eventproto.EvaluationEvent,
 	id, environmentNamespace string,
 ) error {
-	eventStorage := v2ec.NewEventCreationStorage(p.postgresClient)
-	if err := eventStorage.CreateEvaluationEvent(p.ctx, event, id, environmentNamespace); err != nil {
-		p.logger.Error(
-			"Failed to store evaluation event",
-			log.FieldsFromImcomingContext(p.ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-			)...,
-		)
-		return err
-	}
-	return nil
+	eventStorage := v2ec.NewEventStorage(p.postgresClient)
+	return eventStorage.CreateEvaluationEvent(p.ctx, event, id, environmentNamespace)
 }
 
 func (p *Persister) createGoalEvent(
@@ -561,34 +550,14 @@ func (p *Persister) createGoalEvent(
 			zap.String("timestamp", time.Unix(event.Timestamp, 0).Format(time.RFC3339)),
 		)
 	}
-	eventStorage := v2ec.NewEventCreationStorage(p.postgresClient)
-	if err := eventStorage.CreateGoalEvent(p.ctx, event, id, environmentNamespace, evaluations); err != nil {
-		p.logger.Error(
-			"Failed to store goal event",
-			log.FieldsFromImcomingContext(p.ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-			)...,
-		)
-		return err
-	}
-	return nil
+	eventStorage := v2ec.NewEventStorage(p.postgresClient)
+	return eventStorage.CreateGoalEvent(p.ctx, event, id, environmentNamespace, evaluations)
 }
 
 func (p *Persister) createUserEvent(
 	event *esproto.UserEvent,
 	id, environmentNamespace string,
 ) error {
-	eventStorage := v2ec.NewEventCreationStorage(p.postgresClient)
-	if err := eventStorage.CreateUserEvent(p.ctx, event, id, environmentNamespace); err != nil {
-		p.logger.Error(
-			"Failed to store user event",
-			log.FieldsFromImcomingContext(p.ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-			)...,
-		)
-		return err
-	}
-	return nil
+	eventStorage := v2ec.NewEventStorage(p.postgresClient)
+	return eventStorage.CreateUserEvent(p.ctx, event, id, environmentNamespace)
 }

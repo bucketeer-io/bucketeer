@@ -3,7 +3,6 @@ module github.com/bucketeer-io/bucketeer
 go 1.17
 
 require (
-	cloud.google.com/go/alloydbconn v0.2.1
 	cloud.google.com/go/bigtable v1.0.0
 	cloud.google.com/go/kms v1.4.0
 	cloud.google.com/go/profiler v0.3.0
@@ -21,7 +20,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/itchyny/gojq v0.12.5
-	github.com/lib/pq v1.10.2
+	github.com/lib/pq v1.10.7
 	github.com/mna/redisc v1.1.2
 	github.com/nicksnyder/go-i18n/v2 v2.2.0
 	github.com/prometheus/client_golang v1.2.1
@@ -73,14 +72,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
-	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.12.1 // indirect
-	github.com/jackc/pgio v1.0.0 // indirect
-	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.3.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgtype v1.11.0 // indirect
-	github.com/jackc/pgx/v4 v4.16.1 // indirect
 	github.com/jcmturner/gofork v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af // indirect
 	github.com/klauspost/compress v1.10.10 // indirect
