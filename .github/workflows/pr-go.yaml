@@ -104,9 +104,7 @@ jobs:
       run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
     - name: Generate proto go files
       run: make proto-go
-    - name: Generate proto go descriptor files
-      run: make proto-go-descriptor
-    - name: Check repository updates
+    - name: Check proto go descriptor
       run: make proto-go-descriptor-check
 
   update-repos-check:
