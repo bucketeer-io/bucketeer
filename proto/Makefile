@@ -38,6 +38,12 @@ remove-go:
 go-descriptor:
 	DIR=$(GIT_TOP_DIR) DESCRIPTOR_PATH=$(GIT_TOP_DIR)/proto bash $(GIT_TOP_DIR)/tools/gen/descriptor.sh
 
+.PHONY: go-descriptor-check
+go-descriptor-check: go-descriptor
+	$(eval api_gateway_values_path := manifests/bucketeer/charts/api-gateway/values.yaml)
+	$(eval web_gateway_values_path := manifests/bucketeer/charts/web-gateway/values.yaml)
+	test -z "$$(git diff --name-only | grep -e "$(api_gateway_values_path)\|$(web_gateway_values_path)")"
+
 .PHONY: check
 check: fmt-check lock-check
 

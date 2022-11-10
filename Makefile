@@ -98,6 +98,10 @@ proto-go:
 proto-go-descriptor:
 	make -C proto go-descriptor
 
+.PHONY: proto-go-descriptor-check
+proto-go-descriptor-check:
+	make -C proto go-descriptor-check
+
 .PHONY: mockgen
 mockgen: proto-go
 	find ./pkg -path "*mock*.go" -type f -delete
