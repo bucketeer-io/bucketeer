@@ -42,7 +42,7 @@ func (s *NotificationService) CreateAdminSubscription(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateCreateAdminSubscriptionRequest(req); err != nil {
+	if err := s.validateCreateAdminSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	subscription, err := domain.NewSubscription(req.Command.Name, req.Command.SourceTypes, req.Command.Recipient)
@@ -140,6 +140,7 @@ func (s *NotificationService) CreateAdminSubscription(
 
 func (s *NotificationService) validateCreateAdminSubscriptionRequest(
 	req *notificationproto.CreateAdminSubscriptionRequest,
+	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -148,7 +149,14 @@ func (s *NotificationService) validateCreateAdminSubscriptionRequest(
 		return localizedError(statusNameRequired, locale.JaJP)
 	}
 	if len(req.Command.SourceTypes) == 0 {
-		return localizedError(statusSourceTypesRequired, locale.JaJP)
+		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if err := s.validateRecipient(req.Command.Recipient); err != nil {
 		return err
@@ -202,10 +210,24 @@ func (s *NotificationService) validateUpdateAdminSubscriptionRequest(
 		return localizedError(statusNoCommand, locale.JaJP)
 	}
 	if req.AddSourceTypesCommand != nil && len(req.AddSourceTypesCommand.SourceTypes) == 0 {
-		return localizedError(statusSourceTypesRequired, locale.JaJP)
+		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.DeleteSourceTypesCommand != nil && len(req.DeleteSourceTypesCommand.SourceTypes) == 0 {
-		return localizedError(statusSourceTypesRequired, locale.JaJP)
+		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.RenameSubscriptionCommand != nil && req.RenameSubscriptionCommand.Name == "" {
 		return localizedError(statusNameRequired, locale.JaJP)

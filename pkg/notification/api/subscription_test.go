@@ -19,6 +19,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
@@ -31,6 +34,16 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc        string
@@ -57,7 +70,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusSourceTypesRequired, locale.JaJP),
+			expectedErr: createError(statusSourceTypesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes")),
 		},
 		{
 			desc: "err: ErrRecipientRequired",
@@ -166,6 +179,16 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*NotificationService)
@@ -190,7 +213,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 				Id:                    "key-0",
 				AddSourceTypesCommand: &proto.AddSourceTypesCommand{},
 			},
-			expectedErr: localizedError(statusSourceTypesRequired, locale.JaJP),
+			expectedErr: createError(statusSourceTypesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes")),
 		},
 		{
 			desc: "err: delete notification types: ErrSourceTypesRequired",
@@ -198,7 +221,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 				Id:                       "key-0",
 				DeleteSourceTypesCommand: &proto.DeleteSourceTypesCommand{},
 			},
-			expectedErr: localizedError(statusSourceTypesRequired, locale.JaJP),
+			expectedErr: createError(statusSourceTypesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes")),
 		},
 		{
 			desc: "err: ErrNotFound",
