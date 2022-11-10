@@ -127,7 +127,7 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 		postgresPass:      cmd.Flag("postgres-pass", "").Required().String(),
 		postgresHost:      cmd.Flag("postgres-host", "").Required().String(),
 		postgresPort:      cmd.Flag("postgres-port", "").Required().Int(),
-		postgresDbName:    cmd.Flag("allodb-name", "").Required().String(),
+		postgresDbName:    cmd.Flag("postgres-name", "").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
