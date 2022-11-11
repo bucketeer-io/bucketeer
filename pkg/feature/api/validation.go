@@ -372,7 +372,10 @@ func validateListSegmentUsersRequest(req *featureproto.ListSegmentUsersRequest) 
 	return nil
 }
 
-func validateBulkUploadSegmentUsersRequest(req *featureproto.BulkUploadSegmentUsersRequest, localizer locale.Localizer) error {
+func validateBulkUploadSegmentUsersRequest(
+	req *featureproto.BulkUploadSegmentUsersRequest,
+	localizer locale.Localizer,
+) error {
 	if req.SegmentId == "" {
 		return localizedError(statusMissingSegmentID, locale.JaJP)
 	}
@@ -523,7 +526,11 @@ func validateFeatureVariationsCommand(
 	}
 }
 
-func validateArchiveFeatureRequest(req *featureproto.ArchiveFeatureRequest, fs []*featureproto.Feature, localizer locale.Localizer) error {
+func validateArchiveFeatureRequest(
+	req *featureproto.ArchiveFeatureRequest,
+	fs []*featureproto.Feature,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
