@@ -41,7 +41,7 @@ func (s *FeatureService) CreateSegment(
 	if err != nil {
 		return nil, err
 	}
-	if err = validateCreateSegmentRequest(req.Command); err != nil {
+	if err = validateCreateSegmentRequest(req.Command, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -157,7 +157,7 @@ func (s *FeatureService) DeleteSegment(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteSegmentRequest(req); err != nil {
+	if err := validateDeleteSegmentRequest(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -295,7 +295,7 @@ func (s *FeatureService) UpdateSegment(
 		}
 		commands = append(commands, cmd)
 	}
-	if err := validateUpdateSegment(req.Id, commands); err != nil {
+	if err := validateUpdateSegment(req.Id, commands, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(

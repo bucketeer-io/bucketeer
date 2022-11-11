@@ -495,7 +495,7 @@ func (s *FeatureService) CreateFeature(
 	if err != nil {
 		return nil, err
 	}
-	if err = validateCreateFeatureRequest(req.Command); err != nil {
+	if err = validateCreateFeatureRequest(req.Command, localizer); err != nil {
 		return nil, err
 	}
 	feature, err := domain.NewFeature(
@@ -810,7 +810,7 @@ func (s *FeatureService) EnableFeature(
 	req *featureproto.EnableFeatureRequest,
 ) (*featureproto.EnableFeatureResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	if err := validateEnableFeatureRequest(req); err != nil {
+	if err := validateEnableFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
@@ -835,7 +835,7 @@ func (s *FeatureService) DisableFeature(
 	req *featureproto.DisableFeatureRequest,
 ) (*featureproto.DisableFeatureResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	if err := validateDisableFeatureRequest(req); err != nil {
+	if err := validateDisableFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
@@ -881,7 +881,7 @@ func (s *FeatureService) ArchiveFeature(
 		)
 		return nil, err
 	}
-	if err := validateArchiveFeatureRequest(req, features); err != nil {
+	if err := validateArchiveFeatureRequest(req, features, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
@@ -904,7 +904,7 @@ func (s *FeatureService) UnarchiveFeature(
 	req *featureproto.UnarchiveFeatureRequest,
 ) (*featureproto.UnarchiveFeatureResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	if err := validateUnarchiveFeatureRequest(req); err != nil {
+	if err := validateUnarchiveFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
@@ -927,7 +927,7 @@ func (s *FeatureService) DeleteFeature(
 	req *featureproto.DeleteFeatureRequest,
 ) (*featureproto.DeleteFeatureResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	if err := validateDeleteFeatureRequest(req); err != nil {
+	if err := validateDeleteFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
@@ -959,7 +959,14 @@ func (s *FeatureService) updateFeature(
 		return localizedError(statusMissingID, locale.JaJP)
 	}
 	if cmd == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	runningExperimentExists, err := s.existsRunningExperiment(ctx, id, environmentNamespace)
 	if err != nil {
@@ -1765,7 +1772,7 @@ func (s *FeatureService) CloneFeature(
 	req *featureproto.CloneFeatureRequest,
 ) (*featureproto.CloneFeatureResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	if err := validateCloneFeatureRequest(req); err != nil {
+	if err := validateCloneFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.Command.EnvironmentNamespace, localizer)

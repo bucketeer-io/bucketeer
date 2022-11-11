@@ -47,7 +47,7 @@ func (s *FeatureService) AddSegmentUser(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateAddSegmentUserRequest(req); err != nil {
+	if err := validateAddSegmentUserRequest(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -92,7 +92,7 @@ func (s *FeatureService) DeleteSegmentUser(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteSegmentUserRequest(req); err != nil {
+	if err := validateDeleteSegmentUserRequest(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -370,7 +370,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateBulkUploadSegmentUsersRequest(req); err != nil {
+	if err := validateBulkUploadSegmentUsersRequest(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
