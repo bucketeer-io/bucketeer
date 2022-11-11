@@ -178,6 +178,28 @@ We use Bigtable to store userEvaluation because PubSub doesn't guarantee order i
 
 In conclusion, we can enable an order guarantee because we can set the key for each evaluation(userEvaluations + goalEvaluations). In short, we can design the key with fine granularity.
 
+**Conversion plan from existing subscriber to ordering subscriber**
+
+1. Create the new pubsub topic(bucketeer-xxx-evaluation-goal-events) in terraform.
+
+2. Create the new subscription(bucketeer-xxx-evaluation-goal-events-event-persister) with turning on ordering feature and target topic.
+
+3. Implement for enabling message ordering
+  * Publisher
+    * https://cloud.google.com/pubsub/docs/publisher#using-ordering-keys
+  * Subscriber
+    * https://cloud.google.com/pubsub/docs/ordering#enabling_message_ordering
+  * Stores all events into dummy table such as dummy_evaluation_event, dummy_goal_event
+
+4. Check if all messages are correctly stored into dummy tables correctly.
+
+5. Move evaluations from BigTable into RDB.
+
+6. Remove evaluation event persister and goal event persister.
+
+7. Stop using Bigtable
+
+
 ### Cloud SQL & Memorystore
 
 ![event-pipeline](./images/0039-image3.png)
