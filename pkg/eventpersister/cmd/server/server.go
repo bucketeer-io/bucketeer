@@ -33,7 +33,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/kafka"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/postgres"
 )
 
 const (
@@ -174,26 +173,26 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	postgresClient, err := postgres.NewClient(
-		ctx,
-		*s.postgresUser,
-		*s.postgresPass,
-		*s.postgresHost,
-		*s.postgresPort,
-		*s.postgresDbName,
-		postgres.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer postgresClient.Close()
+	// postgresClient, err := postgres.NewClient(
+	// 	ctx,
+	// 	*s.postgresUser,
+	// 	*s.postgresPass,
+	// 	*s.postgresHost,
+	// 	*s.postgresPort,
+	// 	*s.postgresDbName,
+	// 	postgres.WithLogger(logger),
+	// )
+	// if err != nil {
+	// 	return err
+	// }
+	// defer postgresClient.Close()
 
 	p := persister.NewPersister(
 		featureClient,
 		puller,
 		datastore,
 		btClient,
-		postgresClient,
+		nil, // Disable PostgreSQL temporarily due to instability issues on the Google side.
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
