@@ -41,6 +41,16 @@ func TestCreateSegmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	testcases := []struct {
 		setup                func(*FeatureService)
 		role                 accountproto.Account_Role
@@ -53,7 +63,7 @@ func TestCreateSegmentMySQL(t *testing.T) {
 			role:                 accountproto.Account_OWNER,
 			cmd:                  nil,
 			environmentNamespace: "ns0",
-			expected:             errMissingCommandJaJP,
+			expected:             createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: nil,
@@ -100,6 +110,16 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	testcases := []struct {
 		setup                func(*FeatureService)
 		role                 accountproto.Account_Role
@@ -122,7 +142,7 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 			id:                   "id",
 			cmd:                  nil,
 			environmentNamespace: "ns0",
-			expected:             errMissingCommandJaJP,
+			expected:             createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -198,6 +218,16 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	changeSegmentNameCmd, err := ptypes.MarshalAny(&featureproto.ChangeSegmentNameCommand{Name: "name"})
 	require.NoError(t, err)
 	testcases := []struct {
@@ -222,7 +252,7 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 			id:                   "id",
 			cmds:                 nil,
 			environmentNamespace: "ns0",
-			expected:             errMissingCommandJaJP,
+			expected:             createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: func(s *FeatureService) {

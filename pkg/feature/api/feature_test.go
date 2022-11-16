@@ -1114,6 +1114,16 @@ func TestEnableFeatureMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		setup       func(*FeatureService)
 		req         *featureproto.EnableFeatureRequest
@@ -1132,7 +1142,7 @@ func TestEnableFeatureMySQL(t *testing.T) {
 				Id:                   "id-0",
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errMissingCommandJaJP,
+			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -1179,6 +1189,16 @@ func TestDisableFeatureMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		setup       func(*FeatureService)
 		req         *featureproto.DisableFeatureRequest
@@ -1197,7 +1217,7 @@ func TestDisableFeatureMySQL(t *testing.T) {
 				Id:                   "id-0",
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errMissingCommandJaJP,
+			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -1247,6 +1267,15 @@ func TestValidateArchiveFeature(t *testing.T) {
 	f3 := makeFeature("fID-3")
 	f4 := makeFeature("fID-4")
 	f5 := makeFeature("fID-5")
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		req         *featureproto.ArchiveFeatureRequest
@@ -1266,7 +1295,7 @@ func TestValidateArchiveFeature(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 			},
 			fs:          nil,
-			expectedErr: errMissingCommandJaJP,
+			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			req: &featureproto.ArchiveFeatureRequest{
@@ -1355,7 +1384,7 @@ func TestValidateArchiveFeature(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		err := validateArchiveFeatureRequest(p.req, p.fs)
+		err := validateArchiveFeatureRequest(p.req, p.fs, localizer)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -1364,6 +1393,16 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		setup       func(*FeatureService)
@@ -1383,7 +1422,7 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 				Id:                   "id-0",
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errMissingCommandJaJP,
+			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -1430,6 +1469,16 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		setup       func(*FeatureService)
 		req         *featureproto.DeleteFeatureRequest
@@ -1448,7 +1497,7 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 				Id:                   "id-0",
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errMissingCommandJaJP,
+			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -1523,7 +1572,7 @@ func TestCloneFeatureMySQL(t *testing.T) {
 				Id:                   "id-0",
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errMissingCommandJaJP,
+			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: nil,

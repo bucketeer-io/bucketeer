@@ -35,9 +35,16 @@ const (
 
 var featureIDRegex = regexp.MustCompile("^[a-zA-Z0-9-]+$")
 
-func validateCreateFeatureRequest(cmd *featureproto.CreateFeatureCommand) error {
+func validateCreateFeatureRequest(cmd *featureproto.CreateFeatureCommand, localizer locale.Localizer) error {
 	if cmd == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if cmd.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
@@ -70,9 +77,16 @@ func validateCreateFeatureRequest(cmd *featureproto.CreateFeatureCommand) error 
 	return nil
 }
 
-func validateCreateSegmentRequest(cmd *featureproto.CreateSegmentCommand) error {
+func validateCreateSegmentRequest(cmd *featureproto.CreateSegmentCommand, localizer locale.Localizer) error {
 	if cmd == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if cmd.Name == "" {
 		return localizedError(statusMissingName, locale.JaJP)
@@ -94,24 +108,31 @@ func validateListSegmentsRequest(req *featureproto.ListSegmentsRequest) error {
 	return nil
 }
 
-func validateDeleteSegmentRequest(req *featureproto.DeleteSegmentRequest) error {
+func validateDeleteSegmentRequest(req *featureproto.DeleteSegmentRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
 	if req.Command == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func validateUpdateSegment(segmentID string, commands []command.Command) error {
+func validateUpdateSegment(segmentID string, commands []command.Command, localizer locale.Localizer) error {
 	if segmentID == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
-	return validateUpdateSegmentCommands(commands)
+	return validateUpdateSegmentCommands(commands, localizer)
 }
 
-func validateUpdateSegmentCommands(commands []command.Command) error {
+func validateUpdateSegmentCommands(commands []command.Command, localizer locale.Localizer) error {
 	for _, cmd := range commands {
 		switch c := cmd.(type) {
 		case *featureproto.ChangeSegmentNameCommand:
@@ -121,7 +142,7 @@ func validateUpdateSegmentCommands(commands []command.Command) error {
 		case *featureproto.AddRuleCommand:
 			return validateAddSegmentRule(c)
 		case *featureproto.DeleteRuleCommand:
-			return validateDeleteSegmentRule(c)
+			return validateDeleteSegmentRule(c, localizer)
 		case *featureproto.AddClauseCommand:
 			return validateAddSegmentClauseCommand(c)
 		case *featureproto.DeleteClauseCommand:
@@ -138,7 +159,14 @@ func validateUpdateSegmentCommands(commands []command.Command) error {
 			return localizedError(statusUnknownCommand, locale.JaJP)
 		}
 	}
-	return localizedError(statusMissingCommand, locale.JaJP)
+	dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+	})
+	if err != nil {
+		return statusInternal.Err()
+	}
+	return dt.Err()
 }
 
 func validateChangeSegmentName(cmd *featureproto.ChangeSegmentNameCommand) error {
@@ -176,9 +204,16 @@ func validateClauses(clauses []*featureproto.Clause) error {
 	return nil
 }
 
-func validateDeleteSegmentRule(cmd *featureproto.DeleteRuleCommand) error {
+func validateDeleteSegmentRule(cmd *featureproto.DeleteRuleCommand, localizer locale.Localizer) error {
 	if cmd == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if cmd.Id == "" {
 		return localizedError(statusMissingRuleID, locale.JaJP)
@@ -250,12 +285,19 @@ func validateClauseValueCommand(clauseID string, ruleID string, value string) er
 	return nil
 }
 
-func validateAddSegmentUserRequest(req *featureproto.AddSegmentUserRequest) error {
+func validateAddSegmentUserRequest(req *featureproto.AddSegmentUserRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
 	if req.Command == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return validateSegmentUserState(req.Command.State)
 }
@@ -264,12 +306,19 @@ func validateAddSegmentUserCommand(cmd *featureproto.AddSegmentUserCommand) erro
 	return validateUserIDs(cmd.UserIds)
 }
 
-func validateDeleteSegmentUserRequest(req *featureproto.DeleteSegmentUserRequest) error {
+func validateDeleteSegmentUserRequest(req *featureproto.DeleteSegmentUserRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
 	if req.Command == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return validateSegmentUserState(req.Command.State)
 }
@@ -323,12 +372,22 @@ func validateListSegmentUsersRequest(req *featureproto.ListSegmentUsersRequest) 
 	return nil
 }
 
-func validateBulkUploadSegmentUsersRequest(req *featureproto.BulkUploadSegmentUsersRequest) error {
+func validateBulkUploadSegmentUsersRequest(
+	req *featureproto.BulkUploadSegmentUsersRequest,
+	localizer locale.Localizer,
+) error {
 	if req.SegmentId == "" {
 		return localizedError(statusMissingSegmentID, locale.JaJP)
 	}
 	if req.Command == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -402,32 +461,53 @@ func validateGetFeaturesRequest(req *featureproto.GetFeaturesRequest) error {
 	return nil
 }
 
-func validateEnableFeatureRequest(req *featureproto.EnableFeatureRequest) error {
+func validateEnableFeatureRequest(req *featureproto.EnableFeatureRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
 	if req.Command == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func validateDisableFeatureRequest(req *featureproto.DisableFeatureRequest) error {
+func validateDisableFeatureRequest(req *featureproto.DisableFeatureRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
 	if req.Command == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func validateDeleteFeatureRequest(req *featureproto.DeleteFeatureRequest) error {
+func validateDeleteFeatureRequest(req *featureproto.DeleteFeatureRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
 	if req.Command == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -446,12 +526,23 @@ func validateFeatureVariationsCommand(
 	}
 }
 
-func validateArchiveFeatureRequest(req *featureproto.ArchiveFeatureRequest, fs []*featureproto.Feature) error {
+func validateArchiveFeatureRequest(
+	req *featureproto.ArchiveFeatureRequest,
+	fs []*featureproto.Feature,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
 	if req.Command == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	for _, f := range fs {
 		for _, p := range f.Prerequisites {
@@ -474,22 +565,36 @@ func validateVariationCommand(fs []*featureproto.Feature, vID string) error {
 	return nil
 }
 
-func validateUnarchiveFeatureRequest(req *featureproto.UnarchiveFeatureRequest) error {
+func validateUnarchiveFeatureRequest(req *featureproto.UnarchiveFeatureRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
 	if req.Command == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func validateCloneFeatureRequest(req *featureproto.CloneFeatureRequest) error {
+func validateCloneFeatureRequest(req *featureproto.CloneFeatureRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
 		return localizedError(statusMissingID, locale.JaJP)
 	}
 	if req.Command == nil {
-		return localizedError(statusMissingCommand, locale.JaJP)
+		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command.EnvironmentNamespace == req.EnvironmentNamespace {
 		return localizedError(statusIncorrectDestinationEnvironment, locale.JaJP)
