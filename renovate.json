@@ -4,5 +4,16 @@
     "config:base",
     ":timezone(Asia/Tokyo)",
     "schedule:monthly"
-  ]
+  ],
+  "labels": ["renovate"],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true,
+      "addLabels": ["automerge by renovate"]
+    }
+  ],
+  "automergeSchedule": ["* 11 * * tue-thu"],
+  "automergeStrategy": "squash",
+  "reviewers": ["team:renovate-reviewers"]
 }
