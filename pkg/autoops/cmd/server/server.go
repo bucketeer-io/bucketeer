@@ -21,7 +21,6 @@ import (
 	"path"
 	"time"
 
-	kms "cloud.google.com/go/kms/apiv1"
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -46,6 +45,8 @@ import (
 const (
 	command     = "server"
 	webhookPath = "hook"
+	gcp         = "gcp"
+	aws         = "aws"
 )
 
 type server struct {
@@ -72,6 +73,8 @@ type server struct {
 
 	webhookBaseURL         *string
 	webhookKMSResourceName *string
+
+	cloudService *string
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -104,6 +107,7 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"webhook-kms-resource-name",
 			"Cloud KMS resource name to encrypt and decrypt webhook credentials.",
 		).Required().String(),
+		cloudService: cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -188,14 +192,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	u.Path = path.Join(u.Path, webhookPath)
 
-	kmsClient, err := kms.NewKeyManagementClient(ctx)
-	if err != nil {
-		return err
+	var webhookCryptoUtil crypto.EncrypterDecrypter
+	switch *s.cloudService {
+	case gcp:
+		webhookCryptoUtil, err = crypto.NewCloudKMSCrypto(ctx, *s.webhookKMSResourceName)
+		if err != nil {
+			return err
+		}
+	case aws:
+		// TODO: Get region from command-line flags
+		webhookCryptoUtil, err = crypto.NewAwsKMSCrypto(ctx, *s.webhookKMSResourceName, "ap-northeast-1")
+		if err != nil {
+			return err
+		}
 	}
-	webhookCryptoUtil := crypto.NewCloudKMSCrypto(
-		kmsClient,
-		*s.webhookKMSResourceName,
-	)
+
 	service := api.NewAutoOpsService(
 		mysqlClient,
 		featureClient,

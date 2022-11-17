@@ -17,45 +17,48 @@ package crypto
 import (
 	"context"
 
-	cloudkms "cloud.google.com/go/kms/apiv1"
-	kms "cloud.google.com/go/kms/apiv1"
-	kmsproto "google.golang.org/genproto/googleapis/cloud/kms/v1"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
 )
 
-type cloudKMSCrypto struct {
-	client  *cloudkms.KeyManagementClient
-	keyName string
+type awsKMSCrypto struct {
+	client *kms.Client
+	keyID  string
 }
 
-func NewCloudKMSCrypto(
+func NewAwsKMSCrypto(
 	ctx context.Context,
-	keyName string,
+	keyID, region string,
 ) (EncrypterDecrypter, error) {
-	kmsClient, err := kms.NewKeyManagementClient(ctx)
+	cfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion(region),
+	)
 	if err != nil {
 		return nil, err
 	}
-	return cloudKMSCrypto{
-		client:  kmsClient,
-		keyName: keyName,
+	client := kms.NewFromConfig(cfg)
+	return awsKMSCrypto{
+		client: client,
+		keyID:  keyID,
 	}, nil
 }
 
-func (c cloudKMSCrypto) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
-	resp, err := c.client.Encrypt(ctx, &kmsproto.EncryptRequest{
-		Name:      c.keyName,
+func (c awsKMSCrypto) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
+	resp, err := c.client.Encrypt(ctx, &kms.EncryptInput{
 		Plaintext: data,
+		KeyId:     &c.keyID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return resp.Ciphertext, nil
+	return resp.CiphertextBlob, nil
 }
 
-func (c cloudKMSCrypto) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
-	resp, err := c.client.Decrypt(ctx, &kmsproto.DecryptRequest{
-		Name:       c.keyName,
-		Ciphertext: data,
+func (c awsKMSCrypto) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
+	resp, err := c.client.Decrypt(ctx, &kms.DecryptInput{
+		CiphertextBlob: data,
+		KeyId:          &c.keyID,
 	})
 	if err != nil {
 		return nil, err

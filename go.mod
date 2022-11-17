@@ -10,6 +10,8 @@ require (
 	contrib.go.opencensus.io/exporter/stackdriver v0.8.0
 	github.com/Shopify/sarama v1.27.0
 	github.com/VividCortex/mysqlerr v1.0.0
+	github.com/aws/aws-sdk-go-v2/config v1.17.10
+	github.com/aws/aws-sdk-go-v2/service/kms v1.18.15
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/ca-dp/godruid v0.0.0-20210401093507-918893fdd0d7
 	github.com/coreos/go-oidc v2.1.0+incompatible
@@ -52,6 +54,17 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4 // indirect
 	github.com/aws/aws-sdk-go v1.17.7 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.17.1 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.23 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.19 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.25 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.19 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.26 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.19 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.11.25 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.17.1 // indirect
+	github.com/aws/smithy-go v1.13.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -73,7 +86,7 @@ require (
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
 	github.com/jcmturner/gofork v1.0.0 // indirect
-	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.10.10 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.10.1 // indirect

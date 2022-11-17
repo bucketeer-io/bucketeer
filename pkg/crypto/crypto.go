@@ -14,7 +14,9 @@
 
 package crypto
 
-import "context"
+import (
+	"context"
+)
 
 type EncrypterDecrypter interface {
 	Encrypt(ctx context.Context, data []byte) ([]byte, error)
