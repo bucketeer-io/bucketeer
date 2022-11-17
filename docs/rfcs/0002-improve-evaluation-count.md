@@ -71,6 +71,8 @@ User count: `uc:feature_flag_id:variation_id:daily_timestamp`
 We will change the event counter API's storage interface to retrieve the data from Redis instead of Druid and convert the data to the current Timeseries format.
 No changes are needed in the console UI.
 
+**Note:** We will add the default value count in the Timeseries response as a new feature. Currently, we only return the variation counters.
+
 ##### Event count
 
 We will get multiple counters using the `MGET` interface.
