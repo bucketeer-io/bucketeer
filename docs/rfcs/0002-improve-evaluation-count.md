@@ -2,8 +2,9 @@
 
 We'll migrate the evaluation count data from Druid to another place to achieve the following goals.
 
-- The data retrieval is done in milliseconds instead of 5-20 seconds
+- The time series data retrieval is done in milliseconds instead of 5-20 seconds
 - Split the data pipeline for Feature Flag and A/B Test, making the self-host process simple and cheaper
+- Be able to see the default value count
 
 ## Proposal
 
@@ -62,6 +63,8 @@ Also, we will use the `EXPIRE` to set a TTL of 31 days so that the keys will del
 
 Event count: `ec:feature_flag_id:variation_id:daily_timestamp`
 User count: `uc:feature_flag_id:variation_id:daily_timestamp`
+
+**Note:** For default evaluation events, we set the variation id as `default`.
 
 #### Event Counter Storage
 
