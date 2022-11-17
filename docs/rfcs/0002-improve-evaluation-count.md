@@ -17,12 +17,14 @@ We'll migrate the evaluation count data from Druid to another place to achieve t
   * Doesn't need much space to store the counts
   * No need to create a service and a table to summarize the daily count
   * No need to create a scheduled workflow to delete old data
-  * Support up to 60k connections
+  * Support up to 60k connections (We can add more replicas for reading if needed without downtime)
   * Cluster cost is cheap
 
 * Cons
   * Need to create a scheduled workflow to backup the current data
   * There is an error rate of up to 0.81% for the unique count
+  * We need to monitor from time to time the storage usage
+  * SLA (99.9% >=) is a little low compared to PostgreSQL
 
 See also: [pricing](https://cloud.google.com/memorystore/docs/redis/pricing)
 
@@ -31,6 +33,8 @@ See also: [pricing](https://cloud.google.com/memorystore/docs/redis/pricing)
 * Pros
   * The unique count will be accurate
   * Backup can be done automatically
+  * Automatic storage resize
+  * SLA 99.95%
 
 * Cons
   * It requires much more space to store the data (Terabytes)
