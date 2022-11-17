@@ -48,44 +48,44 @@ See also: [pricing](https://cloud.google.com/memorystore/docs/redis/pricing)
 
 See also: [pricing](https://cloud.google.com/sql/pricing)
 
-## Implementation
+# Implementation
 
-### Infra
+## Infra
 
 We may need to increase the current Redis storage via Terraform. Currently, we use 1GB.
 
-### Server
+## Server
 
-#### Event Persister
+### Event Persister
 
-We will implement the Redis using `INCR` interface to increment the event counter
+We will implement the Redis using `INCR` interface to increment the event counter.<br />
 For the user count, we will use the `PFADD` (HyperLogLog) interface to increment the unique counter.
 
 Also, we will use the `EXPIRE` to set a TTL of 31 days so that the keys will delete automatically.
 
-##### Key format
+#### Key format
 
-Event count: `ec:feature_flag_id:variation_id:daily_timestamp`
-User count: `uc:feature_flag_id:variation_id:daily_timestamp`
+- Event count: `ec:feature_flag_id:variation_id:daily_timestamp`
+- User count: `uc:feature_flag_id:variation_id:daily_timestamp`
 
 **Note:** For default evaluation events, we set the variation id as `default`.
 
-#### Event Counter Storage
+### Event Counter Storage
 
 We will change the event counter API's storage interface to retrieve the data from Redis instead of Druid and convert the data to the current Timeseries format.
 No changes are needed in the console UI.
 
 **Note:** We will add the default value count in the Timeseries response as a new feature. Currently, we only return the variation counters.
 
-##### Event count
+#### Event count
 
 We will get multiple counters using the `MGET` interface.
 
-##### User count
+#### User count
 
 We will get the unique count using the `PFCOUNT` interface.
 
-## Migration
+# Migration
 
 Because there is no need to rush, I'm going to implement it to double-write the data for 30 days and then delete the old implementation after we confirm everything is okay.
 
