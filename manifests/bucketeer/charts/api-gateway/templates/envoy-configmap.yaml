@@ -37,9 +37,9 @@ data:
             thresholds:
               - priority: DEFAULT
                 max_retries: 3
-                # we don't want to break a circuit by number of request, so set a large number.
-                max_pending_requests: 100000000
-                max_requests: 100000000
+                max_pending_requests: 3500
+                max_requests: 3500
+                max_connections: 3500
           load_assignment:
             cluster_name: api-gateway
             endpoints:
@@ -85,9 +85,9 @@ data:
             thresholds:
               - priority: DEFAULT
                 max_retries: 3
-                # we don't want to break a circuit by number of request, so set a large number.
-                max_pending_requests: 100000000
-                max_requests: 100000000
+                max_pending_requests: 3500
+                max_requests: 3500
+                max_connections: 3500
           load_assignment:
             cluster_name: api-gateway-rest-v1
             endpoints:
