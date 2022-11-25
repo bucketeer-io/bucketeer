@@ -101,6 +101,38 @@ datasources:
 
 https://docs.growthbook.io/self-host#installation
 
+**mastodon**
+
+mastodon loads `./.env.production`.
+
+```text
+
+# Redis
+# -----
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# PostgreSQL
+# ----------
+DB_HOST=/var/run/postgresql
+DB_USER=mastodon
+DB_NAME=mastodon_production
+DB_PASS=
+DB_PORT=5432
+
+# Elasticsearch (optional)
+# ------------------------
+ES_ENABLED=true
+ES_HOST=localhost
+ES_PORT=9200
+# Authentication for ES (optional)
+ES_USER=elastic
+ES_PASS=password
+
+```
+
+https://github.com/mastodon/mastodon/blob/main/.env.production.sample
+
 ### Conclusion
 
 Since Bucketeer uses Kubernetes, using YAML file and Helm fits into our cases.
