@@ -80,30 +80,23 @@ spec:
 
 https://pipecd.dev/docs/installation/install-controlplane/#using-firestore-and-gcs
 
-They use Helm and above YAML file.
+**Growth Book**
+
+They use Helm and above YAML file. Growth Book loads `/usr/local/src/app/config/config.yml`.
 
 ```yaml
-# docker-compose.yml
-version: "3"
-services:
-  mongo:
-    image: "mongo:latest"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=password
-  growthbook:
-    image: "growthbook/growthbook:latest"
-    ports:
-      - "3000:3000"
-      - "3100:3100"
-    depends_on:
-      - mongo
-    environment:
-      - MONGODB_URI=mongodb://root:password@mongo:27017/
-    volumes:
-      - uploads:/usr/local/src/app/packages/back-end/uploads
-volumes:
-  uploads:
+datasources:
+  warehouse:
+    type: postgres
+    name: Main Warehouse
+    # Connection params (different for each type of data source)
+    params:
+      host: localhost
+      port: 5432
+      user: root
+      password: ${POSTGRES_PW} # use env for secrets
+      database: growthbook
+...
 ```
 
 https://docs.growthbook.io/self-host#installation
