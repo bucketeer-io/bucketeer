@@ -133,6 +133,18 @@ ES_PASS=password
 
 https://github.com/mastodon/mastodon/blob/main/.env.production.sample
 
+**FeatureHub**
+
+```console
+$ export GCP_REGION=us-east1
+$ export GCP_ZONE=us-east1-b
+$ export FH_DB_NAME=featurehub-db
+$ export FH_DB_PASSWORD=FeatureHub17#
+$ export FH_DB_SCHEMA=featurehub
+```
+
+https://docs.featurehub.io/featurehub/latest/installation.html#_cloud_deployments
+
 ### Conclusion
 
 Since Bucketeer uses Kubernetes, using YAML file and Helm fits into our cases.
