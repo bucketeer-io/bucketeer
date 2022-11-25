@@ -78,6 +78,14 @@ spec:
       credentialsFile: /etc/pipecd-secret/gcs-service-account
 ```
 
+```sh
+$ helm install pipecd oci://ghcr.io/pipe-cd/chart/pipecd --version v0.39.0 --namespace={NAMESPACE} \
+  --set-file config.data=path-to-control-plane-configuration-file \
+  --set-file secret.encryptionKey.data=path-to-encryption-key-file \
+  --set-file secret.firestoreServiceAccount.data=path-to-service-account-file \
+  --set-file secret.gcsServiceAccount.data=path-to-service-account-file
+```
+
 https://pipecd.dev/docs/installation/install-controlplane/#using-firestore-and-gcs
 
 **Growth Book**
@@ -87,7 +95,7 @@ They use Helm and above YAML file. Growth Book loads `/usr/local/src/app/config/
 ```yaml
 datasources:
   warehouse:
-    type: postgres
+    type: postgres # or "redshift" or "mysql" or "clickhouse"
     name: Main Warehouse
     # Connection params (different for each type of data source)
     params:
