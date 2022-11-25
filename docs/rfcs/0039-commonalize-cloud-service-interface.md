@@ -90,7 +90,33 @@ https://pipecd.dev/docs/installation/install-controlplane/#using-firestore-and-g
 
 **Growth Book**
 
-They use Helm and above YAML file. Growth Book loads `/usr/local/src/app/config/config.yml`.
+To open web console, docker-compose.yml is used.
+
+```docker-compose.yml
+# docker-compose.yml
+version: "3"
+services:
+  mongo:
+    image: "mongo:latest"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password
+  growthbook:
+    image: "growthbook/growthbook:latest"
+    ports:
+      - "3000:3000"
+      - "3100:3100"
+    depends_on:
+      - mongo
+    environment:
+      - MONGODB_URI=mongodb://root:password@mongo:27017/
+    volumes:
+      - uploads:/usr/local/src/app/packages/back-end/uploads
+volumes:
+  uploads:
+```
+
+To use the feature of feature flag, Growth Book loads `/usr/local/src/app/config/config.yml`.
 
 ```yaml
 datasources:
