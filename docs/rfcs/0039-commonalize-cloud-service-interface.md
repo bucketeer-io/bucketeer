@@ -135,7 +135,7 @@ https://github.com/mastodon/mastodon/blob/main/.env.production.sample
 
 **FeatureHub**
 
-```console
+```sh
 $ export GCP_REGION=us-east1
 $ export GCP_ZONE=us-east1-b
 $ export FH_DB_NAME=featurehub-db
