@@ -1,6 +1,8 @@
 name: push-image
 
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - main
@@ -11,6 +13,7 @@ on:
       - "CLA.md"
       - "CONTRIBUTING.md"
       - "DEPLOYMENT.md"
+      - ".github/workflows/**"
 
 env:
   GHCR_REGISTRY: ghcr.io/bucketeer-io
@@ -260,4 +263,3 @@ jobs:
                 }
               ]
             }
-
