@@ -33,6 +33,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/kafka"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
 const (
@@ -75,6 +76,11 @@ type server struct {
 	postgresHost                 *string
 	postgresPort                 *int
 	postgresDbName               *string
+	mysqlUser                    *string
+	mysqlPass                    *string
+	mysqlHost                    *string
+	mysqlPort                    *int
+	mysqlDbName                  *string
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -127,6 +133,11 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 		postgresHost:      cmd.Flag("postgres-host", "").Required().String(),
 		postgresPort:      cmd.Flag("postgres-port", "").Required().Int(),
 		postgresDbName:    cmd.Flag("postgres-name", "").Required().String(),
+		mysqlUser:         cmd.Flag("mysql-user", "").String(),
+		mysqlPass:         cmd.Flag("mysql-pass", "").String(),
+		mysqlHost:         cmd.Flag("mysql-host", "").String(),
+		mysqlPort:         cmd.Flag("mysql-port", "").Int(),
+		mysqlDbName:       cmd.Flag("mysql-dbname", "").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -187,12 +198,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// }
 	// defer postgresClient.Close()
 
+	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if mysqlClient != nil {
+			defer mysqlClient.Close()
+		}
+	}()
+
 	p := persister.NewPersister(
 		featureClient,
 		puller,
 		datastore,
 		btClient,
 		nil, // Disable PostgreSQL temporarily due to instability issues on the Google side.
+		mysqlClient,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
@@ -221,6 +243,26 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	<-ctx.Done()
 	return nil
+}
+
+func (s *server) createMySQLClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (mysql.Client, error) {
+	if *s.mysqlUser == "" || *s.mysqlPass == "" || *s.mysqlHost == "" || *s.mysqlPort == 0 || *s.mysqlDbName == "" {
+		return nil, nil
+	}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return mysql.NewClient(
+		ctx,
+		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost,
+		*s.mysqlPort,
+		*s.mysqlDbName,
+		mysql.WithLogger(logger),
+		mysql.WithMetrics(registerer),
+	)
 }
 
 func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.Puller, error) {
