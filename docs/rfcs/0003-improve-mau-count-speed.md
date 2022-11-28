@@ -15,15 +15,15 @@ Also, it reduces the Druid instance and storage costs.
 ```sql
 CREATE TABLE IF NOT EXISTS `mau` (
   `user_id` VARCHAR(255) NOT NULL,
-  `year_month` VARCHAR(6) NOT NULL,
+  `yearmonth` VARCHAR(6) NOT NULL,
   `source_id` VARCHAR(30) NOT NULL,
-  `count` INT(11) UNSIGNED NOT NULL,
+  `event_count` INT(11) UNSIGNED NOT NULL,
   `created_at` BIGINT(20) NOT NULL,
   `updated_at` BIGINT(20) NOT NULL,
   `environment_namespace` VARCHAR(255) NOT NULL,
-  PRIMARY KEY (`environment_namespace`, `year_month`, `source_id`, `user_id`)
+  PRIMARY KEY (`environment_namespace`, `yearmonth`, `source_id`, `user_id`)
 )
-PARTITION BY RANGE COLUMNS(`year_month`) (
+PARTITION BY RANGE COLUMNS(`yearmonth`) (
   PARTITION p202211 VALUES LESS THAN ('202212'),
   PARTITION p202212 VALUES LESS THAN ('202301'),
   PARTITION p202301 VALUES LESS THAN ('202302')
@@ -34,22 +34,22 @@ PARTITION BY RANGE COLUMNS(`year_month`) (
 
 ### Upsert
 
-We will increment the count column if the user exists.
+We will increment the `event_count` column if the user exists.
 
 ```sql
 INSERT INTO mau (
   user_id,
-  year_month,
+  yearmonth,
   source_id,
-  count,
+  event_count,
   created_at,
   updated_at,
   environment_namespace
 ) VALUES (
   ?, ?, ?, ?, ?, ?, ?
 ) ON DUPLICATE KEY UPDATE
+  event_count = event_count + 1
   updated_at = VALUES(1668737826),
-  count = VALUES(count + 1)
 ```
 
 ### Retrieve
@@ -57,10 +57,10 @@ INSERT INTO mau (
 ```sql
 SELECT
   COUNT(*) as user_count, 
-  SUM(count) as event_count
+  SUM(event_count) as event_count
 FROM
   mau
-where year_month = '2022-12'
+where yearmonth = '2022-12'
 ```
 
 ## Server changes
