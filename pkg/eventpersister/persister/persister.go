@@ -29,6 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	v2ec "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
+	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersister/storage/v2"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
@@ -36,6 +37,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/postgres"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	esproto "github.com/bucketeer-io/bucketeer/proto/event/service"
@@ -115,6 +117,7 @@ type Persister struct {
 	cancel                func()
 	doneCh                chan struct{}
 	postgresClient        postgres.Client
+	mysqlClient           mysql.Client
 }
 
 func NewPersister(
@@ -123,6 +126,7 @@ func NewPersister(
 	ds datastore.Writer,
 	bt bigtable.Client,
 	postgresClient postgres.Client,
+	mysqlClient mysql.Client,
 	opts ...Option,
 ) *Persister {
 	dopts := &options{
@@ -151,6 +155,7 @@ func NewPersister(
 		cancel:                cancel,
 		doneCh:                make(chan struct{}),
 		postgresClient:        postgresClient,
+		mysqlClient:           mysqlClient,
 	}
 }
 
@@ -248,6 +253,16 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 					)
 				}
 			}
+			if err := p.upsertMAU(ctx, event, environmentNamespace); err != nil {
+				p.logger.Error(
+					"failed to store a mau",
+					zap.Error(err),
+					zap.String("id", id),
+					zap.String("environmentNamespace", environmentNamespace),
+				)
+				fails[id] = false
+				continue
+			}
 			eventJSON, repeatable, err := p.marshalEvent(event, environmentNamespace)
 			if err != nil {
 				if !repeatable {
@@ -318,6 +333,17 @@ func (p *Persister) extractEvents(messages map[string]*puller.Message) environme
 		envEvents[event.EnvironmentNamespace] = eventMap{event.Id: innerEvent.Message}
 	}
 	return envEvents
+}
+
+func (p *Persister) upsertMAU(ctx context.Context, event proto.Message, environmentNamespace string) error {
+	if p.mysqlClient == nil {
+		return nil
+	}
+	if e, ok := event.(*esproto.UserEvent); ok {
+		s := storage.NewMysqlMAUStorage(p.mysqlClient)
+		return s.UpsertMAU(ctx, e, environmentNamespace)
+	}
+	return nil
 }
 
 func (p *Persister) marshalEvent(event interface{}, environmentNamespace string) (string, bool, error) {

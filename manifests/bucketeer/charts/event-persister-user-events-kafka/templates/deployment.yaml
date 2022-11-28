@@ -124,6 +124,16 @@ spec:
               value: "{{ .Values.env.postgresPort }}"
             - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_NAME
               value: "{{ .Values.env.postgresDbName }}"
+            - name: BUCKETEER_EVENT_PERSISTER_MYSQL_USER
+              value: "{{ .Values.env.mysqlUser }}"
+            - name: BUCKETEER_EVENT_PERSISTER_MYSQL_PASS
+              value: "{{ .Values.env.mysqlPass}}"
+            - name: BUCKETEER_EVENT_PERSISTER_MYSQL_HOST
+              value: "{{ .Values.env.mysqlHost }}"
+            - name: BUCKETEER_EVENT_PERSISTER_MYSQL_PORT
+              value: "{{ .Values.env.mysqlPort }}"
+            - name: BUCKETEER_EVENT_PERSISTER_MYSQL_DBNAME
+              value: "{{ .Values.env.mysqlDbName }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

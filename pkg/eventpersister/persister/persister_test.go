@@ -18,10 +18,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -30,6 +32,7 @@ import (
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
 	pullermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/mock"
 	btstorage "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
+	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	esproto "github.com/bucketeer-io/bucketeer/proto/event/service"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -477,6 +480,66 @@ func TestMarshaEvent(t *testing.T) {
 	}
 }
 
+func TestUpsertMAU(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		desc        string
+		setup       func(context.Context, *gomock.Controller) *Persister
+		input       proto.Message
+		expectedErr error
+	}{
+		{
+			desc: "not executed: mysqlClient is nil",
+			setup: func(ctx context.Context, ctrl *gomock.Controller) *Persister {
+				return newPersister(ctrl)
+			},
+			input:       &esproto.UserEvent{},
+			expectedErr: nil,
+		},
+		{
+			desc: "not executed: message is not UserEvent",
+			setup: func(ctx context.Context, ctrl *gomock.Controller) *Persister {
+				return newPersisterWithMysqlClient(ctrl)
+			},
+			input:       &eventproto.EvaluationEvent{},
+			expectedErr: nil,
+		},
+		{
+			desc: "success upsert UserEvent",
+			setup: func(ctx context.Context, ctrl *gomock.Controller) *Persister {
+				p := newPersisterWithMysqlClient(ctrl)
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
+				return p
+			},
+			input:       &esproto.UserEvent{},
+			expectedErr: nil,
+		},
+		{
+			desc: "error upsert UserEvent",
+			setup: func(ctx context.Context, ctrl *gomock.Controller) *Persister {
+				p := newPersisterWithMysqlClient(ctrl)
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("internal"))
+				return p
+			},
+			input:       &esproto.UserEvent{},
+			expectedErr: errors.New("internal"),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			persister := p.setup(context.Background(), mockController)
+			actualErr := persister.upsertMAU(context.Background(), p.input, "ns")
+			assert.Equal(t, p.expectedErr, actualErr)
+		})
+	}
+}
+
 func newPersister(c *gomock.Controller) *Persister {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Persister{
@@ -489,5 +552,21 @@ func newPersister(c *gomock.Controller) *Persister {
 		ctx:                   ctx,
 		cancel:                cancel,
 		doneCh:                make(chan struct{}),
+	}
+}
+
+func newPersisterWithMysqlClient(c *gomock.Controller) *Persister {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Persister{
+		featureClient:         fcmock.NewMockClient(c),
+		puller:                pullermock.NewMockRateLimitedPuller(c),
+		datastore:             nil,
+		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),
+		opts:                  &defaultOptions,
+		logger:                defaultOptions.logger,
+		ctx:                   ctx,
+		cancel:                cancel,
+		doneCh:                make(chan struct{}),
+		mysqlClient:           mysqlmock.NewMockClient(c),
 	}
 }

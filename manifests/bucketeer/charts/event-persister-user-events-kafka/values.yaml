@@ -45,6 +45,11 @@ env:
   postgresHost:
   postgresPort:
   postgresDbName:
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
 
 affinity: {}
 
