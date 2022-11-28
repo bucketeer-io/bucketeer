@@ -253,7 +253,6 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 					)
 				}
 			}
-
 			if err := p.upsertMAU(ctx, event, environmentNamespace); err != nil {
 				p.logger.Error(
 					"failed to store a mau",
@@ -264,7 +263,6 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 				fails[id] = false
 				continue
 			}
-
 			eventJSON, repeatable, err := p.marshalEvent(event, environmentNamespace)
 			if err != nil {
 				if !repeatable {

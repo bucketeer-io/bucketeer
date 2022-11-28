@@ -53,7 +53,6 @@ func (s *mysqlMAUStorage) UpsertMAU(ctx context.Context, event *esproto.UserEven
 		event_count = event_count + 1,
 		updated_at = VALUES(updated_at)
 	`
-
 	now := time.Now()
 	yearMonth := fmt.Sprintf("%d%d", now.Year(), now.Month())
 	_, err := s.qe.ExecContext(
