@@ -260,7 +260,7 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 					zap.String("id", id),
 					zap.String("environmentNamespace", environmentNamespace),
 				)
-				fails[id] = false
+				fails[id] = true
 				continue
 			}
 			eventJSON, repeatable, err := p.marshalEvent(event, environmentNamespace)
