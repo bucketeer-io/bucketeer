@@ -27,32 +27,6 @@ First, we'll start implementing AWS. Later, we'll support Azure.
 
 ### Comparision
 
-**PostHog**
-
-```yaml
-cloud: 'aws'
-ingress:
-    hostname: <your-hostname>
-    nginx:
-        enabled: true
-cert-manager:
-    enabled: true
-```
-
-https://posthog.com/docs/self-host/deploy/aws#chart-configuration
-
-```yaml
-cloud: 'gcp'
-ingress:
-    hostname: <your-hostname>
-```
-
-https://posthog.com/docs/self-host/deploy/gcp#chart-configuration
-
-They use Helm and above YAML file.
-
-https://github.com/PostHog/charts-clickhouse
-
 **PipeCD**
 
 ```yaml
@@ -90,9 +64,9 @@ https://pipecd.dev/docs/installation/install-controlplane/#using-firestore-and-g
 
 **Growth Book**
 
-To open web console, docker-compose.yml is used.
+To open web console, docker-compose.yml is used. Users can't use the feature of feature flag at this time.
 
-```docker-compose.yml
+```yml
 # docker-compose.yml
 version: "3"
 services:
@@ -118,7 +92,7 @@ volumes:
 
 To use the feature of feature flag, Growth Book loads `/usr/local/src/app/config/config.yml`.
 
-```yaml
+```yml
 datasources:
   warehouse:
     type: postgres # or "redshift" or "mysql" or "clickhouse"
@@ -133,11 +107,16 @@ datasources:
 ...
 ```
 
+As an alternative plan, users can register the configuration in web console as follows:
+
+![growth-book-dashboard](./images/0039-image6.png)
+![growth-book-dashboard2](./images/0039-image7.png)
+
 https://docs.growthbook.io/self-host#installation
 
 **mastodon**
 
-mastodon loads `./.env.production`.
+Users configure the following `./.env.production`. Then, run docker-compose.
 
 ```text
 
@@ -169,15 +148,46 @@ https://github.com/mastodon/mastodon/blob/main/.env.production.sample
 
 **FeatureHub**
 
-```sh
-$ export GCP_REGION=us-east1
-$ export GCP_ZONE=us-east1-b
-$ export FH_DB_NAME=featurehub-db
-$ export FH_DB_PASSWORD=FeatureHub17#
-$ export FH_DB_SCHEMA=featurehub
+There are several deployment options for running FeatureHub. Please visit https://docs.featurehub.io/featurehub/latest/installation.html for further information.
+
+FeatureHub supports both [kubernetes](https://github.com/featurehub-io/featurehub-helm) and [docker-compose](https://github.com/featurehub-io/featurehub-install).
+Users configure the following application.properties files.
+
+```text
+db.url=jdbc:postgresql://db:5432/featurehub
+db.username=featurehub
+db.password=featurehub
+db.connections=10
+nats.urls=nats://nats:4222
+dacha1.enabled=false
+dacha2.enabled=true
 ```
 
-https://docs.featurehub.io/featurehub/latest/installation.html#_cloud_deployments
+**PostHog**
+
+```yaml
+cloud: 'aws'
+ingress:
+    hostname: <your-hostname>
+    nginx:
+        enabled: true
+cert-manager:
+    enabled: true
+```
+
+https://posthog.com/docs/self-host/deploy/aws#chart-configuration
+
+```yaml
+cloud: 'gcp'
+ingress:
+    hostname: <your-hostname>
+```
+
+https://posthog.com/docs/self-host/deploy/gcp#chart-configuration
+
+They use Helm and above YAML file.
+
+https://github.com/PostHog/charts-clickhouse
 
 ### Conclusion
 
