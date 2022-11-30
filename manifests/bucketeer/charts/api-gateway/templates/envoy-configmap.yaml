@@ -315,19 +315,6 @@ data:
                       path: /dev/stdout
                   codec_type: auto
                   http_filters:
-                    - name: envoy.filters.http.health_check
-                      typed_config:
-                        "@type": type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
-                        cluster_min_healthy_percentages:
-                          account:
-                            value: 25
-                          feature:
-                            value: 25
-                        pass_through_mode: false
-                        headers:
-                          - name: :path
-                            string_match:
-                              exact: /health
                     - name: envoy.filters.http.router
                   route_config:
                     virtual_hosts:
