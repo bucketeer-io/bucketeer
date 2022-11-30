@@ -229,9 +229,9 @@ data:
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
-                                timeout: 3600s
+                                timeout: 10800s
                     stat_prefix: ingress_http
-                    stream_idle_timeout: 3600s
+                    stream_idle_timeout: 10800s
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:
@@ -306,7 +306,7 @@ data:
                                   retry_on: 5xx
                                 timeout: 15s
                     stat_prefix: egress_http
-                    stream_idle_timeout: 3600s
+                    stream_idle_timeout: 10800s
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:

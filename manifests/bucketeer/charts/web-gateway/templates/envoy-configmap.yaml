@@ -616,8 +616,8 @@ data:
                   common_http_protocol_options:
                     # set longer timeout than lb session timeout (600s)
                     idle_timeout: 620s
-                  stream_idle_timeout: 3600s
-                  request_timeout: 3600s
+                  stream_idle_timeout: 10800s
+                  request_timeout: 10800s
                   http_filters:
                     - name: envoy.filters.http.cors
                     - name: envoy.filters.http.grpc_web
@@ -794,7 +794,7 @@ data:
                               prefix: /bucketeer.eventcounter.EventCounterService
                             route:
                               cluster: event-counter
-                              timeout: 3600s
+                              timeout: 10800s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 3
