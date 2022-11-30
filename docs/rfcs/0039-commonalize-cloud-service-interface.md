@@ -256,27 +256,28 @@ dacha2.enabled=true
 
 **PostHog**
 
+Users need to create values.yaml such as follows:
+
 ```yaml
 cloud: 'aws'
 ingress:
-    hostname: <your-hostname>
-    nginx:
-        enabled: true
-cert-manager:
-    enabled: true
+  hostname: <your-hostname>
+  nginx:
+      enabled: true
+externalPostgresql:
+  # -- External PostgreSQL service host.
+  postgresqlHost:
+  # -- External PostgreSQL service port.
+  postgresqlPort: 5432
 ```
 
-https://posthog.com/docs/self-host/deploy/aws#chart-configuration
+Then, deploying service as follows:
 
-```yaml
-cloud: 'gcp'
-ingress:
-    hostname: <your-hostname>
+```console
+$ helm repo add posthog https://posthog.github.io/charts-clickhouse/
+$ helm repo update
+$ helm upgrade --install -f values.yaml --timeout 30m --create-namespace --namespace posthog posthog posthog/posthog --wait --wait-for-jobs --debug
 ```
-
-https://posthog.com/docs/self-host/deploy/gcp#chart-configuration
-
-They use Helm and above YAML file.
 
 https://github.com/PostHog/charts-clickhouse
 
