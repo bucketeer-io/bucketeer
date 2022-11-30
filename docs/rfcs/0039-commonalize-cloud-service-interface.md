@@ -6,14 +6,6 @@
 2. Create a new instance for each cloud service such as AWS, GCP, and Azure.
 3. Call common method from the new instance. The caller doesn't have to be conscious of which cloud service is used. (Dependency Injection)
 
-##### Example for YAML file
-
-```yaml
-cloud: 'aws'
-project: 'foobar'
-...
-```
-
 #### Implementation 
 
 1. Decide the interface(common method name) and abstract the around middleware implementation.
@@ -25,7 +17,106 @@ First, we'll start implementing AWS. Later, we'll support Azure.
 
 ## Self-host Bucketeer
 
-### Comparision
+[Prototype of design for YAML file](./utils/sample.yml)
+
+### Controversial Topic
+
+#### How to configure database info?
+
+```yaml
+params:
+  host: localhost
+  port: 5432
+  usernameFile: path/to/usernameFile # or env?
+  passwordFile: path/to/passwordFile # or env?
+```
+
+```yaml
+params:
+  url: mysql://<username>:<password>@<host>:<port>/<db_name>
+  pemFile: path/to/pemfile # for IAM
+```
+
+#### How to configure secret info?
+
+1
+```yaml
+params:
+  usernameFile: path/to/usernameFile # or env?
+  passwordFile: path/to/passwordFile # or env?
+```
+
+2
+```yaml
+params:
+  username: ${POSTGRES_USER} # or env?
+  password: ${POSTGRES_PW} # or env?
+```
+
+#### Should we use the specific cloud's name or the commonalized name?
+
+1. Use the specific cloud's name
+
+```yaml
+kms:
+  type: cloudKms
+  params:
+    keyName: keyName
+```
+
+```yaml
+kms:
+  type: awsKms
+  params:
+    keyID: keyID
+    region: # for AWS
+```
+
+```yaml
+messageService:
+  type: pubsub 
+  metricsEvent:
+    topic: bucketeer-metrics-events
+    subscription:
+      metricsEventPersister: bucketeer-metrics-events-metrics-event-persister
+```
+
+```yaml
+messageService:
+  type: sns/sqs
+  metricsEvent:
+    topic: bucketeer-metrics-events
+    queue:
+      metricsEventPersister: bucketeer-metrics-events-metrics-event-persister
+```
+
+2. Use the commonalized name
+
+```yaml
+kms:
+  type: cloudKms
+  params:
+    keyName: keyName
+```
+
+```yaml
+kms:
+  type: awsKms
+  params:
+    keyName: keyName
+    region: # for AWS
+```
+
+```yaml
+messageService:
+  type: pubsub 
+  metricsEvent:
+    publisher: bucketeer-metrics-events
+    subscriber:
+      metricsEventPersister: bucketeer-metrics-events-metrics-event-persister
+```
+
+### Other services
 
 **PipeCD**
 
