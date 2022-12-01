@@ -94,14 +94,6 @@ data:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
               explicit_http_config:
                 http2_protocol_options: {}
-          health_checks:
-            - grpc_health_check: {}
-              healthy_threshold: 1
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              timeout: 1s
-              unhealthy_threshold: 2
       listeners:
         - name: ingress
           address:
