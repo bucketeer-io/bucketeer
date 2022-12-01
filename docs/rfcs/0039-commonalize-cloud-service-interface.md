@@ -23,6 +23,7 @@ First, we'll start implementing AWS. Later, we'll support Azure.
 
 #### How to configure database info?
 
+1.
 ```yaml
 params:
   host: localhost
@@ -31,6 +32,7 @@ params:
   passwordFile: path/to/passwordFile # or env?
 ```
 
+2.
 ```yaml
 params:
   url: mysql://<username>:<password>@<host>:<port>/<db_name>
