@@ -47,7 +47,6 @@ const (
 	codeEmptyTag                   = "EmptyTag"
 	codeEmptyUserID                = "EmptyUserID"
 	codeInvalidTimestampRequest    = "InvalidTimestampRequest"
-	codeUpsertUserEvaluationFailed = "UpsertUserEvaluationFailed"
 	codeUnmarshalFailed            = "UnmarshalFailed"
 	codeMarshalAnyFailed           = "MarshalAnyFailed"
 	codeEvaluationConversionFailed = "EvaluationConversionFailed"

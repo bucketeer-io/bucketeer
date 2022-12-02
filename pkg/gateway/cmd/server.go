@@ -34,7 +34,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 )
 
 const command = "server"
@@ -43,7 +42,6 @@ type server struct {
 	*kingpin.CmdClause
 	port                   *int
 	project                *string
-	bigtableInstance       *string
 	goalTopic              *string
 	goalTopicProject       *string
 	goalBatchTopic         *string
@@ -69,11 +67,10 @@ type server struct {
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the gRPC server")
 	server := &server{
-		CmdClause:        cmd,
-		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:          cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
-		bigtableInstance: cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
-		goalTopic:        cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
+		CmdClause: cmd,
+		port:      cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:   cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
+		goalTopic: cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
 		goalTopicProject: cmd.Flag(
 			"goal-topic-project",
 			"GCP Project id to use for PubSub to publish GoalEvent.",
@@ -137,12 +134,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 
 func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	registerer := metrics.DefaultRegisterer()
-
-	btClient, err := s.createBigtableClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-	defer btClient.Close()
 
 	pubsubCtx, pubsubCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer pubsubCancel()
@@ -259,7 +250,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
 	service := api.NewGrpcGatewayService(
-		btClient,
 		featureClient,
 		accountClient,
 		goalPublisher,
@@ -298,7 +288,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go restHealthChecker.Run(ctx)
 
 	gatewayService := api.NewGatewayService(
-		btClient,
 		featureClient,
 		accountClient,
 		goalPublisher,
@@ -325,17 +314,4 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	<-ctx.Done()
 	return nil
-}
-
-func (s *server) createBigtableClient(
-	ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (bigtable.Client, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	return bigtable.NewBigtableClient(ctx, *s.project, *s.bigtableInstance,
-		bigtable.WithMetrics(registerer),
-		bigtable.WithLogger(logger),
-	)
 }
