@@ -35,7 +35,6 @@ import (
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftsmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
@@ -90,7 +89,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewGrpcGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &grpcGatewayService{}, g)
 }
 
@@ -1812,76 +1811,6 @@ func TestGrpcGetEvaluation(t *testing.T) {
 			expectedErr:       ErrInternal,
 		},
 		{
-			desc: "error while trying to upsert the user evaluation",
-			setup: func(gs *grpcGatewayService) {
-				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
-					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
-						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
-							Disabled: false,
-						},
-					}, nil)
-				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
-					&featureproto.Features{
-						Features: []*featureproto.Feature{
-							{
-								Id: "feature-id-1",
-								Variations: []*featureproto.Variation{
-									{
-										Id:    "variation-a",
-										Value: "true",
-									},
-									{
-										Id:    "variation-b",
-										Value: "false",
-									},
-								},
-								DefaultStrategy: &featureproto.Strategy{
-									Type: featureproto.Strategy_FIXED,
-									FixedStrategy: &featureproto.FixedStrategy{
-										Variation: "variation-b",
-									},
-								},
-								Tags: []string{"test"},
-							},
-							{
-								Id: "feature-id-2",
-								Variations: []*featureproto.Variation{
-									{
-										Id:    "variation-a",
-										Value: "true",
-									},
-									{
-										Id:    "variation-b",
-										Value: "false",
-									},
-								},
-								DefaultStrategy: &featureproto.Strategy{
-									Type: featureproto.Strategy_FIXED,
-									FixedStrategy: &featureproto.FixedStrategy{
-										Variation: "variation-b",
-									},
-								},
-								Tags: []string{"test"},
-							},
-						},
-					}, nil)
-				gs.userEvaluationStorage.(*ftsmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(errors.New("storage: internal")).MaxTimes(1)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
-			},
-			input:             &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "id-0"}, FeatureId: "feature-id-2"},
-			expectedFeatureID: "",
-			expectedErr:       ErrInternal,
-		},
-		{
 			desc: "return evaluation",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
@@ -1938,12 +1867,6 @@ func TestGrpcGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userEvaluationStorage.(*ftsmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(nil).MaxTimes(1)
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
@@ -2130,75 +2053,6 @@ func TestGrcpRegisterEvents(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "error while trying to upsert the user evaluation",
-			setup: func(gs *grpcGatewayService) {
-				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
-					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
-						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
-							Disabled: false,
-						},
-					}, nil)
-				gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
-				gs.goalBatchPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
-				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
-				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
-				gs.userEvaluationStorage.(*ftsmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(errors.New("storage: internal")).MaxTimes(1)
-			},
-			input: &gwproto.RegisterEventsRequest{
-				Events: []*eventproto.Event{
-					{
-						Id: uuid0,
-						Event: &any.Any{
-							TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalEvent",
-							Value:   bGoalEvent,
-						},
-					},
-					{
-						Id: uuid1,
-						Event: &any.Any{
-							TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-							Value:   bEvaluationEvent,
-						},
-					},
-					{
-						Id: uuid2,
-						Event: &any.Any{
-							TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.MetricsEvent",
-							Value:   bMetricsEvent,
-						},
-					},
-					{
-						Id: uuid3,
-						Event: &any.Any{
-							TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalBatchEvent",
-							Value:   bGoalBatchEvent,
-						},
-					},
-				},
-			},
-			expected: &gwproto.RegisterEventsResponse{
-				Errors: map[string]*gwproto.RegisterEventsResponse_Error{
-					uuid1: {
-						Retriable: true,
-						Message:   "Failed to upsert user evaluation",
-					},
-				},
-			},
-			expectedErr: nil,
-		},
-		{
 			desc: "success",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
@@ -2218,12 +2072,6 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					nil).MaxTimes(1)
 				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
-				gs.userEvaluationStorage.(*ftsmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.RegisterEventsRequest{
 				Events: []*eventproto.Event{
@@ -2273,108 +2121,6 @@ func TestGrcpRegisterEvents(t *testing.T) {
 	}
 }
 
-func TestGrpcConvToEvaluation(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	tag := "tag"
-	evaluationEvent := &eventproto.EvaluationEvent{
-		FeatureId:      "feature-id",
-		FeatureVersion: 2,
-		UserId:         "user-id",
-		VariationId:    "variation-id",
-		User:           &userproto.User{Id: "user-id"},
-		Reason: &featureproto.Reason{
-			Type: featureproto.Reason_DEFAULT,
-		},
-		Tag:       tag,
-		Timestamp: time.Now().Unix(),
-	}
-	bEvaluationEventWithTag, err := proto.Marshal(evaluationEvent)
-	evaluationEvent.Tag = ""
-	bEvaluationEventWithoutTag, err := proto.Marshal(evaluationEvent)
-	assert.NoError(t, err)
-	bInvalidEvent, err := proto.Marshal(&any.Any{})
-	assert.NoError(t, err)
-
-	patterns := []struct {
-		desc        string
-		input       *eventproto.Event
-		expected    *featureproto.Evaluation
-		expectedTag string
-		expectedErr error
-	}{
-		{
-			desc: "error",
-			input: &eventproto.Event{
-				Id: "id",
-				Event: &any.Any{
-					TypeUrl: "github.com/golang/protobuf/ptypes/any",
-					Value:   bInvalidEvent,
-				},
-			},
-			expected:    nil,
-			expectedTag: "",
-			expectedErr: errUnmarshalFailed,
-		},
-		{
-			desc: "success without tag",
-			input: &eventproto.Event{
-				Id: "id",
-				Event: &any.Any{
-					TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-					Value:   bEvaluationEventWithoutTag,
-				},
-			},
-			expected: &featureproto.Evaluation{
-				Id: featuredomain.EvaluationID(
-					evaluationEvent.FeatureId,
-					evaluationEvent.FeatureVersion,
-					evaluationEvent.UserId,
-				),
-				FeatureId:      evaluationEvent.FeatureId,
-				FeatureVersion: evaluationEvent.FeatureVersion,
-				UserId:         evaluationEvent.UserId,
-				VariationId:    evaluationEvent.VariationId,
-				Reason:         evaluationEvent.Reason,
-			},
-			expectedTag: "none",
-			expectedErr: nil,
-		},
-		{
-			desc: "success with tag",
-			input: &eventproto.Event{
-				Id: "id",
-				Event: &any.Any{
-					TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-					Value:   bEvaluationEventWithTag,
-				},
-			},
-			expected: &featureproto.Evaluation{
-				Id: featuredomain.EvaluationID(
-					evaluationEvent.FeatureId,
-					evaluationEvent.FeatureVersion,
-					evaluationEvent.UserId,
-				),
-				FeatureId:      evaluationEvent.FeatureId,
-				FeatureVersion: evaluationEvent.FeatureVersion,
-				UserId:         evaluationEvent.UserId,
-				VariationId:    evaluationEvent.VariationId,
-				Reason:         evaluationEvent.Reason,
-			},
-			expectedTag: tag,
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		gs := newGrpcGatewayServiceWithMock(t, mockController)
-		ev, tag, err := gs.convToEvaluation(context.Background(), p.input)
-		assert.True(t, proto.Equal(p.expected, ev), p.desc)
-		assert.Equal(t, p.expectedTag, tag, p.desc)
-		assert.Equal(t, p.expectedErr, err, p.desc)
-	}
-}
-
 func TestGrpcContainsInvalidTimestampError(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -2421,7 +2167,6 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	return &grpcGatewayService{
-		userEvaluationStorage:  ftsmock.NewMockUserEvaluationsStorage(mockController),
 		featureClient:          featureclientmock.NewMockClient(mockController),
 		accountClient:          accountclientmock.NewMockClient(mockController),
 		goalPublisher:          publishermock.NewMockPublisher(mockController),

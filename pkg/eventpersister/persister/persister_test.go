@@ -29,6 +29,7 @@ import (
 	"go.uber.org/zap"
 
 	fcmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
+	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
 	pullermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/mock"
 	btstorage "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
@@ -50,6 +51,31 @@ func TestMarshaEvent(t *testing.T) {
 	layout := "2006-01-02 15:04:05 -0700 MST"
 	t1, err := time.Parse(layout, "2014-01-17 23:02:03 +0000 UTC")
 	require.NoError(t, err)
+	evaluation := &featureproto.Evaluation{
+		Id: featuredomain.EvaluationID(
+			"fid",
+			1,
+			"uid",
+		),
+		FeatureId:      "fid",
+		FeatureVersion: 1,
+		UserId:         "uid",
+		VariationId:    "vid",
+		Reason:         &featureproto.Reason{Type: featureproto.Reason_CLIENT},
+	}
+	evaluationEvent := &eventproto.EvaluationEvent{
+		Tag:            "tag",
+		Timestamp:      t1.Unix(),
+		FeatureId:      "fid",
+		FeatureVersion: int32(1),
+		UserId:         "uid",
+		VariationId:    "vid",
+		Reason:         &featureproto.Reason{Type: featureproto.Reason_CLIENT},
+		User: &userproto.User{
+			Id:   "uid",
+			Data: map[string]string{"atr": "av"},
+		},
+	}
 	patterns := []struct {
 		desc               string
 		setup              func(context.Context, *Persister)
@@ -78,21 +104,31 @@ func TestMarshaEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc:  "success evaluation event",
-			setup: nil,
-			input: &eventproto.EvaluationEvent{
-				Tag:            "tag",
-				Timestamp:      t1.Unix(),
-				FeatureId:      "fid",
-				FeatureVersion: int32(1),
-				UserId:         "uid",
-				VariationId:    "vid",
-				Reason:         &featureproto.Reason{Type: featureproto.Reason_CLIENT},
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
+			desc: "error: failed to upsert evaluation event",
+			setup: func(ctx context.Context, p *Persister) {
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
+					ctx,
+					evaluation,
+					"ns",
+					"tag",
+				).Return(btstorage.ErrInternal)
 			},
+			input:              evaluationEvent,
+			expected:           "",
+			expectedErr:        btstorage.ErrInternal,
+			expectedRepeatable: true,
+		},
+		{
+			desc: "success: evaluation event",
+			setup: func(ctx context.Context, p *Persister) {
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
+					ctx,
+					evaluation,
+					"ns",
+					"tag",
+				).Return(nil)
+			},
+			input: evaluationEvent,
 			expected: `{
 				"environmentNamespace":"ns",
 				"featureId": "fid",
@@ -464,7 +500,7 @@ func TestMarshaEvent(t *testing.T) {
 			if p.setup != nil {
 				p.setup(persister.ctx, persister)
 			}
-			actual, repeatable, err := persister.marshalEvent(p.input, "ns")
+			actual, repeatable, err := persister.marshalEvent(persister.ctx, p.input, "ns")
 			assert.Equal(t, p.expectedRepeatable, repeatable)
 			if err != nil {
 				assert.Equal(t, actual, "")
@@ -537,6 +573,83 @@ func TestUpsertMAU(t *testing.T) {
 			actualErr := persister.upsertMAU(context.Background(), p.input, "ns")
 			assert.Equal(t, p.expectedErr, actualErr)
 		})
+	}
+}
+
+func TestConvToEvaluation(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	tag := "tag"
+	evaluationEventWithTag := &eventproto.EvaluationEvent{
+		FeatureId:      "feature-id",
+		FeatureVersion: 2,
+		UserId:         "user-id",
+		VariationId:    "variation-id",
+		User:           &userproto.User{Id: "user-id"},
+		Reason: &featureproto.Reason{
+			Type: featureproto.Reason_DEFAULT,
+		},
+		Tag:       tag,
+		Timestamp: time.Now().Unix(),
+	}
+	evaluationEventWithoutTag := &eventproto.EvaluationEvent{
+		FeatureId:      "feature-id",
+		FeatureVersion: 2,
+		UserId:         "user-id",
+		VariationId:    "variation-id",
+		User:           &userproto.User{Id: "user-id"},
+		Reason: &featureproto.Reason{
+			Type: featureproto.Reason_DEFAULT,
+		},
+		Timestamp: time.Now().Unix(),
+	}
+	patterns := []struct {
+		desc        string
+		input       *eventproto.EvaluationEvent
+		expected    *featureproto.Evaluation
+		expectedTag string
+	}{
+		{
+			desc:  "success without tag",
+			input: evaluationEventWithoutTag,
+			expected: &featureproto.Evaluation{
+				Id: featuredomain.EvaluationID(
+					evaluationEventWithoutTag.FeatureId,
+					evaluationEventWithoutTag.FeatureVersion,
+					evaluationEventWithoutTag.UserId,
+				),
+				FeatureId:      evaluationEventWithoutTag.FeatureId,
+				FeatureVersion: evaluationEventWithoutTag.FeatureVersion,
+				UserId:         evaluationEventWithoutTag.UserId,
+				VariationId:    evaluationEventWithoutTag.VariationId,
+				Reason:         evaluationEventWithoutTag.Reason,
+			},
+			expectedTag: "none",
+		},
+		{
+			desc:  "success with tag",
+			input: evaluationEventWithTag,
+			expected: &featureproto.Evaluation{
+				Id: featuredomain.EvaluationID(
+					evaluationEventWithTag.FeatureId,
+					evaluationEventWithTag.FeatureVersion,
+					evaluationEventWithTag.UserId,
+				),
+				FeatureId:      evaluationEventWithTag.FeatureId,
+				FeatureVersion: evaluationEventWithTag.FeatureVersion,
+				UserId:         evaluationEventWithTag.UserId,
+				VariationId:    evaluationEventWithTag.VariationId,
+				Reason:         evaluationEventWithTag.Reason,
+			},
+			expectedTag: tag,
+		},
+	}
+	for _, p := range patterns {
+		persister := newPersister(mockController)
+		ev, tag := persister.convToEvaluation(context.Background(), p.input)
+		assert.True(t, proto.Equal(p.expected, ev), p.desc)
+		assert.Equal(t, p.expectedTag, tag, p.desc)
 	}
 }
 

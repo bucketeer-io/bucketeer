@@ -26,7 +26,6 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -38,7 +37,6 @@ import (
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftsmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -51,7 +49,7 @@ const dummyURL = "http://example.com"
 
 func TestNewGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &gatewayService{}, g)
 }
 
@@ -1756,87 +1754,6 @@ func TestGetEvaluation(t *testing.T) {
 			expectedErr:       errInternal,
 		},
 		{
-			desc: "error while trying to upsert the user evaluation",
-			setup: func(gs *gatewayService) {
-				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
-					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
-						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
-							Disabled: false,
-						},
-					}, nil)
-				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
-					&featureproto.Features{
-						Features: []*featureproto.Feature{
-							{
-								Id: "feature-id-1",
-								Variations: []*featureproto.Variation{
-									{
-										Id:    "variation-a",
-										Value: "true",
-									},
-									{
-										Id:    "variation-b",
-										Value: "false",
-									},
-								},
-								DefaultStrategy: &featureproto.Strategy{
-									Type: featureproto.Strategy_FIXED,
-									FixedStrategy: &featureproto.FixedStrategy{
-										Variation: "variation-b",
-									},
-								},
-								Tags: []string{"test"},
-							},
-							{
-								Id: "feature-id-2",
-								Variations: []*featureproto.Variation{
-									{
-										Id:    "variation-a",
-										Value: "true",
-									},
-									{
-										Id:    "variation-b",
-										Value: "false",
-									},
-								},
-								DefaultStrategy: &featureproto.Strategy{
-									Type: featureproto.Strategy_FIXED,
-									FixedStrategy: &featureproto.FixedStrategy{
-										Variation: "variation-b",
-									},
-								},
-								Tags: []string{"test"},
-							},
-						},
-					}, nil)
-				gs.userEvaluationStorage.(*ftsmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(errors.New("storage: internal")).MaxTimes(1)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
-			},
-			input: httptest.NewRequest(
-				"POST",
-				dummyURL,
-				renderBody(
-					t,
-					getEvaluationRequest{
-						Tag:       "test",
-						User:      &userproto.User{Id: "id-0"},
-						FeatureID: "feature-id-2",
-					},
-				),
-			),
-			expectedFeatureID: "",
-			expectedErr:       errInternal,
-		},
-		{
 			desc: "return evaluation",
 			setup: func(gs *gatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
@@ -1893,14 +1810,7 @@ func TestGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userEvaluationStorage.(*ftsmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(nil).MaxTimes(1)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -2163,74 +2073,6 @@ func TestRegisterEvents(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "error while trying to upsert the user evaluation",
-			setup: func(gs *gatewayService) {
-				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
-					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
-						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
-							Disabled: false,
-						},
-					}, nil)
-				gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
-				gs.goalBatchPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
-				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
-				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
-				gs.userEvaluationStorage.(*ftsmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(errors.New("storage: internal")).MaxTimes(1)
-			},
-			input: httptest.NewRequest(
-				"POST",
-				dummyURL,
-				renderBody(
-					t,
-					registerEventsRequest{
-						Events: []event{
-							{
-								ID:    uuid0,
-								Event: json.RawMessage(bGoalEvent),
-								Type:  goalEventType,
-							},
-							{
-								ID:    uuid1,
-								Event: json.RawMessage(bEvaluationEvent),
-								Type:  evaluationEventType,
-							},
-							{
-								ID:    uuid2,
-								Event: json.RawMessage(bMetricsEvent),
-								Type:  metricsEventType,
-							},
-							{
-								ID:    uuid3,
-								Event: json.RawMessage(bGoalBatchEvent),
-								Type:  goalBatchEventType,
-							},
-						},
-					},
-				),
-			),
-			expected: &registerEventsResponse{
-				Errors: map[string]*registerEventsResponseError{
-					uuid1: {
-						Retriable: true,
-						Message:   "Failed to upsert user evaluation",
-					},
-				},
-			},
-			expectedErr: nil,
-		},
-		{
 			desc: "success",
 			setup: func(gs *gatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
@@ -2250,12 +2092,6 @@ func TestRegisterEvents(t *testing.T) {
 					nil).MaxTimes(1)
 				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
-				gs.userEvaluationStorage.(*ftsmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -2309,87 +2145,6 @@ func TestRegisterEvents(t *testing.T) {
 		err := json.Unmarshal(decoded, &respBody)
 		assert.NoError(t, err)
 		assert.Equal(t, p.expected, &respBody, p.desc)
-	}
-}
-
-func TestConvToEvaluation(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	tag := "tag"
-	evaluationEventWithTag := &eventproto.EvaluationEvent{
-		FeatureId:      "feature-id",
-		FeatureVersion: 2,
-		UserId:         "user-id",
-		VariationId:    "variation-id",
-		User:           &userproto.User{Id: "user-id"},
-		Reason: &featureproto.Reason{
-			Type: featureproto.Reason_DEFAULT,
-		},
-		Tag:       tag,
-		Timestamp: time.Now().Unix(),
-	}
-	evaluationEventWithoutTag := &eventproto.EvaluationEvent{
-		FeatureId:      "feature-id",
-		FeatureVersion: 2,
-		UserId:         "user-id",
-		VariationId:    "variation-id",
-		User:           &userproto.User{Id: "user-id"},
-		Reason: &featureproto.Reason{
-			Type: featureproto.Reason_DEFAULT,
-		},
-		Timestamp: time.Now().Unix(),
-	}
-	patterns := []struct {
-		desc        string
-		input       *eventproto.EvaluationEvent
-		expected    *featureproto.Evaluation
-		expectedTag string
-		expectedErr error
-	}{
-		{
-			desc:  "success without tag",
-			input: evaluationEventWithoutTag,
-			expected: &featureproto.Evaluation{
-				Id: featuredomain.EvaluationID(
-					evaluationEventWithoutTag.FeatureId,
-					evaluationEventWithoutTag.FeatureVersion,
-					evaluationEventWithoutTag.UserId,
-				),
-				FeatureId:      evaluationEventWithoutTag.FeatureId,
-				FeatureVersion: evaluationEventWithoutTag.FeatureVersion,
-				UserId:         evaluationEventWithoutTag.UserId,
-				VariationId:    evaluationEventWithoutTag.VariationId,
-				Reason:         evaluationEventWithoutTag.Reason,
-			},
-			expectedTag: "none",
-			expectedErr: nil,
-		},
-		{
-			desc:  "success with tag",
-			input: evaluationEventWithTag,
-			expected: &featureproto.Evaluation{
-				Id: featuredomain.EvaluationID(
-					evaluationEventWithTag.FeatureId,
-					evaluationEventWithTag.FeatureVersion,
-					evaluationEventWithTag.UserId,
-				),
-				FeatureId:      evaluationEventWithTag.FeatureId,
-				FeatureVersion: evaluationEventWithTag.FeatureVersion,
-				UserId:         evaluationEventWithTag.UserId,
-				VariationId:    evaluationEventWithTag.VariationId,
-				Reason:         evaluationEventWithTag.Reason,
-			},
-			expectedTag: tag,
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		gs := newGatewayServiceWithMock(t, mockController)
-		ev, tag, err := gs.convToEvaluation(context.Background(), p.input)
-		assert.True(t, proto.Equal(p.expected, ev), p.desc)
-		assert.Equal(t, p.expectedTag, tag, p.desc)
-		assert.Equal(t, p.expectedErr, err, p.desc)
 	}
 }
 
@@ -2562,7 +2317,6 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	return &gatewayService{
-		userEvaluationStorage:  ftsmock.NewMockUserEvaluationsStorage(mockController),
 		featureClient:          featureclientmock.NewMockClient(mockController),
 		accountClient:          accountclientmock.NewMockClient(mockController),
 		goalPublisher:          publishermock.NewMockPublisher(mockController),

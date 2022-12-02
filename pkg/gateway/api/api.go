@@ -37,11 +37,9 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
-	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
@@ -51,7 +49,6 @@ import (
 )
 
 type gatewayService struct {
-	userEvaluationStorage  ftstorage.UserEvaluationsStorage
 	featureClient          featureclient.Client
 	accountClient          accountclient.Client
 	goalPublisher          publisher.Publisher
@@ -68,7 +65,6 @@ type gatewayService struct {
 }
 
 func NewGatewayService(
-	bt bigtable.Client,
 	featureClient featureclient.Client,
 	accountClient accountclient.Client,
 	gp publisher.Publisher,
@@ -87,7 +83,6 @@ func NewGatewayService(
 		registerMetrics(options.metrics)
 	}
 	return &gatewayService{
-		userEvaluationStorage:  ftstorage.NewUserEvaluationsStorage(bt),
 		featureClient:          featureClient,
 		accountClient:          accountClient,
 		goalPublisher:          gp,
@@ -366,25 +361,6 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
-			log.FieldsFromImcomingContext(req.Context()).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
-				zap.String("userId", reqBody.User.Id),
-				zap.String("featureId", reqBody.FeatureID),
-			)...,
-		)
-		rest.ReturnFailureResponse(w, errInternal)
-		return
-	}
-	if err := s.upsertUserEvaluation(
-		req.Context(),
-		envAPIKey.EnvironmentNamespace,
-		reqBody.Tag,
-		evaluations.Evaluations[0],
-	); err != nil {
-		restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeUpsertUserEvaluationFailed).Inc()
-		s.logger.Error(
-			"Failed to upsert user evaluation while trying to get evaluation",
 			log.FieldsFromImcomingContext(req.Context()).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
@@ -845,22 +821,6 @@ func (s *gatewayService) listFeatures(
 	}
 }
 
-func (s *gatewayService) upsertUserEvaluation(
-	ctx context.Context,
-	environmentNamespace, tag string,
-	evaluation *featureproto.Evaluation,
-) error {
-	if err := s.userEvaluationStorage.UpsertUserEvaluation(
-		ctx,
-		evaluation,
-		environmentNamespace,
-		tag,
-	); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request) {
 	envAPIKey, reqBody, err := s.checkRegisterEvents(req)
 	if err != nil {
@@ -938,6 +898,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 					Retriable: false,
 					Message:   err.Error(),
 				}
+				continue
 			}
 			batchAny, err := ptypes.MarshalAny(batch)
 			if err != nil {
@@ -960,22 +921,6 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				errs[event.ID] = &registerEventsResponseError{
 					Retriable: false,
 					Message:   err.Error(),
-				}
-			}
-			evaluation, tag, err := s.convToEvaluation(req.Context(), eval)
-			if err != nil {
-				eventCounter.WithLabelValues(callerGatewayService, typeEvaluation, codeEvaluationConversionFailed).Inc()
-				errs[event.ID] = &registerEventsResponseError{
-					Retriable: false,
-					Message:   err.Error(),
-				}
-				continue
-			}
-			if err := s.upsertUserEvaluation(req.Context(), envAPIKey.EnvironmentNamespace, tag, evaluation); err != nil {
-				eventCounter.WithLabelValues(callerGatewayService, typeEvaluation, codeUpsertUserEvaluationFailed).Inc()
-				errs[event.ID] = &registerEventsResponseError{
-					Retriable: true,
-					Message:   "Failed to upsert user evaluation",
 				}
 				continue
 			}
@@ -1001,6 +946,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 					Retriable: false,
 					Message:   err.Error(),
 				}
+				continue
 			}
 			metricsAny, err := ptypes.MarshalAny(metrics)
 			if err != nil {
@@ -1330,33 +1276,6 @@ func (s *gatewayService) checkRegisterEvents(
 		return nil, registerEventsRequest{}, errMissingEvents
 	}
 	return envAPIKey, body, nil
-}
-
-func (s *gatewayService) convToEvaluation(
-	ctx context.Context,
-	event *eventproto.EvaluationEvent,
-) (*featureproto.Evaluation, string, error) {
-	evaluation := &featureproto.Evaluation{
-		Id: featuredomain.EvaluationID(
-			event.FeatureId,
-			event.FeatureVersion,
-			event.UserId,
-		),
-		FeatureId:      event.FeatureId,
-		FeatureVersion: event.FeatureVersion,
-		UserId:         event.UserId,
-		VariationId:    event.VariationId,
-		Reason:         event.Reason,
-	}
-	// For requests that doesn't have the tag info,
-	// it will insert none instead, until all SDK clients are updated
-	var tag string
-	if event.Tag == "" {
-		tag = "none"
-	} else {
-		tag = event.Tag
-	}
-	return evaluation, tag, nil
 }
 
 func (s *gatewayService) containsInvalidTimestampError(errs map[string]*registerEventsResponseError) bool {

@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersister/storage/v2"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
@@ -263,7 +264,7 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 				fails[id] = true
 				continue
 			}
-			eventJSON, repeatable, err := p.marshalEvent(event, environmentNamespace)
+			eventJSON, repeatable, err := p.marshalEvent(ctx, event, environmentNamespace)
 			if err != nil {
 				if !repeatable {
 					p.logger.Error(
@@ -346,10 +347,14 @@ func (p *Persister) upsertMAU(ctx context.Context, event proto.Message, environm
 	return nil
 }
 
-func (p *Persister) marshalEvent(event interface{}, environmentNamespace string) (string, bool, error) {
+func (p *Persister) marshalEvent(
+	ctx context.Context,
+	event interface{},
+	environmentNamespace string,
+) (string, bool, error) {
 	switch event := event.(type) {
 	case *eventproto.EvaluationEvent:
-		return p.marshalEvaluationEvent(event, environmentNamespace)
+		return p.marshalEvaluationEvent(ctx, event, environmentNamespace)
 	case *eventproto.GoalEvent:
 		return p.marshalGoalEvent(event, environmentNamespace)
 	case *esproto.UserEvent:
@@ -359,9 +364,15 @@ func (p *Persister) marshalEvent(event interface{}, environmentNamespace string)
 }
 
 func (p *Persister) marshalEvaluationEvent(
+	ctx context.Context,
 	e *eventproto.EvaluationEvent,
 	environmentNamespace string,
 ) (string, bool, error) {
+	evaluation, tag := p.convToEvaluation(ctx, e)
+	if err := p.upsertUserEvaluation(ctx, environmentNamespace, tag, evaluation); err != nil {
+		handledCounter.WithLabelValues(codeUpsertUserEvaluationFailed).Inc()
+		return "", true, err
+	}
 	m := map[string]string{}
 	m["environmentNamespace"] = environmentNamespace
 	m["sourceId"] = e.SourceId.String()
@@ -486,6 +497,49 @@ func (p *Persister) getEvaluations(
 		return nil, true, err
 	}
 	return ue, false, nil
+}
+
+func (p *Persister) convToEvaluation(
+	ctx context.Context,
+	event *eventproto.EvaluationEvent,
+) (*featureproto.Evaluation, string) {
+	evaluation := &featureproto.Evaluation{
+		Id: featuredomain.EvaluationID(
+			event.FeatureId,
+			event.FeatureVersion,
+			event.UserId,
+		),
+		FeatureId:      event.FeatureId,
+		FeatureVersion: event.FeatureVersion,
+		UserId:         event.UserId,
+		VariationId:    event.VariationId,
+		Reason:         event.Reason,
+	}
+	// For requests that doesn't have the tag info,
+	// it will insert none instead, until all SDK clients are updated
+	var tag string
+	if event.Tag == "" {
+		tag = "none"
+	} else {
+		tag = event.Tag
+	}
+	return evaluation, tag
+}
+
+func (p *Persister) upsertUserEvaluation(
+	ctx context.Context,
+	environmentNamespace, tag string,
+	evaluation *featureproto.Evaluation,
+) error {
+	if err := p.userEvaluationStorage.UpsertUserEvaluation(
+		ctx,
+		evaluation,
+		environmentNamespace,
+		tag,
+	); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *Persister) getCurrentUserEvaluations(

@@ -32,12 +32,10 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
@@ -132,7 +130,6 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type grpcGatewayService struct {
-	userEvaluationStorage  ftstorage.UserEvaluationsStorage
 	featureClient          featureclient.Client
 	accountClient          accountclient.Client
 	goalPublisher          publisher.Publisher
@@ -149,7 +146,6 @@ type grpcGatewayService struct {
 }
 
 func NewGrpcGatewayService(
-	bt bigtable.Client,
 	featureClient featureclient.Client,
 	accountClient accountclient.Client,
 	gp publisher.Publisher,
@@ -168,7 +164,6 @@ func NewGrpcGatewayService(
 		registerMetrics(options.metrics)
 	}
 	return &grpcGatewayService{
-		userEvaluationStorage:  ftstorage.NewUserEvaluationsStorage(bt),
 		featureClient:          featureClient,
 		accountClient:          accountClient,
 		goalPublisher:          gp,
@@ -396,24 +391,6 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
-				zap.String("userId", req.User.Id),
-				zap.String("featureId", req.FeatureId),
-			)...,
-		)
-		return nil, ErrInternal
-	}
-	if err := s.upsertUserEvaluation(
-		ctx,
-		envAPIKey.EnvironmentNamespace,
-		req.Tag,
-		evaluations.Evaluations[0],
-	); err != nil {
-		eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeUpsertUserEvaluationFailed).Inc()
-		s.logger.Error(
-			"Failed to upsert user evaluation while trying to get evaluation",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
@@ -704,60 +681,6 @@ func (s *grpcGatewayService) getSegmentUsersFromCache(
 	return nil, err
 }
 
-func (s *grpcGatewayService) upsertUserEvaluation(
-	ctx context.Context,
-	environmentNamespace, tag string,
-	evaluation *featureproto.Evaluation,
-) error {
-	if err := s.userEvaluationStorage.UpsertUserEvaluation(
-		ctx,
-		evaluation,
-		environmentNamespace,
-		tag,
-	); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *grpcGatewayService) convToEvaluation(
-	ctx context.Context,
-	event *eventproto.Event,
-) (*featureproto.Evaluation, string, error) {
-	ev := &eventproto.EvaluationEvent{}
-	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
-		s.logger.Error(
-			"Failed to extract evaluation event for converting evaluation",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", event.Id),
-			)...,
-		)
-		return nil, "", errUnmarshalFailed
-	}
-	evaluation := &featureproto.Evaluation{
-		Id: featuredomain.EvaluationID(
-			ev.FeatureId,
-			ev.FeatureVersion,
-			ev.UserId,
-		),
-		FeatureId:      ev.FeatureId,
-		FeatureVersion: ev.FeatureVersion,
-		UserId:         ev.UserId,
-		VariationId:    ev.VariationId,
-		Reason:         ev.Reason,
-	}
-	// For requests that doesn't have the tag info,
-	// it will insert none instead, until all SDK clients are updated
-	var tag string
-	if ev.Tag == "" {
-		tag = "none"
-	} else {
-		tag = ev.Tag
-	}
-	return evaluation, tag, nil
-}
-
 func (s *grpcGatewayService) RegisterEvents(
 	ctx context.Context,
 	req *gwproto.RegisterEventsRequest,
@@ -851,24 +774,8 @@ func (s *grpcGatewayService) RegisterEvents(
 				}
 				continue
 			}
-			evaluation, tag, err := s.convToEvaluation(ctx, event)
-			if err != nil {
-				eventCounter.WithLabelValues(callerGatewayService, typeEvaluation, codeEvaluationConversionFailed).Inc()
-				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{
-					Retriable: false,
-					Message:   err.Error(),
-				}
-				continue
-			}
-			if err := s.upsertUserEvaluation(ctx, envAPIKey.EnvironmentNamespace, tag, evaluation); err != nil {
-				eventCounter.WithLabelValues(callerGatewayService, typeEvaluation, codeUpsertUserEvaluationFailed).Inc()
-				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{
-					Retriable: true,
-					Message:   "Failed to upsert user evaluation",
-				}
-				continue
-			}
 			evaluationMessages = append(evaluationMessages, event)
+			continue
 		}
 		if ptypes.Is(event.Event, grpcMetricsEvent) {
 			errorCode, err := validator.validate(ctx)
