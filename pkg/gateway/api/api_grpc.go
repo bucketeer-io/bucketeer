@@ -774,14 +774,6 @@ func (s *grpcGatewayService) RegisterEvents(
 				}
 				continue
 			}
-			if err != nil {
-				eventCounter.WithLabelValues(callerGatewayService, typeEvaluation, codeEvaluationConversionFailed).Inc()
-				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{
-					Retriable: false,
-					Message:   err.Error(),
-				}
-				continue
-			}
 			evaluationMessages = append(evaluationMessages, event)
 			continue
 		}

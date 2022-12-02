@@ -898,6 +898,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 					Retriable: false,
 					Message:   err.Error(),
 				}
+				continue
 			}
 			batchAny, err := ptypes.MarshalAny(batch)
 			if err != nil {
@@ -917,13 +918,6 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 			eval, errCode, err := s.getEvaluationEvent(req.Context(), event)
 			if err != nil {
 				restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, errCode).Inc()
-				errs[event.ID] = &registerEventsResponseError{
-					Retriable: false,
-					Message:   err.Error(),
-				}
-			}
-			if err != nil {
-				eventCounter.WithLabelValues(callerGatewayService, typeEvaluation, codeEvaluationConversionFailed).Inc()
 				errs[event.ID] = &registerEventsResponseError{
 					Retriable: false,
 					Message:   err.Error(),
@@ -952,6 +946,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 					Retriable: false,
 					Message:   err.Error(),
 				}
+				continue
 			}
 			metricsAny, err := ptypes.MarshalAny(metrics)
 			if err != nil {
