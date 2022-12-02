@@ -65,12 +65,6 @@ type server struct {
 	pullerNumGoroutines          *int
 	pullerMaxOutstandingMessages *int
 	pullerMaxOutstandingBytes    *int
-	alloyDBRegion                *string
-	alloyDBClusterID             *string
-	alloyDBInstanceID            *string
-	alloyDBUser                  *string
-	alloyDBPass                  *string
-	alloyDBName                  *string
 	postgresUser                 *string
 	postgresPass                 *string
 	postgresHost                 *string
@@ -122,22 +116,16 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"puller-max-outstanding-bytes",
 			"Maximum size of unprocessed messages.",
 		).Int(),
-		alloyDBRegion:     cmd.Flag("alloydb-region", "").Required().String(),
-		alloyDBClusterID:  cmd.Flag("alloydb-cluster-id", "").Required().String(),
-		alloyDBInstanceID: cmd.Flag("alloydb-instance-id", "").Required().String(),
-		alloyDBUser:       cmd.Flag("alloydb-user", "").Required().String(),
-		alloyDBPass:       cmd.Flag("alloydb-pass", "").Required().String(),
-		alloyDBName:       cmd.Flag("alloydb-name", "").Required().String(),
-		postgresUser:      cmd.Flag("postgres-user", "").Required().String(),
-		postgresPass:      cmd.Flag("postgres-pass", "").Required().String(),
-		postgresHost:      cmd.Flag("postgres-host", "").Required().String(),
-		postgresPort:      cmd.Flag("postgres-port", "").Required().Int(),
-		postgresDbName:    cmd.Flag("postgres-name", "").Required().String(),
-		mysqlUser:         cmd.Flag("mysql-user", "").String(),
-		mysqlPass:         cmd.Flag("mysql-pass", "").String(),
-		mysqlHost:         cmd.Flag("mysql-host", "").String(),
-		mysqlPort:         cmd.Flag("mysql-port", "").Int(),
-		mysqlDbName:       cmd.Flag("mysql-dbname", "").String(),
+		postgresUser:   cmd.Flag("postgres-user", "").Required().String(),
+		postgresPass:   cmd.Flag("postgres-pass", "").Required().String(),
+		postgresHost:   cmd.Flag("postgres-host", "").Required().String(),
+		postgresPort:   cmd.Flag("postgres-port", "").Required().Int(),
+		postgresDbName: cmd.Flag("postgres-name", "").Required().String(),
+		mysqlUser:      cmd.Flag("mysql-user", "").String(),
+		mysqlPass:      cmd.Flag("mysql-pass", "").String(),
+		mysqlHost:      cmd.Flag("mysql-host", "").String(),
+		mysqlPort:      cmd.Flag("mysql-port", "").Int(),
+		mysqlDbName:    cmd.Flag("mysql-dbname", "").String(),
 	}
 	r.RegisterCommand(server)
 	return server

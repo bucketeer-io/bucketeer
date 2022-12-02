@@ -102,18 +102,6 @@ spec:
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_EVENT_PERSISTER_SERVICE_TOKEN
               value: /usr/local/service-token/token
-            - name: BUCKETEER_EVENT_PERSISTER_ALLOYDB_REGION
-              value: "{{ .Values.env.alloyDBRegion }}"
-            - name: BUCKETEER_EVENT_PERSISTER_ALLOYDB_CLUSTER_ID
-              value: "{{ .Values.env.alloyDBClusterId}}"
-            - name: BUCKETEER_EVENT_PERSISTER_ALLOYDB_INSTANCE_ID
-              value: "{{ .Values.env.alloyDBInstanceId }}"
-            - name: BUCKETEER_EVENT_PERSISTER_ALLOYDB_USER
-              value: "{{ .Values.env.alloyDBUser }}"
-            - name: BUCKETEER_EVENT_PERSISTER_ALLOYDB_PASS
-              value: "{{ .Values.env.alloyDBPass }}"
-            - name: BUCKETEER_EVENT_PERSISTER_ALLOYDB_NAME
-              value: "{{ .Values.env.alloyDBName }}"
             - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_USER
               value: "{{ .Values.env.postgresUser }}"
             - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_PASS

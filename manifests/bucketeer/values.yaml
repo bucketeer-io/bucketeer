@@ -1099,12 +1099,6 @@ event-persister-evaluation-events-kafka:
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
-    alloyDBRegion:
-    alloyDBClusterId:
-    alloyDBInstanceId:
-    alloyDBUser:
-    alloyDBPass:
-    alloyDBName:
     postgresUser:
     postgresPass:
     postgresHost:
@@ -1180,12 +1174,6 @@ event-persister-goal-events-kafka:
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
-    alloyDBRegion:
-    alloyDBClusterId:
-    alloyDBInstanceId:
-    alloyDBUser:
-    alloyDBPass:
-    alloyDBName:
     postgresUser:
     postgresPass:
     postgresHost:
@@ -1261,12 +1249,6 @@ event-persister-user-events-kafka:
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
-    alloyDBRegion:
-    alloyDBClusterId:
-    alloyDBInstanceId:
-    alloyDBUser:
-    alloyDBPass:
-    alloyDBName:
     postgresUser:
     postgresPass:
     postgresHost:
