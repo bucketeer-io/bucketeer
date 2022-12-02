@@ -20,6 +20,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
 
+const (
+	codeUpsertUserEvaluationFailed = "UpsertUserEvaluationFailed"
+)
+
 var (
 	receivedCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
