@@ -665,12 +665,12 @@ func (p *Persister) createUserEvent(
 
 func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
-		eck := p.key(eventCountKey, e.FeatureId, e.VariationId, e.Timestamp)
+		eck := p.key(eventCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
 		_, err := p.evaluationCountCacher.Increment(eck)
 		if err != nil {
 			return err
 		}
-		uck := p.key(userCountKey, e.FeatureId, e.VariationId, e.Timestamp)
+		uck := p.key(userCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
 		_, err = p.evaluationCountCacher.PFAdd(uck, e.UserId)
 		if err != nil {
 			return err
@@ -679,8 +679,15 @@ func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamesp
 	return nil
 }
 
-func (p *Persister) key(kind, featureID, variationID string, timestamp int64) string {
+func (p *Persister) key(
+	kind, featureID, variationID, environmentNamespace string,
+	timestamp int64,
+) string {
 	t := time.Unix(timestamp, 0)
 	date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
-	return fmt.Sprintf("%s:%s:%s:%d", kind, featureID, variationID, date.Unix())
+	return cache.MakeKey(
+		kind,
+		fmt.Sprintf("%s:%s:%d", featureID, variationID, date.Unix()),
+		environmentNamespace,
+	)
 }
