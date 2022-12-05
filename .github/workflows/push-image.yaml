@@ -17,6 +17,7 @@ on:
 
 env:
   GHCR_REGISTRY: ghcr.io/bucketeer-io
+  GAR_REGISTRY: asia-docker.pkg.dev
   PROTOC_VERSION: 3.18.1
   PROTOC_GEN_GO_VERSION: v1.5.2
   GO_VERSION: 1.17.13
@@ -41,6 +42,9 @@ jobs:
   go:
     needs: setup
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -64,29 +68,61 @@ jobs:
         uses: docker/setup-buildx-action@95cb08cb2672c73d4ffd2f422e6d11953d2a9c70 # v2.1.0
         with:
           install: true
-      - name: Login to GHCR
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
-        with:
-          registry: ghcr.io
-          username: ca-dp
-          password: ${{ secrets.GHCR_PAT }}
       - name: Create Dockerfile of go applications
         run: |
           for APP in `ls bin`
           do
             ./tools/build/show-dockerfile.sh bin $APP > Dockerfile-app-$APP
           done
-      - name: Build and push go application images
+      - name: Build go application images
         run: |
           for APP in `ls bin`
           do
             IMAGE=`./tools/build/show-image-name.sh $APP`
-            docker build -f Dockerfile-app-$APP -t ${{ env.GHCR_REGISTRY }}/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} --push .
+            docker build -f Dockerfile-app-$APP -t bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} --load .
+          done
+      - name: Login to GHCR
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
+        with:
+          registry: ghcr.io
+          username: ca-dp
+          password: ${{ secrets.GHCR_PAT }}
+      - name: push go application images to GHCR
+        run: |
+          for APP in `ls bin`
+          do
+            IMAGE=`./tools/build/show-image-name.sh $APP`
+            docker tag bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
+            docker push ${{ env.GHCR_REGISTRY }}/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
+          done
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@c4799db9111fba4461e9f9da8732e5057b394f72 # v0.8.3
+        with:
+          token_format: 'access_token'
+          workload_identity_provider: ${{ secrets.GAR_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GAR_SA_MAIL_ADDRESS }}
+      - name: Login to GAR
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.GAR_REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+      - name: push go application images to GAR
+        run: |
+          for APP in `ls bin`
+          do
+            IMAGE=`./tools/build/show-image-name.sh $APP`
+            docker tag bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
+            docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
           done
 
   python:
     needs: setup
     runs-on: ubuntu-20.04
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     defaults:
       run:
         working-directory: ${{ env.PYTHON_PATH }}
@@ -119,18 +155,42 @@ jobs:
         uses: docker/setup-buildx-action@95cb08cb2672c73d4ffd2f422e6d11953d2a9c70 # v2.1.0
         with:
           install: true
+      - name: Build python application images
+        run: docker build -t bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }} --load .
       - name: Login to GHCR
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
           registry: ghcr.io
           username: ca-dp
           password: ${{ secrets.GHCR_PAT }}
-      - name: Build and push python application images
-        run: docker build -t ${{ env.GHCR_REGISTRY }}/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }} --push .
+      - name: Push python application image to GHCR
+        run: |
+          docker tag bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GHCR_REGISTRY }}/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@c4799db9111fba4461e9f9da8732e5057b394f72 # v0.8.3
+        with:
+          token_format: 'access_token'
+          workload_identity_provider: ${{ secrets.GAR_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GAR_SA_MAIL_ADDRESS }}
+      - name: Login to GAR
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.GAR_REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+      - name: Push python application image to GAR
+        run: |
+          docker tag bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
 
   web-v2:
     needs: setup
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     defaults:
       run:
         working-directory: ${{ env.WEB_PATH }}
@@ -166,14 +226,35 @@ jobs:
         uses: docker/setup-buildx-action@95cb08cb2672c73d4ffd2f422e6d11953d2a9c70 # v2.1.0
         with:
           install: true
+      - name: Build web application images
+        run: docker build -t bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }} --load .
       - name: Login to GHCR
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
           registry: ghcr.io
           username: ca-dp
           password: ${{ secrets.GHCR_PAT }}
-      - name: Build and push web application images
-        run: docker build -t ${{ env.GHCR_REGISTRY }}/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }} --push .
+      - name: Push web application image to GHCR
+        run: |
+          docker tag bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GHCR_REGISTRY }}/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }}
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@c4799db9111fba4461e9f9da8732e5057b394f72 # v0.8.3
+        with:
+          token_format: 'access_token'
+          workload_identity_provider: ${{ secrets.GAR_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GAR_SA_MAIL_ADDRESS }}
+      - name: Login to GAR
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.GAR_REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+      - name: Push web application image to GAR
+        run: |
+          docker tag bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }}
 
   dispatch:
     needs: [setup, go, python, web-v2]
