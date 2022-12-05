@@ -306,7 +306,14 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		return nil, err
 	}
 	if req.Id == "" {
-		return nil, localizedError(statusMissingAPIKeyID, locale.JaJP)
+		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	apiKeyStorage := v2as.NewAPIKeyStorage(s.mysqlClient)
 	apiKey, err := apiKeyStorage.GetAPIKey(ctx, req.Id, req.EnvironmentNamespace)
@@ -456,7 +463,14 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		return nil, err
 	}
 	if req.Id == "" {
-		return nil, localizedError(statusMissingAPIKeyID, locale.JaJP)
+		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	projects, err := s.listProjects(ctx)
 	if err != nil {

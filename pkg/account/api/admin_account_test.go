@@ -220,7 +220,7 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 			req: &accountproto.CreateAdminAccountRequest{
 				Command: &accountproto.CreateAdminAccountCommand{Email: ""},
 			},
-			expectedErr: localizedError(statusEmailIsEmpty, locale.JaJP),
+			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
 			desc:    "errInvalidEmail",
@@ -364,7 +364,7 @@ func TestEnableAdminAccountMySQL(t *testing.T) {
 			req: &accountproto.EnableAdminAccountRequest{
 				Id: "",
 			},
-			expectedErr: localizedError(statusMissingAccountID, locale.JaJP),
+			expectedErr: createError(statusMissingAccountID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "account_id")),
 		},
 		{
 			desc:    "errNoCommand",
@@ -462,7 +462,7 @@ func TestDisableAdminAccountMySQL(t *testing.T) {
 			req: &accountproto.DisableAdminAccountRequest{
 				Id: "",
 			},
-			expectedErr: localizedError(statusMissingAccountID, locale.JaJP),
+			expectedErr: createError(statusMissingAccountID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "account_id")),
 		},
 		{
 			desc:    "errNoCommand",
@@ -561,7 +561,7 @@ func TestConvertAccountMySQL(t *testing.T) {
 				Id:      "",
 				Command: &accountproto.ConvertAccountCommand{},
 			},
-			expectedErr: localizedError(statusMissingAccountID, locale.JaJP),
+			expectedErr: createError(statusMissingAccountID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "account_id")),
 		},
 		{
 			desc: "errNotFound",
@@ -647,7 +647,7 @@ func TestGetAdminAccountMySQL(t *testing.T) {
 			req: &accountproto.GetAdminAccountRequest{
 				Email: "",
 			},
-			expectedErr: localizedError(statusEmailIsEmpty, locale.JaJP),
+			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
 			desc: "errInvalidEmail",

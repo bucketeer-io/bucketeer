@@ -17,6 +17,8 @@ package api
 import (
 	"regexp"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
@@ -24,32 +26,67 @@ import (
 // nolint:lll
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
-func validateGetAdminAccountRequest(req *accountproto.GetAdminAccountRequest) error {
+func validateGetAdminAccountRequest(req *accountproto.GetAdminAccountRequest, localizer locale.Localizer) error {
 	if req.Email == "" {
-		return localizedError(statusEmailIsEmpty, locale.JaJP)
+		dt, err := statusEmailIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if !verifyEmailFormat(req.Email) {
-		return localizedError(statusInvalidEmail, locale.JaJP)
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func validateCreateAdminAccountRequest(req *accountproto.CreateAdminAccountRequest) error {
+func validateCreateAdminAccountRequest(req *accountproto.CreateAdminAccountRequest, localizer locale.Localizer) error {
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
 	}
 	if req.Command.Email == "" {
-		return localizedError(statusEmailIsEmpty, locale.JaJP)
+		dt, err := statusEmailIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if !verifyEmailFormat(req.Command.Email) {
-		return localizedError(statusInvalidEmail, locale.JaJP)
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func validateEnableAdminAccountRequest(req *accountproto.EnableAdminAccountRequest) error {
+func validateEnableAdminAccountRequest(req *accountproto.EnableAdminAccountRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		return localizedError(statusMissingAccountID, locale.JaJP)
+		dt, err := statusMissingAccountID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "account_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -57,9 +94,19 @@ func validateEnableAdminAccountRequest(req *accountproto.EnableAdminAccountReque
 	return nil
 }
 
-func validateDisableAdminAccountRequest(req *accountproto.DisableAdminAccountRequest) error {
+func validateDisableAdminAccountRequest(
+	req *accountproto.DisableAdminAccountRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
-		return localizedError(statusMissingAccountID, locale.JaJP)
+		dt, err := statusMissingAccountID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "account_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -67,32 +114,67 @@ func validateDisableAdminAccountRequest(req *accountproto.DisableAdminAccountReq
 	return nil
 }
 
-func validateGetAccountRequest(req *accountproto.GetAccountRequest) error {
+func validateGetAccountRequest(req *accountproto.GetAccountRequest, localizer locale.Localizer) error {
 	if req.Email == "" {
-		return localizedError(statusEmailIsEmpty, locale.JaJP)
+		dt, err := statusEmailIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if !verifyEmailFormat(req.Email) {
-		return localizedError(statusInvalidEmail, locale.JaJP)
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func validateCreateAccountRequest(req *accountproto.CreateAccountRequest) error {
+func validateCreateAccountRequest(req *accountproto.CreateAccountRequest, localizer locale.Localizer) error {
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
 	}
 	if req.Command.Email == "" {
-		return localizedError(statusEmailIsEmpty, locale.JaJP)
+		dt, err := statusEmailIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if !verifyEmailFormat(req.Command.Email) {
-		return localizedError(statusInvalidEmail, locale.JaJP)
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func validateChangeAccountRoleRequest(req *accountproto.ChangeAccountRoleRequest) error {
+func validateChangeAccountRoleRequest(req *accountproto.ChangeAccountRoleRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		return localizedError(statusMissingAccountID, locale.JaJP)
+		dt, err := statusMissingAccountID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "account_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -100,9 +182,16 @@ func validateChangeAccountRoleRequest(req *accountproto.ChangeAccountRoleRequest
 	return nil
 }
 
-func validateConvertAccountRequest(req *accountproto.ConvertAccountRequest) error {
+func validateConvertAccountRequest(req *accountproto.ConvertAccountRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		return localizedError(statusMissingAccountID, locale.JaJP)
+		dt, err := statusMissingAccountID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "account_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -110,9 +199,16 @@ func validateConvertAccountRequest(req *accountproto.ConvertAccountRequest) erro
 	return nil
 }
 
-func validateEnableAccountRequest(req *accountproto.EnableAccountRequest) error {
+func validateEnableAccountRequest(req *accountproto.EnableAccountRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		return localizedError(statusMissingAccountID, locale.JaJP)
+		dt, err := statusMissingAccountID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "account_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)
@@ -120,9 +216,16 @@ func validateEnableAccountRequest(req *accountproto.EnableAccountRequest) error 
 	return nil
 }
 
-func validateDisableAccountRequest(req *accountproto.DisableAccountRequest) error {
+func validateDisableAccountRequest(req *accountproto.DisableAccountRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		return localizedError(statusMissingAccountID, locale.JaJP)
+		dt, err := statusMissingAccountID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "account_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command == nil {
 		return localizedError(statusNoCommand, locale.JaJP)

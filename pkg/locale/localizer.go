@@ -39,6 +39,7 @@ const (
 	InvalidArgumentError  = "InvalidArgumentError"
 	AlreadyExistsError    = "AlreadyExistsError"
 	PermissionDenied      = "PermissionDenied"
+	UnauthenticatedError  = "UnauthenticatedError"
 )
 
 func init() {
