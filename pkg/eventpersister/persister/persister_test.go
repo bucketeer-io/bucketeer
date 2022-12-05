@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -651,6 +652,50 @@ func TestConvToEvaluation(t *testing.T) {
 		ev, tag := persister.convToEvaluation(context.Background(), p.input)
 		assert.True(t, proto.Equal(p.expected, ev), p.desc)
 		assert.Equal(t, p.expectedTag, tag, p.desc)
+	}
+}
+
+func TestKey(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	featureID := "feature_id"
+	variationID := "variation_id"
+	unix := time.Now().Unix()
+	now := time.Unix(unix, 0)
+	date := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	patterns := []struct {
+		desc                 string
+		kind                 string
+		featureID            string
+		variationID          string
+		environmentNamespace string
+		timestamp            int64
+		expected             string
+	}{
+		{
+			desc:        "userCount",
+			kind:        userCountKey,
+			featureID:   featureID,
+			variationID: variationID,
+			timestamp:   unix,
+			expected:    fmt.Sprintf("%s:%s:%s:%d", userCountKey, featureID, variationID, date.Unix()),
+		},
+		{
+			desc:        "eventCount",
+			kind:        eventCountKey,
+			featureID:   featureID,
+			variationID: variationID,
+			timestamp:   unix,
+			expected:    fmt.Sprintf("%s:%s:%s:%d", eventCountKey, featureID, variationID, date.Unix()),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			persister := newPersister(mockController)
+			actual := persister.key(p.kind, p.featureID, p.variationID, p.timestamp)
+			assert.Equal(t, p.expected, actual)
+		})
 	}
 }
 

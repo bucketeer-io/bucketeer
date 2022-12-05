@@ -38,6 +38,7 @@ const (
 	pfCountCmdName     = "PFCOUNT"
 	incrByFloatCmdName = "INCR_BY_FLOAT"
 	delCmdName         = "DEL"
+	incr               = "INCR"
 )
 
 var (
@@ -67,6 +68,7 @@ type Client interface {
 	PFCount(keys ...string) (int64, error)
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
+	Incr(key string) (int64, error)
 }
 
 type client struct {
@@ -352,4 +354,19 @@ func (c *client) Del(key string) error {
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, delCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return err
+}
+
+func (c *client) Incr(key string) (int64, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incr).Inc()
+	v, err := c.rc.Incr(key).Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, incr, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, incr, code).Observe(
+		time.Since(startTime).Seconds())
+	return v, err
 }
