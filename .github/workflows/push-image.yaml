@@ -113,8 +113,8 @@ jobs:
           for APP in `ls bin`
           do
             IMAGE=`./tools/build/show-image-name.sh $APP`
-            docker tag bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer-io/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
-            docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer-io/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
+            docker tag bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
+            docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
           done
 
   python:
@@ -182,8 +182,8 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
       - name: Push python application image to GAR
         run: |
-          docker tag bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer-io/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
-          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer-io/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker tag bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
 
   web-v2:
     needs: setup
@@ -253,8 +253,8 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
       - name: Push web application image to GAR
         run: |
-          docker tag bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer-io/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }}
-          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer-io/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker tag bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }}
 
   dispatch:
     needs: [setup, go, python, web-v2]
