@@ -36,6 +36,21 @@ func (m *MockUserEvaluationsStorage) EXPECT() *MockUserEvaluationsStorageMockRec
 	return m.recorder
 }
 
+// GetUserEvaluation mocks base method.
+func (m *MockUserEvaluationsStorage) GetUserEvaluation(ctx context.Context, userID, environmentNamespace, tag, featureID string, featureVersion int32) (*feature.Evaluation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserEvaluation", ctx, userID, environmentNamespace, tag, featureID, featureVersion)
+	ret0, _ := ret[0].(*feature.Evaluation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserEvaluation indicates an expected call of GetUserEvaluation.
+func (mr *MockUserEvaluationsStorageMockRecorder) GetUserEvaluation(ctx, userID, environmentNamespace, tag, featureID, featureVersion interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserEvaluation", reflect.TypeOf((*MockUserEvaluationsStorage)(nil).GetUserEvaluation), ctx, userID, environmentNamespace, tag, featureID, featureVersion)
+}
+
 // GetUserEvaluations mocks base method.
 func (m *MockUserEvaluationsStorage) GetUserEvaluations(ctx context.Context, userID, environmentNamespace, tag string) ([]*feature.Evaluation, error) {
 	m.ctrl.T.Helper()

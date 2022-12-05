@@ -36,6 +36,13 @@ type ReadRequest struct {
 }
 
 // All fields are required
+type ReadRowRequest struct {
+	TableName    string
+	ColumnFamily string
+	RowKey       string
+}
+
+// All fields are required
 type WriteRequest struct {
 	TableName    string
 	ColumnFamily string

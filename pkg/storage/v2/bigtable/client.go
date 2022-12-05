@@ -34,6 +34,7 @@ var (
 )
 
 type Reader interface {
+	ReadRow(ctx context.Context, request *ReadRowRequest) (Row, error)
 	ReadRows(ctx context.Context, request *ReadRequest) (Rows, error)
 }
 
@@ -105,6 +106,24 @@ func NewBigtableClient(
 	}, nil
 }
 
+func (c *client) ReadRow(ctx context.Context, req *ReadRowRequest) (Row, error) {
+	var err error
+	defer record()(operationReadRow, &err)
+	tbl := c.client.Open(req.TableName)
+	r, err := tbl.ReadRow(ctx, req.RowKey)
+	if err != nil {
+		c.logger.Error("Failed to read row", zap.Error(err))
+		return nil, ErrInternal
+	}
+	if r == nil && err == nil {
+		return nil, ErrKeyNotFound
+	}
+	return &row{
+		row:    r,
+		logger: c.logger,
+	}, nil
+}
+
 func (c *client) ReadRows(ctx context.Context, req *ReadRequest) (Rows, error) {
 	var err error
 	defer record()(operationReadRows, &err)
@@ -130,9 +149,8 @@ func (c *client) ReadRows(ctx context.Context, req *ReadRequest) (Rows, error) {
 		return nil, ErrKeyNotFound
 	}
 	return &rows{
-		rows:         rs,
-		columnFamily: req.ColumnFamily,
-		logger:       c.logger,
+		rows:   rs,
+		logger: c.logger,
 	}, nil
 }
 

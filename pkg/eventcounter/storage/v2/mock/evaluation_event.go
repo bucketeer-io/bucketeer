@@ -11,6 +11,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 
 	client "github.com/bucketeer-io/bucketeer/proto/event/client"
+	service "github.com/bucketeer-io/bucketeer/proto/event/service"
 )
 
 // MockEventStorage is a mock of EventStorage interface.
@@ -62,4 +63,18 @@ func (m *MockEventStorage) CreateGoalEvent(ctx context.Context, event *client.Go
 func (mr *MockEventStorageMockRecorder) CreateGoalEvent(ctx, event, id, environmentNamespace, evaluations interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGoalEvent", reflect.TypeOf((*MockEventStorage)(nil).CreateGoalEvent), ctx, event, id, environmentNamespace, evaluations)
+}
+
+// CreateUserEvent mocks base method.
+func (m *MockEventStorage) CreateUserEvent(ctx context.Context, event *service.UserEvent, id, environmentNamespace string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUserEvent", ctx, event, id, environmentNamespace)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateUserEvent indicates an expected call of CreateUserEvent.
+func (mr *MockEventStorageMockRecorder) CreateUserEvent(ctx, event, id, environmentNamespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserEvent", reflect.TypeOf((*MockEventStorage)(nil).CreateUserEvent), ctx, event, id, environmentNamespace)
 }

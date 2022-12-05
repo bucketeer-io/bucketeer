@@ -22,6 +22,60 @@ import (
 	"go.uber.org/zap"
 )
 
+func TestItem(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc          string
+		row           *row
+		expected      *ReadItem
+		expectedError error
+	}{
+		{
+			desc: "ErrColumnFamilyNotFound",
+			row: &row{
+				row: map[string][]bigtable.ReadItem{"columnFamily-2": {
+					{
+						Row:       "Row-1",
+						Column:    "columnFamily:Column",
+						Timestamp: 0,
+						Value:     []byte("Value-1"),
+					},
+				}},
+				logger: zap.NewNop(),
+			},
+			expected:      nil,
+			expectedError: ErrColumnFamilyNotFound,
+		},
+		{
+			desc: "Valid",
+			row: &row{
+				row: map[string][]bigtable.ReadItem{"columnFamily": {
+					{
+						Row:       "Row-1",
+						Column:    "columnFamily:Column",
+						Timestamp: 0,
+						Value:     []byte("Value-1"),
+					},
+				}},
+			},
+			expected: &ReadItem{
+				RowKey:    "Row-1",
+				Column:    "columnFamily:Column",
+				Timestamp: 0,
+				Value:     []byte("Value-1"),
+			},
+			expectedError: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			items, err := p.row.ReadItem("columnFamily", "Column")
+			assert.Equal(t, p.expected, items)
+			assert.Equal(t, p.expectedError, err)
+		})
+	}
+}
+
 func TestItems(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
@@ -101,8 +155,7 @@ func TestItems(t *testing.T) {
 						},
 					}},
 				},
-				columnFamily: "columnFamily",
-				logger:       zap.NewNop(),
+				logger: zap.NewNop(),
 			},
 			expected: []*ReadItem{
 				{
@@ -134,7 +187,7 @@ func TestItems(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		items, err := p.rows.ReadItems("Column")
+		items, err := p.rows.ReadItems("columnFamily", "Column")
 		assert.Equal(t, p.expected, items)
 		assert.Equal(t, p.expectedError, err)
 	}
