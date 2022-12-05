@@ -32,6 +32,8 @@ const (
 	environmentNamespace = "environmentNamespace"
 	tag                  = "tag"
 	userID               = "user-id"
+	featureID            = "feature-id"
+	featureVersion       = int32(2)
 )
 
 var (
@@ -52,21 +54,114 @@ func TestNewUserEvaluationsStorage(t *testing.T) {
 	assert.IsType(t, &userEvaluationsStorage{}, db)
 }
 
-type rows struct {
-	columnFamily string
-	value        []byte
+type row struct {
+	value []byte
 }
 
-func (r *rows) ReadItems(column string) ([]*storage.ReadItem, error) {
-	items := []*storage.ReadItem{
+func (r *row) ReadItem(columnFamily, column string) (*storage.ReadItem, error) {
+	item := &storage.ReadItem{
+		RowKey:    "Row-1",
+		Column:    fmt.Sprintf("%s:%s", columnFamily, column),
+		Timestamp: 0,
+		Value:     r.value,
+	}
+	return item, nil
+}
+
+type rows struct {
+	value []byte
+}
+
+func (r *rows) ReadItems(columnFamily, column string) ([]*storage.ReadItem, error) {
+	items := []*storage.ReadItem{{
+		RowKey:    "Row-1",
+		Column:    fmt.Sprintf("%s:%s", columnFamily, column),
+		Timestamp: 0,
+		Value:     r.value,
+	}}
+	return items, nil
+}
+
+func TestGetUserEvaluation(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	req := &storage.ReadRowRequest{
+		TableName:    tableName,
+		ColumnFamily: columnFamily,
+		RowKey: newKey(
+			environmentNamespace,
+			tag,
+			userID,
+			featureID,
+			featureVersion,
+		),
+	}
+	value, err := proto.Marshal(evaluation)
+	assert.NoError(t, err)
+	patterns := []struct {
+		desc        string
+		setup       func(context.Context, *userEvaluationsStorage)
+		expected    *featureproto.Evaluation
+		expectedErr error
+	}{
 		{
-			RowKey:    "Row-1",
-			Column:    fmt.Sprintf("%s:%s", r.columnFamily, column),
-			Timestamp: 0,
-			Value:     r.value,
+			desc: "ErrInternal",
+			setup: func(ctx context.Context, s *userEvaluationsStorage) {
+				s.client.(*btmock.MockClient).EXPECT().ReadRow(
+					ctx,
+					req,
+				).Return(nil, storage.ErrInternal)
+			},
+			expected:    nil,
+			expectedErr: storage.ErrInternal,
+		},
+		{
+			desc: "ErrKeyNotFound",
+			setup: func(ctx context.Context, s *userEvaluationsStorage) {
+				s.client.(*btmock.MockClient).EXPECT().ReadRow(
+					ctx,
+					req,
+				).Return(nil, storage.ErrKeyNotFound)
+			},
+			expected:    nil,
+			expectedErr: storage.ErrKeyNotFound,
+		},
+		{
+			desc: "Success",
+			setup: func(ctx context.Context, s *userEvaluationsStorage) {
+				s.client.(*btmock.MockClient).EXPECT().ReadRow(
+					ctx,
+					req,
+				).Return(
+					&row{
+						value: value,
+					},
+					nil,
+				)
+			},
+			expected:    evaluation,
+			expectedErr: nil,
 		},
 	}
-	return items, nil
+	for _, p := range patterns {
+		s := createNewUserEvaluationsStorage(mockController)
+		p.setup(ctx, s)
+		actual, err := s.GetUserEvaluation(
+			ctx,
+			userID,
+			environmentNamespace,
+			tag,
+			featureID,
+			featureVersion,
+		)
+		if p.expected != nil {
+			assert.True(t, proto.Equal(p.expected, actual), p.desc)
+		}
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+	}
 }
 
 func TestGetUserEvaluations(t *testing.T) {
@@ -122,8 +217,7 @@ func TestGetUserEvaluations(t *testing.T) {
 					req,
 				).Return(
 					&rows{
-						columnFamily: columnFamily,
-						value:        value,
+						value: value,
 					},
 					nil,
 				)

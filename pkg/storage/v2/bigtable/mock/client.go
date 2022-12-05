@@ -36,6 +36,21 @@ func (m *MockReader) EXPECT() *MockReaderMockRecorder {
 	return m.recorder
 }
 
+// ReadRow mocks base method.
+func (m *MockReader) ReadRow(ctx context.Context, request *bigtable.ReadRowRequest) (bigtable.Row, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadRow", ctx, request)
+	ret0, _ := ret[0].(bigtable.Row)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadRow indicates an expected call of ReadRow.
+func (mr *MockReaderMockRecorder) ReadRow(ctx, request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadRow", reflect.TypeOf((*MockReader)(nil).ReadRow), ctx, request)
+}
+
 // ReadRows mocks base method.
 func (m *MockReader) ReadRows(ctx context.Context, request *bigtable.ReadRequest) (bigtable.Rows, error) {
 	m.ctrl.T.Helper()
@@ -125,6 +140,21 @@ func (m *MockReadWriter) EXPECT() *MockReadWriterMockRecorder {
 	return m.recorder
 }
 
+// ReadRow mocks base method.
+func (m *MockReadWriter) ReadRow(ctx context.Context, request *bigtable.ReadRowRequest) (bigtable.Row, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadRow", ctx, request)
+	ret0, _ := ret[0].(bigtable.Row)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadRow indicates an expected call of ReadRow.
+func (mr *MockReadWriterMockRecorder) ReadRow(ctx, request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadRow", reflect.TypeOf((*MockReadWriter)(nil).ReadRow), ctx, request)
+}
+
 // ReadRows mocks base method.
 func (m *MockReadWriter) ReadRows(ctx context.Context, request *bigtable.ReadRequest) (bigtable.Rows, error) {
 	m.ctrl.T.Helper()
@@ -203,6 +233,21 @@ func (m *MockClient) Close() error {
 func (mr *MockClientMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockClient)(nil).Close))
+}
+
+// ReadRow mocks base method.
+func (m *MockClient) ReadRow(ctx context.Context, request *bigtable.ReadRowRequest) (bigtable.Row, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadRow", ctx, request)
+	ret0, _ := ret[0].(bigtable.Row)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadRow indicates an expected call of ReadRow.
+func (mr *MockClientMockRecorder) ReadRow(ctx, request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadRow", reflect.TypeOf((*MockClient)(nil).ReadRow), ctx, request)
 }
 
 // ReadRows mocks base method.
