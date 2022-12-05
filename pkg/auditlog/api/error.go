@@ -15,12 +15,8 @@
 package api
 
 import (
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	gstatus "google.golang.org/grpc/status"
-
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/status"
 )
 
 var (
