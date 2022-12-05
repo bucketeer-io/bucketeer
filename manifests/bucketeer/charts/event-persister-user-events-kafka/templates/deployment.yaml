@@ -46,6 +46,8 @@ spec:
           env:
             - name: BUCKETEER_EVENT_PERSISTER_PROJECT
               value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_EVENT_PERSISTER_EXPERIMENT_SERVICE
+              value: "{{ .Values.env.experimentService }}"
             - name: BUCKETEER_EVENT_PERSISTER_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_EVENT_PERSISTER_BIGTABLE_INSTANCE
