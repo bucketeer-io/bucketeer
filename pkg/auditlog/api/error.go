@@ -15,6 +15,9 @@
 package api
 
 import (
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc/status"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	gstatus "google.golang.org/grpc/status"
 )
@@ -25,4 +28,19 @@ var (
 	statusPermissionDenied = gstatus.New(codes.PermissionDenied, "auditlog: permission denied")
 	statusInvalidCursor    = gstatus.New(codes.InvalidArgument, "auditlog: cursor is invalid")
 	statusInvalidOrderBy   = gstatus.New(codes.InvalidArgument, "auditlog: order_by is invalid")
+
+	errInternalJaJP = status.MustWithDetails(
+		statusInternal,
+		&errdetails.LocalizedMessage{
+			Locale:  locale.JaJP,
+			Message: "内部エラーが発生しました",
+		},
+	)
+	errInvalidCursorJaJP = status.MustWithDetails(
+		statusInvalidCursor,
+		&errdetails.LocalizedMessage{
+			Locale:  locale.JaJP,
+			Message: "不正なcursorです",
+		},
+	)
 )
