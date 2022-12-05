@@ -29,12 +29,4 @@ var (
 	statusPermissionDenied = gstatus.New(codes.PermissionDenied, "auditlog: permission denied")
 	statusInvalidCursor    = gstatus.New(codes.InvalidArgument, "auditlog: cursor is invalid")
 	statusInvalidOrderBy   = gstatus.New(codes.InvalidArgument, "auditlog: order_by is invalid")
-
-	errInternalJaJP = status.MustWithDetails(
-		statusInternal,
-		&errdetails.LocalizedMessage{
-			Locale:  locale.JaJP,
-			Message: "内部エラーが発生しました",
-		},
-	)
 )
