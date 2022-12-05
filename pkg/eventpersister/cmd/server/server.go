@@ -24,6 +24,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/persister"
+	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
@@ -58,6 +59,7 @@ type server struct {
 	flushSize                    *int
 	flushInterval                *time.Duration
 	flushTimeout                 *time.Duration
+	experimentService            *string
 	featureService               *string
 	certPath                     *string
 	keyPath                      *string
@@ -98,8 +100,12 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"flush-size",
 			"Maximum number of messages to batch before writing to datastore.",
 		).Default("50").Int(),
-		flushInterval:    cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
-		flushTimeout:     cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
+		flushInterval: cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
+		flushTimeout:  cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
+		experimentService: cmd.Flag(
+			"experiment-service",
+			"bucketeer-experiment-service address.",
+		).Default("experiment:9090").String(),
 		featureService:   cmd.Flag("feature-service", "bucketeer-feature-service address.").Default("feature:9090").String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
@@ -156,6 +162,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	experimentClient, err := ec.NewClient(*s.experimentService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer experimentClient.Close()
+
 	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
 		client.WithDialTimeout(30*time.Second),
@@ -197,6 +215,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}()
 
 	p := persister.NewPersister(
+		experimentClient,
 		featureClient,
 		puller,
 		datastore,

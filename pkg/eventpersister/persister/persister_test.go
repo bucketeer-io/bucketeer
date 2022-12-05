@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	fcmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
@@ -656,6 +657,7 @@ func TestConvToEvaluation(t *testing.T) {
 func newPersister(c *gomock.Controller) *Persister {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Persister{
+		experimentClient:      ecmock.NewMockClient(c),
 		featureClient:         fcmock.NewMockClient(c),
 		puller:                pullermock.NewMockRateLimitedPuller(c),
 		datastore:             nil,
@@ -671,6 +673,7 @@ func newPersister(c *gomock.Controller) *Persister {
 func newPersisterWithMysqlClient(c *gomock.Controller) *Persister {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Persister{
+		experimentClient:      ecmock.NewMockClient(c),
 		featureClient:         fcmock.NewMockClient(c),
 		puller:                pullermock.NewMockRateLimitedPuller(c),
 		datastore:             nil,

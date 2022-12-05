@@ -30,6 +30,7 @@ import (
 	v2ec "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersister/storage/v2"
+	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
@@ -107,6 +108,7 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type Persister struct {
+	experimentClient      ec.Client
 	featureClient         featureclient.Client
 	puller                puller.RateLimitedPuller
 	datastore             datastore.Writer
@@ -122,6 +124,7 @@ type Persister struct {
 }
 
 func NewPersister(
+	experimentClient ec.Client,
 	featureClient featureclient.Client,
 	p puller.Puller,
 	ds datastore.Writer,
@@ -146,6 +149,7 @@ func NewPersister(
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Persister{
+		experimentClient:      experimentClient,
 		featureClient:         featureClient,
 		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
 		datastore:             ds,
