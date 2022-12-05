@@ -62,7 +62,7 @@ type Deleter interface {
 
 type Counter interface {
 	Increment(key string) (int64, error)
-	PFAdd(key string, els []string) (int64, error)
+	PFAdd(key string, els ...string) (int64, error)
 }
 
 // FIXME: remove after persistent-redis migration

@@ -64,7 +64,7 @@ type Client interface {
 	Get(key string) ([]byte, error)
 	GetMulti(keys []string) ([]interface{}, error)
 	Set(key string, val interface{}, expiration time.Duration) error
-	PFAdd(key string, els []string) (int64, error)
+	PFAdd(key string, els ...string) (int64, error)
 	PFCount(keys ...string) (int64, error)
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
@@ -294,7 +294,7 @@ func (c *client) Set(key string, val interface{}, expiration time.Duration) erro
 	return err
 }
 
-func (c *client) PFAdd(key string, els []string) (int64, error) {
+func (c *client) PFAdd(key string, els ...string) (int64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfAddCmdName).Inc()
 	result, err := c.rc.PFAdd(key, els).Result()

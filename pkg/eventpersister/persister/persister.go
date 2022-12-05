@@ -671,7 +671,7 @@ func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamesp
 			return err
 		}
 		uck := p.key(userCountKey, e.FeatureId, e.VariationId, e.Timestamp)
-		_, err = p.evaluationCountCacher.PFAdd(uck, []string{e.UserId})
+		_, err = p.evaluationCountCacher.PFAdd(uck, e.UserId)
 		if err != nil {
 			return err
 		}

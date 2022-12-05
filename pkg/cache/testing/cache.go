@@ -78,7 +78,7 @@ func (c *inMemoryCache) Increment(key string) (int64, error) {
 	return 0, nil
 }
 
-func (c *inMemoryCache) PFAdd(key string, els []string) (int64, error) {
+func (c *inMemoryCache) PFAdd(key string, els ...string) (int64, error) {
 	// TODO: implement
 	return 0, nil
 }

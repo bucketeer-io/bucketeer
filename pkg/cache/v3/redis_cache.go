@@ -78,6 +78,6 @@ func (r *redisCache) Increment(key string) (int64, error) {
 	return r.client.Incr(key)
 }
 
-func (r *redisCache) PFAdd(key string, els []string) (int64, error) {
-	return r.client.PFAdd(key, els)
+func (r *redisCache) PFAdd(key string, els ...string) (int64, error) {
+	return r.client.PFAdd(key, els...)
 }
