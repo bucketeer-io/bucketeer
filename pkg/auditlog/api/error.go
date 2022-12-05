@@ -37,11 +37,4 @@ var (
 			Message: "内部エラーが発生しました",
 		},
 	)
-	errInvalidCursorJaJP = status.MustWithDetails(
-		statusInvalidCursor,
-		&errdetails.LocalizedMessage{
-			Locale:  locale.JaJP,
-			Message: "不正なcursorです",
-		},
-	)
 )

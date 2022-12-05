@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	gstatus "google.golang.org/grpc/status"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	v2alsmock "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2/mock"
@@ -53,6 +55,16 @@ func TestListAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*auditlogService)
@@ -65,7 +77,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &proto.ListAuditLogsRequest{Cursor: "XXX"},
 			expected:    nil,
-			expectedErr: errInvalidCursorJaJP,
+			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -76,7 +88,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			},
 			input:       &proto.ListAuditLogsRequest{},
 			expected:    nil,
-			expectedErr: errInternalJaJP,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -108,6 +120,16 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*auditlogService)
@@ -120,7 +142,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &proto.ListAdminAuditLogsRequest{Cursor: "invalid"},
 			expected:    nil,
-			expectedErr: errInvalidCursorJaJP,
+			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -131,7 +153,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			},
 			input:       &proto.ListAdminAuditLogsRequest{},
 			expected:    nil,
-			expectedErr: errInternalJaJP,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -163,6 +185,16 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*auditlogService)
@@ -175,7 +207,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &proto.ListFeatureHistoryRequest{Cursor: "XXX"},
 			expected:    nil,
-			expectedErr: errInvalidCursorJaJP,
+			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -186,7 +218,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			},
 			input:       &proto.ListFeatureHistoryRequest{},
 			expected:    nil,
-			expectedErr: errInternalJaJP,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
