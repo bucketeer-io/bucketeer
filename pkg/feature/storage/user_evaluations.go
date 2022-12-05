@@ -35,6 +35,11 @@ const (
 type UserEvaluationsStorage interface {
 	UpsertUserEvaluation(ctx context.Context, evaluation *featureproto.Evaluation, environmentNamespace, tag string) error
 	GetUserEvaluations(ctx context.Context, userID, environmentNamespace, tag string) ([]*featureproto.Evaluation, error)
+	GetUserEvaluation(
+		ctx context.Context,
+		userID, environmentNamespace, tag, featureID string,
+		featureVersion int32,
+	) (*featureproto.Evaluation, error)
 }
 
 type userEvaluationsStorage struct {
@@ -78,6 +83,37 @@ func (s *userEvaluationsStorage) UpsertUserEvaluation(
 	return nil
 }
 
+func (s *userEvaluationsStorage) GetUserEvaluation(
+	ctx context.Context,
+	userID, environmentNamespace, tag, featureID string,
+	featureVersion int32,
+) (*featureproto.Evaluation, error) {
+	req := &storage.ReadRowRequest{
+		TableName:    tableName,
+		ColumnFamily: columnFamily,
+		RowKey: newKey(
+			environmentNamespace,
+			tag,
+			userID,
+			featureID,
+			featureVersion,
+		),
+	}
+	it, err := s.client.ReadRow(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	item, err := it.ReadItem(columnFamily, columnName)
+	if err != nil {
+		return nil, err
+	}
+	evaluation := &featureproto.Evaluation{}
+	if err := proto.Unmarshal(item.Value, evaluation); err != nil {
+		return nil, err
+	}
+	return evaluation, nil
+}
+
 func (s *userEvaluationsStorage) GetUserEvaluations(
 	ctx context.Context,
 	userID, environmentNamespace, tag string,
@@ -95,7 +131,7 @@ func (s *userEvaluationsStorage) GetUserEvaluations(
 	if err != nil {
 		return nil, err
 	}
-	items, err := it.ReadItems(columnName)
+	items, err := it.ReadItems(columnFamily, columnName)
 	if err != nil {
 		return nil, err
 	}

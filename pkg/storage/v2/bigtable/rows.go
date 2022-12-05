@@ -34,25 +34,47 @@ type WriteItem struct {
 	Value []byte
 }
 
+type Row interface {
+	ReadItem(columnFamily, column string) (*ReadItem, error)
+}
+
+type row struct {
+	row    bigtable.Row
+	logger *zap.Logger
+}
+
 type Rows interface {
-	ReadItems(column string) ([]*ReadItem, error)
+	ReadItems(columnFamily, column string) ([]*ReadItem, error)
 }
 
 type rows struct {
-	rows         []bigtable.Row
-	columnFamily string
-	logger       *zap.Logger
+	rows   []bigtable.Row
+	logger *zap.Logger
 }
 
-func (r *rows) ReadItems(column string) (readItems []*ReadItem, err error) {
+func (r *row) ReadItem(columnFamily, column string) (readItem *ReadItem, err error) {
+	defer record()(operationReadItem, &err)
+	items, err := getColumnItems(r.row, columnFamily, column)
+	if err != nil {
+		r.logger.Error("Failed to read item by column",
+			zap.Error(err),
+			zap.String("columnFamily", columnFamily),
+			zap.String("column", column),
+		)
+		return nil, err
+	}
+	return items[0], nil
+}
+
+func (r *rows) ReadItems(columnFamily, column string) (readItems []*ReadItem, err error) {
 	defer record()(operationReadItems, &err)
 	for _, row := range r.rows {
 		var items []*ReadItem
-		items, err = r.getColumnItems(row, column)
+		items, err = getColumnItems(row, columnFamily, column)
 		if err != nil {
 			r.logger.Error("Failed to read items by column",
 				zap.Error(err),
-				zap.String("columnFamily", r.columnFamily),
+				zap.String("columnFamily", columnFamily),
 				zap.String("column", column),
 			)
 			return nil, err
@@ -62,13 +84,13 @@ func (r *rows) ReadItems(column string) (readItems []*ReadItem, err error) {
 	return readItems, nil
 }
 
-func (r *rows) getColumnItems(row bigtable.Row, column string) ([]*ReadItem, error) {
-	items, ok := row[r.columnFamily]
+func getColumnItems(row bigtable.Row, columnFamily, column string) ([]*ReadItem, error) {
+	items, ok := row[columnFamily]
 	if !ok {
 		return nil, ErrColumnFamilyNotFound
 	}
 	var readItems []*ReadItem
-	col := fmt.Sprintf("%s:%s", r.columnFamily, column)
+	col := fmt.Sprintf("%s:%s", columnFamily, column)
 	for _, item := range items {
 		if item.Column == col {
 			i := &ReadItem{

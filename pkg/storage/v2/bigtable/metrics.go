@@ -24,7 +24,9 @@ import (
 )
 
 const (
+	operationReadItem  = "ReadItem"
 	operationReadItems = "ReadItems"
+	operationReadRow   = "ReadRow"
 	operationReadRows  = "ReadRows"
 	operationWriteRow  = "WriteRow"
 	operationWriteRows = "WriteRows"
