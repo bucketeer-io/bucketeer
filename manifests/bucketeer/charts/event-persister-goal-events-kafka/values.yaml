@@ -33,7 +33,7 @@ env:
     serverName:
     addr:
     poolMaxIdle: 50
-    poolMaxActive: 200
+    poolMaxActive: 50
   pullerNumGoroutines: 5
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
