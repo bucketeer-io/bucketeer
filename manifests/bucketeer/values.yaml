@@ -1096,6 +1096,8 @@ event-persister-evaluation-events-kafka:
     redis:
       serverName: bucketeer-redis
       addr: bucketeer-redis.bucketeer.private:6379
+      poolMaxIdle: 50
+      poolMaxActive: 50
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
@@ -1171,6 +1173,8 @@ event-persister-goal-events-kafka:
     redis:
       serverName: bucketeer-redis
       addr: bucketeer-redis.bucketeer.private:6379
+      poolMaxIdle: 50
+      poolMaxActive: 50
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
@@ -1246,6 +1250,8 @@ event-persister-user-events-kafka:
     redis:
       serverName: bucketeer-redis
       addr: bucketeer-redis.bucketeer.private:6379
+      poolMaxIdle: 50
+      poolMaxActive: 50
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
