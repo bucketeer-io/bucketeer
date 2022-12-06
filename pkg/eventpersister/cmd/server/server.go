@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/persister"
@@ -30,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/kafka"
@@ -77,6 +79,10 @@ type server struct {
 	mysqlHost                    *string
 	mysqlPort                    *int
 	mysqlDbName                  *string
+	redisServerName              *string
+	redisAddr                    *string
+	redisPoolMaxIdle             *int
+	redisPoolMaxActive           *int
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -122,16 +128,26 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"puller-max-outstanding-bytes",
 			"Maximum size of unprocessed messages.",
 		).Int(),
-		postgresUser:   cmd.Flag("postgres-user", "").Required().String(),
-		postgresPass:   cmd.Flag("postgres-pass", "").Required().String(),
-		postgresHost:   cmd.Flag("postgres-host", "").Required().String(),
-		postgresPort:   cmd.Flag("postgres-port", "").Required().Int(),
-		postgresDbName: cmd.Flag("postgres-name", "").Required().String(),
-		mysqlUser:      cmd.Flag("mysql-user", "").String(),
-		mysqlPass:      cmd.Flag("mysql-pass", "").String(),
-		mysqlHost:      cmd.Flag("mysql-host", "").String(),
-		mysqlPort:      cmd.Flag("mysql-port", "").Int(),
-		mysqlDbName:    cmd.Flag("mysql-dbname", "").String(),
+		postgresUser:    cmd.Flag("postgres-user", "").Required().String(),
+		postgresPass:    cmd.Flag("postgres-pass", "").Required().String(),
+		postgresHost:    cmd.Flag("postgres-host", "").Required().String(),
+		postgresPort:    cmd.Flag("postgres-port", "").Required().Int(),
+		postgresDbName:  cmd.Flag("postgres-name", "").Required().String(),
+		mysqlUser:       cmd.Flag("mysql-user", "").String(),
+		mysqlPass:       cmd.Flag("mysql-pass", "").String(),
+		mysqlHost:       cmd.Flag("mysql-host", "").String(),
+		mysqlPort:       cmd.Flag("mysql-port", "").Int(),
+		mysqlDbName:     cmd.Flag("mysql-dbname", "").String(),
+		redisServerName: cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
+		redisAddr:       cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
+		redisPoolMaxIdle: cmd.Flag(
+			"redis-pool-max-idle",
+			"Maximum number of idle connections in the pool.",
+		).Default("5").Int(),
+		redisPoolMaxActive: cmd.Flag(
+			"redis-pool-max-active",
+			"Maximum number of connections allocated by the pool at a given time.",
+		).Default("10").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -190,6 +206,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	redisV3Client, err := redisv3.NewClient(
+		*s.redisAddr,
+		redisv3.WithPoolSize(*s.redisPoolMaxActive),
+		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),
+		redisv3.WithServerName(*s.redisServerName),
+		redisv3.WithMetrics(registerer),
+		redisv3.WithLogger(logger),
+	)
+
+	if err != nil {
+		return err
+	}
+	defer redisV3Client.Close()
+	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
+
 	// postgresClient, err := postgres.NewClient(
 	// 	ctx,
 	// 	*s.postgresUser,
@@ -222,6 +253,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		btClient,
 		nil, // Disable PostgreSQL temporarily due to instability issues on the Google side.
 		mysqlClient,
+		redisV3Cache,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),

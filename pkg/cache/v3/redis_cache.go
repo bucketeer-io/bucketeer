@@ -23,7 +23,7 @@ type redisCache struct {
 	client redis.Client
 }
 
-func NewRedisCache(client redis.Client) cache.MultiGetDeleteCache {
+func NewRedisCache(client redis.Client) cache.MultiGetDeleteCountCache {
 	return &redisCache{
 		client: client,
 	}
@@ -72,4 +72,12 @@ func (r *redisCache) Scan(cursor, key, count interface{}) (uint64, []string, err
 
 func (r *redisCache) Delete(key string) error {
 	return r.client.Del(key)
+}
+
+func (r *redisCache) Increment(key string) (int64, error) {
+	return r.client.Incr(key)
+}
+
+func (r *redisCache) PFAdd(key string, els ...string) (int64, error) {
+	return r.client.PFAdd(key, els...)
 }

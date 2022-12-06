@@ -25,7 +25,7 @@ type inMemoryCache struct {
 	mutex sync.Mutex
 }
 
-func NewInMemoryCache() cache.MultiGetDeleteCache {
+func NewInMemoryCache() cache.MultiGetDeleteCountCache {
 	return &inMemoryCache{
 		data: make(map[interface{}]interface{}),
 	}
@@ -62,4 +62,23 @@ func (c *inMemoryCache) Delete(key string) error {
 	defer c.mutex.Unlock()
 	delete(c.data, key)
 	return nil
+}
+
+func (c *inMemoryCache) Increment(key string) (int64, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if val, ok := c.data[key]; ok {
+		if intVal, ok := val.(int64); ok {
+			intVal += 1
+			c.data[key] = intVal
+		}
+	} else {
+		c.data[key] = 1
+	}
+	return 0, nil
+}
+
+func (c *inMemoryCache) PFAdd(key string, els ...string) (int64, error) {
+	// TODO: implement
+	return 0, nil
 }

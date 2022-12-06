@@ -26,6 +26,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	v2ec "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
@@ -48,6 +49,11 @@ import (
 
 var (
 	ErrUnexpectedMessageType = errors.New("eventpersister: unexpected message type")
+)
+
+const (
+	eventCountKey = "ec"
+	userCountKey  = "uc"
 )
 
 type eventMap map[string]proto.Message
@@ -121,6 +127,7 @@ type Persister struct {
 	doneCh                chan struct{}
 	postgresClient        postgres.Client
 	mysqlClient           mysql.Client
+	evaluationCountCacher cache.MultiGetDeleteCountCache
 }
 
 func NewPersister(
@@ -131,6 +138,7 @@ func NewPersister(
 	bt bigtable.Client,
 	postgresClient postgres.Client,
 	mysqlClient mysql.Client,
+	v3Cache cache.MultiGetDeleteCountCache,
 	opts ...Option,
 ) *Persister {
 	dopts := &options{
@@ -161,6 +169,7 @@ func NewPersister(
 		doneCh:                make(chan struct{}),
 		postgresClient:        postgresClient,
 		mysqlClient:           mysqlClient,
+		evaluationCountCacher: v3Cache,
 	}
 }
 
@@ -267,6 +276,14 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 				)
 				fails[id] = true
 				continue
+			}
+			if err := p.upsertEvaluationCount(event, environmentNamespace); err != nil {
+				p.logger.Error(
+					"failed to upsert an evaluation event on redis",
+					zap.Error(err),
+					zap.String("id", id),
+					zap.String("environmentNamespace", environmentNamespace),
+				)
 			}
 			eventJSON, repeatable, err := p.marshalEvent(ctx, event, environmentNamespace)
 			if err != nil {
@@ -644,4 +661,33 @@ func (p *Persister) createUserEvent(
 ) error {
 	eventStorage := v2ec.NewEventStorage(p.postgresClient)
 	return eventStorage.CreateUserEvent(p.ctx, event, id, environmentNamespace)
+}
+
+func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
+	if e, ok := event.(*eventproto.EvaluationEvent); ok {
+		eck := p.key(eventCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
+		_, err := p.evaluationCountCacher.Increment(eck)
+		if err != nil {
+			return err
+		}
+		uck := p.key(userCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
+		_, err = p.evaluationCountCacher.PFAdd(uck, e.UserId)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *Persister) key(
+	kind, featureID, variationID, environmentNamespace string,
+	timestamp int64,
+) string {
+	t := time.Unix(timestamp, 0)
+	date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
+	return cache.MakeKey(
+		kind,
+		fmt.Sprintf("%s:%s:%d", featureID, variationID, date.Unix()),
+		environmentNamespace,
+	)
 }

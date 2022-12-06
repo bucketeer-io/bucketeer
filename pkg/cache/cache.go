@@ -37,9 +37,10 @@ type MultiGetCache interface {
 	MultiGetter
 }
 
-type MultiGetDeleteCache interface {
+type MultiGetDeleteCountCache interface {
 	MultiGetCache
 	Deleter
+	Counter
 }
 
 type Getter interface {
@@ -57,6 +58,11 @@ type Putter interface {
 
 type Deleter interface {
 	Delete(key string) error
+}
+
+type Counter interface {
+	Increment(key string) (int64, error)
+	PFAdd(key string, els ...string) (int64, error)
 }
 
 // FIXME: remove after persistent-redis migration
