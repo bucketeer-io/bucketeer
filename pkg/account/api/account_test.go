@@ -60,7 +60,7 @@ func TestCreateAccountMySQL(t *testing.T) {
 				Command:              nil,
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc:    "errInvalidIsEmpty",
@@ -78,7 +78,7 @@ func TestCreateAccountMySQL(t *testing.T) {
 				Command:              &accountproto.CreateAccountCommand{Email: "bucketeer@"},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusInvalidEmail, locale.JaJP),
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
 			desc: "errAlreadyExists_AdminAccount",
@@ -133,7 +133,7 @@ func TestCreateAccountMySQL(t *testing.T) {
 				},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -211,7 +211,7 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 				Command:              nil,
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "errNotFound",
@@ -247,7 +247,7 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 				},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -320,7 +320,7 @@ func TestEnableAccountMySQL(t *testing.T) {
 				Command:              nil,
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "errNotFound",
@@ -352,7 +352,7 @@ func TestEnableAccountMySQL(t *testing.T) {
 				Command:              &accountproto.EnableAccountCommand{},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -423,7 +423,7 @@ func TestDisableAccountMySQL(t *testing.T) {
 				Command:              nil,
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "errNotFound",
@@ -455,7 +455,7 @@ func TestDisableAccountMySQL(t *testing.T) {
 				Command:              &accountproto.DisableAccountCommand{},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -522,7 +522,7 @@ func TestGetAccountMySQL(t *testing.T) {
 				Email:                "bucketeer@",
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusInvalidEmail, locale.JaJP),
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
 			desc: "errNotFound",
@@ -575,6 +575,16 @@ func TestListAccountsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -587,7 +597,7 @@ func TestListAccountsMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &accountproto.ListAccountsRequest{EnvironmentNamespace: "ns0", Cursor: "XXX"},
 			expected:    nil,
-			expectedErr: localizedError(statusInvalidCursor, locale.JaJP),
+			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
 		{
 			desc: "errInternal",
@@ -598,7 +608,7 @@ func TestListAccountsMySQL(t *testing.T) {
 			},
 			input:       &accountproto.ListAccountsRequest{EnvironmentNamespace: "ns0"},
 			expected:    nil,
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",

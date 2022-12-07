@@ -109,7 +109,7 @@ func TestCreatePushMySQL(t *testing.T) {
 					FcmApiKey: "key-0",
 				},
 			},
-			expectedErr: localizedError(statusTagsRequired, locale.JaJP),
+			expectedErr: createError(statusTagsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
 		},
 		{
 			desc:  "err: ErrNameRequired",
@@ -235,7 +235,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 				Id:                    "key-0",
 				DeletePushTagsCommand: &pushproto.DeletePushTagsCommand{Tags: []string{}},
 			},
-			expectedErr: localizedError(statusTagsRequired, locale.JaJP),
+			expectedErr: createError(statusTagsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
 		},
 		{
 			desc: "err: ErrTagsRequired: add",
@@ -243,7 +243,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 				Id:                 "key-0",
 				AddPushTagsCommand: &pushproto.AddPushTagsCommand{Tags: []string{}},
 			},
-			expectedErr: localizedError(statusTagsRequired, locale.JaJP),
+			expectedErr: createError(statusTagsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
 		},
 		{
 			desc: "err: ErrNameRequired: add",

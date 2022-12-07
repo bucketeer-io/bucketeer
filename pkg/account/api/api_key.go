@@ -40,7 +40,7 @@ func (s *AccountService) CreateAPIKey(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCreateAPIKeyRequest(req); err != nil {
+	if err := validateCreateAPIKeyRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	key, err := domain.NewAPIKey(req.Command.Name, req.Command.Role)
@@ -127,7 +127,7 @@ func (s *AccountService) ChangeAPIKeyName(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateChangeAPIKeyNameRequest(req); err != nil {
+	if err := validateChangeAPIKeyNameRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to change api key name",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -178,7 +178,7 @@ func (s *AccountService) EnableAPIKey(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateEnableAPIKeyRequest(req); err != nil {
+	if err := validateEnableAPIKeyRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to enable api key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -228,7 +228,7 @@ func (s *AccountService) DisableAPIKey(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDisableAPIKeyRequest(req); err != nil {
+	if err := validateDisableAPIKeyRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to disable api key",
 			log.FieldsFromImcomingContext(ctx).AddFields(

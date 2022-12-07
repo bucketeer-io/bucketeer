@@ -205,7 +205,7 @@ func (s *EnvironmentService) CreateProject(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCreateProjectRequest(req); err != nil {
+	if err := validateCreateProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	project := domain.NewProject(req.Command.Id, req.Command.Description, editor.Email, false)
@@ -215,9 +215,16 @@ func (s *EnvironmentService) CreateProject(
 	return &environmentproto.CreateProjectResponse{}, nil
 }
 
-func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest) error {
+func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, localizer locale.Localizer) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if !projectIDRegex.MatchString(req.Command.Id) {
 		return localizedError(statusInvalidProjectID, locale.JaJP)
@@ -286,7 +293,7 @@ func (s *EnvironmentService) CreateTrialProject(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCreateTrialProjectRequest(req); err != nil {
+	if err := validateCreateTrialProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	editor := &eventproto.Editor{
@@ -311,9 +318,19 @@ func (s *EnvironmentService) CreateTrialProject(
 	return &environmentproto.CreateTrialProjectResponse{}, nil
 }
 
-func validateCreateTrialProjectRequest(req *environmentproto.CreateTrialProjectRequest) error {
+func validateCreateTrialProjectRequest(
+	req *environmentproto.CreateTrialProjectRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if !projectIDRegex.MatchString(req.Command.Id) {
 		return localizedError(statusInvalidProjectID, locale.JaJP)
@@ -419,7 +436,7 @@ func (s *EnvironmentService) UpdateProject(
 		return nil, err
 	}
 	commands := getUpdateProjectCommands(req)
-	if err := validateUpdateProjectRequest(req.Id, commands); err != nil {
+	if err := validateUpdateProjectRequest(req.Id, commands, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateProject(ctx, req.Id, editor, localizer, commands...); err != nil {
@@ -436,9 +453,16 @@ func getUpdateProjectCommands(req *environmentproto.UpdateProjectRequest) []comm
 	return commands
 }
 
-func validateUpdateProjectRequest(id string, commands []command.Command) error {
+func validateUpdateProjectRequest(id string, commands []command.Command, localizer locale.Localizer) error {
 	if len(commands) == 0 {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if id == "" {
 		return localizedError(statusProjectIDRequired, locale.JaJP)
@@ -513,7 +537,7 @@ func (s *EnvironmentService) EnableProject(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateEnableProjectRequest(req); err != nil {
+	if err := validateEnableProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateProject(ctx, req.Id, editor, localizer, req.Command); err != nil {
@@ -522,9 +546,16 @@ func (s *EnvironmentService) EnableProject(
 	return &environmentproto.EnableProjectResponse{}, nil
 }
 
-func validateEnableProjectRequest(req *environmentproto.EnableProjectRequest) error {
+func validateEnableProjectRequest(req *environmentproto.EnableProjectRequest, localizer locale.Localizer) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Id == "" {
 		return localizedError(statusProjectIDRequired, locale.JaJP)
@@ -541,7 +572,7 @@ func (s *EnvironmentService) DisableProject(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDisableProjectRequest(req); err != nil {
+	if err := validateDisableProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateProject(ctx, req.Id, editor, localizer, req.Command); err != nil {
@@ -550,9 +581,16 @@ func (s *EnvironmentService) DisableProject(
 	return &environmentproto.DisableProjectResponse{}, nil
 }
 
-func validateDisableProjectRequest(req *environmentproto.DisableProjectRequest) error {
+func validateDisableProjectRequest(req *environmentproto.DisableProjectRequest, localizer locale.Localizer) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Id == "" {
 		return localizedError(statusProjectIDRequired, locale.JaJP)
@@ -569,7 +607,7 @@ func (s *EnvironmentService) ConvertTrialProject(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateConvertTrialProjectRequest(req); err != nil {
+	if err := validateConvertTrialProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateProject(ctx, req.Id, editor, localizer, req.Command); err != nil {
@@ -578,9 +616,19 @@ func (s *EnvironmentService) ConvertTrialProject(
 	return &environmentproto.ConvertTrialProjectResponse{}, nil
 }
 
-func validateConvertTrialProjectRequest(req *environmentproto.ConvertTrialProjectRequest) error {
+func validateConvertTrialProjectRequest(
+	req *environmentproto.ConvertTrialProjectRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Id == "" {
 		return localizedError(statusProjectIDRequired, locale.JaJP)

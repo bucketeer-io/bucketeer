@@ -228,7 +228,7 @@ func (s *EnvironmentService) CreateEnvironment(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCreateEnvironmentRequest(req); err != nil {
+	if err := validateCreateEnvironmentRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.checkProjectExistence(ctx, req.Command.ProjectId, localizer); err != nil {
@@ -293,9 +293,19 @@ func (s *EnvironmentService) createEnvironment(
 	return nil
 }
 
-func validateCreateEnvironmentRequest(req *environmentproto.CreateEnvironmentRequest) error {
+func validateCreateEnvironmentRequest(
+	req *environmentproto.CreateEnvironmentRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if !environmentIDRegex.MatchString(req.Command.Id) {
 		return localizedError(statusInvalidEnvironmentID, locale.JaJP)
@@ -332,7 +342,7 @@ func (s *EnvironmentService) UpdateEnvironment(
 		return nil, err
 	}
 	commands := getUpdateEnvironmentCommands(req)
-	if err := validateUpdateEnvironmentRequest(req.Id, commands); err != nil {
+	if err := validateUpdateEnvironmentRequest(req.Id, commands, localizer); err != nil {
 		return nil, err
 	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -397,9 +407,16 @@ func getUpdateEnvironmentCommands(req *environmentproto.UpdateEnvironmentRequest
 	return commands
 }
 
-func validateUpdateEnvironmentRequest(id string, commands []command.Command) error {
+func validateUpdateEnvironmentRequest(id string, commands []command.Command, localizer locale.Localizer) error {
 	if len(commands) == 0 {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if id == "" {
 		return localizedError(statusEnvironmentIDRequired, locale.JaJP)
@@ -416,7 +433,7 @@ func (s *EnvironmentService) DeleteEnvironment(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteEnvironmentRequest(req); err != nil {
+	if err := validateDeleteEnvironmentRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -468,9 +485,19 @@ func (s *EnvironmentService) DeleteEnvironment(
 	return &environmentproto.DeleteEnvironmentResponse{}, nil
 }
 
-func validateDeleteEnvironmentRequest(req *environmentproto.DeleteEnvironmentRequest) error {
+func validateDeleteEnvironmentRequest(
+	req *environmentproto.DeleteEnvironmentRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Id == "" {
 		return localizedError(statusEnvironmentIDRequired, locale.JaJP)
