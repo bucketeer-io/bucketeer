@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ template "api-gateway.fullname" . }}
@@ -19,6 +19,9 @@ spec:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
-          - backend:
-              serviceName: {{ template "api-gateway.fullname" . }}
-              servicePort: {{ .Values.service.externalPort }}
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ template "api-gateway.fullname" . }}
+                port:
+                  number: {{ .Values.service.externalPort }}
