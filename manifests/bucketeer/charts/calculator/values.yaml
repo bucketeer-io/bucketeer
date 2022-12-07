@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/bucketeer-io/bucketeer-calculator
+  repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-calculator
   pullPolicy: IfNotPresent
 
 fullnameOverride: "calculator"

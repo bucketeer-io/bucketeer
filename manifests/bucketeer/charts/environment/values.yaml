@@ -1,5 +1,5 @@
 image:
-  repository: ghcr.io/bucketeer-io/bucketeer-environment
+  repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-environment
   pullPolicy: IfNotPresent
 
 fullnameOverride: "environment"

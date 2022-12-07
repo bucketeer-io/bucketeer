@@ -1,5 +1,5 @@
 image:
-  repository: ghcr.io/bucketeer-io/bucketeer-auth
+  repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-auth
   pullPolicy: IfNotPresent
 
 fullnameOverride: "auth"

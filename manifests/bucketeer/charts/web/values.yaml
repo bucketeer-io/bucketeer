@@ -1,5 +1,5 @@
 image:
-  repository: ghcr.io/bucketeer-io/bucketeer-web-v2
+  repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-web-v2
   pullPolicy: Always
 
 fullnameOverride: "web"

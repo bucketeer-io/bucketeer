@@ -1,5 +1,5 @@
 image:
-  repository: ghcr.io/bucketeer-io/bucketeer-auto-ops
+  repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-auto-ops
   pullPolicy: IfNotPresent
 
 fullnameOverride: "auto-ops"

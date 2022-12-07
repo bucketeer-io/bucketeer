@@ -2,7 +2,7 @@ druid-cluster:
   namespace:
   spec:
     imagePullSecrets:
-    image: ghcr.io/bucketeer-io/druid:0.5.0/druid:0.5.0
+    image: asia-docker.pkg.dev/bucketeer-io/bucketeer/druid:0.5.0
     nodeSelector: {}
     jvmOptions: |-
       -server
@@ -358,7 +358,7 @@ zookeeper-operator:
     "helm.sh/resource-policy": keep
 
   image:
-    repository: ghcr.io/bucketeer-io/pravega/zookeeper-operator
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/pravega/zookeeper-operator
     tag: 0.2.9-13
 
   watchNamespace: "druid"

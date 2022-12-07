@@ -1,5 +1,5 @@
 image:
-  repository: ghcr.io/bucketeer-io/bucketeer-metrics-event
+  repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-metrics-event
   pullPolicy: IfNotPresent
 
 fullnameOverride: "metrics-event-persister"

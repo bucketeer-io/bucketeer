@@ -1,5 +1,5 @@
 image:
-  repository: ghcr.io/bucketeer-io/bucketeer-goal-batch
+  repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-goal-batch
   pullPolicy: IfNotPresent
 
 fullnameOverride: "goal-batch-transformer"

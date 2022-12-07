@@ -13,7 +13,7 @@ global:
 
 account:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-account
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-account
     pullPolicy: IfNotPresent
   fullnameOverride: "account"
   namespace: default
@@ -75,7 +75,7 @@ account:
 
 account-apikey-cacher:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-account
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-account
     pullPolicy: IfNotPresent
   fullnameOverride: "account-apikey-cacher"
   namespace: default
@@ -135,7 +135,7 @@ account-apikey-cacher:
 
 api-gateway:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-gateway
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-gateway
     pullPolicy: IfNotPresent
   fullnameOverride: "api-gateway"
   namespace: default
@@ -205,7 +205,7 @@ api-gateway:
 
 auditlog:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-auditlog
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-auditlog
     pullPolicy: IfNotPresent
   fullnameOverride: "auditlog"
   namespace: default
@@ -266,7 +266,7 @@ auditlog:
 
 auditlog-persister:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-auditlog
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-auditlog
     pullPolicy: IfNotPresent
   fullnameOverride: "auditlog-persister"
   namespace: default
@@ -323,7 +323,7 @@ auditlog-persister:
 
 auth:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-auth
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-auth
     pullPolicy: IfNotPresent
   fullnameOverride: "auth"
   namespace: default
@@ -387,7 +387,7 @@ auth:
 
 auto-ops:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-auto-ops
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-auto-ops
     pullPolicy: IfNotPresent
   fullnameOverride: "auto-ops"
   namespace: default
@@ -455,7 +455,7 @@ auto-ops:
 calculator:
   replicaCount: 1
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-calculator
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-calculator
     pullPolicy: IfNotPresent
   fullnameOverride: "calculator"
   namespace: default
@@ -569,7 +569,7 @@ druid:
     namespace: default
     spec:
       imagePullSecrets:
-      image: ghcr.io/bucketeer-io/druid:0.5.0
+      image: asia-docker.pkg.dev/bucketeer-io/bucketeer/druid:0.5.0
       nodeSelector: {}
       jvmOptions: |-
         -server
@@ -880,7 +880,7 @@ druid:
     annotations:
       "helm.sh/resource-policy": keep
     image:
-      repository: ghcr.io/bucketeer-io/pravega/zookeeper-operator
+      repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/pravega/zookeeper-operator
       tag: 0.2.9-13
     watchNamespace: "druid"
     resources: {}
@@ -937,7 +937,7 @@ druid:
 
 environment:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-environment
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-environment
     pullPolicy: IfNotPresent
   fullnameOverride: "environment"
   namespace: default
@@ -1001,7 +1001,7 @@ environment:
 
 event-counter:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-event-counter
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-event-counter
     pullPolicy: IfNotPresent
   fullnameOverride: "event-counter"
   namespace: default
@@ -1067,7 +1067,7 @@ event-counter:
 
 event-persister-evaluation-events-kafka:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-event-persister
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-event-persister
     pullPolicy: IfNotPresent
   nameOverride: "event-persister"
   fullnameOverride: "event-persister-evaluation-events-kafka"
@@ -1144,7 +1144,7 @@ event-persister-evaluation-events-kafka:
 
 event-persister-goal-events-kafka:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-event-persister
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-event-persister
     pullPolicy: IfNotPresent
   nameOverride: "event-persister"
   fullnameOverride: "event-persister-goal-events-kafka"
@@ -1221,7 +1221,7 @@ event-persister-goal-events-kafka:
 
 event-persister-user-events-kafka:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-event-persister
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-event-persister
     pullPolicy: IfNotPresent
   nameOverride: "event-persister"
   fullnameOverride: "event-persister-user-events-kafka"
@@ -1303,7 +1303,7 @@ event-persister-user-events-kafka:
 
 experiment:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-experiment
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-experiment
     pullPolicy: IfNotPresent
   fullnameOverride: "experiment"
   namespace: default
@@ -1366,7 +1366,7 @@ experiment:
 
 feature:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-feature
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-feature
     pullPolicy: IfNotPresent
   fullnameOverride: "feature"
   namespace: default
@@ -1437,7 +1437,7 @@ feature:
 
 feature-recorder:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-feature
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-feature
     pullPolicy: IfNotPresent
   fullnameOverride: "feature-recorder"
   namespace: default
@@ -1497,7 +1497,7 @@ feature-recorder:
 
 feature-segment-persister:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-feature
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-feature
     pullPolicy: IfNotPresent
   fullnameOverride: "feature-segment-persister"
   namespace: default
@@ -1560,7 +1560,7 @@ feature-segment-persister:
 
 feature-tag-cacher:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-feature
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-feature
     pullPolicy: IfNotPresent
   fullnameOverride: "feature-tag-cacher"
   namespace: default
@@ -1619,7 +1619,7 @@ feature-tag-cacher:
 
 goal-batch-transformer:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-goal-batch
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-goal-batch
     pullPolicy: IfNotPresent
   fullnameOverride: "goal-batch-transformer"
   namespace: default
@@ -1855,7 +1855,7 @@ kafka:
 
 metrics-event-persister:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-metrics-event
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-metrics-event
     pullPolicy: IfNotPresent
   fullnameOverride: "metrics-event-persister"
   namespace: default
@@ -1908,7 +1908,7 @@ metrics-event-persister:
 migration-mysql:
   replicaCount: 1
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-migration
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-migration
     pullPolicy: IfNotPresent
   fullnameOverride: "migration-mysql"
   namespace: default
@@ -1963,7 +1963,7 @@ migration-mysql:
 
 notification:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-notification
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-notification
     pullPolicy: IfNotPresent
   fullnameOverride: "notification"
   namespace: default
@@ -2024,7 +2024,7 @@ notification:
 
 notification-sender:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-notification
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-notification
     pullPolicy: IfNotPresent
   fullnameOverride: "notification-sender"
   namespace: default
@@ -2081,7 +2081,7 @@ notification-sender:
 
 ops-event-batch:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-ops-event
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-ops-event
     pullPolicy: IfNotPresent
   fullnameOverride: "ops-event-batch"
   namespace: default
@@ -2133,7 +2133,7 @@ ops-event-batch:
 
 push:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-push
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-push
     pullPolicy: IfNotPresent
   fullnameOverride: "push"
   namespace: default
@@ -2196,7 +2196,7 @@ push:
 
 push-sender:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-push
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-push
     pullPolicy: IfNotPresent
   fullnameOverride: "push-sender"
   namespace: default
@@ -2251,7 +2251,7 @@ push-sender:
 
 user:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-user
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-user
     pullPolicy: IfNotPresent
   fullnameOverride: "user"
   namespace:
@@ -2312,7 +2312,7 @@ user:
 
 user-persister:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-user
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-user
     pullPolicy: IfNotPresent
   fullnameOverride: "user-persister"
   namespace: default
@@ -2373,7 +2373,7 @@ user-persister:
 
 web:
   image:
-    repository: ghcr.io/bucketeer-io/bucketeer-web-v2
+    repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-web-v2
     pullPolicy: Always
   fullnameOverride: "web"
   namespace: default
