@@ -37,11 +37,6 @@ env:
   pullerNumGoroutines: 5
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
-  postgresUser:
-  postgresPass:
-  postgresHost:
-  postgresPort:
-  postgresDbName:
   mysqlUser:
   mysqlPass:
   mysqlHost:

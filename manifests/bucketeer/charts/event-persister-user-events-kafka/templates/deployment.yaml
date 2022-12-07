@@ -104,16 +104,6 @@ spec:
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_EVENT_PERSISTER_SERVICE_TOKEN
               value: /usr/local/service-token/token
-            - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_USER
-              value: "{{ .Values.env.postgresUser }}"
-            - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_PASS
-              value: "{{ .Values.env.postgresPass}}"
-            - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_HOST
-              value: "{{ .Values.env.postgresHost }}"
-            - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_PORT
-              value: "{{ .Values.env.postgresPort }}"
-            - name: BUCKETEER_EVENT_PERSISTER_POSTGRES_NAME
-              value: "{{ .Values.env.postgresDbName }}"
             - name: BUCKETEER_EVENT_PERSISTER_MYSQL_USER
               value: "{{ .Values.env.mysqlUser }}"
             - name: BUCKETEER_EVENT_PERSISTER_MYSQL_PASS

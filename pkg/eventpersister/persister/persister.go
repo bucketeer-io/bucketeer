@@ -28,7 +28,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	v2ec "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersister/storage/v2"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
@@ -41,7 +40,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/postgres"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	esproto "github.com/bucketeer-io/bucketeer/proto/event/service"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -125,7 +123,6 @@ type Persister struct {
 	ctx                   context.Context
 	cancel                func()
 	doneCh                chan struct{}
-	postgresClient        postgres.Client
 	mysqlClient           mysql.Client
 	evaluationCountCacher cache.MultiGetDeleteCountCache
 }
@@ -136,7 +133,6 @@ func NewPersister(
 	p puller.Puller,
 	ds datastore.Writer,
 	bt bigtable.Client,
-	postgresClient postgres.Client,
 	mysqlClient mysql.Client,
 	v3Cache cache.MultiGetDeleteCountCache,
 	opts ...Option,
@@ -167,7 +163,6 @@ func NewPersister(
 		ctx:                   ctx,
 		cancel:                cancel,
 		doneCh:                make(chan struct{}),
-		postgresClient:        postgresClient,
 		mysqlClient:           mysqlClient,
 		evaluationCountCacher: v3Cache,
 	}
@@ -257,16 +252,6 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 	for environmentNamespace, events := range envEvents {
 		evs := make(map[string]string, len(events))
 		for id, event := range events {
-			if p.postgresClient != nil {
-				if err := p.createEvent(event, id, environmentNamespace); err != nil {
-					p.logger.Error(
-						"failed to store an event",
-						zap.Error(err),
-						zap.String("id", id),
-						zap.String("environmentNamespace", environmentNamespace),
-					)
-				}
-			}
 			if err := p.upsertMAU(ctx, event, environmentNamespace); err != nil {
 				p.logger.Error(
 					"failed to store a mau",
@@ -599,68 +584,6 @@ func userMetadataColumn(environmentNamespace string, key string) string {
 		return fmt.Sprintf("user.data.%s", key)
 	}
 	return fmt.Sprintf("%s.user.data.%s", environmentNamespace, key)
-}
-
-func (p *Persister) createEvent(event interface{}, id, environmentNamespace string) error {
-	switch event := event.(type) {
-	case *eventproto.EvaluationEvent:
-		return p.createEvaluationEvent(event, id, environmentNamespace)
-	case *eventproto.GoalEvent:
-		return p.createGoalEvent(event, id, environmentNamespace)
-	case *esproto.UserEvent:
-		return p.createUserEvent(event, id, environmentNamespace)
-	}
-	return nil
-}
-
-func (p *Persister) createEvaluationEvent(
-	event *eventproto.EvaluationEvent,
-	id, environmentNamespace string,
-) error {
-	eventStorage := v2ec.NewEventStorage(p.postgresClient)
-	return eventStorage.CreateEvaluationEvent(p.ctx, event, id, environmentNamespace)
-}
-
-func (p *Persister) createGoalEvent(
-	event *eventproto.GoalEvent,
-	id, environmentNamespace string,
-) error {
-	ue, _, err := p.getEvaluations(event, environmentNamespace)
-	if err != nil {
-		return err
-	}
-	evaluations := []string{}
-	for _, eval := range ue {
-		reason := ""
-		if eval.Reason != nil {
-			reason = eval.Reason.Type.String()
-		}
-		evaluations = append(
-			evaluations,
-			fmt.Sprintf("%s:%d:%s:%s", eval.FeatureId, eval.FeatureVersion, eval.VariationId, reason),
-		)
-	}
-	if len(evaluations) == 0 {
-		p.logger.Warn(
-			"Goal event has no evaluations",
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.String("sourceId", event.SourceId.String()),
-			zap.String("goalId", event.GoalId),
-			zap.String("userId", event.UserId),
-			zap.String("tag", event.Tag),
-			zap.String("timestamp", time.Unix(event.Timestamp, 0).Format(time.RFC3339)),
-		)
-	}
-	eventStorage := v2ec.NewEventStorage(p.postgresClient)
-	return eventStorage.CreateGoalEvent(p.ctx, event, id, environmentNamespace, evaluations)
-}
-
-func (p *Persister) createUserEvent(
-	event *esproto.UserEvent,
-	id, environmentNamespace string,
-) error {
-	eventStorage := v2ec.NewEventStorage(p.postgresClient)
-	return eventStorage.CreateUserEvent(p.ctx, event, id, environmentNamespace)
 }
 
 func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
