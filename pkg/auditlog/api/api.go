@@ -434,7 +434,14 @@ func (s *auditlogService) checkRole(
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
-			return nil, localizedError(statusUnauthenticated, locale.JaJP)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		case codes.PermissionDenied:
 			s.logger.Info(
 				"Permission denied",
@@ -481,7 +488,14 @@ func (s *auditlogService) checkAdminRole(ctx context.Context, localizer locale.L
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 			)
-			return nil, localizedError(statusUnauthenticated, locale.JaJP)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		case codes.PermissionDenied:
 			s.logger.Info(
 				"Permission denied",

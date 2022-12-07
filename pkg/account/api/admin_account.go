@@ -42,14 +42,28 @@ func (s *AccountService) GetMe(
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	t, ok := rpc.GetIDToken(ctx)
 	if !ok {
-		return nil, localizedError(statusUnauthenticated, locale.JaJP)
+		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if !verifyEmailFormat(t.Email) {
 		s.logger.Error(
 			"Email inside IDToken has an invalid format",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", t.Email))...,
 		)
-		return nil, localizedError(statusInvalidEmail, locale.JaJP)
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return s.getMe(ctx, t.Email, localizer)
 }
@@ -68,7 +82,14 @@ func (s *AccountService) GetMeByEmail(
 			"Email inside request has an invalid format",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", req.Email))...,
 		)
-		return nil, localizedError(statusInvalidEmail, locale.JaJP)
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return s.getMe(ctx, req.Email, localizer)
 }
@@ -258,7 +279,7 @@ func (s *AccountService) CreateAdminAccount(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCreateAdminAccountRequest(req); err != nil {
+	if err := validateCreateAdminAccountRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to create admin account",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
@@ -374,7 +395,7 @@ func (s *AccountService) EnableAdminAccount(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateEnableAdminAccountRequest(req); err != nil {
+	if err := validateEnableAdminAccountRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to enable admin account",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
@@ -417,7 +438,7 @@ func (s *AccountService) DisableAdminAccount(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDisableAdminAccountRequest(req); err != nil {
+	if err := validateDisableAdminAccountRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to disable admin account",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
@@ -490,7 +511,7 @@ func (s *AccountService) ConvertAccount(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateConvertAccountRequest(req); err != nil {
+	if err := validateConvertAccountRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to get account",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
@@ -620,7 +641,7 @@ func (s *AccountService) GetAdminAccount(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetAdminAccountRequest(req); err != nil {
+	if err := validateGetAdminAccountRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to get admin account",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,

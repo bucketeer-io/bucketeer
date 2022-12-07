@@ -756,7 +756,14 @@ func (s *eventCounterService) checkRole(
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
-			return nil, localizedError(statusUnauthenticated, locale.JaJP)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		case codes.PermissionDenied:
 			s.logger.Info(
 				"Permission denied",

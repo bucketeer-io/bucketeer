@@ -42,7 +42,7 @@ func (s *AccountService) CreateAccount(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCreateAccountRequest(req); err != nil {
+	if err := validateCreateAccountRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to create account",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -156,7 +156,7 @@ func (s *AccountService) ChangeAccountRole(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateChangeAccountRoleRequest(req); err != nil {
+	if err := validateChangeAccountRoleRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to change account role",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -205,7 +205,7 @@ func (s *AccountService) EnableAccount(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateEnableAccountRequest(req); err != nil {
+	if err := validateEnableAccountRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to enable account",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -254,7 +254,7 @@ func (s *AccountService) DisableAccount(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDisableAccountRequest(req); err != nil {
+	if err := validateDisableAccountRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to disable account",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -333,7 +333,7 @@ func (s *AccountService) GetAccount(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetAccountRequest(req); err != nil {
+	if err := validateGetAccountRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to get account",
 			log.FieldsFromImcomingContext(ctx).AddFields(

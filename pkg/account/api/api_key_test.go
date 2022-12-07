@@ -431,7 +431,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 		{
 			desc:     "errMissingAPIKeyID",
 			req:      &accountproto.GetAPIKeyRequest{Id: ""},
-			expected: localizedError(statusMissingAPIKeyID, locale.JaJP),
+			expected: createError(statusMissingAPIKeyID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id")),
 		},
 		{
 			desc: "errNotFound",
