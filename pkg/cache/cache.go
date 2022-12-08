@@ -18,6 +18,7 @@ package cache
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 )
@@ -41,6 +42,8 @@ type MultiGetDeleteCountCache interface {
 	MultiGetCache
 	Deleter
 	Counter
+	Exister
+	Setter
 }
 
 type Getter interface {
@@ -63,6 +66,14 @@ type Deleter interface {
 type Counter interface {
 	Increment(key string) (int64, error)
 	PFAdd(key string, els ...string) (int64, error)
+}
+
+type Exister interface {
+	Exists(keys ...string) (int64, error)
+}
+
+type Setter interface {
+	Set(key interface{}, value interface{}, expiration time.Duration) error
 }
 
 // FIXME: remove after persistent-redis migration

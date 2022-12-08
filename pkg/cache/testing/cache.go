@@ -16,6 +16,7 @@ package testing
 
 import (
 	"sync"
+	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 )
@@ -81,4 +82,14 @@ func (c *inMemoryCache) Increment(key string) (int64, error) {
 func (c *inMemoryCache) PFAdd(key string, els ...string) (int64, error) {
 	// TODO: implement
 	return 0, nil
+}
+
+func (c *inMemoryCache) Exists(keys ...string) (int64, error) {
+	// TODO: implement
+	return 0, nil
+}
+
+func (c *inMemoryCache) Set(key interface{}, value interface{}, expiration time.Duration) error {
+	// TODO: implement
+	return nil
 }

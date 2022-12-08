@@ -72,6 +72,7 @@ const (
 	eventCountKey      = "ec"
 	userCountKey       = "uc"
 	defaultVariationID = "default"
+	oneMonth           = 24 * time.Hour * 31
 )
 
 type eventMap map[string]proto.Message
@@ -849,4 +850,17 @@ func (p *Persister) getUserEvaluation(
 		return nil, err
 	}
 	return evaluation, nil
+}
+
+func (p *Persister) setExpiration(key string) error {
+	exist, err := p.evaluationCountCacher.Exists(key)
+	if err != nil {
+		return err
+	}
+	if exist == 0 {
+		if err := p.evaluationCountCacher.Set(key, 0, oneMonth); err != nil {
+			return err
+		}
+	}
+	return nil
 }
