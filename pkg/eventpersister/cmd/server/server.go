@@ -69,11 +69,6 @@ type server struct {
 	pullerNumGoroutines          *int
 	pullerMaxOutstandingMessages *int
 	pullerMaxOutstandingBytes    *int
-	postgresUser                 *string
-	postgresPass                 *string
-	postgresHost                 *string
-	postgresPort                 *int
-	postgresDbName               *string
 	mysqlUser                    *string
 	mysqlPass                    *string
 	mysqlHost                    *string
@@ -128,11 +123,6 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"puller-max-outstanding-bytes",
 			"Maximum size of unprocessed messages.",
 		).Int(),
-		postgresUser:    cmd.Flag("postgres-user", "").Required().String(),
-		postgresPass:    cmd.Flag("postgres-pass", "").Required().String(),
-		postgresHost:    cmd.Flag("postgres-host", "").Required().String(),
-		postgresPort:    cmd.Flag("postgres-port", "").Required().Int(),
-		postgresDbName:  cmd.Flag("postgres-name", "").Required().String(),
 		mysqlUser:       cmd.Flag("mysql-user", "").String(),
 		mysqlPass:       cmd.Flag("mysql-pass", "").String(),
 		mysqlHost:       cmd.Flag("mysql-host", "").String(),
@@ -221,20 +211,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
-	// postgresClient, err := postgres.NewClient(
-	// 	ctx,
-	// 	*s.postgresUser,
-	// 	*s.postgresPass,
-	// 	*s.postgresHost,
-	// 	*s.postgresPort,
-	// 	*s.postgresDbName,
-	// 	postgres.WithLogger(logger),
-	// )
-	// if err != nil {
-	// 	return err
-	// }
-	// defer postgresClient.Close()
-
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
@@ -251,7 +227,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		puller,
 		datastore,
 		btClient,
-		nil, // Disable PostgreSQL temporarily due to instability issues on the Google side.
 		mysqlClient,
 		redisV3Cache,
 		persister.WithMaxMPS(*s.maxMPS),
