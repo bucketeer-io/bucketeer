@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"time"
 
+	goredis "github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -852,15 +853,42 @@ func (p *Persister) getUserEvaluation(
 	return evaluation, nil
 }
 
-func (p *Persister) setExpiration(key string) error {
-	exist, err := p.evaluationCountCacher.Exists(key)
+func (p *Persister) setExpiration(dCmd *goredis.DurationCmd, key string) error {
+	// The value of command is available only after the pipeline is executed.
+	// https://redis.uptrace.dev/guide/go-redis-pipelines.html#pipelines
+	d, err := dCmd.Result()
 	if err != nil {
 		return err
 	}
-	if exist == 0 {
-		if err := p.evaluationCountCacher.Set(key, 0, oneMonth); err != nil {
+	if d == -1 {
+		// The expiration may be overriden because of race condition.
+		// However, we don't have to care it because this expiration is not have to be strict.
+		_, err := p.evaluationCountCacher.Expire(key, oneMonth)
+		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (p *Persister) countEvent(key string) error {
+	pipe := p.evaluationCountCacher.Pipeline()
+	pipe.Incr(key)
+	dCmd := pipe.TTL(key)
+	_, err := pipe.Exec()
+	if err != nil {
+		return err
+	}
+	return p.setExpiration(dCmd, key)
+}
+
+func (p *Persister) countUser(key, userID string) error {
+	pipe := p.evaluationCountCacher.Pipeline()
+	pipe.PFAdd(key, userID)
+	dCmd := pipe.TTL(key)
+	_, err := pipe.Exec()
+	if err != nil {
+		return err
+	}
+	return p.setExpiration(dCmd, key)
 }

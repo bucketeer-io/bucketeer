@@ -91,3 +91,11 @@ func (r *redisCache) Exists(keys ...string) (int64, error) {
 func (r *redisCache) Set(key interface{}, value interface{}, expiration time.Duration) error {
 	return r.client.Set(key.(string), value, expiration)
 }
+
+func (r *redisCache) Pipeline() redis.PipeClient {
+	return r.client.Pipeline()
+}
+
+func (r *redisCache) Expire(key string, expiration time.Duration) (bool, error) {
+	return r.client.Expire(key, expiration)
+}

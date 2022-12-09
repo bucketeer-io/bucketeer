@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	redis "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 )
 
@@ -44,6 +45,8 @@ type MultiGetDeleteCountCache interface {
 	Counter
 	Exister
 	Setter
+	PipeLiner
+	Expirer
 }
 
 type Getter interface {
@@ -74,6 +77,14 @@ type Exister interface {
 
 type Setter interface {
 	Set(key interface{}, value interface{}, expiration time.Duration) error
+}
+
+type PipeLiner interface {
+	Pipeline() redis.PipeClient
+}
+
+type Expirer interface {
+	Expire(key string, expiration time.Duration) (bool, error)
 }
 
 // FIXME: remove after persistent-redis migration
