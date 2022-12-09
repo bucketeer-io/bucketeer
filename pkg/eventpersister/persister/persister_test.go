@@ -25,6 +25,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -254,7 +255,17 @@ func TestMarshaGoalEvent(t *testing.T) {
 			setup: func(ctx context.Context, p *Persister) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
-					gomock.Any(),
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
@@ -288,6 +299,7 @@ func TestMarshaGoalEvent(t *testing.T) {
 							exproto.Experiment_FORCE_STOPPED,
 							exproto.Experiment_STOPPED,
 						},
+						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 			},
@@ -322,6 +334,7 @@ func TestMarshaGoalEvent(t *testing.T) {
 							exproto.Experiment_FORCE_STOPPED,
 							exproto.Experiment_STOPPED,
 						},
+						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -363,6 +376,7 @@ func TestMarshaGoalEvent(t *testing.T) {
 							exproto.Experiment_FORCE_STOPPED,
 							exproto.Experiment_STOPPED,
 						},
+						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -414,6 +428,7 @@ func TestMarshaGoalEvent(t *testing.T) {
 							exproto.Experiment_FORCE_STOPPED,
 							exproto.Experiment_STOPPED,
 						},
+						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -465,6 +480,7 @@ func TestMarshaGoalEvent(t *testing.T) {
 							exproto.Experiment_FORCE_STOPPED,
 							exproto.Experiment_STOPPED,
 						},
+						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -516,6 +532,7 @@ func TestMarshaGoalEvent(t *testing.T) {
 							exproto.Experiment_FORCE_STOPPED,
 							exproto.Experiment_STOPPED,
 						},
+						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
