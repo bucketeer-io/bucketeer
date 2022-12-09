@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
+	redis "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 )
 
 type inMemoryCache struct {
@@ -90,6 +91,16 @@ func (c *inMemoryCache) Exists(keys ...string) (int64, error) {
 }
 
 func (c *inMemoryCache) Set(key interface{}, value interface{}, expiration time.Duration) error {
+	// TODO: implement
+	return nil
+}
+
+func (c *inMemoryCache) Expire(key string, expiration time.Duration) (bool, error) {
+	// TODO: implement
+	return true, nil
+}
+
+func (c *inMemoryCache) Pipeline() redis.PipeClient {
 	// TODO: implement
 	return nil
 }
