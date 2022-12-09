@@ -84,14 +84,6 @@ func (r *redisCache) PFAdd(key string, els ...string) (int64, error) {
 	return r.client.PFAdd(key, els...)
 }
 
-func (r *redisCache) Exists(keys ...string) (int64, error) {
-	return r.client.Exists(keys...)
-}
-
-func (r *redisCache) Set(key interface{}, value interface{}, expiration time.Duration) error {
-	return r.client.Set(key.(string), value, expiration)
-}
-
 func (r *redisCache) Pipeline() redis.PipeClient {
 	return r.client.Pipeline()
 }

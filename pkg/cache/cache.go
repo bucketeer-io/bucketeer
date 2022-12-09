@@ -43,8 +43,6 @@ type MultiGetDeleteCountCache interface {
 	MultiGetCache
 	Deleter
 	Counter
-	Exister
-	Setter
 	PipeLiner
 	Expirer
 }
@@ -69,14 +67,6 @@ type Deleter interface {
 type Counter interface {
 	Increment(key string) (int64, error)
 	PFAdd(key string, els ...string) (int64, error)
-}
-
-type Exister interface {
-	Exists(keys ...string) (int64, error)
-}
-
-type Setter interface {
-	Set(key interface{}, value interface{}, expiration time.Duration) error
 }
 
 type PipeLiner interface {
