@@ -295,11 +295,11 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	time.Sleep(40 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
-	for _, uid := range userIDs {
-		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, "")
-	}
 	for _, uid := range userIDs[:6] {
 		registerGoalEventWithEvaluations(t, featureID, feature.Version, goalID, uid, feature.Variations[0].Id)
+	}
+	for _, uid := range userIDs {
+		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, "")
 	}
 	for i := 0; i < retryTimes; i++ {
 		feature = getFeature(t, featureClient, featureID)
@@ -342,11 +342,11 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	time.Sleep(40 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
-	for _, uid := range userIDs {
-		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
-	}
 	for _, uid := range userIDs[:6] {
 		grpcRegisterGoalEvent(t, goalID, uid, feature.Tags[0])
+	}
+	for _, uid := range userIDs {
+		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
 	}
 	for i := 0; i < retryTimes; i++ {
 		feature = getFeature(t, featureClient, featureID)
@@ -389,11 +389,11 @@ func TestOpsEventRateBatch(t *testing.T) {
 	time.Sleep(40 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
-	for _, uid := range userIDs {
-		registerEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
-	}
 	for _, uid := range userIDs[:6] {
 		registerGoalEvent(t, goalID, uid, feature.Tags[0])
+	}
+	for _, uid := range userIDs {
+		registerEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
 	}
 	for i := 0; i < retryTimes; i++ {
 		feature = getFeature(t, featureClient, featureID)

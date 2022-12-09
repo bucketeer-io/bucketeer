@@ -93,10 +93,11 @@ func TestGrpcGoalCountV2(t *testing.T) {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
 
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2))
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3))
+
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -186,10 +187,11 @@ func TestGoalCountV2(t *testing.T) {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
 
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2))
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3))
+
+	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -281,6 +283,10 @@ func TestExperimentResultWithoutTag(t *testing.T) {
 	experiment := createExperimentWithMultiGoals(ctx, t, experimentClient, "ExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
 	// CVRs is 3/4
+	// Register goal variation
+	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[0], experiment.Variations[0].Id, float64(0.3))
+	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[1], experiment.Variations[0].Id, float64(0.2))
+	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[2], experiment.Variations[0].Id, float64(0.1))
 	// Register 3 events and 2 user counts for user 1, 2 and 3
 	// Register variation a
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, "")
@@ -288,21 +294,17 @@ func TestExperimentResultWithoutTag(t *testing.T) {
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, "")
 	// Increment evaluation event count
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, "")
-	// Register goal variation
-	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[0], experiment.Variations[0].Id, float64(0.3))
-	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[1], experiment.Variations[0].Id, float64(0.2))
-	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[2], experiment.Variations[0].Id, float64(0.1))
 
 	// CVRs is 2/3
+	// Register goal
+	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[3], experiment.Variations[1].Id, float64(0.1))
+	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[4], experiment.Variations[1].Id, float64(0.15))
 	// Register 3 events and 2 user counts for user 4 and 5
 	// Register variation
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, "")
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, "")
 	// Increment evaluation event count
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, "")
-	// Register goal
-	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[3], experiment.Variations[1].Id, float64(0.1))
-	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[4], experiment.Variations[1].Id, float64(0.15))
 
 	for i := 0; i < retryTimes; i++ {
 		resp := getExperimentResult(t, ecClient, experiment.Id)
@@ -467,6 +469,12 @@ func TestGrpcExperimentResult(t *testing.T) {
 	experiment := createExperimentWithMultiGoals(ctx, t, experimentClient, "ExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
 	// CVRs is 3/4
+	// Register goal variation
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1))
+	// Increment experiment event count
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
 	// Register 3 events and 2 user counts for user 1, 2 and 3
 	// Register variation a
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag)
@@ -474,25 +482,19 @@ func TestGrpcExperimentResult(t *testing.T) {
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, tag)
 	// Increment evaluation event count
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag)
-	// Register goal variation
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1))
-	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
 
 	// CVRs is 2/3
+	// Register goal
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15))
+	// Increment experiment event count
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
 	// Register 3 events and 2 user counts for user 4 and 5
 	// Register variation
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag)
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag)
 	// Increment evaluation event count
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag)
-	// Register goal
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15))
-	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
 
 	for i := 0; i < retryTimes; i++ {
 		resp := getExperimentResult(t, ecClient, experiment.Id)
@@ -663,6 +665,12 @@ func TestExperimentResult(t *testing.T) {
 	experiment := createExperimentWithMultiGoals(ctx, t, experimentClient, "ExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
 	// CVRs is 3/4
+	// Register goal variation
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
+	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2))
+	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1))
+	// Increment experiment event count
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
 	// Register 3 events and 2 user counts for user 1, 2 and 3
 	// Register variation a
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag)
@@ -670,25 +678,19 @@ func TestExperimentResult(t *testing.T) {
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, tag)
 	// Increment evaluation event count
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag)
-	// Register goal variation
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2))
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1))
-	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
 
 	// CVRs is 2/3
+	// Register goal
+	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
+	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15))
+	// Increment experiment event count
+	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
 	// Register 3 events and 2 user counts for user 4 and 5
 	// Register variation
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag)
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag)
 	// Increment evaluation event count
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag)
-	// Register goal
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15))
-	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
 
 	for i := 0; i < retryTimes; i++ {
 		resp := getExperimentResult(t, ecClient, experiment.Id)
@@ -859,11 +861,11 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version+1, userID, f.Variations[1].Id, tag)
-
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3))
 	grpcRegisterGoalEvent(t, goalIDs[1], userID, tag, float64(0.2))
+
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version+1, userID, f.Variations[1].Id, tag)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -1016,11 +1018,11 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
-	registerEvaluationEvent(t, featureID, f.Version+1, userID, f.Variations[1].Id, tag)
-
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3))
 	registerGoalEvent(t, goalIDs[1], userID, tag, float64(0.2))
+
+	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version+1, userID, f.Variations[1].Id, tag)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -1187,9 +1189,10 @@ func TestGoalBatchEventCounter(t *testing.T) {
 	}
 	time.Sleep(5 * time.Second)
 
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
 	// Send goal batch events.
 	registerGoalBatchEvent(t, tag, goalIDs[0], userID)
+
+	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
 
 	// Check the count
 	for i := 0; i < retryTimes; i++ {
