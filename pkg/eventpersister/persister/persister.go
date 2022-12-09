@@ -24,7 +24,9 @@ import (
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
@@ -42,11 +44,21 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	esproto "github.com/bucketeer-io/bucketeer/proto/event/service"
+	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 var (
-	ErrUnexpectedMessageType = errors.New("eventpersister: unexpected message type")
+	ErrUnexpectedMessageType     = errors.New("eventpersister: unexpected message type")
+	ErrExperimentNotFound        = errors.New("eventpersister: experiment not found")
+	ErrNoExperiments             = errors.New("eventpersister: no experiments")
+	ErrInvalidGoalEventTimestamp = errors.New("eventpersister: invalid goal event timestamp")
+)
+
+const (
+	listRequestSize        = 500
+	furthestEventTimestamp = 24 * time.Hour
+	oldestEventTimestamp   = 24 * time.Hour
 )
 
 const (
@@ -125,6 +137,7 @@ type Persister struct {
 	doneCh                chan struct{}
 	mysqlClient           mysql.Client
 	evaluationCountCacher cache.MultiGetDeleteCountCache
+	flightgroup           singleflight.Group
 }
 
 func NewPersister(
@@ -362,7 +375,7 @@ func (p *Persister) marshalEvent(
 	case *eventproto.EvaluationEvent:
 		return p.marshalEvaluationEvent(ctx, event, environmentNamespace)
 	case *eventproto.GoalEvent:
-		return p.marshalGoalEvent(event, environmentNamespace)
+		return p.marshalGoalEvent(ctx, event, environmentNamespace)
 	case *esproto.UserEvent:
 		return p.marshalUserEvent(event, environmentNamespace)
 	}
@@ -404,7 +417,19 @@ func (p *Persister) marshalEvaluationEvent(
 	return string(b), false, nil
 }
 
-func (p *Persister) marshalGoalEvent(e *eventproto.GoalEvent, environmentNamespace string) (string, bool, error) {
+func (p *Persister) marshalGoalEvent(
+	ctx context.Context,
+	e *eventproto.GoalEvent,
+	environmentNamespace string,
+) (string, bool, error) {
+	if !p.validateTimestamp(e.Timestamp, oldestEventTimestamp, furthestEventTimestamp) {
+		handledCounter.WithLabelValues(codeInvalidGoalEventTimestamp).Inc()
+		return "", false, ErrInvalidGoalEventTimestamp
+	}
+	ev, retriable, err := p.getEvaluation(ctx, e, environmentNamespace)
+	if err != nil {
+		return "", retriable, err
+	}
 	m := map[string]interface{}{}
 	m["environmentNamespace"] = environmentNamespace
 	m["sourceId"] = e.SourceId.String()
@@ -419,90 +444,17 @@ func (p *Persister) marshalGoalEvent(e *eventproto.GoalEvent, environmentNamespa
 		}
 	}
 	m["value"] = strconv.FormatFloat(e.Value, 'f', -1, 64)
-	ue, retriable, err := p.getEvaluations(e, environmentNamespace)
-	if err != nil {
-		return "", retriable, err
+	reason := ""
+	if ev.Reason != nil {
+		reason = ev.Reason.Type.String()
 	}
-	evaluations := []string{}
-	for _, eval := range ue {
-		reason := ""
-		if eval.Reason != nil {
-			reason = eval.Reason.Type.String()
-		}
-		evaluations = append(
-			evaluations,
-			fmt.Sprintf("%s:%d:%s:%s", eval.FeatureId, eval.FeatureVersion, eval.VariationId, reason),
-		)
-	}
-	if len(evaluations) == 0 {
-		p.logger.Warn(
-			"Goal event has no evaluations",
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.String("sourceId", e.SourceId.String()),
-			zap.String("goalId", e.GoalId),
-			zap.String("userId", e.UserId),
-			zap.String("tag", e.Tag),
-			zap.String("timestamp", time.Unix(e.Timestamp, 0).Format(time.RFC3339)),
-		)
-	}
-	m["evaluations"] = evaluations
+	eval := fmt.Sprintf("%s:%d:%s:%s", ev.FeatureId, ev.FeatureVersion, ev.VariationId, reason)
+	m["evaluations"] = []string{eval}
 	b, err := json.Marshal(m)
 	if err != nil {
 		return "", false, err
 	}
 	return string(b), false, nil
-}
-
-func (p *Persister) getEvaluations(
-	e *eventproto.GoalEvent,
-	environmentNamespace string,
-) ([]*featureproto.Evaluation, bool, error) {
-	// Evaluations field in the GoalEvent is deprecated.
-	// The following conditions should be removed once all client SDKs are updated.
-	if e.SourceId == eventproto.SourceId_GOAL_BATCH {
-		// Because the Goal Batch Transformer includes events from the new and old SDKs
-		// we need to check both cases.
-		// If both cases fail, it will save the event with no evaluations
-		var ue []*featureproto.Evaluation
-		ue, err := p.getCurrentUserEvaluations(environmentNamespace, e.UserId, e.Tag)
-		if err != nil {
-			if err == bigtable.ErrKeyNotFound {
-				// Old SDK
-				resp, err := p.featureClient.EvaluateFeatures(p.ctx, &featureproto.EvaluateFeaturesRequest{
-					User:                 e.User,
-					EnvironmentNamespace: environmentNamespace,
-					Tag:                  e.Tag,
-				})
-				if err != nil {
-					return nil, false, err
-				}
-				return resp.UserEvaluations.Evaluations, false, nil
-			}
-			// Retry
-			return nil, true, err
-		}
-		return ue, false, nil
-	}
-	// Old SDK implementation doesn't include the Tag, so we use the evaluations from the client
-	if e.Tag == "" {
-		return e.Evaluations, false, nil
-	}
-	// New SDK implementation
-	ue, err := p.getCurrentUserEvaluations(environmentNamespace, e.UserId, e.Tag)
-	if err != nil && err != bigtable.ErrKeyNotFound {
-		p.logger.Error(
-			"Failed to get user evaluations",
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.String("sourceId", e.SourceId.String()),
-			zap.String("goalId", e.GoalId),
-			zap.String("userId", e.UserId),
-			zap.String("tag", e.Tag),
-			zap.String("timestamp", time.Unix(e.Timestamp, 0).Format(time.RFC3339)),
-		)
-		return nil, true, err
-	}
-	return ue, false, nil
 }
 
 func (p *Persister) convToEvaluation(
@@ -548,23 +500,6 @@ func (p *Persister) upsertUserEvaluation(
 	return nil
 }
 
-func (p *Persister) getCurrentUserEvaluations(
-	environmentNamespace,
-	userID,
-	tag string,
-) ([]*featureproto.Evaluation, error) {
-	evaluations, err := p.userEvaluationStorage.GetUserEvaluations(
-		p.ctx,
-		userID,
-		environmentNamespace,
-		tag,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return evaluations, nil
-}
-
 func (p *Persister) marshalUserEvent(e *esproto.UserEvent, environmentNamespace string) (string, bool, error) {
 	m := map[string]interface{}{}
 	m["environmentNamespace"] = environmentNamespace
@@ -588,12 +523,12 @@ func userMetadataColumn(environmentNamespace string, key string) string {
 
 func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
-		eck := p.key(eventCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
+		eck := p.newEvaluationCountkey(eventCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
 		_, err := p.evaluationCountCacher.Increment(eck)
 		if err != nil {
 			return err
 		}
-		uck := p.key(userCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
+		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
 		_, err = p.evaluationCountCacher.PFAdd(uck, e.UserId)
 		if err != nil {
 			return err
@@ -602,7 +537,7 @@ func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamesp
 	return nil
 }
 
-func (p *Persister) key(
+func (p *Persister) newEvaluationCountkey(
 	kind, featureID, variationID, environmentNamespace string,
 	timestamp int64,
 ) string {
@@ -613,4 +548,143 @@ func (p *Persister) key(
 		fmt.Sprintf("%s:%s:%d", featureID, variationID, date.Unix()),
 		environmentNamespace,
 	)
+}
+
+// validateTimestamp limits date range of the given timestamp
+func (p *Persister) validateTimestamp(
+	timestamp int64,
+	oldestTimestampDuration, furthestTimestampDuration time.Duration,
+) bool {
+	given := time.Unix(timestamp, 0)
+	maxPast := time.Now().Add(-oldestTimestampDuration)
+	if given.Before(maxPast) {
+		return false
+	}
+	maxFuture := time.Now().Add(furthestTimestampDuration)
+	return !given.After(maxFuture)
+}
+
+func (p *Persister) getEvaluation(
+	ctx context.Context,
+	event *eventproto.GoalEvent,
+	environmentNamespace string,
+) (*featureproto.Evaluation, bool, error) {
+	// List experiments with the following status RUNNING, FORCE_STOPPED, and STOPPED
+	experiments, err := p.listExperiments(ctx, environmentNamespace)
+	if err != nil {
+		return nil, true, err
+	}
+	if len(experiments) == 0 {
+		handledCounter.WithLabelValues(codeNoExperiments).Inc()
+		return nil, false, ErrNoExperiments
+	}
+	// Find the experiment by goal ID
+	// TODO: we must change the console UI not to allow creating
+	// multiple experiments running at the same time,
+	// using the same feature flag id and goal id
+	var experiment *exproto.Experiment
+	for _, exp := range experiments {
+		if p.findGoalID(event.GoalId, exp.GoalIds) {
+			experiment = exp
+			break
+		}
+	}
+	if experiment == nil {
+		handledCounter.WithLabelValues(codeExperimentNotFound).Inc()
+		return nil, false, ErrExperimentNotFound
+	}
+	// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
+	var tag string
+	if event.Tag == "" {
+		tag = "none"
+	} else {
+		tag = event.Tag
+	}
+	// Get the user evaluation using the experiment info
+	ev, err := p.getUserEvaluation(
+		environmentNamespace,
+		event.UserId,
+		tag,
+		experiment.FeatureId,
+		experiment.FeatureVersion,
+	)
+	if err != nil {
+		return nil, true, err
+	}
+	return ev, false, nil
+}
+
+func (p *Persister) listExperiments(
+	ctx context.Context,
+	environmentNamespace string,
+) ([]*exproto.Experiment, error) {
+	exp, err, _ := p.flightgroup.Do(
+		fmt.Sprintf("%s:%s", environmentNamespace, "listExperiments"),
+		func() (interface{}, error) {
+			experiments := []*exproto.Experiment{}
+			cursor := ""
+			for {
+				resp, err := p.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
+					PageSize:             listRequestSize,
+					Cursor:               cursor,
+					EnvironmentNamespace: environmentNamespace,
+					Statuses: []exproto.Experiment_Status{
+						exproto.Experiment_RUNNING,
+						exproto.Experiment_FORCE_STOPPED,
+						exproto.Experiment_STOPPED,
+					},
+					Archived: &wrappers.BoolValue{Value: false},
+				})
+				if err != nil {
+					return nil, err
+				}
+				experiments = append(experiments, resp.Experiments...)
+				experimentSize := len(resp.Experiments)
+				if experimentSize == 0 || experimentSize < listRequestSize {
+					return experiments, nil
+				}
+				cursor = resp.Cursor
+			}
+		},
+	)
+	if err != nil {
+		handledCounter.WithLabelValues(codeFailedToListExperiments).Inc()
+		return nil, err
+	}
+	return exp.([]*exproto.Experiment), nil
+}
+
+func (p *Persister) findGoalID(id string, goalIDs []string) bool {
+	for _, goalID := range goalIDs {
+		if id == goalID {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Persister) getUserEvaluation(
+	environmentNamespace,
+	userID,
+	tag,
+	featureID string,
+	featureVersion int32,
+) (*featureproto.Evaluation, error) {
+	evaluation, err := p.userEvaluationStorage.GetUserEvaluation(
+		p.ctx,
+		userID,
+		environmentNamespace,
+		tag,
+		featureID,
+		featureVersion,
+	)
+	if err != nil {
+		if err == bigtable.ErrKeyNotFound {
+			handledCounter.WithLabelValues(codeUserEvaluationNotFound).Inc()
+		} else {
+			handledCounter.WithLabelValues(codeFailedToGetUserEvaluation).Inc()
+		}
+		return nil, err
+	}
+	return evaluation, nil
 }

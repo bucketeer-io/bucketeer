@@ -21,7 +21,13 @@ import (
 )
 
 const (
+	codeExperimentNotFound         = "ExperimentNotFound"
+	codeFailedToListExperiments    = "FailedToListExperiments"
+	codeFailedToGetUserEvaluation  = "FailedToGetUserEvaluation"
+	codeInvalidGoalEventTimestamp  = "InvalidGoalEventTimestamp"
+	codeNoExperiments              = "NoExperiments"
 	codeUpsertUserEvaluationFailed = "UpsertUserEvaluationFailed"
+	codeUserEvaluationNotFound     = "UserEvaluationNotFound"
 )
 
 var (

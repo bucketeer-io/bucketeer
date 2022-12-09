@@ -25,6 +25,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -38,6 +39,7 @@ import (
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	esproto "github.com/bucketeer-io/bucketeer/proto/event/service"
+	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
@@ -46,13 +48,60 @@ var defaultOptions = options{
 	logger: zap.NewNop(),
 }
 
-func TestMarshaEvent(t *testing.T) {
+func TestMarshalUserEvent(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	layout := "2006-01-02 15:04:05 -0700 MST"
 	t1, err := time.Parse(layout, "2014-01-17 23:02:03 +0000 UTC")
 	require.NoError(t, err)
+	patterns := []struct {
+		desc               string
+		input              interface{}
+		expected           string
+		expectedErr        error
+		expectedRepeatable bool
+	}{
+		{
+			desc: "success: user event",
+			input: &esproto.UserEvent{
+				UserId:   "uid",
+				SourceId: eventproto.SourceId_ANDROID,
+				Tag:      "tag",
+				LastSeen: t1.Unix(),
+			},
+			expected: `{
+				"environmentNamespace": "ns",
+				"sourceId": "ANDROID",
+				"tag": "tag",
+				"timestamp": "2014-01-17T23:02:03Z",
+				"userId":"uid"
+			}`,
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			persister := newPersister(mockController)
+			actual, repeatable, err := persister.marshalEvent(persister.ctx, p.input, "ns")
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expectedRepeatable, repeatable)
+			buf := new(bytes.Buffer)
+			err = json.Compact(buf, []byte(p.expected))
+			assert.Equal(t, buf.String(), actual)
+		})
+	}
+}
+
+func TestMarshalEvaluationEvent(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	layout := "2006-01-02 15:04:05 -0700 MST"
+	t1, err := time.Parse(layout, "2014-01-17 23:02:03 +0000 UTC")
+	require.NoError(t, err)
+	environmentNamespace := "ns"
 	evaluation := &featureproto.Evaluation{
 		Id: featuredomain.EvaluationID(
 			"fid",
@@ -87,31 +136,12 @@ func TestMarshaEvent(t *testing.T) {
 		expectedRepeatable bool
 	}{
 		{
-			desc:  "success: user event",
-			setup: nil,
-			input: &esproto.UserEvent{
-				UserId:   "uid",
-				SourceId: eventproto.SourceId_ANDROID,
-				Tag:      "tag",
-				LastSeen: t1.Unix(),
-			},
-			expected: `{
-				"environmentNamespace": "ns",
-				"sourceId": "ANDROID",
-				"tag": "tag",
-				"timestamp": "2014-01-17T23:02:03Z",
-				"userId":"uid"
-			}`,
-			expectedErr:        nil,
-			expectedRepeatable: false,
-		},
-		{
 			desc: "error: failed to upsert evaluation event",
 			setup: func(ctx context.Context, p *Persister) {
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
 					ctx,
 					evaluation,
-					"ns",
+					environmentNamespace,
 					"tag",
 				).Return(btstorage.ErrInternal)
 			},
@@ -126,7 +156,7 @@ func TestMarshaEvent(t *testing.T) {
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
 					ctx,
 					evaluation,
-					"ns",
+					environmentNamespace,
 					"tag",
 				).Return(nil)
 			},
@@ -148,347 +178,6 @@ func TestMarshaEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "err goal batch event: internal error from bigtable",
-			setup: func(ctx context.Context, p *Persister) {
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
-					ctx,
-					"uid",
-					"ns",
-					"tag",
-				).Return(nil, btstorage.ErrInternal).Times(1)
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
-				Timestamp: t1.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected:           "",
-			expectedErr:        btstorage.ErrInternal,
-			expectedRepeatable: true,
-		},
-		{
-			desc: "success goal batch event: getting evaluations from bigtable",
-			setup: func(ctx context.Context, p *Persister) {
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
-					ctx,
-					"uid",
-					"ns",
-					"tag",
-				).Return([]*featureproto.Evaluation{
-					{
-						FeatureId:      "fid-0",
-						FeatureVersion: int32(0),
-						VariationId:    "vid-0",
-						Reason:         &featureproto.Reason{Type: featureproto.Reason_CLIENT},
-					},
-					{
-						FeatureId:      "fid-1",
-						FeatureVersion: int32(1),
-						VariationId:    "vid-1",
-						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
-					},
-				}, nil).Times(1)
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
-				Timestamp: t1.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected: `{
-				"environmentNamespace": "ns",
-				"evaluations": ["fid-0:0:vid-0:CLIENT","fid-1:1:vid-1:TARGET"],
-				"goalId": "gid",
-				"metric.userId": "uid",
-				"ns.user.data.atr":"av",
-				"sourceId":"GOAL_BATCH",
-				"tag": "tag",
-				"timestamp": "2014-01-17T23:02:03Z",
-				"userId":"uid",
-				"value": "1.2"
-			}`,
-			expectedErr:        nil,
-			expectedRepeatable: false,
-		},
-		{
-			desc: "success goal batch event: getting evaluations from evaluate process with segment users",
-			setup: func(ctx context.Context, p *Persister) {
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
-					ctx,
-					"uid",
-					"ns",
-					"tag",
-				).Return(nil, btstorage.ErrKeyNotFound).Times(1)
-				p.featureClient.(*fcmock.MockClient).EXPECT().EvaluateFeatures(
-					ctx,
-					&featureproto.EvaluateFeaturesRequest{
-						User: &userproto.User{
-							Id:   "uid",
-							Data: map[string]string{"atr": "av"},
-						},
-						EnvironmentNamespace: "ns",
-						Tag:                  "tag",
-					},
-				).Return(
-					&featureproto.EvaluateFeaturesResponse{
-						UserEvaluations: &featureproto.UserEvaluations{
-							Id: "uid",
-							Evaluations: []*featureproto.Evaluation{
-								{
-									FeatureId:      "fid",
-									FeatureVersion: int32(1),
-									VariationId:    "vid-1",
-									Reason:         &featureproto.Reason{Type: featureproto.Reason_RULE},
-								},
-							},
-						},
-					}, nil,
-				).Times(1)
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
-				Timestamp: t1.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected: `{
-				"environmentNamespace": "ns",
-				"evaluations": ["fid:1:vid-1:RULE"],
-				"goalId": "gid",
-				"metric.userId": "uid",
-				"ns.user.data.atr":"av",
-				"sourceId":"GOAL_BATCH",
-				"tag": "tag",
-				"timestamp": "2014-01-17T23:02:03Z",
-				"userId":"uid",
-				"value": "1.2"
-			}`,
-			expectedErr:        nil,
-			expectedRepeatable: false,
-		},
-		{
-			desc: "err goal batch event: internal error from feature api",
-			setup: func(ctx context.Context, p *Persister) {
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
-					ctx,
-					"uid",
-					"ns",
-					"tag",
-				).Return(nil, btstorage.ErrKeyNotFound).Times(1)
-				p.featureClient.(*fcmock.MockClient).EXPECT().EvaluateFeatures(
-					ctx,
-					&featureproto.EvaluateFeaturesRequest{
-						User: &userproto.User{
-							Id:   "uid",
-							Data: map[string]string{"atr": "av"},
-						},
-						EnvironmentNamespace: "ns",
-						Tag:                  "tag",
-					},
-				).Return(
-					nil, btstorage.ErrInternal,
-				).Times(1)
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
-				Timestamp: t1.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected:           "",
-			expectedErr:        btstorage.ErrInternal,
-			expectedRepeatable: false,
-		},
-		{
-			desc:  "success goal event: no tag info",
-			setup: nil,
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: t1.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value: float64(1.2),
-				Evaluations: []*featureproto.Evaluation{
-					{
-						FeatureId:      "fid-0",
-						FeatureVersion: int32(0),
-						VariationId:    "vid-0",
-						Reason:         &featureproto.Reason{Type: featureproto.Reason_CLIENT},
-					},
-					{
-						FeatureId:      "fid-1",
-						FeatureVersion: int32(1),
-						VariationId:    "vid-1",
-						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
-					},
-				},
-				Tag: "",
-			},
-			expected: `{
-				"environmentNamespace": "ns",
-				"evaluations": ["fid-0:0:vid-0:CLIENT","fid-1:1:vid-1:TARGET"],
-				"goalId": "gid",
-				"metric.userId": "uid",
-				"ns.user.data.atr":"av",
-				"sourceId":"ANDROID",
-				"tag": "",
-				"timestamp": "2014-01-17T23:02:03Z",
-				"userId":"uid",
-				"value": "1.2"
-			}`,
-			expectedErr:        nil,
-			expectedRepeatable: false,
-		},
-		{
-			desc: "err goal event: internal",
-			setup: func(ctx context.Context, p *Persister) {
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
-					ctx,
-					"uid",
-					"ns",
-					"tag",
-				).Return(nil, btstorage.ErrInternal).Times(1)
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: t1.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected:           "",
-			expectedErr:        btstorage.ErrInternal,
-			expectedRepeatable: true,
-		},
-		{
-			desc: "success goal event: key not found not in bigtable",
-			setup: func(ctx context.Context, p *Persister) {
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
-					ctx,
-					"uid",
-					"ns",
-					"tag",
-				).Return(nil, btstorage.ErrKeyNotFound).Times(1)
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: t1.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected: `{
-				"environmentNamespace": "ns",
-				"evaluations": [],
-				"goalId": "gid",
-				"metric.userId": "uid",
-				"ns.user.data.atr":"av",
-				"sourceId":"ANDROID",
-				"tag": "tag",
-				"timestamp": "2014-01-17T23:02:03Z",
-				"userId":"uid",
-				"value": "1.2"
-			}`,
-			expectedErr:        nil,
-			expectedRepeatable: false,
-		},
-		{
-			desc: "success goal event: getting evaluations from bigtable",
-			setup: func(ctx context.Context, p *Persister) {
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluations(
-					ctx,
-					"uid",
-					"ns",
-					"tag",
-				).Return([]*featureproto.Evaluation{
-					{
-						FeatureId:      "fid-0",
-						FeatureVersion: int32(0),
-						VariationId:    "vid-0",
-						Reason:         &featureproto.Reason{Type: featureproto.Reason_CLIENT},
-					},
-					{
-						FeatureId:      "fid-1",
-						FeatureVersion: int32(1),
-						VariationId:    "vid-1",
-						Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
-					},
-				}, nil).Times(1)
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: t1.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected: `{
-				"environmentNamespace": "ns",
-				"evaluations": ["fid-0:0:vid-0:CLIENT","fid-1:1:vid-1:TARGET"],
-				"goalId": "gid",
-				"metric.userId": "uid",
-				"ns.user.data.atr":"av",
-				"sourceId":"ANDROID",
-				"tag": "tag",
-				"timestamp": "2014-01-17T23:02:03Z",
-				"userId":"uid",
-				"value": "1.2"
-			}`,
-			expectedErr:        nil,
-			expectedRepeatable: false,
-		},
-		{
 			desc:               "err: ErrUnexpectedMessageType",
 			input:              "",
 			expected:           "",
@@ -502,7 +191,409 @@ func TestMarshaEvent(t *testing.T) {
 			if p.setup != nil {
 				p.setup(persister.ctx, persister)
 			}
-			actual, repeatable, err := persister.marshalEvent(persister.ctx, p.input, "ns")
+			actual, repeatable, err := persister.marshalEvent(persister.ctx, p.input, environmentNamespace)
+			assert.Equal(t, p.expectedRepeatable, repeatable)
+			if err != nil {
+				assert.Equal(t, actual, "")
+				assert.Equal(t, p.expectedErr, err)
+			} else {
+				assert.Equal(t, p.expectedErr, err)
+				buf := new(bytes.Buffer)
+				err = json.Compact(buf, []byte(p.expected))
+				require.NoError(t, err)
+				assert.Equal(t, buf.String(), actual)
+			}
+		})
+	}
+}
+
+func TestMarshaGoalEvent(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	timeNow := time.Now()
+	timeFormated := time.Unix(timeNow.Unix(), 0).Format(time.RFC3339)
+	timeMoreThan24Hours := timeNow.AddDate(0, 0, -2)
+	environmentNamespace := "ns"
+	patterns := []struct {
+		desc               string
+		setup              func(context.Context, *Persister)
+		input              interface{}
+		expected           string
+		expectedErr        error
+		expectedRepeatable bool
+	}{
+		{
+			desc:               "err: ErrUnexpectedMessageType",
+			input:              "",
+			expected:           "",
+			expectedErr:        ErrUnexpectedMessageType,
+			expectedRepeatable: false,
+		},
+		{
+			desc:  "err: invalid goal event timestamp",
+			setup: nil,
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: timeMoreThan24Hours.Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        ErrInvalidGoalEventTimestamp,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "err: list experiment internal",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(nil, errors.New("internal"))
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        errors.New("internal"),
+			expectedRepeatable: true,
+		},
+		{
+			desc: "err: list experiment empty",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{}, nil)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        ErrNoExperiments,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "err: experiment not found",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:      "experiment-id",
+							GoalIds: []string{"goal-id"},
+						},
+					},
+				}, nil)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        ErrExperimentNotFound,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "err: get evaluation not found",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid",
+							FeatureVersion: int32(1),
+						},
+					},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					"ns",
+					"tag",
+					"fid",
+					int32(1),
+				).Return(nil, btstorage.ErrKeyNotFound)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        btstorage.ErrKeyNotFound,
+			expectedRepeatable: true,
+		},
+		{
+			desc: "err: get evaluation internal",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid",
+							FeatureVersion: int32(1),
+						},
+					},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"tag",
+					"fid",
+					int32(1),
+				).Return(nil, errors.New("internal"))
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        errors.New("internal"),
+			expectedRepeatable: true,
+		},
+		{
+			desc: "err: get evaluation internal using empty tag",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid",
+							FeatureVersion: int32(1),
+						},
+					},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"none",
+					"fid",
+					int32(1),
+				).Return(nil, errors.New("internal"))
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "",
+			},
+			expected:           "",
+			expectedErr:        errors.New("internal"),
+			expectedRepeatable: true,
+		},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid",
+							FeatureVersion: int32(1),
+						},
+					},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"tag",
+					"fid",
+					int32(1),
+				).Return(&featureproto.Evaluation{
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					VariationId:    "vid",
+					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				}, nil)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_ANDROID,
+				Timestamp: timeNow.Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected: fmt.Sprintf(`{
+				"environmentNamespace": "ns",
+				"evaluations": ["fid:1:vid:TARGET"],
+				"goalId": "gid",
+				"metric.userId": "uid",
+				"ns.user.data.atr":"av",
+				"sourceId":"ANDROID",
+				"tag": "tag",
+				"timestamp": "%s",
+				"userId":"uid",
+				"value": "1.2"
+			}`, timeFormated),
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			persister := newPersister(mockController)
+			if p.setup != nil {
+				p.setup(persister.ctx, persister)
+			}
+			actual, repeatable, err := persister.marshalEvent(persister.ctx, p.input, environmentNamespace)
 			assert.Equal(t, p.expectedRepeatable, repeatable)
 			if err != nil {
 				assert.Equal(t, actual, "")
@@ -655,7 +746,7 @@ func TestConvToEvaluation(t *testing.T) {
 	}
 }
 
-func TestKey(t *testing.T) {
+func TestEvaluationCountkey(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -696,7 +787,7 @@ func TestKey(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			persister := newPersister(mockController)
-			actual := persister.key(p.kind, p.featureID, p.variationID, p.environmentNamespace, p.timestamp)
+			actual := persister.newEvaluationCountkey(p.kind, p.featureID, p.variationID, p.environmentNamespace, p.timestamp)
 			assert.Equal(t, p.expected, actual)
 		})
 	}
