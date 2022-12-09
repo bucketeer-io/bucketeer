@@ -87,9 +87,13 @@ func TestGrpcGoalCountV2(t *testing.T) {
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
+	startAt := time.Now().Local().Add(-1 * time.Hour)
+	stopAt := startAt.Local().Add(time.Hour * 2)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "TestGrpcGoalCountV2", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
-	for _, v := range f.Variations {
+	for _, v := range experiment.Variations {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
@@ -181,9 +185,13 @@ func TestGoalCountV2(t *testing.T) {
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
+	startAt := time.Now().Local().Add(-1 * time.Hour)
+	stopAt := startAt.Local().Add(time.Hour * 2)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "TestGoalCountV2", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
-	for _, v := range f.Variations {
+	for _, v := range experiment.Variations {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
@@ -280,7 +288,8 @@ func TestExperimentResultWithoutTag(t *testing.T) {
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local().Add(-1 * time.Hour)
 	stopAt := startAt.Local().Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(ctx, t, experimentClient, "ExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "TestExperimentResultWithoutTag", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
 	// CVRs is 3/4
 	// Register goal variation
@@ -325,6 +334,18 @@ func TestExperimentResultWithoutTag(t *testing.T) {
 			}
 			if len(gr.VariationResults) != 2 {
 				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
+			}
+			if gr.VariationResults[0].EvaluationCount.EventCount == 0 && // variation A
+				gr.VariationResults[0].EvaluationCount.UserCount == 0 &&
+				gr.VariationResults[1].EvaluationCount.EventCount == 0 && // variation B
+				gr.VariationResults[1].EvaluationCount.UserCount == 0 {
+				continue
+			}
+			if gr.VariationResults[0].ExperimentCount.EventCount == 0 && // variation A
+				gr.VariationResults[0].ExperimentCount.UserCount == 0 &&
+				gr.VariationResults[1].ExperimentCount.EventCount == 0 && // variation B
+				gr.VariationResults[1].ExperimentCount.UserCount == 0 {
+				continue
 			}
 			for _, vr := range gr.VariationResults {
 				// variation a
@@ -466,7 +487,8 @@ func TestGrpcExperimentResult(t *testing.T) {
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local().Add(-1 * time.Hour)
 	stopAt := startAt.Local().Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(ctx, t, experimentClient, "ExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
 	// CVRs is 3/4
 	// Register goal variation
@@ -515,6 +537,18 @@ func TestGrpcExperimentResult(t *testing.T) {
 			}
 			if len(gr.VariationResults) != 2 {
 				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
+			}
+			if gr.VariationResults[0].EvaluationCount.EventCount == 0 && // variation A
+				gr.VariationResults[0].EvaluationCount.UserCount == 0 &&
+				gr.VariationResults[1].EvaluationCount.EventCount == 0 && // variation B
+				gr.VariationResults[1].EvaluationCount.UserCount == 0 {
+				continue
+			}
+			if gr.VariationResults[0].ExperimentCount.EventCount == 0 && // variation A
+				gr.VariationResults[0].ExperimentCount.UserCount == 0 &&
+				gr.VariationResults[1].ExperimentCount.EventCount == 0 && // variation B
+				gr.VariationResults[1].ExperimentCount.UserCount == 0 {
+				continue
 			}
 			for _, vr := range gr.VariationResults {
 				// variation a
@@ -662,7 +696,8 @@ func TestExperimentResult(t *testing.T) {
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local().Add(-1 * time.Hour)
 	stopAt := startAt.Local().Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(ctx, t, experimentClient, "ExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
 	// CVRs is 3/4
 	// Register goal variation
@@ -711,6 +746,18 @@ func TestExperimentResult(t *testing.T) {
 			}
 			if len(gr.VariationResults) != 2 {
 				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
+			}
+			if gr.VariationResults[0].EvaluationCount.EventCount == 0 && // variation A
+				gr.VariationResults[0].EvaluationCount.UserCount == 0 &&
+				gr.VariationResults[1].EvaluationCount.EventCount == 0 && // variation B
+				gr.VariationResults[1].EvaluationCount.UserCount == 0 {
+				continue
+			}
+			if gr.VariationResults[0].ExperimentCount.EventCount == 0 && // variation A
+				gr.VariationResults[0].ExperimentCount.UserCount == 0 &&
+				gr.VariationResults[1].ExperimentCount.EventCount == 0 && // variation B
+				gr.VariationResults[1].ExperimentCount.UserCount == 0 {
+				continue
 			}
 			for _, vr := range gr.VariationResults {
 				// variation a
@@ -844,7 +891,10 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := createUserID(t, uuid)
+	userIDs := []string{}
+	for i := 0; i < 5; i++ {
+		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
+	}
 	featureID := createFeatureID(t, uuid)
 
 	variationVarA := "a"
@@ -855,17 +905,25 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
 	goalIDs := createGoals(ctx, t, experimentClient, 3)
+	startAt := time.Now().Local().Add(-1 * time.Hour)
+	stopAt := startAt.Local().Add(time.Hour * 2)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "GrpcMultiGoalsEventCounterRealtime", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
-	for _, v := range f.Variations {
+	for _, v := range experiment.Variations {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
-	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3))
-	grpcRegisterGoalEvent(t, goalIDs[1], userID, tag, float64(0.2))
 
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version+1, userID, f.Variations[1].Id, tag)
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
+	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
+	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
+
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[1].Id, tag)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -889,10 +947,10 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcA.UserCount != 1 {
 			continue
 		}
-		if vcA.EventCount != 1 {
+		if vcA.EventCount != 2 {
 			continue
 		}
-		if vcA.ValueSum != float64(0.3) {
+		if vcA.ValueSum != float64(0.6) {
 			continue
 		}
 
@@ -911,7 +969,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		}
 
 		// Goal 1.
-		resp = getGoalCountV2(t, ecClient, goalIDs[1], featureID, f.Version+1, variationIDs)
+		resp = getGoalCountV2(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
 		if len(resp.GoalCounts.RealtimeCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -940,10 +998,10 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcB.UserCount != 1 {
 			continue
 		}
-		if vcB.EventCount != 1 {
+		if vcB.EventCount != 2 {
 			continue
 		}
-		if vcB.ValueSum != float64(0.2) {
+		if vcB.ValueSum != float64(0.4) {
 			continue
 		}
 
@@ -1001,7 +1059,10 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := createUserID(t, uuid)
+	userIDs := []string{}
+	for i := 0; i < 5; i++ {
+		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
+	}
 	featureID := createFeatureID(t, uuid)
 
 	variationVarA := "a"
@@ -1012,17 +1073,25 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
 	goalIDs := createGoals(ctx, t, experimentClient, 3)
+	startAt := time.Now().Local().Add(-1 * time.Hour)
+	stopAt := startAt.Local().Add(time.Hour * 2)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "GrpcMultiGoalsEventCounterRealtime", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
-	for _, v := range f.Variations {
+	for _, v := range experiment.Variations {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
-	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3))
-	registerGoalEvent(t, goalIDs[1], userID, tag, float64(0.2))
 
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
-	registerEvaluationEvent(t, featureID, f.Version+1, userID, f.Variations[1].Id, tag)
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
+	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
+	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
+
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -1046,10 +1115,10 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcA.UserCount != 1 {
 			continue
 		}
-		if vcA.EventCount != 1 {
+		if vcA.EventCount != 2 {
 			continue
 		}
-		if vcA.ValueSum != float64(0.3) {
+		if vcA.ValueSum != float64(0.6) {
 			continue
 		}
 
@@ -1068,7 +1137,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		}
 
 		// Goal 1.
-		resp = getGoalCountV2(t, ecClient, goalIDs[1], featureID, f.Version+1, variationIDs)
+		resp = getGoalCountV2(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
 		if len(resp.GoalCounts.RealtimeCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -1097,10 +1166,10 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcB.UserCount != 1 {
 			continue
 		}
-		if vcB.EventCount != 1 {
+		if vcB.EventCount != 2 {
 			continue
 		}
-		if vcB.ValueSum != float64(0.2) {
+		if vcB.ValueSum != float64(0.4) {
 			continue
 		}
 
@@ -1169,14 +1238,21 @@ func TestGoalBatchEventCounter(t *testing.T) {
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
+	startAt := time.Now().Local().Add(-1 * time.Hour)
+	stopAt := startAt.Local().Add(time.Hour * 2)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "GoalBatchEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
-	for _, v := range f.Variations {
+	for _, v := range experiment.Variations {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
 
-	// Get user evaluations, which creates user in redis.
+	// Goal batch transformer service will get the user from the DB to create the goal event,
+	// so we need to ensure that the user is stored into DB before sending the goal batch event.
+	// By calling the GetEvaluations API, it will store the user.
 	for i := 0; i < retryTimes; i++ {
 		resp := getEvaluation(t, tag, userID)
 		if len(resp.Evaluations.Evaluations) == 1 {
@@ -1278,29 +1354,21 @@ func TestHTTPTrack(t *testing.T) {
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
+	startAt := time.Now().Local().Add(-1 * time.Hour)
+	stopAt := startAt.Local().Add(time.Hour * 2)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "TestHTTPTrack", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
-	for _, v := range f.Variations {
+	for _, v := range experiment.Variations {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
 
-	// Get user evaluations, which creates user in redis.
-	for i := 0; i < retryTimes; i++ {
-		resp := getEvaluation(t, tag, userID)
-		if len(resp.Evaluations.Evaluations) == 1 {
-			break
-		}
-		if i == retryTimes-1 {
-			t.Fatalf("State did not change. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, resp.State)
-		}
-		time.Sleep(time.Second)
-	}
-	time.Sleep(5 * time.Second)
-
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
 	// Send track events.
 	sendHTTPTrack(t, userID, goalIDs[0], tag, value)
+	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
 
 	// Check the count
 	for i := 0; i < retryTimes; i++ {
@@ -1574,6 +1642,14 @@ func createExperimentWithMultiGoals(
 	resp, err := client.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{
 		Command:              cmd,
 		EnvironmentNamespace: *environmentNamespace,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.StartExperiment(ctx, &experimentproto.StartExperimentRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   resp.Experiment.Id,
+		Command:              &experimentproto.StartExperimentCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
