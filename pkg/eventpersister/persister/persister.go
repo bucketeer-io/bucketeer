@@ -534,15 +534,12 @@ func getVariationID(reason featureproto.Reason_Type, vID string) string {
 
 func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
-		vID := getVariationID(e.Reason.Type, e.VariationId)
-		eck := p.newEvaluationCountkey(eventCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
-		_, err := p.evaluationCountCacher.Increment(eck)
-		if err != nil {
+		eck := p.newEvaluationCountkey(eventCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
+		if err := p.countEvent(eck); err != nil {
 			return err
 		}
-		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
-		_, err = p.evaluationCountCacher.PFAdd(uck, e.UserId)
-		if err != nil {
+		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
+		if err := p.countUser(uck, e.UserId); err != nil {
 			return err
 		}
 	}
