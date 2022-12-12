@@ -21,10 +21,16 @@ import (
 )
 
 const (
+	codeAutoOpsAlreadyTriggered    = "AutoOpsAlreadyTriggered"
+	codeAutoOpsRulesNotFound       = "AutoOpsRulesNotFound"
 	codeExperimentNotFound         = "ExperimentNotFound"
-	codeFailedToListExperiments    = "FailedToListExperiments"
+	codeExtractOpsEventRateClauses = "ExtractOpsEventRateClauses"
+	codeFailedToGetFeatures        = "FailedToGetFeatures"
 	codeFailedToGetUserEvaluation  = "FailedToGetUserEvaluation"
+	codeFailedToListAutoOpsRules   = "FailedToListAutoOpsRules"
+	codeFailedToListExperiments    = "FailedToListExperiments"
 	codeInvalidGoalEventTimestamp  = "InvalidGoalEventTimestamp"
+	codeNoAutoOpsRules             = "AutoOpsRules"
 	codeNoExperiments              = "NoExperiments"
 	codeUpsertUserEvaluationFailed = "UpsertUserEvaluationFailed"
 	codeUserEvaluationNotFound     = "UserEvaluationNotFound"
