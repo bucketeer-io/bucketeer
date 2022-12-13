@@ -6,6 +6,11 @@ on:
       bucketeer_version:
         description: "Bucketeer version"
         required: false
+      skip_release_note:
+        description: "Skip release note"
+        type: boolean
+        default: true
+
   push:
     branches:
       - main
@@ -42,6 +47,7 @@ jobs:
           # Because the version is based on the tag, if the publish_chart starts before
           # the release workflow, it will create a chart with an old version.
       - name: Wait for release note to succeed
+        if: ${{ github.event.inputs.skip_release_note == 'false' }}
         uses: lewagon/wait-on-check-action@0179dfc359f90a703c41240506f998ee1603f9ea #v1.0.0
         with:
           ref: ${{ github.ref }}
@@ -70,7 +76,7 @@ jobs:
         id: auth
         uses: google-github-actions/auth@c4799db9111fba4461e9f9da8732e5057b394f72 # v0.8.3
         with:
-          token_format: 'access_token'
+          token_format: "access_token"
           workload_identity_provider: ${{ secrets.GAR_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GAR_SA_MAIL_ADDRESS }}
       - name: Login to GAR OCI using Helm
