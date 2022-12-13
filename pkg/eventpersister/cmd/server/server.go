@@ -111,9 +111,9 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 		).Default("experiment:9090").String(),
 		featureService: cmd.Flag("feature-service", "bucketeer-feature-service address.").Default("feature:9090").String(),
 		autoOpsService: cmd.Flag(
-			"autoops-service",
-			"bucketeer-autoops-service address.",
-		).Default("autoops:9090").String(),
+			"auto-ops-service",
+			"bucketeer-auto-ops-service address.",
+		).Default("auto-ops:9090").String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
