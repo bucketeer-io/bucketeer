@@ -1140,18 +1140,35 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 								GoalId: "gid",
 							}),
 						},
+						{
+							FeatureId:   "fid-2",
+							TriggeredAt: int64(1),
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+						{
+							FeatureId: "fid-3",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
 					},
 				}, nil)
 				p.featureClient.(*fcmock.MockClient).EXPECT().GetFeatures(
 					ctx,
 					&featureproto.GetFeaturesRequest{
 						EnvironmentNamespace: environmentNamespace,
-						Ids:                  []string{"fid"},
+						Ids:                  []string{"fid", "fid-3"},
 					},
 				).Return(&featureproto.GetFeaturesResponse{
 					Features: []*featureproto.Feature{
 						{
 							Id:      "fid",
+							Version: int32(1),
+						},
+						{
+							Id:      "fid-3",
 							Version: int32(1),
 						},
 					},
@@ -1167,6 +1184,19 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 					FeatureId:      "fid",
 					FeatureVersion: int32(1),
 					VariationId:    "vid",
+					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"tag",
+					"fid-3",
+					int32(1),
+				).Return(&featureproto.Evaluation{
+					FeatureId:      "fid-3",
+					FeatureVersion: int32(1),
+					VariationId:    "vid-3",
 					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
 				}, nil)
 			},
@@ -1185,7 +1215,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 			},
 			expected: fmt.Sprintf(`{
 				"environmentNamespace": "ns",
-				"evaluations": ["fid:1:vid:TARGET"],
+				"evaluations": ["fid:1:vid:TARGET","fid-3:1:vid-3:TARGET"],
 				"goalId": "gid",
 				"metric.userId": "uid",
 				"ns.user.data.atr":"av",
