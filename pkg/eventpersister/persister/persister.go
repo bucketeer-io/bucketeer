@@ -431,7 +431,7 @@ func (p *Persister) marshalGoalEvent(
 	e *eventproto.GoalEvent,
 	environmentNamespace string,
 ) (string, bool, error) {
-	evs, retriable, err := p.linkGoalEvent(ctx, e, environmentNamespace)
+	evaluations, retriable, err := p.linkGoalEvent(ctx, e, environmentNamespace)
 	if err != nil {
 		return "", retriable, err
 	}
@@ -449,7 +449,7 @@ func (p *Persister) marshalGoalEvent(
 		}
 	}
 	m["value"] = strconv.FormatFloat(e.Value, 'f', -1, 64)
-	m["evaluations"] = evs
+	m["evaluations"] = evaluations
 	b, err := json.Marshal(m)
 	if err != nil {
 		return "", false, err
