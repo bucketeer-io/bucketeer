@@ -11,6 +11,7 @@ env:
   project:
   experimentService: localhost:9001
   featureService: localhost:9001
+  autoOpsService: localhost:9001
   bigtableInstance:
   location: asia-northeast1
   topic:

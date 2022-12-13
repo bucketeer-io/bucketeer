@@ -50,6 +50,8 @@ spec:
               value: "{{ .Values.env.experimentService }}"
             - name: BUCKETEER_EVENT_PERSISTER_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
+            - name: BUCKETEER_EVENT_PERSISTER_AUTO_OPS_SERVICE
+              value: "{{ .Values.env.autoOpsService }}"
             - name: BUCKETEER_EVENT_PERSISTER_BIGTABLE_INSTANCE
               value: "{{ .Values.env.bigtableInstance }}"
             - name: BUCKETEER_EVENT_PERSISTER_LOCATION
