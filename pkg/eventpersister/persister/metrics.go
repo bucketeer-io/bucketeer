@@ -21,19 +21,15 @@ import (
 )
 
 const (
-	codeAutoOpsAlreadyTriggered    = "AutoOpsAlreadyTriggered"
-	codeAutoOpsRulesNotFound       = "AutoOpsRulesNotFound"
-	codeExperimentNotFound         = "ExperimentNotFound"
-	codeExtractOpsEventRateClauses = "ExtractOpsEventRateClauses"
-	codeFailedToGetFeatures        = "FailedToGetFeatures"
-	codeFailedToGetUserEvaluation  = "FailedToGetUserEvaluation"
-	codeFailedToListAutoOpsRules   = "FailedToListAutoOpsRules"
-	codeFailedToListExperiments    = "FailedToListExperiments"
-	codeInvalidGoalEventTimestamp  = "InvalidGoalEventTimestamp"
-	codeNoAutoOpsRules             = "AutoOpsRules"
-	codeNoExperiments              = "NoExperiments"
-	codeUpsertUserEvaluationFailed = "UpsertUserEvaluationFailed"
-	codeUserEvaluationNotFound     = "UserEvaluationNotFound"
+	codeFailedToExtractOpsEventRateClauses = "FailedToExtractOpsEventRateClauses"
+	codeFailedToGetFeatures                = "FailedToGetFeatures"
+	codeFailedToGetUserEvaluation          = "FailedToGetUserEvaluation"
+	codeFailedToListAutoOpsRules           = "FailedToListAutoOpsRules"
+	codeFailedToListExperiments            = "FailedToListExperiments"
+	codeInvalidGoalEventTimestamp          = "InvalidGoalEventTimestamp"
+	codeNoLinking                          = "NoLinking"
+	codeUpsertUserEvaluationFailed         = "UpsertUserEvaluationFailed"
+	codeUserEvaluationNotFound             = "UserEvaluationNotFound"
 )
 
 var (

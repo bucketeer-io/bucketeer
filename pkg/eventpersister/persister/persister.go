@@ -576,6 +576,8 @@ func (p *Persister) linkGoalEvent(
 	}
 	evaluations := []*featureproto.Evaluation{}
 	evalExp, retriable, err := p.linkGoalEventByExperiment(ctx, event, environmentNamespace)
+	// If there are no experiments or the goal ID didn't match, it will ignore the error
+	// so it can try to link the goal event to auto ops.
 	if err != nil && err != ErrNoExperiments && err != ErrExperimentNotFound {
 		return nil, retriable, err
 	}
@@ -583,6 +585,8 @@ func (p *Persister) linkGoalEvent(
 		evaluations = append(evaluations, evalExp)
 	}
 	evalAuto, retriable, err := p.linkGoalEventByAutoOps(ctx, event, environmentNamespace)
+	// If there are no rules or the goal ID didn't match, it will ignore the error
+	// so we can acknowledge the message because the event doesn't belong to no one
 	if err != nil && err != ErrNoAutoOpsRules && err != ErrAutoOpsRulesNotFound {
 		return nil, retriable, err
 	}
@@ -590,6 +594,7 @@ func (p *Persister) linkGoalEvent(
 		evaluations = append(evaluations, evalAuto...)
 	}
 	if len(evaluations) == 0 {
+		handledCounter.WithLabelValues(codeNoLinking).Inc()
 		return nil, false, ErrNoLinking
 	}
 	evalsMap := make(map[string]struct{})
@@ -627,13 +632,11 @@ func (p *Persister) linkGoalEventByAutoOps(
 		return nil, true, err
 	}
 	if len(list) == 0 {
-		handledCounter.WithLabelValues(codeNoAutoOpsRules).Inc()
 		return nil, false, ErrNoAutoOpsRules
 	}
 	// Find the feature flags by goal ID
 	featureIDs := p.findFeatureIDs(event.GoalId, list)
 	if len(featureIDs) == 0 {
-		handledCounter.WithLabelValues(codeAutoOpsRulesNotFound).Inc()
 		return nil, false, ErrAutoOpsRulesNotFound
 	}
 	// Get the lastest feature version
@@ -669,12 +672,11 @@ func (p *Persister) findFeatureIDs(goalID string, listAutoOpsRules []*aoproto.Au
 		autoOpsRule := &aodomain.AutoOpsRule{AutoOpsRule: aor}
 		// We ignore the rules that are already triggered
 		if autoOpsRule.AlreadyTriggered() {
-			handledCounter.WithLabelValues(codeAutoOpsAlreadyTriggered).Inc()
 			continue
 		}
 		clauses, err := autoOpsRule.ExtractOpsEventRateClauses()
 		if err != nil {
-			handledCounter.WithLabelValues(codeExtractOpsEventRateClauses).Inc()
+			handledCounter.WithLabelValues(codeFailedToExtractOpsEventRateClauses).Inc()
 			continue
 		}
 		for _, clause := range clauses {
@@ -731,7 +733,6 @@ func (p *Persister) linkGoalEventByExperiment(
 		return nil, true, err
 	}
 	if len(experiments) == 0 {
-		handledCounter.WithLabelValues(codeNoExperiments).Inc()
 		return nil, false, ErrNoExperiments
 	}
 	// Find the experiment by goal ID
@@ -746,7 +747,6 @@ func (p *Persister) linkGoalEventByExperiment(
 		}
 	}
 	if experiment == nil {
-		handledCounter.WithLabelValues(codeExperimentNotFound).Inc()
 		return nil, false, ErrExperimentNotFound
 	}
 	// Get the user evaluation using the experiment info
