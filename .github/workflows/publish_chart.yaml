@@ -47,7 +47,7 @@ jobs:
           # Because the version is based on the tag, if the publish_chart starts before
           # the release workflow, it will create a chart with an old version.
       - name: Wait for release note to succeed
-        if: ${{ github.event.inputs.skip_release_note == 'false' }}
+        if: ${{ github.event.inputs.skip_release_note != 'true' }}
         uses: lewagon/wait-on-check-action@0179dfc359f90a703c41240506f998ee1603f9ea #v1.0.0
         with:
           ref: ${{ github.ref }}
