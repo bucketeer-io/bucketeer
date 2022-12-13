@@ -177,6 +177,7 @@ func NewPersister(
 	return &Persister{
 		experimentClient:      experimentClient,
 		featureClient:         featureClient,
+		autoOpsClient:         autoOpsClient,
 		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
 		datastore:             ds,
 		userEvaluationStorage: featurestorage.NewUserEvaluationsStorage(bt),
