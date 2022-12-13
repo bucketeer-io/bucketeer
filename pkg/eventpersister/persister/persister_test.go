@@ -300,7 +300,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           "",
-			expectedErr:        ErrNoLinking,
+			expectedErr:        ErrNothingToLink,
 			expectedRepeatable: false,
 		},
 		{
@@ -350,7 +350,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           "",
-			expectedErr:        ErrNoLinking,
+			expectedErr:        ErrNothingToLink,
 			expectedRepeatable: false,
 		},
 		{
@@ -713,7 +713,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           "",
-			expectedErr:        ErrNoLinking,
+			expectedErr:        ErrNothingToLink,
 			expectedRepeatable: false,
 		},
 		{
@@ -771,7 +771,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           "",
-			expectedErr:        ErrNoLinking,
+			expectedErr:        ErrNothingToLink,
 			expectedRepeatable: false,
 		},
 		{
@@ -1105,7 +1105,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           "",
-			expectedErr:        ErrNoLinking,
+			expectedErr:        ErrNothingToLink,
 			expectedRepeatable: false,
 		},
 		{

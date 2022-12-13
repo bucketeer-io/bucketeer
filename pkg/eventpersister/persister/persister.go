@@ -58,7 +58,7 @@ var (
 	ErrExperimentNotFound        = errors.New("eventpersister: experiment not found")
 	ErrNoAutoOpsRules            = errors.New("eventpersister: no auto ops rules")
 	ErrNoExperiments             = errors.New("eventpersister: no experiments")
-	ErrNoLinking                 = errors.New("eventpersister: no linking")
+	ErrNothingToLink             = errors.New("eventpersister: nothing to link")
 	ErrInvalidGoalEventTimestamp = errors.New("eventpersister: invalid goal event timestamp")
 )
 
@@ -594,8 +594,8 @@ func (p *Persister) linkGoalEvent(
 		evaluations = append(evaluations, evalAuto...)
 	}
 	if len(evaluations) == 0 {
-		handledCounter.WithLabelValues(codeNoLinking).Inc()
-		return nil, false, ErrNoLinking
+		handledCounter.WithLabelValues(codeNothingToLink).Inc()
+		return nil, false, ErrNothingToLink
 	}
 	evalsMap := make(map[string]struct{})
 	for _, ev := range evaluations {
