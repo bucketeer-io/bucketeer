@@ -38,6 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       IMAGE_TAG: ${{ steps.tag.outputs.value }}
+      REF: ${{ steps.ref.outputs.value }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -45,6 +46,9 @@ jobs:
       - name: Store git tag value to output
         id: tag
         run: echo "value=$(git describe --tags --always --abbrev=7)" >> $GITHUB_OUTPUT
+      - name: Store git ref value to output
+        id: ref
+        run: echo "value=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
 
   go:
     needs: setup
@@ -276,7 +280,7 @@ jobs:
           repository: ${{ secrets.CONFIG_REPO }}
           token: ${{ secrets.REPO_ACCESS_PAT }}
           event-type: release
-          client-payload: '{"image_tag": "${{ needs.setup.outputs.IMAGE_TAG }}", "committer": "${{ github.event.head_commit.author.name }}", "commit_message": "${{ github.event.head_commit.message }}", "commit_url": "${{ github.event.head_commit.url }}", "skip_e2e": "${{ github.event.inputs.skip_e2e }}", "skip_prd_pr": "${{ github.event.inputs.skip_prd_pr }}"}'
+          client-payload: '{"ref": "${{ needs.setup.outputs.REF }}", "image_tag": "${{ needs.setup.outputs.IMAGE_TAG }}", "committer": "${{ github.event.head_commit.author.name }}", "commit_message": "${{ github.event.head_commit.message }}", "commit_url": "${{ github.event.head_commit.url }}", "skip_e2e": "${{ github.event.inputs.skip_e2e }}", "skip_prd_pr": "${{ github.event.inputs.skip_prd_pr }}"}'
 
   notify-success-to-slack:
     needs: dispatch
