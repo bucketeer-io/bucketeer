@@ -101,11 +101,28 @@ jobs:
           password: ${{ secrets.GHCR_PAT }}
       - name: push go application images to GHCR
         run: |
-          for APP in `ls bin`
-          do
-            IMAGE=`./tools/build/show-image-name.sh $APP`
+          push_func(){
+            IMAGE=`./tools/build/show-image-name.sh $1`
             docker tag bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
             docker push ${{ env.GHCR_REGISTRY }}/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
+          }
+          pids=()
+          for APP in `ls bin`
+          do
+            push_func "$APP" &
+            pids+=($!)
+          done
+          for pid in "${pids[@]}"; do
+          if wait -n; then
+            :
+          else
+            exit_code=$?
+            echo "Process exited with $exit_code, killing the other processes now."
+            for pid in "${pids[@]}"; do
+              kill -9 "$pid" 2> /dev/null || :
+            done
+            exit "$exit_code"
+          fi
           done
       - name: Authenticate to Google Cloud
         id: auth
@@ -122,13 +139,29 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
       - name: push go application images to GAR
         run: |
-          for APP in `ls bin`
-          do
-            IMAGE=`./tools/build/show-image-name.sh $APP`
+          push_func(){
+            IMAGE=`./tools/build/show-image-name.sh $1`
             docker tag bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
             docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }}
+          }
+          pids=()
+          for APP in `ls bin`
+          do
+            push_func "$APP" &
+            pids+=($!)
           done
-
+          for pid in "${pids[@]}"; do
+          if wait -n; then
+            :
+          else
+            exit_code=$?
+            echo "Process exited with $exit_code, killing the other processes now."
+            for pid in "${pids[@]}"; do
+              kill -9 "$pid" 2> /dev/null || :
+            done
+            exit "$exit_code"
+          fi
+          done
   python:
     needs: setup
     runs-on: ubuntu-20.04
