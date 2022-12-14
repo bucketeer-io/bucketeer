@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
+	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
@@ -63,6 +64,7 @@ type server struct {
 	flushTimeout                 *time.Duration
 	experimentService            *string
 	featureService               *string
+	autoOpsService               *string
 	certPath                     *string
 	keyPath                      *string
 	serviceTokenPath             *string
@@ -107,7 +109,11 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"experiment-service",
 			"bucketeer-experiment-service address.",
 		).Default("experiment:9090").String(),
-		featureService:   cmd.Flag("feature-service", "bucketeer-feature-service address.").Default("feature:9090").String(),
+		featureService: cmd.Flag("feature-service", "bucketeer-feature-service address.").Default("feature:9090").String(),
+		autoOpsService: cmd.Flag(
+			"auto-ops-service",
+			"bucketeer-auto-ops-service address.",
+		).Default("auto-ops:9090").String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -192,6 +198,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer featureClient.Close()
 
+	autoOpsClient, err := aoclient.NewClient(*s.autoOpsService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer autoOpsClient.Close()
+
 	if err != nil {
 		return err
 	}
@@ -224,6 +242,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	p := persister.NewPersister(
 		experimentClient,
 		featureClient,
+		autoOpsClient,
 		puller,
 		datastore,
 		btClient,

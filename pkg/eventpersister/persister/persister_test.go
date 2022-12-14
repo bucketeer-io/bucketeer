@@ -25,11 +25,13 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	aomock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	fcmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -37,6 +39,7 @@ import (
 	pullermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/mock"
 	btstorage "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	esproto "github.com/bucketeer-io/bucketeer/proto/event/service"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -207,13 +210,12 @@ func TestMarshalEvaluationEvent(t *testing.T) {
 	}
 }
 
-func TestMarshaGoalEvent(t *testing.T) {
+func TestMarshalGoalEventWithExperiments(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	timeNow := time.Now()
 	timeFormated := time.Unix(timeNow.Unix(), 0).Format(time.RFC3339)
-	timeMoreThan24Hours := timeNow.AddDate(0, 0, -2)
 	environmentNamespace := "ns"
 	patterns := []struct {
 		desc               string
@@ -223,33 +225,6 @@ func TestMarshaGoalEvent(t *testing.T) {
 		expectedErr        error
 		expectedRepeatable bool
 	}{
-		{
-			desc:               "err: ErrUnexpectedMessageType",
-			input:              "",
-			expected:           "",
-			expectedErr:        ErrUnexpectedMessageType,
-			expectedRepeatable: false,
-		},
-		{
-			desc:  "err: invalid goal event timestamp",
-			setup: nil,
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
-				Timestamp: timeMoreThan24Hours.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected:           "",
-			expectedErr:        ErrInvalidGoalEventTimestamp,
-			expectedRepeatable: false,
-		},
 		{
 			desc: "err: list experiment internal",
 			setup: func(ctx context.Context, p *Persister) {
@@ -302,6 +277,14 @@ func TestMarshaGoalEvent(t *testing.T) {
 						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{}, nil)
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_GOAL_BATCH,
@@ -317,7 +300,7 @@ func TestMarshaGoalEvent(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           "",
-			expectedErr:        ErrNoExperiments,
+			expectedErr:        ErrNothingToLink,
 			expectedRepeatable: false,
 		},
 		{
@@ -344,6 +327,14 @@ func TestMarshaGoalEvent(t *testing.T) {
 						},
 					},
 				}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{}, nil)
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_GOAL_BATCH,
@@ -359,7 +350,7 @@ func TestMarshaGoalEvent(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           "",
-			expectedErr:        ErrExperimentNotFound,
+			expectedErr:        ErrNothingToLink,
 			expectedRepeatable: false,
 		},
 		{
@@ -544,6 +535,14 @@ func TestMarshaGoalEvent(t *testing.T) {
 						},
 					},
 				}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{}, nil)
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
 					ctx,
 					"uid",
@@ -574,6 +573,935 @@ func TestMarshaGoalEvent(t *testing.T) {
 			expected: fmt.Sprintf(`{
 				"environmentNamespace": "ns",
 				"evaluations": ["fid:1:vid:TARGET"],
+				"goalId": "gid",
+				"metric.userId": "uid",
+				"ns.user.data.atr":"av",
+				"sourceId":"ANDROID",
+				"tag": "tag",
+				"timestamp": "%s",
+				"userId":"uid",
+				"value": "1.2"
+			}`, timeFormated),
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			persister := newPersister(mockController)
+			if p.setup != nil {
+				p.setup(persister.ctx, persister)
+			}
+			actual, repeatable, err := persister.marshalEvent(persister.ctx, p.input, environmentNamespace)
+			assert.Equal(t, p.expectedRepeatable, repeatable)
+			if err != nil {
+				assert.Equal(t, actual, "")
+				assert.Equal(t, p.expectedErr, err)
+			} else {
+				assert.Equal(t, p.expectedErr, err)
+				buf := new(bytes.Buffer)
+				err = json.Compact(buf, []byte(p.expected))
+				require.NoError(t, err)
+				assert.Equal(t, buf.String(), actual)
+			}
+		})
+	}
+}
+
+func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	timeNow := time.Now()
+	timeFormated := time.Unix(timeNow.Unix(), 0).Format(time.RFC3339)
+	convert := func(oerc *aoproto.OpsEventRateClause) []*aoproto.Clause {
+		var clauses []*aoproto.Clause
+		c, err := ptypes.MarshalAny(oerc)
+		require.NoError(t, err)
+		clauses = append(clauses, &aoproto.Clause{Clause: c})
+		return clauses
+	}
+	environmentNamespace := "ns"
+	patterns := []struct {
+		desc               string
+		setup              func(context.Context, *Persister)
+		input              interface{}
+		expected           string
+		expectedErr        error
+		expectedRepeatable bool
+	}{
+		{
+			desc: "err: list auto ops rules internal",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(nil, errors.New("internal"))
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        errors.New("internal"),
+			expectedRepeatable: true,
+		},
+		{
+			desc: "err: list auto ops rules empty",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{}, nil)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        ErrNothingToLink,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "err: auto ops rules not found",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*aoproto.AutoOpsRule{
+						{
+							FeatureId: "fid-1",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "goal-id-1",
+							}),
+						},
+						{
+							FeatureId: "fid-2",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "goal-id-2",
+							}),
+						},
+					},
+				}, nil)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        ErrNothingToLink,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "err: get features internal error",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*aoproto.AutoOpsRule{
+						{
+							FeatureId: "fid",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+					},
+				}, nil)
+				p.featureClient.(*fcmock.MockClient).EXPECT().GetFeatures(
+					ctx,
+					&featureproto.GetFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						Ids:                  []string{"fid"},
+					},
+				).Return(nil, errors.New("internal"))
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        errors.New("internal"),
+			expectedRepeatable: true,
+		},
+		{
+			desc: "err: get evaluation not found",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*aoproto.AutoOpsRule{
+						{
+							FeatureId: "fid",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+					},
+				}, nil)
+				p.featureClient.(*fcmock.MockClient).EXPECT().GetFeatures(
+					ctx,
+					&featureproto.GetFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						Ids:                  []string{"fid"},
+					},
+				).Return(&featureproto.GetFeaturesResponse{
+					Features: []*featureproto.Feature{
+						{
+							Id:      "fid",
+							Version: int32(1),
+						},
+					},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					"ns",
+					"tag",
+					"fid",
+					int32(1),
+				).Return(nil, btstorage.ErrKeyNotFound)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        btstorage.ErrKeyNotFound,
+			expectedRepeatable: true,
+		},
+		{
+			desc: "err: get evaluation internal",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*aoproto.AutoOpsRule{
+						{
+							FeatureId: "fid",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+					},
+				}, nil)
+				p.featureClient.(*fcmock.MockClient).EXPECT().GetFeatures(
+					ctx,
+					&featureproto.GetFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						Ids:                  []string{"fid"},
+					},
+				).Return(&featureproto.GetFeaturesResponse{
+					Features: []*featureproto.Feature{
+						{
+							Id:      "fid",
+							Version: int32(1),
+						},
+					},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"tag",
+					"fid",
+					int32(1),
+				).Return(nil, errors.New("internal"))
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        errors.New("internal"),
+			expectedRepeatable: true,
+		},
+		{
+			desc: "err: get evaluation internal using empty tag",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*aoproto.AutoOpsRule{
+						{
+							FeatureId: "fid",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+					},
+				}, nil)
+				p.featureClient.(*fcmock.MockClient).EXPECT().GetFeatures(
+					ctx,
+					&featureproto.GetFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						Ids:                  []string{"fid"},
+					},
+				).Return(&featureproto.GetFeaturesResponse{
+					Features: []*featureproto.Feature{
+						{
+							Id:      "fid",
+							Version: int32(1),
+						},
+					},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"none",
+					"fid",
+					int32(1),
+				).Return(nil, errors.New("internal"))
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: time.Now().Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "",
+			},
+			expected:           "",
+			expectedErr:        errors.New("internal"),
+			expectedRepeatable: true,
+		},
+		{
+			desc: "err: auto ops is already triggered",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*aoproto.AutoOpsRule{
+						{
+							FeatureId:   "fid",
+							TriggeredAt: int64(1),
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+					},
+				}, nil)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_ANDROID,
+				Timestamp: timeNow.Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        ErrNothingToLink,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*aoproto.AutoOpsRule{
+						{
+							FeatureId: "fid",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+						{
+							FeatureId:   "fid-2",
+							TriggeredAt: int64(1),
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+						{
+							FeatureId: "fid-3",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+					},
+				}, nil)
+				p.featureClient.(*fcmock.MockClient).EXPECT().GetFeatures(
+					ctx,
+					&featureproto.GetFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						Ids:                  []string{"fid", "fid-3"},
+					},
+				).Return(&featureproto.GetFeaturesResponse{
+					Features: []*featureproto.Feature{
+						{
+							Id:      "fid",
+							Version: int32(1),
+						},
+						{
+							Id:      "fid-3",
+							Version: int32(1),
+						},
+					},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"tag",
+					"fid",
+					int32(1),
+				).Return(&featureproto.Evaluation{
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					VariationId:    "vid",
+					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"tag",
+					"fid-3",
+					int32(1),
+				).Return(&featureproto.Evaluation{
+					FeatureId:      "fid-3",
+					FeatureVersion: int32(1),
+					VariationId:    "vid-3",
+					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				}, nil)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_ANDROID,
+				Timestamp: timeNow.Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected: fmt.Sprintf(`{
+				"environmentNamespace": "ns",
+				"evaluations": ["fid:1:vid:TARGET","fid-3:1:vid-3:TARGET"],
+				"goalId": "gid",
+				"metric.userId": "uid",
+				"ns.user.data.atr":"av",
+				"sourceId":"ANDROID",
+				"tag": "tag",
+				"timestamp": "%s",
+				"userId":"uid",
+				"value": "1.2"
+			}`, timeFormated),
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			persister := newPersister(mockController)
+			if p.setup != nil {
+				p.setup(persister.ctx, persister)
+			}
+			actual, repeatable, err := persister.marshalEvent(persister.ctx, p.input, environmentNamespace)
+			assert.Equal(t, p.expectedRepeatable, repeatable)
+			if err != nil {
+				assert.Equal(t, actual, "")
+				assert.Equal(t, p.expectedErr, err)
+			} else {
+				assert.Equal(t, p.expectedErr, err)
+				buf := new(bytes.Buffer)
+				err = json.Compact(buf, []byte(p.expected))
+				require.NoError(t, err)
+				assert.Equal(t, buf.String(), actual)
+			}
+		})
+	}
+}
+
+func TestMarshalGoalEventWithExperimentsAndAutoOpsRules(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	timeNow := time.Now()
+	timeFormated := time.Unix(timeNow.Unix(), 0).Format(time.RFC3339)
+	convert := func(oerc *aoproto.OpsEventRateClause) []*aoproto.Clause {
+		var clauses []*aoproto.Clause
+		c, err := ptypes.MarshalAny(oerc)
+		require.NoError(t, err)
+		clauses = append(clauses, &aoproto.Clause{Clause: c})
+		return clauses
+	}
+	timeMoreThan24Hours := timeNow.AddDate(0, 0, -2)
+	environmentNamespace := "ns"
+	patterns := []struct {
+		desc               string
+		setup              func(context.Context, *Persister)
+		input              interface{}
+		expected           string
+		expectedErr        error
+		expectedRepeatable bool
+	}{
+		{
+			desc:               "err: ErrUnexpectedMessageType",
+			input:              "",
+			expected:           "",
+			expectedErr:        ErrUnexpectedMessageType,
+			expectedRepeatable: false,
+		},
+		{
+			desc:  "err: invalid goal event timestamp",
+			setup: nil,
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				Timestamp: timeMoreThan24Hours.Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected:           "",
+			expectedErr:        ErrInvalidGoalEventTimestamp,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "success: using same feature flag id, version and goal id in the experiments and in the auto ops",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid",
+							FeatureVersion: int32(1),
+						},
+					},
+				}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*aoproto.AutoOpsRule{
+						{
+							FeatureId: "fid",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+					},
+				}, nil)
+				p.featureClient.(*fcmock.MockClient).EXPECT().GetFeatures(
+					ctx,
+					&featureproto.GetFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						Ids:                  []string{"fid"},
+					},
+				).Return(&featureproto.GetFeaturesResponse{
+					Features: []*featureproto.Feature{
+						{
+							Id:      "fid",
+							Version: int32(1),
+						},
+					},
+				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"tag",
+					"fid",
+					int32(1),
+				).Return(&featureproto.Evaluation{
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					VariationId:    "vid",
+					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				}, nil).MaxTimes(2)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_ANDROID,
+				Timestamp: timeNow.Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected: fmt.Sprintf(`{
+				"environmentNamespace": "ns",
+				"evaluations": ["fid:1:vid:TARGET"],
+				"goalId": "gid",
+				"metric.userId": "uid",
+				"ns.user.data.atr":"av",
+				"sourceId":"ANDROID",
+				"tag": "tag",
+				"timestamp": "%s",
+				"userId":"uid",
+				"value": "1.2"
+			}`, timeFormated),
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "success: using same goal id but different feature flags",
+			setup: func(ctx context.Context, p *Persister) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_FORCE_STOPPED,
+							exproto.Experiment_STOPPED,
+						},
+						Archived: &wrappers.BoolValue{Value: false},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid-1",
+							FeatureVersion: int32(1),
+						},
+					},
+				}, nil)
+				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
+					ctx,
+					&aoproto.ListAutoOpsRulesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+					},
+				).Return(&aoproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*aoproto.AutoOpsRule{
+						{
+							FeatureId: "fid-2",
+							Clauses: convert(&aoproto.OpsEventRateClause{
+								GoalId: "gid",
+							}),
+						},
+					},
+				}, nil)
+				p.featureClient.(*fcmock.MockClient).EXPECT().GetFeatures(
+					ctx,
+					&featureproto.GetFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						Ids:                  []string{"fid-2"},
+					},
+				).Return(&featureproto.GetFeaturesResponse{
+					Features: []*featureproto.Feature{
+						{
+							Id:      "fid-2",
+							Version: int32(1),
+						},
+					},
+				}, nil)
+				// Query for experiments
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"tag",
+					"fid-1",
+					int32(1),
+				).Return(&featureproto.Evaluation{
+					FeatureId:      "fid-1",
+					FeatureVersion: int32(1),
+					VariationId:    "vid-1",
+					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				}, nil).MaxTimes(1)
+				// Query for auto ops rules
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"tag",
+					"fid-2",
+					int32(1),
+				).Return(&featureproto.Evaluation{
+					FeatureId:      "fid-2",
+					FeatureVersion: int32(1),
+					VariationId:    "vid-2",
+					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				}, nil).MaxTimes(1)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_ANDROID,
+				Timestamp: timeNow.Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: map[string]string{"atr": "av"},
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "tag",
+			},
+			expected: fmt.Sprintf(`{
+				"environmentNamespace": "ns",
+				"evaluations": ["fid-2:1:vid-2:TARGET", "fid-1:1:vid-1:TARGET"],
 				"goalId": "gid",
 				"metric.userId": "uid",
 				"ns.user.data.atr":"av",
@@ -798,6 +1726,7 @@ func newPersister(c *gomock.Controller) *Persister {
 	return &Persister{
 		experimentClient:      ecmock.NewMockClient(c),
 		featureClient:         fcmock.NewMockClient(c),
+		autoOpsClient:         aomock.NewMockClient(c),
 		puller:                pullermock.NewMockRateLimitedPuller(c),
 		datastore:             nil,
 		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),
@@ -814,6 +1743,7 @@ func newPersisterWithMysqlClient(c *gomock.Controller) *Persister {
 	return &Persister{
 		experimentClient:      ecmock.NewMockClient(c),
 		featureClient:         fcmock.NewMockClient(c),
+		autoOpsClient:         aomock.NewMockClient(c),
 		puller:                pullermock.NewMockRateLimitedPuller(c),
 		datastore:             nil,
 		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),

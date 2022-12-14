@@ -21,13 +21,15 @@ import (
 )
 
 const (
-	codeExperimentNotFound         = "ExperimentNotFound"
-	codeFailedToListExperiments    = "FailedToListExperiments"
-	codeFailedToGetUserEvaluation  = "FailedToGetUserEvaluation"
-	codeInvalidGoalEventTimestamp  = "InvalidGoalEventTimestamp"
-	codeNoExperiments              = "NoExperiments"
-	codeUpsertUserEvaluationFailed = "UpsertUserEvaluationFailed"
-	codeUserEvaluationNotFound     = "UserEvaluationNotFound"
+	codeFailedToExtractOpsEventRateClauses = "FailedToExtractOpsEventRateClauses"
+	codeFailedToGetFeatures                = "FailedToGetFeatures"
+	codeFailedToGetUserEvaluation          = "FailedToGetUserEvaluation"
+	codeFailedToListAutoOpsRules           = "FailedToListAutoOpsRules"
+	codeFailedToListExperiments            = "FailedToListExperiments"
+	codeInvalidGoalEventTimestamp          = "InvalidGoalEventTimestamp"
+	codeNothingToLink                      = "NothingToLink"
+	codeUpsertUserEvaluationFailed         = "UpsertUserEvaluationFailed"
+	codeUserEvaluationNotFound             = "UserEvaluationNotFound"
 )
 
 var (
