@@ -97,7 +97,7 @@ jobs:
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
           registry: ghcr.io
-          username: ca-dp
+          username: ${{ secrets.GHCR_USER_NAME }}
           password: ${{ secrets.GHCR_PAT }}
       - name: push go application images to GHCR
         run: |
@@ -173,7 +173,7 @@ jobs:
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
           registry: ghcr.io
-          username: ca-dp
+          username: ${{ secrets.GHCR_USER_NAME }}
           password: ${{ secrets.GHCR_PAT }}
       - name: Push python application image to GHCR
         run: |
@@ -245,7 +245,7 @@ jobs:
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
         with:
           registry: ghcr.io
-          username: ca-dp
+          username: ${{ secrets.GHCR_USER_NAME }}
           password: ${{ secrets.GHCR_PAT }}
       - name: Push web application image to GHCR
         run: |
