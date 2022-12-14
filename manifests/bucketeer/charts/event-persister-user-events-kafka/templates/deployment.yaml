@@ -96,10 +96,6 @@ spec:
               value: "{{ .Values.env.pullerMaxOutstandingMessages }}"
             - name: BUCKETEER_EVENT_PERSISTER_PULLER_MAX_OUTSTANDING_BYTES
               value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
-            - name: BUCKETEER_EVENT_PERSISTER_REDIS_SERVER_NAME
-              value: "{{ .Values.env.redis.serverName }}"
-            - name: BUCKETEER_EVENT_PERSISTER_REDIS_ADDR
-              value: "{{ .Values.env.redis.addr }}"
             - name: BUCKETEER_EVENT_PERSISTER_CERT
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_EVENT_PERSISTER_KEY
