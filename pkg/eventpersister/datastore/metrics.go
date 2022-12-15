@@ -23,9 +23,12 @@ import (
 )
 
 const (
-	writerKafka = "Kafka"
-	codeSuccess = "Success"
-	codeFail    = "Fail"
+	writerKafka                    = "Kafka"
+	codeSuccess                    = "Success"
+	codeFail                       = "Fail"
+	codeFailedToConvertMultiErrors = "FailedToConvertMultiErrors"
+	codeRepeatableError            = "RepeatableError"
+	codeNonRepeatableError         = "NonRepeatableError"
 )
 
 var (

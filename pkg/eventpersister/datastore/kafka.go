@@ -88,7 +88,7 @@ func (w *kafkaWriter) Write(
 	startTime := time.Now()
 	defer func() {
 		code := codeSuccess
-		if err != nil {
+		if err != nil || len(fails) > 0 {
 			code = codeFail
 		}
 		writeCounter.WithLabelValues(writerKafka, code).Inc()
@@ -105,6 +105,11 @@ func (w *kafkaWriter) Write(
 	err = w.producer.SendMessages(messages)
 	merr, ok := err.(sarama.ProducerErrors)
 	if !ok {
+		writeCounter.WithLabelValues(writerKafka, codeFailedToConvertMultiErrors).Inc()
+		w.logger.Error("failed to convert kafka multi errors",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+		)
 		return nil, err
 	}
 	fails = make(map[string]bool, len(events))
@@ -112,17 +117,20 @@ func (w *kafkaWriter) Write(
 		id := string(e.Msg.Key.(sarama.StringEncoder))
 		if !w.isRepeatable(e.Err) {
 			fails[id] = false
-			w.logger.Error("MultiError NonRepeatable",
+			writeCounter.WithLabelValues(writerKafka, codeNonRepeatableError).Inc()
+			w.logger.Error("kafka non repeatable error",
 				zap.Error(e),
 				zap.String("environmentNamespace", environmentNamespace),
-				zap.Any("msg", id),
+				zap.Any("msgId", id),
 			)
-			break
+			continue
 		}
-		w.logger.Error("MultiError Repeatable",
+		fails[id] = true
+		writeCounter.WithLabelValues(writerKafka, codeRepeatableError).Inc()
+		w.logger.Error("kafka repeatable error",
 			zap.Error(e),
 			zap.String("environmentNamespace", environmentNamespace),
-			zap.Any("msg", id),
+			zap.Any("msgId", id),
 		)
 	}
 	return fails, nil
