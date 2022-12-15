@@ -102,7 +102,11 @@ func (w *kafkaWriter) Write(
 			Value: sarama.StringEncoder(event),
 		})
 	}
+	fails = make(map[string]bool, len(events))
 	err = w.producer.SendMessages(messages)
+	if err == nil {
+		return fails, nil
+	}
 	merr, ok := err.(sarama.ProducerErrors)
 	if !ok {
 		writeCounter.WithLabelValues(writerKafka, codeFailedToConvertMultiErrors).Inc()
@@ -110,9 +114,8 @@ func (w *kafkaWriter) Write(
 			zap.Error(err),
 			zap.String("environmentNamespace", environmentNamespace),
 		)
-		return nil, err
+		return fails, err
 	}
-	fails = make(map[string]bool, len(events))
 	for _, e := range merr {
 		id := string(e.Msg.Key.(sarama.StringEncoder))
 		if !w.isRepeatable(e.Err) {
