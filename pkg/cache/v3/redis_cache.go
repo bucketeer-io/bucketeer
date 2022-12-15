@@ -15,6 +15,8 @@
 package v3
 
 import (
+	"time"
+
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	redis "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 )
@@ -80,4 +82,12 @@ func (r *redisCache) Increment(key string) (int64, error) {
 
 func (r *redisCache) PFAdd(key string, els ...string) (int64, error) {
 	return r.client.PFAdd(key, els...)
+}
+
+func (r *redisCache) Pipeline() redis.PipeClient {
+	return r.client.Pipeline()
+}
+
+func (r *redisCache) Expire(key string, expiration time.Duration) (bool, error) {
+	return r.client.Expire(key, expiration)
 }

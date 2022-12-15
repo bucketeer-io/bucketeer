@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"time"
 
+	goredis "github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -72,6 +73,7 @@ const (
 	eventCountKey      = "ec"
 	userCountKey       = "uc"
 	defaultVariationID = "default"
+	oneMonth           = 24 * time.Hour * 31
 )
 
 type eventMap map[string]proto.Message
@@ -534,13 +536,11 @@ func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamesp
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
 		vID := getVariationID(e.Reason.Type, e.VariationId)
 		eck := p.newEvaluationCountkey(eventCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
-		_, err := p.evaluationCountCacher.Increment(eck)
-		if err != nil {
+		if err := p.countEvent(eck); err != nil {
 			return err
 		}
 		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
-		_, err = p.evaluationCountCacher.PFAdd(uck, e.UserId)
-		if err != nil {
+		if err := p.countUser(uck, e.UserId); err != nil {
 			return err
 		}
 	}
@@ -849,4 +849,44 @@ func (p *Persister) getUserEvaluation(
 		return nil, err
 	}
 	return evaluation, nil
+}
+
+func (p *Persister) setExpiration(dCmd *goredis.DurationCmd, key string) error {
+	// The value of command is available only after the pipeline is executed.
+	// https://redis.uptrace.dev/guide/go-redis-pipelines.html#pipelines
+	d, err := dCmd.Result()
+	if err != nil {
+		return err
+	}
+	if d == -1 {
+		// The expiration may be overriden because of race condition.
+		// However, we don't have to care it because this expiration is not have to be strict.
+		_, err := p.evaluationCountCacher.Expire(key, oneMonth)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *Persister) countEvent(key string) error {
+	pipe := p.evaluationCountCacher.Pipeline()
+	pipe.Incr(key)
+	dCmd := pipe.TTL(key)
+	_, err := pipe.Exec()
+	if err != nil {
+		return err
+	}
+	return p.setExpiration(dCmd, key)
+}
+
+func (p *Persister) countUser(key, userID string) error {
+	pipe := p.evaluationCountCacher.Pipeline()
+	pipe.PFAdd(key, userID)
+	dCmd := pipe.TTL(key)
+	_, err := pipe.Exec()
+	if err != nil {
+		return err
+	}
+	return p.setExpiration(dCmd, key)
 }

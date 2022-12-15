@@ -39,6 +39,8 @@ const (
 	incrByFloatCmdName = "INCR_BY_FLOAT"
 	delCmdName         = "DEL"
 	incr               = "INCR"
+	expire             = "EXPIRE"
+	exec               = "EXEC"
 )
 
 var (
@@ -69,10 +71,25 @@ type Client interface {
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
 	Incr(key string) (int64, error)
+	Pipeline() PipeClient
+	Expire(key string, expiration time.Duration) (bool, error)
 }
 
 type client struct {
 	rc     *goredis.Client
+	opts   *options
+	logger *zap.Logger
+}
+
+type PipeClient interface {
+	PFAdd(key string, els ...string) *goredis.IntCmd
+	Incr(key string) *goredis.IntCmd
+	TTL(key string) *goredis.DurationCmd
+	Exec() ([]goredis.Cmder, error)
+}
+
+type pipeClient struct {
+	pipe   goredis.Pipeliner
 	opts   *options
 	logger *zap.Logger
 }
@@ -367,6 +384,56 @@ func (c *client) Incr(key string) (int64, error) {
 	}
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, incr, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, incr, code).Observe(
+		time.Since(startTime).Seconds())
+	return v, err
+}
+
+func (c *client) Expire(key string, expiration time.Duration) (bool, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incr).Inc()
+	v, err := c.rc.Expire(key, expiration).Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, expire, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, expire, code).Observe(
+		time.Since(startTime).Seconds())
+	return v, err
+}
+
+func (c *client) Pipeline() PipeClient {
+	return &pipeClient{
+		pipe:   c.rc.Pipeline(),
+		opts:   c.opts,
+		logger: c.logger,
+	}
+}
+
+func (c *pipeClient) Incr(key string) *goredis.IntCmd {
+	return c.pipe.Incr(key)
+}
+
+func (c *pipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
+	return c.pipe.PFAdd(key, els)
+}
+
+func (c *pipeClient) TTL(key string) *goredis.DurationCmd {
+	return c.pipe.TTL(key)
+}
+
+func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incr).Inc()
+	v, err := c.pipe.Exec()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, exec, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, exec, code).Observe(
 		time.Since(startTime).Seconds())
 	return v, err
 }

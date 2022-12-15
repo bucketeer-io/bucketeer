@@ -16,8 +16,10 @@ package testing
 
 import (
 	"sync"
+	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
+	redis "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 )
 
 type inMemoryCache struct {
@@ -81,4 +83,14 @@ func (c *inMemoryCache) Increment(key string) (int64, error) {
 func (c *inMemoryCache) PFAdd(key string, els ...string) (int64, error) {
 	// TODO: implement
 	return 0, nil
+}
+
+func (c *inMemoryCache) Expire(key string, expiration time.Duration) (bool, error) {
+	// TODO: implement
+	return true, nil
+}
+
+func (c *inMemoryCache) Pipeline() redis.PipeClient {
+	// TODO: implement
+	return nil
 }
