@@ -119,7 +119,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateCreateAutoOpsRuleRequest(req); err != nil {
+	if err := s.validateCreateAutoOpsRuleRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	autoOpsRule, err := domain.NewAutoOpsRule(
@@ -239,9 +239,19 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	return &autoopsproto.CreateAutoOpsRuleResponse{}, nil
 }
 
-func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(req *autoopsproto.CreateAutoOpsRuleRequest) error {
+func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
+	req *autoopsproto.CreateAutoOpsRuleRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command.FeatureId == "" {
 		return localizedError(statusFeatureIDRequired, locale.JaJP)
@@ -421,7 +431,14 @@ func validateDeleteAutoOpsRuleRequest(req *autoopsproto.DeleteAutoOpsRuleRequest
 		return dt.Err()
 	}
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -553,7 +570,14 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 		return dt.Err()
 	}
 	if s.isNoUpdateAutoOpsRuleCommand(req) {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	for _, c := range req.AddOpsEventRateClauseCommands {
 		if c.OpsEventRateClause == nil {
@@ -895,7 +919,14 @@ func (s *AutoOpsService) validateExecuteAutoOpsRequest(
 		return dt.Err()
 	}
 	if req.ChangeAutoOpsRuleTriggeredAtCommand == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }

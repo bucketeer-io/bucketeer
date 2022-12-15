@@ -208,7 +208,7 @@ func (s *experimentService) CreateGoal(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCreateGoalRequest(req); err != nil {
+	if err := validateCreateGoalRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	goal, err := domain.NewGoal(req.Command.Id, req.Command.Name, req.Command.Description)
@@ -284,9 +284,16 @@ func (s *experimentService) CreateGoal(
 	return &proto.CreateGoalResponse{}, nil
 }
 
-func validateCreateGoalRequest(req *proto.CreateGoalRequest) error {
+func validateCreateGoalRequest(req *proto.CreateGoalRequest, localizer locale.Localizer) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command.Id == "" {
 		return localizedError(statusGoalIDRequired, locale.JaJP)

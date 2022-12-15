@@ -109,13 +109,20 @@ func (s *authService) GetAuthCodeURL(
 	// When the client is redirected back, the state value will be included in that redirect.
 	// Client compares the returned state to the one generated before,
 	// if the values match then send a new request to ExchangeToken, else deny it.
-	if err := validateGetAuthCodeURLRequest(req); err != nil {
+	if err := validateGetAuthCodeURLRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	url, err := s.oidc.AuthCodeURL(req.State, req.RedirectUrl)
 	if err != nil {
 		if err == oidc.ErrUnregisteredRedirectURL {
-			return nil, localizedError(statusUnregisteredRedirectURL, locale.JaJP)
+			dt, err := statusUnregisteredRedirectURL.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "redirect_url"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get auth code url",
@@ -133,12 +140,19 @@ func (s *authService) GetAuthCodeURL(
 	return &authproto.GetAuthCodeURLResponse{Url: url}, nil
 }
 
-func validateGetAuthCodeURLRequest(req *authproto.GetAuthCodeURLRequest) error {
+func validateGetAuthCodeURLRequest(req *authproto.GetAuthCodeURLRequest, localizer locale.Localizer) error {
 	if req.State == "" {
 		return localizedError(statusMissingState, locale.JaJP)
 	}
 	if req.RedirectUrl == "" {
-		return localizedError(statusMissingRedirectURL, locale.JaJP)
+		dt, err := statusMissingRedirectURL.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "redirect_url"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -148,13 +162,20 @@ func (s *authService) ExchangeToken(
 	req *authproto.ExchangeTokenRequest,
 ) (*authproto.ExchangeTokenResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	if err := validateExchangeTokenRequest(req); err != nil {
+	if err := validateExchangeTokenRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	authToken, err := s.oidc.Exchange(ctx, req.Code, req.RedirectUrl)
 	if err != nil {
 		if err == oidc.ErrUnregisteredRedirectURL {
-			return nil, localizedError(statusUnregisteredRedirectURL, locale.JaJP)
+			dt, err := statusUnregisteredRedirectURL.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "redirect_url"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		if err == oidc.ErrBadRequest {
 			return nil, localizedError(statusInvalidCode, locale.JaJP)
@@ -179,12 +200,19 @@ func (s *authService) ExchangeToken(
 	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
 
-func validateExchangeTokenRequest(req *authproto.ExchangeTokenRequest) error {
+func validateExchangeTokenRequest(req *authproto.ExchangeTokenRequest, localizer locale.Localizer) error {
 	if req.Code == "" {
 		return localizedError(statusMissingCode, locale.JaJP)
 	}
 	if req.RedirectUrl == "" {
-		return localizedError(statusMissingRedirectURL, locale.JaJP)
+		dt, err := statusMissingRedirectURL.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "redirect_url"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -194,13 +222,20 @@ func (s *authService) RefreshToken(
 	req *authproto.RefreshTokenRequest,
 ) (*authproto.RefreshTokenResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	if err := validateRefreshTokenRequest(req); err != nil {
+	if err := validateRefreshTokenRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	authToken, err := s.oidc.RefreshToken(ctx, req.RefreshToken, s.opts.refreshTokenTTL, req.RedirectUrl)
 	if err != nil {
 		if err == oidc.ErrUnregisteredRedirectURL {
-			return nil, localizedError(statusUnregisteredRedirectURL, locale.JaJP)
+			dt, err := statusUnregisteredRedirectURL.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "redirect_url"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		if err == oidc.ErrBadRequest {
 			return nil, localizedError(statusInvalidRefreshToken, locale.JaJP)
@@ -225,12 +260,19 @@ func (s *authService) RefreshToken(
 	return &authproto.RefreshTokenResponse{Token: token}, nil
 }
 
-func validateRefreshTokenRequest(req *authproto.RefreshTokenRequest) error {
+func validateRefreshTokenRequest(req *authproto.RefreshTokenRequest, localizer locale.Localizer) error {
 	if req.RefreshToken == "" {
 		return localizedError(statusMissingRefreshToken, locale.JaJP)
 	}
 	if req.RedirectUrl == "" {
-		return localizedError(statusMissingRedirectURL, locale.JaJP)
+		dt, err := statusMissingRedirectURL.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "redirect_url"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }

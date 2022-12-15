@@ -182,6 +182,7 @@ func TestCreateExperimentMySQL(t *testing.T) {
 
 func TestValidateCreateExperimentRequest(t *testing.T) {
 	t.Parallel()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	patterns := []struct {
 		in       *experimentproto.CreateExperimentRequest
 		expected error
@@ -264,7 +265,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		err := validateCreateExperimentRequest(p.in)
+		err := validateCreateExperimentRequest(p.in, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }

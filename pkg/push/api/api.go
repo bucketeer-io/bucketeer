@@ -105,7 +105,7 @@ func (s *PushService) CreatePush(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateCreatePushRequest(req); err != nil {
+	if err := s.validateCreatePushRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	push, err := domain.NewPush(req.Command.Name, req.Command.FcmApiKey, req.Command.Tags)
@@ -141,7 +141,7 @@ func (s *PushService) CreatePush(
 	if s.containsFCMKey(ctx, pushes, req.Command.FcmApiKey) {
 		return nil, localizedError(statusFCMKeyAlreadyExists, locale.JaJP)
 	}
-	err = s.containsTags(ctx, pushes, req.Command.Tags)
+	err = s.containsTags(ctx, pushes, req.Command.Tags, localizer)
 	if err != nil {
 		if status.Code(err) == codes.AlreadyExists {
 			return nil, localizedError(statusTagAlreadyExists, locale.JaJP)
@@ -222,18 +222,39 @@ func (s *PushService) CreatePush(
 	return &pushproto.CreatePushResponse{}, nil
 }
 
-func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest) error {
+func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest, localizer locale.Localizer) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command.FcmApiKey == "" {
 		return localizedError(statusFCMAPIKeyRequired, locale.JaJP)
 	}
 	if len(req.Command.Tags) == 0 {
-		return localizedError(statusTagsRequired, locale.JaJP)
+		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command.Name == "" {
-		return localizedError(statusNameRequired, locale.JaJP)
+		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -329,16 +350,37 @@ func (s *PushService) validateUpdatePushRequest(
 		return dt.Err()
 	}
 	if s.isNoUpdatePushCommand(req) {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.DeletePushTagsCommand != nil && len(req.DeletePushTagsCommand.Tags) == 0 {
-		return localizedError(statusTagsRequired, locale.JaJP)
+		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if err := s.validateAddPushTagsCommand(ctx, req, localizer); err != nil {
 		return err
 	}
 	if req.RenamePushCommand != nil && req.RenamePushCommand.Name == "" {
-		return localizedError(statusNameRequired, locale.JaJP)
+		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -352,7 +394,14 @@ func (s *PushService) validateAddPushTagsCommand(
 		return nil
 	}
 	if len(req.AddPushTagsCommand.Tags) == 0 {
-		return localizedError(statusTagsRequired, locale.JaJP)
+		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	pushes, err := s.listAllPushes(ctx, req.EnvironmentNamespace, localizer)
 	if err != nil {
@@ -365,10 +414,17 @@ func (s *PushService) validateAddPushTagsCommand(
 		}
 		return dt.Err()
 	}
-	err = s.containsTags(ctx, pushes, req.AddPushTagsCommand.Tags)
+	err = s.containsTags(ctx, pushes, req.AddPushTagsCommand.Tags, localizer)
 	if err != nil {
 		if status.Code(err) == codes.AlreadyExists {
-			return localizedError(statusTagAlreadyExists, locale.JaJP)
+			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "tag"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		s.logger.Error(
 			"Failed to validate tag existence",
@@ -481,7 +537,14 @@ func validateDeletePushRequest(req *pushproto.DeletePushRequest, localizer local
 		return dt.Err()
 	}
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -500,14 +563,26 @@ func (s *PushService) createUpdatePushCommands(req *pushproto.UpdatePushRequest)
 	return commands
 }
 
-func (s *PushService) containsTags(ctx context.Context, pushes []*pushproto.Push, tags []string) error {
+func (s *PushService) containsTags(
+	ctx context.Context,
+	pushes []*pushproto.Push,
+	tags []string,
+	localizer locale.Localizer,
+) error {
 	m, err := s.tagMap(pushes)
 	if err != nil {
 		return err
 	}
 	for _, t := range tags {
 		if _, ok := m[t]; ok {
-			return localizedError(statusTagAlreadyExists, locale.JaJP)
+			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "tag"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 	}
 	return nil

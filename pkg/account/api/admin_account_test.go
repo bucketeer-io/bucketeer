@@ -65,7 +65,7 @@ func TestGetMeMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &accountproto.GetMeRequest{},
 			expected:    "",
-			expectedErr: localizedError(statusUnauthenticated, locale.JaJP),
+			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
 		},
 		{
 			desc:        "errInvalidEmail",
@@ -73,7 +73,7 @@ func TestGetMeMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &accountproto.GetMeRequest{},
 			expected:    "",
-			expectedErr: localizedError(statusInvalidEmail, locale.JaJP),
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
 			desc: "errInternal",
@@ -84,12 +84,12 @@ func TestGetMeMySQL(t *testing.T) {
 					gomock.Any(),
 				).Return(
 					nil,
-					localizedError(statusInternal, locale.JaJP),
+					createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 				)
 			},
 			input:       &accountproto.GetMeRequest{},
 			expected:    "",
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "errInternal_no_projects",
@@ -105,7 +105,7 @@ func TestGetMeMySQL(t *testing.T) {
 			},
 			input:       &accountproto.GetMeRequest{},
 			expected:    "",
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "errInternal_no_environments",
@@ -131,7 +131,7 @@ func TestGetMeMySQL(t *testing.T) {
 			},
 			input:       &accountproto.GetMeRequest{},
 			expected:    "",
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "errNotFound",
@@ -212,7 +212,7 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 			req: &accountproto.CreateAdminAccountRequest{
 				Command: nil,
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc:    "errEmailIsEmpty",
@@ -228,14 +228,14 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 			req: &accountproto.CreateAdminAccountRequest{
 				Command: &accountproto.CreateAdminAccountCommand{Email: "bucketeer@"},
 			},
-			expectedErr: localizedError(statusInvalidEmail, locale.JaJP),
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, localizedError(statusInternal, locale.JaJP))
+				).Return(nil, createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)))
 			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAdminAccountRequest{
@@ -243,7 +243,7 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 					Email: "bucketeer@example.com",
 				},
 			},
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "errAlreadyExists_EnvironmentAccount",
@@ -373,7 +373,7 @@ func TestEnableAdminAccountMySQL(t *testing.T) {
 				Id:      "id",
 				Command: nil,
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "errNotFound",
@@ -403,7 +403,7 @@ func TestEnableAdminAccountMySQL(t *testing.T) {
 				Id:      "bucketeer@example.com",
 				Command: &accountproto.EnableAdminAccountCommand{},
 			},
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -471,7 +471,7 @@ func TestDisableAdminAccountMySQL(t *testing.T) {
 				Id:      "id",
 				Command: nil,
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "errNotFound",
@@ -501,7 +501,7 @@ func TestDisableAdminAccountMySQL(t *testing.T) {
 				Id:      "bucketeer@example.com",
 				Command: &accountproto.DisableAdminAccountCommand{},
 			},
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -654,7 +654,7 @@ func TestGetAdminAccountMySQL(t *testing.T) {
 			req: &accountproto.GetAdminAccountRequest{
 				Email: "bucketeer@",
 			},
-			expectedErr: localizedError(statusInvalidEmail, locale.JaJP),
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
 			desc: "errNotFound",
@@ -706,6 +706,16 @@ func TestListAdminAccountsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
@@ -718,7 +728,7 @@ func TestListAdminAccountsMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &accountproto.ListAdminAccountsRequest{Cursor: "xxx"},
 			expected:    nil,
-			expectedErr: localizedError(statusInvalidCursor, locale.JaJP),
+			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
 		{
 			desc: "errInternal",
@@ -729,7 +739,7 @@ func TestListAdminAccountsMySQL(t *testing.T) {
 			},
 			input:       &accountproto.ListAdminAccountsRequest{},
 			expected:    nil,
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",

@@ -143,10 +143,24 @@ func (s *NotificationService) validateCreateAdminSubscriptionRequest(
 	localizer locale.Localizer,
 ) error {
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command.Name == "" {
-		return localizedError(statusNameRequired, locale.JaJP)
+		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if len(req.Command.SourceTypes) == 0 {
 		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
@@ -207,7 +221,14 @@ func (s *NotificationService) validateUpdateAdminSubscriptionRequest(
 		return dt.Err()
 	}
 	if s.isNoUpdateAdminSubscriptionCommand(req) {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.AddSourceTypesCommand != nil && len(req.AddSourceTypesCommand.SourceTypes) == 0 {
 		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
@@ -230,7 +251,14 @@ func (s *NotificationService) validateUpdateAdminSubscriptionRequest(
 		return dt.Err()
 	}
 	if req.RenameSubscriptionCommand != nil && req.RenameSubscriptionCommand.Name == "" {
-		return localizedError(statusNameRequired, locale.JaJP)
+		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -284,7 +312,14 @@ func (s *NotificationService) validateEnableAdminSubscriptionRequest(
 		return dt.Err()
 	}
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -330,7 +365,14 @@ func (s *NotificationService) validateDisableAdminSubscriptionRequest(
 		return dt.Err()
 	}
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -524,7 +566,14 @@ func validateDeleteAdminSubscriptionRequest(
 		return dt.Err()
 	}
 	if req.Command == nil {
-		return localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
