@@ -1721,6 +1721,53 @@ func TestEvaluationCountkey(t *testing.T) {
 	}
 }
 
+func TestGetVariationID(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		variationID string
+		reason      featureproto.Reason_Type
+		expected    string
+	}{
+		{
+			desc:        "get given variation id if off variation",
+			variationID: "vID1",
+			reason:      featureproto.Reason_OFF_VARIATION,
+			expected:    "vID1",
+		},
+		{
+			desc:        "get given variation id if target",
+			variationID: "vID1",
+			reason:      featureproto.Reason_TARGET,
+			expected:    "vID1",
+		},
+		{
+			desc:        "get given variation id if rule",
+			variationID: "vID1",
+			reason:      featureproto.Reason_RULE,
+			expected:    "vID1",
+		},
+		{
+			desc:        "get given variation id if prerequisite",
+			variationID: "vID1",
+			reason:      featureproto.Reason_PREREQUISITE,
+			expected:    "vID1",
+		},
+		{
+			desc:        "get default variation id if client",
+			variationID: "vID1",
+			reason:      featureproto.Reason_CLIENT,
+			expected:    defaultVariationID,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := getVariationID(p.reason, p.variationID)
+			assert.Equal(t, p.expected, actual)
+		})
+	}
+}
+
 func newPersister(c *gomock.Controller) *Persister {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Persister{

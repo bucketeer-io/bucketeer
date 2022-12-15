@@ -69,8 +69,9 @@ const (
 )
 
 const (
-	eventCountKey = "ec"
-	userCountKey  = "uc"
+	eventCountKey      = "ec"
+	userCountKey       = "uc"
+	defaultVariationID = "default"
 )
 
 type eventMap map[string]proto.Message
@@ -522,14 +523,22 @@ func userMetadataColumn(environmentNamespace string, key string) string {
 	return fmt.Sprintf("%s.user.data.%s", environmentNamespace, key)
 }
 
+func getVariationID(reason featureproto.Reason_Type, vID string) string {
+	if reason == featureproto.Reason_CLIENT {
+		return defaultVariationID
+	}
+	return vID
+}
+
 func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
-		eck := p.newEvaluationCountkey(eventCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
+		vID := getVariationID(e.Reason.Type, e.VariationId)
+		eck := p.newEvaluationCountkey(eventCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
 		_, err := p.evaluationCountCacher.Increment(eck)
 		if err != nil {
 			return err
 		}
-		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, e.VariationId, environmentNamespace, e.Timestamp)
+		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
 		_, err = p.evaluationCountCacher.PFAdd(uck, e.UserId)
 		if err != nil {
 			return err
