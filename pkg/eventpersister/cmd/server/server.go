@@ -252,6 +252,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
 		persister.WithFlushInterval(*s.flushInterval),
+		persister.WithFlushTimeout(*s.flushTimeout),
 		persister.WithMetrics(registerer),
 		persister.WithLogger(logger),
 	)
