@@ -908,8 +908,8 @@ func (p *Persister) countEvent(key string) error {
 	redis.HandledCounter.WithLabelValues(clientVersion, p.redisServerName, incr, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, p.redisServerName, incr, code).Observe(
 		time.Since(startTime).Seconds())
-	
-	return p.setExpiration(dCmd, key, starttime)
+
+	return p.setExpiration(dCmd, key, startTime)
 }
 
 func (p *Persister) countUser(key, userID string) error {
