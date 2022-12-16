@@ -44,6 +44,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
+	"github.com/bucketeer-io/bucketeer/pkg/redis"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
@@ -74,6 +75,13 @@ const (
 	userCountKey       = "uc"
 	defaultVariationID = "default"
 	oneMonth           = 24 * time.Hour * 31
+)
+
+const (
+	clientVersion = "v3"
+	incr          = "INCR"
+	ttl           = "TTL"
+	pfadd         = "PFADD"
 )
 
 type eventMap map[string]proto.Message
@@ -149,6 +157,7 @@ type Persister struct {
 	mysqlClient           mysql.Client
 	evaluationCountCacher cache.MultiGetDeleteCountCache
 	flightgroup           singleflight.Group
+	redisServerName       string
 }
 
 func NewPersister(
@@ -160,6 +169,7 @@ func NewPersister(
 	bt bigtable.Client,
 	mysqlClient mysql.Client,
 	v3Cache cache.MultiGetDeleteCountCache,
+	redisServerName string,
 	opts ...Option,
 ) *Persister {
 	dopts := &options{
@@ -191,6 +201,7 @@ func NewPersister(
 		doneCh:                make(chan struct{}),
 		mysqlClient:           mysqlClient,
 		evaluationCountCacher: v3Cache,
+		redisServerName:       redisServerName,
 	}
 }
 
@@ -851,13 +862,21 @@ func (p *Persister) getUserEvaluation(
 	return evaluation, nil
 }
 
-func (p *Persister) setExpiration(dCmd *goredis.DurationCmd, key string) error {
+func (p *Persister) setExpiration(dCmd *goredis.DurationCmd, key string, st time.Time) error {
 	// The value of command is available only after the pipeline is executed.
 	// https://redis.uptrace.dev/guide/go-redis-pipelines.html#pipelines
 	d, err := dCmd.Result()
 	if err != nil {
 		return err
 	}
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, p.redisServerName, ttl, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, p.redisServerName, ttl, code).Observe(
+		time.Since(st).Seconds())
 	if d == -1 {
 		// The expiration may be overriden because of race condition.
 		// However, we don't have to care it because this expiration is not have to be strict.
@@ -871,22 +890,48 @@ func (p *Persister) setExpiration(dCmd *goredis.DurationCmd, key string) error {
 
 func (p *Persister) countEvent(key string) error {
 	pipe := p.evaluationCountCacher.Pipeline()
-	pipe.Incr(key)
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, p.redisServerName, incr).Inc()
+	iCmd := pipe.Incr(key)
+	redis.ReceivedCounter.WithLabelValues(clientVersion, p.redisServerName, ttl).Inc()
 	dCmd := pipe.TTL(key)
 	_, err := pipe.Exec()
 	if err != nil {
 		return err
 	}
-	return p.setExpiration(dCmd, key)
+	_, err = iCmd.Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, p.redisServerName, incr, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, p.redisServerName, incr, code).Observe(
+		time.Since(startTime).Seconds())
+	
+	return p.setExpiration(dCmd, key, starttime)
 }
 
 func (p *Persister) countUser(key, userID string) error {
 	pipe := p.evaluationCountCacher.Pipeline()
-	pipe.PFAdd(key, userID)
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, p.redisServerName, pfadd).Inc()
+	iCmd := pipe.PFAdd(key, userID)
+	redis.ReceivedCounter.WithLabelValues(clientVersion, p.redisServerName, ttl).Inc()
 	dCmd := pipe.TTL(key)
 	_, err := pipe.Exec()
 	if err != nil {
 		return err
 	}
-	return p.setExpiration(dCmd, key)
+	_, err = iCmd.Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, p.redisServerName, pfadd, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, p.redisServerName, pfadd, code).Observe(
+		time.Since(startTime).Seconds())
+
+	return p.setExpiration(dCmd, key, startTime)
 }
