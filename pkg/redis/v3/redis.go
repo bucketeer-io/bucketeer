@@ -390,7 +390,7 @@ func (c *client) Incr(key string) (int64, error) {
 
 func (c *client) Expire(key string, expiration time.Duration) (bool, error) {
 	startTime := time.Now()
-	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incr).Inc()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, expire).Inc()
 	v, err := c.rc.Expire(key, expiration).Result()
 	code := redis.CodeFail
 	switch err {
@@ -425,7 +425,7 @@ func (c *pipeClient) TTL(key string) *goredis.DurationCmd {
 
 func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 	startTime := time.Now()
-	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incr).Inc()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, exec).Inc()
 	v, err := c.pipe.Exec()
 	code := redis.CodeFail
 	switch err {
