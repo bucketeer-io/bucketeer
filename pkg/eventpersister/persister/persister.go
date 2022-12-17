@@ -858,7 +858,7 @@ func (p *Persister) setExpiration(dCmd *goredis.DurationCmd, key string) error {
 	if err != nil {
 		return err
 	}
-	if d == -1 {
+	if d == -1*time.Second {
 		// The expiration may be overriden because of race condition.
 		// However, we don't have to care it because this expiration is not have to be strict.
 		_, err := p.evaluationCountCacher.Expire(key, oneMonth)
