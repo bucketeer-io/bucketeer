@@ -19,9 +19,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"cloud.google.com/go/bigquery/storage/managedwriter"
-
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
+	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
@@ -29,19 +28,18 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 )
 
 type PersisterDwh struct {
-	puller puller.RateLimitedPuller
-	logger *zap.Logger
-	ctx    context.Context
-	cancel func()
-	group  errgroup.Group
-	doneCh chan struct{}
+	puller          puller.RateLimitedPuller
+	logger          *zap.Logger
+	ctx             context.Context
+	cancel          func()
+	group           errgroup.Group
+	doneCh          chan struct{}
 	evalEventWriter datastore.EvalEventWriter
 	goalEventWriter datastore.GoalEventWriter
-	opts   *options
+	opts            *options
 }
 
 func NewPersisterDwh(
@@ -64,14 +62,14 @@ func NewPersisterDwh(
 	if dopts.metrics != nil {
 		dwhRegisterMetrics(dopts.metrics)
 	}
-	
+
 	ctx, cancel := context.WithCancel(context.Background())
 	return &PersisterDwh{
-		puller: puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		logger: dopts.logger.Named("persister-dwh"),
-		ctx:    ctx,
-		cancel: cancel,
-		doneCh: make(chan struct{}),
+		puller:          puller.NewRateLimitedPuller(p, dopts.maxMPS),
+		logger:          dopts.logger.Named("persister-dwh"),
+		ctx:             ctx,
+		cancel:          cancel,
+		doneCh:          make(chan struct{}),
 		evalEventWriter: evalEventWriter,
 		goalEventWriter: goalEventWriter,
 	}
