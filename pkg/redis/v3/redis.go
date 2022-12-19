@@ -17,6 +17,7 @@ package v3
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	goredis "github.com/go-redis/redis"
@@ -30,17 +31,18 @@ import (
 const (
 	clientVersion = "v3"
 
-	scanCmdName        = "SCAN"
-	getCmdName         = "GET"
-	getMultiCmdName    = "GET_MULTI"
-	setCmdName         = "SET"
-	pfAddCmdName       = "PFADD"
-	pfCountCmdName     = "PFCOUNT"
-	incrByFloatCmdName = "INCR_BY_FLOAT"
-	delCmdName         = "DEL"
-	incr               = "INCR"
-	expire             = "EXPIRE"
-	exec               = "EXEC"
+	scanCmdName         = "SCAN"
+	getCmdName          = "GET"
+	getMultiCmdName     = "GET_MULTI"
+	setCmdName          = "SET"
+	pfAddCmdName        = "PFADD"
+	pfCountCmdName      = "PFCOUNT"
+	incrByFloatCmdName  = "INCR_BY_FLOAT"
+	delCmdName          = "DEL"
+	incrCmdName         = "INCR"
+	expireCmdName       = "EXPIRE"
+	pipelineExecCmdName = "PIPELINE_EXEC"
+	ttlCmdName          = "TTL"
 )
 
 var (
@@ -90,6 +92,7 @@ type PipeClient interface {
 
 type pipeClient struct {
 	pipe   goredis.Pipeliner
+	cmds   []string
 	opts   *options
 	logger *zap.Logger
 }
@@ -375,30 +378,30 @@ func (c *client) Del(key string) error {
 
 func (c *client) Incr(key string) (int64, error) {
 	startTime := time.Now()
-	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incr).Inc()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incrCmdName).Inc()
 	v, err := c.rc.Incr(key).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
 		code = redis.CodeSuccess
 	}
-	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, incr, code).Inc()
-	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, incr, code).Observe(
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, incrCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, incrCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return v, err
 }
 
 func (c *client) Expire(key string, expiration time.Duration) (bool, error) {
 	startTime := time.Now()
-	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incr).Inc()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, expireCmdName).Inc()
 	v, err := c.rc.Expire(key, expiration).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
 		code = redis.CodeSuccess
 	}
-	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, expire, code).Inc()
-	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, expire, code).Observe(
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, expireCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, expireCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return v, err
 }
@@ -406,34 +409,44 @@ func (c *client) Expire(key string, expiration time.Duration) (bool, error) {
 func (c *client) Pipeline() PipeClient {
 	return &pipeClient{
 		pipe:   c.rc.Pipeline(),
+		cmds:   []string{},
 		opts:   c.opts,
 		logger: c.logger,
 	}
 }
 
 func (c *pipeClient) Incr(key string) *goredis.IntCmd {
+	c.cmds = append(c.cmds, incrCmdName)
 	return c.pipe.Incr(key)
 }
 
 func (c *pipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
+	c.cmds = append(c.cmds, pfAddCmdName)
 	return c.pipe.PFAdd(key, els)
 }
 
 func (c *pipeClient) TTL(key string) *goredis.DurationCmd {
+	c.cmds = append(c.cmds, ttlCmdName)
 	return c.pipe.TTL(key)
 }
 
+// The command name reported in the metrics handler counter
+// is based on how many commands were used in the pipeline
 func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 	startTime := time.Now()
-	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incr).Inc()
+	cmdName := pipelineExecCmdName
+	for _, cmd := range c.cmds {
+		cmdName += fmt.Sprintf("_%s", cmd)
+	}
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, cmdName).Inc()
 	v, err := c.pipe.Exec()
 	code := redis.CodeFail
 	switch err {
 	case nil:
 		code = redis.CodeSuccess
 	}
-	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, exec, code).Inc()
-	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, exec, code).Observe(
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, cmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, cmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return v, err
 }
