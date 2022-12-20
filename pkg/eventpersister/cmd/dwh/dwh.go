@@ -16,23 +16,19 @@ package dwh
 
 import (
 	"context"
-	"os"
 	"time"
 
-	"cloud.google.com/go/bigquery/storage/managedwriter"
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"google.golang.org/protobuf/reflect/protoreflect"
-
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
+	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/persister"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 )
 
 const (
@@ -83,10 +79,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+	evalEventReader, err := datastore.NewEvalEventReader(ctx, *s.project, *s.dataset)
+	if err != nil {
+		return err
+	}
 	p := persister.NewPersisterDwh(
 		puller,
 		evalEventWriter,
 		goalEventWriter,
+		evalEventReader,
 	)
 	if err != nil {
 		return err
@@ -127,18 +128,4 @@ func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.P
 		pubsub.WithMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
 		pubsub.WithMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
 	)
-}
-
-func (s *server) createManagedStream(
-	ctx context.Context,
-	descriptor protoreflect.MessageDescriptor,
-	tableName string,
-) {
-	c, err := managedwriter.NewClient(ctx, *s.project)
-	if err != nil {
-		logger.Error("Failed to create bigquery client", zap.Error(err))
-		os.Exit(1)
-	}
-	defer c.Close()
-
 }
