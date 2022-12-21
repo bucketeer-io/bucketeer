@@ -870,7 +870,7 @@ func (p *Persister) countUser(key, userID string) error {
 	if err != nil {
 		return err
 	}
-	if d == -1*time.Second {
+	if d == -1*time.Nanosecond {
 		_, err := p.evaluationCountCacher.Expire(key, oneMonth)
 		if err != nil {
 			return err
