@@ -65,9 +65,9 @@ const (
 )
 
 var (
-	ErrNil                                   = goredis.Nil
-	ErrInvalidType                           = errors.New("redis: invalid type")
-	ErrLuaScriptFailedForIncrementWithExpire = errors.New("redis: failed to increment and set expiration using the lua script")
+	ErrNil               = goredis.Nil
+	ErrInvalidType       = errors.New("redis: invalid type")
+	ErrFailedToIncrement = errors.New("redis: failed to increment and set expiration using the lua script")
 )
 
 type poolStats goredis.PoolStats
@@ -411,10 +411,10 @@ func (c *client) Incr(key string, expiration time.Duration) (int64, error) {
 	} else {
 		incr := goredis.NewScript(incrementWithExpireScript)
 		keys := []string{key}
-		values := []interface{}{expiration}
+		values := []interface{}{expiration.Seconds()}
 		val, err = incr.Run(c.ctx, c.rc, keys, values...).Int64()
 		if val == -1 {
-			err = ErrLuaScriptFailedForIncrementWithExpire
+			err = ErrFailedToIncrement
 		}
 	}
 	code := redis.CodeFail
