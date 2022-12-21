@@ -23,7 +23,6 @@ import (
 	"strconv"
 	"time"
 
-	goredis "github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -555,7 +554,7 @@ func (p *Persister) newEvaluationCountkey(
 	date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%d", featureID, variationID, date.Unix()),
+		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
 		environmentNamespace,
 	)
 }
@@ -851,42 +850,31 @@ func (p *Persister) getUserEvaluation(
 	return evaluation, nil
 }
 
-func (p *Persister) setExpiration(dCmd *goredis.DurationCmd, key string) error {
-	// The value of command is available only after the pipeline is executed.
-	// https://redis.uptrace.dev/guide/go-redis-pipelines.html#pipelines
-	d, err := dCmd.Result()
+func (p *Persister) countEvent(key string) error {
+	_, err := p.evaluationCountCacher.Increment(key, oneMonth)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *Persister) countUser(key, userID string) error {
+	pipe := p.evaluationCountCacher.Pipeline()
+	pipe.PFAdd(key, userID)
+	ttlCmd := pipe.TTL(key)
+	_, err := pipe.Exec()
+	if err != nil {
+		return err
+	}
+	d, err := ttlCmd.Result()
 	if err != nil {
 		return err
 	}
 	if d == -1*time.Second {
-		// The expiration may be overriden because of race condition.
-		// However, we don't have to care it because this expiration is not have to be strict.
 		_, err := p.evaluationCountCacher.Expire(key, oneMonth)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func (p *Persister) countEvent(key string) error {
-	pipe := p.evaluationCountCacher.Pipeline()
-	pipe.Incr(key)
-	dCmd := pipe.TTL(key)
-	_, err := pipe.Exec()
-	if err != nil {
-		return err
-	}
-	return p.setExpiration(dCmd, key)
-}
-
-func (p *Persister) countUser(key, userID string) error {
-	pipe := p.evaluationCountCacher.Pipeline()
-	pipe.PFAdd(key, userID)
-	dCmd := pipe.TTL(key)
-	_, err := pipe.Exec()
-	if err != nil {
-		return err
-	}
-	return p.setExpiration(dCmd, key)
 }

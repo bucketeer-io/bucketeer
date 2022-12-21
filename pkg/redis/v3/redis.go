@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	goredis "github.com/go-redis/redis"
+	goredis "github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/health"
@@ -43,11 +43,31 @@ const (
 	expireCmdName       = "EXPIRE"
 	pipelineExecCmdName = "PIPELINE_EXEC"
 	ttlCmdName          = "TTL"
+
+	incrementWithExpireScript string = `
+    local key =  KEYS[1]
+    local result = redis.pcall("INCR", key)
+    if type(result) == 'table' and result.err then
+      redis.log(redis.LOG_WARNING, "failed to increment", key, result.err)
+      return -1
+    end
+    if result == 1 then
+      redis.log(redis.LOG_NOTICE, "setting expiration in the key", key)
+      local expireInSeconds = ARGV[1]
+      local res = redis.pcall("EXPIRE", key, expireInSeconds)
+      if type(res) == 'table' and res.err then
+        redis.log(redis.LOG_WARNING, "failed to set expiration", key, expireInSeconds, res.err)
+        return -1
+      end
+    end
+    return result
+  `
 )
 
 var (
-	ErrNil         = goredis.Nil
-	ErrInvalidType = errors.New("redis: invalid type")
+	ErrNil                                   = goredis.Nil
+	ErrInvalidType                           = errors.New("redis: invalid type")
+	ErrLuaScriptFailedForIncrementWithExpire = errors.New("redis: failed to increment and set expiration using the lua script")
 )
 
 type poolStats goredis.PoolStats
@@ -72,12 +92,13 @@ type Client interface {
 	PFCount(keys ...string) (int64, error)
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
-	Incr(key string) (int64, error)
+	Incr(key string, expire time.Duration) (int64, error)
 	Pipeline() PipeClient
-	Expire(key string, expiration time.Duration) (bool, error)
+	Expire(key string, seconds time.Duration) (bool, error)
 }
 
 type client struct {
+	ctx    context.Context
 	rc     *goredis.Client
 	opts   *options
 	logger *zap.Logger
@@ -91,6 +112,7 @@ type PipeClient interface {
 }
 
 type pipeClient struct {
+	ctx    context.Context
 	pipe   goredis.Pipeliner
 	cmds   []string
 	opts   *options
@@ -176,7 +198,7 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
-func NewClient(addr string, opts ...Option) (Client, error) {
+func NewClient(ctx context.Context, addr string, opts ...Option) (Client, error) {
 	options := defaultOptions()
 	for _, opt := range opts {
 		opt(options)
@@ -191,12 +213,13 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 		MinIdleConns: options.minIdleConns,
 		PoolTimeout:  options.poolTimeout,
 	})
-	_, err := rc.Ping().Result()
+	_, err := rc.Ping(ctx).Result()
 	if err != nil {
 		logger.Error("Failed to ping", zap.Error(err))
 		return nil, err
 	}
 	client := &client{
+		ctx:    ctx,
 		rc:     rc,
 		opts:   options,
 		logger: logger,
@@ -214,7 +237,7 @@ func (c *client) Close() error {
 func (c *client) Check(ctx context.Context) health.Status {
 	resultCh := make(chan health.Status, 1)
 	go func() {
-		_, err := c.rc.Ping().Result()
+		_, err := c.rc.Ping(ctx).Result()
 		if err != nil {
 			c.logger.Error("Unhealthy", zap.Error(err))
 			resultCh <- health.Unhealthy
@@ -238,7 +261,7 @@ func (c *client) Stats() redis.PoolStats {
 func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName).Inc()
-	keys, cursor, err := c.rc.Scan(cursor, key, count).Result()
+	keys, cursor, err := c.rc.Scan(c.ctx, cursor, key, count).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -255,7 +278,7 @@ func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string,
 func (c *client) Get(key string) ([]byte, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, getCmdName).Inc()
-	reply, err := c.rc.Get(key).Bytes()
+	reply, err := c.rc.Get(c.ctx, key).Bytes()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -272,7 +295,7 @@ func (c *client) Get(key string) ([]byte, error) {
 func (c *client) GetMulti(keys []string) ([]interface{}, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, getMultiCmdName).Inc()
-	reply, err := c.rc.MGet(keys...).Result()
+	reply, err := c.rc.MGet(c.ctx, keys...).Result()
 	code := redis.CodeFail
 	values := make([]interface{}, 0, len(reply))
 	switch err {
@@ -300,7 +323,7 @@ func (c *client) GetMulti(keys []string) ([]interface{}, error) {
 func (c *client) Set(key string, val interface{}, expiration time.Duration) error {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, setCmdName).Inc()
-	err := c.rc.Set(key, val, expiration).Err()
+	err := c.rc.Set(c.ctx, key, val, expiration).Err()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -317,7 +340,7 @@ func (c *client) Set(key string, val interface{}, expiration time.Duration) erro
 func (c *client) PFAdd(key string, els ...string) (int64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfAddCmdName).Inc()
-	result, err := c.rc.PFAdd(key, els).Result()
+	result, err := c.rc.PFAdd(c.ctx, key, els).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -332,7 +355,7 @@ func (c *client) PFAdd(key string, els ...string) (int64, error) {
 func (c *client) PFCount(keys ...string) (int64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfCountCmdName).Inc()
-	count, err := c.rc.PFCount(keys...).Result()
+	count, err := c.rc.PFCount(c.ctx, keys...).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -347,7 +370,7 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 func (c *client) IncrByFloat(key string, value float64) (float64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incrByFloatCmdName).Inc()
-	v, err := c.rc.IncrByFloat(key, value).Result()
+	v, err := c.rc.IncrByFloat(c.ctx, key, value).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -362,7 +385,7 @@ func (c *client) IncrByFloat(key string, value float64) (float64, error) {
 func (c *client) Del(key string) error {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, delCmdName).Inc()
-	_, err := c.rc.Del(key).Result()
+	_, err := c.rc.Del(c.ctx, key).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -376,10 +399,24 @@ func (c *client) Del(key string) error {
 	return err
 }
 
-func (c *client) Incr(key string) (int64, error) {
+// Incr interface only set the expiration when the key is created.
+// Once is created, the expiration setting will be ignored in the Lua script
+func (c *client) Incr(key string, expiration time.Duration) (int64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incrCmdName).Inc()
-	v, err := c.rc.Incr(key).Result()
+	var val int64
+	var err error
+	if expiration < 1*time.Second {
+		val, err = c.rc.Incr(c.ctx, key).Result()
+	} else {
+		incr := goredis.NewScript(incrementWithExpireScript)
+		keys := []string{key}
+		values := []interface{}{expiration}
+		val, err = incr.Run(c.ctx, c.rc, keys, values...).Int64()
+		if val == -1 {
+			err = ErrLuaScriptFailedForIncrementWithExpire
+		}
+	}
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -388,13 +425,13 @@ func (c *client) Incr(key string) (int64, error) {
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, incrCmdName, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, incrCmdName, code).Observe(
 		time.Since(startTime).Seconds())
-	return v, err
+	return val, err
 }
 
-func (c *client) Expire(key string, expiration time.Duration) (bool, error) {
+func (c *client) Expire(key string, seconds time.Duration) (bool, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, expireCmdName).Inc()
-	v, err := c.rc.Expire(key, expiration).Result()
+	v, err := c.rc.Expire(c.ctx, key, seconds).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -408,6 +445,7 @@ func (c *client) Expire(key string, expiration time.Duration) (bool, error) {
 
 func (c *client) Pipeline() PipeClient {
 	return &pipeClient{
+		ctx:    c.ctx,
 		pipe:   c.rc.Pipeline(),
 		cmds:   []string{},
 		opts:   c.opts,
@@ -417,17 +455,17 @@ func (c *client) Pipeline() PipeClient {
 
 func (c *pipeClient) Incr(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, incrCmdName)
-	return c.pipe.Incr(key)
+	return c.pipe.Incr(c.ctx, key)
 }
 
 func (c *pipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfAddCmdName)
-	return c.pipe.PFAdd(key, els)
+	return c.pipe.PFAdd(c.ctx, key, els)
 }
 
 func (c *pipeClient) TTL(key string) *goredis.DurationCmd {
 	c.cmds = append(c.cmds, ttlCmdName)
-	return c.pipe.TTL(key)
+	return c.pipe.TTL(c.ctx, key)
 }
 
 // The command name reported in the metrics handler counter
@@ -439,7 +477,7 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 		cmdName += fmt.Sprintf("_%s", cmd)
 	}
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, cmdName).Inc()
-	v, err := c.pipe.Exec()
+	v, err := c.pipe.Exec(c.ctx)
 	code := redis.CodeFail
 	switch err {
 	case nil:

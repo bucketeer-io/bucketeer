@@ -21,6 +21,18 @@ import (
 	redis "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 )
 
+type RedisCache interface {
+	Get(key interface{}) (interface{}, error)
+	Put(key interface{}, value interface{}) error
+	GetMulti(keys interface{}) ([]interface{}, error)
+	Scan(cursor, key, count interface{}) (uint64, []string, error)
+	Delete(key string) error
+	Increment(key string, expire time.Duration) (int64, error)
+	PFAdd(key string, els ...string) (int64, error)
+	Pipeline() redis.PipeClient
+	Expire(key string, expiration time.Duration) (bool, error)
+}
+
 type redisCache struct {
 	client redis.Client
 }
@@ -76,8 +88,8 @@ func (r *redisCache) Delete(key string) error {
 	return r.client.Del(key)
 }
 
-func (r *redisCache) Increment(key string) (int64, error) {
-	return r.client.Incr(key)
+func (r *redisCache) Increment(key string, expire time.Duration) (int64, error) {
+	return r.client.Incr(key, expire)
 }
 
 func (r *redisCache) PFAdd(key string, els ...string) (int64, error) {

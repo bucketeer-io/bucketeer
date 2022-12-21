@@ -125,6 +125,7 @@ func (p *persister) Run(ctx context.Context, metrics metrics.Metrics, logger *za
 	defer mysqlClient.Close()
 
 	redisV3Client, err := redisv3.NewClient(
+		ctx,
 		*p.redisAddr,
 		redisv3.WithPoolSize(*p.redisPoolMaxActive),
 		redisv3.WithMinIdleConns(*p.redisPoolMaxIdle),

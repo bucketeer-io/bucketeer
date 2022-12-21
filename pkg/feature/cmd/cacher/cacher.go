@@ -115,6 +115,7 @@ func (c *featureCacher) Run(ctx context.Context, metrics metrics.Metrics, logger
 	defer featureClient.Close()
 
 	redisV3Client, err := redisv3.NewClient(
+		ctx,
 		*c.redisAddr,
 		redisv3.WithServerName(*c.redisServerName),
 		redisv3.WithMetrics(registerer),

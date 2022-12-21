@@ -151,6 +151,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer featureClient.Close()
 
 	redisV3Client, err := redisv3.NewClient(
+		ctx,
 		*s.redisAddr,
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
 		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),

@@ -65,7 +65,7 @@ type Deleter interface {
 }
 
 type Counter interface {
-	Increment(key string) (int64, error)
+	Increment(key string, expire time.Duration) (int64, error)
 	PFAdd(key string, els ...string) (int64, error)
 }
 
