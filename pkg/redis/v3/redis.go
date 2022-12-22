@@ -88,6 +88,8 @@ type PipeClient interface {
 	Incr(key string) *goredis.IntCmd
 	TTL(key string) *goredis.DurationCmd
 	Exec() ([]goredis.Cmder, error)
+	GetMulti(keys []string) *goredis.SliceCmd
+	PFCount(keys ...string) *goredis.IntCmd
 }
 
 type pipeClient struct {
@@ -449,4 +451,14 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, cmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return v, err
+}
+
+func (c *pipeClient) GetMulti(keys []string) *goredis.SliceCmd {
+	c.cmds = append(c.cmds, getMultiCmdName)
+	return c.pipe.MGet(keys...)
+}
+
+func (c *pipeClient) PFCount(keys ...string) *goredis.IntCmd {
+	c.cmds = append(c.cmds, pfCountCmdName)
+	return c.pipe.PFCount(keys...)
 }

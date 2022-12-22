@@ -17,9 +17,11 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
+	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -28,6 +30,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	ecdruid "github.com/bucketeer-io/bucketeer/pkg/eventcounter/druid"
 	v2ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
@@ -48,6 +51,12 @@ import (
 
 const listRequestPageSize = 500
 
+const (
+	eventCountPrefix   = "ec"
+	userCountPrefix    = "uc"
+	defaultVariationID = "default"
+)
+
 var (
 	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
 )
@@ -59,6 +68,7 @@ type eventCounterService struct {
 	druidQuerier                 ecdruid.Querier
 	mysqlExperimentResultStorage v2ecstorage.ExperimentResultStorage
 	metrics                      metrics.Registerer
+	evaluationCountCacher        cache.MultiGetDeleteCountCache
 	logger                       *zap.Logger
 }
 
@@ -69,6 +79,7 @@ func NewEventCounterService(
 	a accountclient.Client,
 	d ecdruid.Querier,
 	r metrics.Registerer,
+	redis cache.MultiGetDeleteCountCache,
 	l *zap.Logger,
 ) rpc.Service {
 	registerMetrics(r)
@@ -79,6 +90,7 @@ func NewEventCounterService(
 		druidQuerier:                 d,
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
 		metrics:                      r,
+		evaluationCountCacher:        redis,
 		logger:                       l.Named("api"),
 	}
 }
@@ -272,21 +284,41 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		}
 		return nil, dt.Err()
 	}
+
+	timeStamps := []int64{}
+	for i := 0; i < 30; i++ {
+		ts := startAt.AddDate(0, 0, i).Unix()
+		timeStamps = append(timeStamps, ts)
+	}
+
+	vIDs := []string{}
+	for _, v := range resp.Feature.Variations {
+		vIDs = append(vIDs, v.Id)
+	}
+	vIDs = append(vIDs, defaultVariationID)
+
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
-	for _, variation := range resp.Feature.Variations {
-		varTS, err := s.druidQuerier.QueryEvaluationTimeseriesCount(
-			ctx,
-			req.EnvironmentNamespace,
-			startAt,
-			endAt,
-			req.FeatureId,
-			0,
-			variation.Id,
-		)
+	for _, vID := range vIDs {
+		eventCountKeys := []string{}
+		userCountKeys := []string{}
+		for _, ts := range timeStamps {
+			ec := newEvaluationCountkey(eventCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
+			eventCountKeys = append(eventCountKeys, ec)
+			uc := newEvaluationCountkey(userCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
+			userCountKeys = append(userCountKeys, uc)
+		}
+		pipe := s.evaluationCountCacher.Pipeline()
+		sCmd := pipe.GetMulti(eventCountKeys)
+		iCmds := []*redis.IntCmd{}
+		for _, k := range userCountKeys {
+			c := pipe.PFCount(k)
+			iCmds = append(iCmds, c)
+		}
+		_, err := pipe.Exec()
 		if err != nil {
 			s.logger.Error(
-				"Failed to query goal counts",
+				"Failed to run `EXEC` command in evaluation event count",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentNamespace", req.EnvironmentNamespace),
@@ -294,7 +326,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 					zap.Time("endAt", endAt),
 					zap.String("featureId", req.FeatureId),
 					zap.Int32("featureVersion", resp.Feature.Version),
-					zap.String("variationId", variation.Id),
+					zap.String("variationId", vID),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -306,9 +338,77 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 			}
 			return nil, dt.Err()
 		}
-		variationTSEvents = append(variationTSEvents, varTS[ecdruid.ColumnEvaluationTotal])
-		variationTSUsers = append(variationTSUsers, varTS[ecdruid.ColumnEvaluationUser])
+		vals, err := sCmd.Result()
+		if err != nil {
+			s.logger.Error(
+				"Failed to get the result from `MGET` command",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.Time("startAt", startAt),
+					zap.Time("endAt", endAt),
+					zap.String("featureId", req.FeatureId),
+					zap.Int32("featureVersion", resp.Feature.Version),
+					zap.String("variationId", vID),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		eventVals := []float64{}
+		for _, v := range vals {
+			float := v.(float64)
+			eventVals = append(eventVals, float)
+		}
+		userVals := []float64{}
+		for _, c := range iCmds {
+			val, err := c.Result()
+			if err != nil {
+				s.logger.Error(
+					"Failed to get the result from `PFCount` command",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.Time("startAt", startAt),
+						zap.Time("endAt", endAt),
+						zap.String("featureId", req.FeatureId),
+						zap.Int32("featureVersion", resp.Feature.Version),
+						zap.String("variationId", vID),
+					)...,
+				)
+				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.InternalServerError),
+				})
+				if err != nil {
+					return nil, statusInternal.Err()
+				}
+				return nil, dt.Err()
+			}
+			userVals = append(userVals, float64(val))
+		}
+		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
+			VariationId: vID,
+			Timeseries: &ecproto.Timeseries{
+				Timestamps: timeStamps,
+				Values:     userVals,
+			},
+		})
+		variationTSEvents = append(variationTSEvents, &ecproto.VariationTimeseries{
+			VariationId: vID,
+			Timeseries: &ecproto.Timeseries{
+				Timestamps: timeStamps,
+				Values:     eventVals,
+			},
+		})
 	}
+	// TODO: default variation id
 	return &ecproto.GetEvaluationTimeseriesCountResponse{
 		EventCounts: variationTSEvents,
 		UserCounts:  variationTSUsers,
@@ -318,6 +418,17 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 func genInterval(loc *time.Location, endAt time.Time, durationDays int) (time.Time, error) {
 	year, month, day := endAt.In(loc).AddDate(0, 0, -durationDays).Date()
 	return time.Date(year, month, day, 0, 0, 0, 0, loc), nil
+}
+
+func newEvaluationCountkey(
+	kind, featureID, variationID, environmentNamespace string,
+	ts int64,
+) string {
+	return cache.MakeKey(
+		kind,
+		fmt.Sprintf("%s:%s:%d", featureID, variationID, ts),
+		environmentNamespace,
+	)
 }
 
 func (s *eventCounterService) GetExperimentResult(
