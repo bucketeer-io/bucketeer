@@ -261,6 +261,12 @@ func (p *Persister) batch() error {
 			}
 			timer.Reset(p.opts.flushInterval)
 		case <-p.ctx.Done():
+			batchSize := len(batch)
+			p.logger.Info("Context is done", zap.Int("batchSize", batchSize))
+			if len(batch) > 0 {
+				p.send(batch)
+				p.logger.Info("All the left messages are processed successfully", zap.Int("batchSize", batchSize))
+			}
 			return nil
 		}
 	}
