@@ -365,6 +365,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		for _, v := range vals {
 			float, ok := v.(float64)
 			if !ok {
+				eventVals = append(eventVals, 0)
 				continue
 			}
 			eventVals = append(eventVals, float)
