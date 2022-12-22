@@ -1022,8 +1022,8 @@ event-counter:
     port: 9090
     metricsPort: 9002
     redis:
-      serverName: bucketeer-redis
-      addr: bucketeer-redis.bucketeer.private:6379
+      serverName:
+      addr:
       poolMaxIdle: 50
       poolMaxActive: 50
   affinity: {}
