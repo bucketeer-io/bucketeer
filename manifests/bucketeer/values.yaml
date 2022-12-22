@@ -1021,6 +1021,11 @@ event-counter:
     mysqlDbName:
     port: 9090
     metricsPort: 9002
+    redis:
+      serverName: bucketeer-redis
+      addr: bucketeer-redis.bucketeer.private:6379
+      poolMaxIdle: 50
+      poolMaxActive: 50
   affinity: {}
   nodeSelector: {}
   pdb:
