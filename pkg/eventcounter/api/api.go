@@ -363,7 +363,10 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		}
 		eventVals := []float64{}
 		for _, v := range vals {
-			float := v.(float64)
+			float, ok := v.(float64)
+			if !ok {
+				continue
+			}
 			eventVals = append(eventVals, float)
 		}
 		userVals := []float64{}
