@@ -104,6 +104,16 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		druidDatasourcePrefix: cmd.Flag("druid-datasource-prefix", "Druid datasource prefix.").String(),
 		druidUsername:         cmd.Flag("druid-username", "Druid username.").String(),
 		druidPassword:         cmd.Flag("druid-password", "Druid password.").String(),
+		redisServerName:       cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
+		redisAddr:             cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
+		redisPoolMaxIdle: cmd.Flag(
+			"redis-pool-max-idle",
+			"Maximum number of idle connections in the pool.",
+		).Default("5").Int(),
+		redisPoolMaxActive: cmd.Flag(
+			"redis-pool-max-active",
+			"Maximum number of connections allocated by the pool at a given time.",
+		).Default("10").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
