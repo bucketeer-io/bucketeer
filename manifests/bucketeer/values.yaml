@@ -2214,8 +2214,8 @@ push-sender:
     redis:
       serverName:
       addr:
-      poolMaxIdle: 5
-      poolMaxActive: 20
+      poolMaxIdle: 25
+      poolMaxActive: 25
     logLevel: info
     port: 9090
     metricsPort: 9002
