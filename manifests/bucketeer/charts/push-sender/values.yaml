@@ -18,7 +18,7 @@ env:
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
   redis:
-    serverName: non-persistent-redis
+    serverName:
     poolMaxIdle: 5
     poolMaxActive: 20
     addr:

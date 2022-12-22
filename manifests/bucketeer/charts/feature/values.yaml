@@ -19,8 +19,8 @@ env:
   experimentService: localhost:9001
   redis:
     serverName:
-    poolMaxIdle: 50
-    poolMaxActive: 200
+    poolMaxIdle: 25
+    poolMaxActive: 25
     addr:
   logLevel: info
   port: 9090

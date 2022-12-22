@@ -33,8 +33,8 @@ env:
   redis:
     serverName:
     addr:
-    poolMaxIdle: 50
-    poolMaxActive: 50
+    poolMaxIdle: 25
+    poolMaxActive: 25
   pullerNumGoroutines: 5
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
