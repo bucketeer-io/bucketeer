@@ -535,6 +535,8 @@ func getVariationID(reason featureproto.Reason_Type, vID string) string {
 func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
 		vID := getVariationID(e.Reason.Type, e.VariationId)
+		// To avoid duplication when the request fails, we increment the event count in the end
+		// because the user count is an unique count, and there is no problem adding the same event more than once
 		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
 		if err := p.countUser(uck, e.UserId); err != nil {
 			return err
