@@ -1700,7 +1700,7 @@ func TestEvaluationCountkey(t *testing.T) {
 			variationID:          variationID,
 			environmentNamespace: environmentNamespace,
 			timestamp:            unix,
-			expected:             fmt.Sprintf("%s:%s:%s:%s:%d", environmentNamespace, userCountKey, featureID, variationID, date.Unix()),
+			expected:             fmt.Sprintf("%s:%s:%d:%s:%s", environmentNamespace, userCountKey, date.Unix(), featureID, variationID),
 		},
 		{
 			desc:                 "eventCount",
@@ -1709,7 +1709,7 @@ func TestEvaluationCountkey(t *testing.T) {
 			variationID:          variationID,
 			environmentNamespace: environmentNamespace,
 			timestamp:            unix,
-			expected:             fmt.Sprintf("%s:%s:%s:%s:%d", environmentNamespace, eventCountKey, featureID, variationID, date.Unix()),
+			expected:             fmt.Sprintf("%s:%s:%d:%s:%s", environmentNamespace, eventCountKey, date.Unix(), featureID, variationID),
 		},
 	}
 	for _, p := range patterns {

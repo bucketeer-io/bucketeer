@@ -23,7 +23,6 @@ import (
 	"strconv"
 	"time"
 
-	goredis "github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -73,7 +72,6 @@ const (
 	eventCountKey      = "ec"
 	userCountKey       = "uc"
 	defaultVariationID = "default"
-	oneMonth           = 24 * time.Hour * 31
 )
 
 type eventMap map[string]proto.Message
@@ -294,14 +292,6 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 				fails[id] = true
 				continue
 			}
-			if err := p.upsertEvaluationCount(event, environmentNamespace); err != nil {
-				p.logger.Error(
-					"failed to upsert an evaluation event on redis",
-					zap.Error(err),
-					zap.String("id", id),
-					zap.String("environmentNamespace", environmentNamespace),
-				)
-			}
 			eventJSON, repeatable, err := p.marshalEvent(ctx, event, environmentNamespace)
 			if err != nil {
 				if !repeatable {
@@ -316,6 +306,16 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 				continue
 			}
 			evs[id] = eventJSON
+			if err := p.upsertEvaluationCount(event, environmentNamespace); err != nil {
+				p.logger.Error(
+					"failed to upsert an evaluation event in redis",
+					zap.Error(err),
+					zap.String("id", id),
+					zap.String("environmentNamespace", environmentNamespace),
+				)
+				fails[id] = true
+				continue
+			}
 		}
 		if len(evs) > 0 {
 			fs, err := p.datastore.Write(ctx, evs, environmentNamespace)
@@ -541,12 +541,14 @@ func getVariationID(reason featureproto.Reason_Type, vID string) string {
 func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
 		vID := getVariationID(e.Reason.Type, e.VariationId)
-		eck := p.newEvaluationCountkey(eventCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
-		if err := p.countEvent(eck); err != nil {
-			return err
-		}
+		// To avoid duplication when the request fails, we increment the event count in the end
+		// because the user count is an unique count, and there is no problem adding the same event more than once
 		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
 		if err := p.countUser(uck, e.UserId); err != nil {
+			return err
+		}
+		eck := p.newEvaluationCountkey(eventCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
+		if err := p.countEvent(eck); err != nil {
 			return err
 		}
 	}
@@ -561,7 +563,7 @@ func (p *Persister) newEvaluationCountkey(
 	date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%d", featureID, variationID, date.Unix()),
+		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
 		environmentNamespace,
 	)
 }
@@ -857,42 +859,18 @@ func (p *Persister) getUserEvaluation(
 	return evaluation, nil
 }
 
-func (p *Persister) setExpiration(dCmd *goredis.DurationCmd, key string) error {
-	// The value of command is available only after the pipeline is executed.
-	// https://redis.uptrace.dev/guide/go-redis-pipelines.html#pipelines
-	d, err := dCmd.Result()
+func (p *Persister) countEvent(key string) error {
+	_, err := p.evaluationCountCacher.Increment(key)
 	if err != nil {
 		return err
-	}
-	if d == -1*time.Second {
-		// The expiration may be overriden because of race condition.
-		// However, we don't have to care it because this expiration is not have to be strict.
-		_, err := p.evaluationCountCacher.Expire(key, oneMonth)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
-func (p *Persister) countEvent(key string) error {
-	pipe := p.evaluationCountCacher.Pipeline()
-	pipe.Incr(key)
-	dCmd := pipe.TTL(key)
-	_, err := pipe.Exec()
-	if err != nil {
-		return err
-	}
-	return p.setExpiration(dCmd, key)
-}
-
 func (p *Persister) countUser(key, userID string) error {
-	pipe := p.evaluationCountCacher.Pipeline()
-	pipe.PFAdd(key, userID)
-	dCmd := pipe.TTL(key)
-	_, err := pipe.Exec()
+	_, err := p.evaluationCountCacher.PFAdd(key)
 	if err != nil {
 		return err
 	}
-	return p.setExpiration(dCmd, key)
+	return nil
 }
