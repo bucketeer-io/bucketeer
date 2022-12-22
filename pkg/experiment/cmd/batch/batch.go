@@ -142,7 +142,7 @@ func (b *batch) registerJobs(
 		job  job.Job
 	}{
 		{
-			cron: "0,10,20,30,40,50 * * * * *",
+			cron: "0,30 * * * * *",
 			name: "experiment_status_updater",
 			job: experimentjob.NewExperimentStatusUpdater(
 				environmentClient,
