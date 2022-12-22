@@ -91,7 +91,7 @@ account-apikey-cacher:
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
     redis:
-      serverName: bucketeer-redis
+      serverName:
       addr:
     logLevel: info
     port: 9090
@@ -150,10 +150,10 @@ api-gateway:
     publishNumGoroutines: 200
     publishTimeout: 1m
     redis:
-      serverName: bucketeer-redis
-      addr: bucketeer-redis.bucketeer.private:6379
-      poolMaxIdle: 50
-      poolMaxActive: 200
+      serverName:
+      addr:
+      poolMaxIdle: 25
+      poolMaxActive: 25
     oldestEventTimestamp: "168h"
     furthestEventTimestamp:
     logLevel: info
@@ -1094,10 +1094,10 @@ event-persister-evaluation-events-kafka:
     flushSize: 100
     flushInterval: 2s
     redis:
-      serverName: bucketeer-redis
-      addr: bucketeer-redis.bucketeer.private:6379
-      poolMaxIdle: 50
-      poolMaxActive: 50
+      serverName:
+      addr:
+      poolMaxIdle: 25
+      poolMaxActive: 25
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
@@ -1171,10 +1171,10 @@ event-persister-goal-events-kafka:
     flushSize: 100
     flushInterval: 2s
     redis:
-      serverName: bucketeer-redis
-      addr: bucketeer-redis.bucketeer.private:6379
-      poolMaxIdle: 50
-      poolMaxActive: 50
+      serverName:
+      addr:
+      poolMaxIdle: 25
+      poolMaxActive: 25
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
@@ -1248,10 +1248,10 @@ event-persister-user-events-kafka:
     flushSize: 100
     flushInterval: 2s
     redis:
-      serverName: bucketeer-redis
-      addr: bucketeer-redis.bucketeer.private:6379
-      poolMaxIdle: 50
-      poolMaxActive: 50
+      serverName:
+      addr:
+      poolMaxIdle: 25
+      poolMaxActive: 25
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
@@ -1382,9 +1382,9 @@ feature:
     accountService: localhost:9001
     experimentService: localhost:9001
     redis:
-      serverName: bucketeer-redis
-      poolMaxIdle: 50
-      poolMaxActive: 200
+      serverName:
+      poolMaxIdle: 25
+      poolMaxActive: 25
       addr:
     logLevel: info
     port: 9090
@@ -1519,9 +1519,9 @@ feature-segment-persister:
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
     redis:
-      serverName: non-persistent-redis
-      poolMaxIdle: 50
-      poolMaxActive: 200
+      serverName:
+      poolMaxIdle: 25
+      poolMaxActive: 25
       addr:
     logLevel: info
     port: 9090
@@ -1575,8 +1575,8 @@ feature-tag-cacher:
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
     redis:
-      serverName: bucketeer-redis
-      addr: bucketeer-redis.bucketeer.private:6379
+      serverName:
+      addr:
     logLevel: info
     port: 9090
     metricsPort: 9002
@@ -2212,10 +2212,10 @@ push-sender:
     pullerMaxOutstandingMessages: "1000"
     pullerMaxOutstandingBytes: "1000000000"
     redis:
-      serverName: bucketeer-redis
-      addr: bucketeer-redis.bucketeer.private:6379
-      poolMaxIdle: 5
-      poolMaxActive: 20
+      serverName:
+      addr:
+      poolMaxIdle: 25
+      poolMaxActive: 25
     logLevel: info
     port: 9090
     metricsPort: 9002

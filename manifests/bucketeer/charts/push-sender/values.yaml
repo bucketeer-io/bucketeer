@@ -18,9 +18,9 @@ env:
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
   redis:
-    serverName: non-persistent-redis
-    poolMaxIdle: 5
-    poolMaxActive: 20
+    serverName:
+    poolMaxIdle: 25
+    poolMaxActive: 25
     addr:
   logLevel: info
   port: 9090

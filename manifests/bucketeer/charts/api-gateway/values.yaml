@@ -15,8 +15,8 @@ env:
   publishTimeout: 1m
   redis:
     serverName:
-    poolMaxIdle: 50
-    poolMaxActive: 200
+    poolMaxIdle: 25
+    poolMaxActive: 25
     addr:
   oldestEventTimestamp:
   furthestEventTimestamp:
