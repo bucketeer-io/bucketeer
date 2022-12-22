@@ -868,7 +868,7 @@ func (p *Persister) countEvent(key string) error {
 }
 
 func (p *Persister) countUser(key, userID string) error {
-	_, err := p.evaluationCountCacher.PFAdd(key)
+	_, err := p.evaluationCountCacher.PFAdd(key, userID)
 	if err != nil {
 		return err
 	}
