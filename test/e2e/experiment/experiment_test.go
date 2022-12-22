@@ -424,7 +424,7 @@ func TestDeleteGoal(t *testing.T) {
 
 func TestStatusUpdateFromWaitingToRunning(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	c := newExperimentClient(t)
 	defer c.Close()
@@ -465,7 +465,7 @@ func TestStatusUpdateFromWaitingToRunning(t *testing.T) {
 
 func TestStatusUpdateFromRunningToStopped(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	c := newExperimentClient(t)
 	defer c.Close()
@@ -521,7 +521,7 @@ func TestStatusUpdateFromRunningToStopped(t *testing.T) {
 
 func TestStatusUpdateFromWaitingToStopped(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	c := newExperimentClient(t)
 	defer c.Close()
