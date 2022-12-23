@@ -298,13 +298,6 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	}
 	vIDs = append(vIDs, defaultVariationID)
 
-	s.logger.Error(
-		"Debug VIDs",
-		log.FieldsFromImcomingContext(ctx).AddFields(
-			zap.Strings("vIDs", vIDs),
-		)...,
-	)
-
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
 	for _, vID := range vIDs {
@@ -316,13 +309,6 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 			uc := newEvaluationCountkey(userCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
 			userCountKeys = append(userCountKeys, uc)
 		}
-		s.logger.Error(
-			"Debug keys",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Strings("ec", eventCountKeys),
-				zap.Strings("uc", userCountKeys),
-			)...,
-		)
 		pipe := s.evaluationCountCacher.Pipeline()
 		sCmd := pipe.GetMulti(eventCountKeys)
 		iCmds := []*redis.IntCmd{}
@@ -376,20 +362,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 			}
 			return nil, dt.Err()
 		}
-		eventVals := []float64{}
-		for _, v := range vals {
-			str, ok := v.(string)
-			if !ok {
-				eventVals = append(eventVals, 0)
-				continue
-			}
-			float, err := strconv.ParseFloat(str, 64)
-			if err != nil {
-				eventVals = append(eventVals, 0)
-				continue
-			}
-			eventVals = append(eventVals, float)
-		}
+		eventVals := getEventValues(vals)
 		userVals := []float64{}
 		for _, c := range iCmds {
 			val, err := c.Result()
@@ -453,6 +426,24 @@ func newEvaluationCountkey(
 		fmt.Sprintf("%d:%s:%s", ts, featureID, variationID),
 		environmentNamespace,
 	)
+}
+
+func getEventValues(vals []interface{}) []float64 {
+	eventVals := []float64{}
+	for _, v := range vals {
+		str, ok := v.(string)
+		if !ok {
+			eventVals = append(eventVals, 0)
+			continue
+		}
+		float, err := strconv.ParseFloat(str, 64)
+		if err != nil {
+			eventVals = append(eventVals, 0)
+			continue
+		}
+		eventVals = append(eventVals, float)
+	}
+	return eventVals
 }
 
 func (s *eventCounterService) GetExperimentResult(
