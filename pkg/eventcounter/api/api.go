@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -377,8 +378,13 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		}
 		eventVals := []float64{}
 		for _, v := range vals {
-			float, ok := v.(float64)
+			str, ok := v.(string)
 			if !ok {
+				eventVals = append(eventVals, 0)
+				continue
+			}
+			float, err := strconv.ParseFloat(str, 64)
+			if err != nil {
 				eventVals = append(eventVals, 0)
 				continue
 			}
