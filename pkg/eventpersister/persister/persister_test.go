@@ -1683,7 +1683,7 @@ func TestEvaluationCountkey(t *testing.T) {
 	unix := time.Now().Unix()
 	environmentNamespace := "en-1"
 	now := time.Unix(unix, 0)
-	date := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	date := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jpLocation)
 	patterns := []struct {
 		desc                 string
 		kind                 string
