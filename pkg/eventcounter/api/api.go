@@ -362,33 +362,51 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 			}
 			return nil, dt.Err()
 		}
-		eventVals := getEventValues(vals)
-		userVals := []float64{}
-		for _, c := range iCmds {
-			val, err := c.Result()
+		eventVals, err := getEventValues(vals)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get event values",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.Time("startAt", startAt),
+					zap.Time("endAt", endAt),
+					zap.String("featureId", req.FeatureId),
+					zap.Int32("featureVersion", resp.Feature.Version),
+					zap.String("variationId", vID),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
 			if err != nil {
-				s.logger.Error(
-					"Failed to get the result from `PFCount` command",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
-						zap.Time("startAt", startAt),
-						zap.Time("endAt", endAt),
-						zap.String("featureId", req.FeatureId),
-						zap.Int32("featureVersion", resp.Feature.Version),
-						zap.String("variationId", vID),
-					)...,
-				)
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalize(locale.InternalServerError),
-				})
-				if err != nil {
-					return nil, statusInternal.Err()
-				}
-				return nil, dt.Err()
+				return nil, statusInternal.Err()
 			}
-			userVals = append(userVals, float64(val))
+			return nil, dt.Err()
+		}
+		userVals, err := getUserValues(iCmds)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get user values",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.Time("startAt", startAt),
+					zap.Time("endAt", endAt),
+					zap.String("featureId", req.FeatureId),
+					zap.Int32("featureVersion", resp.Feature.Version),
+					zap.String("variationId", vID),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
 			VariationId: vID,
@@ -428,7 +446,7 @@ func newEvaluationCountkey(
 	)
 }
 
-func getEventValues(vals []interface{}) []float64 {
+func getEventValues(vals []interface{}) ([]float64, error) {
 	eventVals := []float64{}
 	for _, v := range vals {
 		str, ok := v.(string)
@@ -438,12 +456,23 @@ func getEventValues(vals []interface{}) []float64 {
 		}
 		float, err := strconv.ParseFloat(str, 64)
 		if err != nil {
-			eventVals = append(eventVals, 0)
-			continue
+			return []float64{}, err
 		}
 		eventVals = append(eventVals, float)
 	}
-	return eventVals
+	return eventVals, nil
+}
+
+func getUserValues(cmds []*redis.IntCmd) ([]float64, error) {
+	userVals := []float64{}
+	for _, c := range cmds {
+		val, err := c.Result()
+		if err != nil {
+			return []float64{}, err
+		}
+		userVals = append(userVals, float64(val))
+	}
+	return userVals, nil
 }
 
 func (s *eventCounterService) GetExperimentResult(
