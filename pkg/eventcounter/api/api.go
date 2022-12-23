@@ -297,6 +297,13 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	}
 	vIDs = append(vIDs, defaultVariationID)
 
+	s.logger.Error(
+		"Debug VIDs",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.Strings("vIDs", vIDs),
+		)...,
+	)
+
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
 	for _, vID := range vIDs {
@@ -308,7 +315,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 			uc := newEvaluationCountkey(userCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
 			userCountKeys = append(userCountKeys, uc)
 		}
-		s.logger.Debug(
+		s.logger.Error(
 			"Debug keys",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Strings("ec", eventCountKeys),
