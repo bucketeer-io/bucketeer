@@ -308,6 +308,13 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 			uc := newEvaluationCountkey(userCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
 			userCountKeys = append(userCountKeys, uc)
 		}
+		s.logger.Debug(
+			"Debug keys",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Strings("ec", eventCountKeys),
+				zap.Strings("uc", userCountKeys),
+			)...,
+		)
 		pipe := s.evaluationCountCacher.Pipeline()
 		sCmd := pipe.GetMulti(eventCountKeys)
 		iCmds := []*redis.IntCmd{}
