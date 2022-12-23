@@ -430,7 +430,7 @@ func newEvaluationCountkey(
 ) string {
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%d", featureID, variationID, ts),
+		fmt.Sprintf("%d:%s:%s", ts, featureID, variationID),
 		environmentNamespace,
 	)
 }
