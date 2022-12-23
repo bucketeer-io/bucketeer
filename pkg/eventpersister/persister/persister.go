@@ -74,6 +74,10 @@ const (
 	defaultVariationID = "default"
 )
 
+var (
+	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
+)
+
 type eventMap map[string]proto.Message
 type environmentEventMap map[string]eventMap
 
@@ -560,7 +564,7 @@ func (p *Persister) newEvaluationCountkey(
 	timestamp int64,
 ) string {
 	t := time.Unix(timestamp, 0)
-	date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
+	date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, jpLocation)
 	return cache.MakeKey(
 		kind,
 		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
