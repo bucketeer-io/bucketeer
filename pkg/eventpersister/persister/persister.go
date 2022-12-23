@@ -305,7 +305,6 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 				fails[id] = repeatable
 				continue
 			}
-			evs[id] = eventJSON
 			if err := p.upsertEvaluationCount(event, environmentNamespace); err != nil {
 				p.logger.Error(
 					"failed to upsert an evaluation event in redis",
@@ -316,6 +315,7 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 				fails[id] = true
 				continue
 			}
+			evs[id] = eventJSON
 		}
 		if len(evs) > 0 {
 			fs, err := p.datastore.Write(ctx, evs, environmentNamespace)
