@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/eventcounter/domain"
@@ -46,6 +47,7 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 func TestNewEventCounterService(t *testing.T) {
@@ -1001,6 +1003,81 @@ func TestGetUserValues(t *testing.T) {
 	}
 }
 
+func TestGetOneMonthTimeStamps(t *testing.T) {
+	t.Parallel()
+
+	endAt := time.Now()
+	startAt, err := genInterval(jpLocation, endAt, 30)
+	assert.NoError(t, err)
+
+	patterns := []struct {
+		desc             string
+		startAt          time.Time
+		expectedElements []int64
+		expectedLen      int
+	}{
+		{
+			desc:    "success",
+			startAt: startAt,
+			expectedElements: []int64{
+				getDate(startAt),
+				getDate(startAt.AddDate(0, 0, 1)),
+				getDate(endAt),
+			},
+			expectedLen: 31,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := getOneMonthTimeStamps(p.startAt)
+			for _, e := range p.expectedElements {
+				assert.Contains(t, actual, int64(e))
+			}
+			assert.Len(t, actual, p.expectedLen)
+		})
+	}
+}
+
+func TestGetVariationIDs(t *testing.T) {
+	t.Parallel()
+
+	vID1 := newUUID(t)
+	vID2 := newUUID(t)
+
+	patterns := []struct {
+		desc       string
+		variations []*featureproto.Variation
+		expected   []string
+	}{
+		{
+			desc: "success",
+			variations: []*featureproto.Variation{
+				{
+					Id:    vID1,
+					Value: "true",
+				},
+				{
+					Id:    vID2,
+					Value: "false",
+				},
+			},
+			expected: []string{
+				vID1, vID2, defaultVariationID,
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := getVariationIDs(p.variations)
+			assert.Equal(t, actual, p.expected)
+		})
+	}
+}
+
+func getDate(t time.Time) int64 {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, jpLocation).Unix()
+}
+
 func newEventCounterService(t *testing.T, mockController *gomock.Controller) *eventCounterService {
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
@@ -1036,4 +1113,13 @@ func createContextWithToken(t *testing.T, role accountproto.Account_Role) contex
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
+}
+
+func newUUID(t *testing.T) string {
+	t.Helper()
+	id, err := uuid.NewUUID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return id.String()
 }

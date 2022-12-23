@@ -286,17 +286,9 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		return nil, dt.Err()
 	}
 
-	timeStamps := []int64{}
-	for i := 0; i < 30; i++ {
-		ts := startAt.AddDate(0, 0, i).Unix()
-		timeStamps = append(timeStamps, ts)
-	}
+	timeStamps := getOneMonthTimeStamps(startAt)
 
-	vIDs := []string{}
-	for _, v := range resp.Feature.Variations {
-		vIDs = append(vIDs, v.Id)
-	}
-	vIDs = append(vIDs, defaultVariationID)
+	vIDs := getVariationIDs(resp.Feature.Variations)
 
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
@@ -446,6 +438,15 @@ func newEvaluationCountkey(
 	)
 }
 
+func getOneMonthTimeStamps(startAt time.Time) []int64 {
+	timeStamps := []int64{}
+	for i := 0; i < 31; i++ {
+		ts := startAt.AddDate(0, 0, i).Unix()
+		timeStamps = append(timeStamps, ts)
+	}
+	return timeStamps
+}
+
 func getEventValues(vals []interface{}) ([]float64, error) {
 	eventVals := []float64{}
 	for _, v := range vals {
@@ -473,6 +474,15 @@ func getUserValues(cmds []*redis.IntCmd) ([]float64, error) {
 		userVals = append(userVals, float64(val))
 	}
 	return userVals, nil
+}
+
+func getVariationIDs(vs []*featureproto.Variation) []string {
+	vIDs := []string{}
+	for _, v := range vs {
+		vIDs = append(vIDs, v.Id)
+	}
+	vIDs = append(vIDs, defaultVariationID)
+	return vIDs
 }
 
 func (s *eventCounterService) GetExperimentResult(
