@@ -99,6 +99,7 @@ jobs:
         uses: arduino/setup-protoc@v1
         with:
           version: ${{ env.PROTOC_VERSION }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate proto files
         run: make gen_proto
       - name: Build
