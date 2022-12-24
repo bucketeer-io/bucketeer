@@ -12,20 +12,13 @@ First, ensure that the node and yarn are installed in your local environment, us
 yarn install
 ```
 
-### Configure the TLS certificate
-
-Place the TLS cert and key files under the following directory.
-
-- `./apps/admin/certs/tls.crt`
-- `./apps/admin/certs/tls.key`
-
 ## Local Development
 
 ### Set the API and Web endpoint
 
 ```sh
 export NX_DEV_WEB_API_ENDPOINT=https://example.com
-export NX_DEV_AUTH_REDIRECT_ENDPOINT=https://local.example.com
+export NX_DEV_AUTH_REDIRECT_ENDPOINT=http://localhost:8000
 ```
 
 ### Serve locally

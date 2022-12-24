@@ -76,12 +76,8 @@ module.exports = (config, context) => {
     },
     devServer: {
       ...config.devServer,
-      https: {
-        key: './apps/admin/certs/tls.key',
-        cert: './apps/admin/certs/tls.crt',
-      },
-      host: '0.0.0.0',
-      port: 443,
+      host: 'localhost',
+      port: 8000,
       disableHostCheck: true,
     },
   };
