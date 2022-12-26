@@ -80,7 +80,11 @@ func NewQuerier(
 	}, nil
 }
 
-func (c *querier) ExecQuery(ctx context.Context, query string, params []bigquery.QueryParameter) (*bigquery.RowIterator, error) {
+func (c *querier) ExecQuery(
+	ctx context.Context,
+	query string,
+	params []bigquery.QueryParameter,
+) (*bigquery.RowIterator, error) {
 	var err error
 	defer record()(operationQuery, &err)
 	q := c.client.Query(query)
@@ -90,7 +94,12 @@ func (c *querier) ExecQuery(ctx context.Context, query string, params []bigquery
 		return nil, err
 	}
 	status, err := job.Wait(ctx)
-	c.logger.Debug("Bigquery jobStatus", zap.Any("status", status), zap.Any("query", query), zap.Any("params", params))
+	c.logger.Debug(
+		"Bigquery jobStatus",
+		zap.Any("status", status),
+		zap.Any("query", query),
+		zap.Any("params", params),
+	)
 	if err != nil {
 		return nil, err
 	}
