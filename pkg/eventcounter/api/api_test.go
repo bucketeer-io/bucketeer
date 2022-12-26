@@ -1028,6 +1028,26 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
 		},
 		{
+			desc: "error: get feature failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, errors.New("error"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
 			desc: "error: get event counts failed",
 			setup: func(ctx context.Context, s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
@@ -1098,12 +1118,12 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(ec).Return(
 						[]float64{
 							1, 3, 5,
-						}, nil).AnyTimes()
+						}, nil)
 					uc := getUserCountKeys(vID, fID, environmentNamespace, timeStamps)
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(uc).Return(
 						[]float64{
 							2, 4, 6,
-						}, nil).AnyTimes()
+						}, nil)
 				}
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
