@@ -504,7 +504,6 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			},
 		})
 	}
-	// TODO: default variation id
 	return &ecproto.GetEvaluationTimeseriesCountResponse{
 		EventCounts: variationTSEvents,
 		UserCounts:  variationTSUsers,
