@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -1002,6 +1003,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 	fID := "fid"
 	vID0 := "vid0"
 	vID1 := "vid1"
+	randomNumberGroup := getRandomNumberGroup(3)
 
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	createError := func(status *gstatus.Status, msg string) error {
@@ -1113,17 +1115,14 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 				startAt, err := genInterval(jpLocation, endAt, 30)
 				assert.NoError(t, err)
 				timeStamps := getOneMonthTimeStamps(startAt)
-				for _, vID := range vIDs {
+				for idx, vID := range vIDs {
 					ec := getEventCountKeys(vID, fID, environmentNamespace, timeStamps)
+					val := randomNumberGroup[idx]
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(ec).Return(
-						[]float64{
-							1, 3, 5,
-						}, nil)
+						val, nil)
 					uc := getUserCountKeys(vID, fID, environmentNamespace, timeStamps)
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(uc).Return(
-						[]float64{
-							2, 4, 6,
-						}, nil)
+						val, nil)
 				}
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
@@ -1195,20 +1194,37 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 			}
 			actual, err := s.GetEvaluationTimeseriesCountV2(ctx, p.input)
 			if p.expectedErr == nil {
-				for idx, expectedEc := range p.expected.EventCounts {
+				for idx := range p.expected.EventCounts {
 					actualTs := actual.EventCounts[idx].Timeseries
-					assert.Equal(t, expectedEc.Timeseries.Values, actualTs.Values)
+					assert.Equal(t, randomNumberGroup[idx], actualTs.Values)
 					assert.Len(t, actualTs.Timestamps, 31)
 				}
-				for idx, expectedUc := range p.expected.UserCounts {
+				for idx := range p.expected.UserCounts {
 					actualTs := actual.UserCounts[idx].Timeseries
-					assert.Equal(t, expectedUc.Timeseries.Values, actualTs.Values)
+					assert.Equal(t, randomNumberGroup[idx], actualTs.Values)
 					assert.Len(t, actualTs.Timestamps, 31)
 				}
 			}
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
+}
+
+func getRandomNumberGroup(size int) [][]float64 {
+	group := make([][]float64, 0, size)
+	for i := 0; i < size; i++ {
+		group = append(group, getRandomNumbers())
+	}
+	return group
+}
+
+func getRandomNumbers() []float64 {
+	size := 31
+	nums := make([]float64, 0, size)
+	for i := 0; i < size; i++ {
+		nums = append(nums, rand.Float64())
+	}
+	return nums
 }
 
 func getEventCountKeys(vID, fID, environmentNamespace string, timeStamps []int64) []string {

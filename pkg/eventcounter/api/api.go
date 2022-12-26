@@ -472,7 +472,7 @@ func newEvaluationCountkey(
 func getOneMonthTimeStamps(startAt time.Time) []int64 {
 	limit := 31
 	timeStamps := make([]int64, 0, limit)
-	for i := 0; i < 31; i++ {
+	for i := 0; i < limit; i++ {
 		ts := startAt.AddDate(0, 0, i).Unix()
 		timeStamps = append(timeStamps, ts)
 	}
