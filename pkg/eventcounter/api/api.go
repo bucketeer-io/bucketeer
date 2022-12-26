@@ -527,7 +527,8 @@ func newEvaluationCountkey(
 }
 
 func getOneMonthTimeStamps(startAt time.Time) []int64 {
-	timeStamps := []int64{}
+	limit := 31
+	timeStamps := make([]int64, 0, limit)
 	for i := 0; i < 31; i++ {
 		ts := startAt.AddDate(0, 0, i).Unix()
 		timeStamps = append(timeStamps, ts)
@@ -536,7 +537,7 @@ func getOneMonthTimeStamps(startAt time.Time) []int64 {
 }
 
 func getEventValues(vals []interface{}) ([]float64, error) {
-	eventVals := []float64{}
+	eventVals := make([]float64, 0, len(vals))
 	for _, v := range vals {
 		str, ok := v.(string)
 		if !ok {
