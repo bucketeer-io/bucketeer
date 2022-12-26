@@ -1101,7 +1101,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 			if p.expectedErr == nil {
 				for idx, expectedEc := range p.expected.EventCounts {
 					actualTs := actual.EventCounts[idx].Timeseries
-					assert.Equal(t,  expectedEc.Timeseries.Values, actualTs.Values)
+					assert.Equal(t, expectedEc.Timeseries.Values, actualTs.Values)
 					assert.Len(t, actualTs.Timestamps, 31)
 				}
 				for idx, expectedUc := range p.expected.UserCounts {
