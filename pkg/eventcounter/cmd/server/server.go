@@ -22,6 +22,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventcounter/api"
 	"github.com/bucketeer-io/bucketeer/pkg/eventcounter/druid"
@@ -29,6 +30,7 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	storagedruid "github.com/bucketeer-io/bucketeer/pkg/storage/druid"
@@ -60,6 +62,10 @@ type server struct {
 	druidDatasourcePrefix *string
 	druidUsername         *string
 	druidPassword         *string
+	redisServerName       *string
+	redisAddr             *string
+	redisPoolMaxIdle      *int
+	redisPoolMaxActive    *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -98,6 +104,16 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		druidDatasourcePrefix: cmd.Flag("druid-datasource-prefix", "Druid datasource prefix.").String(),
 		druidUsername:         cmd.Flag("druid-username", "Druid username.").String(),
 		druidPassword:         cmd.Flag("druid-password", "Druid password.").String(),
+		redisServerName:       cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
+		redisAddr:             cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
+		redisPoolMaxIdle: cmd.Flag(
+			"redis-pool-max-idle",
+			"Maximum number of idle connections in the pool.",
+		).Default("5").Int(),
+		redisPoolMaxActive: cmd.Flag(
+			"redis-pool-max-active",
+			"Maximum number of connections allocated by the pool at a given time.",
+		).Default("10").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -159,6 +175,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	redisV3Client, err := redisv3.NewClient(
+		*s.redisAddr,
+		redisv3.WithPoolSize(*s.redisPoolMaxActive),
+		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),
+		redisv3.WithServerName(*s.redisServerName),
+		redisv3.WithMetrics(registerer),
+		redisv3.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer redisV3Client.Close()
+	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
+
 	service := api.NewEventCounterService(
 		mysqlClient,
 		experimentClient,
@@ -166,6 +196,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountClient,
 		druidQuerier,
 		registerer,
+		redisV3Cache,
 		logger,
 	)
 

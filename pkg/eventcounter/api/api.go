@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -28,6 +29,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	ecdruid "github.com/bucketeer-io/bucketeer/pkg/eventcounter/druid"
 	v2ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
@@ -48,6 +51,12 @@ import (
 
 const listRequestPageSize = 500
 
+const (
+	eventCountPrefix   = "ec"
+	userCountPrefix    = "uc"
+	defaultVariationID = "default"
+)
+
 var (
 	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
 )
@@ -59,6 +68,7 @@ type eventCounterService struct {
 	druidQuerier                 ecdruid.Querier
 	mysqlExperimentResultStorage v2ecstorage.ExperimentResultStorage
 	metrics                      metrics.Registerer
+	evaluationCountCacher        cachev3.EventCounterCache
 	logger                       *zap.Logger
 }
 
@@ -69,6 +79,7 @@ func NewEventCounterService(
 	a accountclient.Client,
 	d ecdruid.Querier,
 	r metrics.Registerer,
+	redis cache.MultiGetDeleteCountCache,
 	l *zap.Logger,
 ) rpc.Service {
 	registerMetrics(r)
@@ -79,6 +90,7 @@ func NewEventCounterService(
 		druidQuerier:                 d,
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
 		metrics:                      r,
+		evaluationCountCacher:        cachev3.NewEventCountCache(redis),
 		logger:                       l.Named("api"),
 	}
 }
@@ -315,9 +327,165 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	}, nil
 }
 
+func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
+	ctx context.Context,
+	req *ecproto.GetEvaluationTimeseriesCountRequest,
+) (*ecproto.GetEvaluationTimeseriesCountResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if req.FeatureId == "" {
+		return nil, localizedError(statusFeatureIDRequired, locale.JaJP)
+	}
+	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
+		EnvironmentNamespace: req.EnvironmentNamespace,
+		Id:                   req.FeatureId,
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to get feature",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("featureId", req.FeatureId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	endAt := time.Now()
+	startAt, err := genInterval(jpLocation, endAt, 30)
+	if err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	timeStamps := getOneMonthTimeStamps(startAt)
+	vIDs := getVariationIDs(resp.Feature.Variations)
+	variationTSEvents := []*ecproto.VariationTimeseries{}
+	variationTSUsers := []*ecproto.VariationTimeseries{}
+	for _, vID := range vIDs {
+		eventCountKeys := []string{}
+		userCountKeys := []string{}
+		for _, ts := range timeStamps {
+			ec := newEvaluationCountkey(eventCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
+			eventCountKeys = append(eventCountKeys, ec)
+			uc := newEvaluationCountkey(userCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
+			userCountKeys = append(userCountKeys, uc)
+		}
+		eventCounts, err := s.evaluationCountCacher.GetEventCounts(eventCountKeys)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get event counts",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.Time("startAt", startAt),
+					zap.Time("endAt", endAt),
+					zap.String("featureId", req.FeatureId),
+					zap.Int32("featureVersion", resp.Feature.Version),
+					zap.String("variationId", vID),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		userCounts, err := s.evaluationCountCacher.GetUserCounts(userCountKeys)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get user counts",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.Time("startAt", startAt),
+					zap.Time("endAt", endAt),
+					zap.String("featureId", req.FeatureId),
+					zap.Int32("featureVersion", resp.Feature.Version),
+					zap.String("variationId", vID),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
+			VariationId: vID,
+			Timeseries: &ecproto.Timeseries{
+				Timestamps: timeStamps,
+				Values:     userCounts,
+			},
+		})
+		variationTSEvents = append(variationTSEvents, &ecproto.VariationTimeseries{
+			VariationId: vID,
+			Timeseries: &ecproto.Timeseries{
+				Timestamps: timeStamps,
+				Values:     eventCounts,
+			},
+		})
+	}
+	return &ecproto.GetEvaluationTimeseriesCountResponse{
+		EventCounts: variationTSEvents,
+		UserCounts:  variationTSUsers,
+	}, nil
+}
+
 func genInterval(loc *time.Location, endAt time.Time, durationDays int) (time.Time, error) {
 	year, month, day := endAt.In(loc).AddDate(0, 0, -durationDays).Date()
 	return time.Date(year, month, day, 0, 0, 0, 0, loc), nil
+}
+
+func newEvaluationCountkey(
+	kind, featureID, variationID, environmentNamespace string,
+	ts int64,
+) string {
+	return cache.MakeKey(
+		kind,
+		fmt.Sprintf("%d:%s:%s", ts, featureID, variationID),
+		environmentNamespace,
+	)
+}
+
+func getOneMonthTimeStamps(startAt time.Time) []int64 {
+	limit := 31
+	timeStamps := make([]int64, 0, limit)
+	for i := 0; i < limit; i++ {
+		ts := startAt.AddDate(0, 0, i).Unix()
+		timeStamps = append(timeStamps, ts)
+	}
+	return timeStamps
+}
+
+func getVariationIDs(vs []*featureproto.Variation) []string {
+	vIDs := []string{}
+	for _, v := range vs {
+		vIDs = append(vIDs, v.Id)
+	}
+	vIDs = append(vIDs, defaultVariationID)
+	return vIDs
 }
 
 func (s *eventCounterService) GetExperimentResult(

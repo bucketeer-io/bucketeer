@@ -91,6 +91,14 @@ spec:
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_EVENT_COUNTER_KEY
               value: /usr/local/certs/service/tls.key
+            - name: BUCKETEER_EVENT_COUNTER_REDIS_SERVER_NAME
+              value: "{{ .Values.env.redis.serverName }}"
+            - name: BUCKETEER_EVENT_COUNTER_REDIS_ADDR
+              value: "{{ .Values.env.redis.addr }}"
+            - name: BUCKETEER_EVENT_COUNTER_REDIS_POOL_MAX_IDLE
+              value: "{{ .Values.env.redis.poolMaxIdle }}"
+            - name: BUCKETEER_EVENT_COUNTER_REDIS_POOL_MAX_ACTIVE
+              value: "{{ .Values.env.redis.poolMaxActive }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

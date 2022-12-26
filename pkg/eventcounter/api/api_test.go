@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -30,8 +31,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	eccachemock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/eventcounter/domain"
 	ecdruid "github.com/bucketeer-io/bucketeer/pkg/eventcounter/druid"
 	dmock "github.com/bucketeer-io/bucketeer/pkg/eventcounter/druid/mock"
@@ -56,7 +59,7 @@ func TestNewEventCounterService(t *testing.T) {
 	reg := metrics.DefaultRegisterer()
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	g := NewEventCounterService(nil, nil, nil, nil, nil, reg, logger)
+	g := NewEventCounterService(nil, nil, nil, nil, nil, reg, nil, logger)
 	assert.IsType(t, &eventCounterService{}, g)
 }
 
@@ -919,6 +922,301 @@ func TestGenInterval(t *testing.T) {
 	}
 }
 
+func TestGetOneMonthTimeStamps(t *testing.T) {
+	t.Parallel()
+
+	endAt := time.Now()
+	startAt, err := genInterval(jpLocation, endAt, 30)
+	assert.NoError(t, err)
+
+	patterns := []struct {
+		desc             string
+		startAt          time.Time
+		expectedElements []int64
+		expectedLen      int
+	}{
+		{
+			desc:    "success",
+			startAt: startAt,
+			expectedElements: []int64{
+				getDate(startAt),
+				getDate(startAt.AddDate(0, 0, 1)),
+				getDate(endAt),
+			},
+			expectedLen: 31,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := getOneMonthTimeStamps(p.startAt)
+			for _, e := range p.expectedElements {
+				assert.Contains(t, actual, int64(e))
+			}
+			assert.Len(t, actual, p.expectedLen)
+		})
+	}
+}
+
+func TestGetVariationIDs(t *testing.T) {
+	t.Parallel()
+
+	vID1 := newUUID(t)
+	vID2 := newUUID(t)
+
+	patterns := []struct {
+		desc       string
+		variations []*featureproto.Variation
+		expected   []string
+	}{
+		{
+			desc: "success",
+			variations: []*featureproto.Variation{
+				{
+					Id:    vID1,
+					Value: "true",
+				},
+				{
+					Id:    vID2,
+					Value: "false",
+				},
+			},
+			expected: []string{
+				vID1, vID2, defaultVariationID,
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := getVariationIDs(p.variations)
+			assert.Equal(t, actual, p.expected)
+		})
+	}
+}
+
+func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
+	t.Parallel()
+
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	environmentNamespace := "ns0"
+	fID := "fid"
+	vID0 := "vid0"
+	vID1 := "vid1"
+	randomNumberGroup := getRandomNumberGroup(3)
+
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(context.Context, *eventCounterService)
+		input       *ecproto.GetEvaluationTimeseriesCountRequest
+		expected    *ecproto.GetEvaluationTimeseriesCountResponse
+		expectedErr error
+	}{
+		{
+			desc: "error: ErrFeatureIDRequired",
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: "ns0",
+			},
+			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
+		},
+		{
+			desc: "error: get feature failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, errors.New("error"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: get event counts failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(gomock.Any()).Return(
+					nil, errors.New("error"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: get user counts failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(gomock.Any()).Return(
+					[]float64{
+						1, 3, 5,
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(gomock.Any()).Return(
+					nil, errors.New("error"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: vID0}, {Id: vID1}},
+						},
+					}, nil)
+				vIDs := []string{vID0, vID1, defaultVariationID}
+				endAt := time.Now()
+				startAt, err := genInterval(jpLocation, endAt, 30)
+				assert.NoError(t, err)
+				timeStamps := getOneMonthTimeStamps(startAt)
+				for idx, vID := range vIDs {
+					ec := getEventCountKeys(vID, fID, environmentNamespace, timeStamps)
+					val := randomNumberGroup[idx]
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(ec).Return(
+						val, nil)
+					uc := getUserCountKeys(vID, fID, environmentNamespace, timeStamps)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(uc).Return(
+						val, nil)
+				}
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expected: &ecproto.GetEvaluationTimeseriesCountResponse{
+				EventCounts: []*ecproto.VariationTimeseries{
+					{
+						VariationId: vID0,
+					},
+					{
+						VariationId: vID1,
+					},
+					{
+						VariationId: defaultVariationID,
+					},
+				},
+				UserCounts: []*ecproto.VariationTimeseries{
+					{
+						VariationId: vID0,
+					},
+					{
+						VariationId: vID1,
+					},
+					{
+						VariationId: defaultVariationID,
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := newEventCounterService(t, mockController)
+			if p.setup != nil {
+				p.setup(ctx, s)
+			}
+			actual, err := s.GetEvaluationTimeseriesCountV2(ctx, p.input)
+			if p.expectedErr == nil {
+				for idx := range p.expected.EventCounts {
+					actualTs := actual.EventCounts[idx]
+					assert.Equal(t, p.expected.EventCounts[idx].VariationId, actualTs.VariationId)
+					assert.Equal(t, randomNumberGroup[idx], actualTs.Timeseries.Values)
+					assert.Len(t, actualTs.Timeseries.Timestamps, 31)
+				}
+				for idx := range p.expected.UserCounts {
+					actualTs := actual.EventCounts[idx]
+					assert.Equal(t, p.expected.UserCounts[idx].VariationId, actualTs.VariationId)
+					assert.Equal(t, randomNumberGroup[idx], actualTs.Timeseries.Values)
+					assert.Len(t, actualTs.Timeseries.Timestamps, 31)
+				}
+			}
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func getRandomNumberGroup(size int) [][]float64 {
+	group := make([][]float64, 0, size)
+	for i := 0; i < size; i++ {
+		group = append(group, getRandomNumbers())
+	}
+	return group
+}
+
+func getRandomNumbers() []float64 {
+	size := 31
+	nums := make([]float64, 0, size)
+	for i := 0; i < size; i++ {
+		nums = append(nums, rand.Float64())
+	}
+	return nums
+}
+
+func getEventCountKeys(vID, fID, environmentNamespace string, timeStamps []int64) []string {
+	eventCountKeys := []string{}
+	for _, ts := range timeStamps {
+		ec := newEvaluationCountkey(eventCountPrefix, fID, vID, environmentNamespace, ts)
+		eventCountKeys = append(eventCountKeys, ec)
+	}
+	return eventCountKeys
+}
+
+func getUserCountKeys(vID, fid, environmentNamespace string, timeStamps []int64) []string {
+	userCountKeys := []string{}
+	for _, ts := range timeStamps {
+		uc := newEvaluationCountkey(userCountPrefix, fid, vID, environmentNamespace, ts)
+		userCountKeys = append(userCountKeys, uc)
+	}
+	return userCountKeys
+}
+
 func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -1037,6 +1335,10 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	}
 }
 
+func getDate(t time.Time) int64 {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, jpLocation).Unix()
+}
+
 func newEventCounterService(t *testing.T, mockController *gomock.Controller) *eventCounterService {
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
@@ -1059,6 +1361,7 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller) *ev
 		accountClient:                accountClientMock,
 		mysqlExperimentResultStorage: v2ecsmock.NewMockExperimentResultStorage(mockController),
 		druidQuerier:                 dmock.NewMockQuerier(mockController),
+		evaluationCountCacher:        eccachemock.NewMockEventCounterCache(mockController),
 		metrics:                      reg,
 		logger:                       logger.Named("api"),
 	}
@@ -1072,4 +1375,13 @@ func createContextWithToken(t *testing.T, role accountproto.Account_Role) contex
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
+}
+
+func newUUID(t *testing.T) string {
+	t.Helper()
+	id, err := uuid.NewUUID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return id.String()
 }
