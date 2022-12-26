@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis"
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
@@ -917,96 +916,6 @@ func TestGenInterval(t *testing.T) {
 			actual, err := genInterval(p.inputLocation, p.inputEndAt, p.inputDurationDays)
 			assert.Equal(t, p.expected.Unix(), actual.Unix())
 			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestGetEventValues(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		desc     string
-		vals     []interface{}
-		expected []float64
-		inValid  bool
-	}{
-		{
-			desc: "success: all vals are numbers",
-			vals: []interface{}{
-				"1", "2", "32", "91",
-			},
-			expected: []float64{
-				1, 2, 32, 91,
-			},
-			inValid: false,
-		},
-		{
-			desc: "success: some vals are nil",
-			vals: []interface{}{
-				"1", "2", nil, "32", "91", nil,
-			},
-			expected: []float64{
-				1, 2, 0, 32, 91, 0,
-			},
-			inValid: false,
-		},
-		{
-			desc: "fail: invalid vals: bool",
-			vals: []interface{}{
-				true,
-			},
-			expected: []float64{},
-			inValid:  true,
-		},
-		{
-			desc: "fail: invalid vals: alphabet",
-			vals: []interface{}{
-				"a",
-			},
-			expected: []float64{},
-			inValid:  true,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			actual, err := getEventValues(p.vals)
-			assert.Equal(t, p.expected, actual)
-			if p.inValid {
-				assert.Error(t, err)
-			}
-		})
-	}
-}
-
-func TestGetUserValues(t *testing.T) {
-	t.Parallel()
-
-	patterns := []struct {
-		desc     string
-		cmds     []*redis.IntCmd
-		expected []float64
-		inValid  bool
-	}{
-		{
-			desc: "success",
-			cmds: []*redis.IntCmd{
-				redis.NewIntCmd(),
-				redis.NewIntCmd(),
-				redis.NewIntCmd(),
-				redis.NewIntCmd(),
-			},
-			expected: []float64{
-				0, 0, 0, 0,
-			},
-			inValid: false,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			actual, err := getUserValues(p.cmds)
-			assert.Equal(t, p.expected, actual)
-			if p.inValid {
-				assert.Error(t, err)
-			}
 		})
 	}
 }
