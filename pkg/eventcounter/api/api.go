@@ -373,11 +373,8 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 		}
 		return nil, dt.Err()
 	}
-
 	timeStamps := getOneMonthTimeStamps(startAt)
-
 	vIDs := getVariationIDs(resp.Feature.Variations)
-
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
 	for _, vID := range vIDs {

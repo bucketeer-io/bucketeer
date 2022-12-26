@@ -994,12 +994,26 @@ func TestGetVariationIDs(t *testing.T) {
 
 func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 	t.Parallel()
+
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	environmentNamespace := "ns0"
+	fID := "fid"
+
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc        string
-		setup       func(*eventCounterService)
+		setup       func(context.Context, *eventCounterService)
 		input       *ecproto.GetEvaluationTimeseriesCountRequest
 		expected    *ecproto.GetEvaluationTimeseriesCountResponse
 		expectedErr error
@@ -1012,9 +1026,60 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
 		},
 		{
+			desc: "error: get event counts failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(gomock.Any()).Return(
+					nil, errors.New("error"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: get user counts failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(gomock.Any()).Return(
+					[]float64{
+						1, 3, 5,
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(gomock.Any()).Return(
+					nil, errors.New("error"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
 			desc: "success",
-			setup: func(s *eventCounterService) {
-				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(gomock.Any(), gomock.Any()).Return(
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
 					&featureproto.GetFeatureResponse{
 						Feature: &featureproto.Feature{
 							Id:         "fid",
@@ -1031,8 +1096,8 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 					}, nil).AnyTimes()
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: "ns0",
-				FeatureId:            "fid",
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
 			},
 			expected: &ecproto.GetEvaluationTimeseriesCountResponse{
 				EventCounts: []*ecproto.VariationTimeseries{
@@ -1053,7 +1118,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 						},
 					},
 					{
-						VariationId: "default",
+						VariationId: defaultVariationID,
 						Timeseries: &ecproto.Timeseries{
 							Values: []float64{
 								1, 3, 5,
@@ -1079,7 +1144,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 						},
 					},
 					{
-						VariationId: "default",
+						VariationId: defaultVariationID,
 						Timeseries: &ecproto.Timeseries{
 							Values: []float64{
 								2, 4, 6,
@@ -1095,9 +1160,9 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			s := newEventCounterService(t, mockController)
 			if p.setup != nil {
-				p.setup(s)
+				p.setup(ctx, s)
 			}
-			actual, err := s.GetEvaluationTimeseriesCountV2(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			actual, err := s.GetEvaluationTimeseriesCountV2(ctx, p.input)
 			if p.expectedErr == nil {
 				for idx, expectedEc := range p.expected.EventCounts {
 					actualTs := actual.EventCounts[idx].Timeseries

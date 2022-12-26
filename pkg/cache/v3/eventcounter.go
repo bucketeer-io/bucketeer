@@ -40,7 +40,7 @@ func NewEventCountCache(c cache.MultiGetDeleteCountCache) EventCounterCache {
 func (c *eventCounterCache) GetEventCounts(keys []string) ([]float64, error) {
 	result, err := c.cache.GetMulti(keys)
 	if err != nil {
-		return nil, err
+		return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
 	}
 	return getEventValues(result)
 }
@@ -74,7 +74,7 @@ func (c *eventCounterCache) GetUserCounts(keys []string) ([]float64, error) {
 	}
 	_, err := pipe.Exec()
 	if err != nil {
-		return []float64{}, err
+		return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
 	}
 	return getUserValues(iCmds)
 }
