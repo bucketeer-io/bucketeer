@@ -453,11 +453,6 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 	return v, err
 }
 
-func (c *pipeClient) GetMulti(keys []string) *goredis.SliceCmd {
-	c.cmds = append(c.cmds, getMultiCmdName)
-	return c.pipe.MGet(keys...)
-}
-
 func (c *pipeClient) PFCount(keys ...string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfCountCmdName)
 	return c.pipe.PFCount(keys...)
