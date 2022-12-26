@@ -1000,6 +1000,8 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
 	environmentNamespace := "ns0"
 	fID := "fid"
+	vID0 := "vid0"
+	vID1 := "vid1"
 
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	createError := func(status *gstatus.Status, msg string) error {
@@ -1083,17 +1085,26 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 					&featureproto.GetFeatureResponse{
 						Feature: &featureproto.Feature{
 							Id:         "fid",
-							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+							Variations: []*featureproto.Variation{{Id: vID0}, {Id: vID1}},
 						},
 					}, nil)
-				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(gomock.Any()).Return(
-					[]float64{
-						1, 3, 5,
-					}, nil).AnyTimes()
-				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(gomock.Any()).Return(
-					[]float64{
-						2, 4, 6,
-					}, nil).AnyTimes()
+				vIDs := []string{vID0, vID1, defaultVariationID}
+				endAt := time.Now()
+				startAt, err := genInterval(jpLocation, endAt, 30)
+				assert.NoError(t, err)
+				timeStamps := getOneMonthTimeStamps(startAt)
+				for _, vID := range vIDs {
+					ec := getEventCountKeys(vID, fID, environmentNamespace, timeStamps)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(ec).Return(
+						[]float64{
+							1, 3, 5,
+						}, nil).AnyTimes()
+					uc := getUserCountKeys(vID, fID, environmentNamespace, timeStamps)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(uc).Return(
+						[]float64{
+							2, 4, 6,
+						}, nil).AnyTimes()
+				}
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
 				EnvironmentNamespace: environmentNamespace,
@@ -1102,7 +1113,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 			expected: &ecproto.GetEvaluationTimeseriesCountResponse{
 				EventCounts: []*ecproto.VariationTimeseries{
 					{
-						VariationId: "vid0",
+						VariationId: vID0,
 						Timeseries: &ecproto.Timeseries{
 							Values: []float64{
 								1, 3, 5,
@@ -1110,7 +1121,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 						},
 					},
 					{
-						VariationId: "vid1",
+						VariationId: vID1,
 						Timeseries: &ecproto.Timeseries{
 							Values: []float64{
 								1, 3, 5,
@@ -1128,7 +1139,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 				},
 				UserCounts: []*ecproto.VariationTimeseries{
 					{
-						VariationId: "vid0",
+						VariationId: vID0,
 						Timeseries: &ecproto.Timeseries{
 							Values: []float64{
 								2, 4, 6,
@@ -1136,7 +1147,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 						},
 					},
 					{
-						VariationId: "vid1",
+						VariationId: vID1,
 						Timeseries: &ecproto.Timeseries{
 							Values: []float64{
 								2, 4, 6,
@@ -1178,6 +1189,24 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
+}
+
+func getEventCountKeys(vID, fID, environmentNamespace string, timeStamps []int64) []string {
+	eventCountKeys := []string{}
+	for _, ts := range timeStamps {
+		ec := newEvaluationCountkey(eventCountPrefix, fID, vID, environmentNamespace, ts)
+		eventCountKeys = append(eventCountKeys, ec)
+	}
+	return eventCountKeys
+}
+
+func getUserCountKeys(vID, fid, environmentNamespace string, timeStamps []int64) []string {
+	userCountKeys := []string{}
+	for _, ts := range timeStamps {
+		uc := newEvaluationCountkey(userCountPrefix, fid, vID, environmentNamespace, ts)
+		userCountKeys = append(userCountKeys, uc)
+	}
+	return userCountKeys
 }
 
 func TestGetEvaluationTimeseriesCount(t *testing.T) {
