@@ -72,6 +72,7 @@ message MetricsEvent {
   int64 timestamp = 1;
   google.protobuf.Any event = 2;
   string sdk_version = 3;
+  map<string, string> metadata = 4;
 }
 
 message GetEvaluationLatencyMetricsEvent {
