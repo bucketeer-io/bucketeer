@@ -88,7 +88,6 @@ type PipeClient interface {
 	Incr(key string) *goredis.IntCmd
 	TTL(key string) *goredis.DurationCmd
 	Exec() ([]goredis.Cmder, error)
-	GetMulti(keys []string) *goredis.SliceCmd
 	PFCount(keys ...string) *goredis.IntCmd
 }
 
