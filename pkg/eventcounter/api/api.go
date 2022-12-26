@@ -554,7 +554,7 @@ func getEventValues(vals []interface{}) ([]float64, error) {
 }
 
 func getUserValues(cmds []*redis.IntCmd) ([]float64, error) {
-	userVals := []float64{}
+	userVals := make([]float64, 0, len(cmds))
 	for _, c := range cmds {
 		val, err := c.Result()
 		if err != nil {
