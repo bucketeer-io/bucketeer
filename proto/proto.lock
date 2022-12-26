@@ -3800,6 +3800,16 @@
                 "name": "sdk_version",
                 "type": "string"
               }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 4,
+                  "name": "metadata",
+                  "type": "string"
+                }
+              }
             ]
           },
           {
