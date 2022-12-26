@@ -1133,53 +1133,23 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 				EventCounts: []*ecproto.VariationTimeseries{
 					{
 						VariationId: vID0,
-						Timeseries: &ecproto.Timeseries{
-							Values: []float64{
-								1, 3, 5,
-							},
-						},
 					},
 					{
 						VariationId: vID1,
-						Timeseries: &ecproto.Timeseries{
-							Values: []float64{
-								1, 3, 5,
-							},
-						},
 					},
 					{
 						VariationId: defaultVariationID,
-						Timeseries: &ecproto.Timeseries{
-							Values: []float64{
-								1, 3, 5,
-							},
-						},
 					},
 				},
 				UserCounts: []*ecproto.VariationTimeseries{
 					{
 						VariationId: vID0,
-						Timeseries: &ecproto.Timeseries{
-							Values: []float64{
-								2, 4, 6,
-							},
-						},
 					},
 					{
 						VariationId: vID1,
-						Timeseries: &ecproto.Timeseries{
-							Values: []float64{
-								2, 4, 6,
-							},
-						},
 					},
 					{
 						VariationId: defaultVariationID,
-						Timeseries: &ecproto.Timeseries{
-							Values: []float64{
-								2, 4, 6,
-							},
-						},
 					},
 				},
 			},
@@ -1195,14 +1165,16 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 			actual, err := s.GetEvaluationTimeseriesCountV2(ctx, p.input)
 			if p.expectedErr == nil {
 				for idx := range p.expected.EventCounts {
-					actualTs := actual.EventCounts[idx].Timeseries
-					assert.Equal(t, randomNumberGroup[idx], actualTs.Values)
-					assert.Len(t, actualTs.Timestamps, 31)
+					actualTs := actual.EventCounts[idx]
+					assert.Equal(t, p.expected.EventCounts[idx].VariationId, actualTs.VariationId)
+					assert.Equal(t, randomNumberGroup[idx], actualTs.Timeseries.Values)
+					assert.Len(t, actualTs.Timeseries.Timestamps, 31)
 				}
 				for idx := range p.expected.UserCounts {
-					actualTs := actual.UserCounts[idx].Timeseries
-					assert.Equal(t, randomNumberGroup[idx], actualTs.Values)
-					assert.Len(t, actualTs.Timestamps, 31)
+					actualTs := actual.EventCounts[idx]
+					assert.Equal(t, p.expected.UserCounts[idx].VariationId, actualTs.VariationId)
+					assert.Equal(t, randomNumberGroup[idx], actualTs.Timeseries.Values)
+					assert.Len(t, actualTs.Timeseries.Timestamps, 31)
 				}
 			}
 			assert.Equal(t, p.expectedErr, err)
