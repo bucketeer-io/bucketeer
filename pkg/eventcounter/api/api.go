@@ -539,10 +539,13 @@ func getOneMonthTimeStamps(startAt time.Time) []int64 {
 func getEventValues(vals []interface{}) ([]float64, error) {
 	eventVals := make([]float64, 0, len(vals))
 	for _, v := range vals {
-		str, ok := v.(string)
-		if !ok {
+		if (v == nil) {
 			eventVals = append(eventVals, 0)
 			continue
+		}
+		str, ok := v.(string)
+		if !ok {
+			return []float64{}, fmt.Errorf("failed to cast value: %v", v)
 		}
 		float, err := strconv.ParseFloat(str, 64)
 		if err != nil {

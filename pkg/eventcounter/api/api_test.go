@@ -950,7 +950,15 @@ func TestGetEventValues(t *testing.T) {
 			inValid: false,
 		},
 		{
-			desc: "fail: invalid vals",
+			desc: "fail: invalid vals: bool",
+			vals: []interface{}{
+				true,
+			},
+			expected: []float64{},
+			inValid:  true,
+		},
+		{
+			desc: "fail: invalid vals: alphabet",
 			vals: []interface{}{
 				"a",
 			},
