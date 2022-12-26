@@ -1004,13 +1004,13 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 		expected    *ecproto.GetEvaluationTimeseriesCountResponse
 		expectedErr error
 	}{
-		// {
-		// 	desc: "error: ErrFeatureIDRequired",
-		// 	input: &ecproto.GetEvaluationTimeseriesCountRequest{
-		// 		EnvironmentNamespace: "ns0",
-		// 	},
-		// 	expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
-		// },
+		{
+			desc: "error: ErrFeatureIDRequired",
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: "ns0",
+			},
+			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
+		},
 		{
 			desc: "success",
 			setup: func(s *eventCounterService) {
