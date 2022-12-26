@@ -65,6 +65,10 @@ spec:
             - name: BUCKETEER_EVENT_COUNTER_DRUID_PASSWORD
               value: "{{ .Values.env.druidPassword }}"
             {{ end }}
+            - name: BUCKETEER_EVENT_COUNTER_BIGQUERY_DATA_SET
+              value: "{{ .Values.env.bigqueryDataSet }}"
+            - name: BUCKETEER_EVENT_COUNTER_BIGQUERY_DATA_LOCATION
+              value: "{{ .Values.env.bigqueryDataLocation }}"
             - name: BUCKETEER_EVENT_COUNTER_MYSQL_USER
               value: "{{ .Values.env.mysqlUser }}"
             - name: BUCKETEER_EVENT_COUNTER_MYSQL_PASS

@@ -34,6 +34,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	storagedruid "github.com/bucketeer-io/bucketeer/pkg/storage/druid"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
@@ -66,6 +67,8 @@ type server struct {
 	redisAddr             *string
 	redisPoolMaxIdle      *int
 	redisPoolMaxActive    *int
+	bigqueryDataSet       *string
+	bigqueryDataLocation  *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -114,6 +117,8 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"redis-pool-max-active",
 			"Maximum number of connections allocated by the pool at a given time.",
 		).Default("10").Int(),
+		bigqueryDataSet:      cmd.Flag("bigquery-data-set", "Bigquery DataSet Name").String(),
+		bigqueryDataLocation: cmd.Flag("bigquery-data-location", "Bigquery DataSet Location").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -189,12 +194,27 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
+	bigqueryQuerier, err := s.createBigqueryQuerier(ctx, *s.project, *s.bigqueryDataLocation, registerer, logger)
+	if err != nil {
+		logger.Error("Failed to create bigquery client",
+			zap.Error(err),
+			zap.String("project", *s.project),
+			zap.String("location", *s.bigqueryDataLocation),
+			zap.String("dataset", *s.bigqueryDataSet),
+		)
+		return err
+	}
+	defer bigqueryQuerier.Close()
+	bigqueryDataset := *s.bigqueryDataSet
+
 	service := api.NewEventCounterService(
 		mysqlClient,
 		experimentClient,
 		featureClient,
 		accountClient,
 		druidQuerier,
+		bigqueryQuerier,
+		bigqueryDataset,
 		registerer,
 		redisV3Cache,
 		logger,
@@ -252,4 +272,21 @@ func (s *server) createDruidQuerier(ctx context.Context, logger *zap.Logger) (dr
 		return nil, err
 	}
 	return druid.NewDruidQuerier(brokerClient, *s.druidDatasourcePrefix, druid.WithLogger(logger)), nil
+}
+
+func (s *server) createBigqueryQuerier(
+	ctx context.Context,
+	project, location string,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (bigquery.Querier, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	return bigquery.NewQuerier(
+		ctx,
+		project,
+		location,
+		bigquery.WithMetrics(registerer),
+		bigquery.WithLogger(logger),
+	)
 }

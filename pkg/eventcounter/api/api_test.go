@@ -59,8 +59,151 @@ func TestNewEventCounterService(t *testing.T) {
 	reg := metrics.DefaultRegisterer()
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	g := NewEventCounterService(nil, nil, nil, nil, nil, reg, nil, logger)
+	g := NewEventCounterService(nil, nil, nil, nil, nil, nil, "", reg, nil, logger)
 	assert.IsType(t, &eventCounterService{}, g)
+}
+
+func TestGetEvaluationCountBigquery(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	now := time.Now()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*eventCounterService)
+		input       *ecproto.GetEvaluationCountV2Request
+		expected    *ecproto.GetEvaluationCountV2Response
+		expectedErr error
+	}{
+		{
+			desc: "error: ErrStartAtRequired",
+			input: &ecproto.GetEvaluationCountV2Request{
+				EnvironmentNamespace: "ns0",
+			},
+			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
+		},
+		{
+			desc: "error: ErrEndAtRequired",
+			input: &ecproto.GetEvaluationCountV2Request{
+				EnvironmentNamespace: "ns0",
+				StartAt:              now.Add(-7 * 24 * time.Hour).Unix(),
+			},
+			expectedErr: localizedError(statusEndAtRequired, locale.JaJP),
+		},
+		{
+			desc: "error: ErrStartAtIsAfterEndAt",
+			input: &ecproto.GetEvaluationCountV2Request{
+				EnvironmentNamespace: "ns0",
+				StartAt:              now.Unix(),
+				EndAt:                now.Add(-31 * 24 * time.Hour).Unix(),
+			},
+			expectedErr: localizedError(statusStartAtIsAfterEndAt, locale.JaJP),
+		},
+		{
+			desc: "error: ErrFeatureIDRequired",
+			input: &ecproto.GetEvaluationCountV2Request{
+				EnvironmentNamespace: "ns0",
+				StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
+				EndAt:                now.Unix(),
+			},
+			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
+		},
+		{
+			desc: "success: one variation",
+			setup: func(s *eventCounterService) {
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
+					[]*ecproto.VariationCount{
+						{
+							VariationId: "vid1",
+							UserCount:   int64(12),
+							EventCount:  int64(123),
+						},
+					},
+					nil,
+				)
+			},
+			input: &ecproto.GetEvaluationCountV2Request{
+				EnvironmentNamespace: "ns0",
+				StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
+				EndAt:                now.Unix(),
+				FeatureId:            "fid",
+				FeatureVersion:       int32(1),
+				VariationIds:         []string{"vid1"},
+			},
+			expected: &ecproto.GetEvaluationCountV2Response{
+				Count: &ecproto.EvaluationCount{
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					RealtimeCounts: []*ecproto.VariationCount{
+						{
+							VariationId: "vid1",
+							UserCount:   int64(12),
+							EventCount:  int64(123),
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: all variations",
+			setup: func(s *eventCounterService) {
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
+					[]*ecproto.VariationCount{
+						{
+							VariationId: "vid0",
+							UserCount:   int64(1),
+							EventCount:  int64(2),
+						},
+						{
+							VariationId: "vid1",
+							UserCount:   int64(12),
+							EventCount:  int64(123),
+						},
+					},
+					nil)
+			},
+			input: &ecproto.GetEvaluationCountV2Request{
+				EnvironmentNamespace: "ns0",
+				StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
+				EndAt:                now.Unix(),
+				FeatureId:            "fid",
+				FeatureVersion:       int32(1),
+				VariationIds:         []string{"vid0", "vid1"},
+			},
+			expected: &ecproto.GetEvaluationCountV2Response{
+				Count: &ecproto.EvaluationCount{
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					RealtimeCounts: []*ecproto.VariationCount{
+						{
+							VariationId: "vid0",
+							UserCount:   int64(1),
+							EventCount:  int64(2),
+						},
+						{
+							VariationId: "vid1",
+							UserCount:   int64(12),
+							EventCount:  int64(123),
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newEventCounterService(t, mockController)
+			if p.setup != nil {
+				p.setup(gs)
+			}
+			actual, err := gs.GetEvaluationCountBigquery(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
 }
 
 func TestGetEvaluationCountV2(t *testing.T) {
@@ -1436,6 +1579,7 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller) *ev
 		userCountStorage:             v2ecsmock.NewMockUserCountStorage(mockController),
 		druidQuerier:                 dmock.NewMockQuerier(mockController),
 		evaluationCountCacher:        eccachemock.NewMockEventCounterCache(mockController),
+		eventStorage:                 v2ecsmock.NewMockEventStorage(mockController),
 		metrics:                      reg,
 		logger:                       logger.Named("api"),
 	}
