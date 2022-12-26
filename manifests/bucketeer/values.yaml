@@ -1024,8 +1024,8 @@ event-counter:
     redis:
       serverName:
       addr:
-      poolMaxIdle: 50
-      poolMaxActive: 50
+      poolMaxIdle: 25
+      poolMaxActive: 25
   affinity: {}
   nodeSelector: {}
   pdb:
