@@ -19,10 +19,8 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"time"
 
-	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -32,6 +30,7 @@ import (
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	ecdruid "github.com/bucketeer-io/bucketeer/pkg/eventcounter/druid"
 	v2ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
@@ -69,7 +68,7 @@ type eventCounterService struct {
 	druidQuerier                 ecdruid.Querier
 	mysqlExperimentResultStorage v2ecstorage.ExperimentResultStorage
 	metrics                      metrics.Registerer
-	evaluationCountCacher        cache.MultiGetDeleteCountCache
+	evaluationCountCacher        cachev3.EventCounterCache
 	logger                       *zap.Logger
 }
 
@@ -91,7 +90,7 @@ func NewEventCounterService(
 		druidQuerier:                 d,
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
 		metrics:                      r,
-		evaluationCountCacher:        redis,
+		evaluationCountCacher:        cachev3.NewEventCountCache(redis),
 		logger:                       l.Named("api"),
 	}
 }
@@ -390,17 +389,10 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			uc := newEvaluationCountkey(userCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
 			userCountKeys = append(userCountKeys, uc)
 		}
-		pipe := s.evaluationCountCacher.Pipeline()
-		sCmd := pipe.GetMulti(eventCountKeys)
-		iCmds := []*redis.IntCmd{}
-		for _, k := range userCountKeys {
-			c := pipe.PFCount(k)
-			iCmds = append(iCmds, c)
-		}
-		_, err := pipe.Exec()
+		eventCounts, err := s.evaluationCountCacher.GetEventCounts(eventCountKeys)
 		if err != nil {
 			s.logger.Error(
-				"Failed to run `EXEC` command in evaluation event count",
+				"Failed to get event counts",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentNamespace", req.EnvironmentNamespace),
@@ -420,56 +412,10 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			}
 			return nil, dt.Err()
 		}
-		vals, err := sCmd.Result()
+		userCounts, err := s.evaluationCountCacher.GetUserCounts(userCountKeys)
 		if err != nil {
 			s.logger.Error(
-				"Failed to get the result from `MGET` command",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
-					zap.Time("startAt", startAt),
-					zap.Time("endAt", endAt),
-					zap.String("featureId", req.FeatureId),
-					zap.Int32("featureVersion", resp.Feature.Version),
-					zap.String("variationId", vID),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		eventVals, err := getEventValues(vals)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get event values",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
-					zap.Time("startAt", startAt),
-					zap.Time("endAt", endAt),
-					zap.String("featureId", req.FeatureId),
-					zap.Int32("featureVersion", resp.Feature.Version),
-					zap.String("variationId", vID),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		userVals, err := getUserValues(iCmds)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get user values",
+				"Failed to get user counts",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentNamespace", req.EnvironmentNamespace),
@@ -493,14 +439,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
 				Timestamps: timeStamps,
-				Values:     userVals,
+				Values:     userCounts,
 			},
 		})
 		variationTSEvents = append(variationTSEvents, &ecproto.VariationTimeseries{
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
 				Timestamps: timeStamps,
-				Values:     eventVals,
+				Values:     eventCounts,
 			},
 		})
 	}
@@ -534,38 +480,6 @@ func getOneMonthTimeStamps(startAt time.Time) []int64 {
 		timeStamps = append(timeStamps, ts)
 	}
 	return timeStamps
-}
-
-func getEventValues(vals []interface{}) ([]float64, error) {
-	eventVals := make([]float64, 0, len(vals))
-	for _, v := range vals {
-		if (v == nil) {
-			eventVals = append(eventVals, 0)
-			continue
-		}
-		str, ok := v.(string)
-		if !ok {
-			return []float64{}, fmt.Errorf("failed to cast value: %v", v)
-		}
-		float, err := strconv.ParseFloat(str, 64)
-		if err != nil {
-			return []float64{}, err
-		}
-		eventVals = append(eventVals, float)
-	}
-	return eventVals, nil
-}
-
-func getUserValues(cmds []*redis.IntCmd) ([]float64, error) {
-	userVals := make([]float64, 0, len(cmds))
-	for _, c := range cmds {
-		val, err := c.Result()
-		if err != nil {
-			return []float64{}, err
-		}
-		userVals = append(userVals, float64(val))
-	}
-	return userVals, nil
 }
 
 func getVariationIDs(vs []*featureproto.Variation) []string {
