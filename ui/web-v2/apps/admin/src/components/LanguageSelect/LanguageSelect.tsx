@@ -1,22 +1,18 @@
 import { getSelectedLanguage, LanguageTypes } from '@/lang/getSelectedLanguage';
 import { Listbox, Transition } from '@headlessui/react';
-import { CheckIcon, SelectorIcon } from '@heroicons/react/solid';
+import { Translate, ArrowDropDown } from '@material-ui/icons';
 import React, { FC, Fragment, memo, useState } from 'react';
-
-import englishIcon from '../../assets/english.png';
-import japanIcon from '../../assets/japan.png';
 
 import { classNames } from '../../utils/css';
 
 interface ILanguageItem {
   readonly label: string;
   readonly value: LanguageTypes;
-  readonly icon: string;
 }
 
 const languageList: ILanguageItem[] = [
-  { label: '日本国', value: LanguageTypes.JAPAN, icon: japanIcon },
-  { label: 'English', value: LanguageTypes.ENGLISH, icon: englishIcon },
+  { label: '日本国', value: LanguageTypes.JAPAN },
+  { label: 'English', value: LanguageTypes.ENGLISH },
 ];
 
 export const LanguageSelect: FC = memo(() => {
@@ -35,10 +31,10 @@ export const LanguageSelect: FC = memo(() => {
   const language = languageList.find((lang) => lang.value === selectedLanguage);
   return (
     <Listbox value={selectedLanguage} onChange={handleSwitchLanguage}>
-      <div className="relative">
+      <div className="relative mt-2">
         <Listbox.Button
           className={classNames(
-            'h-10 py-2 px-2 space-x-3 border flex items-center',
+            'h-10 py-2 pl-2 flex items-center',
             'text-left bg-white',
             'cursor-default',
             'rounded-md',
@@ -48,9 +44,9 @@ export const LanguageSelect: FC = memo(() => {
             'text-sm'
           )}
         >
-          <img alt={language.label} src={language.icon} />
-          <span>{language.label}</span>
-          {/* <SelectorIcon className="w-5 h-5 text-gray-700" aria-hidden="true" /> */}
+          <Translate fontSize="small" />
+          <span className="ml-1">{language.label}</span>
+          <ArrowDropDown />
         </Listbox.Button>
         <Transition
           as={Fragment}
@@ -61,8 +57,8 @@ export const LanguageSelect: FC = memo(() => {
           <Listbox.Options
             className={classNames(
               'absolute',
-              'w-32 right-0',
-              'py-1 mt-1 overflow-auto',
+              'w-full right-0',
+              'py-2 mt-1 overflow-auto',
               'bg-white text-sm z-50',
               'rounded-md',
               'shadow-lg max-h-60 ring-1 ring-black',
@@ -75,21 +71,19 @@ export const LanguageSelect: FC = memo(() => {
                 key={item.value}
                 value={item.value}
                 className={classNames(
-                  'cursor-default select-none py-2 flex px- space-x-2 justify-center whitespace-nowrap',
-                  'text-sm hover:bg-gray-100',
+                  'cursor-default select-none px-2',
+                  'text-sm',
                   'text-gray-700'
                 )}
               >
                 {({ selected }) => (
-                  <>
-                    <img alt={item.label} src={item.icon} />
-                    <span>{item.label}</span>
-                    {selected ? (
-                      <CheckIcon className="w-5 h-5" aria-hidden="true" />
-                    ) : (
-                      <div className="w-6" />
-                    )}
-                  </>
+                  <p
+                    className={`p-2 ${
+                      selected ? 'text-primary font-bold' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    {item.label}
+                  </p>
                 )}
               </Listbox.Option>
             ))}
