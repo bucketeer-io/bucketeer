@@ -873,10 +873,13 @@ func TestGetMAUCount(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:        "error: mau year month is required",
-			input:       &ecproto.GetMAUCountRequest{EnvironmentNamespace: "ns0"},
-			expected:    nil,
-			expectedErr: localizedError(statusMAUYearMonthRequired, locale.JaJP),
+			desc:     "error: mau year month is required",
+			input:    &ecproto.GetMAUCountRequest{EnvironmentNamespace: "ns0"},
+			expected: nil,
+			expectedErr: createError(
+				statusMAUYearMonthRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "year_month"),
+			),
 		},
 		{
 			desc: "err: internal",

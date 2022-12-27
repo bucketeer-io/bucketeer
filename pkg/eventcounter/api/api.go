@@ -836,7 +836,14 @@ func (s *eventCounterService) GetMAUCount(
 		return nil, err
 	}
 	if req.YearMonth == "" {
-		return nil, localizedError(statusMAUYearMonthRequired, locale.JaJP)
+		dt, err := statusMAUYearMonthRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "year_month"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	userCount, eventCount, err := s.userCountStorage.GetMAUCount(ctx, req.EnvironmentNamespace, req.YearMonth)
 	if err != nil {

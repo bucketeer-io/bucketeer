@@ -58,13 +58,6 @@ var (
 			Message: "experiment idは必須です",
 		},
 	)
-	errMAUYearMonthRequiredJaJP = status.MustWithDetails(
-		statusMAUYearMonthRequired,
-		&errdetails.LocalizedMessage{
-			Locale:  locale.JaJP,
-			Message: "mau year monthは必須です",
-		},
-	)
 	errGoalIDRequiredJaJP = status.MustWithDetails(
 		statusGoalIDRequired,
 		&errdetails.LocalizedMessage{
@@ -132,8 +125,6 @@ func localizedError(s *gstatus.Status, loc string) error {
 		return errFeatureIDRequiredJaJP
 	case statusExperimentIDRequired:
 		return errExperimentIDRequiredJaJP
-	case statusMAUYearMonthRequired:
-		return errMAUYearMonthRequiredJaJP
 	case statusGoalIDRequired:
 		return errGoalIDRequiredJaJP
 	case statusStartAtRequired:
