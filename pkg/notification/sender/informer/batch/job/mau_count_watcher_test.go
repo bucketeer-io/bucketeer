@@ -197,7 +197,7 @@ func TestCreateMAUNotification(t *testing.T) {
 	}
 }
 
-func TestGetLastMonth(t *testing.T) {
+func TestGeteYearLastMonth(t *testing.T) {
 	t.Parallel()
 	watcher := &mauCountWatcher{}
 	time := time.Unix(1672498800, 0) // 2023/01/01 00:00:00
