@@ -1,11 +1,11 @@
+import { yupLocale } from '@/lang/yup';
 import * as yup from 'yup';
 
 import { ACCOUNT_EMAIL_MAX_LENGTH } from '../../../constants/account';
 import { intl } from '../../../lang';
 import { messages } from '../../../lang/messages';
-import { localJp } from '../../../lang/yup/jp';
 
-yup.setLocale(localJp);
+yup.setLocale(yupLocale);
 
 const emailSchema = yup
   .string()

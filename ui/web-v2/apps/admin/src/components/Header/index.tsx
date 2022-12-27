@@ -1,5 +1,7 @@
 import { FC, memo } from 'react';
 
+import { LanguageSelect } from '../LanguageSelect/LanguageSelect';
+
 export interface HeaderProps {
   title: string;
   description: string;
@@ -9,10 +11,13 @@ export const Header: FC<HeaderProps> = memo(({ title, description }) => {
   return (
     <div
       id="header"
-      className="bg-white px-10 py-4 text-gray-700 border-b border-gray-300"
+      className="bg-white px-10 py-4 text-gray-700 border-b border-gray-300 flex justify-between"
     >
-      <p className="text-xl">{title}</p>
-      <p className="text-sm">{description}</p>
+      <div className="flex-1">
+        <p className="text-xl">{title}</p>
+        <p className="text-sm">{description}</p>
+      </div>
+      <LanguageSelect />
     </div>
   );
 });

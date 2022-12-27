@@ -1,11 +1,11 @@
+import { yupLocale } from '@/lang/yup';
 import * as yup from 'yup';
 
 import { ENVIRONMENT_ID_MAX_LENGTH } from '../../../constants/environment';
 import { intl } from '../../../lang';
 import { messages } from '../../../lang/messages';
-import { localJp } from '../../../lang/yup/jp';
 
-yup.setLocale(localJp);
+yup.setLocale(yupLocale);
 
 const regex = new RegExp('^[a-zA-Z0-9-]+$');
 const idSchema = yup

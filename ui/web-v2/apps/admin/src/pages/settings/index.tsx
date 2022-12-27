@@ -1,3 +1,4 @@
+import { Header } from '@/components/Header';
 import { FC, memo } from 'react';
 import { useIntl } from 'react-intl';
 import {
@@ -30,14 +31,12 @@ export const SettingsIndexPage: FC = memo(() => {
     <div className="">
       <div className="bg-white border-b border-gray-300">
         <div className="">
-          <div className="py-5 px-10 text-gray-700">
-            <p className="text-xl">{f(messages.settings.list.header.title)}</p>
-            <p className="text-sm">
-              {f(messages.settings.list.header.description)}
-            </p>
-          </div>
+          <Header
+            title={f(messages.settings.list.header.title)}
+            description={f(messages.settings.list.header.description)}
+          />
         </div>
-        <div className="-mt-4 -ml-5 px-10 hidden sm:block">
+        <div className="px-10 hidden sm:block">
           <nav className="-mb-px flex" aria-label="Tabs">
             {createTabs().map((tab, idx) => (
               <NavLink

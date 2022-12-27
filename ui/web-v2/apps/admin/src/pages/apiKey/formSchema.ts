@@ -1,9 +1,9 @@
+import { yupLocale } from '@/lang/yup';
 import * as yup from 'yup';
 
 import { APIKEY_NAME_MAX_LENGTH } from '../../constants/apiKey';
-import { localJp } from '../../lang/yup/jp';
 
-yup.setLocale(localJp);
+yup.setLocale(yupLocale);
 
 const nameSchema = yup.string().required().max(APIKEY_NAME_MAX_LENGTH);
 
