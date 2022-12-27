@@ -67,6 +67,7 @@ type eventCounterService struct {
 	accountClient                accountclient.Client
 	druidQuerier                 ecdruid.Querier
 	mysqlExperimentResultStorage v2ecstorage.ExperimentResultStorage
+	userCountStorage             v2ecstorage.UserCountStorage
 	metrics                      metrics.Registerer
 	evaluationCountCacher        cachev3.EventCounterCache
 	logger                       *zap.Logger
@@ -89,6 +90,7 @@ func NewEventCounterService(
 		accountClient:                a,
 		druidQuerier:                 d,
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
+		userCountStorage:             v2ecstorage.NewUserCountStorage(mc),
 		metrics:                      r,
 		evaluationCountCacher:        cachev3.NewEventCountCache(redis),
 		logger:                       l.Named("api"),
@@ -821,6 +823,50 @@ func (s *eventCounterService) GetUserCountV2(
 	return &ecproto.GetUserCountV2Response{
 		EventCount: eventCount,
 		UserCount:  userCount,
+	}, nil
+}
+
+func (s *eventCounterService) GetMAUCount(
+	ctx context.Context,
+	req *ecproto.GetMAUCountRequest,
+) (*ecproto.GetMAUCountResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if req.YearMonth == "" {
+		dt, err := statusMAUYearMonthRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "year_month"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	userCount, eventCount, err := s.userCountStorage.GetMAUCount(ctx, req.EnvironmentNamespace, req.YearMonth)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get the mau count",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("yearMonth", req.YearMonth),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &ecproto.GetMAUCountResponse{
+		UserCount:  userCount,
+		EventCount: eventCount,
 	}, nil
 }
 

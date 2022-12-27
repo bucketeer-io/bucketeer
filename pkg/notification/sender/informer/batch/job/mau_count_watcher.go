@@ -16,6 +16,7 @@ package job
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -71,16 +72,15 @@ func (w *mauCountWatcher) Run(ctx context.Context) (lastErr error) {
 	if err != nil {
 		return err
 	}
-	now := time.Now()
-	lastMonth := int32(now.AddDate(0, -1, 0).Month())
-	startAt, endAt := w.getMAUInterval(now)
+	year, lastMonth := w.getLastYearMonth(time.Now().In(jpLocation))
+	yearMonth := fmt.Sprintf("%d%d", year, lastMonth)
 	for _, pj := range projects {
 		environments, err := w.listEnvironments(ctx, pj.Id)
 		if err != nil {
 			return err
 		}
 		for _, env := range environments {
-			eventCount, userCount, err := w.getUserCount(ctx, env.Namespace, startAt, endAt)
+			eventCount, userCount, err := w.getUserCount(ctx, env.Namespace, yearMonth)
 			if err != nil {
 				return err
 			}
@@ -120,11 +120,9 @@ func (w *mauCountWatcher) listProjects(ctx context.Context) ([]*environmentproto
 	}
 }
 
-func (w *mauCountWatcher) getMAUInterval(now time.Time) (startAt int64, endAt int64) {
-	currentYear, currentMonth, _ := now.In(jpLocation).Date()
-	startAt = time.Date(currentYear, currentMonth-1, 1, 0, 0, 0, 0, jpLocation).Unix()
-	endAt = time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, jpLocation).Unix()
-	return
+func (w *mauCountWatcher) getLastYearMonth(now time.Time) (int32, int32) {
+	targetDate := now.AddDate(0, -1, 0)
+	return int32(targetDate.Year()), int32(targetDate.Month())
 }
 
 func (w *mauCountWatcher) listEnvironments(
@@ -153,13 +151,11 @@ func (w *mauCountWatcher) listEnvironments(
 
 func (w *mauCountWatcher) getUserCount(
 	ctx context.Context,
-	environmentNamespace string,
-	startAt, endAt int64,
+	environmentNamespace, yearMonth string,
 ) (eventCount, userCount int64, err error) {
-	resp, e := w.eventCounterClient.GetUserCountV2(ctx, &ecproto.GetUserCountV2Request{
+	resp, e := w.eventCounterClient.GetMAUCount(ctx, &ecproto.GetMAUCountRequest{
 		EnvironmentNamespace: environmentNamespace,
-		StartAt:              startAt,
-		EndAt:                endAt,
+		YearMonth:            yearMonth,
 	})
 	if e != nil {
 		err = e

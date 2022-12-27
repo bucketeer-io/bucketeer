@@ -17,6 +17,7 @@ package job
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -46,12 +47,7 @@ func TestCreateMAUNotification(t *testing.T) {
 			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
-					nil, errInternal).Times(1)
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
-					gomock.Any(), gomock.Any()).Times(0)
-				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetUserCountV2(
-					gomock.Any(), gomock.Any()).Times(0)
-				w.sender.(*sendermock.MockSender).EXPECT().Send(gomock.Any(), gomock.Any()).Times(0)
+					nil, errInternal)
 			},
 			expectedErr: errInternal,
 		},
@@ -60,12 +56,7 @@ func TestCreateMAUNotification(t *testing.T) {
 			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListProjectsResponse{}, nil).Times(1)
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
-					gomock.Any(), gomock.Any()).Times(0)
-				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetUserCountV2(
-					gomock.Any(), gomock.Any()).Times(0)
-				w.sender.(*sendermock.MockSender).EXPECT().Send(gomock.Any(), gomock.Any()).Times(0)
+					&environmentproto.ListProjectsResponse{}, nil)
 			},
 			expectedErr: nil,
 		},
@@ -77,13 +68,10 @@ func TestCreateMAUNotification(t *testing.T) {
 					&environmentproto.ListProjectsResponse{
 						Projects: []*environmentproto.Project{{Id: "pj0"}},
 						Cursor:   "cursor",
-					}, nil).Times(1)
+					}, nil)
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
-					nil, errInternal).Times(1)
-				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetUserCountV2(
-					gomock.Any(), gomock.Any()).Times(0)
-				w.sender.(*sendermock.MockSender).EXPECT().Send(gomock.Any(), gomock.Any()).Times(0)
+					nil, errInternal)
 			},
 			expectedErr: errInternal,
 		},
@@ -95,13 +83,10 @@ func TestCreateMAUNotification(t *testing.T) {
 					&environmentproto.ListProjectsResponse{
 						Projects: []*environmentproto.Project{{Id: "pj0"}},
 						Cursor:   "cursor",
-					}, nil).Times(1)
+					}, nil)
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsResponse{}, nil).Times(1)
-				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetUserCountV2(
-					gomock.Any(), gomock.Any()).Times(0)
-				w.sender.(*sendermock.MockSender).EXPECT().Send(gomock.Any(), gomock.Any()).Times(0)
+					&environmentproto.ListEnvironmentsResponse{}, nil)
 			},
 			expectedErr: nil,
 		},
@@ -113,16 +98,16 @@ func TestCreateMAUNotification(t *testing.T) {
 					&environmentproto.ListProjectsResponse{
 						Projects: []*environmentproto.Project{{Id: "pj0"}},
 						Cursor:   "cursor",
-					}, nil).Times(1)
+					}, nil)
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListEnvironmentsResponse{
 						Environments: []*environmentproto.Environment{{Id: "eID", Namespace: "eNamespace"}},
 						Cursor:       "",
-					}, nil).Times(1)
-				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetUserCountV2(
+					}, nil)
+				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetMAUCount(
 					gomock.Any(), gomock.Any()).Return(
-					nil, errInternal).Times(1)
+					nil, errInternal)
 				w.sender.(*sendermock.MockSender).EXPECT().Send(gomock.Any(), gomock.Any()).Times(0)
 			},
 			expectedErr: errInternal,
@@ -135,20 +120,20 @@ func TestCreateMAUNotification(t *testing.T) {
 					&environmentproto.ListProjectsResponse{
 						Projects: []*environmentproto.Project{{Id: "pj0"}},
 						Cursor:   "cursor",
-					}, nil).Times(1)
+					}, nil)
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListEnvironmentsResponse{
 						Environments: []*environmentproto.Environment{{Id: "eID", Namespace: "eNamespace"}},
 						Cursor:       "",
-					}, nil).Times(1)
-				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetUserCountV2(
+					}, nil)
+				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetMAUCount(
 					gomock.Any(), gomock.Any()).Return(
-					&ecproto.GetUserCountV2Response{
+					&ecproto.GetMAUCountResponse{
 						EventCount: 4,
 						UserCount:  2,
-					}, nil).Times(1)
-				w.sender.(*sendermock.MockSender).EXPECT().Send(gomock.Any(), gomock.Any()).Return(errInternal).Times(1)
+					}, nil)
+				w.sender.(*sendermock.MockSender).EXPECT().Send(gomock.Any(), gomock.Any()).Return(errInternal)
 			},
 			expectedErr: errInternal,
 		},
@@ -157,11 +142,16 @@ func TestCreateMAUNotification(t *testing.T) {
 			setup: func(t *testing.T, w *mauCountWatcher) {
 				// list projects
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
-					gomock.Any(), gomock.Any()).Return(
+					gomock.Any(),
+					&environmentproto.ListProjectsRequest{
+						PageSize: listRequestSize,
+						Cursor:   "",
+					},
+				).Return(
 					&environmentproto.ListProjectsResponse{
 						Projects: []*environmentproto.Project{{Id: "pj0"}},
 						Cursor:   "cursor",
-					}, nil).Times(1)
+					}, nil)
 				// list environments
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(),
@@ -174,24 +164,23 @@ func TestCreateMAUNotification(t *testing.T) {
 					&environmentproto.ListEnvironmentsResponse{
 						Environments: []*environmentproto.Environment{{Id: "eID", Namespace: "eNamespace"}},
 						Cursor:       "",
-					}, nil).Times(1)
+					}, nil)
 				// get user count
-				startAt, endAt := w.getMAUInterval(time.Now())
-				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetUserCountV2(
+				year, month := w.getLastYearMonth(time.Now())
+				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetMAUCount(
 					gomock.Any(),
-					&ecproto.GetUserCountV2Request{
+					&ecproto.GetMAUCountRequest{
 						EnvironmentNamespace: "eNamespace",
-						StartAt:              startAt,
-						EndAt:                endAt,
+						YearMonth:            fmt.Sprintf("%d%d", year, month),
 					},
 				).Return(
-					&ecproto.GetUserCountV2Response{
+					&ecproto.GetMAUCountResponse{
 						EventCount: 4,
 						UserCount:  2,
-					}, nil).Times(1)
+					}, nil)
 				// send notification
 				w.sender.(*sendermock.MockSender).EXPECT().Send(
-					gomock.Any(), gomock.Any()).Return(nil).Times(1)
+					gomock.Any(), gomock.Any()).Return(nil)
 			},
 			expectedErr: nil,
 		},
@@ -206,6 +195,16 @@ func TestCreateMAUNotification(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
+}
+
+func TestGetYearLastMonth(t *testing.T) {
+	t.Parallel()
+	watcher := &mauCountWatcher{}
+	time := time.Unix(1672498800, 0) // 2023/01/01 00:00:00
+	time.In(jpLocation)
+	year, month := watcher.getLastYearMonth(time)
+	assert.Equal(t, int32(2022), year)
+	assert.Equal(t, int32(12), month)
 }
 
 func newMAUCountWatcherWithMock(t *testing.T, c *gomock.Controller) *mauCountWatcher {

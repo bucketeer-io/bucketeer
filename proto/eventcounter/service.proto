@@ -127,6 +127,16 @@ message GetUserCountV2Response {
   int64 user_count = 2;
 }
 
+message GetMAUCountRequest {
+  string environment_namespace = 1;
+  string year_month = 2;
+}
+
+message GetMAUCountResponse {
+  int64 event_count = 1;
+  int64 user_count = 2;
+}
+
 message ListUserMetadataRequest {
   string environment_namespace = 1;
 }
@@ -153,6 +163,8 @@ service EventCounterService {
   rpc GetGoalCountV2(GetGoalCountV2Request) returns (GetGoalCountV2Response) {}
 
   rpc GetUserCountV2(GetUserCountV2Request) returns (GetUserCountV2Response) {}
+
+  rpc GetMAUCount(GetMAUCountRequest) returns (GetMAUCountResponse) {}
 
   rpc ListUserMetadata(ListUserMetadataRequest)
       returns (ListUserMetadataResponse) {}

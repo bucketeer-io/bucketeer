@@ -27,6 +27,7 @@ var (
 	statusInternal             = gstatus.New(codes.Internal, "eventcounter: internal")
 	statusFeatureIDRequired    = gstatus.New(codes.InvalidArgument, "eventcounter: feature id is required")
 	statusExperimentIDRequired = gstatus.New(codes.InvalidArgument, "eventcounter: experiment id is required")
+	statusMAUYearMonthRequired = gstatus.New(codes.InvalidArgument, "eventcounter: mau year month is required")
 	statusGoalIDRequired       = gstatus.New(codes.InvalidArgument, "eventcounter: goal id is required")
 	statusStartAtRequired      = gstatus.New(codes.InvalidArgument, "eventcounter: start at is required")
 	statusEndAtRequired        = gstatus.New(codes.InvalidArgument, "eventcounter: end at is required")

@@ -149,6 +149,26 @@ func (mr *MockClientMockRecorder) GetGoalCountV2(ctx, in interface{}, opts ...in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoalCountV2", reflect.TypeOf((*MockClient)(nil).GetGoalCountV2), varargs...)
 }
 
+// GetMAUCount mocks base method.
+func (m *MockClient) GetMAUCount(ctx context.Context, in *eventcounter.GetMAUCountRequest, opts ...grpc.CallOption) (*eventcounter.GetMAUCountResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMAUCount", varargs...)
+	ret0, _ := ret[0].(*eventcounter.GetMAUCountResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMAUCount indicates an expected call of GetMAUCount.
+func (mr *MockClientMockRecorder) GetMAUCount(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMAUCount", reflect.TypeOf((*MockClient)(nil).GetMAUCount), varargs...)
+}
+
 // GetUserCountV2 mocks base method.
 func (m *MockClient) GetUserCountV2(ctx context.Context, in *eventcounter.GetUserCountV2Request, opts ...grpc.CallOption) (*eventcounter.GetUserCountV2Response, error) {
 	m.ctrl.T.Helper()

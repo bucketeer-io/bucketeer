@@ -847,6 +847,79 @@ func TestGetUserCountV2(t *testing.T) {
 	}
 }
 
+func TestGetMAUCount(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	input := &ecproto.GetMAUCountRequest{
+		EnvironmentNamespace: "ns0",
+		YearMonth:            "201212",
+	}
+	patterns := []struct {
+		desc        string
+		setup       func(*eventCounterService)
+		input       *ecproto.GetMAUCountRequest
+		expected    *ecproto.GetMAUCountResponse
+		expectedErr error
+	}{
+		{
+			desc:     "error: mau year month is required",
+			input:    &ecproto.GetMAUCountRequest{EnvironmentNamespace: "ns0"},
+			expected: nil,
+			expectedErr: createError(
+				statusMAUYearMonthRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "year_month"),
+			),
+		},
+		{
+			desc: "err: internal",
+			setup: func(s *eventCounterService) {
+				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCount(
+					ctx, input.EnvironmentNamespace, input.YearMonth,
+				).Return(int64(0), int64(0), errors.New("internal"))
+			},
+			input:       input,
+			expected:    nil,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *eventCounterService) {
+				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCount(
+					ctx, input.EnvironmentNamespace, input.YearMonth,
+				).Return(int64(2), int64(4), nil)
+			},
+			input: input,
+			expected: &ecproto.GetMAUCountResponse{
+				UserCount:  2,
+				EventCount: 4,
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newEventCounterService(t, mockController)
+			if p.setup != nil {
+				p.setup(gs)
+			}
+			actual, err := gs.GetMAUCount(ctx, p.input)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
 func TestListUserMetadata(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -1360,6 +1433,7 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller) *ev
 		featureClient:                featureclientmock.NewMockClient(mockController),
 		accountClient:                accountClientMock,
 		mysqlExperimentResultStorage: v2ecsmock.NewMockExperimentResultStorage(mockController),
+		userCountStorage:             v2ecsmock.NewMockUserCountStorage(mockController),
 		druidQuerier:                 dmock.NewMockQuerier(mockController),
 		evaluationCountCacher:        eccachemock.NewMockEventCounterCache(mockController),
 		metrics:                      reg,

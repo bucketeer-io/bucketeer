@@ -7964,6 +7964,36 @@
             ]
           },
           {
+            "name": "GetMAUCountRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "year_month",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetMAUCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "event_count",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "user_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
             "name": "ListUserMetadataRequest",
             "fields": [
               {
@@ -8023,6 +8053,11 @@
                 "name": "GetUserCountV2",
                 "in_type": "GetUserCountV2Request",
                 "out_type": "GetUserCountV2Response"
+              },
+              {
+                "name": "GetMAUCount",
+                "in_type": "GetMAUCountRequest",
+                "out_type": "GetMAUCountResponse"
               },
               {
                 "name": "ListUserMetadata",
