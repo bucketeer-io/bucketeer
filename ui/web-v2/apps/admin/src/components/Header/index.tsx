@@ -1,6 +1,5 @@
+import { LanguageSelect } from '@/components/LanguageSelect';
 import { FC, memo } from 'react';
-
-import { LanguageSelect } from '../LanguageSelect/LanguageSelect';
 
 export interface HeaderProps {
   title: string;

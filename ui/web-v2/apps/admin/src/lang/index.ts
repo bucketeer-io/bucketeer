@@ -1,7 +1,6 @@
+import en from '@/assets/lang/en.json';
+import ja from '@/assets/lang/ja.json';
 import { createIntl, createIntlCache } from 'react-intl';
-
-import en from '../assets/lang/en.json';
-import ja from '../assets/lang/ja.json';
 
 import { getSelectedLanguage, LanguageTypes } from './getSelectedLanguage';
 

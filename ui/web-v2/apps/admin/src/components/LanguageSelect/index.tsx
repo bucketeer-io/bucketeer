@@ -58,44 +58,48 @@ export const LanguageSelect: FC = memo(() => {
           leaveTo="opacity-0"
           show={isOptionsOpen}
         >
-          <Listbox.Options
-            className={classNames(
-              'absolute',
-              'w-full right-0',
-              'py-2 overflow-auto',
-              'bg-white text-sm z-50',
-              'rounded-md',
-              'shadow-lg max-h-60 ring-1 ring-black',
-              'ring-opacity-5 focus:outline-none',
-              'text-gray-700'
-            )}
+          <div
+            className="h-full"
             onMouseEnter={() => setIsOptionsOpen(true)}
             onMouseLeave={() => setIsOptionsOpen(false)}
           >
-            {languageList.map((item) => (
-              <Listbox.Option
-                key={item.value}
-                value={item.value}
-                className={classNames(
-                  'cursor-default select-none px-2',
-                  'text-sm',
-                  'text-gray-700'
-                )}
-              >
-                {({ selected }) => (
-                  <p
-                    className={`p-2 ${
-                      selected
-                        ? 'text-primary font-bold'
-                        : 'hover:bg-gray-100 cursor-pointer'
-                    }`}
-                  >
-                    {item.label}
-                  </p>
-                )}
-              </Listbox.Option>
-            ))}
-          </Listbox.Options>
+            <Listbox.Options
+              className={classNames(
+                'absolute',
+                'w-full right-0 mt-1',
+                'py-2 overflow-auto',
+                'bg-white text-sm z-50',
+                'rounded-md',
+                'shadow-lg max-h-60 ring-1 ring-black',
+                'ring-opacity-5 focus:outline-none',
+                'text-gray-700'
+              )}
+            >
+              {languageList.map((item) => (
+                <Listbox.Option
+                  key={item.value}
+                  value={item.value}
+                  className={classNames(
+                    'cursor-default select-none px-2',
+                    'text-sm',
+                    'text-gray-700'
+                  )}
+                >
+                  {({ selected }) => (
+                    <p
+                      className={`p-2 ${
+                        selected
+                          ? 'text-primary font-bold'
+                          : 'hover:bg-gray-100 cursor-pointer'
+                      }`}
+                    >
+                      {item.label}
+                    </p>
+                  )}
+                </Listbox.Option>
+              ))}
+            </Listbox.Options>
+          </div>
         </Transition>
       </div>
     </Listbox>
