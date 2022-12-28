@@ -56,8 +56,8 @@ INSERT INTO mau (
 
 ```sql
 SELECT
-  COUNT(*) as user_count, 
-  SUM(event_count) as event_count
+  COUNT(*) as user_count,
+  IFNULL(SUM(event_count), 0) as event_count
 FROM
   mau
 where yearmonth = '2022-12'
