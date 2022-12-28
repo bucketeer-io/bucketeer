@@ -58,17 +58,17 @@ We may need to increase the current Redis storage via Terraform. Currently, we u
 
 ### Event Persister
 
-We will implement the Redis using `INCR` interface to increment the event counter.<br />
+We will implement the Redis using the `INCR` interface to increment the event counter.<br />
 For the user count, we will use the `PFADD` (HyperLogLog) interface to increment the unique counter.
 
-Also, we will use the `EXPIRE` to set a TTL of 31 days so that the keys will delete automatically.
+**Note:** We could use `EXPIRE` to set a TTL so that the keys would delete automatically, but for PFADD, there is no way to know when the key was created, and checking every time the TTL is set is also not efficient.
 
 #### Key format
 
-- Event count: `ec:feature_flag_id:variation_id:daily_timestamp`
-- User count: `uc:feature_flag_id:variation_id:daily_timestamp`
+- Event count: `ec:daily_timestamp:feature_flag_id:variation_id`
+- User count: `uc:daily_timestamp:feature_flag_id:variation_id`
 
-**Note:** For default evaluation events, we set the variation id as `default`.
+**Note:** We set the variation id as `default` for default evaluation events.
 
 ### Event Counter Storage
 
@@ -90,3 +90,20 @@ We will get the unique count using the `PFCOUNT` interface.
 Because there is no need to rush, I'm going to implement it to double-write the data for 30 days and then delete the old implementation after we confirm everything is okay.
 
 No need to stop event persister services during this period.
+
+# Backup
+
+We will add GitHub Action workflow to export the data to GCS twice daily.
+
+**Note:** This workflow can also be implemented as part of the Bucketeer App so that self-hosted users can use it if needed. Because we are rethinking the cronjob implementation in the Bucketeer App at the moment, I will use GitHub Actions for now.
+
+# Deletion
+
+We will add a GitHub Action workflow to check and delete the keys for more than 31 days.<br />
+We can use the SCAN interface to scan the keys by daily timestamp and delete them.
+
+E.g.
+
+```
+scan 0 "ec:daily_timestamp*"
+```
