@@ -43,7 +43,7 @@ func (s *userCountStorage) GetMAUCount(
 	query := `
 		SELECT
 			count(*) as user_count,
-			SUM(event_count) as event_count
+			IFNULL(SUM(event_count), 0) as event_count
 		FROM
 			mau
 		WHERE
