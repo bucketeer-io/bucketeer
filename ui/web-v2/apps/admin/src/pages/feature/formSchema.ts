@@ -1,3 +1,4 @@
+import { yupLocale } from '@/lang/yup';
 import * as yup from 'yup';
 
 import { ClauseType } from '../../components/FeatureAutoOpsRulesForm';
@@ -16,12 +17,11 @@ import {
 } from '../../constants/variation';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
-import { localJp } from '../../lang/yup/jp';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
 import { isJsonString } from '../../utils/validate';
 
-yup.setLocale(localJp);
+yup.setLocale(yupLocale);
 
 const regex = new RegExp('^[a-zA-Z0-9-]+$');
 const idSchema = yup

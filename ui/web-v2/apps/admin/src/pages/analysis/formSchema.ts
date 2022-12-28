@@ -1,12 +1,12 @@
+import { yupLocale } from '@/lang/yup';
 import * as yup from 'yup';
 
 import { ANALYSIS_USER_METADATA_MAX_LENGTH } from '../../constants/analysis';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
-import { localJp } from '../../lang/yup/jp';
 import { addDays } from '../../utils/date';
 
-yup.setLocale(localJp);
+yup.setLocale(yupLocale);
 
 export const formSchema = yup.object().shape({
   endAt: yup

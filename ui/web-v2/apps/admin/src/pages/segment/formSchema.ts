@@ -1,3 +1,4 @@
+import { yupLocale } from '@/lang/yup';
 import * as yup from 'yup';
 
 import {
@@ -8,9 +9,8 @@ import {
 } from '../../constants/segment';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
-import { localJp } from '../../lang/yup/jp';
 
-yup.setLocale(localJp);
+yup.setLocale(yupLocale);
 
 const nameSchema = yup.string().required().max(SEGMENT_NAME_MAX_LENGTH);
 const descriptionSchema = yup.string().max(SEGMENT_DESCRIPTION_MAX_LENGTH);
