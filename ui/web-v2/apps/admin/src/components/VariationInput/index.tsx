@@ -1,3 +1,5 @@
+import { Strategy } from '@/proto/feature/strategy_pb';
+import { classNames } from '@/utils/css';
 import { MinusCircleIcon } from '@heroicons/react/solid';
 import { FC, memo, useCallback } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
@@ -8,6 +10,7 @@ import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { useIsEditable } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
+import { HoverPopover } from '../HoverPopover';
 import { Option, Select } from '../Select';
 
 const variationTypeOptionsBoolean: Option = {
@@ -53,10 +56,11 @@ export interface VariationInputProps {
   removeDisabledIndexes: Set<number>;
   typeDisabled: boolean;
   onRemoveVariation: (idx: number) => void;
+  feature?: Feature.AsObject;
 }
 
 export const VariationInput: FC<VariationInputProps> = memo(
-  ({ removeDisabledIndexes, typeDisabled, onRemoveVariation }) => {
+  ({ removeDisabledIndexes, typeDisabled, onRemoveVariation, feature }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
     const methods = useFormContext();
@@ -121,6 +125,36 @@ export const VariationInput: FC<VariationInputProps> = memo(
     const handleRemoveVariation = useCallback((idx) => {
       remove(idx);
       onRemoveVariation(idx);
+    }, []);
+
+    const handleVariationHoverPopover = useCallback((idx, variation) => {
+      if (typeDisabled) {
+        let message;
+        if (variation.id === feature.offVariation) {
+          message = f(messages.feature.variationSettings.offVariation);
+        }
+
+        if (variation.id === feature.defaultStrategy.fixedStrategy?.variation) {
+          message = f(messages.feature.variationSettings.defaultStrategy);
+        }
+
+        feature.defaultStrategy.rolloutStrategy?.variationsList?.forEach(
+          (v, index) => {
+            if (v.weight > 0 && index === idx) {
+              message = f(messages.feature.variationSettings.defaultStrategy);
+            }
+          }
+        );
+
+        if (message) {
+          return message;
+        }
+        return null;
+      } else if (idx === 0) {
+        return f(messages.feature.variationSettings.defaultStrategy);
+      } else if (idx === 1) {
+        return f(messages.feature.variationSettings.offVariation);
+      }
     }, []);
 
     return (
@@ -286,14 +320,38 @@ export const VariationInput: FC<VariationInputProps> = memo(
                 </div>
                 {editable && (
                   <div className="flex items-end py-3 ml-3">
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveVariation(idx)}
-                      className="minus-circle-icon"
-                      disabled={disableRemoveBtn}
-                    >
-                      <MinusCircleIcon aria-hidden="true" />
-                    </button>
+                    {disableRemoveBtn ? (
+                      <HoverPopover
+                        render={() => {
+                          return (
+                            <div
+                              className={classNames(
+                                'bg-gray-900 text-white p-2 text-xs',
+                                'rounded cursor-pointer whitespace-pre'
+                              )}
+                            >
+                              {handleVariationHoverPopover(idx, variation)}
+                            </div>
+                          );
+                        }}
+                      >
+                        <button
+                          type="button"
+                          className="minus-circle-icon"
+                          disabled={disableRemoveBtn}
+                        >
+                          <MinusCircleIcon aria-hidden="true" />
+                        </button>
+                      </HoverPopover>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVariation(idx)}
+                        className="minus-circle-icon"
+                      >
+                        <MinusCircleIcon aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

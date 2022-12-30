@@ -72,6 +72,7 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
               removeDisabledIndexes={removeDisabledIndexes}
               typeDisabled={true}
               onRemoveVariation={handleRemoveVariation}
+              feature={feature}
             />
           </div>
           <div className="flex justify-end mt-5">
