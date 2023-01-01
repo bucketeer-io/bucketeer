@@ -193,7 +193,6 @@ export const VariationInput: FC<VariationInputProps> = memo(
           {variations.map((variation: any, idx) => {
             const disableRemoveBtn =
               variationType == Feature.VariationType.BOOLEAN.toString() ||
-              variations.length <= 2 ||
               removeDisabledIndexes.has(idx);
             return (
               <div key={idx} className="flex flex-row flex-wrap mb-2">
@@ -318,21 +317,25 @@ export const VariationInput: FC<VariationInputProps> = memo(
                     )}
                   </p>
                 </div>
-                {editable && (
+                {editable && variations.length > 2 && (
                   <div className="flex items-end py-3 ml-3">
                     {disableRemoveBtn ? (
                       <HoverPopover
                         render={() => {
-                          return (
+                          const message = handleVariationHoverPopover(
+                            idx,
+                            variation
+                          );
+                          return message ? (
                             <div
                               className={classNames(
-                                'bg-gray-900 text-white p-2 text-xs',
-                                'rounded cursor-pointer whitespace-pre'
+                                'bg-gray-900 text-white p-2 text-xs w-[350px]',
+                                'rounded cursor-pointer'
                               )}
                             >
-                              {handleVariationHoverPopover(idx, variation)}
+                              {message}
                             </div>
-                          );
+                          ) : null;
                         }}
                       >
                         <button
