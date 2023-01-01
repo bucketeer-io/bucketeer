@@ -4,11 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       skip_e2e:
+        description: "Skip e2e tests"
         type: boolean
         default: false
       skip_prd_pr:
+        description: "Skip Production PR"
         type: boolean
         default: false
+      skip_release_note:
+        description: "Skip release note"
+        type: boolean
+        default: true
 
   push:
     branches:
@@ -58,6 +64,20 @@ jobs:
       id-token: "write"
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          # This is a workaround to ensure the publish_chart won't start before the release workflow.
+          # Because the version is based on the tag, if the publish_chart starts before
+          # the release workflow, it will create a chart with an old version.
+      - name: Wait for release note to succeed
+        if: ${{ ! github.event.inputs || github.event.inputs.skip_release_note == 'false' }}
+        uses: lewagon/wait-on-check-action@0179dfc359f90a703c41240506f998ee1603f9ea # v1.0.0
+        with:
+          ref: ${{ github.ref }}
+          # DO NOT CHANGE the check-name. This name is based on the workflow name defined in the release.yaml
+          check-name: "Release Please"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
       - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
