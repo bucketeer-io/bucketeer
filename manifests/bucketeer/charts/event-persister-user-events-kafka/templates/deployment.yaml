@@ -90,6 +90,8 @@ spec:
               value: "{{ .Values.env.flushSize }}"
             - name: BUCKETEER_EVENT_PERSISTER_FLUSH_INTERVAL
               value: "{{ .Values.env.flushInterval }}"
+            - name: BUCKETEER_EVENT_PERSISTER_FLUSH_TIMEOUT
+              value: "{{ .Values.env.flushTimeout }}"
             - name: BUCKETEER_EVENT_PERSISTER_PULLER_NUM_GOROUTINES
               value: "{{ .Values.env.pullerNumGoroutines }}"
             - name: BUCKETEER_EVENT_PERSISTER_PULLER_MAX_OUTSTANDING_MESSAGES
