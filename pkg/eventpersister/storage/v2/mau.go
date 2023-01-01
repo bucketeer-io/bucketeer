@@ -53,8 +53,8 @@ func (s *mysqlMAUStorage) UpsertMAU(ctx context.Context, event *esproto.UserEven
 		event_count = event_count + 1,
 		updated_at = VALUES(updated_at)
 	`
-	now := time.Now()
-	yearMonth := fmt.Sprintf("%d%d", now.Year(), now.Month())
+	t := time.Unix(event.LastSeen, 0)
+	yearMonth := fmt.Sprintf("%d%02d", t.Year(), t.Month())
 	_, err := s.qe.ExecContext(
 		ctx,
 		query,
@@ -62,8 +62,8 @@ func (s *mysqlMAUStorage) UpsertMAU(ctx context.Context, event *esproto.UserEven
 		yearMonth,
 		event.SourceId,
 		1,
-		now.Unix(),
-		now.Unix(),
+		event.LastSeen,
+		event.LastSeen,
 		environmentNamespace,
 	)
 	if err != nil {
