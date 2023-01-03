@@ -1,5 +1,5 @@
 import { Dialog } from '@headlessui/react';
-import { FC, memo, useCallback } from 'react';
+import { FC, memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
@@ -23,27 +23,19 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
       formState: { errors, isSubmitting, isDirty, isValid },
       getValues,
       setValue,
+      watch,
     } = methods;
-    const variations = getValues('variations').map((_, idx) => {
+
+    const variationsOptions = getValues('variations').map((variation, idx) => {
       return {
-        value: idx,
+        id: variation.id,
+        value: idx.toString(),
         label: `${f(messages.feature.variation)} ${idx + 1}`,
       };
     });
-    const onVariation = getValues('onVariation');
-    const offVariation = getValues('offVariation');
 
-    const handleRemoveVariation = useCallback(
-      (idx: number) => {
-        if (onVariation.value >= idx) {
-          setValue('onVariation', variations[onVariation.value - 1]);
-        }
-        if (offVariation.value >= idx) {
-          setValue('offVariation', variations[offVariation.value - 1]);
-        }
-      },
-      [setValue]
-    );
+    const onVariation = watch('onVariation');
+    const offVariation = watch('offVariation');
 
     return (
       <div className="w-[600px]">
@@ -160,14 +152,11 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                 </div>
                 <div className="">
                   <VariationInput
-                    removeDisabledIndexes={
-                      new Set([
-                        Number(onVariation.value),
-                        Number(offVariation.value),
-                      ])
-                    }
                     typeDisabled={false}
-                    onRemoveVariation={handleRemoveVariation}
+                    rulesAppliedVariationList={{
+                      onVariationId: onVariation.id,
+                      offVariationId: offVariation.id,
+                    }}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -178,15 +167,22 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                     <Controller
                       name="onVariation"
                       control={control}
-                      render={({ field }) => (
-                        <Select
-                          onChange={field.onChange}
-                          options={variations}
-                          className="w-full"
-                          value={field.value}
-                          isSearchable={false}
-                        />
-                      )}
+                      render={({ field }) => {
+                        return (
+                          <Select
+                            onChange={(variation) => {
+                              field.onChange(variation);
+                              setValue('onVariation', variation);
+                            }}
+                            options={variationsOptions}
+                            className="w-full"
+                            value={variationsOptions.find(
+                              (v) => v.id === field.value.id
+                            )}
+                            isSearchable={false}
+                          />
+                        );
+                      }}
                     />
                   </div>
                   <div>
@@ -198,10 +194,15 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                       control={control}
                       render={({ field }) => (
                         <Select
-                          onChange={field.onChange}
-                          options={variations}
+                          onChange={(variation) => {
+                            field.onChange(variation);
+                            setValue('offVariation', variation);
+                          }}
+                          options={variationsOptions}
                           className="w-full"
-                          value={field.value}
+                          value={variationsOptions.find(
+                            (v) => v.id === field.value.id
+                          )}
                           isSearchable={false}
                         />
                       )}

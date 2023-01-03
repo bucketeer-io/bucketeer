@@ -1382,6 +1382,11 @@ export const messages = {
         defaultMessage:
           'This variation cannot be deleted because it is used in the off-variation settings.',
       }),
+      bothVariation: defineMessage({
+        id: 'feature.variationSettings.bothVariation',
+        defaultMessage:
+          'This variation cannot be deleted because it is used in the default and the off-variation settings.',
+      }),
     },
     confirm: {
       title: defineMessage({
