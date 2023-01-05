@@ -41,7 +41,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery"
+	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -81,7 +81,7 @@ func NewEventCounterService(
 	f featureclient.Client,
 	a accountclient.Client,
 	d ecdruid.Querier,
-	b bigquery.Querier,
+	b bqquerier.Client,
 	bigQueryDataset string,
 	r metrics.Registerer,
 	redis cache.MultiGetDeleteCountCache,

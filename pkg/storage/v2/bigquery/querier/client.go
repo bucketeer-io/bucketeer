@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bigquery
+package querier
 
 import (
 	"context"
@@ -23,42 +23,43 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
 
-type querierOptions struct {
+type options struct {
 	logger  *zap.Logger
 	metrics metrics.Registerer
 }
 
-type QuerierOption func(*querierOptions)
+type Option func(*options)
 
-func WithLogger(l *zap.Logger) QuerierOption {
-	return func(opts *querierOptions) {
+func WithLogger(l *zap.Logger) Option {
+	return func(opts *options) {
 		opts.logger = l
 	}
 }
 
-func WithMetrics(r metrics.Registerer) QuerierOption {
-	return func(opts *querierOptions) {
+func WithMetrics(r metrics.Registerer) Option {
+	return func(opts *options) {
 		opts.metrics = r
 	}
 }
 
-type Querier interface {
+type Client interface {
 	ExecQuery(context.Context, string, []bigquery.QueryParameter) (*bigquery.RowIterator, error)
 	Close() error
 }
 
-type querier struct {
-	client *bigquery.Client
+type client struct {
+	cli    *bigquery.Client
+	opts   *options
 	logger *zap.Logger
 }
 
-func NewQuerier(
+func NewClient(
 	ctx context.Context,
 	project,
 	location string,
-	opts ...QuerierOption,
-) (Querier, error) {
-	dopts := &querierOptions{
+	opts ...Option,
+) (Client, error) {
+	dopts := &options{
 		logger: zap.NewNop(),
 	}
 	for _, opt := range opts {
@@ -74,20 +75,21 @@ func NewQuerier(
 		return nil, err
 	}
 	cli.Location = location
-	return &querier{
-		client: cli,
+	return &client{
+		cli:    cli,
+		opts:   dopts,
 		logger: logger,
 	}, nil
 }
 
-func (c *querier) ExecQuery(
+func (c *client) ExecQuery(
 	ctx context.Context,
 	query string,
 	params []bigquery.QueryParameter,
 ) (*bigquery.RowIterator, error) {
 	var err error
 	defer record()(operationQuery, &err)
-	q := c.client.Query(query)
+	q := c.cli.Query(query)
 	q.Parameters = params
 	job, err := q.Run(ctx)
 	if err != nil {
@@ -95,7 +97,7 @@ func (c *querier) ExecQuery(
 	}
 	status, err := job.Wait(ctx)
 	c.logger.Debug(
-		"BigQuery jobStatus",
+		"BigQuery QueryJobStatus",
 		zap.Any("status", status),
 		zap.Any("query", query),
 		zap.Any("params", params),
@@ -109,6 +111,6 @@ func (c *querier) ExecQuery(
 	return job.Read(ctx)
 }
 
-func (c *querier) Close() error {
-	return c.client.Close()
+func (c *client) Close() error {
+	return c.cli.Close()
 }

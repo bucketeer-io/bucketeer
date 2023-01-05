@@ -34,7 +34,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	storagedruid "github.com/bucketeer-io/bucketeer/pkg/storage/druid"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery"
+	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
@@ -279,14 +279,14 @@ func (s *server) createBigQueryQuerier(
 	project, location string,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
-) (bigquery.Querier, error) {
+) (bqquerier.Client, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	return bigquery.NewQuerier(
+	return bqquerier.NewClient(
 		ctx,
 		project,
 		location,
-		bigquery.WithMetrics(registerer),
-		bigquery.WithLogger(logger),
+		bqquerier.WithMetrics(registerer),
+		bqquerier.WithLogger(logger),
 	)
 }

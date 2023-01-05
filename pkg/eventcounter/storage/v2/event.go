@@ -22,12 +22,12 @@ import (
 	"sort"
 	"time"
 
-	bq "cloud.google.com/go/bigquery"
+	"cloud.google.com/go/bigquery"
 	"go.uber.org/zap"
 	"google.golang.org/api/iterator"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery"
+	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 )
 
@@ -53,7 +53,7 @@ type EventStorage interface {
 }
 
 type eventStorage struct {
-	querier bigquery.Querier
+	querier bqquerier.Client
 	dataset string
 	logger  *zap.Logger
 }
@@ -64,7 +64,7 @@ type EvaluationEventCount struct {
 	EvaluationTotal int64
 }
 
-func NewEventStorage(querier bigquery.Querier, dataset string, logger *zap.Logger) EventStorage {
+func NewEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) EventStorage {
 	return &eventStorage{
 		querier: querier,
 		dataset: dataset,
@@ -94,7 +94,7 @@ func (es *eventStorage) QueryEvaluationCount(
 	}
 	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeEvaluationEvent)
 	query := fmt.Sprintf(string(q), datasource)
-	params := []bq.QueryParameter{
+	params := []bigquery.QueryParameter{
 		{
 			Name:  "environmentNamespace",
 			Value: environmentNamespace,
