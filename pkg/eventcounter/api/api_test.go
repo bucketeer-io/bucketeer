@@ -68,6 +68,16 @@ func TestGetEvaluationCountBigquery(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	now := time.Now()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	correctStartAtUnix := now.Add(-30 * 24 * time.Hour).Unix()
+	correctStartAt := time.Unix(correctStartAtUnix, 0)
+	correctEndAtUnix := now.Unix()
+	correctEndAt := time.Unix(correctEndAtUnix, 0)
+	ns := "ns0"
+	fID := "fid"
+	fVersion := int32(1)
+	vID1 := "vid01"
+	vID2 := "vid02"
 
 	patterns := []struct {
 		desc        string
@@ -79,22 +89,22 @@ func TestGetEvaluationCountBigquery(t *testing.T) {
 		{
 			desc: "error: ErrStartAtRequired",
 			input: &ecproto.GetEvaluationCountV2Request{
-				EnvironmentNamespace: "ns0",
+				EnvironmentNamespace: ns,
 			},
 			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
 		},
 		{
 			desc: "error: ErrEndAtRequired",
 			input: &ecproto.GetEvaluationCountV2Request{
-				EnvironmentNamespace: "ns0",
-				StartAt:              now.Add(-7 * 24 * time.Hour).Unix(),
+				EnvironmentNamespace: ns,
+				StartAt:              correctStartAtUnix,
 			},
 			expectedErr: localizedError(statusEndAtRequired, locale.JaJP),
 		},
 		{
 			desc: "error: ErrStartAtIsAfterEndAt",
 			input: &ecproto.GetEvaluationCountV2Request{
-				EnvironmentNamespace: "ns0",
+				EnvironmentNamespace: ns,
 				StartAt:              now.Unix(),
 				EndAt:                now.Add(-31 * 24 * time.Hour).Unix(),
 			},
@@ -103,19 +113,19 @@ func TestGetEvaluationCountBigquery(t *testing.T) {
 		{
 			desc: "error: ErrFeatureIDRequired",
 			input: &ecproto.GetEvaluationCountV2Request{
-				EnvironmentNamespace: "ns0",
-				StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
-				EndAt:                now.Unix(),
+				EnvironmentNamespace: ns,
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
 			},
 			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
 		},
 		{
 			desc: "success: one variation",
 			setup: func(s *eventCounterService) {
-				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion, []string{vID1}).Return(
 					[]*ecproto.VariationCount{
 						{
-							VariationId: "vid1",
+							VariationId: vID1,
 							UserCount:   int64(12),
 							EventCount:  int64(123),
 						},
@@ -124,20 +134,20 @@ func TestGetEvaluationCountBigquery(t *testing.T) {
 				)
 			},
 			input: &ecproto.GetEvaluationCountV2Request{
-				EnvironmentNamespace: "ns0",
-				StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
-				EndAt:                now.Unix(),
-				FeatureId:            "fid",
-				FeatureVersion:       int32(1),
-				VariationIds:         []string{"vid1"},
+				EnvironmentNamespace: ns,
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+				FeatureId:            fID,
+				FeatureVersion:       fVersion,
+				VariationIds:         []string{vID1},
 			},
 			expected: &ecproto.GetEvaluationCountV2Response{
 				Count: &ecproto.EvaluationCount{
-					FeatureId:      "fid",
-					FeatureVersion: int32(1),
+					FeatureId:      fID,
+					FeatureVersion: fVersion,
 					RealtimeCounts: []*ecproto.VariationCount{
 						{
-							VariationId: "vid1",
+							VariationId: vID1,
 							UserCount:   int64(12),
 							EventCount:  int64(123),
 						},
@@ -149,15 +159,15 @@ func TestGetEvaluationCountBigquery(t *testing.T) {
 		{
 			desc: "success: all variations",
 			setup: func(s *eventCounterService) {
-				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion, []string{vID1, vID2}).Return(
 					[]*ecproto.VariationCount{
 						{
-							VariationId: "vid0",
+							VariationId: vID1,
 							UserCount:   int64(1),
 							EventCount:  int64(2),
 						},
 						{
-							VariationId: "vid1",
+							VariationId: vID2,
 							UserCount:   int64(12),
 							EventCount:  int64(123),
 						},
@@ -165,25 +175,25 @@ func TestGetEvaluationCountBigquery(t *testing.T) {
 					nil)
 			},
 			input: &ecproto.GetEvaluationCountV2Request{
-				EnvironmentNamespace: "ns0",
-				StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
-				EndAt:                now.Unix(),
-				FeatureId:            "fid",
-				FeatureVersion:       int32(1),
-				VariationIds:         []string{"vid0", "vid1"},
+				EnvironmentNamespace: ns,
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+				FeatureId:            fID,
+				FeatureVersion:       fVersion,
+				VariationIds:         []string{vID1, vID2},
 			},
 			expected: &ecproto.GetEvaluationCountV2Response{
 				Count: &ecproto.EvaluationCount{
-					FeatureId:      "fid",
-					FeatureVersion: int32(1),
+					FeatureId:      fID,
+					FeatureVersion: fVersion,
 					RealtimeCounts: []*ecproto.VariationCount{
 						{
-							VariationId: "vid0",
+							VariationId: vID1,
 							UserCount:   int64(1),
 							EventCount:  int64(2),
 						},
 						{
-							VariationId: "vid1",
+							VariationId: vID2,
 							UserCount:   int64(12),
 							EventCount:  int64(123),
 						},
@@ -199,7 +209,7 @@ func TestGetEvaluationCountBigquery(t *testing.T) {
 			if p.setup != nil {
 				p.setup(gs)
 			}
-			actual, err := gs.GetEvaluationCountBigquery(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			actual, err := gs.GetEvaluationCountBigQuery(ctx, p.input)
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
