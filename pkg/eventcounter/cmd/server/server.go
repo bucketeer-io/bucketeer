@@ -67,8 +67,8 @@ type server struct {
 	redisAddr             *string
 	redisPoolMaxIdle      *int
 	redisPoolMaxActive    *int
-	bigqueryDataSet       *string
-	bigqueryDataLocation  *string
+	bigQueryDataSet       *string
+	bigQueryDataLocation  *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -117,8 +117,8 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"redis-pool-max-active",
 			"Maximum number of connections allocated by the pool at a given time.",
 		).Default("10").Int(),
-		bigqueryDataSet:      cmd.Flag("bigquery-data-set", "Bigquery DataSet Name").String(),
-		bigqueryDataLocation: cmd.Flag("bigquery-data-location", "Bigquery DataSet Location").String(),
+		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
+		bigQueryDataLocation: cmd.Flag("bigquery-data-location", "BigQuery DataSet Location").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -194,18 +194,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
-	bigqueryQuerier, err := s.createBigqueryQuerier(ctx, *s.project, *s.bigqueryDataLocation, registerer, logger)
+	bigQueryQuerier, err := s.createBigQueryQuerier(ctx, *s.project, *s.bigQueryDataLocation, registerer, logger)
 	if err != nil {
-		logger.Error("Failed to create bigquery client",
+		logger.Error("Failed to create BigQuery client",
 			zap.Error(err),
 			zap.String("project", *s.project),
-			zap.String("location", *s.bigqueryDataLocation),
-			zap.String("dataset", *s.bigqueryDataSet),
+			zap.String("location", *s.bigQueryDataLocation),
+			zap.String("dataset", *s.bigQueryDataSet),
 		)
 		return err
 	}
-	defer bigqueryQuerier.Close()
-	bigqueryDataset := *s.bigqueryDataSet
+	defer bigQueryQuerier.Close()
+	bigQueryDataset := *s.bigQueryDataSet
 
 	service := api.NewEventCounterService(
 		mysqlClient,
@@ -213,8 +213,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureClient,
 		accountClient,
 		druidQuerier,
-		bigqueryQuerier,
-		bigqueryDataset,
+		bigQueryQuerier,
+		bigQueryDataset,
 		registerer,
 		redisV3Cache,
 		logger,
@@ -274,7 +274,7 @@ func (s *server) createDruidQuerier(ctx context.Context, logger *zap.Logger) (dr
 	return druid.NewDruidQuerier(brokerClient, *s.druidDatasourcePrefix, druid.WithLogger(logger)), nil
 }
 
-func (s *server) createBigqueryQuerier(
+func (s *server) createBigQueryQuerier(
 	ctx context.Context,
 	project, location string,
 	registerer metrics.Registerer,

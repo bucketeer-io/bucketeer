@@ -82,7 +82,7 @@ func NewEventCounterService(
 	a accountclient.Client,
 	d ecdruid.Querier,
 	b bigquery.Querier,
-	bigqueryDataset string,
+	bigQueryDataset string,
 	r metrics.Registerer,
 	redis cache.MultiGetDeleteCountCache,
 	l *zap.Logger,
@@ -93,7 +93,7 @@ func NewEventCounterService(
 		featureClient:                f,
 		accountClient:                a,
 		druidQuerier:                 d,
-		eventStorage:                 v2ecstorage.NewEventStorage(b, bigqueryDataset, l),
+		eventStorage:                 v2ecstorage.NewEventStorage(b, bigQueryDataset, l),
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
 		userCountStorage:             v2ecstorage.NewUserCountStorage(mc),
 		metrics:                      r,
@@ -107,7 +107,7 @@ func (s *eventCounterService) Register(server *grpc.Server) {
 }
 
 // TODO temporary name
-func (s *eventCounterService) GetEvaluationCountBigquery(
+func (s *eventCounterService) GetEvaluationCountBigQuery(
 	ctx context.Context,
 	req *ecproto.GetEvaluationCountV2Request,
 ) (*ecproto.GetEvaluationCountV2Response, error) {
@@ -152,7 +152,6 @@ func (s *eventCounterService) GetEvaluationCountBigquery(
 		return nil, dt.Err()
 	}
 	s.logger.Debug("result", zap.Any("rows", variationCounts))
-
 	return &ecproto.GetEvaluationCountV2Response{
 		Count: &ecproto.EvaluationCount{
 			FeatureId:      req.FeatureId,

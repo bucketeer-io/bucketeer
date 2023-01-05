@@ -32,8 +32,8 @@ import (
 )
 
 const (
-	DataTypeEvaluationEvents = "evaluation_event"
-	EvaluationCountSQLFile   = "sql/evaluation_count.sql"
+	DataTypeEvaluationEvent = "evaluation_event"
+	EvaluationCountSQLFile  = "sql/evaluation_count.sql"
 )
 
 var (
@@ -92,7 +92,7 @@ func (es *eventStorage) QueryEvaluationCount(
 		)
 		return nil, err
 	}
-	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeEvaluationEvents)
+	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeEvaluationEvent)
 	query := fmt.Sprintf(string(q), datasource)
 	params := []bq.QueryParameter{
 		{
@@ -120,7 +120,7 @@ func (es *eventStorage) QueryEvaluationCount(
 			Value: variationIDs,
 		},
 	}
-	es.logger.Debug("query evaluation count",
+	es.logger.Debug("Query evaluation count",
 		zap.String("query", query),
 		zap.Any("params", params),
 	)
@@ -145,7 +145,7 @@ func (es *eventStorage) QueryEvaluationCount(
 		}
 		if err != nil {
 			es.logger.Error(
-				"Failed to convert evaluation event count query result",
+				"Failed to convert evaluation event count from the query result",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("query", query),

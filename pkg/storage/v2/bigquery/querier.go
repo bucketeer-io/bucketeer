@@ -67,10 +67,10 @@ func NewQuerier(
 	if dopts.metrics != nil {
 		registerMetrics(dopts.metrics)
 	}
-	logger := dopts.logger.Named("bigquery")
+	logger := dopts.logger.Named("bigquery-querier")
 	cli, err := bigquery.NewClient(ctx, project)
 	if err != nil {
-		logger.Error("Failed to create bigquery client", zap.Error(err))
+		logger.Error("Failed to create BigQuery client", zap.Error(err))
 		return nil, err
 	}
 	cli.Location = location
@@ -95,7 +95,7 @@ func (c *querier) ExecQuery(
 	}
 	status, err := job.Wait(ctx)
 	c.logger.Debug(
-		"Bigquery jobStatus",
+		"BigQuery jobStatus",
 		zap.Any("status", status),
 		zap.Any("query", query),
 		zap.Any("params", params),
