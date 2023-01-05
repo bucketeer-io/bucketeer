@@ -17,7 +17,6 @@ package job
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -171,7 +170,7 @@ func TestCreateMAUNotification(t *testing.T) {
 					gomock.Any(),
 					&ecproto.GetMAUCountRequest{
 						EnvironmentNamespace: "eNamespace",
-						YearMonth:            fmt.Sprintf("%d%d", year, month),
+						YearMonth:            w.newYearMonth(year, month),
 					},
 				).Return(
 					&ecproto.GetMAUCountResponse{
@@ -200,11 +199,21 @@ func TestCreateMAUNotification(t *testing.T) {
 func TestGetYearLastMonth(t *testing.T) {
 	t.Parallel()
 	watcher := &mauCountWatcher{}
-	time := time.Unix(1672498800, 0) // 2023/01/01 00:00:00
+	time := time.Unix(1672531200, 0) // 2023/01/01 00:00:00 UTC
 	time.In(jpLocation)
 	year, month := watcher.getLastYearMonth(time)
 	assert.Equal(t, int32(2022), year)
 	assert.Equal(t, int32(12), month)
+}
+
+func TestNewYearMonth(t *testing.T) {
+	t.Parallel()
+	watcher := &mauCountWatcher{}
+	time := time.Unix(1675209600, 0) // 2023/02/01 00:00:00 UTC
+	time.In(jpLocation)
+	year, month := watcher.getLastYearMonth(time)
+	yearMonth := watcher.newYearMonth(year, month)
+	assert.Equal(t, "202301", yearMonth)
 }
 
 func newMAUCountWatcherWithMock(t *testing.T, c *gomock.Controller) *mauCountWatcher {

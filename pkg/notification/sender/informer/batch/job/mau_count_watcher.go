@@ -73,14 +73,13 @@ func (w *mauCountWatcher) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	year, lastMonth := w.getLastYearMonth(time.Now().In(jpLocation))
-	yearMonth := fmt.Sprintf("%d%d", year, lastMonth)
 	for _, pj := range projects {
 		environments, err := w.listEnvironments(ctx, pj.Id)
 		if err != nil {
 			return err
 		}
 		for _, env := range environments {
-			eventCount, userCount, err := w.getUserCount(ctx, env.Namespace, yearMonth)
+			eventCount, userCount, err := w.getUserCount(ctx, env.Namespace, w.newYearMonth(year, lastMonth))
 			if err != nil {
 				return err
 			}
@@ -123,6 +122,10 @@ func (w *mauCountWatcher) listProjects(ctx context.Context) ([]*environmentproto
 func (w *mauCountWatcher) getLastYearMonth(now time.Time) (int32, int32) {
 	targetDate := now.AddDate(0, -1, 0)
 	return int32(targetDate.Year()), int32(targetDate.Month())
+}
+
+func (w *mauCountWatcher) newYearMonth(year, month int32) string {
+	return fmt.Sprintf("%d%02d", year, month)
 }
 
 func (w *mauCountWatcher) listEnvironments(
