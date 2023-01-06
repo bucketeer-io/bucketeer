@@ -1371,6 +1371,23 @@ export const messages = {
       id: 'feature.offVariation',
       defaultMessage: 'off variation',
     }),
+    variationSettings: {
+      defaultStrategy: defineMessage({
+        id: 'feature.variationSettings.defaultStrategy',
+        defaultMessage:
+          'This variation cannot be deleted because it is used in the default variation settings.',
+      }),
+      offVariation: defineMessage({
+        id: 'feature.variationSettings.offVariation',
+        defaultMessage:
+          'This variation cannot be deleted because it is used in the off-variation settings.',
+      }),
+      bothVariations: defineMessage({
+        id: 'feature.variationSettings.bothVariations',
+        defaultMessage:
+          'This variation cannot be deleted because it is used in the default and the off-variation settings.',
+      }),
+    },
     confirm: {
       title: defineMessage({
         id: 'feature.confirm.title',

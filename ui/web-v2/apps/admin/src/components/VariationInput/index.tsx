@@ -1,3 +1,4 @@
+import { classNames } from '@/utils/css';
 import { MinusCircleIcon } from '@heroicons/react/solid';
 import { FC, memo, useCallback } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
@@ -8,6 +9,7 @@ import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { useIsEditable } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
+import { HoverPopover } from '../HoverPopover';
 import { Option, Select } from '../Select';
 
 const variationTypeOptionsBoolean: Option = {
@@ -49,14 +51,18 @@ export const getVariationTypeOption = (
   }
 };
 
+type RulesAppliedVariationList = {
+  onVariationId?: string;
+  onVariationIds?: string[];
+  offVariationId: string;
+};
 export interface VariationInputProps {
-  removeDisabledIndexes: Set<number>;
   typeDisabled: boolean;
-  onRemoveVariation: (idx: number) => void;
+  rulesAppliedVariationList?: RulesAppliedVariationList;
 }
 
 export const VariationInput: FC<VariationInputProps> = memo(
-  ({ removeDisabledIndexes, typeDisabled, onRemoveVariation }) => {
+  ({ typeDisabled, rulesAppliedVariationList }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
     const methods = useFormContext();
@@ -75,27 +81,33 @@ export const VariationInput: FC<VariationInputProps> = memo(
     } = useFieldArray({
       control,
       name: 'variations',
-      keyName: 'key', // the default keyName is "id" and it conflicts with the variation id field
+      keyName: 'key',
+      // keyName: 'key', // the default keyName is "id" and it conflicts with the variation id field
     });
     const variationType = watch('variationType');
     const disabledAddBtn =
       variationType == Feature.VariationType.BOOLEAN.toString();
+    const { onVariationId, onVariationIds, offVariationId } =
+      rulesAppliedVariationList;
 
     const handleChange = useCallback((type: string) => {
+      const defaultVariationId1 = uuid();
+      const defaultVariationId2 = uuid();
+
       reset(
         {
           ...getValues(),
           variationType: type,
           variations: [
             {
-              id: uuid(),
+              id: defaultVariationId1,
               value:
                 type === Feature.VariationType.BOOLEAN.toString() ? 'true' : '',
               name: '',
               description: '',
             },
             {
-              id: uuid(),
+              id: defaultVariationId2,
               value:
                 type === Feature.VariationType.BOOLEAN.toString()
                   ? 'false'
@@ -104,6 +116,16 @@ export const VariationInput: FC<VariationInputProps> = memo(
               description: '',
             },
           ],
+          onVariation: {
+            id: defaultVariationId1,
+            value: 0,
+            label: `${f(messages.feature.variation)} 1`,
+          },
+          offVariation: {
+            id: defaultVariationId2,
+            value: 1,
+            label: `${f(messages.feature.variation)} 2`,
+          },
         },
         { keepDirty: true }
       );
@@ -120,8 +142,45 @@ export const VariationInput: FC<VariationInputProps> = memo(
 
     const handleRemoveVariation = useCallback((idx) => {
       remove(idx);
-      onRemoveVariation(idx);
     }, []);
+
+    const getVariationMessage = useCallback(
+      (variationId) => {
+        // Use a switch statement to determine the message
+        switch (true) {
+          // Check if the variation is both on and off variations
+          case typeDisabled &&
+            onVariationIds.includes(variationId) &&
+            offVariationId === variationId:
+            return f(messages.feature.variationSettings.bothVariations);
+
+          // Check if the variation is the on variation
+          case typeDisabled && onVariationIds.includes(variationId):
+            return f(messages.feature.variationSettings.defaultStrategy);
+
+          // Check if the variation is the off variation
+          case typeDisabled && variationId === offVariationId:
+            return f(messages.feature.variationSettings.offVariation);
+
+          // Check if the variation is both on and off variations
+          case onVariationId === variationId && offVariationId === variationId:
+            return f(messages.feature.variationSettings.bothVariations);
+
+          // Check if the variation is the on variation
+          case onVariationId === variationId:
+            return f(messages.feature.variationSettings.defaultStrategy);
+
+          // Check if the variation is the off variation
+          case offVariationId === variationId:
+            return f(messages.feature.variationSettings.offVariation);
+
+          // Return null if none of the conditions are met
+          default:
+            return null;
+        }
+      },
+      [onVariationId, onVariationIds, offVariationId]
+    );
 
     return (
       <div className="space-y-4 flex flex-col">
@@ -159,8 +218,9 @@ export const VariationInput: FC<VariationInputProps> = memo(
           {variations.map((variation: any, idx) => {
             const disableRemoveBtn =
               variationType == Feature.VariationType.BOOLEAN.toString() ||
-              variations.length <= 2 ||
-              removeDisabledIndexes.has(idx);
+              variation.id === onVariationId ||
+              variation.id === offVariationId ||
+              (typeDisabled && onVariationIds.includes(variation.id));
             return (
               <div key={idx} className="flex flex-row flex-wrap mb-2">
                 {getValues('variationType') ==
@@ -284,16 +344,43 @@ export const VariationInput: FC<VariationInputProps> = memo(
                     )}
                   </p>
                 </div>
-                {editable && (
+                {editable && variations.length > 2 && (
                   <div className="flex items-end py-3 ml-3">
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveVariation(idx)}
-                      className="minus-circle-icon"
-                      disabled={disableRemoveBtn}
-                    >
-                      <MinusCircleIcon aria-hidden="true" />
-                    </button>
+                    {disableRemoveBtn ? (
+                      <HoverPopover
+                        render={() => {
+                          const variationMessage = getVariationMessage(
+                            variation.id
+                          );
+                          return variationMessage ? (
+                            <div
+                              className={classNames(
+                                'bg-gray-900 text-white p-2 text-xs w-[350px]',
+                                'rounded cursor-pointer'
+                              )}
+                            >
+                              {variationMessage}
+                            </div>
+                          ) : null;
+                        }}
+                      >
+                        <button
+                          type="button"
+                          className="minus-circle-icon"
+                          disabled={disableRemoveBtn}
+                        >
+                          <MinusCircleIcon aria-hidden="true" />
+                        </button>
+                      </HoverPopover>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVariation(idx)}
+                        className="minus-circle-icon"
+                      >
+                        <MinusCircleIcon aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

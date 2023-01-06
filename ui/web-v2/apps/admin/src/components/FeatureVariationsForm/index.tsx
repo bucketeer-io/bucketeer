@@ -1,6 +1,6 @@
 import 'react-datepicker/dist/react-datepicker.css';
 import { SerializedError } from '@reduxjs/toolkit';
-import React, { FC, memo, useCallback } from 'react';
+import React, { FC, memo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
@@ -41,37 +41,28 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
       state.features.getFeatureError,
     ]);
     const isValid = Object.keys(errors).length == 0;
-    const removeDisabledIndexes = new Set<number>();
-    removeDisabledIndexes.add(
-      feature.variationsList.findIndex((v) => v.id === feature.offVariation)
-    );
-    if (feature.defaultStrategy.type === Strategy.Type.FIXED) {
-      removeDisabledIndexes.add(
-        feature.variationsList.findIndex(
-          (v) => v.id === feature.defaultStrategy.fixedStrategy.variation
-        )
-      );
-    }
-    if (feature.defaultStrategy.type === Strategy.Type.ROLLOUT) {
-      feature.defaultStrategy.rolloutStrategy.variationsList.forEach(
-        (v, idx) => {
-          if (v.weight > 0) {
-            removeDisabledIndexes.add(idx);
-          }
-        }
-      );
-    }
 
-    const handleRemoveVariation = useCallback((idx: number) => {}, []);
+    const onVariationIds = [];
+    if (feature.defaultStrategy.type === Strategy.Type.FIXED) {
+      onVariationIds.push(feature.defaultStrategy.fixedStrategy.variation);
+    } else if (feature.defaultStrategy.type === Strategy.Type.ROLLOUT) {
+      feature.defaultStrategy.rolloutStrategy.variationsList.forEach((v) => {
+        if (v.weight > 0) {
+          onVariationIds.push(v.variation);
+        }
+      });
+    }
 
     return (
       <div className="p-10 bg-gray-100">
         <form className="">
           <div className="bg-white border border-gray-300 rounded p-5 ">
             <VariationInput
-              removeDisabledIndexes={removeDisabledIndexes}
               typeDisabled={true}
-              onRemoveVariation={handleRemoveVariation}
+              rulesAppliedVariationList={{
+                onVariationIds,
+                offVariationId: feature.offVariation,
+              }}
             />
           </div>
           <div className="flex justify-end mt-5">

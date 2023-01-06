@@ -5,6 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 import { useHistory, useRouteMatch, useParams } from 'react-router-dom';
+import { v4 as uuid } from 'uuid';
 
 import { FeatureAddForm } from '../../components/FeatureAddForm';
 import { FeatureCloneForm } from '../../components/FeatureCloneForm';
@@ -104,6 +105,9 @@ export const FeatureIndexPage: FC = memo(() => {
     url.substring(url.indexOf(PAGE_PATH_FEATURE_CLONE)) ===
     PAGE_PATH_FEATURE_CLONE + '/' + featureId;
   const [open, setOpen] = useState(isNew || isClone);
+
+  const defaultVariationId1 = uuid();
+  const defaultVariationId2 = uuid();
   const addMethod = useForm({
     resolver: yupResolver(addFormSchema),
     defaultValues: {
@@ -114,18 +118,28 @@ export const FeatureIndexPage: FC = memo(() => {
       variationType: Feature.VariationType.BOOLEAN.toString(),
       variations: [
         {
+          id: defaultVariationId1,
           value: 'true',
           name: '',
           description: '',
         },
         {
+          id: defaultVariationId2,
           value: 'false',
           name: '',
           description: '',
         },
       ],
-      onVariation: { value: 0, label: `${f(messages.feature.variation)} 1` },
-      offVariation: { value: 1, label: `${f(messages.feature.variation)} 2` },
+      onVariation: {
+        id: defaultVariationId1,
+        value: '0',
+        label: `${f(messages.feature.variation)} 1`,
+      },
+      offVariation: {
+        id: defaultVariationId2,
+        value: '1',
+        label: `${f(messages.feature.variation)} 2`,
+      },
     },
     mode: 'onChange',
   });
