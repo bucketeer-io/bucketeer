@@ -34,8 +34,12 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
+	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
+	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
@@ -48,19 +52,20 @@ var (
 )
 
 type PersisterDwh struct {
-	experimentClient ec.Client
-	featureClient    featureclient.Client
-	autoOpsClient    aoclient.Client
-	puller           puller.RateLimitedPuller
-	logger           *zap.Logger
-	ctx              context.Context
-	cancel           func()
-	group            errgroup.Group
-	doneCh           chan struct{}
-	evalEventWriter  datastore.EvalEventWriter
-	goalEventWriter  datastore.GoalEventWriter
-	flightgroup      singleflight.Group
-	opts             *options
+	experimentClient      ec.Client
+	featureClient         featureclient.Client
+	autoOpsClient         aoclient.Client
+	puller                puller.RateLimitedPuller
+	logger                *zap.Logger
+	ctx                   context.Context
+	cancel                func()
+	group                 errgroup.Group
+	doneCh                chan struct{}
+	userEvaluationStorage featurestorage.UserEvaluationsStorage
+	evalEventWriter       datastore.EvalEventWriter
+	goalEventWriter       datastore.GoalEventWriter
+	flightgroup           singleflight.Group
+	opts                  *options
 }
 
 func NewPersisterDwh(
@@ -181,9 +186,14 @@ func (p *PersisterDwh) send(messages map[string]*puller.Message) {
 	evalEvents := []*ecproto.EvaluationEvent{}
 	goalEvents := []*ecproto.GoalEvent{}
 
+	fails := make(map[string]bool, len(envEvents))
 	for environmentNamespace, events := range envEvents {
 		for id, event := range events {
 			if evt, ok := event.(*eventproto.EvaluationEvent); ok {
+				if err := p.upsertUserEvaluation(ctx, evt, environmentNamespace); err != nil {
+					fails[id] = true
+					continue
+				}
 				e, err := p.convToEvaluationEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
 					p.logger.Error(
@@ -192,32 +202,58 @@ func (p *PersisterDwh) send(messages map[string]*puller.Message) {
 						zap.String("id", id),
 						zap.String("environmentNamespace", environmentNamespace),
 					)
+					fails[id] = false
+					continue
 				}
 				evalEvents = append(evalEvents, e)
 			}
 		}
 	}
 	if err := p.evalEventWriter.AppendRows(ctx, evalEvents); err != nil {
-
+		p.logger.Error(
+			"failed to append rows to evaluation event",
+			zap.Error(err),
+		)
 	}
 	for environmentNamespace, events := range envEvents {
 		for id, event := range events {
 			if evt, ok := event.(*eventproto.GoalEvent); ok {
-				e, _, err := p.convToGoalEvent(ctx, evt, id, environmentNamespace)
+				e, retriable, err := p.convToGoalEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
-					p.logger.Error(
-						"failed to convert to evaluation event",
-						zap.Error(err),
-						zap.String("id", id),
-						zap.String("environmentNamespace", environmentNamespace),
-					)
+					if !retriable {
+						p.logger.Error(
+							"failed to convert to goal event",
+							zap.Error(err),
+							zap.String("id", id),
+							zap.String("environmentNamespace", environmentNamespace),
+						)
+					}
+					fails[id] = retriable
+					continue
 				}
 				goalEvents = append(goalEvents, e)
 			}
 		}
 	}
 	if err := p.goalEventWriter.AppendRows(ctx, goalEvents); err != nil {
-
+		p.logger.Error(
+			"failed to append rows to goal event",
+			zap.Error(err),
+		)
+	}
+	for id, m := range messages {
+		if repeatable, ok := fails[id]; ok {
+			if repeatable {
+				m.Nack()
+				handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
+			} else {
+				m.Ack()
+				handledCounter.WithLabelValues(codes.NonRepeatableError.String()).Inc()
+			}
+			continue
+		}
+		m.Ack()
+		handledCounter.WithLabelValues(codes.OK.String()).Inc()
 	}
 }
 
@@ -479,7 +515,27 @@ func (p *PersisterDwh) getUserEvaluation(
 	featureID string,
 	featureVersion int32,
 ) (*featureproto.Evaluation, error) {
-	
+	// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
+	if tag == "" {
+		tag = "none"
+	}
+	evaluation, err := p.userEvaluationStorage.GetUserEvaluation(
+		p.ctx,
+		userID,
+		environmentNamespace,
+		tag,
+		featureID,
+		featureVersion,
+	)
+	if err != nil {
+		if err == bigtable.ErrKeyNotFound {
+			handledCounter.WithLabelValues(codeUserEvaluationNotFound).Inc()
+		} else {
+			handledCounter.WithLabelValues(codeFailedToGetUserEvaluation).Inc()
+		}
+		return nil, err
+	}
+	return evaluation, nil
 }
 
 // Because the same goal can be used on other feature flags
@@ -550,6 +606,51 @@ func (p *PersisterDwh) findFeatureIDs(goalID string, listAutoOpsRules []*aoproto
 		}
 	}
 	return featureIDs
+}
+
+func (p *PersisterDwh) convToEvaluation(
+	ctx context.Context,
+	event *eventproto.EvaluationEvent,
+) (*featureproto.Evaluation, string) {
+	evaluation := &featureproto.Evaluation{
+		Id: featuredomain.EvaluationID(
+			event.FeatureId,
+			event.FeatureVersion,
+			event.UserId,
+		),
+		FeatureId:      event.FeatureId,
+		FeatureVersion: event.FeatureVersion,
+		UserId:         event.UserId,
+		VariationId:    event.VariationId,
+		Reason:         event.Reason,
+	}
+	// For requests that doesn't have the tag info,
+	// it will insert none instead, until all SDK clients are updated
+	var tag string
+	if event.Tag == "" {
+		tag = "none"
+	} else {
+		tag = event.Tag
+	}
+	return evaluation, tag
+}
+
+func (p *PersisterDwh) upsertUserEvaluation(
+	ctx context.Context,
+	event *eventproto.EvaluationEvent,
+	environmentNamespace string,
+) error {
+	evaluation, tag := p.convToEvaluation(ctx, event)
+	if err := p.userEvaluationStorage.UpsertUserEvaluation(
+		ctx,
+		evaluation,
+		environmentNamespace,
+		tag,
+	); err != nil {
+		handledCounter.WithLabelValues(codeUpsertUserEvaluationFailed).Inc()
+		return err
+	}
+	return nil
 }
 
 func (p *PersisterDwh) listAutoOpsRules(
