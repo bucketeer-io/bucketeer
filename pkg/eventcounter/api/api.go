@@ -161,7 +161,10 @@ func (s *eventCounterService) GetEvaluationCountBigQuery(
 	}, nil
 }
 
-func (s *eventCounterService) convertEvaluationCounts(rows []*v2ecstorage.EvaluationEventCount, variationIDs []string) []*ecproto.VariationCount {
+func (s *eventCounterService) convertEvaluationCounts(
+	rows []*v2ecstorage.EvaluationEventCount,
+	variationIDs []string,
+) []*ecproto.VariationCount {
 	vcsMap := map[string]*ecproto.VariationCount{}
 	for _, id := range variationIDs {
 		vcsMap[id] = &ecproto.VariationCount{VariationId: id}
