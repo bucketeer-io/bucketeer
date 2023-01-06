@@ -21,6 +21,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
+      serviceAccountName: {{ template "event-counter.name" . }}
       {{- with .Values.global.image.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}

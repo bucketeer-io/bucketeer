@@ -79,3 +79,6 @@ health:
   failureThreshold: 10
 
 resources: {}
+
+serviceAccount:
+  annotations: {}
