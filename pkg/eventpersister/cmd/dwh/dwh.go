@@ -79,15 +79,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	evalEventReader, err := datastore.NewEvalEventReader(ctx, *s.project, *s.dataset)
-	if err != nil {
-		return err
-	}
 	p := persister.NewPersisterDwh(
 		puller,
 		evalEventWriter,
 		goalEventWriter,
-		evalEventReader,
 	)
 	if err != nil {
 		return err
