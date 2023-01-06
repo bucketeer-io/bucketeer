@@ -148,7 +148,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
       (variationId) => {
         // Use a switch statement to determine the message
         switch (true) {
-          // Check if the variation is both the on and off variations
+          // Check if the variation is both on and off variations
           case typeDisabled &&
             onVariationIds.includes(variationId) &&
             offVariationId === variationId:
@@ -162,7 +162,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
           case typeDisabled && variationId === offVariationId:
             return f(messages.feature.variationSettings.offVariation);
 
-          // Check if the variation is both the on and off variation
+          // Check if the variation is both on and off variation
           case onVariationId === variationId && offVariationId === variationId:
             return f(messages.feature.variationSettings.bothVariations);
 
