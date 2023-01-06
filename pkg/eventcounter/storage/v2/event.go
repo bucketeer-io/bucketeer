@@ -19,7 +19,6 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"sort"
 	"time"
 
 	"cloud.google.com/go/bigquery"
@@ -28,7 +27,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
-	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 )
 
 const (
@@ -48,8 +46,7 @@ type EventStorage interface {
 		startAt, endAt time.Time,
 		featureID string,
 		featureVersion int32,
-		variationIDs []string,
-	) ([]*ecproto.VariationCount, error)
+	) ([]*EvaluationEventCount, error)
 }
 
 type eventStorage struct {
@@ -78,8 +75,7 @@ func (es *eventStorage) QueryEvaluationCount(
 	startAt, endAt time.Time,
 	featureID string,
 	featureVersion int32,
-	variationIDs []string,
-) ([]*ecproto.VariationCount, error) {
+) ([]*EvaluationEventCount, error) {
 	fileName := EvaluationCountSQLFile
 	q, err := sql.ReadFile(fileName)
 	if err != nil {
@@ -114,10 +110,6 @@ func (es *eventStorage) QueryEvaluationCount(
 		{
 			Name:  "featureVersion",
 			Value: featureVersion,
-		},
-		{
-			Name:  "variationIDs",
-			Value: variationIDs,
 		},
 	}
 	es.logger.Debug("Query evaluation count",
@@ -156,19 +148,5 @@ func (es *eventStorage) QueryEvaluationCount(
 		}
 		rows = append(rows, &row)
 	}
-	return es.convertEvaluationCounts(rows), nil
-}
-
-func (es *eventStorage) convertEvaluationCounts(rows []*EvaluationEventCount) []*ecproto.VariationCount {
-	vcs := make([]*ecproto.VariationCount, len(rows))
-	for i, row := range rows {
-		vc := ecproto.VariationCount{
-			VariationId: row.VariationID,
-			UserCount:   row.EvaluationUser,
-			EventCount:  row.EvaluationTotal,
-		}
-		vcs[i] = &vc
-	}
-	sort.SliceStable(vcs, func(i, j int) bool { return vcs[i].VariationId < vcs[j].VariationId })
-	return vcs
+	return rows, nil
 }

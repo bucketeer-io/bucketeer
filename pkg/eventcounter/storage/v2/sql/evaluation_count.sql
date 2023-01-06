@@ -9,6 +9,5 @@ WHERE
     AND environment_namespace = @environmentNamespace
     AND feature_id = @featureID
     AND feature_version = @featureVersion
-    AND variation_id IN UNNEST(@variationIDs)
 GROUP BY
     variation_id

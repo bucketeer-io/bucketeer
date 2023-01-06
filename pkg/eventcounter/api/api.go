@@ -121,14 +121,13 @@ func (s *eventCounterService) GetEvaluationCountBigQuery(
 	}
 	startAt := time.Unix(req.StartAt, 0)
 	endAt := time.Unix(req.EndAt, 0)
-	variationCounts, err := s.eventStorage.QueryEvaluationCount(
+	evaluationCounts, err := s.eventStorage.QueryEvaluationCount(
 		ctx,
 		req.EnvironmentNamespace,
 		startAt,
 		endAt,
 		req.FeatureId,
 		req.FeatureVersion,
-		req.VariationIds,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -151,7 +150,8 @@ func (s *eventCounterService) GetEvaluationCountBigQuery(
 		}
 		return nil, dt.Err()
 	}
-	s.logger.Debug("result", zap.Any("rows", variationCounts))
+	variationCounts := s.convertEvaluationCounts(evaluationCounts, req.VariationIds)
+	s.logger.Debug("GetEvaluationCount result", zap.Any("rows", variationCounts))
 	return &ecproto.GetEvaluationCountV2Response{
 		Count: &ecproto.EvaluationCount{
 			FeatureId:      req.FeatureId,
@@ -159,6 +159,28 @@ func (s *eventCounterService) GetEvaluationCountBigQuery(
 			RealtimeCounts: variationCounts,
 		},
 	}, nil
+}
+
+func (s *eventCounterService) convertEvaluationCounts(rows []*v2ecstorage.EvaluationEventCount, variationIDs []string) []*ecproto.VariationCount {
+	vcsMap := map[string]*ecproto.VariationCount{}
+	for _, id := range variationIDs {
+		vcsMap[id] = &ecproto.VariationCount{VariationId: id}
+	}
+	for _, row := range rows {
+		vc, ok := vcsMap[row.VariationID]
+		if !ok {
+			continue
+		}
+		vc.UserCount = row.EvaluationUser
+		vc.EventCount = row.EvaluationTotal
+		vcsMap[row.VariationID] = vc
+	}
+	vcs := make([]*ecproto.VariationCount, 0, len(vcsMap))
+	for _, vc := range vcsMap {
+		vcs = append(vcs, vc)
+	}
+	sort.SliceStable(vcs, func(i, j int) bool { return vcs[i].VariationId < vcs[j].VariationId })
+	return vcs
 }
 
 func (s *eventCounterService) GetEvaluationCountV2(

@@ -122,12 +122,12 @@ func TestGetEvaluationCountBigquery(t *testing.T) {
 		{
 			desc: "success: one variation",
 			setup: func(s *eventCounterService) {
-				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion, []string{vID1}).Return(
-					[]*ecproto.VariationCount{
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
+					[]*v2ecs.EvaluationEventCount{
 						{
-							VariationId: vID1,
-							UserCount:   int64(12),
-							EventCount:  int64(123),
+							VariationID:     vID1,
+							EvaluationUser:  int64(1),
+							EvaluationTotal: int64(2),
 						},
 					},
 					nil,
@@ -148,8 +148,8 @@ func TestGetEvaluationCountBigquery(t *testing.T) {
 					RealtimeCounts: []*ecproto.VariationCount{
 						{
 							VariationId: vID1,
-							UserCount:   int64(12),
-							EventCount:  int64(123),
+							UserCount:   int64(1),
+							EventCount:  int64(2),
 						},
 					},
 				},
@@ -159,17 +159,17 @@ func TestGetEvaluationCountBigquery(t *testing.T) {
 		{
 			desc: "success: all variations",
 			setup: func(s *eventCounterService) {
-				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion, []string{vID1, vID2}).Return(
-					[]*ecproto.VariationCount{
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
+					[]*v2ecs.EvaluationEventCount{
 						{
-							VariationId: vID1,
-							UserCount:   int64(1),
-							EventCount:  int64(2),
+							VariationID:     vID1,
+							EvaluationUser:  int64(1),
+							EvaluationTotal: int64(2),
 						},
 						{
-							VariationId: vID2,
-							UserCount:   int64(12),
-							EventCount:  int64(123),
+							VariationID:     vID2,
+							EvaluationUser:  int64(12),
+							EvaluationTotal: int64(123),
 						},
 					},
 					nil)

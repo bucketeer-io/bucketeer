@@ -11,7 +11,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 
-	eventcounter "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	v2 "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 )
 
 // MockEventStorage is a mock of EventStorage interface.
@@ -38,16 +38,16 @@ func (m *MockEventStorage) EXPECT() *MockEventStorageMockRecorder {
 }
 
 // QueryEvaluationCount mocks base method.
-func (m *MockEventStorage) QueryEvaluationCount(ctx context.Context, environmentNamespace string, startAt, endAt time.Time, featureID string, featureVersion int32, variationIDs []string) ([]*eventcounter.VariationCount, error) {
+func (m *MockEventStorage) QueryEvaluationCount(ctx context.Context, environmentNamespace string, startAt, endAt time.Time, featureID string, featureVersion int32) ([]*v2.EvaluationEventCount, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueryEvaluationCount", ctx, environmentNamespace, startAt, endAt, featureID, featureVersion, variationIDs)
-	ret0, _ := ret[0].([]*eventcounter.VariationCount)
+	ret := m.ctrl.Call(m, "QueryEvaluationCount", ctx, environmentNamespace, startAt, endAt, featureID, featureVersion)
+	ret0, _ := ret[0].([]*v2.EvaluationEventCount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueryEvaluationCount indicates an expected call of QueryEvaluationCount.
-func (mr *MockEventStorageMockRecorder) QueryEvaluationCount(ctx, environmentNamespace, startAt, endAt, featureID, featureVersion, variationIDs interface{}) *gomock.Call {
+func (mr *MockEventStorageMockRecorder) QueryEvaluationCount(ctx, environmentNamespace, startAt, endAt, featureID, featureVersion interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryEvaluationCount", reflect.TypeOf((*MockEventStorage)(nil).QueryEvaluationCount), ctx, environmentNamespace, startAt, endAt, featureID, featureVersion, variationIDs)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryEvaluationCount", reflect.TypeOf((*MockEventStorage)(nil).QueryEvaluationCount), ctx, environmentNamespace, startAt, endAt, featureID, featureVersion)
 }
