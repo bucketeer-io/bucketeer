@@ -88,7 +88,6 @@ func NewPersisterDwh(
 	if dopts.metrics != nil {
 		dwhRegisterMetrics(dopts.metrics)
 	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	return &PersisterDwh{
 		puller:          puller.NewRateLimitedPuller(p, dopts.maxMPS),
