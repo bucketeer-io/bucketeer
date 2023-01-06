@@ -248,7 +248,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		btClient,
 		mysqlClient,
 		redisV3Cache,
-		*s.redisServerName,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
