@@ -353,23 +353,19 @@ func (p *PersisterDwh) linkGoalEvent(
 		return nil, false, err
 	}
 	evaluations := []*featureproto.Evaluation{}
-	evalExp, retriable, err := p.linkGoalEventByExperiment(
-		ctx,
-		event,
-		environmentNamespace,
-	)
-	if err != nil {
+	evalExp, retriable, err := p.linkGoalEventByExperiment(ctx, event, environmentNamespace)
+	// If there are no experiments or the goal ID didn't match, it will ignore the error
+	// so it can try to link the goal event to auto ops.
+	if err != nil && err != ErrNoExperiments && err != ErrExperimentNotFound {
 		return nil, retriable, err
 	}
 	if evalExp != nil {
 		evaluations = append(evaluations, evalExp)
 	}
-	evalAuto, retriable, err := p.linkGoalEventByAutoOps(
-		ctx,
-		event,
-		environmentNamespace,
-	)
-	if err != nil {
+	evalAuto, retriable, err := p.linkGoalEventByAutoOps(ctx, event, environmentNamespace)
+	// If there are no rules or the goal ID didn't match, it will ignore the error
+	// so we can acknowledge the message because the event doesn't belong to no one
+	if err != nil && err != ErrNoAutoOpsRules && err != ErrAutoOpsRulesNotFound {
 		return nil, retriable, err
 	}
 	if evalAuto != nil {
@@ -398,6 +394,36 @@ func (*PersisterDwh) validateTimestamp(
 	return nil
 }
 
+func (p *PersisterDwh) getUserEvaluation(
+	environmentNamespace,
+	userID,
+	tag,
+	featureID string,
+	featureVersion int32,
+) (*featureproto.Evaluation, error) {
+	// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
+	if tag == "" {
+		tag = "none"
+	}
+	evaluation, err := p.userEvaluationStorage.GetUserEvaluation(
+		p.ctx,
+		userID,
+		environmentNamespace,
+		tag,
+		featureID,
+		featureVersion,
+	)
+	if err != nil {
+		if err == bigtable.ErrKeyNotFound {
+			handledCounter.WithLabelValues(codeUserEvaluationNotFound).Inc()
+		} else {
+			handledCounter.WithLabelValues(codeFailedToGetUserEvaluation).Inc()
+		}
+		return nil, err
+	}
+	return evaluation, nil
+}
+
 func (p *PersisterDwh) linkGoalEventByExperiment(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
@@ -409,7 +435,7 @@ func (p *PersisterDwh) linkGoalEventByExperiment(
 		return nil, true, err
 	}
 	if len(experiments) == 0 {
-		return &featureproto.Evaluation{}, false, nil
+		return nil, false, ErrNoExperiments
 	}
 	// Find the experiment by goal ID
 	// TODO: we must change the console UI not to allow creating
@@ -423,7 +449,7 @@ func (p *PersisterDwh) linkGoalEventByExperiment(
 		}
 	}
 	if experiment == nil {
-		return &featureproto.Evaluation{}, false, nil
+		return nil, false, ErrExperimentNotFound
 	}
 	// Get the user evaluation using the experiment info
 	ev, err := p.getUserEvaluation(
@@ -508,34 +534,60 @@ func (p *PersisterDwh) listExperiments(
 	return exp.([]*exproto.Experiment), nil
 }
 
-func (p *PersisterDwh) getUserEvaluation(
-	environmentNamespace,
-	userID,
-	tag,
-	featureID string,
-	featureVersion int32,
-) (*featureproto.Evaluation, error) {
-	// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
-	if tag == "" {
-		tag = "none"
-	}
-	evaluation, err := p.userEvaluationStorage.GetUserEvaluation(
-		p.ctx,
-		userID,
-		environmentNamespace,
-		tag,
-		featureID,
-		featureVersion,
+func (p *PersisterDwh) listAutoOpsRules(
+	ctx context.Context,
+	environmentNamespace string,
+) ([]*aoproto.AutoOpsRule, error) {
+	exp, err, _ := p.flightgroup.Do(
+		fmt.Sprintf("%s:%s", environmentNamespace, "listAutoOpsRules"),
+		func() (interface{}, error) {
+			aor := []*aoproto.AutoOpsRule{}
+			cursor := ""
+			for {
+				resp, err := p.autoOpsClient.ListAutoOpsRules(ctx, &aoproto.ListAutoOpsRulesRequest{
+					EnvironmentNamespace: environmentNamespace,
+					PageSize:             listRequestSize,
+					Cursor:               cursor,
+				})
+				if err != nil {
+					return nil, err
+				}
+				aor = append(aor, resp.AutoOpsRules...)
+				aorSize := len(resp.AutoOpsRules)
+				if aorSize == 0 || aorSize < listRequestSize {
+					return aor, nil
+				}
+				cursor = resp.Cursor
+			}
+		},
 	)
 	if err != nil {
-		if err == bigtable.ErrKeyNotFound {
-			handledCounter.WithLabelValues(codeUserEvaluationNotFound).Inc()
-		} else {
-			handledCounter.WithLabelValues(codeFailedToGetUserEvaluation).Inc()
-		}
+		handledCounter.WithLabelValues(codeFailedToListAutoOpsRules).Inc()
 		return nil, err
 	}
-	return evaluation, nil
+	return exp.([]*aoproto.AutoOpsRule), nil
+}
+
+func (p *PersisterDwh) findFeatureIDs(goalID string, listAutoOpsRules []*aoproto.AutoOpsRule) []string {
+	featureIDs := []string{}
+	for _, aor := range listAutoOpsRules {
+		autoOpsRule := &aodomain.AutoOpsRule{AutoOpsRule: aor}
+		// We ignore the rules that are already triggered
+		if autoOpsRule.AlreadyTriggered() {
+			continue
+		}
+		clauses, err := autoOpsRule.ExtractOpsEventRateClauses()
+		if err != nil {
+			handledCounter.WithLabelValues(codeFailedToExtractOpsEventRateClauses).Inc()
+			continue
+		}
+		for _, clause := range clauses {
+			if clause.GoalId == goalID {
+				featureIDs = append(featureIDs, autoOpsRule.FeatureId)
+			}
+		}
+	}
+	return featureIDs
 }
 
 // Because the same goal can be used on other feature flags
@@ -586,28 +638,6 @@ func (p *PersisterDwh) linkGoalEventByAutoOps(
 	return evaluations, false, nil
 }
 
-func (p *PersisterDwh) findFeatureIDs(goalID string, listAutoOpsRules []*aoproto.AutoOpsRule) []string {
-	featureIDs := []string{}
-	for _, aor := range listAutoOpsRules {
-		autoOpsRule := &aodomain.AutoOpsRule{AutoOpsRule: aor}
-		// We ignore the rules that are already triggered
-		if autoOpsRule.AlreadyTriggered() {
-			continue
-		}
-		clauses, err := autoOpsRule.ExtractOpsEventRateClauses()
-		if err != nil {
-			handledCounter.WithLabelValues(codeFailedToExtractOpsEventRateClauses).Inc()
-			continue
-		}
-		for _, clause := range clauses {
-			if clause.GoalId == goalID {
-				featureIDs = append(featureIDs, autoOpsRule.FeatureId)
-			}
-		}
-	}
-	return featureIDs
-}
-
 func (p *PersisterDwh) convToEvaluation(
 	ctx context.Context,
 	event *eventproto.EvaluationEvent,
@@ -651,38 +681,4 @@ func (p *PersisterDwh) upsertUserEvaluation(
 		return err
 	}
 	return nil
-}
-
-func (p *PersisterDwh) listAutoOpsRules(
-	ctx context.Context,
-	environmentNamespace string,
-) ([]*aoproto.AutoOpsRule, error) {
-	exp, err, _ := p.flightgroup.Do(
-		fmt.Sprintf("%s:%s", environmentNamespace, "listAutoOpsRules"),
-		func() (interface{}, error) {
-			aor := []*aoproto.AutoOpsRule{}
-			cursor := ""
-			for {
-				resp, err := p.autoOpsClient.ListAutoOpsRules(ctx, &aoproto.ListAutoOpsRulesRequest{
-					EnvironmentNamespace: environmentNamespace,
-					PageSize:             listRequestSize,
-					Cursor:               cursor,
-				})
-				if err != nil {
-					return nil, err
-				}
-				aor = append(aor, resp.AutoOpsRules...)
-				aorSize := len(resp.AutoOpsRules)
-				if aorSize == 0 || aorSize < listRequestSize {
-					return aor, nil
-				}
-				cursor = resp.Cursor
-			}
-		},
-	)
-	if err != nil {
-		handledCounter.WithLabelValues(codeFailedToListAutoOpsRules).Inc()
-		return nil, err
-	}
-	return exp.([]*aoproto.AutoOpsRule), nil
 }
