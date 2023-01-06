@@ -61,38 +61,37 @@ var (
 func record() func(operation string, err *error) {
 	startTime := time.Now()
 	return func(operation string, err *error) {
-		if err == nil {
-			handledCounter.WithLabelValues(operation, codeOK).Inc()
-			handledHistogram.WithLabelValues(operation, codeOK).Observe(time.Since(startTime).Seconds())
-			return
-		}
-		var code string
-		var e *googleapi.Error
-		if ok := errors.As(*err, &e); !ok {
-			handledCounter.WithLabelValues(operation, codeUnknown).Inc()
-			handledHistogram.WithLabelValues(operation, codeUnknown).Observe(time.Since(startTime).Seconds())
-			return
-		}
-		switch e.Code {
-		case http.StatusBadRequest:
-			code = codeBadRequest
-		case http.StatusForbidden:
-			code = codeForbidden
-		case http.StatusNotFound:
-			code = codeNotFound
-		case http.StatusConflict:
-			code = codeConflict
-		case http.StatusInternalServerError:
-			code = codeInternalServerError
-		case http.StatusNotImplemented:
-			code = codeNotImplemented
-		case http.StatusServiceUnavailable:
-			code = codeServiceUnavailable
-		default:
-			code = codeUnknown
-		}
+		code := getCodeFromError(*err)
 		handledCounter.WithLabelValues(operation, code).Inc()
 		handledHistogram.WithLabelValues(operation, code).Observe(time.Since(startTime).Seconds())
+	}
+}
+
+func getCodeFromError(err error) string {
+	if err == nil {
+		return codeOK
+	}
+	var e *googleapi.Error
+	if ok := errors.As(err, &e); !ok {
+		return codeUnknown
+	}
+	switch e.Code {
+	case http.StatusBadRequest:
+		return codeBadRequest
+	case http.StatusForbidden:
+		return codeForbidden
+	case http.StatusNotFound:
+		return codeNotFound
+	case http.StatusConflict:
+		return codeConflict
+	case http.StatusInternalServerError:
+		return codeInternalServerError
+	case http.StatusNotImplemented:
+		return codeNotImplemented
+	case http.StatusServiceUnavailable:
+		return codeServiceUnavailable
+	default:
+		return codeUnknown
 	}
 }
 
