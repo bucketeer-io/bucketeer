@@ -59,7 +59,6 @@ type PersisterDwh struct {
 	doneCh           chan struct{}
 	evalEventWriter  datastore.EvalEventWriter
 	goalEventWriter  datastore.GoalEventWriter
-	evalEventReader  datastore.EvalEventReader
 	flightgroup      singleflight.Group
 	opts             *options
 }
@@ -68,7 +67,6 @@ func NewPersisterDwh(
 	p puller.Puller,
 	evalEventWriter datastore.EvalEventWriter,
 	goalEventWriter datastore.GoalEventWriter,
-	evalEventReader datastore.EvalEventReader,
 	opts ...Option,
 ) *PersisterDwh {
 	dopts := &options{
@@ -95,7 +93,6 @@ func NewPersisterDwh(
 		doneCh:          make(chan struct{}),
 		evalEventWriter: evalEventWriter,
 		goalEventWriter: goalEventWriter,
-		evalEventReader: evalEventReader,
 	}
 }
 
@@ -200,7 +197,7 @@ func (p *PersisterDwh) send(messages map[string]*puller.Message) {
 			}
 		}
 	}
-	if err := p.evalEventWriter.Write(ctx, evalEvents); err != nil {
+	if err := p.evalEventWriter.AppendRows(ctx, evalEvents); err != nil {
 
 	}
 	for environmentNamespace, events := range envEvents {
@@ -219,7 +216,7 @@ func (p *PersisterDwh) send(messages map[string]*puller.Message) {
 			}
 		}
 	}
-	if err := p.goalEventWriter.Write(ctx, goalEvents); err != nil {
+	if err := p.goalEventWriter.AppendRows(ctx, goalEvents); err != nil {
 
 	}
 }
