@@ -269,7 +269,7 @@
   "feature.type.string": "string",
   "feature.updateComment": "Comment for update",
   "feature.variation": "variation",
-  "feature.variationSettings.bothVariation": "This variation cannot be deleted because it is used in the default and the off-variation settings.",
+  "feature.variationSettings.bothVariations": "This variation cannot be deleted because it is used in the default and the off-variation settings.",
   "feature.variationSettings.defaultStrategy": "This variation cannot be deleted because it is used in the default variation settings.",
   "feature.variationSettings.offVariation": "This variation cannot be deleted because it is used in the off-variation settings.",
   "feature.variationType": "Flag type",

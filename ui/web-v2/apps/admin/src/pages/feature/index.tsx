@@ -5,6 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 import { useHistory, useRouteMatch, useParams } from 'react-router-dom';
+import { v4 as uuid } from 'uuid';
 
 import { FeatureAddForm } from '../../components/FeatureAddForm';
 import { FeatureCloneForm } from '../../components/FeatureCloneForm';
@@ -51,7 +52,6 @@ import {
   stringifySearchParams,
   useSearchParams,
 } from '../../utils/search-params';
-import { v4 as uuid } from 'uuid';
 
 import {
   addFormSchema,
