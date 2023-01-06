@@ -162,7 +162,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
           case typeDisabled && variationId === offVariationId:
             return f(messages.feature.variationSettings.offVariation);
 
-          // Check if the variation is both on and off variation
+          // Check if the variation is both on and off variations
           case onVariationId === variationId && offVariationId === variationId:
             return f(messages.feature.variationSettings.bothVariations);
 
