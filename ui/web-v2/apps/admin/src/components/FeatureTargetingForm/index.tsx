@@ -40,12 +40,14 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const methods = useFormContext();
     const {
       control,
-      formState: { errors, isSubmitting, dirtyFields },
+      formState: { errors },
+      watch,
     } = methods;
     const { fields: targets } = useFieldArray({
       control,
       name: 'targets',
     });
+    const rules = watch('rules');
     const [feature, _] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
@@ -69,7 +71,17 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
         label: createVariationLabel(v),
       };
     });
-    const isValid = Object.keys(errors).length == 0;
+
+    const checkSaveBtnDisabled = useCallback(() => {
+      if (Object.values(errors).some(Boolean) || !rules.length) {
+        return true;
+      }
+      return !rules.every((rule) =>
+        rule.clauses.every((clause) => {
+          return clause.attribute && clause.values.length > 0;
+        })
+      );
+    }, [rules]);
 
     return (
       <div className="p-10 bg-gray-100">
@@ -181,7 +193,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 <button
                   type="button"
                   className="btn-submit"
-                  disabled={!Object.keys(dirtyFields).length || !isValid}
+                  disabled={checkSaveBtnDisabled()}
                   onClick={onOpenConfirmDialog}
                 >
                   {f(messages.button.saveWithComment)}
