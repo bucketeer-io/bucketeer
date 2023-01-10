@@ -37,27 +37,47 @@ const (
 
 type server struct {
 	*kingpin.CmdClause
-	port    *int
-	project *string
+	port             *int
+	project          *string
+	bigtableInstance *string
 	// pubsub
 	subscription                 *string
 	topic                        *string
 	pullerNumGoroutines          *int
 	pullerMaxOutstandingMessages *int
 	pullerMaxOutstandingBytes    *int
-
 	// rpc
 	certPath *string
 	keyPath  *string
-
 	// bigquery
-	dataset *string
+	bigQueryDataSet *string
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the server")
 	server := &server{
-		CmdClause: cmd,
+		CmdClause:        cmd,
+		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:          cmd.Flag("project", "Google Cloud project name.").String(),
+		bigtableInstance: cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
+		subscription:       cmd.Flag("subscription", "Google PubSub subscription name.").String(),
+		topic:              cmd.Flag("topic", "Google PubSub topic name.").String(),
+		pullerNumGoroutines: cmd.Flag(
+			"puller-num-goroutines",
+			"Number of goroutines will be spawned to pull messages.",
+		).Int(),
+		pullerMaxOutstandingMessages: cmd.Flag(
+			"puller-max-outstanding-messages",
+			"Maximum number of unprocessed messages.",
+		).Int(),
+		pullerMaxOutstandingBytes: cmd.Flag(
+			"puller-max-outstanding-bytes",
+			"Maximum size of unprocessed messages.",
+		).Int(),
+		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
+		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
+		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
+
 	}
 	r.RegisterCommand(server)
 	return server
@@ -71,11 +91,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	evalEventWriter, err := datastore.NewEvalEventWriter(ctx, *s.project, *s.dataset)
+	evalEventWriter, err := datastore.NewEvalEventWriter(ctx, *s.project, *s.bigQueryDataSet)
 	if err != nil {
 		return err
 	}
-	goalEventWriter, err := datastore.NewGoalEventWriter(ctx, *s.project, *s.dataset)
+	goalEventWriter, err := datastore.NewGoalEventWriter(ctx, *s.project, *s.bigQueryDataSet)
 	if err != nil {
 		return err
 	}

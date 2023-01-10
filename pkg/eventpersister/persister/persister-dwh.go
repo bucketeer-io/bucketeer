@@ -188,35 +188,26 @@ func (p *PersisterDwh) send(messages map[string]*puller.Message) {
 	fails := make(map[string]bool, len(envEvents))
 	for environmentNamespace, events := range envEvents {
 		for id, event := range events {
-			if evt, ok := event.(*eventproto.EvaluationEvent); ok {
-				if err := p.upsertUserEvaluation(ctx, evt, environmentNamespace); err != nil {
-					fails[id] = true
-					continue
-				}
-				e, err := p.convToEvaluationEvent(ctx, evt, id, environmentNamespace)
+			switch evt := event.(type) {
+			case *eventproto.EvaluationEvent:
+				e, retriable, err := p.convToEvaluationEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
-					p.logger.Error(
-						"failed to convert to evaluation event",
-						zap.Error(err),
-						zap.String("id", id),
-						zap.String("environmentNamespace", environmentNamespace),
-					)
-					fails[id] = false
+					if err == ErrNoExperiments {
+						continue
+					}
+					if !retriable {
+						p.logger.Error(
+							"failed to convert to evaluation event",
+							zap.Error(err),
+							zap.String("id", id),
+							zap.String("environmentNamespace", environmentNamespace),
+						)
+					}
+					fails[id] = retriable
 					continue
 				}
 				evalEvents = append(evalEvents, e)
-			}
-		}
-	}
-	if err := p.evalEventWriter.AppendRows(ctx, evalEvents); err != nil {
-		p.logger.Error(
-			"failed to append rows to evaluation event",
-			zap.Error(err),
-		)
-	}
-	for environmentNamespace, events := range envEvents {
-		for id, event := range events {
-			if evt, ok := event.(*eventproto.GoalEvent); ok {
+			case *eventproto.GoalEvent:
 				e, retriable, err := p.convToGoalEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
 					if !retriable {
@@ -233,6 +224,12 @@ func (p *PersisterDwh) send(messages map[string]*puller.Message) {
 				goalEvents = append(goalEvents, e)
 			}
 		}
+	}
+	if err := p.evalEventWriter.AppendRows(ctx, evalEvents); err != nil {
+		p.logger.Error(
+			"failed to append rows to evaluation event",
+			zap.Error(err),
+		)
 	}
 	if err := p.goalEventWriter.AppendRows(ctx, goalEvents); err != nil {
 		p.logger.Error(
@@ -283,17 +280,31 @@ func (p *PersisterDwh) extractEvents(messages map[string]*puller.Message) enviro
 	return envEvents
 }
 
-func (*PersisterDwh) convToEvaluationEvent(
+func (p *PersisterDwh) convToEvaluationEvent(
 	ctx context.Context,
 	e *eventproto.EvaluationEvent,
 	id, environmentNamespace string,
-) (*ecproto.EvaluationEvent, error) {
+) (*ecproto.EvaluationEvent, bool, error) {
+	if err := p.validateTimestamp(e.Timestamp); err != nil {
+		handledCounter.WithLabelValues(codeInvalidGoalEventTimestamp).Inc()
+		return nil, false, err
+	}
+	exist, err := p.existExperiment(ctx, e, environmentNamespace)
+	if err != nil {
+		return nil, true, err
+	}
+	if !exist {
+		return nil, false, ErrNoExperiments
+	}
+	if err := p.upsertUserEvaluation(ctx, e, environmentNamespace); err != nil {
+		return nil, true, err
+	}
 	var ud []byte
 	if e.User != nil {
 		var err error
 		ud, err = json.Marshal(e.User.Data)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 	return &ecproto.EvaluationEvent{
@@ -308,7 +319,7 @@ func (*PersisterDwh) convToEvaluationEvent(
 		SourceId:             e.SourceId.String(),
 		EnvironmentNamespace: environmentNamespace,
 		Timestamp:            e.Timestamp,
-	}, nil
+	}, false, nil
 }
 
 func (p *PersisterDwh) convToGoalEvent(
@@ -662,6 +673,29 @@ func (p *PersisterDwh) convToEvaluation(
 		tag = event.Tag
 	}
 	return evaluation, tag
+}
+
+func (p *PersisterDwh) existExperiment(
+	ctx context.Context,
+	event *eventproto.EvaluationEvent,
+	environmentNamespace string,
+) (bool, error) {
+	resp, err := p.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
+		FeatureId:            event.FeatureId,
+		FeatureVersion:       &wrappers.Int32Value{Value: event.FeatureVersion},
+		PageSize:             1,
+		EnvironmentNamespace: environmentNamespace,
+		Statuses: []exproto.Experiment_Status{
+			exproto.Experiment_RUNNING,
+			exproto.Experiment_FORCE_STOPPED,
+			exproto.Experiment_STOPPED,
+		},
+		Archived: &wrappers.BoolValue{Value: false},
+	})
+	if err != nil {
+		return false, err
+	}
+	return len(resp.Experiments) == 1, nil
 }
 
 func (p *PersisterDwh) upsertUserEvaluation(
