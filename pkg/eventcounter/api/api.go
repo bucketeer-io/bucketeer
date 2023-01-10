@@ -89,10 +89,11 @@ func NewEventCounterService(
 ) rpc.Service {
 	registerMetrics(r)
 	return &eventCounterService{
-		experimentClient:             e,
-		featureClient:                f,
-		accountClient:                a,
-		druidQuerier:                 d,
+		experimentClient: e,
+		featureClient:    f,
+		accountClient:    a,
+		druidQuerier:     d,
+		// v2ecstorage.NewEventStorage() is executed at here instead of at eventcounter/cmd/server because {module}/cmd/server should not have a dependency to {module}/storage
 		eventStorage:                 v2ecstorage.NewEventStorage(b, bigQueryDataSet, l),
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
 		userCountStorage:             v2ecstorage.NewUserCountStorage(mc),
