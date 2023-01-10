@@ -63,7 +63,7 @@ func TestNewEventCounterService(t *testing.T) {
 	assert.IsType(t, &eventCounterService{}, g)
 }
 
-func TestGetEvaluationCountBigquery(t *testing.T) {
+func TestGetEvaluationCountBigQuery(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()

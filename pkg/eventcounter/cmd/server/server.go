@@ -200,12 +200,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			zap.Error(err),
 			zap.String("project", *s.project),
 			zap.String("location", *s.bigQueryDataLocation),
-			zap.String("dataset", *s.bigQueryDataSet),
+			zap.String("data-set", *s.bigQueryDataSet),
 		)
 		return err
 	}
 	defer bigQueryQuerier.Close()
-	bigQueryDataset := *s.bigQueryDataSet
+	bigQueryDataSet := *s.bigQueryDataSet
 
 	service := api.NewEventCounterService(
 		mysqlClient,
@@ -214,7 +214,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountClient,
 		druidQuerier,
 		bigQueryQuerier,
-		bigQueryDataset,
+		bigQueryDataSet,
 		registerer,
 		redisV3Cache,
 		logger,
