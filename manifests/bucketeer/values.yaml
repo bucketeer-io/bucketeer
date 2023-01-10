@@ -72,6 +72,8 @@ account:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 account-apikey-cacher:
   image:
@@ -132,6 +134,8 @@ account-apikey-cacher:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 api-gateway:
   image:
@@ -202,6 +206,8 @@ api-gateway:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 auditlog:
   image:
@@ -263,6 +269,8 @@ auditlog:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 auditlog-persister:
   image:
@@ -320,6 +328,8 @@ auditlog-persister:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 auth:
   image:
@@ -384,6 +394,8 @@ auth:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 auto-ops:
   image:
@@ -451,6 +463,8 @@ auto-ops:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 calculator:
   replicaCount: 1
@@ -510,6 +524,8 @@ calculator:
     # cf. CPU: 500m, MEM: 3Gi -> 280sec
     initialDelaySeconds:
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 dex:
   replicaCount: 1
@@ -563,6 +579,8 @@ dex:
       clientID:
       clientSecret:
       redirectURIs:
+  serviceAccount:
+    annotations: {}
 
 druid:
   druid-cluster:
@@ -998,6 +1016,8 @@ environment:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 event-counter:
   image:
@@ -1069,6 +1089,8 @@ event-counter:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 event-persister-evaluation-events-kafka:
   image:
@@ -1146,6 +1168,8 @@ event-persister-evaluation-events-kafka:
     type: ClusterIP
     clusterIP: None
     externalPort: 9000
+  serviceAccount:
+    annotations: {}
 
 event-persister-goal-events-kafka:
   image:
@@ -1223,6 +1247,8 @@ event-persister-goal-events-kafka:
     type: ClusterIP
     clusterIP: None
     externalPort: 9000
+  serviceAccount:
+    annotations: {}
 
 event-persister-user-events-kafka:
   image:
@@ -1305,6 +1331,8 @@ event-persister-user-events-kafka:
     type: ClusterIP
     clusterIP: None
     externalPort: 9000
+  serviceAccount:
+    annotations: {}
 
 experiment:
   image:
@@ -1368,6 +1396,8 @@ experiment:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 feature:
   image:
@@ -1439,6 +1469,8 @@ feature:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 feature-recorder:
   image:
@@ -1499,6 +1531,8 @@ feature-recorder:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 feature-segment-persister:
   image:
@@ -1562,6 +1596,8 @@ feature-segment-persister:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 feature-tag-cacher:
   image:
@@ -1621,6 +1657,8 @@ feature-tag-cacher:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 goal-batch-transformer:
   image:
@@ -1677,6 +1715,8 @@ goal-batch-transformer:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 kafka:
   kafka-cluster:
@@ -1909,6 +1949,8 @@ metrics-event-persister:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 migration-mysql:
   replicaCount: 1
@@ -1965,6 +2007,8 @@ migration-mysql:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 notification:
   image:
@@ -2026,6 +2070,8 @@ notification:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 notification-sender:
   image:
@@ -2083,6 +2129,8 @@ notification-sender:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 ops-event-batch:
   image:
@@ -2135,6 +2183,8 @@ ops-event-batch:
     initialDelaySeconds: 10
     periodSeconds: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 push:
   image:
@@ -2198,6 +2248,8 @@ push:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 push-sender:
   image:
@@ -2253,6 +2305,8 @@ push-sender:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 user:
   image:
@@ -2314,6 +2368,8 @@ user:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 user-persister:
   image:
@@ -2375,6 +2431,8 @@ user-persister:
     periodSeconds: 10
     failureThreshold: 10
   resources: {}
+  serviceAccount:
+    annotations: {}
 
 web:
   image:
@@ -2409,6 +2467,8 @@ web:
     maxReplicas:
     metrics: {}
   tolerations: []
+  serviceAccount:
+    annotations: {}
 
 web-gateway:
   fullnameOverride: "web-gateway"
@@ -2451,3 +2511,5 @@ web-gateway:
     maxReplicas:
     metrics: {}
   tolerations: []
+  serviceAccount:
+    annotations: {}
