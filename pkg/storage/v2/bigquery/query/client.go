@@ -67,9 +67,9 @@ func NewQuery(
 	for _, opt := range opts {
 		opt(dopts)
 	}
-	// if dopts.metrics != nil {
-	// 	registerMetrics(dopts.metrics)
-	// }
+	if dopts.metrics != nil {
+		registerMetrics(dopts.metrics)
+	}
 	logger := dopts.logger.Named("bigtable_query")
 	c, err := managedwriter.NewClient(ctx, project)
 	if err != nil {
@@ -107,6 +107,8 @@ func (q *query) AppendRows(
 	ctx context.Context,
 	msgs [][]byte,
 ) error {
+	var err error
+	defer record()(operationQuery, &err)
 	results := []*managedwriter.AppendResult{}
 	for i := 0; i < len(msgs); i += 10 {
 		batch := msgs[i : i+10]
