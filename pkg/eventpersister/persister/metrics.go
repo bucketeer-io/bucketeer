@@ -63,7 +63,6 @@ var (
 			Name:      "received_total",
 			Help:      "Total number of received messages",
 		})
-
 	dwhHandledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -71,7 +70,6 @@ var (
 			Name:      "handled_total",
 			Help:      "Total number of handled messages",
 		}, []string{"code"})
-
 	dwhCacheCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
