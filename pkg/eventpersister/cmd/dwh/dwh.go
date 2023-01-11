@@ -42,9 +42,13 @@ type server struct {
 	*kingpin.CmdClause
 	port             *int
 	project          *string
-	maxMPS           *int
-	numWorkers       *int
 	bigtableInstance *string
+	// option
+	maxMPS        *int
+	numWorkers    *int
+	flushSize     *int
+	flushInterval *time.Duration
+	flushTimeout  *time.Duration
 	// pubsub
 	subscription                 *string
 	topic                        *string
@@ -142,6 +146,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		btClient,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
+		persister.WithFlushSize(*s.flushSize),
+		persister.WithFlushInterval(*s.flushInterval),
+		persister.WithFlushTimeout(*s.flushTimeout),
+		persister.WithMetrics(registerer),
+		persister.WithLogger(logger),
 	)
 	if err != nil {
 		return err
