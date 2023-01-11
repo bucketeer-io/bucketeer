@@ -6,8 +6,11 @@ package mock
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "github.com/golang/mock/gomock"
+
+	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 )
 
 // MockCache is a mock of Cache interface.
@@ -145,31 +148,31 @@ func (mr *MockMultiGetCacheMockRecorder) Scan(cursor, key, count interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockMultiGetCache)(nil).Scan), cursor, key, count)
 }
 
-// MockMultiGetDeleteCache is a mock of MultiGetDeleteCache interface.
-type MockMultiGetDeleteCache struct {
+// MockMultiGetDeleteCountCache is a mock of MultiGetDeleteCountCache interface.
+type MockMultiGetDeleteCountCache struct {
 	ctrl     *gomock.Controller
-	recorder *MockMultiGetDeleteCacheMockRecorder
+	recorder *MockMultiGetDeleteCountCacheMockRecorder
 }
 
-// MockMultiGetDeleteCacheMockRecorder is the mock recorder for MockMultiGetDeleteCache.
-type MockMultiGetDeleteCacheMockRecorder struct {
-	mock *MockMultiGetDeleteCache
+// MockMultiGetDeleteCountCacheMockRecorder is the mock recorder for MockMultiGetDeleteCountCache.
+type MockMultiGetDeleteCountCacheMockRecorder struct {
+	mock *MockMultiGetDeleteCountCache
 }
 
-// NewMockMultiGetDeleteCache creates a new mock instance.
-func NewMockMultiGetDeleteCache(ctrl *gomock.Controller) *MockMultiGetDeleteCache {
-	mock := &MockMultiGetDeleteCache{ctrl: ctrl}
-	mock.recorder = &MockMultiGetDeleteCacheMockRecorder{mock}
+// NewMockMultiGetDeleteCountCache creates a new mock instance.
+func NewMockMultiGetDeleteCountCache(ctrl *gomock.Controller) *MockMultiGetDeleteCountCache {
+	mock := &MockMultiGetDeleteCountCache{ctrl: ctrl}
+	mock.recorder = &MockMultiGetDeleteCountCacheMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockMultiGetDeleteCache) EXPECT() *MockMultiGetDeleteCacheMockRecorder {
+func (m *MockMultiGetDeleteCountCache) EXPECT() *MockMultiGetDeleteCountCacheMockRecorder {
 	return m.recorder
 }
 
 // Delete mocks base method.
-func (m *MockMultiGetDeleteCache) Delete(key string) error {
+func (m *MockMultiGetDeleteCountCache) Delete(key string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", key)
 	ret0, _ := ret[0].(error)
@@ -177,13 +180,28 @@ func (m *MockMultiGetDeleteCache) Delete(key string) error {
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockMultiGetDeleteCacheMockRecorder) Delete(key interface{}) *gomock.Call {
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) Delete(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockMultiGetDeleteCache)(nil).Delete), key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Delete), key)
+}
+
+// Expire mocks base method.
+func (m *MockMultiGetDeleteCountCache) Expire(key string, expiration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Expire", key, expiration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Expire indicates an expected call of Expire.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) Expire(key, expiration interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Expire", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Expire), key, expiration)
 }
 
 // Get mocks base method.
-func (m *MockMultiGetDeleteCache) Get(key interface{}) (interface{}, error) {
+func (m *MockMultiGetDeleteCountCache) Get(key interface{}) (interface{}, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", key)
 	ret0, _ := ret[0].(interface{})
@@ -192,13 +210,13 @@ func (m *MockMultiGetDeleteCache) Get(key interface{}) (interface{}, error) {
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockMultiGetDeleteCacheMockRecorder) Get(key interface{}) *gomock.Call {
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) Get(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockMultiGetDeleteCache)(nil).Get), key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Get), key)
 }
 
 // GetMulti mocks base method.
-func (m *MockMultiGetDeleteCache) GetMulti(keys interface{}) ([]interface{}, error) {
+func (m *MockMultiGetDeleteCountCache) GetMulti(keys interface{}) ([]interface{}, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMulti", keys)
 	ret0, _ := ret[0].([]interface{})
@@ -207,13 +225,62 @@ func (m *MockMultiGetDeleteCache) GetMulti(keys interface{}) ([]interface{}, err
 }
 
 // GetMulti indicates an expected call of GetMulti.
-func (mr *MockMultiGetDeleteCacheMockRecorder) GetMulti(keys interface{}) *gomock.Call {
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) GetMulti(keys interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMulti", reflect.TypeOf((*MockMultiGetDeleteCache)(nil).GetMulti), keys)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMulti", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).GetMulti), keys)
+}
+
+// Increment mocks base method.
+func (m *MockMultiGetDeleteCountCache) Increment(key string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Increment", key)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Increment indicates an expected call of Increment.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) Increment(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Increment", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Increment), key)
+}
+
+// PFAdd mocks base method.
+func (m *MockMultiGetDeleteCountCache) PFAdd(key string, els ...string) (int64, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{key}
+	for _, a := range els {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PFAdd", varargs...)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PFAdd indicates an expected call of PFAdd.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) PFAdd(key interface{}, els ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{key}, els...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFAdd", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).PFAdd), varargs...)
+}
+
+// Pipeline mocks base method.
+func (m *MockMultiGetDeleteCountCache) Pipeline() v3.PipeClient {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Pipeline")
+	ret0, _ := ret[0].(v3.PipeClient)
+	return ret0
+}
+
+// Pipeline indicates an expected call of Pipeline.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) Pipeline() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Pipeline))
 }
 
 // Put mocks base method.
-func (m *MockMultiGetDeleteCache) Put(key, value interface{}) error {
+func (m *MockMultiGetDeleteCountCache) Put(key, value interface{}) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Put", key, value)
 	ret0, _ := ret[0].(error)
@@ -221,13 +288,13 @@ func (m *MockMultiGetDeleteCache) Put(key, value interface{}) error {
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockMultiGetDeleteCacheMockRecorder) Put(key, value interface{}) *gomock.Call {
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) Put(key, value interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetDeleteCache)(nil).Put), key, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Put), key, value)
 }
 
 // Scan mocks base method.
-func (m *MockMultiGetDeleteCache) Scan(cursor, key, count interface{}) (uint64, []string, error) {
+func (m *MockMultiGetDeleteCountCache) Scan(cursor, key, count interface{}) (uint64, []string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Scan", cursor, key, count)
 	ret0, _ := ret[0].(uint64)
@@ -237,9 +304,9 @@ func (m *MockMultiGetDeleteCache) Scan(cursor, key, count interface{}) (uint64, 
 }
 
 // Scan indicates an expected call of Scan.
-func (mr *MockMultiGetDeleteCacheMockRecorder) Scan(cursor, key, count interface{}) *gomock.Call {
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) Scan(cursor, key, count interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockMultiGetDeleteCache)(nil).Scan), cursor, key, count)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Scan), cursor, key, count)
 }
 
 // MockGetter is a mock of Getter interface.
@@ -406,6 +473,139 @@ func (m *MockDeleter) Delete(key string) error {
 func (mr *MockDeleterMockRecorder) Delete(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDeleter)(nil).Delete), key)
+}
+
+// MockCounter is a mock of Counter interface.
+type MockCounter struct {
+	ctrl     *gomock.Controller
+	recorder *MockCounterMockRecorder
+}
+
+// MockCounterMockRecorder is the mock recorder for MockCounter.
+type MockCounterMockRecorder struct {
+	mock *MockCounter
+}
+
+// NewMockCounter creates a new mock instance.
+func NewMockCounter(ctrl *gomock.Controller) *MockCounter {
+	mock := &MockCounter{ctrl: ctrl}
+	mock.recorder = &MockCounterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCounter) EXPECT() *MockCounterMockRecorder {
+	return m.recorder
+}
+
+// Increment mocks base method.
+func (m *MockCounter) Increment(key string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Increment", key)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Increment indicates an expected call of Increment.
+func (mr *MockCounterMockRecorder) Increment(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Increment", reflect.TypeOf((*MockCounter)(nil).Increment), key)
+}
+
+// PFAdd mocks base method.
+func (m *MockCounter) PFAdd(key string, els ...string) (int64, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{key}
+	for _, a := range els {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PFAdd", varargs...)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PFAdd indicates an expected call of PFAdd.
+func (mr *MockCounterMockRecorder) PFAdd(key interface{}, els ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{key}, els...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFAdd", reflect.TypeOf((*MockCounter)(nil).PFAdd), varargs...)
+}
+
+// MockPipeLiner is a mock of PipeLiner interface.
+type MockPipeLiner struct {
+	ctrl     *gomock.Controller
+	recorder *MockPipeLinerMockRecorder
+}
+
+// MockPipeLinerMockRecorder is the mock recorder for MockPipeLiner.
+type MockPipeLinerMockRecorder struct {
+	mock *MockPipeLiner
+}
+
+// NewMockPipeLiner creates a new mock instance.
+func NewMockPipeLiner(ctrl *gomock.Controller) *MockPipeLiner {
+	mock := &MockPipeLiner{ctrl: ctrl}
+	mock.recorder = &MockPipeLinerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPipeLiner) EXPECT() *MockPipeLinerMockRecorder {
+	return m.recorder
+}
+
+// Pipeline mocks base method.
+func (m *MockPipeLiner) Pipeline() v3.PipeClient {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Pipeline")
+	ret0, _ := ret[0].(v3.PipeClient)
+	return ret0
+}
+
+// Pipeline indicates an expected call of Pipeline.
+func (mr *MockPipeLinerMockRecorder) Pipeline() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*MockPipeLiner)(nil).Pipeline))
+}
+
+// MockExpirer is a mock of Expirer interface.
+type MockExpirer struct {
+	ctrl     *gomock.Controller
+	recorder *MockExpirerMockRecorder
+}
+
+// MockExpirerMockRecorder is the mock recorder for MockExpirer.
+type MockExpirerMockRecorder struct {
+	mock *MockExpirer
+}
+
+// NewMockExpirer creates a new mock instance.
+func NewMockExpirer(ctrl *gomock.Controller) *MockExpirer {
+	mock := &MockExpirer{ctrl: ctrl}
+	mock.recorder = &MockExpirerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockExpirer) EXPECT() *MockExpirerMockRecorder {
+	return m.recorder
+}
+
+// Expire mocks base method.
+func (m *MockExpirer) Expire(key string, expiration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Expire", key, expiration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Expire indicates an expected call of Expire.
+func (mr *MockExpirerMockRecorder) Expire(key, expiration interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Expire", reflect.TypeOf((*MockExpirer)(nil).Expire), key, expiration)
 }
 
 // MockLister is a mock of Lister interface.

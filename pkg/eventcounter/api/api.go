@@ -41,6 +41,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
+	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -66,6 +67,7 @@ type eventCounterService struct {
 	featureClient                featureclient.Client
 	accountClient                accountclient.Client
 	druidQuerier                 ecdruid.Querier
+	eventStorage                 v2ecstorage.EventStorage
 	mysqlExperimentResultStorage v2ecstorage.ExperimentResultStorage
 	userCountStorage             v2ecstorage.UserCountStorage
 	metrics                      metrics.Registerer
@@ -79,6 +81,8 @@ func NewEventCounterService(
 	f featureclient.Client,
 	a accountclient.Client,
 	d ecdruid.Querier,
+	b bqquerier.Client,
+	bigQueryDataSet string,
 	r metrics.Registerer,
 	redis cache.MultiGetDeleteCountCache,
 	l *zap.Logger,
@@ -89,6 +93,7 @@ func NewEventCounterService(
 		featureClient:                f,
 		accountClient:                a,
 		druidQuerier:                 d,
+		eventStorage:                 v2ecstorage.NewEventStorage(b, bigQueryDataSet, l),
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
 		userCountStorage:             v2ecstorage.NewUserCountStorage(mc),
 		metrics:                      r,
@@ -99,6 +104,86 @@ func NewEventCounterService(
 
 func (s *eventCounterService) Register(server *grpc.Server) {
 	ecproto.RegisterEventCounterServiceServer(server, s)
+}
+
+// TODO temporary name
+func (s *eventCounterService) GetEvaluationCountBigQuery(
+	ctx context.Context,
+	req *ecproto.GetEvaluationCountV2Request,
+) (*ecproto.GetEvaluationCountV2Response, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err = validateGetEvaluationCountV2Request(req); err != nil {
+		return nil, err
+	}
+	startAt := time.Unix(req.StartAt, 0)
+	endAt := time.Unix(req.EndAt, 0)
+	evaluationCounts, err := s.eventStorage.QueryEvaluationCount(
+		ctx,
+		req.EnvironmentNamespace,
+		startAt,
+		endAt,
+		req.FeatureId,
+		req.FeatureVersion,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to query evaluation counts",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.Time("startAt", startAt),
+				zap.Time("endAt", endAt),
+				zap.String("featureId", req.FeatureId),
+				zap.Int32("featureVersion", req.FeatureVersion),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	variationCounts := s.convertEvaluationCounts(evaluationCounts, req.VariationIds)
+	s.logger.Debug("GetEvaluationCount result", zap.Any("rows", variationCounts))
+	return &ecproto.GetEvaluationCountV2Response{
+		Count: &ecproto.EvaluationCount{
+			FeatureId:      req.FeatureId,
+			FeatureVersion: req.FeatureVersion,
+			RealtimeCounts: variationCounts,
+		},
+	}, nil
+}
+
+func (s *eventCounterService) convertEvaluationCounts(
+	rows []*v2ecstorage.EvaluationEventCount,
+	variationIDs []string,
+) []*ecproto.VariationCount {
+	vcsMap := map[string]*ecproto.VariationCount{}
+	for _, id := range variationIDs {
+		vcsMap[id] = &ecproto.VariationCount{VariationId: id}
+	}
+	for _, row := range rows {
+		vc, ok := vcsMap[row.VariationID]
+		if !ok {
+			continue
+		}
+		vc.UserCount = row.EvaluationUser
+		vc.EventCount = row.EvaluationTotal
+		vcsMap[row.VariationID] = vc
+	}
+	vcs := make([]*ecproto.VariationCount, 0, len(vcsMap))
+	for _, vc := range vcsMap {
+		vcs = append(vcs, vc)
+	}
+	sort.SliceStable(vcs, func(i, j int) bool { return vcs[i].VariationId < vcs[j].VariationId })
+	return vcs
 }
 
 func (s *eventCounterService) GetEvaluationCountV2(
