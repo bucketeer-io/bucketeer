@@ -24,11 +24,14 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/persister"
+	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 )
 
 const (
@@ -39,6 +42,8 @@ type server struct {
 	*kingpin.CmdClause
 	port             *int
 	project          *string
+	maxMPS           *int
+	numWorkers       *int
 	bigtableInstance *string
 	// pubsub
 	subscription                 *string
@@ -47,8 +52,10 @@ type server struct {
 	pullerMaxOutstandingMessages *int
 	pullerMaxOutstandingBytes    *int
 	// rpc
-	certPath *string
-	keyPath  *string
+	serviceTokenPath  *string
+	certPath          *string
+	keyPath           *string
+	experimentService *string
 	// bigquery
 	bigQueryDataSet *string
 }
@@ -56,9 +63,15 @@ type server struct {
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the server")
 	server := &server{
-		CmdClause:        cmd,
-		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:          cmd.Flag("project", "Google Cloud project name.").String(),
+		CmdClause: cmd,
+		port:      cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:   cmd.Flag("project", "Google Cloud project name.").String(),
+		experimentService: cmd.Flag(
+			"experiment-service",
+			"bucketeer-experiment-service address.",
+		).Default("experiment:9090").String(),
+		maxMPS:           cmd.Flag("max-mps", "Maximum messages should be handled in a second.").Default("1000").Int(),
+		numWorkers:       cmd.Flag("num-workers", "Number of workers.").Default("2").Int(),
 		bigtableInstance: cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
 		subscription:     cmd.Flag("subscription", "Google PubSub subscription name.").String(),
 		topic:            cmd.Flag("topic", "Google PubSub topic name.").String(),
@@ -74,9 +87,10 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"puller-max-outstanding-bytes",
 			"Maximum size of unprocessed messages.",
 		).Int(),
-		certPath:        cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
-		keyPath:         cmd.Flag("key", "Path to TLS key.").Required().String(),
-		bigQueryDataSet: cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
+		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
+		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
+		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
+		bigQueryDataSet:  cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -90,6 +104,28 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	btClient, err := s.createBigtableClient(ctx, registerer, logger)
+	if err != nil {
+		return err
+	}
+	defer btClient.Close()
+
+	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
+	if err != nil {
+		return err
+	}
+
+	experimentClient, err := ec.NewClient(*s.experimentService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer experimentClient.Close()
 	evalEventWriter, err := datastore.NewEvalEventWriter(ctx, *s.project, *s.bigQueryDataSet)
 	if err != nil {
 		return err
@@ -99,9 +135,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	p := persister.NewPersisterDwh(
+		experimentClient,
 		puller,
 		evalEventWriter,
 		goalEventWriter,
+		btClient,
+		persister.WithMaxMPS(*s.maxMPS),
+		persister.WithNumWorkers(*s.numWorkers),
 	)
 	if err != nil {
 		return err
@@ -141,5 +181,18 @@ func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.P
 		pubsub.WithNumGoroutines(*s.pullerNumGoroutines),
 		pubsub.WithMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
 		pubsub.WithMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
+	)
+}
+
+func (s *server) createBigtableClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (bigtable.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return bigtable.NewBigtableClient(ctx, *s.project, *s.bigtableInstance,
+		bigtable.WithMetrics(registerer),
+		bigtable.WithLogger(logger),
 	)
 }
