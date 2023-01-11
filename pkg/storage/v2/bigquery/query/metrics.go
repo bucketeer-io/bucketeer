@@ -42,7 +42,7 @@ var (
 	handledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "bigquery_querier",
+			Subsystem: "bigquery_query",
 			Name:      "handled_total",
 			Help:      "Total number of completed operations.",
 		}, []string{"operation", "code"})
@@ -50,7 +50,7 @@ var (
 	handledHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
-			Subsystem: "bigquery_querier",
+			Subsystem: "bigquery_query",
 			Name:      "handling_seconds",
 			Help:      "Histogram of operation response latency (seconds).",
 			Buckets:   prometheus.DefBuckets,
