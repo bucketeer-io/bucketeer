@@ -61,9 +61,11 @@ type PersisterDwh struct {
 }
 
 func NewPersisterDwh(
+	experimentClient ec.Client,
 	p puller.Puller,
 	evalEventWriter datastore.EvalEventWriter,
 	goalEventWriter datastore.GoalEventWriter,
+	bt bigtable.Client,
 	opts ...Option,
 ) *PersisterDwh {
 	dopts := &options{
@@ -82,13 +84,16 @@ func NewPersisterDwh(
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &PersisterDwh{
-		puller:          puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		logger:          dopts.logger.Named("persister-dwh"),
-		ctx:             ctx,
-		cancel:          cancel,
-		doneCh:          make(chan struct{}),
-		evalEventWriter: evalEventWriter,
-		goalEventWriter: goalEventWriter,
+		experimentClient:      experimentClient,
+		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
+		logger:                dopts.logger.Named("persister-dwh"),
+		ctx:                   ctx,
+		cancel:                cancel,
+		doneCh:                make(chan struct{}),
+		evalEventWriter:       evalEventWriter,
+		goalEventWriter:       goalEventWriter,
+		userEvaluationStorage: featurestorage.NewUserEvaluationsStorage(bt),
+		opts:                  dopts,
 	}
 }
 

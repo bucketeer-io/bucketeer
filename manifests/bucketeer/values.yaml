@@ -2523,8 +2523,17 @@ event-persister-evaluation-events-dwh:
   namespace: default
   env:
     project:
+    logLevel: info
     port: 9090
+    metricsPort: 9002
     bigtableInstance:
+    experimentService: localhost:9001
+    # option
+    maxMps: "1000"
+    numWorkers: 5
+    flushSize: 100
+    flushInterval: 2s
+    flushTimeout: 30s
     # pubsub
     topic: bucketeer-evaluation-events
     subscription: bucketeer-evaluation-events-event-persister-dwh
@@ -2577,8 +2586,17 @@ event-persister-goal-events-dwh:
   namespace: default
   env:
     project:
+    logLevel: info
     port: 9090
+    metricsPort: 9002
     bigtableInstance:
+    experimentService: localhost:9001
+    # option
+    maxMps: "1000"
+    numWorkers: 5
+    flushSize: 100
+    flushInterval: 2s
+    flushTimeout: 30s
     # pubsub
     topic: bucketeer-goal-events
     subscription: bucketeer-goal-events-event-persister-dwh
