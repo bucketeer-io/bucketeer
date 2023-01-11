@@ -2576,6 +2576,8 @@ event-persister-evaluation-events-dwh:
     type: ClusterIP
     clusterIP: None
     externalPort: 9000
+  serviceAccount:
+    annotations: {}
 
 event-persister-goal-events-dwh:
   image:
@@ -2639,3 +2641,5 @@ event-persister-goal-events-dwh:
     type: ClusterIP
     clusterIP: None
     externalPort: 9000
+  serviceAccount:
+    annotations: {}
