@@ -14,97 +14,65 @@
 
 package query
 
-// import (
-// 	"time"
+import (
+	"time"
 
-// 	"github.com/googleapis/gax-go/v2/apierror"
-// 	"github.com/prometheus/client_golang/prometheus"
-// 	storagepb "google.golang.org/genproto/googleapis/cloud/bigquery/storage/v1"
+	"github.com/googleapis/gax-go/v2/apierror"
+	"github.com/prometheus/client_golang/prometheus"
+	storagepb "google.golang.org/genproto/googleapis/cloud/bigquery/storage/v1"
 
-// 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-// )
+	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+)
 
-// const (
-// 	operationStream = "Stream"
+const (
+	operationQuery = "Query"
+	codeOK         = "OK"
+)
 
-// 	codeOK                  = "OK"
-// 	codeBadRequest          = "BadRequest"
-// 	codeForbidden           = "Forbidden"
-// 	codeNotFound            = "NotFound"
-// 	codeConflict            = "Conflict"
-// 	codeInternalServerError = "InternalServerError"
-// 	codeNotImplemented      = "NotImplemented"
-// 	codeServiceUnavailable  = "ServiceUnavailable"
-// 	codeUnknown             = "Unknown"
-// )
+var (
+	handledCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "bigquery_query",
+			Name:      "handled_total",
+			Help:      "Total number of completed operations.",
+		}, []string{"operation", "code"})
 
-// var (
-// 	handledCounter = prometheus.NewCounterVec(
-// 		prometheus.CounterOpts{
-// 			Namespace: "bucketeer",
-// 			Subsystem: "bigquery_query",
-// 			Name:      "handled_total",
-// 			Help:      "Total number of completed operations.",
-// 		}, []string{"operation", "code"})
+	handledHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "bucketeer",
+			Subsystem: "bigquery_query",
+			Name:      "handling_seconds",
+			Help:      "Histogram of operation response latency (seconds).",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"operation", "code"})
+)
 
-// 	handledHistogram = prometheus.NewHistogramVec(
-// 		prometheus.HistogramOpts{
-// 			Namespace: "bucketeer",
-// 			Subsystem: "bigquery_query",
-// 			Name:      "handling_seconds",
-// 			Help:      "Histogram of operation response latency (seconds).",
-// 			Buckets:   prometheus.DefBuckets,
-// 		}, []string{"operation", "code"})
-// )
+func record() func(operation string, err *error) {
+	startTime := time.Now()
+	return func(operation string, err *error) {
+		code := getCodeFromError(*err)
+		handledCounter.WithLabelValues(operation, code).Inc()
+		handledHistogram.WithLabelValues(operation, code).Observe(time.Since(startTime).Seconds())
+	}
+}
 
-// func record() func(operation string, err *error) {
-// 	startTime := time.Now()
-// 	return func(operation string, err *error) {
-// 		code := getCodeFromError(*err)
-// 		handledCounter.WithLabelValues(operation, code).Inc()
-// 		handledHistogram.WithLabelValues(operation, code).Observe(time.Since(startTime).Seconds())
-// 	}
-// }
+func getCodeFromError(err error) string {
+	if err == nil {
+		return codeOK
+	}
+	if apiErr, ok := apierror.FromError(err); ok {
+		storageErr := &storagepb.StorageError{}
+		if e := apiErr.Details().ExtractProtoMessage(storageErr); e != nil {
+		}
+		return storageErr.GetCode().String()
+	}
+	return ""
+}
 
-// func getCodeFromError(err error) string {
-// 	if err == nil {
-// 		return codeOK
-// 	}
-// 	if apiErr, ok := apierror.FromError(err); ok {
-// 		storageErr := &storagepb.StorageError{}
-// 		if e := apiErr.Details().ExtractProtoMessage(storageErr); e != nil {
-// 		}
-// 		switch storageErr.GetCode() {
-// 		case storagepb.StorageError_STORAGE_ERROR_CODE_UNSPECIFIED:
-// 			return codeBadRequest
-// 		case storagepb.StorageError_TABLE_NOT_FOUND:
-// 			return codeForbidden
-// 		case storagepb.StorageError_STREAM_ALREADY_COMMITTED:
-// 			return codeNotFound
-// 		case storagepb.StorageError_STREAM_NOT_FOUND:
-// 			return codeConflict
-// 		case storagepb.StorageError_INVALID_STREAM_TYPE:
-// 			return codeInternalServerError
-// 		case storagepb.StorageError_INVALID_STREAM_STATE:
-// 			return codeNotImplemented
-// 		case storagepb.StorageError_STREAM_FINALIZED:
-// 			return codeServiceUnavailable
-// 		case storagepb.StorageError_SCHEMA_MISMATCH_EXTRA_FIELDS:
-// 			return codeNotImplemented
-// 		case storagepb.StorageError_OFFSET_ALREADY_EXISTS:
-// 			return codeServiceUnavailable
-// 		case storagepb.StorageError_OFFSET_OUT_OF_RANGE:
-// 			return codeServiceUnavailable
-// 		default:
-// 			return codeUnknown
-// 		}
-// 	}
-// 	return ""
-// }
-
-// func registerMetrics(r metrics.Registerer) {
-// 	r.MustRegister(
-// 		handledCounter,
-// 		handledHistogram,
-// 	)
-// }
+func registerMetrics(r metrics.Registerer) {
+	r.MustRegister(
+		handledCounter,
+		handledHistogram,
+	)
+}
