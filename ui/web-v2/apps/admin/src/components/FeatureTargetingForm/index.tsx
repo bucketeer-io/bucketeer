@@ -78,6 +78,9 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       }
       return !rules.every((rule) =>
         rule.clauses.every((clause) => {
+          if (clause.type === ClauseType.SEGMENT) {
+            return clause.values.length > 0;
+          }
           return clause.attribute && clause.values.length > 0;
         })
       );
@@ -492,7 +495,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
       {clauses.map((c: any, clauseIdx) => {
         const clauseName = `rules.${ruleIdx}.clauses.${clauseIdx}`;
         return (
-          <div key={clauseIdx} className={classNames('flex space-x-2')}>
+          <div key={c.id} className={classNames('flex space-x-2')}>
             <div className="w-[2rem] flex justify-center items-center">
               {clauseIdx === 0 ? (
                 <div
