@@ -39,7 +39,7 @@ spec:
           secret:
             secretName: {{ template "service-token-secret" . }}
       containers:
-        - name: "event-persister"
+        - name: "event-persister-dwh"
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
