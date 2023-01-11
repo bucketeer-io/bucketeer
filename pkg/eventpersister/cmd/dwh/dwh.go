@@ -60,8 +60,8 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
 		project:          cmd.Flag("project", "Google Cloud project name.").String(),
 		bigtableInstance: cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
-		subscription:       cmd.Flag("subscription", "Google PubSub subscription name.").String(),
-		topic:              cmd.Flag("topic", "Google PubSub topic name.").String(),
+		subscription:     cmd.Flag("subscription", "Google PubSub subscription name.").String(),
+		topic:            cmd.Flag("topic", "Google PubSub topic name.").String(),
 		pullerNumGoroutines: cmd.Flag(
 			"puller-num-goroutines",
 			"Number of goroutines will be spawned to pull messages.",
@@ -74,10 +74,9 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"puller-max-outstanding-bytes",
 			"Maximum size of unprocessed messages.",
 		).Int(),
-		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
-		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
-		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
-
+		certPath:        cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
+		keyPath:         cmd.Flag("key", "Path to TLS key.").Required().String(),
+		bigQueryDataSet: cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
 	}
 	r.RegisterCommand(server)
 	return server

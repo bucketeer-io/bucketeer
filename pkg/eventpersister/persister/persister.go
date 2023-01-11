@@ -53,13 +53,13 @@ import (
 )
 
 var (
-	ErrUnexpectedMessageType     = errors.New("eventpersister: unexpected message type")
-	ErrAutoOpsRulesNotFound      = errors.New("eventpersister: auto ops rules not found")
-	ErrExperimentNotFound        = errors.New("eventpersister: experiment not found")
-	ErrNoAutoOpsRules            = errors.New("eventpersister: no auto ops rules")
-	ErrNoExperiments             = errors.New("eventpersister: no experiments")
-	ErrNothingToLink             = errors.New("eventpersister: nothing to link")
-	ErrInvalidGoalEventTimestamp = errors.New("eventpersister: invalid goal event timestamp")
+	ErrUnexpectedMessageType = errors.New("eventpersister: unexpected message type")
+	ErrAutoOpsRulesNotFound  = errors.New("eventpersister: auto ops rules not found")
+	ErrExperimentNotFound    = errors.New("eventpersister: experiment not found")
+	ErrNoAutoOpsRules        = errors.New("eventpersister: no auto ops rules")
+	ErrNoExperiments         = errors.New("eventpersister: no experiments")
+	ErrNothingToLink         = errors.New("eventpersister: nothing to link")
+	ErrInvalidEventTimestamp = errors.New("eventpersister: invalid event timestamp")
 )
 
 const (
@@ -593,7 +593,7 @@ func (p *Persister) linkGoalEvent(
 ) ([]string, bool, error) {
 	if !p.validateTimestamp(event.Timestamp, oldestEventTimestamp, furthestEventTimestamp) {
 		handledCounter.WithLabelValues(codeInvalidGoalEventTimestamp).Inc()
-		return nil, false, ErrInvalidGoalEventTimestamp
+		return nil, false, ErrInvalidEventTimestamp
 	}
 	evaluations := []*featureproto.Evaluation{}
 	evalExp, retriable, err := p.linkGoalEventByExperiment(ctx, event, environmentNamespace)

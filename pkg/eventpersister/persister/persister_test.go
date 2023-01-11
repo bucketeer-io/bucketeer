@@ -1298,7 +1298,7 @@ func TestMarshalGoalEventWithExperimentsAndAutoOpsRules(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           "",
-			expectedErr:        ErrInvalidGoalEventTimestamp,
+			expectedErr:        ErrInvalidEventTimestamp,
 			expectedRepeatable: false,
 		},
 		{
