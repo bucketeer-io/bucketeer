@@ -28,4 +28,8 @@ message GoalEvent {
   string source_id = 8;
   string environment_namespace = 9;
   int64 timestamp = 10;
+  string feature_id = 11;
+  int32 feature_version = 12;
+  string variation_id = 13;
+  string reason = 14;
 }

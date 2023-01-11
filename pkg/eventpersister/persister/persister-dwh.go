@@ -18,8 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -29,7 +27,6 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	aodomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
@@ -40,7 +37,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
-	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -327,7 +323,7 @@ func (p *PersisterDwh) convToGoalEvent(
 	e *eventproto.GoalEvent,
 	id, environmentNamespace string,
 ) (*ecproto.GoalEvent, bool, error) {
-	ev, retriable, err := p.linkGoalEvent(ctx, e, environmentNamespace)
+	eval, retriable, err := p.linkGoalEvent(ctx, e, environmentNamespace)
 	if err != nil {
 		return nil, retriable, err
 	}
@@ -339,17 +335,24 @@ func (p *PersisterDwh) convToGoalEvent(
 			return nil, false, err
 		}
 	}
+	reason := ""
+	if eval.Reason != nil {
+		reason = eval.Reason.Type.String()
+	}
 	return &ecproto.GoalEvent{
 		Id:                   id,
 		GoalId:               e.GoalId,
 		Value:                float32(e.Value),
 		UserData:             string(ud),
 		UserId:               e.UserId,
-		Evaluation:           strings.Join(ev, ","),
 		Tag:                  e.Tag,
 		SourceId:             e.SourceId.String(),
 		EnvironmentNamespace: environmentNamespace,
 		Timestamp:            e.Timestamp,
+		FeatureId:            eval.FeatureId,
+		FeatureVersion:       eval.FeatureVersion,
+		VariationId:          eval.VariationId,
+		Reason:               reason,
 	}, false, nil
 }
 
@@ -357,38 +360,22 @@ func (p *PersisterDwh) linkGoalEvent(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
 	environmentNamespace string,
-) ([]string, bool, error) {
+) (*featureproto.Evaluation, bool, error) {
 	if err := p.validateTimestamp(event.Timestamp); err != nil {
 		handledCounter.WithLabelValues(codeInvalidGoalEventTimestamp).Inc()
 		return nil, false, err
 	}
-	evaluations := []*featureproto.Evaluation{}
 	evalExp, retriable, err := p.linkGoalEventByExperiment(ctx, event, environmentNamespace)
 	// If there are no experiments or the goal ID didn't match, it will ignore the error
 	// so it can try to link the goal event to auto ops.
 	if err != nil && err != ErrNoExperiments && err != ErrExperimentNotFound {
 		return nil, retriable, err
 	}
-	if evalExp != nil {
-		evaluations = append(evaluations, evalExp)
-	}
-	evalAuto, retriable, err := p.linkGoalEventByAutoOps(ctx, event, environmentNamespace)
-	// If there are no rules or the goal ID didn't match, it will ignore the error
-	// so we can acknowledge the message because the event doesn't belong to no one
-	if err != nil && err != ErrNoAutoOpsRules && err != ErrAutoOpsRulesNotFound {
-		return nil, retriable, err
-	}
-	if evalAuto != nil {
-		evaluations = append(evaluations, evalAuto...)
-	}
-	if len(evaluations) == 0 {
+	if evalExp == nil {
 		handledCounter.WithLabelValues(codeNothingToLink).Inc()
 		return nil, false, ErrNothingToLink
 	}
-	evalSet := p.getEvalSet(evaluations)
-	// Sort the slice to avoid errors in the unit tests
-	sort.Sort(sort.Reverse(sort.StringSlice(evalSet)))
-	return evalSet, false, nil
+	return evalExp, false, nil
 }
 
 func (*PersisterDwh) validateTimestamp(
@@ -399,7 +386,7 @@ func (*PersisterDwh) validateTimestamp(
 	min := now.Add(-twentyFourHours)
 	max := now.Add(twentyFourHours)
 	if actual.Before(min) || actual.After(max) {
-		return ErrInvalidGoalEventTimestamp
+		return ErrInvalidEventTimestamp
 	}
 	return nil
 }
@@ -475,26 +462,6 @@ func (p *PersisterDwh) linkGoalEventByExperiment(
 	return ev, false, nil
 }
 
-func (*PersisterDwh) getEvalSet(evals []*featureproto.Evaluation) []string {
-	evalsMap := make(map[string]struct{})
-	for _, ev := range evals {
-		// Check the reason
-		reason := ""
-		if ev.Reason != nil {
-			reason = ev.Reason.Type.String()
-		}
-		eval := fmt.Sprintf("%s:%d:%s:%s", ev.FeatureId, ev.FeatureVersion, ev.VariationId, reason)
-		// Remove duplicates if needed
-		evalsMap[eval] = struct{}{}
-	}
-	// Convert it to slice
-	evalSet := []string{}
-	for key := range evalsMap {
-		evalSet = append(evalSet, key)
-	}
-	return evalSet
-}
-
 func (*PersisterDwh) findGoalID(id string, goalIDs []string) bool {
 	for _, goalID := range goalIDs {
 		if id == goalID {
@@ -542,110 +509,6 @@ func (p *PersisterDwh) listExperiments(
 		return nil, err
 	}
 	return exp.([]*exproto.Experiment), nil
-}
-
-func (p *PersisterDwh) listAutoOpsRules(
-	ctx context.Context,
-	environmentNamespace string,
-) ([]*aoproto.AutoOpsRule, error) {
-	exp, err, _ := p.flightgroup.Do(
-		fmt.Sprintf("%s:%s", environmentNamespace, "listAutoOpsRules"),
-		func() (interface{}, error) {
-			aor := []*aoproto.AutoOpsRule{}
-			cursor := ""
-			for {
-				resp, err := p.autoOpsClient.ListAutoOpsRules(ctx, &aoproto.ListAutoOpsRulesRequest{
-					EnvironmentNamespace: environmentNamespace,
-					PageSize:             listRequestSize,
-					Cursor:               cursor,
-				})
-				if err != nil {
-					return nil, err
-				}
-				aor = append(aor, resp.AutoOpsRules...)
-				aorSize := len(resp.AutoOpsRules)
-				if aorSize == 0 || aorSize < listRequestSize {
-					return aor, nil
-				}
-				cursor = resp.Cursor
-			}
-		},
-	)
-	if err != nil {
-		handledCounter.WithLabelValues(codeFailedToListAutoOpsRules).Inc()
-		return nil, err
-	}
-	return exp.([]*aoproto.AutoOpsRule), nil
-}
-
-func (p *PersisterDwh) findFeatureIDs(goalID string, listAutoOpsRules []*aoproto.AutoOpsRule) []string {
-	featureIDs := []string{}
-	for _, aor := range listAutoOpsRules {
-		autoOpsRule := &aodomain.AutoOpsRule{AutoOpsRule: aor}
-		// We ignore the rules that are already triggered
-		if autoOpsRule.AlreadyTriggered() {
-			continue
-		}
-		clauses, err := autoOpsRule.ExtractOpsEventRateClauses()
-		if err != nil {
-			handledCounter.WithLabelValues(codeFailedToExtractOpsEventRateClauses).Inc()
-			continue
-		}
-		for _, clause := range clauses {
-			if clause.GoalId == goalID {
-				featureIDs = append(featureIDs, autoOpsRule.FeatureId)
-			}
-		}
-	}
-	return featureIDs
-}
-
-// Because the same goal can be used on other feature flags
-// we must link the goal event to all flags using the same goal ID
-// If it fails even once to link the goal event, it will retry until all events are linked.
-func (p *PersisterDwh) linkGoalEventByAutoOps(
-	ctx context.Context,
-	event *eventproto.GoalEvent,
-	environmentNamespace string,
-) ([]*featureproto.Evaluation, bool, error) {
-	// List all auto ops rules
-	list, err := p.listAutoOpsRules(ctx, environmentNamespace)
-	if err != nil {
-		return nil, true, err
-	}
-	if len(list) == 0 {
-		return nil, false, ErrNoAutoOpsRules
-	}
-	// Find the feature flags by goal ID
-	featureIDs := p.findFeatureIDs(event.GoalId, list)
-	if len(featureIDs) == 0 {
-		return nil, false, ErrAutoOpsRulesNotFound
-	}
-	// Get the lastest feature version
-	resp, err := p.featureClient.GetFeatures(ctx, &featureproto.GetFeaturesRequest{
-		EnvironmentNamespace: environmentNamespace,
-		Ids:                  featureIDs,
-	})
-	if err != nil {
-		handledCounter.WithLabelValues(codeFailedToGetFeatures).Inc()
-		return nil, true, err
-	}
-	// Get all user evaluations using the feature flag info
-	evaluations := make([]*featureproto.Evaluation, 0, len(resp.Features))
-	for _, feature := range resp.Features {
-		ev, err := p.getUserEvaluation(
-			environmentNamespace,
-			event.UserId,
-			event.Tag,
-			feature.Id,
-			feature.Version,
-		)
-		if err != nil {
-			return nil, true, err
-		}
-		evaluations = append(evaluations, ev)
-	}
-	return evaluations, false, nil
 }
 
 func (p *PersisterDwh) convToEvaluation(
