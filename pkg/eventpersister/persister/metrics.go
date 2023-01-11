@@ -55,8 +55,35 @@ var (
 			Name:      "cache_requests_total",
 			Help:      "Total number of cache requests",
 		}, []string{"type", "code"})
+	dwhReceivedCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "event_persister_dwh",
+			Name:      "received_total",
+			Help:      "Total number of received messages",
+		})
+
+	dwhHandledCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "event_persister_dwh",
+			Name:      "handled_total",
+			Help:      "Total number of handled messages",
+		}, []string{"code"})
+
+	dwhCacheCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "event_persister_dwh",
+			Name:      "cache_requests_total",
+			Help:      "Total number of cache requests",
+		}, []string{"type", "code"})
 )
 
 func registerMetrics(r metrics.Registerer) {
 	r.MustRegister(receivedCounter, handledCounter, cacheCounter)
+}
+
+func dwhRegisterMetrics(r metrics.Registerer) {
+	r.MustRegister(dwhReceivedCounter, dwhHandledCounter, dwhCacheCounter)
 }
