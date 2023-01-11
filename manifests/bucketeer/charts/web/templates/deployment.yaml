@@ -31,6 +31,7 @@ spec:
         - name: certs
           secret:
             secretName: {{ template "cert-secret" . }}
+      serviceAccountName: {{ template "web.name" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"

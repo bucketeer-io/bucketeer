@@ -22,6 +22,7 @@ spec:
     spec:
       affinity: {{ toYaml .Values.affinity | nindent 8 }}
       nodeSelector: {{ toYaml .Values.nodeSelector | indent 8 }}
+      serviceAccountName: {{ template "dex.name" . }}
       containers:
         - name: envoy
           image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"

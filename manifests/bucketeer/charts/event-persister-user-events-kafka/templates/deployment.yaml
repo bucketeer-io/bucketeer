@@ -38,6 +38,7 @@ spec:
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }}
+      serviceAccountName: {{ template "event-persister-user-events-kafka.name" . }}
       containers:
         - name: "event-persister"
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"

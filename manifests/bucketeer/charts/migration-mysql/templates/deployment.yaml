@@ -42,6 +42,7 @@ spec:
         - name: github-access-token-secret
           secret:
             secretName: github-token
+      serviceAccountName: {{ template "migration-mysql.name" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
