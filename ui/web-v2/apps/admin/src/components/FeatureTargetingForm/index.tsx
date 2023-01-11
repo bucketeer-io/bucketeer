@@ -516,6 +516,9 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
               render={({ field }) => (
                 <Select
                   onChange={(e) => {
+                    if (e.value === field.value) {
+                      return;
+                    }
                     handleChangeType(clauseIdx, e.value);
                     field.onChange(e.value);
                   }}
