@@ -27,9 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	aomock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
-	fcmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
 	pullermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/mock"
@@ -730,8 +728,6 @@ func newPersisterDwh(c *gomock.Controller) *PersisterDwh {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &PersisterDwh{
 		experimentClient:      ecmock.NewMockClient(c),
-		featureClient:         fcmock.NewMockClient(c),
-		autoOpsClient:         aomock.NewMockClient(c),
 		puller:                pullermock.NewMockRateLimitedPuller(c),
 		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),
 		opts:                  &defaultOptions,
