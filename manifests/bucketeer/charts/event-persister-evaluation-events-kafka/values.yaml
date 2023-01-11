@@ -83,3 +83,6 @@ service:
   type: ClusterIP
   clusterIP: None
   externalPort: 9000
+
+serviceAccount:
+  annotations: {}

@@ -65,3 +65,6 @@ config:
     clientID:
     clientSecret:
     redirectURIs:
+
+serviceAccount:
+  annotations: {}

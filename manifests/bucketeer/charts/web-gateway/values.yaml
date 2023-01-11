@@ -51,3 +51,5 @@ hpa:
     cpu:
       targetAverageUtilization:
 tolerations: []
+serviceAccount:
+  annotations: {}

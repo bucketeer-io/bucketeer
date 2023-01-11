@@ -71,3 +71,6 @@ health:
   initialDelaySeconds:
 
 resources: {}
+
+serviceAccount:
+  annotations: {}

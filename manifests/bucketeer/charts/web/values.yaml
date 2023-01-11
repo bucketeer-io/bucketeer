@@ -56,3 +56,6 @@ hpa:
       targetAverageUtilization:
 
 tolerations: []
+
+serviceAccount:
+  annotations: {}
