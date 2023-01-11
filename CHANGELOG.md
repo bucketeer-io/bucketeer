@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.1](https://github.com/bucketeer-io/bucketeer/compare/v0.2.0...v0.2.1) (2023-01-11)
+
+
+### Bug Fixes
+
+* flush timeout setting not working ([#146](https://github.com/bucketeer-io/bucketeer/issues/146)) ([4e68977](https://github.com/bucketeer-io/bucketeer/commit/4e68977a3fdb7ce7e4140cf14339c135c6e7e275))
+* mau count yearMonth not matching to the table partition format ([#148](https://github.com/bucketeer-io/bucketeer/issues/148)) ([0323b84](https://github.com/bucketeer-io/bucketeer/commit/0323b84271b63bc86981f78c5c557bcb8fa4ef52))
+* **ui:** show tooltip while hovering on variation delete button ([#143](https://github.com/bucketeer-io/bucketeer/issues/143)) ([5c0d7a9](https://github.com/bucketeer-io/bucketeer/commit/5c0d7a926508e3a0bb308b15aa7b64d2a91a11f5))
+
+
+### Miscellaneous
+
+* add service account config to manifests ([#151](https://github.com/bucketeer-io/bucketeer/issues/151)) ([4f8db44](https://github.com/bucketeer-io/bucketeer/commit/4f8db44e506a36473de8fb47dc4e9fb636ea8ad3))
+
 ## [0.2.0](https://github.com/bucketeer-io/bucketeer/compare/v0.1.0...v0.2.0) (2023-01-01)
 
 
