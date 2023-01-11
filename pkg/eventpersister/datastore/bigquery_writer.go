@@ -19,7 +19,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/query"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 )
 
@@ -45,16 +45,16 @@ type goalEventWriter struct {
 }
 
 type queryClient struct {
-	query bigquery.Query
+	query query.Query
 }
 
 func NewEvalEventWriter(
 	ctx context.Context,
 	project, dataset string,
-	opts ...bigquery.QueryOption,
+	opts ...query.QueryOption,
 ) (EvalEventWriter, error) {
 	evt := ecproto.EvaluationEvent{}
-	q, err := bigquery.NewQuery(
+	q, err := query.NewQuery(
 		ctx,
 		project,
 		dataset,
@@ -75,10 +75,10 @@ func NewEvalEventWriter(
 func NewGoalEventWriter(
 	ctx context.Context,
 	project, dataset string,
-	opts ...bigquery.QueryOption,
+	opts ...query.QueryOption,
 ) (GoalEventWriter, error) {
 	evt := ecproto.GoalEvent{}
-	q, err := bigquery.NewQuery(
+	q, err := query.NewQuery(
 		ctx,
 		project,
 		dataset,
