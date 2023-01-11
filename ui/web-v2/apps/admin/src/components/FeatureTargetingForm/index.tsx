@@ -251,7 +251,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
         {
           type: ClauseType.COMPARE,
           attribute: '',
-          operator: Clause.Operator.EQUALS,
+          operator: Clause.Operator.EQUALS.toString(),
           values: [],
         },
       ],
