@@ -39,6 +39,7 @@ spec:
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }} 
+      serviceAccountName: {{ template "ops-event-batch.name" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
