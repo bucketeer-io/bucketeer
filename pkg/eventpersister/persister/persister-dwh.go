@@ -26,11 +26,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
-	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
@@ -49,8 +47,6 @@ var (
 
 type PersisterDwh struct {
 	experimentClient      ec.Client
-	featureClient         featureclient.Client
-	autoOpsClient         aoclient.Client
 	puller                puller.RateLimitedPuller
 	logger                *zap.Logger
 	ctx                   context.Context
