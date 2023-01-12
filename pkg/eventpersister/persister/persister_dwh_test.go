@@ -363,7 +363,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           nil,
-			expectedErr:        ErrNothingToLink,
+			expectedErr:        ErrNoExperiments,
 			expectedRepeatable: false,
 		},
 		{
@@ -405,7 +405,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           nil,
-			expectedErr:        ErrNothingToLink,
+			expectedErr:        ErrExperimentNotFound,
 			expectedRepeatable: false,
 		},
 		{
