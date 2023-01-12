@@ -44,45 +44,45 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
-            - name: BUCKETEER_EVENT_PERSISTER_PROJECT
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PROJECT
               value: "{{ .Values.env.project }}"
-            - name: BUCKETEER_EVENT_PERSISTER_EXPERIMENT_SERVICE
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_EXPERIMENT_SERVICE
               value: "{{ .Values.env.experimentService }}"
-            - name: BUCKETEER_EVENT_PERSISTER_BIGTABLE_INSTANCE
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_BIGTABLE_INSTANCE
               value: "{{ .Values.env.bigtableInstance }}"
-            - name: BUCKETEER_EVENT_PERSISTER_TOPIC
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_TOPIC
               value: "{{ .Values.env.topic }}"
-            - name: BUCKETEER_EVENT_PERSISTER_SUBSCRIPTION
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_SUBSCRIPTION
               value: "{{ .Values.env.subscription }}"
-            - name: BUCKETEER_EVENT_PERSISTER_PORT
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PORT
               value: "{{ .Values.env.port }}"
-            - name: BUCKETEER_EVENT_PERSISTER_METRICS_PORT
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
-            - name: BUCKETEER_EVENT_PERSISTER_LOG_LEVEL
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
-            - name: BUCKETEER_EVENT_PERSISTER_MAX_MPS
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_MAX_MPS
               value: "{{ .Values.env.maxMps }}"
-            - name: BUCKETEER_EVENT_PERSISTER_NUM_WORKERS
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_NUM_WORKERS
               value: "{{ .Values.env.numWorkers }}"
-            - name: BUCKETEER_EVENT_PERSISTER_NUM_WRITERS
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_NUM_WRITERS
               value: "{{ .Values.env.numWriters }}"
-            - name: BUCKETEER_EVENT_PERSISTER_FLUSH_SIZE
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_FLUSH_SIZE
               value: "{{ .Values.env.flushSize }}"
-            - name: BUCKETEER_EVENT_PERSISTER_FLUSH_INTERVAL
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_FLUSH_INTERVAL
               value: "{{ .Values.env.flushInterval }}"
-            - name: BUCKETEER_EVENT_PERSISTER_FLUSH_TIMEOUT
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_FLUSH_TIMEOUT
               value: "{{ .Values.env.flushTimeout }}"
-            - name: BUCKETEER_EVENT_PERSISTER_PULLER_NUM_GOROUTINES
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PULLER_NUM_GOROUTINES
               value: "{{ .Values.env.pullerNumGoroutines }}"
-            - name: BUCKETEER_EVENT_PERSISTER_PULLER_MAX_OUTSTANDING_MESSAGES
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PULLER_MAX_OUTSTANDING_MESSAGES
               value: "{{ .Values.env.pullerMaxOutstandingMessages }}"
-            - name: BUCKETEER_EVENT_PERSISTER_PULLER_MAX_OUTSTANDING_BYTES
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PULLER_MAX_OUTSTANDING_BYTES
               value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
-            - name: BUCKETEER_EVENT_PERSISTER_CERT
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_CERT
               value: /usr/local/certs/service/tls.crt
-            - name: BUCKETEER_EVENT_PERSISTER_KEY
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_KEY
               value: /usr/local/certs/service/tls.key
-            - name: BUCKETEER_EVENT_PERSISTER_SERVICE_TOKEN
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_SERVICE_TOKEN
               value: /usr/local/service-token/token
           volumeMounts:
             - name: service-cert-secret
