@@ -40,7 +40,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const methods = useFormContext();
     const {
       control,
-      formState: { errors },
+      formState: { errors, isDirty },
       watch,
     } = methods;
     const { fields: targets } = useFieldArray({
@@ -73,9 +73,15 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     });
 
     const checkSaveBtnDisabled = useCallback(() => {
-      if (Object.values(errors).some(Boolean) || !rules.length) {
+      if (
+        Object.values(errors).some(Boolean) ||
+        isDirty === false ||
+        (feature.rulesList.length === 0 && rules.length === 0)
+      ) {
         return true;
       }
+
+      // find if all fields are dirty
       return !rules.every((rule) =>
         rule.clauses.every((clause) => {
           if (clause.type === ClauseType.SEGMENT) {
@@ -84,7 +90,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
           return clause.attribute && clause.values.length > 0;
         })
       );
-    }, [rules]);
+    }, [rules, isDirty, errors]);
 
     return (
       <div className="p-10 bg-gray-100">
@@ -271,7 +277,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
         {rules.map((r: any, ruleIdx) => {
           return (
             <div
-              key={ruleIdx}
+              key={r.id}
               className={classNames('bg-white p-3 rounded-md border')}
             >
               <div key={ruleIdx}>
