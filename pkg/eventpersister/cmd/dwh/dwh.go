@@ -67,18 +67,20 @@ type server struct {
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the server")
 	server := &server{
-		CmdClause: cmd,
-		port:      cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:   cmd.Flag("project", "Google Cloud project name.").String(),
-		experimentService: cmd.Flag(
-			"experiment-service",
-			"bucketeer-experiment-service address.",
-		).Default("experiment:9090").String(),
+		CmdClause:        cmd,
+		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:          cmd.Flag("project", "Google Cloud project name.").String(),
+		bigtableInstance: cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
 		maxMPS:           cmd.Flag("max-mps", "Maximum messages should be handled in a second.").Default("1000").Int(),
 		numWorkers:       cmd.Flag("num-workers", "Number of workers.").Default("2").Int(),
-		bigtableInstance: cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
-		subscription:     cmd.Flag("subscription", "Google PubSub subscription name.").String(),
-		topic:            cmd.Flag("topic", "Google PubSub topic name.").String(),
+		flushSize: cmd.Flag(
+			"flush-size",
+			"Maximum number of messages to batch before writing to datastore.",
+		).Default("50").Int(),
+		flushInterval: cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
+		flushTimeout:  cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
+		subscription:  cmd.Flag("subscription", "Google PubSub subscription name.").String(),
+		topic:         cmd.Flag("topic", "Google PubSub topic name.").String(),
 		pullerNumGoroutines: cmd.Flag(
 			"puller-num-goroutines",
 			"Number of goroutines will be spawned to pull messages.",
@@ -94,7 +96,11 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
-		bigQueryDataSet:  cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
+		experimentService: cmd.Flag(
+			"experiment-service",
+			"bucketeer-experiment-service address.",
+		).Default("experiment:9090").String(),
+		bigQueryDataSet: cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
 	}
 	r.RegisterCommand(server)
 	return server
