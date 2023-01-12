@@ -1,0 +1,74 @@
+image:
+  repository: ghcr.io/bucketeer-io/bucketeer-event-persister-dwh
+  pullPolicy: IfNotPresent
+
+nameOverride: "event-persister-dwh"
+fullnameOverride: "event-persister-goal-events-dwh"
+
+namespace:
+
+env:
+  project:
+  logLevel: info
+  port: 9090
+  metricsPort: 9002
+  bigtableInstance:
+  experimentService: localhost:9001
+  # option
+  maxMps: "1000"
+  numWorkers: 5
+  flushSize: 100
+  flushInterval: 2s
+  flushTimeout: 30s
+  # pubsub
+  topic: bucketeer-goal-events
+  subscription: bucketeer-goal-events-event-persister-dwh
+  pullerNumGoroutines: 5
+  pullerMaxOutstandingMessages: "1000"
+  pullerMaxOutstandingBytes: "1000000000"
+  # bigquery
+  bigQueryDataSet:
+
+affinity: {}
+
+nodeSelector: {}
+
+hpa:
+  enabled:
+  minReplicas:
+  maxReplicas:
+  metrics:
+    cpu:
+      targetAverageUtilization:
+
+envoy:
+  image:
+    repository: envoyproxy/envoy-alpine
+    tag: v1.21.1
+    pullPolicy: IfNotPresent
+  config:
+  port: 9000
+  adminPort: 8001
+  resources: {}
+
+tls:
+  service:
+    secret:
+    cert:
+    key:
+
+serviceToken:
+  secret:
+  token:
+
+health:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 10
+
+resources: {}
+
+service:
+  type: ClusterIP
+  clusterIP: None
+  externalPort: 9000
