@@ -36,6 +36,7 @@ spec:
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
+      serviceAccountName: {{ template "feature-recorder.name" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"

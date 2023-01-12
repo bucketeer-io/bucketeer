@@ -40,7 +40,8 @@ spec:
             secretName: {{ template "service-token-secret" . }}
         - name: oauth-key-secret
           secret:
-            secretName: {{ template "oauth-key-secret" . }}  
+            secretName: {{ template "oauth-key-secret" . }}
+      serviceAccountName: {{ template "account.name" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
