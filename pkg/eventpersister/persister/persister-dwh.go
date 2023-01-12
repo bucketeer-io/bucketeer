@@ -367,14 +367,8 @@ func (p *PersisterDwh) linkGoalEvent(
 		return nil, false, err
 	}
 	evalExp, retriable, err := p.linkGoalEventByExperiment(ctx, event, environmentNamespace)
-	// If there are no experiments or the goal ID didn't match, it will ignore the error
-	// so it can try to link the goal event to auto ops.
-	if err != nil && err != ErrNoExperiments && err != ErrExperimentNotFound {
+	if err != nil {
 		return nil, retriable, err
-	}
-	if evalExp == nil {
-		handledCounter.WithLabelValues(codeNothingToLink).Inc()
-		return nil, false, ErrNothingToLink
 	}
 	return evalExp, false, nil
 }
