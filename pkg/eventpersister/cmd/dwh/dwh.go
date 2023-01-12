@@ -69,7 +69,7 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 	server := &server{
 		CmdClause:        cmd,
 		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:          cmd.Flag("project", "Google Cloud project name.").String(),
+		project:          cmd.Flag("project", "Google Cloud project name.").Required().String(),
 		bigtableInstance: cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
 		maxMPS:           cmd.Flag("max-mps", "Maximum messages should be handled in a second.").Default("1000").Int(),
 		numWorkers:       cmd.Flag("num-workers", "Number of workers.").Default("2").Int(),
@@ -100,7 +100,7 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"experiment-service",
 			"bucketeer-experiment-service address.",
 		).Default("experiment:9090").String(),
-		bigQueryDataSet: cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
+		bigQueryDataSet: cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
