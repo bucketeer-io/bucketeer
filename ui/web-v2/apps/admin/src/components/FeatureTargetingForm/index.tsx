@@ -40,12 +40,14 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const methods = useFormContext();
     const {
       control,
-      formState: { errors, isSubmitting, dirtyFields },
+      formState: { errors, isDirty },
+      watch,
     } = methods;
     const { fields: targets } = useFieldArray({
       control,
       name: 'targets',
     });
+    const rules = watch('rules');
     const [feature, _] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
@@ -69,7 +71,26 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
         label: createVariationLabel(v),
       };
     });
-    const isValid = Object.keys(errors).length == 0;
+
+    const checkSaveBtnDisabled = useCallback(() => {
+      if (
+        Object.values(errors).some(Boolean) ||
+        isDirty === false ||
+        (feature.rulesList.length === 0 && rules.length === 0)
+      ) {
+        return true;
+      }
+
+      // find if all fields are dirty
+      return !rules.every((rule) =>
+        rule.clauses.every((clause) => {
+          if (clause.type === ClauseType.SEGMENT) {
+            return clause.values.length > 0;
+          }
+          return clause.attribute && clause.values.length > 0;
+        })
+      );
+    }, [rules, isDirty, errors]);
 
     return (
       <div className="p-10 bg-gray-100">
@@ -181,7 +202,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 <button
                   type="button"
                   className="btn-submit"
-                  disabled={!Object.keys(dirtyFields).length || !isValid}
+                  disabled={checkSaveBtnDisabled()}
                   onClick={onOpenConfirmDialog}
                 >
                   {f(messages.button.saveWithComment)}
@@ -236,7 +257,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
         {
           type: ClauseType.COMPARE,
           attribute: '',
-          operator: Clause.Operator.EQUALS,
+          operator: Clause.Operator.EQUALS.toString(),
           values: [],
         },
       ],
@@ -256,7 +277,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
         {rules.map((r: any, ruleIdx) => {
           return (
             <div
-              key={ruleIdx}
+              key={r.id}
               className={classNames('bg-white p-3 rounded-md border')}
             >
               <div key={ruleIdx}>
@@ -480,7 +501,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
       {clauses.map((c: any, clauseIdx) => {
         const clauseName = `rules.${ruleIdx}.clauses.${clauseIdx}`;
         return (
-          <div key={clauseIdx} className={classNames('flex space-x-2')}>
+          <div key={c.id} className={classNames('flex space-x-2')}>
             <div className="w-[2rem] flex justify-center items-center">
               {clauseIdx === 0 ? (
                 <div
@@ -501,6 +522,9 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
               render={({ field }) => (
                 <Select
                   onChange={(e) => {
+                    if (e.value === field.value) {
+                      return;
+                    }
                     handleChangeType(clauseIdx, e.value);
                     field.onChange(e.value);
                   }}
