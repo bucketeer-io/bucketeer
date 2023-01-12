@@ -111,7 +111,11 @@ func (q *query) AppendRows(
 	defer record()(operationQuery, &err)
 	results := []*managedwriter.AppendResult{}
 	for i := 0; i < len(msgs); i += 10 {
-		batch := msgs[i : i+10]
+		end := i
+		if end > len(msgs) {
+			end = len(msgs)
+		}
+		batch := msgs[i:end]
 		r, err := q.client.AppendRows(ctx, batch)
 		if err != nil {
 			return err
