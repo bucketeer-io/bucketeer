@@ -106,8 +106,7 @@ func (s *eventCounterService) Register(server *grpc.Server) {
 	ecproto.RegisterEventCounterServiceServer(server, s)
 }
 
-// TODO temporary name
-func (s *eventCounterService) GetEvaluationCountBigQuery(
+func (s *eventCounterService) GetExperimentEvaluationCount(
 	ctx context.Context,
 	req *ecproto.GetEvaluationCountV2Request,
 ) (*ecproto.GetEvaluationCountV2Response, error) {
@@ -131,7 +130,7 @@ func (s *eventCounterService) GetEvaluationCountBigQuery(
 	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to query evaluation counts",
+			"Failed to query experiment evaluation counts",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
@@ -151,7 +150,7 @@ func (s *eventCounterService) GetEvaluationCountBigQuery(
 		return nil, dt.Err()
 	}
 	variationCounts := s.convertEvaluationCounts(evaluationCounts, req.VariationIds)
-	s.logger.Debug("GetEvaluationCount result", zap.Any("rows", variationCounts))
+	s.logger.Debug("GetExperimentEvaluationCount result", zap.Any("rows", variationCounts))
 	return &ecproto.GetEvaluationCountV2Response{
 		Count: &ecproto.EvaluationCount{
 			FeatureId:      req.FeatureId,
@@ -789,8 +788,7 @@ func validateGetGoalCountsRequest(req *ecproto.GetGoalCountRequest) error {
 	return nil
 }
 
-// TODO temporary name
-func (s *eventCounterService) GetGoalCountBigQuery(
+func (s *eventCounterService) GetExperimentGoalCount(
 	ctx context.Context,
 	req *ecproto.GetGoalCountV2Request,
 ) (*ecproto.GetGoalCountV2Response, error) {
@@ -815,7 +813,7 @@ func (s *eventCounterService) GetGoalCountBigQuery(
 	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to query goal counts",
+			"Failed to query experiment goal counts",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
@@ -836,7 +834,7 @@ func (s *eventCounterService) GetGoalCountBigQuery(
 		return nil, dt.Err()
 	}
 	variationCounts := s.convertGoalCounts(goalCounts, req.VariationIds)
-	s.logger.Debug("GetGoalCount result", zap.Any("rows", variationCounts))
+	s.logger.Debug("GetExperimentGoalCount result", zap.Any("rows", variationCounts))
 	return &ecproto.GetGoalCountV2Response{
 		GoalCounts: &ecproto.GoalCounts{
 			GoalId:         req.GoalId,

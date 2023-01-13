@@ -63,7 +63,7 @@ func TestNewEventCounterService(t *testing.T) {
 	assert.IsType(t, &eventCounterService{}, g)
 }
 
-func TestGetEvaluationCountBigQuery(t *testing.T) {
+func TestGetExperimentEvaluationCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -209,7 +209,7 @@ func TestGetEvaluationCountBigQuery(t *testing.T) {
 			if p.setup != nil {
 				p.setup(gs)
 			}
-			actual, err := gs.GetEvaluationCountBigQuery(ctx, p.input)
+			actual, err := gs.GetExperimentEvaluationCount(ctx, p.input)
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
@@ -735,7 +735,7 @@ func TestGetGoalCount(t *testing.T) {
 	}
 }
 
-func TestGetGoalCountBigQuery(t *testing.T) {
+func TestGetExperimentGoalCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -904,7 +904,7 @@ func TestGetGoalCountBigQuery(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.GetGoalCountBigQuery(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			actual, err := s.GetExperimentGoalCount(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})
