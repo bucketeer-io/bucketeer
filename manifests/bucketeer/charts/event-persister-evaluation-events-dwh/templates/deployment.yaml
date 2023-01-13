@@ -24,10 +24,8 @@ spec:
       {{- with .Values.global.image.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
       {{- end }}
-      affinity:
-{{ toYaml .Values.affinity | indent 8 }}
-      nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
+      affinity: {{ toYaml .Values.affinity | nindent 8 }}
+      nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
       volumes:
         - name: envoy-config
           configMap:
@@ -110,8 +108,7 @@ spec:
               path: /health
               port: service
               scheme: HTTPS
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
         - name: envoy
           image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
           imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
@@ -157,7 +154,6 @@ spec:
               path: /health
               port: envoy
               scheme: HTTPS
-          resources:
-{{ toYaml .Values.envoy.resources | indent 12 }}
+          resources: {{ toYaml .Values.envoy.resources | nindent 12 }}
   strategy:
     type: RollingUpdate
