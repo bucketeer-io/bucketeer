@@ -7,7 +7,6 @@ env:
   project:
   bigtableInstance:
   goalTopic:
-  goalBatchTopic:
   evaluationTopic:
   userTopic:
   metricsTopic:

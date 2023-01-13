@@ -49,7 +49,7 @@ const dummyURL = "http://example.com"
 
 func TestNewGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &gatewayService{}, g)
 }
 
@@ -1901,17 +1901,6 @@ func TestRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not serialize goal event")
 	}
-	bGoalBatchEvent, err := protojson.Marshal(&eventproto.GoalBatchEvent{
-		UserId: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-		UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
-			{
-				Tag: "tag",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal("could not serialize goal batch event")
-	}
 	bEvaluationEvent, err := protojson.Marshal(&eventproto.EvaluationEvent{Timestamp: time.Now().Unix()})
 	if err != nil {
 		t.Fatal("could not serialize evaluation event")
@@ -1934,7 +1923,6 @@ func TestRegisterEvents(t *testing.T) {
 	uuid0 := newUUID(t)
 	uuid1 := newUUID(t)
 	uuid2 := newUUID(t)
-	uuid3 := newUUID(t)
 
 	patterns := []struct {
 		desc        string
@@ -2039,8 +2027,6 @@ func TestRegisterEvents(t *testing.T) {
 					}, nil)
 				gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
-				gs.goalBatchPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
@@ -2086,8 +2072,6 @@ func TestRegisterEvents(t *testing.T) {
 					}, nil)
 				gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
-				gs.goalBatchPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
-					nil).MaxTimes(1)
 				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
@@ -2114,11 +2098,6 @@ func TestRegisterEvents(t *testing.T) {
 								ID:    uuid2,
 								Event: json.RawMessage(bMetricsEvent),
 								Type:  metricsEventType,
-							},
-							{
-								ID:    uuid3,
-								Event: json.RawMessage(bGoalBatchEvent),
-								Type:  goalBatchEventType,
 							},
 						},
 					},
@@ -2320,7 +2299,6 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 		featureClient:          featureclientmock.NewMockClient(mockController),
 		accountClient:          accountclientmock.NewMockClient(mockController),
 		goalPublisher:          publishermock.NewMockPublisher(mockController),
-		goalBatchPublisher:     publishermock.NewMockPublisher(mockController),
 		userPublisher:          publishermock.NewMockPublisher(mockController),
 		metricsPublisher:       publishermock.NewMockPublisher(mockController),
 		evaluationPublisher:    publishermock.NewMockPublisher(mockController),

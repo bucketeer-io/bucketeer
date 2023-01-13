@@ -147,7 +147,6 @@ api-gateway:
     project:
     bigtableInstance: bucketeer-cbt
     goalTopic: bucketeer-goal-events
-    goalBatchTopic: bucketeer-goal-batch-events
     evaluationTopic: bucketeer-evaluation-events
     userTopic: bucketeer-user-events
     metricsTopic: bucketeer-metrics-events
