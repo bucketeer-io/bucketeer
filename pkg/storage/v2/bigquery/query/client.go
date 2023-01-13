@@ -98,13 +98,9 @@ func (q *query) AppendRows(
 	var err error
 	defer record()(operationQuery, &err)
 	results := []*managedwriter.AppendResult{}
-	for i := 0; i < len(msgs); i += 10 {
-		end := i + 10
-		if end > len(msgs) {
-			end = len(msgs)
-		}
-		batch := msgs[i:end]
-		r, err := q.client.AppendRows(ctx, batch)
+	batches := getBatch(msgs)
+	for _, b := range batches {
+		r, err := q.client.AppendRows(ctx, b)
 		if err != nil {
 			return err
 		}
@@ -121,4 +117,17 @@ func (q *query) AppendRows(
 
 func (q *query) Close() error {
 	return q.client.Close()
+}
+
+func getBatch(msgs [][]byte) [][][]byte {
+	batches := [][][]byte{}
+	for i := 0; i < len(msgs); i += 10 {
+		end := i + 10
+		if end > len(msgs) {
+			end = len(msgs)
+		}
+		batch := msgs[i:end]
+		batches = append(batches, batch)
+	}
+	return batches
 }
