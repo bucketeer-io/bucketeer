@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
 func TestValidateGoalEvent(t *testing.T) {
@@ -65,85 +64,6 @@ func TestValidateGoalEvent(t *testing.T) {
 			errCode, err := gs.validateGoalEvent(ctx, p.id, p.timestamp)
 			assert.Equal(t, p.expectedCode, errCode)
 			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestValidateGoalBatchEvent(t *testing.T) {
-	t.Parallel()
-	ctx := context.TODO()
-	logger, _ := log.NewLogger()
-	patterns := []struct {
-		desc         string
-		id           string
-		event        *eventproto.GoalBatchEvent
-		expectedCode string
-		expectedErr  error
-	}{
-		{
-			desc: "err: invalid uuid",
-			id:   "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-			event: &eventproto.GoalBatchEvent{
-				UserId: newUUID(t),
-				UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
-					{
-						Tag: "tag",
-					},
-				},
-			},
-			expectedCode: codeInvalidID,
-			expectedErr:  errInvalidIDFormat,
-		},
-		{
-			desc: "err: empty userid",
-			id:   newUUID(t),
-			event: &eventproto.GoalBatchEvent{
-				UserId: "",
-				UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
-					{
-						Tag: "tag",
-					},
-				},
-			},
-			expectedCode: codeEmptyUserID,
-			expectedErr:  errEmptyUserID,
-		},
-		{
-			desc: "err: empty tag",
-			id:   newUUID(t),
-			event: &eventproto.GoalBatchEvent{
-				UserId: newUUID(t),
-				UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
-					{
-						Tag: "",
-					},
-				},
-			},
-			expectedCode: codeEmptyTag,
-			expectedErr:  errEmptyTag,
-		},
-		{
-			desc: "success",
-			id:   newUUID(t),
-			event: &eventproto.GoalBatchEvent{
-				UserId: newUUID(t),
-				UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
-					{
-						Tag: "tag",
-					},
-				},
-			},
-			expectedCode: "",
-			expectedErr:  nil,
-		},
-	}
-
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			gs := gatewayService{logger: logger}
-			errCode, err := gs.validateGoalBatchEvent(ctx, p.id, p.event)
-			assert.Equal(t, errCode, p.expectedCode)
-			assert.Equal(t, err, p.expectedErr)
 		})
 	}
 }

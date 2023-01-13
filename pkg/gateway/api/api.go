@@ -997,38 +997,6 @@ missing method ProtoReflect (typecheck)
                                                                    ^
 */
 //nolint:typecheck
-func (s *gatewayService) getGoalBatchEvent(
-	ctx context.Context,
-	event event,
-) (*eventproto.GoalBatchEvent, string, error) {
-	ev := &eventproto.GoalBatchEvent{}
-	if err := protojson.Unmarshal(event.Event, ev); err != nil {
-		s.logger.Error(
-			"Failed to extract goal batch event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", event.ID),
-			)...,
-		)
-		return nil, codeUnmarshalFailed, errUnmarshalFailed
-	}
-	errorCode, err := s.validateGoalBatchEvent(ctx, event.ID, ev)
-	if err != nil {
-		return nil, errorCode, err
-	}
-	return ev, "", nil
-}
-
-/* Because we got the following error, `nolint` is added. After solving it, we'll remove it.
-
-pkg/gateway/api/api.go:829:47: cannot use ev
-(variable of type *"github.com/bucketeer-io/bucketeer/proto/event/client".GoalEvent)
-as protoreflect.ProtoMessage value in argument to protojson.Unmarshal:
-missing method ProtoReflect (typecheck)
-                        if err := protojson.Unmarshal(event.Event, ev); err != nil {
-                                                                   ^
-*/
-//nolint:typecheck
 func (s *gatewayService) getEvaluationEvent(
 	ctx context.Context,
 	event event,

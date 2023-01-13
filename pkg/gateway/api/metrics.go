@@ -31,7 +31,6 @@ const (
 	typeRegisterEvent = "RegisterEvent"
 	typeEvaluation    = "Evaluation"
 	typeGoal          = "Goal"
-	typeGoalBatch     = "GoalBatch"
 	typeMetrics       = "Metrics"
 	typeUnknown       = "Unknown"
 	typeTrack         = "Track"
