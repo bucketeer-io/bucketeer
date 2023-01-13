@@ -42,7 +42,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// This test is based on
 func TestGetCodeFromError(t *testing.T) {
 	t.Parallel()
 
