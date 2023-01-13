@@ -18,10 +18,11 @@ import (
 	"strconv"
 	"testing"
 
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+
+	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
 func TestCreateBatch(t *testing.T) {
