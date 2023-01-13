@@ -191,6 +191,12 @@ func (p *PersisterDwh) send(messages map[string]*puller.Message) {
 				e, retriable, err := p.convToEvaluationEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
 					if err == ErrNoExperiments {
+						p.logger.Warn(
+							"There is no running experiments",
+							zap.Error(err),
+							zap.String("id", id),
+							zap.String("environmentNamespace", environmentNamespace),
+						)
 						continue
 					}
 					if !retriable {
@@ -208,6 +214,15 @@ func (p *PersisterDwh) send(messages map[string]*puller.Message) {
 			case *eventproto.GoalEvent:
 				e, retriable, err := p.convToGoalEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
+					if err == ErrNoExperiments {
+						p.logger.Warn(
+							"There is no running experiments",
+							zap.Error(err),
+							zap.String("id", id),
+							zap.String("environmentNamespace", environmentNamespace),
+						)
+						continue
+					}
 					if !retriable {
 						p.logger.Error(
 							"failed to convert to goal event",

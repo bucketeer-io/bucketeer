@@ -65,7 +65,20 @@ func getCodeFromError(err error) string {
 		storageErr := &storagepb.StorageError{}
 		if e := apiErr.Details().ExtractProtoMessage(storageErr); e != nil {
 		}
-		return storageErr.GetCode().String()
+		switch storageErr.GetCode() {
+		case 
+		storagepb.StorageError_STORAGE_ERROR_CODE_UNSPECIFIED StorageError_StorageErrorCode = 0
+		storagepb.StorageError_TABLE_NOT_FOUND StorageError_StorageErrorCode = 1
+		storagepb.StorageError_STREAM_ALREADY_COMMITTED StorageError_StorageErrorCode = 2
+		storagepb.StorageError_STREAM_NOT_FOUND StorageError_StorageErrorCode = 3
+		storagepb.StorageError_INVALID_STREAM_TYPE StorageError_StorageErrorCode = 4
+		storagepb.StorageError_INVALID_STREAM_STATE StorageError_StorageErrorCode = 5
+		storagepb.StorageError_STREAM_FINALIZED StorageError_StorageErrorCode = 6
+		storagepb.StorageError_SCHEMA_MISMATCH_EXTRA_FIELDS StorageError_StorageErrorCode = 7
+		storagepb.StorageError_OFFSET_ALREADY_EXISTS StorageError_StorageErrorCode = 8
+		storagepb.StorageError_OFFSET_OUT_OF_RANGE StorageError_StorageErrorCode = 9
+
+		}
 	}
 	return ""
 }

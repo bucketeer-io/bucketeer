@@ -391,7 +391,7 @@ func TestOpsEventRateBatch(t *testing.T) {
 	startAt := time.Now()
 	stopAt := startAt.Local().Add(time.Hour * 1)
 	createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "GrpcOpsEventRateBatch", featureID, []string{goalID}, feature.Variations[0].Id, startAt, stopAt)
+		ctx, t, experimentClient, "OpsEventRateBatch", featureID, []string{goalID}, feature.Variations[0].Id, startAt, stopAt)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
 	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
