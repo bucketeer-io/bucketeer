@@ -55,57 +55,113 @@ func TestGetCodeFromError(t *testing.T) {
 			desc:     "codeOK",
 			expected: codeOK,
 		},
-		// {
-		// 	desc:     "codeUnknown: unknow error",
-		// 	input:    errors.New("error"),
-		// 	expected: codeUnknown,
-		// },
 		{
-			desc: "codeUnknown: error code is not unexpected",
+			desc: "codeUnknown",
+			status: func() *status.Status {
+				status := status.New(codes.InvalidArgument, "invalid")
+				return status
+			},
+			expected: codeUnknown,
+		},
+		{
+			desc: "storageErrorCodeUnspecified",
 			status: func() *status.Status {
 				status, err := status.New(codes.InvalidArgument, "invalid").WithDetails(
-					&storagepb.StorageError{Code: storagepb.StorageError_INVALID_STREAM_STATE},
+					&storagepb.StorageError{Code: storagepb.StorageError_STORAGE_ERROR_CODE_UNSPECIFIED},
 				)
 				require.NoError(t, err)
 				return status
 			},
-			expected: invalidStreamState,
+			expected: storageErrorCodeUnspecified,
 		},
-		// {
-		// 	desc:     "codeBadRequest",
-		// 	input:    &apierror.APIError{err: eS.Err(), status: eS, details: ErrDetails{ErrorInfo: ei}},
-		// 	expected: codeBadRequest,
-		// },
-		// {
-		// 	desc:     "codeForbidden",
-		// 	input:    &googleapi.Error{Code: http.StatusForbidden},
-		// 	expected: codeForbidden,
-		// },
-		// {
-		// 	desc:     "codeNotFound",
-		// 	input:    &googleapi.Error{Code: http.StatusNotFound},
-		// 	expected: codeNotFound,
-		// },
-		// {
-		// 	desc:     "codeConflict",
-		// 	input:    &googleapi.Error{Code: http.StatusConflict},
-		// 	expected: codeConflict,
-		// },
-		// {
-		// 	desc:     "codeInternalServerError",
-		// 	input:    &googleapi.Error{Code: http.StatusInternalServerError},
-		// 	expected: codeInternalServerError,
-		// },
-		// {
-		// 	desc:     "codeNotImplemented",
-		// 	input:    &googleapi.Error{Code: http.StatusNotImplemented},
-		// 	expected: codeNotImplemented,
-		// },
-		// {
-		// 	desc:     "codeServiceUnavailable",
-		// 	input:    &googleapi.Error{Code: http.StatusServiceUnavailable},
-		// 	expected: codeServiceUnavailable,
-		// },
+		{
+			desc: "tableNotFound",
+			status: func() *status.Status {
+				status, err := status.New(codes.InvalidArgument, "invalid").WithDetails(
+					&storagepb.StorageError{Code: storagepb.StorageError_TABLE_NOT_FOUND},
+				)
+				require.NoError(t, err)
+				return status
+			},
+			expected: tableNotFound,
+		},
+		{
+			desc: "streamAlreadyCommitted",
+			status: func() *status.Status {
+				status, err := status.New(codes.InvalidArgument, "invalid").WithDetails(
+					&storagepb.StorageError{Code: storagepb.StorageError_STREAM_ALREADY_COMMITTED},
+				)
+				require.NoError(t, err)
+				return status
+			},
+			expected: streamAlreadyCommitted,
+		},
+		{
+			desc: "sreamNotFound",
+			status: func() *status.Status {
+				status, err := status.New(codes.InvalidArgument, "invalid").WithDetails(
+					&storagepb.StorageError{Code: storagepb.StorageError_STREAM_NOT_FOUND},
+				)
+				require.NoError(t, err)
+				return status
+			},
+			expected: sreamNotFound,
+		},
+		{
+			desc: "invalidStreamType",
+			status: func() *status.Status {
+				status, err := status.New(codes.InvalidArgument, "invalid").WithDetails(
+					&storagepb.StorageError{Code: storagepb.StorageError_INVALID_STREAM_TYPE},
+				)
+				require.NoError(t, err)
+				return status
+			},
+			expected: invalidStreamType,
+		},
+		{
+			desc: "streamFinalized",
+			status: func() *status.Status {
+				status, err := status.New(codes.InvalidArgument, "invalid").WithDetails(
+					&storagepb.StorageError{Code: storagepb.StorageError_STREAM_FINALIZED},
+				)
+				require.NoError(t, err)
+				return status
+			},
+			expected: streamFinalized,
+		},
+		{
+			desc: "schemaMismatchExtraFields",
+			status: func() *status.Status {
+				status, err := status.New(codes.InvalidArgument, "invalid").WithDetails(
+					&storagepb.StorageError{Code: storagepb.StorageError_SCHEMA_MISMATCH_EXTRA_FIELDS},
+				)
+				require.NoError(t, err)
+				return status
+			},
+			expected: schemaMismatchExtraFields,
+		},
+		{
+			desc: "offsetAlreadyExists",
+			status: func() *status.Status {
+				status, err := status.New(codes.InvalidArgument, "invalid").WithDetails(
+					&storagepb.StorageError{Code: storagepb.StorageError_OFFSET_ALREADY_EXISTS},
+				)
+				require.NoError(t, err)
+				return status
+			},
+			expected: offsetAlreadyExists,
+		},
+		{
+			desc: "offsetOutOfRange",
+			status: func() *status.Status {
+				status, err := status.New(codes.InvalidArgument, "invalid").WithDetails(
+					&storagepb.StorageError{Code: storagepb.StorageError_OFFSET_OUT_OF_RANGE},
+				)
+				require.NoError(t, err)
+				return status
+			},
+			expected: offsetOutOfRange,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
