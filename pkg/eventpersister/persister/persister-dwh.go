@@ -330,7 +330,12 @@ func (p *PersisterDwh) convToGoalEvent(
 	e *eventproto.GoalEvent,
 	id, environmentNamespace string,
 ) (*ecproto.GoalEvent, bool, error) {
-	eval, retriable, err := p.linkGoalEvent(ctx, e, environmentNamespace)
+	tag := e.Tag
+	if tag == "" {
+		// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
+		tag = "none"
+	}
+	eval, retriable, err := p.linkGoalEvent(ctx, e, environmentNamespace, tag)
 	if err != nil {
 		return nil, retriable, err
 	}
@@ -352,7 +357,7 @@ func (p *PersisterDwh) convToGoalEvent(
 		Value:                float32(e.Value),
 		UserData:             string(ud),
 		UserId:               e.UserId,
-		Tag:                  e.Tag,
+		Tag:                  tag,
 		SourceId:             e.SourceId.String(),
 		EnvironmentNamespace: environmentNamespace,
 		Timestamp:            e.Timestamp,
@@ -366,13 +371,13 @@ func (p *PersisterDwh) convToGoalEvent(
 func (p *PersisterDwh) linkGoalEvent(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
-	environmentNamespace string,
+	environmentNamespace, tag string,
 ) (*featureproto.Evaluation, bool, error) {
 	if err := p.validateTimestamp(event.Timestamp); err != nil {
 		handledCounter.WithLabelValues(codeInvalidGoalEventTimestamp).Inc()
 		return nil, false, err
 	}
-	evalExp, retriable, err := p.linkGoalEventByExperiment(ctx, event, environmentNamespace)
+	evalExp, retriable, err := p.linkGoalEventByExperiment(ctx, event, environmentNamespace, tag)
 	if err != nil {
 		return nil, retriable, err
 	}
@@ -399,10 +404,6 @@ func (p *PersisterDwh) getUserEvaluation(
 	featureID string,
 	featureVersion int32,
 ) (*featureproto.Evaluation, error) {
-	// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
-	if tag == "" {
-		tag = "none"
-	}
 	evaluation, err := p.userEvaluationStorage.GetUserEvaluation(
 		p.ctx,
 		userID,
@@ -425,7 +426,7 @@ func (p *PersisterDwh) getUserEvaluation(
 func (p *PersisterDwh) linkGoalEventByExperiment(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
-	environmentNamespace string,
+	environmentNamespace, tag string,
 ) (*featureproto.Evaluation, bool, error) {
 	// List experiments with the following status RUNNING, FORCE_STOPPED, and STOPPED
 	experiments, err := p.listExperiments(ctx, environmentNamespace)
@@ -453,7 +454,7 @@ func (p *PersisterDwh) linkGoalEventByExperiment(
 	ev, err := p.getUserEvaluation(
 		environmentNamespace,
 		event.UserId,
-		event.Tag,
+		tag,
 		experiment.FeatureId,
 		experiment.FeatureVersion,
 	)
