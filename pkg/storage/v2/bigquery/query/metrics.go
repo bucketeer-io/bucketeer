@@ -25,8 +25,15 @@ import (
 )
 
 const (
-	operationQuery = "Query"
-	codeOK         = "OK"
+	operationQuery              = "Query"
+	codeOK                      = "OK"
+	storageErrorCodeUnspecified = "StorageErroCodeUnspecified"
+	tableNotFound               = "TableNotFound"
+	streamAlreadyCommitted      = "StreamAlreadyCommitted"
+	sreamNotFound               = "StreamNotFound"
+	invalidStreamType           = "InvalidStreamType"
+	invalidStreamState          = "InvalidStreamState"
+	
 )
 
 var (
@@ -66,18 +73,26 @@ func getCodeFromError(err error) string {
 		if e := apiErr.Details().ExtractProtoMessage(storageErr); e != nil {
 		}
 		switch storageErr.GetCode() {
-		case 
-		storagepb.StorageError_STORAGE_ERROR_CODE_UNSPECIFIED StorageError_StorageErrorCode = 0
-		storagepb.StorageError_TABLE_NOT_FOUND StorageError_StorageErrorCode = 1
-		storagepb.StorageError_STREAM_ALREADY_COMMITTED StorageError_StorageErrorCode = 2
-		storagepb.StorageError_STREAM_NOT_FOUND StorageError_StorageErrorCode = 3
-		storagepb.StorageError_INVALID_STREAM_TYPE StorageError_StorageErrorCode = 4
-		storagepb.StorageError_INVALID_STREAM_STATE StorageError_StorageErrorCode = 5
-		storagepb.StorageError_STREAM_FINALIZED StorageError_StorageErrorCode = 6
-		storagepb.StorageError_SCHEMA_MISMATCH_EXTRA_FIELDS StorageError_StorageErrorCode = 7
-		storagepb.StorageError_OFFSET_ALREADY_EXISTS StorageError_StorageErrorCode = 8
-		storagepb.StorageError_OFFSET_OUT_OF_RANGE StorageError_StorageErrorCode = 9
-
+		case storagepb.StorageError_STORAGE_ERROR_CODE_UNSPECIFIED:
+			return
+		case storagepb.StorageError_TABLE_NOT_FOUND:
+			return
+		case storagepb.StorageError_STREAM_ALREADY_COMMITTED:
+			return
+		case storagepb.StorageError_STREAM_NOT_FOUND:
+			return
+		case storagepb.StorageError_INVALID_STREAM_TYPE:
+			return
+		case storagepb.StorageError_INVALID_STREAM_STATE:
+			return
+		case storagepb.StorageError_STREAM_FINALIZED:
+			return
+		case storagepb.StorageError_SCHEMA_MISMATCH_EXTRA_FIELDS:
+			return
+		case storagepb.StorageError_OFFSET_ALREADY_EXISTS:
+			return
+		case storagepb.StorageError_OFFSET_OUT_OF_RANGE:
+			return
 		}
 	}
 	return ""
