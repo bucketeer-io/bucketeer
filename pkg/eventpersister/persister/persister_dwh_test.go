@@ -280,7 +280,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		{
 			desc: "err: invalid timestamp",
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_ANDROID,
 				Timestamp: invalidTime.Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -315,7 +315,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_ANDROID,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -350,7 +350,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_ANDROID,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -392,7 +392,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				}, nil)
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_ANDROID,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -444,7 +444,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				).Return(nil, btstorage.ErrKeyNotFound)
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_ANDROID,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -496,7 +496,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_ANDROID,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -548,7 +548,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_ANDROID,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
