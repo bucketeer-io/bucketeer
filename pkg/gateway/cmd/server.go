@@ -44,7 +44,6 @@ type server struct {
 	project                *string
 	goalTopic              *string
 	goalTopicProject       *string
-	goalBatchTopic         *string
 	evaluationTopic        *string
 	evaluationTopicProject *string
 	userTopic              *string
@@ -75,10 +74,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"goal-topic-project",
 			"GCP Project id to use for PubSub to publish GoalEvent.",
 		).String(),
-		goalBatchTopic: cmd.Flag(
-			"goal-batch-topic",
-			"Topic to use for publishing GoalBatchEvent.",
-		).Required().String(),
 		evaluationTopic: cmd.Flag(
 			"evaluation-topic",
 			"Topic to use for publishing EvaluationEvent.",
@@ -200,12 +195,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		defer metricsPublisher.Stop()
 	}
 
-	goalBatchPublisher, err := pubsubClient.CreatePublisherInProject(*s.goalBatchTopic, *s.project, publishOptions...)
-	if err != nil {
-		return err
-	}
-	defer goalBatchPublisher.Stop()
-
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
 		return err
@@ -253,7 +242,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureClient,
 		accountClient,
 		goalPublisher,
-		goalBatchPublisher,
 		evaluationPublisher,
 		userPublisher,
 		metricsPublisher,
@@ -291,7 +279,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureClient,
 		accountClient,
 		goalPublisher,
-		goalBatchPublisher,
 		evaluationPublisher,
 		userPublisher,
 		metricsPublisher,

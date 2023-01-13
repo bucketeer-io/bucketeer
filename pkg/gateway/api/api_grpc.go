@@ -67,7 +67,6 @@ var (
 	ErrInternal          = status.Error(codes.Internal, "gateway: internal")
 
 	grpcGoalEvent       = &eventproto.GoalEvent{}
-	grpcGoalBatchEvent  = &eventproto.GoalBatchEvent{}
 	grpcEvaluationEvent = &eventproto.EvaluationEvent{}
 	grpcMetricsEvent    = &eventproto.MetricsEvent{}
 )
@@ -133,7 +132,6 @@ type grpcGatewayService struct {
 	featureClient          featureclient.Client
 	accountClient          accountclient.Client
 	goalPublisher          publisher.Publisher
-	goalBatchPublisher     publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
 	metricsPublisher       publisher.Publisher
@@ -149,7 +147,6 @@ func NewGrpcGatewayService(
 	featureClient featureclient.Client,
 	accountClient accountclient.Client,
 	gp publisher.Publisher,
-	gbp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
 	mp publisher.Publisher,
@@ -167,7 +164,6 @@ func NewGrpcGatewayService(
 		featureClient:          featureClient,
 		accountClient:          accountClient,
 		goalPublisher:          gp,
-		goalBatchPublisher:     gbp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,
 		metricsPublisher:       mp,
@@ -694,7 +690,6 @@ func (s *grpcGatewayService) RegisterEvents(
 	}
 	errs := make(map[string]*gwproto.RegisterEventsResponse_Error)
 	goalMessages := make([]publisher.Message, 0)
-	goalBatchMessages := make([]publisher.Message, 0)
 	evaluationMessages := make([]publisher.Message, 0)
 	metricsMessages := make([]publisher.Message, 0)
 	publish := func(p publisher.Publisher, messages []publisher.Message, typ string) {
@@ -751,19 +746,6 @@ func (s *grpcGatewayService) RegisterEvents(
 			goalMessages = append(goalMessages, event)
 			continue
 		}
-		if ptypes.Is(event.Event, grpcGoalBatchEvent) {
-			errorCode, err := validator.validate(ctx)
-			if err != nil {
-				eventCounter.WithLabelValues(callerGatewayService, typeGoalBatch, errorCode).Inc()
-				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{
-					Retriable: false,
-					Message:   err.Error(),
-				}
-				continue
-			}
-			goalBatchMessages = append(goalBatchMessages, event)
-			continue
-		}
 		if ptypes.Is(event.Event, grpcEvaluationEvent) {
 			errorCode, err := validator.validate(ctx)
 			if err != nil {
@@ -791,7 +773,6 @@ func (s *grpcGatewayService) RegisterEvents(
 		}
 	}
 	publish(s.goalPublisher, goalMessages, typeGoal)
-	publish(s.goalBatchPublisher, goalBatchMessages, typeGoalBatch)
 	publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
 	publish(s.metricsPublisher, metricsMessages, typeMetrics)
 	if len(errs) > 0 {

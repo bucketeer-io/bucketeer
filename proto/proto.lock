@@ -3595,10 +3595,6 @@
                 "integer": 3
               },
               {
-                "name": "GOAL_BATCH",
-                "integer": 4
-              },
-              {
                 "name": "GO_SERVER",
                 "integer": 5
               },
@@ -3606,6 +3602,9 @@
                 "name": "NODE_SERVER",
                 "integer": 6
               }
+            ],
+            "reserved_ids": [
+              4
             ]
           },
           {
@@ -4058,38 +4057,6 @@
                 "id": 6,
                 "name": "user_id",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GoalBatchEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "user_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "user_goal_events_over_tags",
-                "type": "UserGoalEventsOverTag",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "UserGoalEventsOverTag",
-            "fields": [
-              {
-                "id": 1,
-                "name": "tag",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "user_goal_events",
-                "type": "UserGoalEvent",
-                "is_repeated": true
               }
             ]
           },

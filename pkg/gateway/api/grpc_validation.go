@@ -28,8 +28,6 @@ import (
 )
 
 var (
-	errEmptyTag         = errors.New("gateway: tag is empty")
-	errEmptyUserID      = errors.New("gateway: user id is empty")
 	errInvalidIDFormat  = errors.New("gateway: invalid event id format")
 	errInvalidTimestamp = errors.New("gateway: invalid event timestamp")
 	errUnmarshalFailed  = errors.New("gateway: failed to unmarshal event")
@@ -53,13 +51,6 @@ type eventGoalValidator struct {
 	logger                    *zap.Logger
 }
 
-type eventGoalBatchValidator struct {
-	event                     *eventproto.Event
-	oldestTimestampDuration   time.Duration
-	furthestTimestampDuration time.Duration
-	logger                    *zap.Logger
-}
-
 type eventMetricsValidator struct {
 	event                     *eventproto.Event
 	oldestTimestampDuration   time.Duration
@@ -74,14 +65,6 @@ func newEventValidator(
 ) eventValidator {
 	if ptypes.Is(event.Event, grpcGoalEvent) {
 		return &eventGoalValidator{
-			event:                     event,
-			oldestTimestampDuration:   oldestTimestampDuration,
-			furthestTimestampDuration: furthestTimestampDuration,
-			logger:                    logger,
-		}
-	}
-	if ptypes.Is(event.Event, grpcGoalBatchEvent) {
-		return &eventGoalBatchValidator{
 			event:                     event,
 			oldestTimestampDuration:   oldestTimestampDuration,
 			furthestTimestampDuration: furthestTimestampDuration,
@@ -140,62 +123,6 @@ func (v *eventGoalValidator) unmarshal(ctx context.Context) (*eventproto.GoalEve
 	if err := ptypes.UnmarshalAny(v.event.Event, ev); err != nil {
 		v.logger.Error(
 			"Failed to extract goal event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", v.event.Id),
-			)...,
-		)
-		return nil, err
-	}
-	return ev, nil
-}
-
-func (v *eventGoalBatchValidator) validate(ctx context.Context) (string, error) {
-	if err := uuid.ValidateUUID(v.event.Id); err != nil {
-		v.logger.Warn(
-			"Failed to validate goal batch event id format",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", v.event.Id),
-			)...,
-		)
-		return codeInvalidID, errInvalidIDFormat
-	}
-	ev, err := v.unmarshal(ctx)
-	if err != nil {
-		return codeUnmarshalFailed, errUnmarshalFailed
-	}
-	if ev.UserId == "" {
-		v.logger.Error(
-			"Failed to validate goal batch event. User id is empty",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(errEmptyUserID),
-				zap.String("id", v.event.Id),
-			)...,
-		)
-		return codeEmptyUserID, errEmptyUserID
-	}
-	for _, ugeot := range ev.UserGoalEventsOverTags {
-		if ugeot.Tag == "" {
-			v.logger.Error(
-				"Failed to validate goal batch event. Tag is empty",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(errEmptyTag),
-					zap.String("id", v.event.Id),
-					zap.String("userId", ev.UserId),
-				)...,
-			)
-			return codeEmptyTag, errEmptyTag
-		}
-	}
-	return "", nil
-}
-
-func (v *eventGoalBatchValidator) unmarshal(ctx context.Context) (*eventproto.GoalBatchEvent, error) {
-	ev := &eventproto.GoalBatchEvent{}
-	if err := ptypes.UnmarshalAny(v.event.Event, ev); err != nil {
-		v.logger.Error(
-			"Failed to extract goal batch event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", v.event.Id),

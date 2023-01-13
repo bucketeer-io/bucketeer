@@ -54,8 +54,6 @@ spec:
               value: "{{ .Values.env.bigtableInstance }}"
             - name: BUCKETEER_GATEWAY_GOAL_TOPIC
               value: "{{ .Values.env.goalTopic }}"
-            - name: BUCKETEER_GATEWAY_GOAL_BATCH_TOPIC
-              value: "{{ .Values.env.goalBatchTopic }}"
             - name: BUCKETEER_GATEWAY_EVALUATION_TOPIC
               value: "{{ .Values.env.evaluationTopic }}"
             - name: BUCKETEER_GATEWAY_USER_TOPIC

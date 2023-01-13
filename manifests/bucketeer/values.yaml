@@ -147,7 +147,6 @@ api-gateway:
     project:
     bigtableInstance: bucketeer-cbt
     goalTopic: bucketeer-goal-events
-    goalBatchTopic: bucketeer-goal-batch-events
     evaluationTopic: bucketeer-evaluation-events
     userTopic: bucketeer-user-events
     metricsTopic: bucketeer-metrics-events
@@ -1648,64 +1647,6 @@ feature-tag-cacher:
     port: 9000
     adminPort: 8001
     resources: {}
-  service:
-    type: ClusterIP
-    clusterIP: None
-    externalPort: 9000
-  health:
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    failureThreshold: 10
-  resources: {}
-  serviceAccount:
-    annotations: {}
-
-goal-batch-transformer:
-  image:
-    repository: ghcr.io/bucketeer-io/bucketeer-goal-batch
-    pullPolicy: IfNotPresent
-  fullnameOverride: "goal-batch-transformer"
-  namespace: default
-  env:
-    port: 9090
-    metricsPort: 9002
-    project:
-    featureService: localhost:9001
-    userService: localhost:9001
-    goalBatchTopic: bucketeer-goal-batch-events
-    goalBatchSubscription: bucketeer-goal-batch-events-goal-batch-transformer
-    goalTopic: bucketeer-goal-events
-    maxMps: 100
-    numWorkers: 10
-    pullerNumGoroutines: "5"
-    pullerMaxOutstandingMessages: "1000"
-    pullerMaxOutstandingBytes: "1000000000"
-    logLevel: info
-  affinity: {}
-  nodeSelector: {}
-  hpa:
-    enabled: false
-    namespace:
-    minReplicas:
-    maxReplicas:
-    metrics: {}
-  envoy:
-    image:
-      repository: envoyproxy/envoy-alpine
-      tag: v1.21.1
-      pullPolicy: IfNotPresent
-    config:
-    port: 9000
-    adminPort: 8001
-    resources: {}
-  tls:
-    service:
-      secret:
-      cert:
-      key:
-  serviceToken:
-    secret:
-    token:
   service:
     type: ClusterIP
     clusterIP: None

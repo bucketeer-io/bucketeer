@@ -21,7 +21,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
 func (s *gatewayService) validateGoalEvent(ctx context.Context, id string, timeStamp int64) (string, error) {
@@ -44,47 +43,6 @@ func (s *gatewayService) validateGoalEvent(ctx context.Context, id string, timeS
 			)...,
 		)
 		return codeInvalidTimestamp, errInvalidTimestamp
-	}
-	return "", nil
-}
-
-func (s *gatewayService) validateGoalBatchEvent(
-	ctx context.Context,
-	id string,
-	event *eventproto.GoalBatchEvent,
-) (string, error) {
-	if err := uuid.ValidateUUID(id); err != nil {
-		s.logger.Warn(
-			"Failed to validate goal event id format",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", id),
-			)...,
-		)
-		return codeInvalidID, errInvalidIDFormat
-	}
-	if event.UserId == "" {
-		s.logger.Error(
-			"Failed to validate goal batch event. User id is empty",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(errEmptyUserID),
-				zap.String("id", id),
-			)...,
-		)
-		return codeEmptyUserID, errEmptyUserID
-	}
-	for _, ugeot := range event.UserGoalEventsOverTags {
-		if ugeot.Tag == "" {
-			s.logger.Error(
-				"Failed to validate goal batch event. Tag is empty",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(errEmptyTag),
-					zap.String("id", id),
-					zap.String("userId", event.UserId),
-				)...,
-			)
-			return codeEmptyTag, errEmptyTag
-		}
 	}
 	return "", nil
 }

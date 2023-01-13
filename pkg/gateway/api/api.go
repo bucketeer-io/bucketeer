@@ -52,7 +52,6 @@ type gatewayService struct {
 	featureClient          featureclient.Client
 	accountClient          accountclient.Client
 	goalPublisher          publisher.Publisher
-	goalBatchPublisher     publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
 	metricsPublisher       publisher.Publisher
@@ -68,7 +67,6 @@ func NewGatewayService(
 	featureClient featureclient.Client,
 	accountClient accountclient.Client,
 	gp publisher.Publisher,
-	gbp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
 	mp publisher.Publisher,
@@ -86,7 +84,6 @@ func NewGatewayService(
 		featureClient:          featureClient,
 		accountClient:          accountClient,
 		goalPublisher:          gp,
-		goalBatchPublisher:     gbp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,
 		metricsPublisher:       mp,
@@ -104,7 +101,6 @@ type metricsDetailEventType int
 
 const (
 	goalEventType eventType = iota + 1 // eventType starts from 1 for validation.
-	goalBatchEventType
 	evaluationEventType
 	metricsEventType
 )
@@ -829,7 +825,6 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 	}
 	errs := make(map[string]*registerEventsResponseError)
 	goalMessages := make([]publisher.Message, 0)
-	goalBatchMessages := make([]publisher.Message, 0)
 	evaluationMessages := make([]publisher.Message, 0)
 	metricsMessages := make([]publisher.Message, 0)
 	publish := func(p publisher.Publisher, messages []publisher.Message, typ string) {
@@ -890,30 +885,6 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				Event:                goalAny,
 				EnvironmentNamespace: event.EnvironmentNamespace,
 			})
-		case goalBatchEventType:
-			batch, errCode, err := s.getGoalBatchEvent(req.Context(), event)
-			if err != nil {
-				restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, errCode).Inc()
-				errs[event.ID] = &registerEventsResponseError{
-					Retriable: false,
-					Message:   err.Error(),
-				}
-				continue
-			}
-			batchAny, err := ptypes.MarshalAny(batch)
-			if err != nil {
-				restEventCounter.WithLabelValues(callerGatewayService, typeGoalBatch, codeMarshalAnyFailed).Inc()
-				errs[event.ID] = &registerEventsResponseError{
-					Retriable: false,
-					Message:   err.Error(),
-				}
-				continue
-			}
-			goalBatchMessages = append(goalBatchMessages, &eventproto.Event{
-				Id:                   event.ID,
-				Event:                batchAny,
-				EnvironmentNamespace: event.EnvironmentNamespace,
-			})
 		case evaluationEventType:
 			eval, errCode, err := s.getEvaluationEvent(req.Context(), event)
 			if err != nil {
@@ -972,7 +943,6 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 		}
 	}
 	publish(s.goalPublisher, goalMessages, typeGoal)
-	publish(s.goalBatchPublisher, goalBatchMessages, typeGoalBatch)
 	publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
 	publish(s.metricsPublisher, metricsMessages, typeMetrics)
 	if len(errs) > 0 {
@@ -1011,38 +981,6 @@ func (s *gatewayService) getGoalEvent(ctx context.Context, event event) (*eventp
 		return nil, codeUnmarshalFailed, errUnmarshalFailed
 	}
 	errorCode, err := s.validateGoalEvent(ctx, event.ID, ev.Timestamp)
-	if err != nil {
-		return nil, errorCode, err
-	}
-	return ev, "", nil
-}
-
-/* Because we got the following error, `nolint` is added. After solving it, we'll remove it.
-
-pkg/gateway/api/api.go:829:47: cannot use ev
-(variable of type *"github.com/bucketeer-io/bucketeer/proto/event/client".GoalEvent)
-as protoreflect.ProtoMessage value in argument to protojson.Unmarshal:
-missing method ProtoReflect (typecheck)
-                        if err := protojson.Unmarshal(event.Event, ev); err != nil {
-                                                                   ^
-*/
-//nolint:typecheck
-func (s *gatewayService) getGoalBatchEvent(
-	ctx context.Context,
-	event event,
-) (*eventproto.GoalBatchEvent, string, error) {
-	ev := &eventproto.GoalBatchEvent{}
-	if err := protojson.Unmarshal(event.Event, ev); err != nil {
-		s.logger.Error(
-			"Failed to extract goal batch event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", event.ID),
-			)...,
-		)
-		return nil, codeUnmarshalFailed, errUnmarshalFailed
-	}
-	errorCode, err := s.validateGoalBatchEvent(ctx, event.ID, ev)
 	if err != nil {
 		return nil, errorCode, err
 	}

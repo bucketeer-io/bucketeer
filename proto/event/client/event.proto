@@ -63,7 +63,7 @@ enum SourceId {
   ANDROID = 1;
   IOS = 2;
   WEB = 3;
-  GOAL_BATCH = 4;
+  reserved 4;  // GOAL_BATCH = 4;
   GO_SERVER = 5;
   NODE_SERVER = 6;
 }
@@ -143,16 +143,6 @@ message OpsEvent {
   string variation_id = 4;
   string goal_id = 5;
   string user_id = 6;
-}
-
-message GoalBatchEvent {
-  string user_id = 1;
-  repeated UserGoalEventsOverTag user_goal_events_over_tags = 2;
-}
-
-message UserGoalEventsOverTag {
-  string tag = 1;
-  repeated UserGoalEvent user_goal_events = 2;
 }
 
 message UserGoalEvent {

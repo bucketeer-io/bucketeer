@@ -44,10 +44,6 @@ func TestNewEventValidator(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not serialize goal event")
 	}
-	bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{})
-	if err != nil {
-		t.Fatal("could not serialize goal batch event")
-	}
 	bMetricsEvent, err := proto.Marshal(&eventproto.MetricsEvent{})
 	if err != nil {
 		t.Fatal("could not serialize metrics event")
@@ -78,17 +74,6 @@ func TestNewEventValidator(t *testing.T) {
 				},
 			},
 			expected: &eventGoalValidator{},
-		},
-		{
-			desc: "GoalBatchValidator",
-			input: &eventproto.Event{
-				Id: newUUID(t),
-				Event: &any.Any{
-					TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalBatchEvent",
-					Value:   bGoalBatchEvent,
-				},
-			},
-			expected: &eventGoalBatchValidator{},
 		},
 		{
 			desc: "MetricsEvent",
@@ -216,119 +201,6 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			logger, _ := log.NewLogger()
 			v := &eventGoalValidator{
-				event:                     p.inputFunc(),
-				logger:                    logger,
-				oldestTimestampDuration:   24 * time.Hour,
-				furthestTimestampDuration: 24 * time.Hour,
-			}
-			actual, err := v.validate(context.Background())
-			assert.Equal(t, p.expected, actual)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestGrpcValidateGoalBatchEvent(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		desc        string
-		inputFunc   func() *eventproto.Event
-		expected    string
-		expectedErr error
-	}{
-		{
-			desc: "err: invalid uuid",
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-				}
-			},
-			expected:    codeInvalidID,
-			expectedErr: errInvalidIDFormat,
-		},
-		{
-			desc: "err: unmarshal failed",
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-				}
-			},
-			expected:    codeUnmarshalFailed,
-			expectedErr: errUnmarshalFailed,
-		},
-		{
-			desc: "err: empty user id",
-			inputFunc: func() *eventproto.Event {
-				bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{
-					UserId: "",
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalBatchEvent",
-						Value:   bGoalBatchEvent,
-					},
-				}
-			},
-			expected:    codeEmptyUserID,
-			expectedErr: errEmptyUserID,
-		},
-		{
-			desc: "err: empty tag",
-			inputFunc: func() *eventproto.Event {
-				bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{
-					UserId: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
-						{
-							Tag: "",
-						},
-					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalBatchEvent",
-						Value:   bGoalBatchEvent,
-					},
-				}
-			},
-			expected:    codeEmptyTag,
-			expectedErr: errEmptyTag,
-		},
-		{
-			desc: "success",
-			inputFunc: func() *eventproto.Event {
-				bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{
-					UserId: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					UserGoalEventsOverTags: []*eventproto.UserGoalEventsOverTag{
-						{
-							Tag: "tag",
-						},
-					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalBatchEvent",
-						Value:   bGoalBatchEvent,
-					},
-				}
-			},
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			logger, _ := log.NewLogger()
-			v := &eventGoalBatchValidator{
 				event:                     p.inputFunc(),
 				logger:                    logger,
 				oldestTimestampDuration:   24 * time.Hour,
