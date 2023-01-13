@@ -26,7 +26,6 @@ spec:
       {{- end }}
       affinity: {{ toYaml .Values.affinity | nindent 8 }}
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
-      serviceAccountName: {{ template "event-persister-evaluation-events-dwh.name" . }}
       volumes:
         - name: envoy-config
           configMap:
@@ -37,6 +36,7 @@ spec:
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }}
+      serviceAccountName: {{ template "event-persister-evaluation-events-dwh.name" . }}
       containers:
         - name: "event-persister-dwh"
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
