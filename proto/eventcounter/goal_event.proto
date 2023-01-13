@@ -23,13 +23,12 @@ message GoalEvent {
   float value = 3;
   string user_data = 4;
   string user_id = 5;
-  string evaluation = 6;
-  string tag = 7;
-  string source_id = 8;
-  string environment_namespace = 9;
-  int64 timestamp = 10;
-  string feature_id = 11;
-  int32 feature_version = 12;
-  string variation_id = 13;
-  string reason = 14;
+  string tag = 6;
+  string source_id = 7;
+  string environment_namespace = 8;
+  int64 timestamp = 9;
+  string feature_id = 10;
+  int32 feature_version = 11;
+  string variation_id = 12;
+  string reason = 13;
 }

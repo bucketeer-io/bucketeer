@@ -305,6 +305,11 @@ func (p *PersisterDwh) convToEvaluationEvent(
 			return nil, false, err
 		}
 	}
+	tag := e.Tag
+	if tag == "" {
+		// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
+		tag = "none"
+	}
 	return &ecproto.EvaluationEvent{
 		Id:                   id,
 		FeatureId:            e.FeatureId,
@@ -313,7 +318,7 @@ func (p *PersisterDwh) convToEvaluationEvent(
 		UserId:               e.UserId,
 		VariationId:          e.VariationId,
 		Reason:               e.Reason.Type.String(),
-		Tag:                  e.Tag,
+		Tag:                  tag,
 		SourceId:             e.SourceId.String(),
 		EnvironmentNamespace: environmentNamespace,
 		Timestamp:            e.Timestamp,
