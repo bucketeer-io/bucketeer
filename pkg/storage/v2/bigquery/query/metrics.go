@@ -17,9 +17,9 @@ package query
 import (
 	"time"
 
+	"cloud.google.com/go/bigquery/storage/apiv1/storagepb"
 	"github.com/googleapis/gax-go/v2/apierror"
 	"github.com/prometheus/client_golang/prometheus"
-	"cloud.google.com/go/bigquery/storage/apiv1/storagepb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
