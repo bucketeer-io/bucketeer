@@ -19,7 +19,7 @@ import (
 
 	"github.com/googleapis/gax-go/v2/apierror"
 	"github.com/prometheus/client_golang/prometheus"
-	storagepb "google.golang.org/genproto/googleapis/cloud/bigquery/storage/v1"
+	"cloud.google.com/go/bigquery/storage/apiv1/storagepb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
