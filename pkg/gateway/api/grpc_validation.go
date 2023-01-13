@@ -28,8 +28,6 @@ import (
 )
 
 var (
-	errEmptyTag         = errors.New("gateway: tag is empty")
-	errEmptyUserID      = errors.New("gateway: user id is empty")
 	errInvalidIDFormat  = errors.New("gateway: invalid event id format")
 	errInvalidTimestamp = errors.New("gateway: invalid event timestamp")
 	errUnmarshalFailed  = errors.New("gateway: failed to unmarshal event")

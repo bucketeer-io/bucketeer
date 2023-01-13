@@ -43,8 +43,6 @@ const (
 	codeOK                      = "OK"
 	codeInvalidID               = "InvalidID"
 	codeInvalidTimestamp        = "InvalidTimestamp"
-	codeEmptyTag                = "EmptyTag"
-	codeEmptyUserID             = "EmptyUserID"
 	codeInvalidTimestampRequest = "InvalidTimestampRequest"
 	codeUnmarshalFailed         = "UnmarshalFailed"
 	codeMarshalAnyFailed        = "MarshalAnyFailed"
