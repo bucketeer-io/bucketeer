@@ -36,31 +36,23 @@ import (
 	"testing"
 
 	"cloud.google.com/go/bigquery/storage/apiv1/storagepb"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-// This test is based on 
+// This test is based on
 func TestGetCodeFromError(t *testing.T) {
 	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	a := &storagepb.StorageError{Code: storagepb.StorageError_INVALID_STREAM_STATE}
-	b, err := status.New(codes.InvalidArgument, "invalid").WithDetails(a)
-	require.NoError(t, err)
 
 	patterns := []struct {
 		desc     string
-		input    error
 		expected string
+		status   func() *status.Status
 	}{
 		{
 			desc:     "codeOK",
-			input:    nil,
 			expected: codeOK,
 		},
 		// {
@@ -69,8 +61,14 @@ func TestGetCodeFromError(t *testing.T) {
 		// 	expected: codeUnknown,
 		// },
 		{
-			desc:     "codeUnknown: error code is not unexpected",
-			input:    b.Err(),
+			desc: "codeUnknown: error code is not unexpected",
+			status: func() *status.Status {
+				status, err := status.New(codes.InvalidArgument, "invalid").WithDetails(
+					&storagepb.StorageError{Code: storagepb.StorageError_INVALID_STREAM_STATE},
+				)
+				require.NoError(t, err)
+				return status
+			},
 			expected: invalidStreamState,
 		},
 		// {
@@ -111,7 +109,11 @@ func TestGetCodeFromError(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual := getCodeFromError(p.input)
+			var err error
+			if p.status != nil {
+				err = p.status().Err()
+			}
+			actual := getCodeFromError(err)
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 		})
 	}
