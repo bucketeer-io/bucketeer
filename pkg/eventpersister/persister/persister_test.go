@@ -244,7 +244,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -287,7 +287,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 				).Return(&aoproto.ListAutoOpsRulesResponse{}, nil)
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -337,7 +337,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 				).Return(&aoproto.ListAutoOpsRulesResponse{}, nil)
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -389,7 +389,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 				).Return(nil, btstorage.ErrKeyNotFound)
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -441,7 +441,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -493,7 +493,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -657,7 +657,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -700,7 +700,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 				).Return(&aoproto.ListAutoOpsRulesResponse{}, nil)
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -758,7 +758,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 				}, nil)
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -817,7 +817,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -891,7 +891,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 				).Return(nil, btstorage.ErrKeyNotFound)
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -965,7 +965,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -1039,7 +1039,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: time.Now().Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
@@ -1285,7 +1285,7 @@ func TestMarshalGoalEventWithExperimentsAndAutoOpsRules(t *testing.T) {
 			desc:  "err: invalid goal event timestamp",
 			setup: nil,
 			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GOAL_BATCH,
+				SourceId:  eventproto.SourceId_GO_SERVER,
 				Timestamp: timeMoreThan24Hours.Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",

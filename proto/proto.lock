@@ -3595,10 +3595,6 @@
                 "integer": 3
               },
               {
-                "name": "GOAL_BATCH",
-                "integer": 4
-              },
-              {
                 "name": "GO_SERVER",
                 "integer": 5
               },
@@ -3606,6 +3602,9 @@
                 "name": "NODE_SERVER",
                 "integer": 6
               }
+            ],
+            "reserved_ids": [
+              4
             ]
           },
           {
