@@ -135,12 +135,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer experimentClient.Close()
-	goalQuery, err := s.createGoalQuery(ctx)
+	goalQuery, err := s.createGoalQuery(
+		ctx,
+		registerer,
+		logger,
+	)
 	if err != nil {
 		return err
 	}
 	defer goalQuery.Close()
-	evalQuery, err := s.createEvalQuery(ctx)
+	evalQuery, err := s.createEvalQuery(
+		ctx,
+		registerer,
+		logger,
+	)
 	if err != nil {
 		return err
 	}
@@ -213,7 +221,11 @@ func (s *server) createBigtableClient(
 	)
 }
 
-func (s *server) createEvalQuery(ctx context.Context) (query.Query, error) {
+func (s *server) createEvalQuery(
+	ctx context.Context,
+	r metrics.Registerer,
+	l *zap.Logger,
+) (query.Query, error) {
 	evt := ecproto.EvaluationEvent{}
 	evalQuery, err := query.NewQuery(
 		ctx,
@@ -221,6 +233,8 @@ func (s *server) createEvalQuery(ctx context.Context) (query.Query, error) {
 		*s.bigQueryDataSet,
 		evaluationEventTable,
 		evt.ProtoReflect().Descriptor(),
+		query.WithMetrics(r),
+		query.WithLogger(l),
 	)
 	if err != nil {
 		return nil, err
@@ -228,7 +242,11 @@ func (s *server) createEvalQuery(ctx context.Context) (query.Query, error) {
 	return evalQuery, nil
 }
 
-func (s *server) createGoalQuery(ctx context.Context) (query.Query, error) {
+func (s *server) createGoalQuery(
+	ctx context.Context,
+	r metrics.Registerer,
+	l *zap.Logger,
+) (query.Query, error) {
 	evt := ecproto.GoalEvent{}
 	goalQuery, err := query.NewQuery(
 		ctx,
@@ -236,6 +254,8 @@ func (s *server) createGoalQuery(ctx context.Context) (query.Query, error) {
 		*s.bigQueryDataSet,
 		goalEventTable,
 		evt.ProtoReflect().Descriptor(),
+		query.WithMetrics(r),
+		query.WithLogger(l),
 	)
 	if err != nil {
 		return nil, err
