@@ -41,7 +41,6 @@ type eventType int
 
 const (
 	GoalEventType eventType = iota + 1 // eventType starts from 1 for validation.
-	GoalBatchEventType
 	EvaluationEventType
 	MetricsEventType
 )

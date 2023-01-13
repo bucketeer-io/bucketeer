@@ -67,7 +67,6 @@ var (
 	ErrInternal          = status.Error(codes.Internal, "gateway: internal")
 
 	grpcGoalEvent       = &eventproto.GoalEvent{}
-	grpcGoalBatchEvent  = &eventproto.GoalBatchEvent{}
 	grpcEvaluationEvent = &eventproto.EvaluationEvent{}
 	grpcMetricsEvent    = &eventproto.MetricsEvent{}
 )

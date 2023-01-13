@@ -47,7 +47,6 @@ import (
 
 const (
 	goalEventType eventType = iota + 1 // eventType starts from 1 for validation.
-	goalBatchEventType
 	evaluationEventType
 	metricsEventType
 	prefixTestName   = "e2e-test"

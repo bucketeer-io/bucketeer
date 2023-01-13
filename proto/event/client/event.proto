@@ -145,16 +145,6 @@ message OpsEvent {
   string user_id = 6;
 }
 
-message GoalBatchEvent {
-  string user_id = 1;
-  repeated UserGoalEventsOverTag user_goal_events_over_tags = 2;
-}
-
-message UserGoalEventsOverTag {
-  string tag = 1;
-  repeated UserGoalEvent user_goal_events = 2;
-}
-
 message UserGoalEvent {
   int64 timestamp = 1;
   string goal_id = 2;

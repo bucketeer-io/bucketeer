@@ -44,10 +44,6 @@ func TestNewEventValidator(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not serialize goal event")
 	}
-	bGoalBatchEvent, err := proto.Marshal(&eventproto.GoalBatchEvent{})
-	if err != nil {
-		t.Fatal("could not serialize goal batch event")
-	}
 	bMetricsEvent, err := proto.Marshal(&eventproto.MetricsEvent{})
 	if err != nil {
 		t.Fatal("could not serialize metrics event")
@@ -78,17 +74,6 @@ func TestNewEventValidator(t *testing.T) {
 				},
 			},
 			expected: &eventGoalValidator{},
-		},
-		{
-			desc: "GoalBatchValidator",
-			input: &eventproto.Event{
-				Id: newUUID(t),
-				Event: &any.Any{
-					TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalBatchEvent",
-					Value:   bGoalBatchEvent,
-				},
-			},
-			expected: &eventGoalBatchValidator{},
 		},
 		{
 			desc: "MetricsEvent",

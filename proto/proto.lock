@@ -4061,38 +4061,6 @@
             ]
           },
           {
-            "name": "GoalBatchEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "user_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "user_goal_events_over_tags",
-                "type": "UserGoalEventsOverTag",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "UserGoalEventsOverTag",
-            "fields": [
-              {
-                "id": 1,
-                "name": "tag",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "user_goal_events",
-                "type": "UserGoalEvent",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
             "name": "UserGoalEvent",
             "fields": [
               {
