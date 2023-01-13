@@ -7629,46 +7629,41 @@
               },
               {
                 "id": 6,
-                "name": "evaluation",
-                "type": "string"
-              },
-              {
-                "id": 7,
                 "name": "tag",
                 "type": "string"
               },
               {
-                "id": 8,
+                "id": 7,
                 "name": "source_id",
                 "type": "string"
               },
               {
-                "id": 9,
+                "id": 8,
                 "name": "environment_namespace",
                 "type": "string"
               },
               {
-                "id": 10,
+                "id": 9,
                 "name": "timestamp",
                 "type": "int64"
               },
               {
-                "id": 11,
+                "id": 10,
                 "name": "feature_id",
                 "type": "string"
               },
               {
-                "id": 12,
+                "id": 11,
                 "name": "feature_version",
                 "type": "int32"
               },
               {
-                "id": 13,
+                "id": 12,
                 "name": "variation_id",
                 "type": "string"
               },
               {
-                "id": 14,
+                "id": 13,
                 "name": "reason",
                 "type": "string"
               }
