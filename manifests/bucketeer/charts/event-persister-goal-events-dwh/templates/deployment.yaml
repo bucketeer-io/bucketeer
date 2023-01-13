@@ -26,6 +26,7 @@ spec:
       {{- end }}
       affinity: {{ toYaml .Values.affinity | nindent 8 }}
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
+      serviceAccountName: {{ template "event-persister-goal-events-dwh.name" . }}
       volumes:
         - name: envoy-config
           configMap:
