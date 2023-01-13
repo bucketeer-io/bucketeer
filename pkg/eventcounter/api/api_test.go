@@ -735,6 +735,182 @@ func TestGetGoalCount(t *testing.T) {
 	}
 }
 
+func TestGetGoalCountBigQuery(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	now := time.Now()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	correctStartAtUnix := now.Add(-30 * 24 * time.Hour).Unix()
+	correctStartAt := time.Unix(correctStartAtUnix, 0)
+	correctEndAtUnix := now.Unix()
+	correctEndAt := time.Unix(correctEndAtUnix, 0)
+	ns := "ns0"
+	fID := "fid"
+	fVersion := int32(1)
+	vID1 := "vid01"
+	vID2 := "vid02"
+	gID := "gid"
+	patterns := []struct {
+		desc        string
+		setup       func(*eventCounterService)
+		input       *ecproto.GetGoalCountV2Request
+		expected    *ecproto.GetGoalCountV2Response
+		expectedErr error
+	}{
+		{
+			desc: "error: ErrStartAtRequired",
+			input: &ecproto.GetGoalCountV2Request{
+				EnvironmentNamespace: ns,
+				GoalId:               gID,
+			},
+			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
+		},
+		{
+			desc: "error: ErrEndAtRequired",
+			input: &ecproto.GetGoalCountV2Request{
+				EnvironmentNamespace: ns,
+				GoalId:               gID,
+				StartAt:              correctStartAtUnix,
+			},
+			expectedErr: localizedError(statusEndAtRequired, locale.JaJP),
+		},
+		{
+			desc: "error: ErrStartAtIsAfterEndAt",
+			input: &ecproto.GetGoalCountV2Request{
+				EnvironmentNamespace: ns,
+				GoalId:               gID,
+				StartAt:              now.Unix(),
+				EndAt:                now.Add(-30 * 24 * time.Hour).Unix(),
+			},
+			expectedErr: localizedError(statusStartAtIsAfterEndAt, locale.JaJP),
+		},
+		{
+			// TODO goalID is required?
+			desc: "error: ErrGoalIDRequired",
+			input: &ecproto.GetGoalCountV2Request{
+				EnvironmentNamespace: ns,
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+			},
+			expectedErr: localizedError(statusGoalIDRequired, locale.JaJP),
+		},
+		{
+			desc: "success: one variation",
+			setup: func(s *eventCounterService) {
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(
+					[]*v2ecs.GoalEventCount{
+						{
+							VariationID:       vID1,
+							GoalUser:          int64(1),
+							GoalTotal:         int64(2),
+							GoalValueTotal:    1.23,
+							GoalValueMean:     1.234,
+							GoalValueVariance: 1.2345,
+						},
+					},
+					nil,
+				)
+			},
+			input: &ecproto.GetGoalCountV2Request{
+				EnvironmentNamespace: ns,
+				GoalId:               gID,
+				FeatureId:            fID,
+				FeatureVersion:       fVersion,
+				VariationIds:         []string{vID1},
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+			},
+			expected: &ecproto.GetGoalCountV2Response{
+				GoalCounts: &ecproto.GoalCounts{
+					GoalId: gID,
+					RealtimeCounts: []*ecproto.VariationCount{
+						{
+							VariationId:             vID1,
+							UserCount:               int64(1),
+							EventCount:              int64(2),
+							ValueSum:                1.23,
+							ValueSumPerUserMean:     1.234,
+							ValueSumPerUserVariance: 1.2345,
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: all variations",
+			setup: func(s *eventCounterService) {
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(
+					[]*v2ecs.GoalEventCount{
+						{
+							VariationID:       vID1,
+							GoalUser:          int64(1),
+							GoalTotal:         int64(2),
+							GoalValueTotal:    1.23,
+							GoalValueMean:     1.234,
+							GoalValueVariance: 1.2345,
+						},
+						{
+							VariationID:       vID2,
+							GoalUser:          int64(12),
+							GoalTotal:         int64(123),
+							GoalValueTotal:    123.45,
+							GoalValueMean:     123.456,
+							GoalValueVariance: 123.4567,
+						},
+					},
+					nil,
+				)
+			},
+			input: &ecproto.GetGoalCountV2Request{
+				EnvironmentNamespace: ns,
+				GoalId:               gID,
+				FeatureId:            fID,
+				FeatureVersion:       fVersion,
+				VariationIds:         []string{vID1, vID2},
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+			},
+			expected: &ecproto.GetGoalCountV2Response{
+				GoalCounts: &ecproto.GoalCounts{
+					GoalId: gID,
+					RealtimeCounts: []*ecproto.VariationCount{
+						{
+							VariationId:             vID1,
+							UserCount:               int64(1),
+							EventCount:              int64(2),
+							ValueSum:                1.23,
+							ValueSumPerUserMean:     1.234,
+							ValueSumPerUserVariance: 1.2345,
+						},
+						{
+							VariationId:             vID2,
+							UserCount:               int64(12),
+							EventCount:              int64(123),
+							ValueSum:                123.45,
+							ValueSumPerUserMean:     123.456,
+							ValueSumPerUserVariance: 123.4567,
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := newEventCounterService(t, mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			actual, err := s.GetGoalCountBigQuery(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestGetGoalCountV2(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

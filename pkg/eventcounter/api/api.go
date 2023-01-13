@@ -789,6 +789,87 @@ func validateGetGoalCountsRequest(req *ecproto.GetGoalCountRequest) error {
 	return nil
 }
 
+// TODO temporary name
+func (s *eventCounterService) GetGoalCountBigQuery(
+	ctx context.Context,
+	req *ecproto.GetGoalCountV2Request,
+) (*ecproto.GetGoalCountV2Response, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err = validateGetGoalCountV2Request(req); err != nil {
+		return nil, err
+	}
+	startAt := time.Unix(req.StartAt, 0)
+	endAt := time.Unix(req.EndAt, 0)
+	goalCounts, err := s.eventStorage.QueryGoalCount(
+		ctx,
+		req.EnvironmentNamespace,
+		startAt,
+		endAt,
+		req.GoalId,
+		req.FeatureId,
+		req.FeatureVersion,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to query goal counts",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.Time("startAt", startAt),
+				zap.Time("endAt", endAt),
+				zap.String("goalId", req.GoalId),
+				zap.String("featureId", req.FeatureId),
+				zap.Int32("featureVersion", req.FeatureVersion),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	variationCounts := s.convertGoalCounts(goalCounts, req.VariationIds)
+	s.logger.Debug("GetGoalCount result", zap.Any("rows", variationCounts))
+	return &ecproto.GetGoalCountV2Response{
+		GoalCounts: &ecproto.GoalCounts{
+			GoalId:         req.GoalId,
+			RealtimeCounts: variationCounts,
+		},
+	}, nil
+}
+
+func (s *eventCounterService) convertGoalCounts(rows []*v2ecstorage.GoalEventCount, variationIDs []string) []*ecproto.VariationCount {
+	vcsMap := map[string]*ecproto.VariationCount{}
+	for _, id := range variationIDs {
+		vcsMap[id] = &ecproto.VariationCount{VariationId: id}
+	}
+	for _, row := range rows {
+		vc, ok := vcsMap[row.VariationID]
+		if !ok {
+			continue
+		}
+		vc.UserCount = row.GoalUser
+		vc.EventCount = row.GoalTotal
+		vc.ValueSum = row.GoalValueTotal
+		vc.ValueSumPerUserMean = row.GoalValueMean
+		vc.ValueSumPerUserVariance = row.GoalValueVariance
+		vcsMap[row.VariationID] = vc
+	}
+	vcs := make([]*ecproto.VariationCount, 0, len(vcsMap))
+	for _, vc := range vcsMap {
+		vcs = append(vcs, vc)
+	}
+	sort.SliceStable(vcs, func(i, j int) bool { return vcs[i].VariationId < vcs[j].VariationId })
+	return vcs
+}
+
 func (s *eventCounterService) GetGoalCountV2(
 	ctx context.Context,
 	req *ecproto.GetGoalCountV2Request,
