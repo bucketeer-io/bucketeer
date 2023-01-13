@@ -27,13 +27,17 @@ import (
 const (
 	operationQuery              = "Query"
 	codeOK                      = "OK"
-	storageErrorCodeUnspecified = "StorageErroCodeUnspecified"
+	codeUnknown                 = "Unknown"
+	storageErrorCodeUnspecified = "StorageErrorCodeUnspecified"
 	tableNotFound               = "TableNotFound"
 	streamAlreadyCommitted      = "StreamAlreadyCommitted"
 	sreamNotFound               = "StreamNotFound"
 	invalidStreamType           = "InvalidStreamType"
 	invalidStreamState          = "InvalidStreamState"
-	
+	streamFinalized             = "streamFinalized"
+	schemaMismatchExtraFields   = "SchemaMismatchExtraFields"
+	offsetAlreadyExists         = "offsetAlreadyExists"
+	offsetOutOfRange            = "offsetOutOfRange"
 )
 
 var (
@@ -71,31 +75,32 @@ func getCodeFromError(err error) string {
 	if apiErr, ok := apierror.FromError(err); ok {
 		storageErr := &storagepb.StorageError{}
 		if e := apiErr.Details().ExtractProtoMessage(storageErr); e != nil {
+			return codeUnknown
 		}
 		switch storageErr.GetCode() {
 		case storagepb.StorageError_STORAGE_ERROR_CODE_UNSPECIFIED:
-			return
+			return storageErrorCodeUnspecified
 		case storagepb.StorageError_TABLE_NOT_FOUND:
-			return
+			return tableNotFound
 		case storagepb.StorageError_STREAM_ALREADY_COMMITTED:
-			return
+			return streamAlreadyCommitted
 		case storagepb.StorageError_STREAM_NOT_FOUND:
-			return
+			return sreamNotFound
 		case storagepb.StorageError_INVALID_STREAM_TYPE:
-			return
+			return invalidStreamType
 		case storagepb.StorageError_INVALID_STREAM_STATE:
-			return
+			return invalidStreamState
 		case storagepb.StorageError_STREAM_FINALIZED:
-			return
+			return streamFinalized
 		case storagepb.StorageError_SCHEMA_MISMATCH_EXTRA_FIELDS:
-			return
+			return schemaMismatchExtraFields
 		case storagepb.StorageError_OFFSET_ALREADY_EXISTS:
-			return
+			return offsetAlreadyExists
 		case storagepb.StorageError_OFFSET_OUT_OF_RANGE:
-			return
+			return offsetOutOfRange
 		}
 	}
-	return ""
+	return codeUnknown
 }
 
 func registerMetrics(r metrics.Registerer) {
