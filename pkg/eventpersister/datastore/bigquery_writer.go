@@ -23,11 +23,6 @@ import (
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 )
 
-const (
-	evaluationEventTable = "evaluation_event"
-	goalEventTable       = "goal_event"
-)
-
 type EvalEventWriter interface {
 	AppendRows(ctx context.Context, events []*ecproto.EvaluationEvent) error
 }
@@ -48,52 +43,20 @@ type queryClient struct {
 	query query.Query
 }
 
-func NewEvalEventWriter(
-	ctx context.Context,
-	project, dataset string,
-	opts ...query.QueryOption,
-) (EvalEventWriter, error) {
-	evt := ecproto.EvaluationEvent{}
-	q, err := query.NewQuery(
-		ctx,
-		project,
-		dataset,
-		evaluationEventTable,
-		evt.ProtoReflect().Descriptor(),
-		opts...,
-	)
-	if err != nil {
-		return nil, err
-	}
+func NewEvalEventWriter(q query.Query) EvalEventWriter {
 	return &evalEventWriter{
 		queryClient: &queryClient{
 			query: q,
 		},
-	}, nil
+	}
 }
 
-func NewGoalEventWriter(
-	ctx context.Context,
-	project, dataset string,
-	opts ...query.QueryOption,
-) (GoalEventWriter, error) {
-	evt := ecproto.GoalEvent{}
-	q, err := query.NewQuery(
-		ctx,
-		project,
-		dataset,
-		goalEventTable,
-		evt.ProtoReflect().Descriptor(),
-		opts...,
-	)
-	if err != nil {
-		return nil, err
-	}
+func NewGoalEventWriter(q query.Query) GoalEventWriter {
 	return &goalEventWriter{
 		queryClient: &queryClient{
 			query: q,
 		},
-	}, nil
+	}
 }
 
 func (ew *evalEventWriter) AppendRows(

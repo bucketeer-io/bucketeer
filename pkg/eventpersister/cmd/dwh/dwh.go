@@ -22,7 +22,6 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/persister"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
@@ -31,11 +30,15 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/query"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
+	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 )
 
 const (
-	command = "server"
+	command              = "server"
+	evaluationEventTable = "evaluation_event"
+	goalEventTable       = "goal_event"
 )
 
 type server struct {
@@ -108,23 +111,19 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 
 func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	registerer := metrics.DefaultRegisterer()
-
 	puller, err := s.createPuller(ctx, logger)
 	if err != nil {
 		return err
 	}
-
 	btClient, err := s.createBigtableClient(ctx, registerer, logger)
 	if err != nil {
 		return err
 	}
 	defer btClient.Close()
-
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
 		return err
 	}
-
 	experimentClient, err := ec.NewClient(*s.experimentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
 		client.WithDialTimeout(30*time.Second),
@@ -136,19 +135,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer experimentClient.Close()
-	evalEventWriter, err := datastore.NewEvalEventWriter(ctx, *s.project, *s.bigQueryDataSet)
+	goalQuery, err := s.createGoalQuery(ctx)
 	if err != nil {
 		return err
 	}
-	goalEventWriter, err := datastore.NewGoalEventWriter(ctx, *s.project, *s.bigQueryDataSet)
+	defer goalQuery.Close()
+	evalQuery, err := s.createEvalQuery(ctx)
 	if err != nil {
 		return err
 	}
+	defer evalQuery.Close()
 	p := persister.NewPersisterDwh(
 		experimentClient,
 		puller,
-		evalEventWriter,
-		goalEventWriter,
+		evalQuery,
+		goalQuery,
 		btClient,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
@@ -210,4 +211,34 @@ func (s *server) createBigtableClient(
 		bigtable.WithMetrics(registerer),
 		bigtable.WithLogger(logger),
 	)
+}
+
+func (s *server) createEvalQuery(ctx context.Context) (query.Query, error) {
+	evt := ecproto.EvaluationEvent{}
+	evalQuery, err := query.NewQuery(
+		ctx,
+		*s.project,
+		*s.bigQueryDataSet,
+		evaluationEventTable,
+		evt.ProtoReflect().Descriptor(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return evalQuery, nil
+}
+
+func (s *server) createGoalQuery(ctx context.Context) (query.Query, error) {
+	evt := ecproto.GoalEvent{}
+	goalQuery, err := query.NewQuery(
+		ctx,
+		*s.project,
+		*s.bigQueryDataSet,
+		goalEventTable,
+		evt.ProtoReflect().Descriptor(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return goalQuery, nil
 }

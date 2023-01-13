@@ -16,11 +16,10 @@ package query
 
 import (
 	"context"
-	"fmt"
 
 	"cloud.google.com/go/bigquery/storage/managedwriter"
-	"cloud.google.com/go/bigquery/storage/managedwriter/adapt"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
@@ -47,12 +46,12 @@ func WithMetrics(r metrics.Registerer) QueryOption {
 
 type Query interface {
 	AppendRows(ctx context.Context, msgs [][]byte) error
+	Close() error
 }
 
 type query struct {
 	client *managedwriter.ManagedStream
 	opts   *queryOptions
-	logger *zap.Logger
 }
 
 func NewQuery(
@@ -70,26 +69,16 @@ func NewQuery(
 	if dopts.metrics != nil {
 		registerMetrics(dopts.metrics)
 	}
-	logger := dopts.logger.Named("bigtable_query")
 	c, err := managedwriter.NewClient(ctx, project)
 	if err != nil {
 		return nil, err
 	}
-	defer c.Close()
-	descriptorProto, err := adapt.NormalizeDescriptor(desc)
-	if err != nil {
-		return nil, err
-	}
-	tableName := fmt.Sprintf(
-		"projects/%s/datasets/%s/tables/%s",
-		project,
-		dataset,
-		table,
-	)
 	managedStream, err := c.NewManagedStream(
 		ctx,
-		managedwriter.WithSchemaDescriptor(descriptorProto),
-		managedwriter.WithDestinationTable(tableName),
+		managedwriter.WithSchemaDescriptor(protodesc.ToDescriptorProto(desc)),
+		managedwriter.WithDestinationTable(
+			managedwriter.TableParentFromParts(project, dataset, table),
+		),
 		managedwriter.WithType(managedwriter.DefaultStream),
 		managedwriter.EnableWriteRetries(true),
 	)
@@ -99,7 +88,6 @@ func NewQuery(
 	return &query{
 		client: managedStream,
 		opts:   dopts,
-		logger: logger,
 	}, nil
 }
 
@@ -111,7 +99,7 @@ func (q *query) AppendRows(
 	defer record()(operationQuery, &err)
 	results := []*managedwriter.AppendResult{}
 	for i := 0; i < len(msgs); i += 10 {
-		end := i
+		end := i + 10
 		if end > len(msgs) {
 			end = len(msgs)
 		}
@@ -129,4 +117,8 @@ func (q *query) AppendRows(
 		}
 	}
 	return nil
+}
+
+func (q *query) Close() error {
+	return q.client.Close()
 }

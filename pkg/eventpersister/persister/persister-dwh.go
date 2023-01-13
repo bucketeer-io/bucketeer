@@ -34,6 +34,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/query"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
@@ -63,8 +64,8 @@ type PersisterDwh struct {
 func NewPersisterDwh(
 	experimentClient ec.Client,
 	p puller.Puller,
-	evalEventWriter datastore.EvalEventWriter,
-	goalEventWriter datastore.GoalEventWriter,
+	evalEventWriter query.Query,
+	goalEventWriter query.Query,
 	bt bigtable.Client,
 	opts ...Option,
 ) *PersisterDwh {
@@ -90,8 +91,8 @@ func NewPersisterDwh(
 		ctx:                   ctx,
 		cancel:                cancel,
 		doneCh:                make(chan struct{}),
-		evalEventWriter:       evalEventWriter,
-		goalEventWriter:       goalEventWriter,
+		evalEventWriter:       datastore.NewEvalEventWriter(evalEventWriter),
+		goalEventWriter:       datastore.NewGoalEventWriter(goalEventWriter),
 		userEvaluationStorage: featurestorage.NewUserEvaluationsStorage(bt),
 		opts:                  dopts,
 	}
