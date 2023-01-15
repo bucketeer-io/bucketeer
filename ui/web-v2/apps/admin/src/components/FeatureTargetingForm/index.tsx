@@ -500,6 +500,11 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
     <div className="grid grid-cols-1 gap-2">
       {clauses.map((c: any, clauseIdx) => {
         const clauseName = `rules.${ruleIdx}.clauses.${clauseIdx}`;
+        const clauseType = `${clauseName}.type`;
+        const clauseAttribute = `${clauseName}.attribute`;
+        const clauseOperator = `${clauseName}.operator`;
+        const clauseValues = `${clauseName}.values`;
+
         return (
           <div key={c.id} className={classNames('flex space-x-2')}>
             <div className="w-[2rem] flex justify-center items-center">
@@ -517,7 +522,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
               )}
             </div>
             <Controller
-              name={`${clauseName}.type`}
+              name={clauseType}
               control={control}
               render={({ field }) => (
                 <Select
@@ -540,7 +545,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
               <div className={classNames('flex-grow grid grid-cols-4 gap-1')}>
                 <div>
                   <input
-                    {...register(`${clauseName}.attribute`)}
+                    {...register(clauseAttribute)}
                     type="text"
                     defaultValue={c.attribute}
                     className={classNames('input-text w-full')}
@@ -559,7 +564,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                   </p>
                 </div>
                 <Controller
-                  name={`${clauseName}.operator`}
+                  name={clauseOperator}
                   control={control}
                   render={({ field }) => (
                     <Select
@@ -569,14 +574,14 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                       options={clauseCompareOperatorOptions}
                       disabled={!editable}
                       value={clauseCompareOperatorOptions.find(
-                        (o) => o.value === c.operator
+                        (o) => o.value === field.value
                       )}
                     />
                   )}
                 />
                 <div className="col-span-2">
                   <Controller
-                    name={`${clauseName}.values`}
+                    name={clauseValues}
                     control={control}
                     render={({ field }) => {
                       return (
@@ -622,13 +627,13 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                   ) : (
                     <div>
                       <Controller
-                        name={`rules.${ruleIdx}.clauses.${clauseIdx}.values[0]`}
+                        name={clauseValues}
                         control={control}
                         render={({ field }) => {
                           return (
                             <Select
                               onChange={(o: Option) => {
-                                field.onChange(o.value);
+                                field.onChange([o.value]);
                               }}
                               options={segmentOptions}
                               disabled={!editable}
@@ -665,9 +670,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
               <div className={classNames('flex-grow grid grid-cols-4 gap-1')}>
                 <div>
                   <input
-                    {...register(
-                      `rules.${ruleIdx}.clauses.${clauseIdx}.attribute`
-                    )}
+                    {...register(clauseAttribute)}
                     type="text"
                     defaultValue={c.attribute}
                     className={classNames('input-text w-full')}
@@ -686,7 +689,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                   </p>
                 </div>
                 <Controller
-                  name={`rules.${ruleIdx}.clauseIdx.${clauseIdx}.operator`}
+                  name={clauseOperator}
                   control={control}
                   render={({ field }) => (
                     <Select
@@ -694,16 +697,14 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                       options={clauseDateOperatorOptions}
                       disabled={!editable}
                       value={clauseDateOperatorOptions.find(
-                        (o) => o.value === c.operator
+                        (o) => o.value === field.value
                       )}
                       isSearchable={false}
                     />
                   )}
                 />
                 <div className="col-span-2">
-                  <DatetimePicker
-                    name={`rules.${ruleIdx}.clauses.${clauseIdx}.values.0`}
-                  />
+                  <DatetimePicker name={clauseValues} />
                   <p className="input-error">
                     {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
                       ?.message && (
@@ -905,23 +906,28 @@ export const DatetimePicker: FC<DatetimePickerProps> = memo(({ name }) => {
     <Controller
       control={control}
       name={name}
-      render={({ field }) => (
-        <ReactDatePicker
-          dateFormat="yyyy-MM-dd HH:mm"
-          showTimeSelect
-          timeIntervals={60}
-          placeholderText=""
-          className={classNames('input-text w-full')}
-          wrapperClassName="w-full"
-          onChange={(v) => {
-            field.onChange(v.getTime() / 1000);
-          }}
-          selected={(() => {
-            return field.value ? new Date(Number(field.value) * 1000) : null;
-          })()}
-          disabled={!editable}
-        />
-      )}
+      render={({ field }) => {
+        return (
+          <ReactDatePicker
+            dateFormat="yyyy-MM-dd HH:mm"
+            showTimeSelect
+            timeIntervals={60}
+            placeholderText=""
+            className={classNames('input-text w-full')}
+            wrapperClassName="w-full"
+            onChange={(v) => {
+              const data = [v.getTime() / 1000];
+              field.onChange(data);
+            }}
+            selected={(() => {
+              return field.value[0]
+                ? new Date(Number(field.value[0]) * 1000)
+                : null;
+            })()}
+            disabled={!editable}
+          />
+        );
+      }}
     />
   );
 });

@@ -151,6 +151,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         ),
       },
     };
+
     const methods = useForm({
       resolver: yupResolver(targetingFormSchema),
       defaultValues: defaultValues,
@@ -292,7 +293,8 @@ const createClauseType = (
   switch (cause) {
     case Clause.Operator.SEGMENT:
       return ClauseType.SEGMENT;
-    case Clause.Operator.BEFORE || Clause.Operator.AFTER:
+    case Clause.Operator.BEFORE:
+    case Clause.Operator.AFTER:
       return ClauseType.DATE;
     default:
       return ClauseType.COMPARE;
