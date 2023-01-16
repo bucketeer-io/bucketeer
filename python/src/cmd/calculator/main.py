@@ -54,6 +54,9 @@ async def main():
     service_token_path = env.str("BUCKETEER_CALCULATOR_SERVICE_TOKEN")
     cert_path = env.str("BUCKETEER_CALCULATOR_CERT")
     key_path = env.str("BUCKETEER_CALCULATOR_KEY")
+    job_cron_hour = env.str("BUCKETEER_CALCULATOR_JOB_CRON_HOUR")
+    job_cron_minute = env.str("BUCKETEER_CALCULATOR_JOB_CRON_MINUTE")
+    job_cron_second = env.str("BUCKETEER_CALCULATOR_JOB_CRON_SECOND")
 
     telepresence_root = env.str("TELEPRESENCE_ROOT", "")
     if telepresence_root:
@@ -92,9 +95,9 @@ async def main():
         job.Job(
             "calculate_experiments",
             calculator.run,
-            hour="*",
-            minute="*",
-            second="0",
+            hour=job_cron_hour,
+            minute=job_cron_minute,
+            second=job_cron_second,
         ),
     ]
     sch = scheduler.Scheduler(jobs, _logger)

@@ -485,6 +485,9 @@ calculator:
     logLevel: info
     port: 9090
     metricsPort: 9002
+    jobCronHour: "*"
+    jobCronMinute: "0,10,20,30,40,50"
+    jobCronSecond: "*"
     traceSamplingProbability: 0.001
   affinity: {}
   nodeSelector:
