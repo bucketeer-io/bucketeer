@@ -152,11 +152,9 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	variationCounts := s.convertEvaluationCounts(evaluationCounts, req.VariationIds)
 	s.logger.Debug("GetExperimentEvaluationCount result", zap.Any("rows", variationCounts))
 	return &ecproto.GetExperimentEvaluationCountResponse{
-		Count: &ecproto.EvaluationCount{
-			FeatureId:      req.FeatureId,
-			FeatureVersion: req.FeatureVersion,
-			RealtimeCounts: variationCounts,
-		},
+		FeatureId:       req.FeatureId,
+		FeatureVersion:  req.FeatureVersion,
+		VariationCounts: variationCounts,
 	}, nil
 }
 
@@ -850,10 +848,8 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	variationCounts := s.convertGoalCounts(goalCounts, req.VariationIds)
 	s.logger.Debug("GetExperimentGoalCount result", zap.Any("rows", variationCounts))
 	return &ecproto.GetExperimentGoalCountResponse{
-		GoalCounts: &ecproto.GoalCounts{
-			GoalId:         req.GoalId,
-			RealtimeCounts: variationCounts,
-		},
+		GoalId:          req.GoalId,
+		VariationCounts: variationCounts,
 	}, nil
 }
 

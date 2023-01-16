@@ -7713,8 +7713,19 @@
             "fields": [
               {
                 "id": 1,
-                "name": "count",
-                "type": "EvaluationCount"
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_version",
+                "type": "int32"
+              },
+              {
+                "id": 3,
+                "name": "variation_counts",
+                "type": "VariationCount",
+                "is_repeated": true
               }
             ]
           },
@@ -8020,8 +8031,14 @@
             "fields": [
               {
                 "id": 1,
-                "name": "goal_counts",
-                "type": "GoalCounts"
+                "name": "goal_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "variation_counts",
+                "type": "VariationCount",
+                "is_repeated": true
               }
             ]
           },
@@ -8195,6 +8212,9 @@
           },
           {
             "path": "proto/eventcounter/timeseries.proto"
+          },
+          {
+            "path": "proto/eventcounter/variation_count.proto"
           }
         ],
         "package": {

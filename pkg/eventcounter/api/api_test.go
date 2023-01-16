@@ -142,15 +142,13 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				VariationIds:         []string{vID1},
 			},
 			expected: &ecproto.GetExperimentEvaluationCountResponse{
-				Count: &ecproto.EvaluationCount{
-					FeatureId:      fID,
-					FeatureVersion: fVersion,
-					RealtimeCounts: []*ecproto.VariationCount{
-						{
-							VariationId: vID1,
-							UserCount:   int64(1),
-							EventCount:  int64(2),
-						},
+				FeatureId:      fID,
+				FeatureVersion: fVersion,
+				VariationCounts: []*ecproto.VariationCount{
+					{
+						VariationId: vID1,
+						UserCount:   int64(1),
+						EventCount:  int64(2),
 					},
 				},
 			},
@@ -183,20 +181,18 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				VariationIds:         []string{vID1, vID2},
 			},
 			expected: &ecproto.GetExperimentEvaluationCountResponse{
-				Count: &ecproto.EvaluationCount{
-					FeatureId:      fID,
-					FeatureVersion: fVersion,
-					RealtimeCounts: []*ecproto.VariationCount{
-						{
-							VariationId: vID1,
-							UserCount:   int64(1),
-							EventCount:  int64(2),
-						},
-						{
-							VariationId: vID2,
-							UserCount:   int64(12),
-							EventCount:  int64(123),
-						},
+				FeatureId:      fID,
+				FeatureVersion: fVersion,
+				VariationCounts: []*ecproto.VariationCount{
+					{
+						VariationId: vID1,
+						UserCount:   int64(1),
+						EventCount:  int64(2),
+					},
+					{
+						VariationId: vID2,
+						UserCount:   int64(12),
+						EventCount:  int64(123),
 					},
 				},
 			},
@@ -812,17 +808,15 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				EndAt:                correctEndAtUnix,
 			},
 			expected: &ecproto.GetExperimentGoalCountResponse{
-				GoalCounts: &ecproto.GoalCounts{
-					GoalId: gID,
-					RealtimeCounts: []*ecproto.VariationCount{
-						{
-							VariationId:             vID1,
-							UserCount:               int64(1),
-							EventCount:              int64(2),
-							ValueSum:                1.23,
-							ValueSumPerUserMean:     1.234,
-							ValueSumPerUserVariance: 1.2345,
-						},
+				GoalId: gID,
+				VariationCounts: []*ecproto.VariationCount{
+					{
+						VariationId:             vID1,
+						UserCount:               int64(1),
+						EventCount:              int64(2),
+						ValueSum:                1.23,
+						ValueSumPerUserMean:     1.234,
+						ValueSumPerUserVariance: 1.2345,
 					},
 				},
 			},
@@ -863,25 +857,23 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				EndAt:                correctEndAtUnix,
 			},
 			expected: &ecproto.GetExperimentGoalCountResponse{
-				GoalCounts: &ecproto.GoalCounts{
-					GoalId: gID,
-					RealtimeCounts: []*ecproto.VariationCount{
-						{
-							VariationId:             vID1,
-							UserCount:               int64(1),
-							EventCount:              int64(2),
-							ValueSum:                1.23,
-							ValueSumPerUserMean:     1.234,
-							ValueSumPerUserVariance: 1.2345,
-						},
-						{
-							VariationId:             vID2,
-							UserCount:               int64(12),
-							EventCount:              int64(123),
-							ValueSum:                123.45,
-							ValueSumPerUserMean:     123.456,
-							ValueSumPerUserVariance: 123.4567,
-						},
+				GoalId: gID,
+				VariationCounts: []*ecproto.VariationCount{
+					{
+						VariationId:             vID1,
+						UserCount:               int64(1),
+						EventCount:              int64(2),
+						ValueSum:                1.23,
+						ValueSumPerUserMean:     1.234,
+						ValueSumPerUserVariance: 1.2345,
+					},
+					{
+						VariationId:             vID2,
+						UserCount:               int64(12),
+						EventCount:              int64(123),
+						ValueSum:                123.45,
+						ValueSumPerUserMean:     123.456,
+						ValueSumPerUserVariance: 123.4567,
 					},
 				},
 			},
