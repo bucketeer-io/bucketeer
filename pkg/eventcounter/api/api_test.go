@@ -78,7 +78,15 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 	fVersion := int32(1)
 	vID1 := "vid01"
 	vID2 := "vid02"
-
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
@@ -90,25 +98,29 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 			desc: "error: ErrStartAtRequired",
 			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
+				FeatureId:            fID,
+				EndAt:                correctEndAtUnix,
 			},
-			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
+			expectedErr: createError(statusStartAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at")),
 		},
 		{
 			desc: "error: ErrEndAtRequired",
 			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
+				FeatureId:            fID,
 				StartAt:              correctStartAtUnix,
 			},
-			expectedErr: localizedError(statusEndAtRequired, locale.JaJP),
+			expectedErr: createError(statusEndAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at")),
 		},
 		{
 			desc: "error: ErrStartAtIsAfterEndAt",
 			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
+				FeatureId:            fID,
 				StartAt:              now.Unix(),
 				EndAt:                now.Add(-31 * 24 * time.Hour).Unix(),
 			},
-			expectedErr: localizedError(statusStartAtIsAfterEndAt, locale.JaJP),
+			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd)),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
@@ -117,7 +129,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				StartAt:              correctStartAtUnix,
 				EndAt:                correctEndAtUnix,
 			},
-			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
 			desc: "success: one variation",
@@ -747,6 +759,15 @@ func TestGetExperimentGoalCount(t *testing.T) {
 	vID1 := "vid01"
 	vID2 := "vid02"
 	gID := "gid"
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
@@ -758,28 +779,52 @@ func TestGetExperimentGoalCount(t *testing.T) {
 			desc: "error: ErrStartAtRequired",
 			input: &ecproto.GetExperimentGoalCountRequest{
 				EnvironmentNamespace: ns,
+				FeatureId:            fID,
 				GoalId:               gID,
+				EndAt:                correctEndAtUnix,
 			},
-			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
+			expectedErr: createError(statusStartAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at")),
 		},
 		{
 			desc: "error: ErrEndAtRequired",
 			input: &ecproto.GetExperimentGoalCountRequest{
 				EnvironmentNamespace: ns,
+				FeatureId:            fID,
 				GoalId:               gID,
 				StartAt:              correctStartAtUnix,
 			},
-			expectedErr: localizedError(statusEndAtRequired, locale.JaJP),
+			expectedErr: createError(statusEndAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at")),
 		},
 		{
 			desc: "error: ErrStartAtIsAfterEndAt",
 			input: &ecproto.GetExperimentGoalCountRequest{
 				EnvironmentNamespace: ns,
+				FeatureId:            fID,
 				GoalId:               gID,
 				StartAt:              now.Unix(),
 				EndAt:                now.Add(-30 * 24 * time.Hour).Unix(),
 			},
-			expectedErr: localizedError(statusStartAtIsAfterEndAt, locale.JaJP),
+			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd)),
+		},
+		{
+			desc: "error: ErrFeatureIDRequired",
+			input: &ecproto.GetExperimentGoalCountRequest{
+				EnvironmentNamespace: ns,
+				GoalId:               gID,
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+			},
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+		},
+		{
+			desc: "error: ErrGoalIDRequired",
+			input: &ecproto.GetExperimentGoalCountRequest{
+				EnvironmentNamespace: ns,
+				FeatureId:            fID,
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+			},
+			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
 			desc: "success: one variation",
