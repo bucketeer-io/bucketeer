@@ -54,9 +54,9 @@ async def main():
     service_token_path = env.str("BUCKETEER_CALCULATOR_SERVICE_TOKEN")
     cert_path = env.str("BUCKETEER_CALCULATOR_CERT")
     key_path = env.str("BUCKETEER_CALCULATOR_KEY")
-    job_cron_hour = env.str("BUCKETEER_CALCULATOR_JOB_CRON_HOUR", default="*")
-    job_cron_minute = env.str("BUCKETEER_CALCULATOR_JOB_CRON_MINUTE", default="0,10,20,30,40,50")
-    job_cron_second = env.str("BUCKETEER_CALCULATOR_JOB_CRON_SECOND", default="*")
+    job_cron_hour = env.str("BUCKETEER_CALCULATOR_JOB_CRON_HOUR")
+    job_cron_minute = env.str("BUCKETEER_CALCULATOR_JOB_CRON_MINUTE")
+    job_cron_second = env.str("BUCKETEER_CALCULATOR_JOB_CRON_SECOND")
 
     telepresence_root = env.str("TELEPRESENCE_ROOT", "")
     if telepresence_root:
