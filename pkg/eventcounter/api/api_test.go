@@ -786,16 +786,6 @@ func TestGetExperimentGoalCount(t *testing.T) {
 			expectedErr: localizedError(statusStartAtIsAfterEndAt, locale.JaJP),
 		},
 		{
-			// TODO goalID is required?
-			desc: "error: ErrGoalIDRequired",
-			input: &ecproto.GetGoalCountV2Request{
-				EnvironmentNamespace: ns,
-				StartAt:              correctStartAtUnix,
-				EndAt:                correctEndAtUnix,
-			},
-			expectedErr: localizedError(statusGoalIDRequired, locale.JaJP),
-		},
-		{
 			desc: "success: one variation",
 			setup: func(s *eventCounterService) {
 				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(

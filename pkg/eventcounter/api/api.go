@@ -807,7 +807,6 @@ func (s *eventCounterService) GetExperimentGoalCount(
 		req.EnvironmentNamespace,
 		startAt,
 		endAt,
-		req.GoalId,
 		req.FeatureId,
 		req.FeatureVersion,
 	)
@@ -819,7 +818,6 @@ func (s *eventCounterService) GetExperimentGoalCount(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 				zap.Time("startAt", startAt),
 				zap.Time("endAt", endAt),
-				zap.String("goalId", req.GoalId),
 				zap.String("featureId", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion),
 			)...,
