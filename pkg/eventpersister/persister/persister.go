@@ -25,7 +25,6 @@ import (
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
@@ -53,19 +52,16 @@ import (
 )
 
 var (
-	ErrUnexpectedMessageType     = errors.New("eventpersister: unexpected message type")
-	ErrAutoOpsRulesNotFound      = errors.New("eventpersister: auto ops rules not found")
-	ErrExperimentNotFound        = errors.New("eventpersister: experiment not found")
-	ErrNoAutoOpsRules            = errors.New("eventpersister: no auto ops rules")
-	ErrNoExperiments             = errors.New("eventpersister: no experiments")
-	ErrNothingToLink             = errors.New("eventpersister: nothing to link")
-	ErrInvalidGoalEventTimestamp = errors.New("eventpersister: invalid goal event timestamp")
+	ErrUnexpectedMessageType = errors.New("eventpersister: unexpected message type")
+	ErrAutoOpsRulesNotFound  = errors.New("eventpersister: auto ops rules not found")
+	ErrExperimentNotFound    = errors.New("eventpersister: experiment not found")
+	ErrNoAutoOpsRules        = errors.New("eventpersister: no auto ops rules")
+	ErrNoExperiments         = errors.New("eventpersister: no experiments")
+	ErrNothingToLink         = errors.New("eventpersister: nothing to link")
 )
 
 const (
-	listRequestSize        = 500
-	furthestEventTimestamp = 24 * time.Hour
-	oldestEventTimestamp   = 24 * time.Hour
+	listRequestSize = 500
 )
 
 const (
@@ -572,29 +568,11 @@ func (p *Persister) newEvaluationCountkey(
 	)
 }
 
-// validateTimestamp limits date range of the given timestamp
-func (p *Persister) validateTimestamp(
-	timestamp int64,
-	oldestTimestampDuration, furthestTimestampDuration time.Duration,
-) bool {
-	given := time.Unix(timestamp, 0)
-	maxPast := time.Now().Add(-oldestTimestampDuration)
-	if given.Before(maxPast) {
-		return false
-	}
-	maxFuture := time.Now().Add(furthestTimestampDuration)
-	return !given.After(maxFuture)
-}
-
 func (p *Persister) linkGoalEvent(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
 	environmentNamespace string,
 ) ([]string, bool, error) {
-	if !p.validateTimestamp(event.Timestamp, oldestEventTimestamp, furthestEventTimestamp) {
-		handledCounter.WithLabelValues(codeInvalidGoalEventTimestamp).Inc()
-		return nil, false, ErrInvalidGoalEventTimestamp
-	}
 	evaluations := []*featureproto.Evaluation{}
 	evalExp, retriable, err := p.linkGoalEventByExperiment(ctx, event, environmentNamespace)
 	// If there are no experiments or the goal ID didn't match, it will ignore the error
@@ -748,7 +726,7 @@ func (p *Persister) linkGoalEventByExperiment(
 	event *eventproto.GoalEvent,
 	environmentNamespace string,
 ) (*featureproto.Evaluation, bool, error) {
-	// List experiments with the following status RUNNING, FORCE_STOPPED, and STOPPED
+	// List running experiments
 	experiments, err := p.listExperiments(ctx, environmentNamespace)
 	if err != nil {
 		return nil, true, err
@@ -800,10 +778,7 @@ func (p *Persister) listExperiments(
 					EnvironmentNamespace: environmentNamespace,
 					Statuses: []exproto.Experiment_Status{
 						exproto.Experiment_RUNNING,
-						exproto.Experiment_FORCE_STOPPED,
-						exproto.Experiment_STOPPED,
 					},
-					Archived: &wrappers.BoolValue{Value: false},
 				})
 				if err != nil {
 					return nil, err

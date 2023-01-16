@@ -26,7 +26,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -236,10 +235,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(nil, errors.New("internal"))
 			},
@@ -271,10 +267,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -314,10 +307,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -364,10 +354,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -416,10 +403,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -468,10 +452,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -520,10 +501,7 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -641,10 +619,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -684,10 +659,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -727,10 +699,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -785,10 +754,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -844,10 +810,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -918,10 +881,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -992,10 +952,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -1066,10 +1023,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -1119,10 +1073,7 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -1264,7 +1215,6 @@ func TestMarshalGoalEventWithExperimentsAndAutoOpsRules(t *testing.T) {
 		clauses = append(clauses, &aoproto.Clause{Clause: c})
 		return clauses
 	}
-	timeMoreThan24Hours := timeNow.AddDate(0, 0, -2)
 	environmentNamespace := "ns"
 	patterns := []struct {
 		desc               string
@@ -1282,26 +1232,6 @@ func TestMarshalGoalEventWithExperimentsAndAutoOpsRules(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc:  "err: invalid goal event timestamp",
-			setup: nil,
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_GO_SERVER,
-				Timestamp: timeMoreThan24Hours.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected:           "",
-			expectedErr:        ErrInvalidGoalEventTimestamp,
-			expectedRepeatable: false,
-		},
-		{
 			desc: "success: using same feature flag id, version and goal id in the experiments and in the auto ops",
 			setup: func(ctx context.Context, p *Persister) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
@@ -1312,10 +1242,7 @@ func TestMarshalGoalEventWithExperimentsAndAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -1411,10 +1338,7 @@ func TestMarshalGoalEventWithExperimentsAndAutoOpsRules(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{

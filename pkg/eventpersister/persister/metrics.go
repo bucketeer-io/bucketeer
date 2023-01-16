@@ -26,7 +26,6 @@ const (
 	codeFailedToGetUserEvaluation          = "FailedToGetUserEvaluation"
 	codeFailedToListAutoOpsRules           = "FailedToListAutoOpsRules"
 	codeFailedToListExperiments            = "FailedToListExperiments"
-	codeInvalidGoalEventTimestamp          = "InvalidGoalEventTimestamp"
 	codeNothingToLink                      = "NothingToLink"
 	codeUpsertUserEvaluationFailed         = "UpsertUserEvaluationFailed"
 	codeUserEvaluationNotFound             = "UserEvaluationNotFound"
