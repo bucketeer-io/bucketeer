@@ -37,9 +37,10 @@ const (
 	InternalServerError   = "InternalServerError"
 	NotFoundError         = "NotFoundError"
 	InvalidArgumentError  = "InvalidArgumentError"
-	AlreadyExistsError    = "AlreadyExistsError"
-	PermissionDenied      = "PermissionDenied"
 	UnauthenticatedError  = "UnauthenticatedError"
+	PermissionDenied      = "PermissionDenied"
+	AlreadyExistsError    = "AlreadyExistsError"
+	StartAtIsAfterEnd     = "StartAtIsAfterEnd"
 )
 
 func init() {

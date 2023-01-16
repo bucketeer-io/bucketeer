@@ -115,7 +115,7 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	if err != nil {
 		return nil, err
 	}
-	if err = validateGetExperimentEvaluationCountRequest(req); err != nil {
+	if err = validateGetExperimentEvaluationCountRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	startAt := time.Unix(req.StartAt, 0)
@@ -158,18 +158,46 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	}, nil
 }
 
-func validateGetExperimentEvaluationCountRequest(req *ecproto.GetExperimentEvaluationCountRequest) error {
+func validateGetExperimentEvaluationCountRequest(req *ecproto.GetExperimentEvaluationCountRequest, localizer locale.Localizer) error {
 	if req.StartAt == 0 {
-		return localizedError(statusStartAtRequired, locale.JaJP)
+		dt, err := statusStartAtRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.EndAt == 0 {
-		return localizedError(statusEndAtRequired, locale.JaJP)
+		dt, err := statusEndAtRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.StartAt > req.EndAt {
-		return localizedError(statusStartAtIsAfterEndAt, locale.JaJP)
+		dt, err := statusStartAtIsAfterEndAt.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.FeatureId == "" {
-		return localizedError(statusFeatureIDRequired, locale.JaJP)
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -811,7 +839,7 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	if err != nil {
 		return nil, err
 	}
-	if err = validateGetExperimentGoalCountRequest(req); err != nil {
+	if err = validateGetExperimentGoalCountRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	startAt := time.Unix(req.StartAt, 0)
@@ -853,18 +881,56 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	}, nil
 }
 
-func validateGetExperimentGoalCountRequest(req *ecproto.GetExperimentGoalCountRequest) error {
+func validateGetExperimentGoalCountRequest(req *ecproto.GetExperimentGoalCountRequest, localizer locale.Localizer) error {
 	if req.StartAt == 0 {
-		return localizedError(statusStartAtRequired, locale.JaJP)
+		dt, err := statusStartAtRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.EndAt == 0 {
-		return localizedError(statusEndAtRequired, locale.JaJP)
+		dt, err := statusEndAtRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.StartAt > req.EndAt {
-		return localizedError(statusStartAtIsAfterEndAt, locale.JaJP)
+		dt, err := statusStartAtIsAfterEndAt.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.FeatureId == "" {
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.GoalId == "" {
-		return localizedError(statusGoalIDRequired, locale.JaJP)
+		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
