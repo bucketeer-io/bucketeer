@@ -841,7 +841,10 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	}, nil
 }
 
-func (s *eventCounterService) convertGoalCounts(rows []*v2ecstorage.GoalEventCount, variationIDs []string) []*ecproto.VariationCount {
+func (s *eventCounterService) convertGoalCounts(
+	rows []*v2ecstorage.GoalEventCount,
+	variationIDs []string,
+) []*ecproto.VariationCount {
 	vcsMap := map[string]*ecproto.VariationCount{}
 	for _, id := range variationIDs {
 		vcsMap[id] = &ecproto.VariationCount{VariationId: id}
