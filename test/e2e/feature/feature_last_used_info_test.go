@@ -23,6 +23,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	gwapi "github.com/bucketeer-io/bucketeer/pkg/gateway/api"
 	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/gateway/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
@@ -158,7 +159,7 @@ func registerEvaluationEvents(t *testing.T, features []*feature.Feature, tag str
 		events = append(events, util.Event{
 			ID:    newUUID(t),
 			Event: evaluation,
-			Type:  util.EvaluationEventType,
+			Type:  gwapi.EvaluationEventType,
 		})
 	}
 	response := util.RegisterEvents(t, events, *gatewayAddr, *apiKeyPath)

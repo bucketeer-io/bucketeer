@@ -2087,17 +2087,17 @@ func TestRegisterEvents(t *testing.T) {
 							{
 								ID:    uuid0,
 								Event: json.RawMessage(bGoalEvent),
-								Type:  goalEventType,
+								Type:  GoalEventType,
 							},
 							{
 								ID:    uuid1,
 								Event: json.RawMessage(bEvaluationEvent),
-								Type:  evaluationEventType,
+								Type:  EvaluationEventType,
 							},
 							{
 								ID:    uuid2,
 								Event: json.RawMessage(bMetricsEvent),
-								Type:  metricsEventType,
+								Type:  MetricsEventType,
 							},
 						},
 					},
@@ -2217,7 +2217,7 @@ func TestGetMetricsEvent(t *testing.T) {
 			ev := event{
 				ID:    newUUID(t),
 				Event: json.RawMessage(bMetricsEvent),
-				Type:  metricsEventType,
+				Type:  MetricsEventType,
 			}
 			event, _, err := gs.getMetricsEvent(ctx, ev)
 			if err != nil {

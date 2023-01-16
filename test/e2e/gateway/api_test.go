@@ -22,6 +22,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
+	gwapi "github.com/bucketeer-io/bucketeer/pkg/gateway/api"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
@@ -180,13 +181,13 @@ func TestRegisterEvents(t *testing.T) {
 				ID:                   newUUID(t),
 				Event:                json.RawMessage(evaluation),
 				EnvironmentNamespace: "",
-				Type:                 util.EvaluationEventType,
+				Type:                 gwapi.EvaluationEventType,
 			},
 			{
 				ID:                   newUUID(t),
 				Event:                json.RawMessage(goal),
 				EnvironmentNamespace: "",
-				Type:                 util.GoalEventType,
+				Type:                 gwapi.GoalEventType,
 			},
 		},
 		*gatewayAddr,

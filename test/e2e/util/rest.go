@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"testing"
 
+	gwapi "github.com/bucketeer-io/bucketeer/pkg/gateway/api"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
@@ -35,14 +36,6 @@ const (
 	evaluationAPI    = "/evaluation"
 	eventsAPI        = "/events"
 	authorizationKey = "authorization"
-)
-
-type eventType int
-
-const (
-	GoalEventType eventType = iota + 1 // eventType starts from 1 for validation.
-	EvaluationEventType
-	MetricsEventType
 )
 
 type successResponse struct {
@@ -84,7 +77,7 @@ type Event struct {
 	ID                   string          `json:"id,omitempty"`
 	Event                json.RawMessage `json:"event,omitempty"`
 	EnvironmentNamespace string          `json:"environment_namespace,omitempty"`
-	Type                 eventType       `json:"type,omitempty"`
+	Type                 gwapi.EventType `json:"type,omitempty"`
 }
 
 func GetEvaluations(t *testing.T, tag, userID, gatewayAddr, apiKeyPath string) *getEvaluationsResponse {
