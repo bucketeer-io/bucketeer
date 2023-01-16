@@ -569,20 +569,6 @@ func (p *Persister) newEvaluationCountkey(
 	)
 }
 
-// validateTimestamp limits date range of the given timestamp
-func (p *Persister) validateTimestamp(
-	timestamp int64,
-	oldestTimestampDuration, furthestTimestampDuration time.Duration,
-) bool {
-	given := time.Unix(timestamp, 0)
-	maxPast := time.Now().Add(-oldestTimestampDuration)
-	if given.Before(maxPast) {
-		return false
-	}
-	maxFuture := time.Now().Add(furthestTimestampDuration)
-	return !given.After(maxFuture)
-}
-
 func (p *Persister) linkGoalEvent(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
