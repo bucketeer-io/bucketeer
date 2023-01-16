@@ -158,7 +158,10 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	}, nil
 }
 
-func validateGetExperimentEvaluationCountRequest(req *ecproto.GetExperimentEvaluationCountRequest, localizer locale.Localizer) error {
+func validateGetExperimentEvaluationCountRequest(
+	req *ecproto.GetExperimentEvaluationCountRequest,
+	localizer locale.Localizer,
+) error {
 	if req.StartAt == 0 {
 		dt, err := statusStartAtRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -881,7 +884,10 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	}, nil
 }
 
-func validateGetExperimentGoalCountRequest(req *ecproto.GetExperimentGoalCountRequest, localizer locale.Localizer) error {
+func validateGetExperimentGoalCountRequest(
+	req *ecproto.GetExperimentGoalCountRequest,
+	localizer locale.Localizer,
+) error {
 	if req.StartAt == 0 {
 		dt, err := statusStartAtRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
