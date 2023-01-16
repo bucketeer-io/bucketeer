@@ -14,18 +14,13 @@ interface TimeseriesLineChartProps {
 
 export const TimeseriesLineChart: FC<TimeseriesLineChartProps> = memo(
   ({ label, dataLabels, timeseries, data, height }) => {
-    // Copy arrays to avoid
-    // "Uncaught TypeError: Cannot assign to read only property 'length' of object '[object Array]""
-    const dataLabelsCopy = [...dataLabels];
-    const timeseriesCopy = [...timeseries];
-    const dataCopy = [...data];
     const chartData = {
-      labels: timeseriesCopy.map((t) => new Date(t * 1000)),
-      datasets: dataLabelsCopy.map((e, i) => {
+      labels: timeseries.map((t) => new Date(t * 1000)),
+      datasets: dataLabels.map((e, i) => {
         const color = COLORS[i % COLORS.length];
         return {
           label: e,
-          data: dataCopy[i],
+          data: [...data[i]], // Copy arrays to avoid  "Uncaught TypeError: Cannot assign to read only property 'length' of object '[object Array]""
           borderColor: color,
           backgroundColor: color,
           fill: false,
