@@ -1915,7 +1915,7 @@ func TestRegisterEvents(t *testing.T) {
 	bMetricsEvent, err := json.Marshal(&metricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     json.RawMessage(string(bLatencyEvent)),
-		Type:      latencyMetricsEventType,
+		Type:      LatencyMetricsEventType,
 	})
 	if err != nil {
 		t.Fatal("could not serialize metrics event")
@@ -2087,17 +2087,17 @@ func TestRegisterEvents(t *testing.T) {
 							{
 								ID:    uuid0,
 								Event: json.RawMessage(bGoalEvent),
-								Type:  goalEventType,
+								Type:  GoalEventType,
 							},
 							{
 								ID:    uuid1,
 								Event: json.RawMessage(bEvaluationEvent),
-								Type:  evaluationEventType,
+								Type:  EvaluationEventType,
 							},
 							{
 								ID:    uuid2,
 								Event: json.RawMessage(bMetricsEvent),
-								Type:  metricsEventType,
+								Type:  MetricsEventType,
 							},
 						},
 					},
@@ -2201,7 +2201,7 @@ func TestGetMetricsEvent(t *testing.T) {
 			input: metricsEvent{
 				Timestamp: time.Now().Unix(),
 				Event:     json.RawMessage(string(bLatencyEvent)),
-				Type:      latencyMetricsEventType,
+				Type:      LatencyMetricsEventType,
 			},
 			expected: &eventproto.MetricsEvent{
 				Timestamp: time.Now().Unix(),
@@ -2217,7 +2217,7 @@ func TestGetMetricsEvent(t *testing.T) {
 			ev := event{
 				ID:    newUUID(t),
 				Event: json.RawMessage(bMetricsEvent),
-				Type:  metricsEventType,
+				Type:  MetricsEventType,
 			}
 			event, _, err := gs.getMetricsEvent(ctx, ev)
 			if err != nil {

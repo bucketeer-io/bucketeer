@@ -95,28 +95,6 @@ func NewGatewayService(
 	}
 }
 
-type eventType int
-
-type metricsDetailEventType int
-
-const (
-	goalEventType eventType = iota + 1 // eventType starts from 1 for validation.
-	// Do NOT remove the goalBatchEventType because the go-server-sdk depends on the same order
-	// https://github.com/ca-dp/bucketeer-go-server-sdk/blob/master/pkg/bucketeer/api/rest.go#L35
-	goalBatchEventType // nolint:deadcode,unused,varcheck
-	evaluationEventType
-	metricsEventType
-)
-
-const (
-	latencyMetricsEventType metricsDetailEventType = iota + 1
-	sizeMetricsEventType
-	timeoutErrorMetricsEventType
-	internalErrorMetricsEventType
-	networkErrorMetricsEventType
-	internalSdkErrorMetricsEventType
-)
-
 const (
 	Version          = "/v1"
 	Service          = "/gateway"
@@ -204,7 +182,7 @@ type event struct {
 	ID                   string          `json:"id,omitempty"`
 	Event                json.RawMessage `json:"event,omitempty"`
 	EnvironmentNamespace string          `json:"environment_namespace,omitempty"`
-	Type                 eventType       `json:"type,omitempty"`
+	Type                 EventType       `json:"type,omitempty"`
 }
 
 type metricsEvent struct {
@@ -864,7 +842,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 			return
 		}
 		switch event.Type {
-		case goalEventType:
+		case GoalEventType:
 			goal, errCode, err := s.getGoalEvent(req.Context(), event)
 			if err != nil {
 				restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, errCode).Inc()
@@ -888,7 +866,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				Event:                goalAny,
 				EnvironmentNamespace: event.EnvironmentNamespace,
 			})
-		case evaluationEventType:
+		case EvaluationEventType:
 			eval, errCode, err := s.getEvaluationEvent(req.Context(), event)
 			if err != nil {
 				restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, errCode).Inc()
@@ -912,7 +890,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				Event:                evalAny,
 				EnvironmentNamespace: event.EnvironmentNamespace,
 			})
-		case metricsEventType:
+		case MetricsEventType:
 			metrics, errCode, err := s.getMetricsEvent(req.Context(), event)
 			if err != nil {
 				restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, errCode).Inc()
@@ -1053,7 +1031,7 @@ func (s *gatewayService) getMetricsEvent(
 	}
 	var eventAny *anypb.Any
 	switch metricsEvt.Type {
-	case latencyMetricsEventType:
+	case LatencyMetricsEventType:
 		latency := &latencyMetricsEvent{}
 		if err := json.Unmarshal(metricsEvt.Event, latency); err != nil {
 			s.logger.Error(
@@ -1074,7 +1052,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case sizeMetricsEventType:
+	case SizeMetricsEventType:
 		size := &sizeMetricsEvent{}
 		if err := json.Unmarshal(metricsEvt.Event, size); err != nil {
 			s.logger.Error(
@@ -1095,7 +1073,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case timeoutErrorMetricsEventType:
+	case TimeoutErrorMetricsEventType:
 		timeout := &timeoutErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, timeout); err != nil {
 			s.logger.Error(
@@ -1114,7 +1092,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case internalErrorMetricsEventType:
+	case InternalErrorMetricsEventType:
 		internal := &internalErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, internal); err != nil {
 			s.logger.Error(
@@ -1133,7 +1111,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case networkErrorMetricsEventType:
+	case NetworkErrorMetricsEventType:
 		network := &networkErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, network); err != nil {
 			s.logger.Error(
@@ -1152,7 +1130,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case internalSdkErrorMetricsEventType:
+	case InternalSdkErrorMetricsEventType:
 		internalSdk := &internalSdkErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, internalSdk); err != nil {
 			s.logger.Error(
