@@ -1031,7 +1031,7 @@ func (s *gatewayService) getMetricsEvent(
 	}
 	var eventAny *anypb.Any
 	switch metricsEvt.Type {
-	case LatencyMetricsEventType:
+	case latencyMetricsEventType:
 		latency := &latencyMetricsEvent{}
 		if err := json.Unmarshal(metricsEvt.Event, latency); err != nil {
 			s.logger.Error(
@@ -1052,7 +1052,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case SizeMetricsEventType:
+	case sizeMetricsEventType:
 		size := &sizeMetricsEvent{}
 		if err := json.Unmarshal(metricsEvt.Event, size); err != nil {
 			s.logger.Error(
@@ -1073,7 +1073,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case TimeoutErrorMetricsEventType:
+	case timeoutErrorMetricsEventType:
 		timeout := &timeoutErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, timeout); err != nil {
 			s.logger.Error(
@@ -1092,7 +1092,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case InternalErrorMetricsEventType:
+	case internalErrorMetricsEventType:
 		internal := &internalErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, internal); err != nil {
 			s.logger.Error(
@@ -1111,7 +1111,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case NetworkErrorMetricsEventType:
+	case networkErrorMetricsEventType:
 		network := &networkErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, network); err != nil {
 			s.logger.Error(
@@ -1130,7 +1130,7 @@ func (s *gatewayService) getMetricsEvent(
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err
 		}
-	case InternalSdkErrorMetricsEventType:
+	case internalSdkErrorMetricsEventType:
 		internalSdk := &internalSdkErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, internalSdk); err != nil {
 			s.logger.Error(
