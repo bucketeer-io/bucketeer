@@ -75,6 +75,12 @@ spec:
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_CALCULATOR_KEY
               value: /usr/local/certs/service/tls.key
+            - name: BUCKETEER_CALCULATOR_JOB_CRON_HOUR
+              value: "{{ .Values.env.jobCronHour }}"
+            - name: BUCKETEER_CALCULATOR_JOB_CRON_MINUTE
+              value: "{{ .Values.env.jobCronMinute }}"
+            - name: BUCKETEER_CALCULATOR_JOB_CRON_SECOND
+              value: "{{ .Values.env.jobCronSecond }}"
             - name: BUCKETEER_CALCULATOR_TRACE_SAMPLING_PROBABILITY
               value: "{{ .Values.env.traceSamplingProbability }}"
           volumeMounts:
