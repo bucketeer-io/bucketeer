@@ -788,7 +788,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 		{
 			desc: "success: one variation",
 			setup: func(s *eventCounterService) {
-				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
 					[]*v2ecs.GoalEventCount{
 						{
 							VariationID:       vID1,
@@ -831,7 +831,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 		{
 			desc: "success: all variations",
 			setup: func(s *eventCounterService) {
-				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
 					[]*v2ecs.GoalEventCount{
 						{
 							VariationID:       vID1,
