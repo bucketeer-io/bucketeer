@@ -31,6 +31,7 @@ import (
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	gwapi "github.com/bucketeer-io/bucketeer/pkg/gateway/api"
 	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/gateway/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
@@ -1603,7 +1604,7 @@ func registerGoalEvent(
 		{
 			ID:    newUUID(t),
 			Event: goal,
-			Type:  util.GoalEventType,
+			Type:  gwapi.GoalEventType,
 		},
 	}
 	response := util.RegisterEvents(t, events, *gatewayAddr, *apiKeyPath)
@@ -1752,7 +1753,7 @@ func registerEvaluationEvent(
 		{
 			ID:    newUUID(t),
 			Event: evaluation,
-			Type:  util.EvaluationEventType,
+			Type:  gwapi.EvaluationEventType,
 		},
 	}
 	response := util.RegisterEvents(t, events, *gatewayAddr, *apiKeyPath)
