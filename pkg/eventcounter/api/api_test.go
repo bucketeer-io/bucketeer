@@ -82,20 +82,20 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
-		input       *ecproto.GetEvaluationCountV2Request
-		expected    *ecproto.GetEvaluationCountV2Response
+		input       *ecproto.GetExperimentEvaluationCountRequest
+		expected    *ecproto.GetExperimentEvaluationCountResponse
 		expectedErr error
 	}{
 		{
 			desc: "error: ErrStartAtRequired",
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
 			},
 			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
 		},
 		{
 			desc: "error: ErrEndAtRequired",
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
 				StartAt:              correctStartAtUnix,
 			},
@@ -103,7 +103,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 		},
 		{
 			desc: "error: ErrStartAtIsAfterEndAt",
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
 				StartAt:              now.Unix(),
 				EndAt:                now.Add(-31 * 24 * time.Hour).Unix(),
@@ -112,7 +112,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
 				StartAt:              correctStartAtUnix,
 				EndAt:                correctEndAtUnix,
@@ -133,7 +133,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 					nil,
 				)
 			},
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
 				StartAt:              correctStartAtUnix,
 				EndAt:                correctEndAtUnix,
@@ -141,7 +141,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				FeatureVersion:       fVersion,
 				VariationIds:         []string{vID1},
 			},
-			expected: &ecproto.GetEvaluationCountV2Response{
+			expected: &ecproto.GetExperimentEvaluationCountResponse{
 				Count: &ecproto.EvaluationCount{
 					FeatureId:      fID,
 					FeatureVersion: fVersion,
@@ -174,7 +174,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 					},
 					nil)
 			},
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
 				StartAt:              correctStartAtUnix,
 				EndAt:                correctEndAtUnix,
@@ -182,7 +182,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				FeatureVersion:       fVersion,
 				VariationIds:         []string{vID1, vID2},
 			},
-			expected: &ecproto.GetEvaluationCountV2Response{
+			expected: &ecproto.GetExperimentEvaluationCountResponse{
 				Count: &ecproto.EvaluationCount{
 					FeatureId:      fID,
 					FeatureVersion: fVersion,
@@ -754,13 +754,13 @@ func TestGetExperimentGoalCount(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
-		input       *ecproto.GetGoalCountV2Request
-		expected    *ecproto.GetGoalCountV2Response
+		input       *ecproto.GetExperimentGoalCountRequest
+		expected    *ecproto.GetExperimentGoalCountResponse
 		expectedErr error
 	}{
 		{
 			desc: "error: ErrStartAtRequired",
-			input: &ecproto.GetGoalCountV2Request{
+			input: &ecproto.GetExperimentGoalCountRequest{
 				EnvironmentNamespace: ns,
 				GoalId:               gID,
 			},
@@ -768,7 +768,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 		},
 		{
 			desc: "error: ErrEndAtRequired",
-			input: &ecproto.GetGoalCountV2Request{
+			input: &ecproto.GetExperimentGoalCountRequest{
 				EnvironmentNamespace: ns,
 				GoalId:               gID,
 				StartAt:              correctStartAtUnix,
@@ -777,7 +777,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 		},
 		{
 			desc: "error: ErrStartAtIsAfterEndAt",
-			input: &ecproto.GetGoalCountV2Request{
+			input: &ecproto.GetExperimentGoalCountRequest{
 				EnvironmentNamespace: ns,
 				GoalId:               gID,
 				StartAt:              now.Unix(),
@@ -802,7 +802,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 					nil,
 				)
 			},
-			input: &ecproto.GetGoalCountV2Request{
+			input: &ecproto.GetExperimentGoalCountRequest{
 				EnvironmentNamespace: ns,
 				GoalId:               gID,
 				FeatureId:            fID,
@@ -811,7 +811,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				StartAt:              correctStartAtUnix,
 				EndAt:                correctEndAtUnix,
 			},
-			expected: &ecproto.GetGoalCountV2Response{
+			expected: &ecproto.GetExperimentGoalCountResponse{
 				GoalCounts: &ecproto.GoalCounts{
 					GoalId: gID,
 					RealtimeCounts: []*ecproto.VariationCount{
@@ -853,7 +853,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 					nil,
 				)
 			},
-			input: &ecproto.GetGoalCountV2Request{
+			input: &ecproto.GetExperimentGoalCountRequest{
 				EnvironmentNamespace: ns,
 				GoalId:               gID,
 				FeatureId:            fID,
@@ -862,7 +862,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				StartAt:              correctStartAtUnix,
 				EndAt:                correctEndAtUnix,
 			},
-			expected: &ecproto.GetGoalCountV2Response{
+			expected: &ecproto.GetExperimentGoalCountResponse{
 				GoalCounts: &ecproto.GoalCounts{
 					GoalId: gID,
 					RealtimeCounts: []*ecproto.VariationCount{

@@ -108,14 +108,14 @@ func (s *eventCounterService) Register(server *grpc.Server) {
 
 func (s *eventCounterService) GetExperimentEvaluationCount(
 	ctx context.Context,
-	req *ecproto.GetEvaluationCountV2Request,
-) (*ecproto.GetEvaluationCountV2Response, error) {
+	req *ecproto.GetExperimentEvaluationCountRequest,
+) (*ecproto.GetExperimentEvaluationCountResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err = validateGetEvaluationCountV2Request(req); err != nil {
+	if err = validateGetExperimentEvaluationCountRequest(req); err != nil {
 		return nil, err
 	}
 	startAt := time.Unix(req.StartAt, 0)
@@ -151,13 +151,29 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	}
 	variationCounts := s.convertEvaluationCounts(evaluationCounts, req.VariationIds)
 	s.logger.Debug("GetExperimentEvaluationCount result", zap.Any("rows", variationCounts))
-	return &ecproto.GetEvaluationCountV2Response{
+	return &ecproto.GetExperimentEvaluationCountResponse{
 		Count: &ecproto.EvaluationCount{
 			FeatureId:      req.FeatureId,
 			FeatureVersion: req.FeatureVersion,
 			RealtimeCounts: variationCounts,
 		},
 	}, nil
+}
+
+func validateGetExperimentEvaluationCountRequest(req *ecproto.GetExperimentEvaluationCountRequest) error {
+	if req.StartAt == 0 {
+		return localizedError(statusStartAtRequired, locale.JaJP)
+	}
+	if req.EndAt == 0 {
+		return localizedError(statusEndAtRequired, locale.JaJP)
+	}
+	if req.StartAt > req.EndAt {
+		return localizedError(statusStartAtIsAfterEndAt, locale.JaJP)
+	}
+	if req.FeatureId == "" {
+		return localizedError(statusFeatureIDRequired, locale.JaJP)
+	}
+	return nil
 }
 
 func (s *eventCounterService) convertEvaluationCounts(
@@ -790,14 +806,14 @@ func validateGetGoalCountsRequest(req *ecproto.GetGoalCountRequest) error {
 
 func (s *eventCounterService) GetExperimentGoalCount(
 	ctx context.Context,
-	req *ecproto.GetGoalCountV2Request,
-) (*ecproto.GetGoalCountV2Response, error) {
+	req *ecproto.GetExperimentGoalCountRequest,
+) (*ecproto.GetExperimentGoalCountResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err = validateGetGoalCountV2Request(req); err != nil {
+	if err = validateGetExperimentGoalCountRequest(req); err != nil {
 		return nil, err
 	}
 	startAt := time.Unix(req.StartAt, 0)
@@ -833,12 +849,28 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	}
 	variationCounts := s.convertGoalCounts(goalCounts, req.VariationIds)
 	s.logger.Debug("GetExperimentGoalCount result", zap.Any("rows", variationCounts))
-	return &ecproto.GetGoalCountV2Response{
+	return &ecproto.GetExperimentGoalCountResponse{
 		GoalCounts: &ecproto.GoalCounts{
 			GoalId:         req.GoalId,
 			RealtimeCounts: variationCounts,
 		},
 	}, nil
+}
+
+func validateGetExperimentGoalCountRequest(req *ecproto.GetExperimentGoalCountRequest) error {
+	if req.StartAt == 0 {
+		return localizedError(statusStartAtRequired, locale.JaJP)
+	}
+	if req.EndAt == 0 {
+		return localizedError(statusEndAtRequired, locale.JaJP)
+	}
+	if req.StartAt > req.EndAt {
+		return localizedError(statusStartAtIsAfterEndAt, locale.JaJP)
+	}
+	if req.GoalId == "" {
+		return localizedError(statusGoalIDRequired, locale.JaJP)
+	}
+	return nil
 }
 
 func (s *eventCounterService) convertGoalCounts(

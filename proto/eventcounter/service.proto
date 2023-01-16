@@ -39,6 +39,19 @@ message GetEvaluationCountV2Response {
   EvaluationCount count = 1;
 }
 
+message GetExperimentEvaluationCountRequest {
+  string environment_namespace = 1;
+  int64 start_at = 2;
+  int64 end_at = 3;
+  string feature_id = 4;
+  int32 feature_version = 5;
+  repeated string variation_ids = 6;
+}
+
+message GetExperimentEvaluationCountResponse {
+  EvaluationCount count = 1;
+}
+
 message GetEvaluationTimeseriesCountRequest {
   string environment_namespace = 1;
   string feature_id = 2;
@@ -116,6 +129,20 @@ message GetGoalCountV2Response {
   GoalCounts goal_counts = 1;
 }
 
+message GetExperimentGoalCountRequest {
+  string environment_namespace = 1;
+  int64 start_at = 2;
+  int64 end_at = 3;
+  string goal_id = 4;
+  string feature_id = 5;
+  int32 feature_version = 6;
+  repeated string variation_ids = 7;
+}
+
+message GetExperimentGoalCountResponse {
+  GoalCounts goal_counts = 1;
+}
+
 message GetUserCountV2Request {
   string environment_namespace = 1;
   int64 start_at = 2;
@@ -146,6 +173,9 @@ message ListUserMetadataResponse {
 }
 
 service EventCounterService {
+  rpc GetExperimentEvaluationCount(GetExperimentEvaluationCountRequest)
+      returns (GetExperimentEvaluationCountResponse) {}
+
   rpc GetEvaluationCountV2(GetEvaluationCountV2Request)
       returns (GetEvaluationCountV2Response) {}
 
@@ -161,6 +191,9 @@ service EventCounterService {
   rpc GetGoalCount(GetGoalCountRequest) returns (GetGoalCountResponse) {}
 
   rpc GetGoalCountV2(GetGoalCountV2Request) returns (GetGoalCountV2Response) {}
+
+  rpc GetExperimentGoalCount(GetExperimentGoalCountRequest)
+      returns (GetExperimentGoalCountResponse) {}
 
   rpc GetUserCountV2(GetUserCountV2Request) returns (GetUserCountV2Response) {}
 
