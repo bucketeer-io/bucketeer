@@ -25,7 +25,6 @@ import (
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
@@ -780,7 +779,6 @@ func (p *Persister) listExperiments(
 					Statuses: []exproto.Experiment_Status{
 						exproto.Experiment_RUNNING,
 					},
-					Archived: &wrappers.BoolValue{Value: false},
 				})
 				if err != nil {
 					return nil, err

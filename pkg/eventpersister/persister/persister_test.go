@@ -26,7 +26,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -237,7 +236,6 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(nil, errors.New("internal"))
 			},
@@ -270,7 +268,6 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -311,7 +308,6 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -359,7 +355,6 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -409,7 +404,6 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -459,7 +453,6 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -509,7 +502,6 @@ func TestMarshalGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -628,7 +620,6 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -669,7 +660,6 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -710,7 +700,6 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -766,7 +755,6 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -823,7 +811,6 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -895,7 +882,6 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -967,7 +953,6 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -1039,7 +1024,6 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -1090,7 +1074,6 @@ func TestMarshalGoalEventWithAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 				p.autoOpsClient.(*aomock.MockClient).EXPECT().ListAutoOpsRules(
@@ -1260,7 +1243,6 @@ func TestMarshalGoalEventWithExperimentsAndAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -1357,7 +1339,6 @@ func TestMarshalGoalEventWithExperimentsAndAutoOpsRules(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
