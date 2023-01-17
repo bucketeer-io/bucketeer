@@ -23,7 +23,6 @@ import (
 const (
 	codeFailedToGetUserEvaluation  = "FailedToGetUserEvaluation"
 	codeFailedToListExperiments    = "FailedToListExperiments"
-	codeInvalidGoalEventTimestamp  = "InvalidGoalEventTimestamp"
 	codeUpsertUserEvaluationFailed = "UpsertUserEvaluationFailed"
 	codeUserEvaluationNotFound     = "UserEvaluationNotFound"
 )
