@@ -60,8 +60,8 @@ type server struct {
 	keyPath           *string
 	experimentService *string
 	// bigquery
-	bigQueryDataSet  *string
-	bigQeryBatchSize *int
+	bigQueryDataSet   *string
+	bigQueryBatchSize *int
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -100,8 +100,8 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"experiment-service",
 			"bucketeer-experiment-service address.",
 		).Default("experiment:9090").String(),
-		bigQueryDataSet:  cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").Required().String(),
-		bigQeryBatchSize: cmd.Flag("bigquery-batch-size", "BigQuery Size of rows to be sent at once").Default("10").Int(),
+		bigQueryDataSet:   cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").Required().String(),
+		bigQueryBatchSize: cmd.Flag("bigquery-batch-size", "BigQuery Size of rows to be sent at once").Default("10").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -148,7 +148,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		persister.WithFlushTimeout(*s.flushTimeout),
 		persister.WithMetrics(registerer),
 		persister.WithLogger(logger),
-		persister.WithBatchSize(*s.bigQeryBatchSize),
+		persister.WithBatchSize(*s.bigQueryBatchSize),
 	)
 	if err != nil {
 		return err
