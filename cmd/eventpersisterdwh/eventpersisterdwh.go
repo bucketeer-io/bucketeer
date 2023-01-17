@@ -37,5 +37,5 @@ func main() {
 }
 
 func registerCommands(app *cli.App) {
-	cmd.RegisterServerCommand(app, app)
+	dwh.RegisterServerCommand(app, app)
 }
