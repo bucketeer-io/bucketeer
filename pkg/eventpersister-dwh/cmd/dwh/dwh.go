@@ -16,6 +16,7 @@ package dwh
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -133,14 +134,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer experimentClient.Close()
-	p, err := persister.NewPersisterDWH(
+	writer, err := s.newBigQueryWriter(
+		ctx,
+		registerer,
+		logger,
+	)
+	if err != nil {
+		return err
+	}
+	p := persister.NewPersisterDWH(
 		experimentClient,
 		puller,
 		registerer,
 		btClient,
-		*s.topic,
-		*s.project,
-		*s.bigQueryDataSet,
+		writer,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
@@ -202,4 +209,36 @@ func (s *server) createBigtableClient(
 		bigtable.WithMetrics(registerer),
 		bigtable.WithLogger(logger),
 	)
+}
+
+func (s *server) newBigQueryWriter(
+	ctx context.Context,
+	r metrics.Registerer,
+	logger *zap.Logger,
+) (persister.Writer, error) {
+	var writer persister.Writer
+	var err error
+	if strings.HasSuffix(*s.topic, "evaluation-events") {
+		writer, err = persister.NewEvalEventWriter(
+			ctx,
+			r,
+			logger,
+			*s.project,
+			*s.bigQueryDataSet,
+			*s.bigQueryBatchSize,
+		)
+	} else {
+		writer, err = persister.NewGoalEventWriter(
+			ctx,
+			r,
+			logger,
+			*s.project,
+			*s.bigQueryDataSet,
+			*s.bigQueryBatchSize,
+		)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return writer, nil
 }

@@ -17,7 +17,6 @@ package persister
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -131,9 +130,9 @@ func NewPersisterDWH(
 	p puller.Puller,
 	r metrics.Registerer,
 	bt bigtable.Client,
-	topic, project, ds string,
+	writer Writer,
 	opts ...Option,
-) (*PersisterDWH, error) {
+) *PersisterDWH {
 	dopts := &options{
 		maxMPS:        1000,
 		numWorkers:    1,
@@ -150,31 +149,6 @@ func NewPersisterDWH(
 		registerMetrics(dopts.metrics)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	var writer Writer
-	var err error
-	if strings.HasSuffix(topic, "evaluation-events") {
-		writer, err = NewEvalEventWriter(
-			ctx,
-			r,
-			dopts.logger,
-			project,
-			ds,
-			dopts.batchSize,
-		)
-	} else {
-		writer, err = NewGoalEventWriter(
-			ctx,
-			r,
-			dopts.logger,
-			project,
-			ds,
-			dopts.batchSize,
-		)
-	}
-	if err != nil {
-		cancel()
-		return nil, err
-	}
 	return &PersisterDWH{
 		experimentClient:      experimentClient,
 		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
@@ -185,7 +159,7 @@ func NewPersisterDWH(
 		writer:                writer,
 		userEvaluationStorage: featurestorage.NewUserEvaluationsStorage(bt),
 		opts:                  dopts,
-	}, nil
+	}
 }
 
 func (p *PersisterDWH) Run() error {
