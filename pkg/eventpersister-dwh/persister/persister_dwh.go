@@ -264,8 +264,7 @@ func (p *PersisterDWH) send(messages map[string]*puller.Message) {
 		return
 	}
 
-	p.writer.Write(ctx, envEvents)
-	fails := make(map[string]bool, len(envEvents))
+	fails := p.writer.Write(ctx, envEvents)
 	for id, m := range messages {
 		if repeatable, ok := fails[id]; ok {
 			if repeatable {
