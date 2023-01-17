@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package query
+package writer
 
 import (
 	"context"
@@ -44,22 +44,22 @@ func WithMetrics(r metrics.Registerer) QueryOption {
 	}
 }
 
-type Query interface {
+type Writer interface {
 	AppendRows(ctx context.Context, msgs [][]byte) error
 	Close() error
 }
 
-type query struct {
+type writer struct {
 	client *managedwriter.ManagedStream
 	opts   *queryOptions
 }
 
-func NewQuery(
+func NewWriter(
 	ctx context.Context,
 	project, dataset, table string,
 	desc protoreflect.MessageDescriptor,
 	opts ...QueryOption,
-) (Query, error) {
+) (Writer, error) {
 	dopts := &queryOptions{
 		logger: zap.NewNop(),
 	}
@@ -85,13 +85,13 @@ func NewQuery(
 	if err != nil {
 		return nil, err
 	}
-	return &query{
+	return &writer{
 		client: managedStream,
 		opts:   dopts,
 	}, nil
 }
 
-func (q *query) AppendRows(
+func (w *writer) AppendRows(
 	ctx context.Context,
 	msgs [][]byte,
 ) error {
@@ -100,7 +100,7 @@ func (q *query) AppendRows(
 	results := []*managedwriter.AppendResult{}
 	batches := getBatch(msgs)
 	for _, b := range batches {
-		r, err := q.client.AppendRows(ctx, b)
+		r, err := w.client.AppendRows(ctx, b)
 		if err != nil {
 			return err
 		}
@@ -115,8 +115,8 @@ func (q *query) AppendRows(
 	return nil
 }
 
-func (q *query) Close() error {
-	return q.client.Close()
+func (w *writer) Close() error {
+	return w.client.Close()
 }
 
 func getBatch(msgs [][]byte) [][][]byte {

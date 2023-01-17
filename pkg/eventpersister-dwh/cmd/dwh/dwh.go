@@ -22,7 +22,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/persister"
+	"github.com/bucketeer-io/bucketeer/pkg/eventpersister-dwh/persister"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
@@ -30,9 +30,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/query"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
-	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersister-dwh"
 )
 
 const (
@@ -225,16 +225,16 @@ func (s *server) createEvalQuery(
 	ctx context.Context,
 	r metrics.Registerer,
 	l *zap.Logger,
-) (query.Query, error) {
-	evt := ecproto.EvaluationEvent{}
-	evalQuery, err := query.NewQuery(
+) (writer.Writer, error) {
+	evt := epproto.EvaluationEvent{}
+	evalQuery, err := writer.NewWriter(
 		ctx,
 		*s.project,
 		*s.bigQueryDataSet,
 		evaluationEventTable,
 		evt.ProtoReflect().Descriptor(),
-		query.WithMetrics(r),
-		query.WithLogger(l),
+		writer.WithMetrics(r),
+		writer.WithLogger(l),
 	)
 	if err != nil {
 		return nil, err
@@ -246,16 +246,16 @@ func (s *server) createGoalQuery(
 	ctx context.Context,
 	r metrics.Registerer,
 	l *zap.Logger,
-) (query.Query, error) {
-	evt := ecproto.GoalEvent{}
-	goalQuery, err := query.NewQuery(
+) (writer.Writer, error) {
+	evt := epproto.GoalEvent{}
+	goalQuery, err := writer.NewWriter(
 		ctx,
 		*s.project,
 		*s.bigQueryDataSet,
 		goalEventTable,
 		evt.ProtoReflect().Descriptor(),
-		query.WithMetrics(r),
-		query.WithLogger(l),
+		writer.WithMetrics(r),
+		writer.WithLogger(l),
 	)
 	if err != nil {
 		return nil, err

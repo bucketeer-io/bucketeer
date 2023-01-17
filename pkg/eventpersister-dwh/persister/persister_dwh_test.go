@@ -26,6 +26,7 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -33,11 +34,15 @@ import (
 	pullermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/mock"
 	btstorage "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersister-dwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
+
+var defaultOptions = options{
+	logger: zap.NewNop(),
+}
 
 func TestConvToEvaluationEvent(t *testing.T) {
 	t.Parallel()
@@ -79,9 +84,9 @@ func TestConvToEvaluationEvent(t *testing.T) {
 	eventID := "event-id"
 	patterns := []struct {
 		desc               string
-		setup              func(context.Context, *PersisterDwh)
+		setup              func(context.Context, *PersisterDWH)
 		input              *eventproto.EvaluationEvent
-		expected           *ecproto.EvaluationEvent
+		expected           *epproto.EvaluationEvent
 		expectedErr        error
 		expectedRepeatable bool
 	}{
@@ -107,7 +112,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 		},
 		{
 			desc: "error: failed to list experiments",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -131,7 +136,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 		},
 		{
 			desc: "error: experiment does not exist",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -155,7 +160,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 		},
 		{
 			desc: "error: failed to upsert user evaluation",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -192,7 +197,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 		},
 		{
 			desc: "success: evaluation event",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -223,7 +228,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				).Return(nil)
 			},
 			input: evaluationEvent,
-			expected: &ecproto.EvaluationEvent{
+			expected: &epproto.EvaluationEvent{
 				Id:                   eventID,
 				FeatureId:            evaluationEvent.FeatureId,
 				FeatureVersion:       evaluationEvent.FeatureVersion,
@@ -271,9 +276,9 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	require.NoError(t, err)
 	patterns := []struct {
 		desc               string
-		setup              func(context.Context, *PersisterDwh)
+		setup              func(context.Context, *PersisterDWH)
 		input              *eventproto.GoalEvent
-		expected           *ecproto.GoalEvent
+		expected           *epproto.GoalEvent
 		expectedErr        error
 		expectedRepeatable bool
 	}{
@@ -298,7 +303,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: list experiment internal",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -333,7 +338,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: list experiment empty",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -368,7 +373,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: experiment not found",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -410,7 +415,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: get evaluation not found",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -462,7 +467,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: get evaluation internal",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -514,7 +519,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: get evaluation internal using empty tag",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -566,7 +571,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(ctx context.Context, p *PersisterDwh) {
+			setup: func(ctx context.Context, p *PersisterDWH) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -614,7 +619,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Evaluations: nil,
 				Tag:         "tag",
 			},
-			expected: &ecproto.GoalEvent{
+			expected: &epproto.GoalEvent{
 				SourceId:             eventproto.SourceId_ANDROID.String(),
 				Id:                   eventID,
 				GoalId:               "gid",
@@ -724,9 +729,9 @@ func TestConvToEvaluationDwh(t *testing.T) {
 	}
 }
 
-func newPersisterDwh(c *gomock.Controller) *PersisterDwh {
+func newPersisterDwh(c *gomock.Controller) *PersisterDWH {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &PersisterDwh{
+	return &PersisterDWH{
 		experimentClient:      ecmock.NewMockClient(c),
 		puller:                pullermock.NewMockRateLimitedPuller(c),
 		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),

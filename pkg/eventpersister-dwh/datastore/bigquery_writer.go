@@ -19,16 +19,16 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/query"
-	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
+	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersister-dwh"
 )
 
 type EvalEventWriter interface {
-	AppendRows(ctx context.Context, events []*ecproto.EvaluationEvent) error
+	AppendRows(ctx context.Context, events []*epproto.EvaluationEvent) error
 }
 
 type GoalEventWriter interface {
-	AppendRows(ctx context.Context, events []*ecproto.GoalEvent) error
+	AppendRows(ctx context.Context, events []*epproto.GoalEvent) error
 }
 
 type evalEventWriter struct {
@@ -40,28 +40,28 @@ type goalEventWriter struct {
 }
 
 type queryClient struct {
-	query query.Query
+	writer writer.Writer
 }
 
-func NewEvalEventWriter(q query.Query) EvalEventWriter {
+func NewEvalEventWriter(q writer.Writer) EvalEventWriter {
 	return &evalEventWriter{
 		queryClient: &queryClient{
-			query: q,
+			writer: q,
 		},
 	}
 }
 
-func NewGoalEventWriter(q query.Query) GoalEventWriter {
+func NewGoalEventWriter(q writer.Writer) GoalEventWriter {
 	return &goalEventWriter{
 		queryClient: &queryClient{
-			query: q,
+			writer: q,
 		},
 	}
 }
 
 func (ew *evalEventWriter) AppendRows(
 	ctx context.Context,
-	events []*ecproto.EvaluationEvent,
+	events []*epproto.EvaluationEvent,
 ) error {
 	// Encode the messages into binary format.
 	encoded := make([][]byte, len(events))
@@ -72,7 +72,7 @@ func (ew *evalEventWriter) AppendRows(
 		}
 		encoded[k] = b
 	}
-	if err := ew.query.AppendRows(ctx, encoded); err != nil {
+	if err := ew.writer.AppendRows(ctx, encoded); err != nil {
 		return err
 	}
 	return nil
@@ -80,7 +80,7 @@ func (ew *evalEventWriter) AppendRows(
 
 func (gw *goalEventWriter) AppendRows(
 	ctx context.Context,
-	events []*ecproto.GoalEvent,
+	events []*epproto.GoalEvent,
 ) error {
 	// Encode the messages into binary format.
 	encoded := make([][]byte, len(events))
@@ -91,7 +91,7 @@ func (gw *goalEventWriter) AppendRows(
 		}
 		encoded[k] = b
 	}
-	if err := gw.query.AppendRows(ctx, encoded); err != nil {
+	if err := gw.writer.AppendRows(ctx, encoded); err != nil {
 		return err
 	}
 	return nil

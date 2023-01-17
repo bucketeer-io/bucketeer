@@ -21,21 +21,18 @@ import (
 )
 
 const (
-	codeFailedToExtractOpsEventRateClauses = "FailedToExtractOpsEventRateClauses"
-	codeFailedToGetFeatures                = "FailedToGetFeatures"
-	codeFailedToGetUserEvaluation          = "FailedToGetUserEvaluation"
-	codeFailedToListAutoOpsRules           = "FailedToListAutoOpsRules"
-	codeFailedToListExperiments            = "FailedToListExperiments"
-	codeNothingToLink                      = "NothingToLink"
-	codeUpsertUserEvaluationFailed         = "UpsertUserEvaluationFailed"
-	codeUserEvaluationNotFound             = "UserEvaluationNotFound"
+	codeFailedToGetUserEvaluation  = "FailedToGetUserEvaluation"
+	codeFailedToListExperiments    = "FailedToListExperiments"
+	codeInvalidGoalEventTimestamp  = "InvalidGoalEventTimestamp"
+	codeUpsertUserEvaluationFailed = "UpsertUserEvaluationFailed"
+	codeUserEvaluationNotFound     = "UserEvaluationNotFound"
 )
 
 var (
 	receivedCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "event_persister",
+			Subsystem: "event_persister_dwh",
 			Name:      "received_total",
 			Help:      "Total number of received messages",
 		})
@@ -43,7 +40,7 @@ var (
 	handledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "event_persister",
+			Subsystem: "event_persister_dwh",
 			Name:      "handled_total",
 			Help:      "Total number of handled messages",
 		}, []string{"code"})
@@ -51,7 +48,7 @@ var (
 	cacheCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "event_persister",
+			Subsystem: "event_persister_dwh",
 			Name:      "cache_requests_total",
 			Help:      "Total number of cache requests",
 		}, []string{"type", "code"})

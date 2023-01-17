@@ -17,6 +17,7 @@ package persister
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -27,26 +28,41 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
+	"github.com/bucketeer-io/bucketeer/pkg/eventpersister-dwh/datastore"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
+	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/query"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersister-dwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+)
+
+const (
+	listRequestSize = 500
 )
 
 var (
 	twentyFourHours = 24 * time.Hour
 )
 
-type PersisterDwh struct {
+var (
+	ErrUnexpectedMessageType = errors.New("eventpersister: unexpected message type")
+	ErrAutoOpsRulesNotFound  = errors.New("eventpersister: auto ops rules not found")
+	ErrExperimentNotFound    = errors.New("eventpersister: experiment not found")
+	ErrNoAutoOpsRules        = errors.New("eventpersister: no auto ops rules")
+	ErrNoExperiments         = errors.New("eventpersister: no experiments")
+	ErrNothingToLink         = errors.New("eventpersister: nothing to link")
+	ErrInvalidEventTimestamp = errors.New("eventpersister: invalid event timestamp")
+)
+
+type PersisterDWH struct {
 	experimentClient      ec.Client
 	puller                puller.RateLimitedPuller
 	logger                *zap.Logger
@@ -61,14 +77,71 @@ type PersisterDwh struct {
 	opts                  *options
 }
 
+type eventMap map[string]proto.Message
+type environmentEventMap map[string]eventMap
+
+type options struct {
+	maxMPS        int
+	numWorkers    int
+	flushSize     int
+	flushInterval time.Duration
+	flushTimeout  time.Duration
+	metrics       metrics.Registerer
+	logger        *zap.Logger
+}
+
+type Option func(*options)
+
+func WithMaxMPS(mps int) Option {
+	return func(opts *options) {
+		opts.maxMPS = mps
+	}
+}
+
+func WithNumWorkers(n int) Option {
+	return func(opts *options) {
+		opts.numWorkers = n
+	}
+}
+
+func WithFlushSize(s int) Option {
+	return func(opts *options) {
+		opts.flushSize = s
+	}
+}
+
+func WithFlushInterval(i time.Duration) Option {
+	return func(opts *options) {
+		opts.flushInterval = i
+	}
+}
+
+func WithFlushTimeout(timeout time.Duration) Option {
+	return func(opts *options) {
+		opts.flushTimeout = timeout
+	}
+}
+
+func WithMetrics(r metrics.Registerer) Option {
+	return func(opts *options) {
+		opts.metrics = r
+	}
+}
+
+func WithLogger(l *zap.Logger) Option {
+	return func(opts *options) {
+		opts.logger = l
+	}
+}
+
 func NewPersisterDwh(
 	experimentClient ec.Client,
 	p puller.Puller,
-	evalEventWriter query.Query,
-	goalEventWriter query.Query,
+	evalEventWriter writer.Writer,
+	goalEventWriter writer.Writer,
 	bt bigtable.Client,
 	opts ...Option,
-) *PersisterDwh {
+) *PersisterDWH {
 	dopts := &options{
 		maxMPS:        1000,
 		numWorkers:    1,
@@ -81,10 +154,10 @@ func NewPersisterDwh(
 		opt(dopts)
 	}
 	if dopts.metrics != nil {
-		dwhRegisterMetrics(dopts.metrics)
+		registerMetrics(dopts.metrics)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	return &PersisterDwh{
+	return &PersisterDWH{
 		experimentClient:      experimentClient,
 		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
 		logger:                dopts.logger.Named("persister-dwh"),
@@ -98,7 +171,7 @@ func NewPersisterDwh(
 	}
 }
 
-func (p *PersisterDwh) Run() error {
+func (p *PersisterDWH) Run() error {
 	defer close(p.doneCh)
 	p.group.Go(func() error {
 		return p.puller.Run(p.ctx)
@@ -109,12 +182,12 @@ func (p *PersisterDwh) Run() error {
 	return p.group.Wait()
 }
 
-func (p *PersisterDwh) Stop() {
+func (p *PersisterDWH) Stop() {
 	p.cancel()
 	<-p.doneCh
 }
 
-func (p *PersisterDwh) Check(ctx context.Context) health.Status {
+func (p *PersisterDWH) Check(ctx context.Context) health.Status {
 	select {
 	case <-p.ctx.Done():
 		p.logger.Error("Unhealthy due to context Done is closed", zap.Error(p.ctx.Err()))
@@ -128,7 +201,7 @@ func (p *PersisterDwh) Check(ctx context.Context) health.Status {
 	}
 }
 
-func (p *PersisterDwh) batch() error {
+func (p *PersisterDWH) batch() error {
 	batch := make(map[string]*puller.Message)
 	timer := time.NewTimer(p.opts.flushInterval)
 	defer timer.Stop()
@@ -138,18 +211,18 @@ func (p *PersisterDwh) batch() error {
 			if !ok {
 				return nil
 			}
-			// dwhReceivedCounter.Inc()
+			receivedCounter.Inc()
 			id := msg.Attributes["id"]
 			if id == "" {
 				msg.Ack()
 				// TODO: better log format for msg data
-				// dwhHandledCounter.WithLabelValues(codes.MissingID.String()).Inc()
+				handledCounter.WithLabelValues(codes.MissingID.String()).Inc()
 				continue
 			}
 			if previous, ok := batch[id]; ok {
 				previous.Ack()
 				p.logger.Warn("Message with duplicate id", zap.String("id", id))
-				// dwhHandledCounter.WithLabelValues(codes.DuplicateID.String()).Inc()
+				handledCounter.WithLabelValues(codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg
 			if len(batch) < p.opts.flushSize {
@@ -170,7 +243,7 @@ func (p *PersisterDwh) batch() error {
 	}
 }
 
-func (p *PersisterDwh) send(messages map[string]*puller.Message) {
+func (p *PersisterDWH) send(messages map[string]*puller.Message) {
 	ctx, cancel := context.WithTimeout(context.Background(), p.opts.flushTimeout)
 	defer cancel()
 
@@ -180,8 +253,8 @@ func (p *PersisterDwh) send(messages map[string]*puller.Message) {
 		return
 	}
 
-	evalEvents := []*ecproto.EvaluationEvent{}
-	goalEvents := []*ecproto.GoalEvent{}
+	evalEvents := []*epproto.EvaluationEvent{}
+	goalEvents := []*epproto.GoalEvent{}
 
 	fails := make(map[string]bool, len(envEvents))
 	for environmentNamespace, events := range envEvents {
@@ -266,12 +339,12 @@ func (p *PersisterDwh) send(messages map[string]*puller.Message) {
 	}
 }
 
-func (p *PersisterDwh) extractEvents(messages map[string]*puller.Message) environmentEventMap {
+func (p *PersisterDWH) extractEvents(messages map[string]*puller.Message) environmentEventMap {
 	envEvents := environmentEventMap{}
 	handleBadMessage := func(m *puller.Message, err error) {
 		m.Ack()
 		p.logger.Error("bad message", zap.Error(err), zap.Any("msg", m))
-		// handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
+		handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
 	}
 	for _, m := range messages {
 		event := &eventproto.Event{}
@@ -293,11 +366,11 @@ func (p *PersisterDwh) extractEvents(messages map[string]*puller.Message) enviro
 	return envEvents
 }
 
-func (p *PersisterDwh) convToEvaluationEvent(
+func (p *PersisterDWH) convToEvaluationEvent(
 	ctx context.Context,
 	e *eventproto.EvaluationEvent,
 	id, environmentNamespace string,
-) (*ecproto.EvaluationEvent, bool, error) {
+) (*epproto.EvaluationEvent, bool, error) {
 	if err := p.validateTimestamp(e.Timestamp); err != nil {
 		handledCounter.WithLabelValues(codeInvalidGoalEventTimestamp).Inc()
 		return nil, false, err
@@ -325,7 +398,7 @@ func (p *PersisterDwh) convToEvaluationEvent(
 		// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
 		tag = "none"
 	}
-	return &ecproto.EvaluationEvent{
+	return &epproto.EvaluationEvent{
 		Id:                   id,
 		FeatureId:            e.FeatureId,
 		FeatureVersion:       e.FeatureVersion,
@@ -340,11 +413,11 @@ func (p *PersisterDwh) convToEvaluationEvent(
 	}, false, nil
 }
 
-func (p *PersisterDwh) convToGoalEvent(
+func (p *PersisterDWH) convToGoalEvent(
 	ctx context.Context,
 	e *eventproto.GoalEvent,
 	id, environmentNamespace string,
-) (*ecproto.GoalEvent, bool, error) {
+) (*epproto.GoalEvent, bool, error) {
 	tag := e.Tag
 	if tag == "" {
 		// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
@@ -366,7 +439,7 @@ func (p *PersisterDwh) convToGoalEvent(
 	if eval.Reason != nil {
 		reason = eval.Reason.Type.String()
 	}
-	return &ecproto.GoalEvent{
+	return &epproto.GoalEvent{
 		Id:                   id,
 		GoalId:               e.GoalId,
 		Value:                float32(e.Value),
@@ -383,7 +456,7 @@ func (p *PersisterDwh) convToGoalEvent(
 	}, false, nil
 }
 
-func (p *PersisterDwh) linkGoalEvent(
+func (p *PersisterDWH) linkGoalEvent(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
 	environmentNamespace, tag string,
@@ -399,7 +472,7 @@ func (p *PersisterDwh) linkGoalEvent(
 	return evalExp, false, nil
 }
 
-func (*PersisterDwh) validateTimestamp(
+func (*PersisterDWH) validateTimestamp(
 	timestamp int64,
 ) error {
 	actual := time.Unix(timestamp, 0)
@@ -412,7 +485,7 @@ func (*PersisterDwh) validateTimestamp(
 	return nil
 }
 
-func (p *PersisterDwh) getUserEvaluation(
+func (p *PersisterDWH) getUserEvaluation(
 	environmentNamespace,
 	userID,
 	tag,
@@ -438,7 +511,7 @@ func (p *PersisterDwh) getUserEvaluation(
 	return evaluation, nil
 }
 
-func (p *PersisterDwh) linkGoalEventByExperiment(
+func (p *PersisterDWH) linkGoalEventByExperiment(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
 	environmentNamespace, tag string,
@@ -479,7 +552,7 @@ func (p *PersisterDwh) linkGoalEventByExperiment(
 	return ev, false, nil
 }
 
-func (*PersisterDwh) findGoalID(id string, goalIDs []string) bool {
+func (*PersisterDWH) findGoalID(id string, goalIDs []string) bool {
 	for _, goalID := range goalIDs {
 		if id == goalID {
 			return true
@@ -488,7 +561,7 @@ func (*PersisterDwh) findGoalID(id string, goalIDs []string) bool {
 	return false
 }
 
-func (p *PersisterDwh) listExperiments(
+func (p *PersisterDWH) listExperiments(
 	ctx context.Context,
 	environmentNamespace string,
 ) ([]*exproto.Experiment, error) {
@@ -528,7 +601,7 @@ func (p *PersisterDwh) listExperiments(
 	return exp.([]*exproto.Experiment), nil
 }
 
-func (p *PersisterDwh) convToEvaluation(
+func (p *PersisterDWH) convToEvaluation(
 	ctx context.Context,
 	event *eventproto.EvaluationEvent,
 ) (*featureproto.Evaluation, string) {
@@ -555,7 +628,7 @@ func (p *PersisterDwh) convToEvaluation(
 	return evaluation, tag
 }
 
-func (p *PersisterDwh) existExperiment(
+func (p *PersisterDWH) existExperiment(
 	ctx context.Context,
 	event *eventproto.EvaluationEvent,
 	environmentNamespace string,
@@ -578,7 +651,7 @@ func (p *PersisterDwh) existExperiment(
 	return len(resp.Experiments) == 1, nil
 }
 
-func (p *PersisterDwh) upsertUserEvaluation(
+func (p *PersisterDWH) upsertUserEvaluation(
 	ctx context.Context,
 	event *eventproto.EvaluationEvent,
 	environmentNamespace string,

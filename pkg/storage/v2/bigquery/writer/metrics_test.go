@@ -30,7 +30,7 @@
 // The following codes based on https://github.com/googleapis/gax-go/blob/v2.7.0/v2/apierror/apierror_test.go.
 // See the file headers for detail informations.
 
-package query
+package writer
 
 import (
 	"testing"
