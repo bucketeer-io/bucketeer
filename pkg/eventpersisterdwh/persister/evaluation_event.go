@@ -177,7 +177,7 @@ func (w *evalEvtWriter) existExperiment(
 ) bool {
 	for _, e := range es {
 		if e.FeatureId == fID && e.FeatureVersion == fVersion {
-			return true 
+			return true
 		}
 	}
 	return false
