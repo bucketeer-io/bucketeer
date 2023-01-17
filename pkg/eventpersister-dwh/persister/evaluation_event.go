@@ -92,7 +92,7 @@ func (w *evalEvtWriter) Write(
 					}
 					if !retriable {
 						w.logger.Error(
-							"failed to convert to evaluation event",
+							"Failed to convert to evaluation event",
 							zap.Error(err),
 							zap.String("id", id),
 							zap.String("environmentNamespace", environmentNamespace),
@@ -102,6 +102,13 @@ func (w *evalEvtWriter) Write(
 					continue
 				}
 				evalEvents = append(evalEvents, e)
+			default:
+				w.logger.Error(
+					"The event is an unexpected message type",
+					zap.String("id", id),
+					zap.String("environmentNamespace", environmentNamespace),
+				)
+				fails[id] = false
 			}
 		}
 	}

@@ -94,7 +94,7 @@ func (w *goalEvtWriter) Write(
 					}
 					if !retriable {
 						w.logger.Error(
-							"failed to convert to goal event",
+							"Failed to convert to goal event",
 							zap.Error(err),
 							zap.String("id", id),
 							zap.String("environmentNamespace", environmentNamespace),
@@ -104,6 +104,13 @@ func (w *goalEvtWriter) Write(
 					continue
 				}
 				goalEvents = append(goalEvents, e)
+			default:
+				w.logger.Error(
+					"The event is an unexpected message type",
+					zap.String("id", id),
+					zap.String("environmentNamespace", environmentNamespace),
+				)
+				fails[id] = false
 			}
 		}
 	}
