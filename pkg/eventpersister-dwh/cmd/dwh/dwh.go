@@ -103,7 +103,7 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"bucketeer-experiment-service address.",
 		).Default("experiment:9090").String(),
 		bigQueryDataSet:  cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").Required().String(),
-		bigQeryBatchSize: cmd.Flag("bigquery-batch-size", "BigQuery batch size").Default("10").Int(),
+		bigQeryBatchSize: cmd.Flag("bigquery-batch-size", "BigQuery Size of rows to be sent at once").Default("10").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
