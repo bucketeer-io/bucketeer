@@ -31,7 +31,6 @@ import (
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
-	pullermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/mock"
 	btstorage "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersister-dwh"
@@ -80,11 +79,13 @@ func TestConvToEvaluationEvent(t *testing.T) {
 	}
 	userData, err := json.Marshal(evaluationEvent.User.Data)
 	require.NoError(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	eventID := "event-id"
 	patterns := []struct {
 		desc               string
-		setup              func(context.Context, *PersisterDWH)
+		setup              func(context.Context, *evalEvtWriter)
 		input              *eventproto.EvaluationEvent
 		expected           *epproto.EvaluationEvent
 		expectedErr        error
@@ -112,7 +113,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 		},
 		{
 			desc: "error: failed to list experiments",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -136,7 +137,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 		},
 		{
 			desc: "error: experiment does not exist",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -160,7 +161,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 		},
 		{
 			desc: "error: failed to upsert user evaluation",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -197,7 +198,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 		},
 		{
 			desc: "success: evaluation event",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -247,11 +248,11 @@ func TestConvToEvaluationEvent(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			persister := newPersisterDwh(mockController)
+			persister := newEvalEventWriter(mockController)
 			if p.setup != nil {
-				p.setup(persister.ctx, persister)
+				p.setup(ctx, persister)
 			}
-			actual, repeatable, err := persister.convToEvaluationEvent(persister.ctx, p.input, eventID, environmentNamespace)
+			actual, repeatable, err := persister.convToEvaluationEvent(ctx, p.input, eventID, environmentNamespace)
 			assert.Equal(t, p.expectedRepeatable, repeatable)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
@@ -267,6 +268,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	invalidTime, err := time.Parse(layout, "2014-01-17 23:02:03 +0000 UTC")
 	require.NoError(t, err)
 	environmentNamespace := "ns"
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	eventID := "event-id"
 	user := &userproto.User{
 		Id:   "uid",
@@ -276,7 +279,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	require.NoError(t, err)
 	patterns := []struct {
 		desc               string
-		setup              func(context.Context, *PersisterDWH)
+		setup              func(context.Context, *goalEvtWriter)
 		input              *eventproto.GoalEvent
 		expected           *epproto.GoalEvent
 		expectedErr        error
@@ -303,7 +306,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: list experiment internal",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -338,7 +341,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: list experiment empty",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -373,7 +376,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: experiment not found",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -415,7 +418,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: get evaluation not found",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -467,7 +470,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: get evaluation internal",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -519,7 +522,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "err: get evaluation internal using empty tag",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -571,7 +574,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(ctx context.Context, p *PersisterDWH) {
+			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
@@ -640,11 +643,11 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			persister := newPersisterDwh(mockController)
+			persister := newGoalEventWriter(mockController)
 			if p.setup != nil {
-				p.setup(persister.ctx, persister)
+				p.setup(ctx, persister)
 			}
-			actual, repeatable, err := persister.convToGoalEvent(persister.ctx, p.input, eventID, environmentNamespace)
+			actual, repeatable, err := persister.convToGoalEvent(ctx, p.input, eventID, environmentNamespace)
 			assert.Equal(t, p.expectedRepeatable, repeatable)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
@@ -722,23 +725,25 @@ func TestConvToEvaluationDwh(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		persister := newPersisterDwh(mockController)
+		persister := newEvalEventWriter(mockController)
 		ev, tag := persister.convToEvaluation(context.Background(), p.input)
 		assert.True(t, proto.Equal(p.expected, ev), p.desc)
 		assert.Equal(t, p.expectedTag, tag, p.desc)
 	}
 }
 
-func newPersisterDwh(c *gomock.Controller) *PersisterDWH {
-	ctx, cancel := context.WithCancel(context.Background())
-	return &PersisterDWH{
+func newEvalEventWriter(c *gomock.Controller) *evalEvtWriter {
+	return &evalEvtWriter{
 		experimentClient:      ecmock.NewMockClient(c),
-		puller:                pullermock.NewMockRateLimitedPuller(c),
 		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),
-		opts:                  &defaultOptions,
 		logger:                defaultOptions.logger,
-		ctx:                   ctx,
-		cancel:                cancel,
-		doneCh:                make(chan struct{}),
+	}
+}
+
+func newGoalEventWriter(c *gomock.Controller) *goalEvtWriter {
+	return &goalEvtWriter{
+		experimentClient:      ecmock.NewMockClient(c),
+		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),
+		logger:                defaultOptions.logger,
 	}
 }

@@ -135,7 +135,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer experimentClient.Close()
-	goalQuery, err := s.createGoalQuery(
+	goalQuery, err := s.createGoalWriter(
 		ctx,
 		registerer,
 		logger,
@@ -144,7 +144,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer goalQuery.Close()
-	evalQuery, err := s.createEvalQuery(
+	evalQuery, err := s.createEvalWriter(
 		ctx,
 		registerer,
 		logger,
@@ -153,12 +153,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer evalQuery.Close()
-	p := persister.NewPersisterDwh(
+	p, err := persister.NewPersisterDWH(
 		experimentClient,
 		puller,
-		evalQuery,
-		goalQuery,
+		registerer,
 		btClient,
+		*s.topic,
+		*s.project,
+		*s.bigQueryDataSet,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
@@ -221,7 +223,7 @@ func (s *server) createBigtableClient(
 	)
 }
 
-func (s *server) createEvalQuery(
+func (s *server) createEvalWriter(
 	ctx context.Context,
 	r metrics.Registerer,
 	l *zap.Logger,
@@ -242,7 +244,7 @@ func (s *server) createEvalQuery(
 	return evalQuery, nil
 }
 
-func (s *server) createGoalQuery(
+func (s *server) createGoalWriter(
 	ctx context.Context,
 	r metrics.Registerer,
 	l *zap.Logger,
