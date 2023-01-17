@@ -17,9 +17,10 @@ package persister
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
@@ -39,6 +40,7 @@ type evalEvtWriter struct {
 	writer                storage.EvalEventWriter
 	userEvaluationStorage featurestorage.UserEvaluationsStorage
 	experimentClient      ec.Client
+	flightgroup           singleflight.Group
 	logger                *zap.Logger
 }
 
@@ -81,7 +83,7 @@ func (w *evalEvtWriter) Write(
 			case *eventproto.EvaluationEvent:
 				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
-					if err == ErrNoExperiments {
+					if err == ErrNoExperiments || err == ErrExperimentNotFound {
 						w.logger.Warn(
 							"There is no running experiments",
 							zap.Error(err),
@@ -126,12 +128,16 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 	e *eventproto.EvaluationEvent,
 	id, environmentNamespace string,
 ) (*epproto.EvaluationEvent, bool, error) {
-	exist, err := w.existExperiment(ctx, e, environmentNamespace)
+	experiments, err := w.listExperiments(ctx, environmentNamespace)
 	if err != nil {
 		return nil, true, err
 	}
-	if !exist {
+	if len(experiments) == 0 {
 		return nil, false, ErrNoExperiments
+	}
+	exist := w.existExperiment(experiments, e.FeatureId, e.FeatureVersion)
+	if !exist {
+		return nil, false, ErrExperimentNotFound
 	}
 	if err := w.upsertUserEvaluation(ctx, e, environmentNamespace); err != nil {
 		return nil, true, err
@@ -165,23 +171,53 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 }
 
 func (w *evalEvtWriter) existExperiment(
-	ctx context.Context,
-	event *eventproto.EvaluationEvent,
-	environmentNamespace string,
-) (bool, error) {
-	resp, err := w.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
-		FeatureId:            event.FeatureId,
-		FeatureVersion:       &wrappers.Int32Value{Value: event.FeatureVersion},
-		PageSize:             1,
-		EnvironmentNamespace: environmentNamespace,
-		Statuses: []exproto.Experiment_Status{
-			exproto.Experiment_RUNNING,
-		},
-	})
-	if err != nil {
-		return false, err
+	es []*exproto.Experiment,
+	fID string,
+	fVersion int32,
+) bool {
+	for _, e := range es {
+		if e.FeatureId == fID && e.FeatureVersion == fVersion {
+			return true 
+		}
 	}
-	return len(resp.Experiments) == 1, nil
+	return false
+}
+
+func (w *evalEvtWriter) listExperiments(
+	ctx context.Context,
+	environmentNamespace string,
+) ([]*exproto.Experiment, error) {
+	exp, err, _ := w.flightgroup.Do(
+		fmt.Sprintf("%s:%s", environmentNamespace, "listExperiments"),
+		func() (interface{}, error) {
+			experiments := []*exproto.Experiment{}
+			cursor := ""
+			for {
+				resp, err := w.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
+					PageSize:             listRequestSize,
+					Cursor:               cursor,
+					EnvironmentNamespace: environmentNamespace,
+					Statuses: []exproto.Experiment_Status{
+						exproto.Experiment_RUNNING,
+					},
+				})
+				if err != nil {
+					return nil, err
+				}
+				experiments = append(experiments, resp.Experiments...)
+				experimentSize := len(resp.Experiments)
+				if experimentSize == 0 || experimentSize < listRequestSize {
+					return experiments, nil
+				}
+				cursor = resp.Cursor
+			}
+		},
+	)
+	if err != nil {
+		handledCounter.WithLabelValues(codeFailedToListExperiments).Inc()
+		return nil, err
+	}
+	return exp.([]*exproto.Experiment), nil
 }
 
 func (w *evalEvtWriter) upsertUserEvaluation(
