@@ -44,7 +44,7 @@ var (
 	handledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "bigquery_query",
+			Subsystem: "bigquery_writer",
 			Name:      "handled_total",
 			Help:      "Total number of completed operations.",
 		}, []string{"operation", "code"})
