@@ -52,7 +52,7 @@ var (
 	handledHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
-			Subsystem: "bigquery_query",
+			Subsystem: "bigquery_writer",
 			Name:      "handling_seconds",
 			Help:      "Histogram of operation response latency (seconds).",
 			Buckets:   prometheus.DefBuckets,
