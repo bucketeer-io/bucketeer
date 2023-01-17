@@ -21,7 +21,7 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/datastore"
+	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
@@ -36,7 +36,7 @@ import (
 const evaluationEventTable = "evaluation_event"
 
 type evalEvtWriter struct {
-	writer                datastore.EvalEventWriter
+	writer                storage.EvalEventWriter
 	userEvaluationStorage featurestorage.UserEvaluationsStorage
 	experimentClient      ec.Client
 	logger                *zap.Logger
@@ -64,7 +64,7 @@ func NewEvalEventWriter(
 		return nil, err
 	}
 	return &evalEvtWriter{
-		writer: datastore.NewEvalEventWriter(evalQuery),
+		writer: storage.NewEvalEventWriter(evalQuery),
 		logger: l,
 	}, nil
 }

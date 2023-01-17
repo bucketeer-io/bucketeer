@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/datastore"
+	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
@@ -37,7 +37,7 @@ import (
 const goalEventTable = "goal_event"
 
 type goalEvtWriter struct {
-	writer                datastore.GoalEventWriter
+	writer                storage.GoalEventWriter
 	userEvaluationStorage featurestorage.UserEvaluationsStorage
 	experimentClient      ec.Client
 	flightgroup           singleflight.Group
@@ -66,7 +66,7 @@ func NewGoalEventWriter(
 		return nil, err
 	}
 	return &goalEvtWriter{
-		writer: datastore.NewGoalEventWriter(goalWriter),
+		writer: storage.NewGoalEventWriter(goalWriter),
 		logger: l,
 	}, nil
 }
