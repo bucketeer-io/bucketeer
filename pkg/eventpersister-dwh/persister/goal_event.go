@@ -49,6 +49,7 @@ func NewGoalEventWriter(
 	r metrics.Registerer,
 	l *zap.Logger,
 	project, ds string,
+	size int,
 ) (Writer, error) {
 	evt := epproto.GoalEvent{}
 	goalWriter, err := writer.NewWriter(
@@ -59,6 +60,7 @@ func NewGoalEventWriter(
 		evt.ProtoReflect().Descriptor(),
 		writer.WithMetrics(r),
 		writer.WithLogger(l),
+		writer.WithBatchSize(size),
 	)
 	if err != nil {
 		return nil, err

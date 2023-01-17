@@ -47,6 +47,7 @@ func NewEvalEventWriter(
 	r metrics.Registerer,
 	l *zap.Logger,
 	project, ds string,
+	size int,
 ) (Writer, error) {
 	evt := epproto.EvaluationEvent{}
 	evalQuery, err := writer.NewWriter(
@@ -57,6 +58,7 @@ func NewEvalEventWriter(
 		evt.ProtoReflect().Descriptor(),
 		writer.WithMetrics(r),
 		writer.WithLogger(l),
+		writer.WithBatchSize(size),
 	)
 	if err != nil {
 		return nil, err

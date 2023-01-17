@@ -25,22 +25,29 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
 
-type queryOptions struct {
-	logger  *zap.Logger
-	metrics metrics.Registerer
+type options struct {
+	logger    *zap.Logger
+	metrics   metrics.Registerer
+	batchSize int
 }
 
-type QueryOption func(*queryOptions)
+type QueryOption func(*options)
 
 func WithLogger(l *zap.Logger) QueryOption {
-	return func(opts *queryOptions) {
+	return func(opts *options) {
 		opts.logger = l
 	}
 }
 
 func WithMetrics(r metrics.Registerer) QueryOption {
-	return func(opts *queryOptions) {
+	return func(opts *options) {
 		opts.metrics = r
+	}
+}
+
+func WithBatchSize(size int) QueryOption {
+	return func(opts *options) {
+		opts.batchSize = size
 	}
 }
 
@@ -51,7 +58,7 @@ type Writer interface {
 
 type writer struct {
 	client *managedwriter.ManagedStream
-	opts   *queryOptions
+	opts   *options
 }
 
 func NewWriter(
@@ -60,8 +67,9 @@ func NewWriter(
 	desc protoreflect.MessageDescriptor,
 	opts ...QueryOption,
 ) (Writer, error) {
-	dopts := &queryOptions{
+	dopts := &options{
 		logger: zap.NewNop(),
+		batchSize: 10,
 	}
 	for _, opt := range opts {
 		opt(dopts)
@@ -98,7 +106,7 @@ func (w *writer) AppendRows(
 	var err error
 	defer record()(operationQuery, &err)
 	results := []*managedwriter.AppendResult{}
-	batches := getBatch(msgs)
+	batches := w.getBatch(msgs)
 	for _, b := range batches {
 		r, err := w.client.AppendRows(ctx, b)
 		if err != nil {
@@ -119,10 +127,10 @@ func (w *writer) Close() error {
 	return w.client.Close()
 }
 
-func getBatch(msgs [][]byte) [][][]byte {
+func (w *writer) getBatch(msgs [][]byte) [][][]byte {
 	batches := [][][]byte{}
-	for i := 0; i < len(msgs); i += 10 {
-		end := i + 10
+	for i := 0; i < len(msgs); i += w.opts.batchSize {
+		end := i + w.opts.batchSize
 		if end > len(msgs) {
 			end = len(msgs)
 		}

@@ -18,15 +18,24 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
+var defaultOptions = options{
+	logger: zap.NewNop(),
+	batchSize: 10,
+}
+
 func TestCreateBatch(t *testing.T) {
 	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
 	patterns := []struct {
 		desc         string
 		size         int
@@ -63,10 +72,17 @@ func TestCreateBatch(t *testing.T) {
 				require.NoError(t, err)
 				encoded[k] = b
 			}
-			actual := getBatch(encoded)
+			w := newWriter(mockController)
+			actual := w.getBatch(encoded)
 			for idx, exp := range p.expectedSize {
 				assert.Len(t, actual[idx], exp)
 			}
 		})
+	}
+}
+
+func newWriter(c *gomock.Controller) *writer {
+	return &writer{
+		opts: &defaultOptions,
 	}
 }

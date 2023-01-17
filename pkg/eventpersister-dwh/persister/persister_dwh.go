@@ -73,6 +73,7 @@ type options struct {
 	flushTimeout  time.Duration
 	metrics       metrics.Registerer
 	logger        *zap.Logger
+	batchSize     int
 }
 
 type Option func(*options)
@@ -119,6 +120,12 @@ func WithLogger(l *zap.Logger) Option {
 	}
 }
 
+func WithBatchSize(size int) Option {
+	return func(opts *options) {
+		opts.batchSize = size
+	}
+}
+
 func NewPersisterDWH(
 	experimentClient ec.Client,
 	p puller.Puller,
@@ -134,6 +141,7 @@ func NewPersisterDWH(
 		flushInterval: 5 * time.Second,
 		flushTimeout:  20 * time.Second,
 		logger:        zap.NewNop(),
+		batchSize:     10,
 	}
 	for _, opt := range opts {
 		opt(dopts)
@@ -151,6 +159,7 @@ func NewPersisterDWH(
 			dopts.logger,
 			project,
 			ds,
+			dopts.batchSize,
 		)
 	} else {
 		writer, err = NewGoalEventWriter(
@@ -159,6 +168,7 @@ func NewPersisterDWH(
 			dopts.logger,
 			project,
 			ds,
+			dopts.batchSize,
 		)
 	}
 	if err != nil {

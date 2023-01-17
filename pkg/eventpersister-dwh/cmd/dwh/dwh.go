@@ -30,9 +30,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
-	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersister-dwh"
 )
 
 const (
@@ -64,7 +62,8 @@ type server struct {
 	keyPath           *string
 	experimentService *string
 	// bigquery
-	bigQueryDataSet *string
+	bigQueryDataSet  *string
+	bigQeryBatchSize *int
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -103,7 +102,8 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"experiment-service",
 			"bucketeer-experiment-service address.",
 		).Default("experiment:9090").String(),
-		bigQueryDataSet: cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").Required().String(),
+		bigQueryDataSet:  cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").Required().String(),
+		bigQeryBatchSize: cmd.Flag("bigquery-batch-size", "BigQuery batch size").Default("10").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -135,24 +135,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer experimentClient.Close()
-	goalQuery, err := s.createGoalWriter(
-		ctx,
-		registerer,
-		logger,
-	)
-	if err != nil {
-		return err
-	}
-	defer goalQuery.Close()
-	evalQuery, err := s.createEvalWriter(
-		ctx,
-		registerer,
-		logger,
-	)
-	if err != nil {
-		return err
-	}
-	defer evalQuery.Close()
 	p, err := persister.NewPersisterDWH(
 		experimentClient,
 		puller,
@@ -168,6 +150,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		persister.WithFlushTimeout(*s.flushTimeout),
 		persister.WithMetrics(registerer),
 		persister.WithLogger(logger),
+		persister.WithBatchSize(*s.bigQeryBatchSize),
 	)
 	if err != nil {
 		return err
@@ -221,46 +204,4 @@ func (s *server) createBigtableClient(
 		bigtable.WithMetrics(registerer),
 		bigtable.WithLogger(logger),
 	)
-}
-
-func (s *server) createEvalWriter(
-	ctx context.Context,
-	r metrics.Registerer,
-	l *zap.Logger,
-) (writer.Writer, error) {
-	evt := epproto.EvaluationEvent{}
-	evalQuery, err := writer.NewWriter(
-		ctx,
-		*s.project,
-		*s.bigQueryDataSet,
-		evaluationEventTable,
-		evt.ProtoReflect().Descriptor(),
-		writer.WithMetrics(r),
-		writer.WithLogger(l),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return evalQuery, nil
-}
-
-func (s *server) createGoalWriter(
-	ctx context.Context,
-	r metrics.Registerer,
-	l *zap.Logger,
-) (writer.Writer, error) {
-	evt := epproto.GoalEvent{}
-	goalQuery, err := writer.NewWriter(
-		ctx,
-		*s.project,
-		*s.bigQueryDataSet,
-		goalEventTable,
-		evt.ProtoReflect().Descriptor(),
-		writer.WithMetrics(r),
-		writer.WithLogger(l),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return goalQuery, nil
 }
