@@ -128,6 +128,35 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expectedRepeatable: true,
 		},
 		{
+			desc: "error: experiment not found",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+						},
+					},
+					).Return(&exproto.ListExperimentsResponse{
+						Experiments: []*exproto.Experiment{
+							{
+								Id:             "experiment-id",
+								GoalIds:        []string{"goal-id"},
+								FeatureId:      "invalid",
+								FeatureVersion: -1,
+							},
+						},
+					}, nil)
+			},
+			input:              evaluationEvent,
+			expected:           nil,
+			expectedErr:        ErrExperimentNotFound,
+			expectedRepeatable: false,
+		},
+		{
 			desc: "error: failed to upsert user evaluation",
 			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
