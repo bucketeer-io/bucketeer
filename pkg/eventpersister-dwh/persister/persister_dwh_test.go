@@ -101,7 +101,6 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						
 					},
 				).Return(nil, errors.New("internal"))
 			},
@@ -123,7 +122,6 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						
 					},
 				).Return(nil, ErrNoExperiments)
 			},
@@ -145,7 +143,6 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -263,7 +260,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						
 					},
 				).Return(nil, errors.New("internal"))
 			},
@@ -296,7 +292,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 			},
@@ -329,7 +324,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -369,7 +363,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -419,7 +412,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -469,7 +461,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -519,7 +510,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
 						},
-						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
