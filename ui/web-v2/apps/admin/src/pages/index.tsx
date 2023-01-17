@@ -194,9 +194,10 @@ export const EnvironmentRoot: FC = memo(() => {
         >
           <GoalIndexPage />
         </Route>
+        {/* Disabling this feature temporarily until the new data pipeline is done.
         <Route exact path={[`${url}${PAGE_PATH_ANALYSIS}`]}>
           <AnalysisIndexPage />
-        </Route>
+        </Route> */}
         <Route
           exact
           path={[
