@@ -68,7 +68,7 @@ func NewWriter(
 	opts ...QueryOption,
 ) (Writer, error) {
 	dopts := &options{
-		logger: zap.NewNop(),
+		logger:    zap.NewNop(),
 		batchSize: 10,
 	}
 	for _, opt := range opts {

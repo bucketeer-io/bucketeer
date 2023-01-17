@@ -34,9 +34,7 @@ import (
 )
 
 const (
-	command              = "server"
-	evaluationEventTable = "evaluation_event"
-	goalEventTable       = "goal_event"
+	command = "server"
 )
 
 type server struct {

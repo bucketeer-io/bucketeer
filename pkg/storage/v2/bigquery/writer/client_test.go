@@ -28,7 +28,7 @@ import (
 )
 
 var defaultOptions = options{
-	logger: zap.NewNop(),
+	logger:    zap.NewNop(),
 	batchSize: 10,
 }
 
