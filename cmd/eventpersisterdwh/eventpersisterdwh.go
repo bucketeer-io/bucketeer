@@ -18,7 +18,7 @@ import (
 	"log"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/cmd"
+	dwh "github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/cmd"
 )
 
 var (
