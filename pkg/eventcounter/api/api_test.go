@@ -63,7 +63,7 @@ func TestNewEventCounterService(t *testing.T) {
 	assert.IsType(t, &eventCounterService{}, g)
 }
 
-func TestGetEvaluationCountBigQuery(t *testing.T) {
+func TestGetExperimentEvaluationCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -78,46 +78,58 @@ func TestGetEvaluationCountBigQuery(t *testing.T) {
 	fVersion := int32(1)
 	vID1 := "vid01"
 	vID2 := "vid02"
-
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
-		input       *ecproto.GetEvaluationCountV2Request
-		expected    *ecproto.GetEvaluationCountV2Response
+		input       *ecproto.GetExperimentEvaluationCountRequest
+		expected    *ecproto.GetExperimentEvaluationCountResponse
 		expectedErr error
 	}{
 		{
 			desc: "error: ErrStartAtRequired",
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
+				FeatureId:            fID,
+				EndAt:                correctEndAtUnix,
 			},
-			expectedErr: localizedError(statusStartAtRequired, locale.JaJP),
+			expectedErr: createError(statusStartAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at")),
 		},
 		{
 			desc: "error: ErrEndAtRequired",
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
+				FeatureId:            fID,
 				StartAt:              correctStartAtUnix,
 			},
-			expectedErr: localizedError(statusEndAtRequired, locale.JaJP),
+			expectedErr: createError(statusEndAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at")),
 		},
 		{
 			desc: "error: ErrStartAtIsAfterEndAt",
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
+				FeatureId:            fID,
 				StartAt:              now.Unix(),
 				EndAt:                now.Add(-31 * 24 * time.Hour).Unix(),
 			},
-			expectedErr: localizedError(statusStartAtIsAfterEndAt, locale.JaJP),
+			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd)),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
 				StartAt:              correctStartAtUnix,
 				EndAt:                correctEndAtUnix,
 			},
-			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
 			desc: "success: one variation",
@@ -133,7 +145,7 @@ func TestGetEvaluationCountBigQuery(t *testing.T) {
 					nil,
 				)
 			},
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
 				StartAt:              correctStartAtUnix,
 				EndAt:                correctEndAtUnix,
@@ -141,16 +153,14 @@ func TestGetEvaluationCountBigQuery(t *testing.T) {
 				FeatureVersion:       fVersion,
 				VariationIds:         []string{vID1},
 			},
-			expected: &ecproto.GetEvaluationCountV2Response{
-				Count: &ecproto.EvaluationCount{
-					FeatureId:      fID,
-					FeatureVersion: fVersion,
-					RealtimeCounts: []*ecproto.VariationCount{
-						{
-							VariationId: vID1,
-							UserCount:   int64(1),
-							EventCount:  int64(2),
-						},
+			expected: &ecproto.GetExperimentEvaluationCountResponse{
+				FeatureId:      fID,
+				FeatureVersion: fVersion,
+				VariationCounts: []*ecproto.VariationCount{
+					{
+						VariationId: vID1,
+						UserCount:   int64(1),
+						EventCount:  int64(2),
 					},
 				},
 			},
@@ -174,7 +184,7 @@ func TestGetEvaluationCountBigQuery(t *testing.T) {
 					},
 					nil)
 			},
-			input: &ecproto.GetEvaluationCountV2Request{
+			input: &ecproto.GetExperimentEvaluationCountRequest{
 				EnvironmentNamespace: ns,
 				StartAt:              correctStartAtUnix,
 				EndAt:                correctEndAtUnix,
@@ -182,21 +192,19 @@ func TestGetEvaluationCountBigQuery(t *testing.T) {
 				FeatureVersion:       fVersion,
 				VariationIds:         []string{vID1, vID2},
 			},
-			expected: &ecproto.GetEvaluationCountV2Response{
-				Count: &ecproto.EvaluationCount{
-					FeatureId:      fID,
-					FeatureVersion: fVersion,
-					RealtimeCounts: []*ecproto.VariationCount{
-						{
-							VariationId: vID1,
-							UserCount:   int64(1),
-							EventCount:  int64(2),
-						},
-						{
-							VariationId: vID2,
-							UserCount:   int64(12),
-							EventCount:  int64(123),
-						},
+			expected: &ecproto.GetExperimentEvaluationCountResponse{
+				FeatureId:      fID,
+				FeatureVersion: fVersion,
+				VariationCounts: []*ecproto.VariationCount{
+					{
+						VariationId: vID1,
+						UserCount:   int64(1),
+						EventCount:  int64(2),
+					},
+					{
+						VariationId: vID2,
+						UserCount:   int64(12),
+						EventCount:  int64(123),
 					},
 				},
 			},
@@ -209,7 +217,7 @@ func TestGetEvaluationCountBigQuery(t *testing.T) {
 			if p.setup != nil {
 				p.setup(gs)
 			}
-			actual, err := gs.GetEvaluationCountBigQuery(ctx, p.input)
+			actual, err := gs.GetExperimentEvaluationCount(ctx, p.input)
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
@@ -729,6 +737,201 @@ func TestGetGoalCount(t *testing.T) {
 				p.setup(s)
 			}
 			actual, err := s.GetGoalCount(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestGetExperimentGoalCount(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	now := time.Now()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	correctStartAtUnix := now.Add(-30 * 24 * time.Hour).Unix()
+	correctStartAt := time.Unix(correctStartAtUnix, 0)
+	correctEndAtUnix := now.Unix()
+	correctEndAt := time.Unix(correctEndAtUnix, 0)
+	ns := "ns0"
+	fID := "fid"
+	fVersion := int32(1)
+	vID1 := "vid01"
+	vID2 := "vid02"
+	gID := "gid"
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	patterns := []struct {
+		desc        string
+		setup       func(*eventCounterService)
+		input       *ecproto.GetExperimentGoalCountRequest
+		expected    *ecproto.GetExperimentGoalCountResponse
+		expectedErr error
+	}{
+		{
+			desc: "error: ErrStartAtRequired",
+			input: &ecproto.GetExperimentGoalCountRequest{
+				EnvironmentNamespace: ns,
+				FeatureId:            fID,
+				GoalId:               gID,
+				EndAt:                correctEndAtUnix,
+			},
+			expectedErr: createError(statusStartAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at")),
+		},
+		{
+			desc: "error: ErrEndAtRequired",
+			input: &ecproto.GetExperimentGoalCountRequest{
+				EnvironmentNamespace: ns,
+				FeatureId:            fID,
+				GoalId:               gID,
+				StartAt:              correctStartAtUnix,
+			},
+			expectedErr: createError(statusEndAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at")),
+		},
+		{
+			desc: "error: ErrStartAtIsAfterEndAt",
+			input: &ecproto.GetExperimentGoalCountRequest{
+				EnvironmentNamespace: ns,
+				FeatureId:            fID,
+				GoalId:               gID,
+				StartAt:              now.Unix(),
+				EndAt:                now.Add(-30 * 24 * time.Hour).Unix(),
+			},
+			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd)),
+		},
+		{
+			desc: "error: ErrFeatureIDRequired",
+			input: &ecproto.GetExperimentGoalCountRequest{
+				EnvironmentNamespace: ns,
+				GoalId:               gID,
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+			},
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+		},
+		{
+			desc: "error: ErrGoalIDRequired",
+			input: &ecproto.GetExperimentGoalCountRequest{
+				EnvironmentNamespace: ns,
+				FeatureId:            fID,
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+			},
+			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+		},
+		{
+			desc: "success: one variation",
+			setup: func(s *eventCounterService) {
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
+					[]*v2ecs.GoalEventCount{
+						{
+							VariationID:       vID1,
+							GoalUser:          int64(1),
+							GoalTotal:         int64(2),
+							GoalValueTotal:    1.23,
+							GoalValueMean:     1.234,
+							GoalValueVariance: 1.2345,
+						},
+					},
+					nil,
+				)
+			},
+			input: &ecproto.GetExperimentGoalCountRequest{
+				EnvironmentNamespace: ns,
+				GoalId:               gID,
+				FeatureId:            fID,
+				FeatureVersion:       fVersion,
+				VariationIds:         []string{vID1},
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+			},
+			expected: &ecproto.GetExperimentGoalCountResponse{
+				GoalId: gID,
+				VariationCounts: []*ecproto.VariationCount{
+					{
+						VariationId:             vID1,
+						UserCount:               int64(1),
+						EventCount:              int64(2),
+						ValueSum:                1.23,
+						ValueSumPerUserMean:     1.234,
+						ValueSumPerUserVariance: 1.2345,
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: all variations",
+			setup: func(s *eventCounterService) {
+				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
+					[]*v2ecs.GoalEventCount{
+						{
+							VariationID:       vID1,
+							GoalUser:          int64(1),
+							GoalTotal:         int64(2),
+							GoalValueTotal:    1.23,
+							GoalValueMean:     1.234,
+							GoalValueVariance: 1.2345,
+						},
+						{
+							VariationID:       vID2,
+							GoalUser:          int64(12),
+							GoalTotal:         int64(123),
+							GoalValueTotal:    123.45,
+							GoalValueMean:     123.456,
+							GoalValueVariance: 123.4567,
+						},
+					},
+					nil,
+				)
+			},
+			input: &ecproto.GetExperimentGoalCountRequest{
+				EnvironmentNamespace: ns,
+				GoalId:               gID,
+				FeatureId:            fID,
+				FeatureVersion:       fVersion,
+				VariationIds:         []string{vID1, vID2},
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+			},
+			expected: &ecproto.GetExperimentGoalCountResponse{
+				GoalId: gID,
+				VariationCounts: []*ecproto.VariationCount{
+					{
+						VariationId:             vID1,
+						UserCount:               int64(1),
+						EventCount:              int64(2),
+						ValueSum:                1.23,
+						ValueSumPerUserMean:     1.234,
+						ValueSumPerUserVariance: 1.2345,
+					},
+					{
+						VariationId:             vID2,
+						UserCount:               int64(12),
+						EventCount:              int64(123),
+						ValueSum:                123.45,
+						ValueSumPerUserMean:     123.456,
+						ValueSumPerUserVariance: 123.4567,
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := newEventCounterService(t, mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			actual, err := s.GetExperimentGoalCount(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})

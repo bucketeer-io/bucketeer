@@ -31,7 +31,9 @@ import (
 
 const (
 	DataTypeEvaluationEvent = "evaluation_event"
+	DataTypeGoalEvent       = "goal_event"
 	EvaluationCountSQLFile  = "sql/evaluation_count.sql"
+	GoalCountSQLFile        = "sql/goal_count.sql"
 )
 
 var (
@@ -47,6 +49,13 @@ type EventStorage interface {
 		featureID string,
 		featureVersion int32,
 	) ([]*EvaluationEventCount, error)
+	QueryGoalCount(
+		ctx context.Context,
+		environmentNamespace string,
+		startAt, endAt time.Time,
+		featureID string,
+		featureVersion int32,
+	) ([]*GoalEventCount, error)
 }
 
 type eventStorage struct {
@@ -59,6 +68,15 @@ type EvaluationEventCount struct {
 	VariationID     string
 	EvaluationUser  int64
 	EvaluationTotal int64
+}
+
+type GoalEventCount struct {
+	VariationID       string
+	GoalUser          int64
+	GoalTotal         int64
+	GoalValueTotal    float64
+	GoalValueMean     float64
+	GoalValueVariance float64
 }
 
 func NewEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) EventStorage {
@@ -138,6 +156,88 @@ func (es *eventStorage) QueryEvaluationCount(
 		if err != nil {
 			es.logger.Error(
 				"Failed to convert evaluation event count from the query result",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("query", query),
+					zap.Any("params", params),
+				)...,
+			)
+			return nil, err
+		}
+		rows = append(rows, &row)
+	}
+	return rows, nil
+}
+
+func (es *eventStorage) QueryGoalCount(
+	ctx context.Context,
+	environmentNamespace string,
+	startAt, endAt time.Time,
+	featureID string,
+	featureVersion int32,
+) ([]*GoalEventCount, error) {
+	fileName := GoalCountSQLFile
+	q, err := sql.ReadFile(fileName)
+	if err != nil {
+		es.logger.Error(
+			"Failed to read file",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("fileName", fileName),
+			)...,
+		)
+		return nil, err
+	}
+	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeGoalEvent)
+	query := fmt.Sprintf(string(q), datasource)
+	params := []bigquery.QueryParameter{
+		{
+			Name:  "environmentNamespace",
+			Value: environmentNamespace,
+		},
+		{
+			Name:  "startAt",
+			Value: startAt,
+		},
+		{
+			Name:  "endAt",
+			Value: endAt,
+		},
+		{
+			Name:  "featureID",
+			Value: featureID,
+		},
+		{
+			Name:  "featureVersion",
+			Value: featureVersion,
+		},
+	}
+	es.logger.Debug("query goal count",
+		zap.String("query", query),
+		zap.Any("params", params),
+	)
+	iter, err := es.querier.ExecQuery(ctx, query, params)
+	if err != nil {
+		es.logger.Error(
+			"Failed to query goal count",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("query", query),
+				zap.Any("params", params),
+			)...,
+		)
+		return nil, err
+	}
+	rows := make([]*GoalEventCount, 0, iter.TotalRows)
+	for {
+		var row GoalEventCount
+		err := iter.Next(&row)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			es.logger.Error(
+				"Failed to convert goal event count from the query result",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("query", query),

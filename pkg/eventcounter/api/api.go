@@ -106,17 +106,16 @@ func (s *eventCounterService) Register(server *grpc.Server) {
 	ecproto.RegisterEventCounterServiceServer(server, s)
 }
 
-// TODO temporary name
-func (s *eventCounterService) GetEvaluationCountBigQuery(
+func (s *eventCounterService) GetExperimentEvaluationCount(
 	ctx context.Context,
-	req *ecproto.GetEvaluationCountV2Request,
-) (*ecproto.GetEvaluationCountV2Response, error) {
+	req *ecproto.GetExperimentEvaluationCountRequest,
+) (*ecproto.GetExperimentEvaluationCountResponse, error) {
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err = validateGetEvaluationCountV2Request(req); err != nil {
+	if err = validateGetExperimentEvaluationCountRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	startAt := time.Unix(req.StartAt, 0)
@@ -131,7 +130,7 @@ func (s *eventCounterService) GetEvaluationCountBigQuery(
 	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to query evaluation counts",
+			"Failed to query experiment evaluation counts",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
@@ -151,14 +150,59 @@ func (s *eventCounterService) GetEvaluationCountBigQuery(
 		return nil, dt.Err()
 	}
 	variationCounts := s.convertEvaluationCounts(evaluationCounts, req.VariationIds)
-	s.logger.Debug("GetEvaluationCount result", zap.Any("rows", variationCounts))
-	return &ecproto.GetEvaluationCountV2Response{
-		Count: &ecproto.EvaluationCount{
-			FeatureId:      req.FeatureId,
-			FeatureVersion: req.FeatureVersion,
-			RealtimeCounts: variationCounts,
-		},
+	s.logger.Debug("GetExperimentEvaluationCount result", zap.Any("rows", variationCounts))
+	return &ecproto.GetExperimentEvaluationCountResponse{
+		FeatureId:       req.FeatureId,
+		FeatureVersion:  req.FeatureVersion,
+		VariationCounts: variationCounts,
 	}, nil
+}
+
+func validateGetExperimentEvaluationCountRequest(
+	req *ecproto.GetExperimentEvaluationCountRequest,
+	localizer locale.Localizer,
+) error {
+	if req.StartAt == 0 {
+		dt, err := statusStartAtRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.EndAt == 0 {
+		dt, err := statusEndAtRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.StartAt > req.EndAt {
+		dt, err := statusStartAtIsAfterEndAt.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.FeatureId == "" {
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }
 
 func (s *eventCounterService) convertEvaluationCounts(
@@ -787,6 +831,142 @@ func validateGetGoalCountsRequest(req *ecproto.GetGoalCountRequest) error {
 		return localizedError(statusGoalIDRequired, locale.JaJP)
 	}
 	return nil
+}
+
+func (s *eventCounterService) GetExperimentGoalCount(
+	ctx context.Context,
+	req *ecproto.GetExperimentGoalCountRequest,
+) (*ecproto.GetExperimentGoalCountResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err = validateGetExperimentGoalCountRequest(req, localizer); err != nil {
+		return nil, err
+	}
+	startAt := time.Unix(req.StartAt, 0)
+	endAt := time.Unix(req.EndAt, 0)
+	goalCounts, err := s.eventStorage.QueryGoalCount(
+		ctx,
+		req.EnvironmentNamespace,
+		startAt,
+		endAt,
+		req.FeatureId,
+		req.FeatureVersion,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to query experiment goal counts",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.Time("startAt", startAt),
+				zap.Time("endAt", endAt),
+				zap.String("featureId", req.FeatureId),
+				zap.Int32("featureVersion", req.FeatureVersion),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	variationCounts := s.convertGoalCounts(goalCounts, req.VariationIds)
+	s.logger.Debug("GetExperimentGoalCount result", zap.Any("rows", variationCounts))
+	return &ecproto.GetExperimentGoalCountResponse{
+		GoalId:          req.GoalId,
+		VariationCounts: variationCounts,
+	}, nil
+}
+
+func validateGetExperimentGoalCountRequest(
+	req *ecproto.GetExperimentGoalCountRequest,
+	localizer locale.Localizer,
+) error {
+	if req.StartAt == 0 {
+		dt, err := statusStartAtRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.EndAt == 0 {
+		dt, err := statusEndAtRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.StartAt > req.EndAt {
+		dt, err := statusStartAtIsAfterEndAt.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.FeatureId == "" {
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.GoalId == "" {
+		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func (s *eventCounterService) convertGoalCounts(
+	rows []*v2ecstorage.GoalEventCount,
+	variationIDs []string,
+) []*ecproto.VariationCount {
+	vcsMap := map[string]*ecproto.VariationCount{}
+	for _, id := range variationIDs {
+		vcsMap[id] = &ecproto.VariationCount{VariationId: id}
+	}
+	for _, row := range rows {
+		vc, ok := vcsMap[row.VariationID]
+		if !ok {
+			continue
+		}
+		vc.UserCount = row.GoalUser
+		vc.EventCount = row.GoalTotal
+		vc.ValueSum = row.GoalValueTotal
+		vc.ValueSumPerUserMean = row.GoalValueMean
+		vc.ValueSumPerUserVariance = row.GoalValueVariance
+		vcsMap[row.VariationID] = vc
+	}
+	vcs := make([]*ecproto.VariationCount, 0, len(vcsMap))
+	for _, vc := range vcsMap {
+		vcs = append(vcs, vc)
+	}
+	sort.SliceStable(vcs, func(i, j int) bool { return vcs[i].VariationId < vcs[j].VariationId })
+	return vcs
 }
 
 func (s *eventCounterService) GetGoalCountV2(

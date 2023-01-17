@@ -20,7 +20,7 @@ SegmentUsersAlreadyUploading: "segment userのリストはすでにアップロ�
 SegmentStatusNotSuceeded: "segmentのstatusがsuceededではありません"
 SegmentInUse: "segmentがfeature flagで使用されているため、削除できません"
 WaitingOrRunningExperimentExists: "開始予定、もしくは実行中のExperimentが存在します。更新する場合はExperimentを停止してください。"
-InvalidArchive: 前提条件のフラグとして登録されているフラグをアーカイブすることはできません"
+InvalidArchive: "前提条件のフラグとして登録されているフラグをアーカイブすることはできません"
 InvalidChangingVariation: "前提条件のフラグとして登録されているフラグのバリエーションを変更または削除することはできません"
 
 # autoops error

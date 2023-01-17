@@ -7640,6 +7640,63 @@
             ]
           },
           {
+            "name": "GetExperimentEvaluationCountRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "start_at",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "end_at",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "feature_version",
+                "type": "int32"
+              },
+              {
+                "id": 6,
+                "name": "variation_ids",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetExperimentEvaluationCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_version",
+                "type": "int32"
+              },
+              {
+                "id": 3,
+                "name": "variation_counts",
+                "type": "VariationCount",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "GetEvaluationTimeseriesCountRequest",
             "fields": [
               {
@@ -7896,6 +7953,63 @@
             ]
           },
           {
+            "name": "GetExperimentGoalCountRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "start_at",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "end_at",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "goal_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "feature_version",
+                "type": "int32"
+              },
+              {
+                "id": 7,
+                "name": "variation_ids",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetExperimentGoalCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "goal_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "variation_counts",
+                "type": "VariationCount",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "GetUserCountV2Request",
             "fields": [
               {
@@ -7987,6 +8101,11 @@
             "name": "EventCounterService",
             "rpcs": [
               {
+                "name": "GetExperimentEvaluationCount",
+                "in_type": "GetExperimentEvaluationCountRequest",
+                "out_type": "GetExperimentEvaluationCountResponse"
+              },
+              {
                 "name": "GetEvaluationCountV2",
                 "in_type": "GetEvaluationCountV2Request",
                 "out_type": "GetEvaluationCountV2Response"
@@ -8015,6 +8134,11 @@
                 "name": "GetGoalCountV2",
                 "in_type": "GetGoalCountV2Request",
                 "out_type": "GetGoalCountV2Response"
+              },
+              {
+                "name": "GetExperimentGoalCount",
+                "in_type": "GetExperimentGoalCountRequest",
+                "out_type": "GetExperimentGoalCountResponse"
               },
               {
                 "name": "GetUserCountV2",
@@ -8055,6 +8179,9 @@
           },
           {
             "path": "proto/eventcounter/timeseries.proto"
+          },
+          {
+            "path": "proto/eventcounter/variation_count.proto"
           }
         ],
         "package": {
