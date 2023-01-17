@@ -21,7 +21,7 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersister-dwh/datastore"
+	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/datastore"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"

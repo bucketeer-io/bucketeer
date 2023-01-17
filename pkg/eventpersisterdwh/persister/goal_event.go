@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersister-dwh/datastore"
+	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/datastore"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"

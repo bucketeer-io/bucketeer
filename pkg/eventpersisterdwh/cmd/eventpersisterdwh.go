@@ -23,7 +23,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersister-dwh/persister"
+	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/persister"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
