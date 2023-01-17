@@ -40,10 +40,6 @@ const (
 )
 
 var (
-	twentyFourHours = 24 * time.Hour
-)
-
-var (
 	ErrUnexpectedMessageType = errors.New("eventpersister: unexpected message type")
 	ErrAutoOpsRulesNotFound  = errors.New("eventpersister: auto ops rules not found")
 	ErrExperimentNotFound    = errors.New("eventpersister: experiment not found")
@@ -304,17 +300,4 @@ func (p *PersisterDWH) extractEvents(messages map[string]*puller.Message) enviro
 		envEvents[event.EnvironmentNamespace] = eventMap{event.Id: innerEvent.Message}
 	}
 	return envEvents
-}
-
-func validateTimestamp(
-	timestamp int64,
-) error {
-	actual := time.Unix(timestamp, 0)
-	now := time.Now()
-	min := now.Add(-twentyFourHours)
-	max := now.Add(twentyFourHours)
-	if actual.Before(min) || actual.After(max) {
-		return ErrInvalidEventTimestamp
-	}
-	return nil
 }

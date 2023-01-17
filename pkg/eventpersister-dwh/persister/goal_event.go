@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
@@ -163,10 +162,6 @@ func (w *goalEvtWriter) linkGoalEvent(
 	event *eventproto.GoalEvent,
 	environmentNamespace, tag string,
 ) (*featureproto.Evaluation, bool, error) {
-	if err := validateTimestamp(event.Timestamp); err != nil {
-		handledCounter.WithLabelValues(codeInvalidGoalEventTimestamp).Inc()
-		return nil, false, err
-	}
 	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, environmentNamespace, tag)
 	if err != nil {
 		return nil, retriable, err
@@ -179,7 +174,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 	event *eventproto.GoalEvent,
 	environmentNamespace, tag string,
 ) (*featureproto.Evaluation, bool, error) {
-	// List experiments with the following status RUNNING, FORCE_STOPPED, and STOPPED
+	// List experiments
 	experiments, err := w.listExperiments(ctx, environmentNamespace)
 	if err != nil {
 		return nil, true, err
@@ -241,10 +236,7 @@ func (w *goalEvtWriter) listExperiments(
 					EnvironmentNamespace: environmentNamespace,
 					Statuses: []exproto.Experiment_Status{
 						exproto.Experiment_RUNNING,
-						exproto.Experiment_FORCE_STOPPED,
-						exproto.Experiment_STOPPED,
 					},
-					Archived: &wrappers.BoolValue{Value: false},
 				})
 				if err != nil {
 					return nil, err

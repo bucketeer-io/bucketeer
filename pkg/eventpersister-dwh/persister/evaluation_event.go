@@ -117,10 +117,6 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 	e *eventproto.EvaluationEvent,
 	id, environmentNamespace string,
 ) (*epproto.EvaluationEvent, bool, error) {
-	if err := validateTimestamp(e.Timestamp); err != nil {
-		handledCounter.WithLabelValues(codeInvalidGoalEventTimestamp).Inc()
-		return nil, false, err
-	}
 	exist, err := w.existExperiment(ctx, e, environmentNamespace)
 	if err != nil {
 		return nil, true, err
@@ -171,10 +167,7 @@ func (w *evalEvtWriter) existExperiment(
 		EnvironmentNamespace: environmentNamespace,
 		Statuses: []exproto.Experiment_Status{
 			exproto.Experiment_RUNNING,
-			exproto.Experiment_FORCE_STOPPED,
-			exproto.Experiment_STOPPED,
 		},
-		Archived: &wrappers.BoolValue{Value: false},
 	})
 	if err != nil {
 		return false, err

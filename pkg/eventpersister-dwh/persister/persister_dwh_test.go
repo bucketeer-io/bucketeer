@@ -47,9 +47,6 @@ func TestConvToEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	layout := "2006-01-02 15:04:05 -0700 MST"
-	invalidTime, err := time.Parse(layout, "2014-01-17 23:02:03 +0000 UTC")
-	require.NoError(t, err)
 	t1 := time.Now()
 	environmentNamespace := "ns"
 	evaluation := &featureproto.Evaluation{
@@ -92,26 +89,6 @@ func TestConvToEvaluationEvent(t *testing.T) {
 		expectedRepeatable bool
 	}{
 		{
-			desc:  "err: invalid timestamp",
-			setup: nil,
-			input: &eventproto.EvaluationEvent{
-				Tag:            "tag",
-				Timestamp:      invalidTime.Unix(),
-				FeatureId:      "fid",
-				FeatureVersion: int32(1),
-				UserId:         "uid",
-				VariationId:    "vid",
-				Reason:         &featureproto.Reason{Type: featureproto.Reason_CLIENT},
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-			},
-			expected:           nil,
-			expectedErr:        ErrInvalidEventTimestamp,
-			expectedRepeatable: false,
-		},
-		{
 			desc: "error: failed to list experiments",
 			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
@@ -123,10 +100,8 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
+						
 					},
 				).Return(nil, errors.New("internal"))
 			},
@@ -147,10 +122,8 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
+						
 					},
 				).Return(nil, ErrNoExperiments)
 			},
@@ -171,10 +144,8 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
+						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -208,10 +179,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -264,9 +232,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	layout := "2006-01-02 15:04:05 -0700 MST"
-	invalidTime, err := time.Parse(layout, "2014-01-17 23:02:03 +0000 UTC")
-	require.NoError(t, err)
+
 	environmentNamespace := "ns"
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -286,25 +252,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		expectedRepeatable bool
 	}{
 		{
-			desc: "err: invalid timestamp",
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: invalidTime.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected:           nil,
-			expectedErr:        ErrInvalidEventTimestamp,
-			expectedRepeatable: false,
-		},
-		{
 			desc: "err: list experiment internal",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
@@ -315,10 +262,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
+						
 					},
 				).Return(nil, errors.New("internal"))
 			},
@@ -350,10 +295,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
+						
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
 			},
@@ -385,10 +328,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
+						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -427,10 +368,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
+						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -479,10 +418,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
+						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -531,10 +468,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
+						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
@@ -583,10 +518,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
-							exproto.Experiment_FORCE_STOPPED,
-							exproto.Experiment_STOPPED,
 						},
-						Archived: &wrappers.BoolValue{Value: false},
+						
 					},
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
