@@ -257,13 +257,11 @@ func (p *PersisterDWH) batch() error {
 func (p *PersisterDWH) send(messages map[string]*puller.Message) {
 	ctx, cancel := context.WithTimeout(context.Background(), p.opts.flushTimeout)
 	defer cancel()
-
 	envEvents := p.extractEvents(messages)
 	if len(envEvents) == 0 {
 		p.logger.Error("all messages were bad")
 		return
 	}
-
 	fails := p.writer.Write(ctx, envEvents)
 	for id, m := range messages {
 		if repeatable, ok := fails[id]; ok {
