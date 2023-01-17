@@ -83,9 +83,9 @@ func (w *goalEvtWriter) Write(
 			case *eventproto.GoalEvent:
 				e, retriable, err := w.convToGoalEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
-					if err == ErrNoExperiments {
+					if err == ErrNoExperiments || err == ErrExperimentNotFound {
 						w.logger.Warn(
-							"There is no running experiments",
+							"Failed to find the appropriate event",
 							zap.Error(err),
 							zap.String("id", id),
 							zap.String("environmentNamespace", environmentNamespace),

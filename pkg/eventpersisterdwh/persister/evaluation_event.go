@@ -85,7 +85,7 @@ func (w *evalEvtWriter) Write(
 				if err != nil {
 					if err == ErrNoExperiments || err == ErrExperimentNotFound {
 						w.logger.Warn(
-							"There is no running experiments",
+							"Failed to find the appropriate event",
 							zap.Error(err),
 							zap.String("id", id),
 							zap.String("environmentNamespace", environmentNamespace),
