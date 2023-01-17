@@ -140,16 +140,16 @@ func TestConvToEvaluationEvent(t *testing.T) {
 							exproto.Experiment_RUNNING,
 						},
 					},
-					).Return(&exproto.ListExperimentsResponse{
-						Experiments: []*exproto.Experiment{
-							{
-								Id:             "experiment-id",
-								GoalIds:        []string{"goal-id"},
-								FeatureId:      "invalid",
-								FeatureVersion: -1,
-							},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      "invalid",
+							FeatureVersion: -1,
 						},
-					}, nil)
+					},
+				}, nil)
 			},
 			input:              evaluationEvent,
 			expected:           nil,
