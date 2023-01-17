@@ -23,7 +23,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -94,9 +93,8 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
-						PageSize:             1,
-						FeatureId:            evaluationEvent.FeatureId,
-						FeatureVersion:       &wrappers.Int32Value{Value: evaluationEvent.FeatureVersion},
+						PageSize:             listRequestSize,
+						Cursor:               "",
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
@@ -115,9 +113,8 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
-						PageSize:             1,
-						FeatureId:            evaluationEvent.FeatureId,
-						FeatureVersion:       &wrappers.Int32Value{Value: evaluationEvent.FeatureVersion},
+						PageSize:             listRequestSize,
+						Cursor:               "",
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
@@ -136,9 +133,8 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
-						PageSize:             1,
-						FeatureId:            evaluationEvent.FeatureId,
-						FeatureVersion:       &wrappers.Int32Value{Value: evaluationEvent.FeatureVersion},
+						PageSize:             listRequestSize,
+						Cursor:               "",
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
@@ -147,8 +143,10 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
 						{
-							Id:      "experiment-id",
-							GoalIds: []string{"goal-id"},
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      evaluationEvent.FeatureId,
+							FeatureVersion: evaluation.FeatureVersion,
 						},
 					},
 				}, nil)
@@ -170,9 +168,8 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{
-						PageSize:             1,
-						FeatureId:            evaluationEvent.FeatureId,
-						FeatureVersion:       &wrappers.Int32Value{Value: evaluationEvent.FeatureVersion},
+						PageSize:             listRequestSize,
+						Cursor:               "",
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
@@ -181,8 +178,10 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				).Return(&exproto.ListExperimentsResponse{
 					Experiments: []*exproto.Experiment{
 						{
-							Id:      "experiment-id",
-							GoalIds: []string{"goal-id"},
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      evaluationEvent.FeatureId,
+							FeatureVersion: evaluation.FeatureVersion,
 						},
 					},
 				}, nil)
