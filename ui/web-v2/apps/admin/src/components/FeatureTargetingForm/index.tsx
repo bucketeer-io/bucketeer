@@ -12,6 +12,7 @@ import {
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import 'react-datepicker/dist/react-datepicker.css';
+import { v4 as uuid } from 'uuid';
 
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -40,12 +41,14 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const methods = useFormContext();
     const {
       control,
-      formState: { errors, isSubmitting, dirtyFields },
+      formState: { errors, isDirty },
+      watch,
     } = methods;
     const { fields: targets } = useFieldArray({
       control,
       name: 'targets',
     });
+    const rules = watch('rules');
     const [feature, _] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
@@ -69,7 +72,21 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
         label: createVariationLabel(v),
       };
     });
-    const isValid = Object.keys(errors).length == 0;
+
+    const checkSaveBtnDisabled = useCallback(() => {
+      if (Object.values(errors).some(Boolean) || isDirty === false) {
+        return true;
+      }
+      // find if all fields are dirty
+      return !rules.every((rule) =>
+        rule.clauses.every((clause) => {
+          if (clause.type === ClauseType.SEGMENT) {
+            return clause.values.length > 0;
+          }
+          return clause.attribute && clause.values.length > 0;
+        })
+      );
+    }, [rules, isDirty, errors]);
 
     return (
       <div className="p-10 bg-gray-100">
@@ -181,7 +198,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 <button
                   type="button"
                   className="btn-submit"
-                  disabled={!Object.keys(dirtyFields).length || !isValid}
+                  disabled={checkSaveBtnDisabled()}
                   onClick={onOpenConfirmDialog}
                 >
                   {f(messages.button.saveWithComment)}
@@ -214,6 +231,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
   } = useFieldArray({
     control,
     name: 'rules',
+    keyName: 'key',
   });
 
   const newRolloutStrategy = [];
@@ -225,6 +243,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
   });
   const handleAddRule = useCallback(() => {
     appendRule({
+      id: uuid(),
       strategy: {
         option: {
           value: feature.variationsList[0].id,
@@ -234,9 +253,10 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
       },
       clauses: [
         {
+          id: uuid(),
           type: ClauseType.COMPARE,
           attribute: '',
-          operator: Clause.Operator.EQUALS,
+          operator: Clause.Operator.EQUALS.toString(),
           values: [],
         },
       ],
@@ -256,7 +276,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
         {rules.map((r: any, ruleIdx) => {
           return (
             <div
-              key={ruleIdx}
+              key={r.id}
               className={classNames('bg-white p-3 rounded-md border')}
             >
               <div key={ruleIdx}>
@@ -404,6 +424,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
   } = useFieldArray({
     control,
     name: clausesName,
+    keyName: 'key',
   });
 
   const segmentOptions = useSelector<AppState, Option[]>(
@@ -422,6 +443,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
       switch (type) {
         case ClauseType.COMPARE: {
           update(idx, {
+            id: uuid(),
             type: type,
             attribute: '',
             operator: Clause.Operator.EQUALS.toString(),
@@ -431,10 +453,11 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
         }
         case ClauseType.SEGMENT: {
           update(idx, {
+            id: uuid(),
             type: type,
             attribute: '',
             operator: Clause.Operator.SEGMENT.toString(),
-            values: [],
+            values: [segmentOptions[0]?.value],
           });
           dispatch(
             listSegments({
@@ -447,6 +470,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
         case ClauseType.DATE: {
           const now = String(Math.round(new Date().getTime() / 1000));
           update(idx, {
+            id: uuid(),
             type: type,
             attribute: '',
             operator: Clause.Operator.BEFORE.toString(),
@@ -456,11 +480,12 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
         }
       }
     },
-    [update, dispatch, currentEnvironment]
+    [update, dispatch, currentEnvironment, segmentOptions]
   );
 
   const handleAdd = useCallback(() => {
     append({
+      id: uuid(),
       type: ClauseType.COMPARE,
       attribute: '',
       operator: Clause.Operator.EQUALS.toString(),
@@ -479,8 +504,13 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
     <div className="grid grid-cols-1 gap-2">
       {clauses.map((c: any, clauseIdx) => {
         const clauseName = `rules.${ruleIdx}.clauses.${clauseIdx}`;
+        const clauseType = `${clauseName}.type`;
+        const clauseAttribute = `${clauseName}.attribute`;
+        const clauseOperator = `${clauseName}.operator`;
+        const clauseValues = `${clauseName}.values`;
+
         return (
-          <div key={clauseIdx} className={classNames('flex space-x-2')}>
+          <div key={c.id} className={classNames('flex space-x-2')}>
             <div className="w-[2rem] flex justify-center items-center">
               {clauseIdx === 0 ? (
                 <div
@@ -496,11 +526,14 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
               )}
             </div>
             <Controller
-              name={`${clauseName}.type`}
+              name={clauseType}
               control={control}
               render={({ field }) => (
                 <Select
                   onChange={(e) => {
+                    if (e.value === field.value) {
+                      return;
+                    }
                     handleChangeType(clauseIdx, e.value);
                     field.onChange(e.value);
                   }}
@@ -516,7 +549,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
               <div className={classNames('flex-grow grid grid-cols-4 gap-1')}>
                 <div>
                   <input
-                    {...register(`${clauseName}.attribute`)}
+                    {...register(clauseAttribute)}
                     type="text"
                     defaultValue={c.attribute}
                     className={classNames('input-text w-full')}
@@ -535,7 +568,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                   </p>
                 </div>
                 <Controller
-                  name={`${clauseName}.operator`}
+                  name={clauseOperator}
                   control={control}
                   render={({ field }) => (
                     <Select
@@ -545,14 +578,14 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                       options={clauseCompareOperatorOptions}
                       disabled={!editable}
                       value={clauseCompareOperatorOptions.find(
-                        (o) => o.value === c.operator
+                        (o) => o.value === field.value
                       )}
                     />
                   )}
                 />
                 <div className="col-span-2">
                   <Controller
-                    name={`${clauseName}.values`}
+                    name={clauseValues}
                     control={control}
                     render={({ field }) => {
                       return (
@@ -598,18 +631,18 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                   ) : (
                     <div>
                       <Controller
-                        name={`rules.${ruleIdx}.clauses.${clauseIdx}.values[0]`}
+                        name={clauseValues}
                         control={control}
                         render={({ field }) => {
                           return (
                             <Select
                               onChange={(o: Option) => {
-                                field.onChange(o.value);
+                                field.onChange([o.value]);
                               }}
                               options={segmentOptions}
                               disabled={!editable}
                               value={segmentOptions.find(
-                                (o) => o.value === c.values[0]
+                                (o) => o.value === field.value[0]
                               )}
                               isSearchable={false}
                             />
@@ -641,9 +674,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
               <div className={classNames('flex-grow grid grid-cols-4 gap-1')}>
                 <div>
                   <input
-                    {...register(
-                      `rules.${ruleIdx}.clauses.${clauseIdx}.attribute`
-                    )}
+                    {...register(clauseAttribute)}
                     type="text"
                     defaultValue={c.attribute}
                     className={classNames('input-text w-full')}
@@ -662,7 +693,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                   </p>
                 </div>
                 <Controller
-                  name={`rules.${ruleIdx}.clauseIdx.${clauseIdx}.operator`}
+                  name={clauseOperator}
                   control={control}
                   render={({ field }) => (
                     <Select
@@ -670,16 +701,14 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                       options={clauseDateOperatorOptions}
                       disabled={!editable}
                       value={clauseDateOperatorOptions.find(
-                        (o) => o.value === c.operator
+                        (o) => o.value === field.value
                       )}
                       isSearchable={false}
                     />
                   )}
                 />
                 <div className="col-span-2">
-                  <DatetimePicker
-                    name={`rules.${ruleIdx}.clauses.${clauseIdx}.values.0`}
-                  />
+                  <DatetimePicker name={clauseValues} />
                   <p className="input-error">
                     {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
                       ?.message && (
@@ -881,23 +910,28 @@ export const DatetimePicker: FC<DatetimePickerProps> = memo(({ name }) => {
     <Controller
       control={control}
       name={name}
-      render={({ field }) => (
-        <ReactDatePicker
-          dateFormat="yyyy-MM-dd HH:mm"
-          showTimeSelect
-          timeIntervals={60}
-          placeholderText=""
-          className={classNames('input-text w-full')}
-          wrapperClassName="w-full"
-          onChange={(v) => {
-            field.onChange(v.getTime() / 1000);
-          }}
-          selected={(() => {
-            return field.value ? new Date(Number(field.value) * 1000) : null;
-          })()}
-          disabled={!editable}
-        />
-      )}
+      render={({ field }) => {
+        return (
+          <ReactDatePicker
+            dateFormat="yyyy-MM-dd HH:mm"
+            showTimeSelect
+            timeIntervals={60}
+            placeholderText=""
+            className={classNames('input-text w-full')}
+            wrapperClassName="w-full"
+            onChange={(v) => {
+              const data = [v.getTime() / 1000];
+              field.onChange(data);
+            }}
+            selected={(() => {
+              return field.value[0]
+                ? new Date(Number(field.value[0]) * 1000)
+                : null;
+            })()}
+            disabled={!editable}
+          />
+        );
+      }}
     />
   );
 });
