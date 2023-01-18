@@ -455,7 +455,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
             type: type,
             attribute: '',
             operator: Clause.Operator.SEGMENT.toString(),
-            values: [],
+            values: [segmentOptions[0].value],
           });
           dispatch(
             listSegments({
@@ -477,7 +477,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
         }
       }
     },
-    [update, dispatch, currentEnvironment]
+    [update, dispatch, currentEnvironment, segmentOptions]
   );
 
   const handleAdd = useCallback(() => {
@@ -630,6 +630,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                         name={clauseValues}
                         control={control}
                         render={({ field }) => {
+                          console.log(field);
                           return (
                             <Select
                               onChange={(o: Option) => {
@@ -638,7 +639,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                               options={segmentOptions}
                               disabled={!editable}
                               value={segmentOptions.find(
-                                (o) => o.value === c.values[0]
+                                (o) => o.value === field.value[0]
                               )}
                               isSearchable={false}
                             />
