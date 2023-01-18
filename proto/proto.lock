@@ -8508,6 +8508,168 @@
       }
     },
     {
+      "protopath": "eventpersisterdwh:/:evaluation_event.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "EvaluationEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_version",
+                "type": "int32"
+              },
+              {
+                "id": 4,
+                "name": "user_data",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "user_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "variation_id",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "reason",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "tag",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "source_id",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "timestamp",
+                "type": "int64"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.eventcounter"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "eventpersisterdwh:/:goal_event.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "GoalEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "goal_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "value",
+                "type": "float"
+              },
+              {
+                "id": 4,
+                "name": "user_data",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "user_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "tag",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "source_id",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "timestamp",
+                "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "feature_version",
+                "type": "int32"
+              },
+              {
+                "id": 12,
+                "name": "variation_id",
+                "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "reason",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.eventcounter"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "experiment:/:command.proto",
       "def": {
         "messages": [
