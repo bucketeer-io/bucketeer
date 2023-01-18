@@ -126,7 +126,6 @@ func WithBatchSize(size int) Option {
 }
 
 func NewPersisterDWH(
-	experimentClient ec.Client,
 	p puller.Puller,
 	r metrics.Registerer,
 	bt bigtable.Client,
@@ -150,7 +149,6 @@ func NewPersisterDWH(
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &PersisterDWH{
-		experimentClient:      experimentClient,
 		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
 		logger:                dopts.logger.Named("persister"),
 		ctx:                   ctx,
