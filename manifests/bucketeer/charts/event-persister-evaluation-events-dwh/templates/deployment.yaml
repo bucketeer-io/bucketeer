@@ -1,0 +1,160 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "event-persister-evaluation-events-dwh.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "event-persister-evaluation-events-dwh.fullname" . }}
+    chart: {{ template "event-persister-evaluation-events-dwh.chart" . }}
+    release: {{ template "event-persister-evaluation-events-dwh.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "event-persister-evaluation-events-dwh.name" . }}
+      release: {{ template "event-persister-evaluation-events-dwh.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "event-persister-evaluation-events-dwh.name" . }}
+        release: {{ template "event-persister-evaluation-events-dwh.fullname" . }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity: {{ toYaml .Values.affinity | nindent 8 }}
+      nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: {{ template "event-persister-evaluation-events-dwh.fullname" . }}-envoy-config
+        - name: service-cert-secret
+          secret:
+            secretName: {{ template "service-cert-secret" . }}
+        - name: service-token-secret
+          secret:
+            secretName: {{ template "service-token-secret" . }}
+      serviceAccountName: {{ template "event-persister-evaluation-events-dwh.name" . }}
+      containers:
+        - name: "event-persister-dwh"
+          image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["server"]
+          env:
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PROJECT
+              value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_EXPERIMENT_SERVICE
+              value: "{{ .Values.env.experimentService }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_BIGTABLE_INSTANCE
+              value: "{{ .Values.env.bigtableInstance }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_TOPIC
+              value: "{{ .Values.env.topic }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_SUBSCRIPTION
+              value: "{{ .Values.env.subscription }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PORT
+              value: "{{ .Values.env.port }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_METRICS_PORT
+              value: "{{ .Values.env.metricsPort }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_LOG_LEVEL
+              value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_MAX_MPS
+              value: "{{ .Values.env.maxMps }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_NUM_WORKERS
+              value: "{{ .Values.env.numWorkers }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_FLUSH_SIZE
+              value: "{{ .Values.env.flushSize }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_FLUSH_INTERVAL
+              value: "{{ .Values.env.flushInterval }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_FLUSH_TIMEOUT
+              value: "{{ .Values.env.flushTimeout }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PULLER_NUM_GOROUTINES
+              value: "{{ .Values.env.pullerNumGoroutines }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PULLER_MAX_OUTSTANDING_MESSAGES
+              value: "{{ .Values.env.pullerMaxOutstandingMessages }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PULLER_MAX_OUTSTANDING_BYTES
+              value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_CERT
+              value: /usr/local/certs/service/tls.crt
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_KEY
+              value: /usr/local/certs/service/tls.key
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_SERVICE_TOKEN
+              value: /usr/local/service-token/token
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_BIGQUERY_DATA_SET
+              value: "{{ .Values.env.bigQueryDataSet }}"
+          volumeMounts:
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+            - name: service-token-secret
+              mountPath: /usr/local/service-token
+              readOnly: true
+          ports:
+            - name: service
+              containerPort: {{ .Values.env.port }}
+            - name: metrics
+              containerPort: {{ .Values.env.metricsPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+        - name: envoy
+          image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+          command: ["envoy"]
+          args:
+            - "-c"
+            - "/usr/local/conf/config.yaml"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /usr/local/conf/
+              readOnly: true
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+          ports:
+            - name: envoy
+              containerPort: {{ .Values.envoy.port }}
+            - name: admin
+              containerPort: {{ .Values.envoy.adminPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          resources: {{ toYaml .Values.envoy.resources | nindent 12 }}
+  strategy:
+    type: RollingUpdate
