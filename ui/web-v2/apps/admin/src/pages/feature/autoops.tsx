@@ -152,33 +152,49 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
           data.autoOpsRules
         );
 
-        Promise.all([
-          new Promise(() => {
-            createAutoOpsRuleCommands.forEach(async (command) => {
-              await dispatch(
+        const promises = [];
+
+        createAutoOpsRuleCommands.forEach((command) => {
+          promises.push(
+            new Promise((resolve) => {
+              dispatch(
                 createAutoOpsRule({
                   environmentNamespace: currentEnvironment.namespace,
                   command: command,
                 })
-              );
-            });
-          }),
-          new Promise(() => {
-            deleteAutoOpsRuleIds.forEach(async (id) => {
-              await dispatch(
+              ).then((res) => {
+                resolve(res);
+              });
+            })
+          );
+        });
+
+        deleteAutoOpsRuleIds.forEach((id) => {
+          promises.push(
+            new Promise((resolve) => {
+              dispatch(
                 deleteAutoOpsRule({
                   environmentNamespace: currentEnvironment.namespace,
                   id: id,
                 })
-              );
-            });
-          }),
-          new Promise(() => {
-            updateAutoOpsRuleParams.forEach(async (param) => {
-              await dispatch(updateAutoOpsRule(param));
-            });
-          }),
-        ]).then(() => {
+              ).then((res) => {
+                resolve(res);
+              });
+            })
+          );
+        });
+
+        updateAutoOpsRuleParams.forEach((param) => {
+          promises.push(
+            new Promise((resolve) => {
+              dispatch(updateAutoOpsRule(param)).then((res) => {
+                resolve(res);
+              });
+            })
+          );
+        });
+
+        Promise.all(promises).then((res) => {
           dispatch(
             listAutoOpsRules({
               featureId: featureId,
