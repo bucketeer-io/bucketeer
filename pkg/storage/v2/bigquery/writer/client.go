@@ -113,15 +113,15 @@ func (w *writer) AppendRows(
 			fails = append(fails, idx)
 		}
 	}
-	return getUniqueFails(fails, len(batches)), err
+	return getUniqueFails(fails), err
 }
 
 func (w *writer) Close() error {
 	return w.client.Close()
 }
 
-func getUniqueFails(fs []int, size int) []int {
-	failMap := make(map[int]struct{}, size)
+func getUniqueFails(fs []int) []int {
+	failMap := make(map[int]struct{})
 	for _, f := range fs {
 		failMap[f] = struct{}{}
 	}
