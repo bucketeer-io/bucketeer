@@ -102,8 +102,8 @@ func (w *writer) AppendRows(
 	for idx, b := range batches {
 		r, err := w.client.AppendRows(ctx, b)
 		if err != nil {
+			// We can't use `continue` because index will be shifted in next for loop
 			fails = append(fails, idx)
-			continue
 		}
 		results = append(results, r)
 	}
@@ -113,9 +113,21 @@ func (w *writer) AppendRows(
 			fails = append(fails, idx)
 		}
 	}
-	return fails, err
+	return getUniqueFails(fails, len(batches)), err
 }
 
 func (w *writer) Close() error {
 	return w.client.Close()
+}
+
+func getUniqueFails(fs []int, size int) []int {
+	failMap := make(map[int]struct{}, size)
+	for _, f := range fs {
+		failMap[f] = struct{}{}
+	}
+	fails := []int{}
+	for key := range failMap {
+		fails = append(fails, key)
+	}
+	return fails
 }
