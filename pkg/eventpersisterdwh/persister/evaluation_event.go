@@ -84,8 +84,8 @@ func (w *evalEvtWriter) Write(
 				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
 					if err == ErrNoExperiments || err == ErrExperimentNotFound {
-						w.logger.Warn(
-							"Failed to find the appropriate event",
+						w.logger.Debug(
+							"There is no experiment to link",
 							zap.Error(err),
 							zap.String("id", id),
 							zap.String("environmentNamespace", environmentNamespace),
