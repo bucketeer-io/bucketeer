@@ -80,6 +80,10 @@ func (r *redisCache) Increment(key string) (int64, error) {
 	return r.client.Incr(key)
 }
 
+func (r *redisCache) PFCount(keys ...string) (int64, error) {
+	return r.client.PFCount(keys...)
+}
+
 func (r *redisCache) PFAdd(key string, els ...string) (int64, error) {
 	return r.client.PFAdd(key, els...)
 }

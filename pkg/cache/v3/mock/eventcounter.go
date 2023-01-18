@@ -48,6 +48,21 @@ func (mr *MockEventCounterCacheMockRecorder) GetEventCounts(keys interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventCounts", reflect.TypeOf((*MockEventCounterCache)(nil).GetEventCounts), keys)
 }
 
+// GetUserCount mocks base method.
+func (m *MockEventCounterCache) GetUserCount(key string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserCount", key)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserCount indicates an expected call of GetUserCount.
+func (mr *MockEventCounterCacheMockRecorder) GetUserCount(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserCount", reflect.TypeOf((*MockEventCounterCache)(nil).GetUserCount), key)
+}
+
 // GetUserCounts mocks base method.
 func (m *MockEventCounterCache) GetUserCounts(keys []string) ([]float64, error) {
 	m.ctrl.T.Helper()
