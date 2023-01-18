@@ -68,10 +68,10 @@ func NewEvalEventWriter(
 		return nil, err
 	}
 	return &evalEvtWriter{
-		writer: storage.NewEvalEventWriter(evalQuery),
+		writer:                storage.NewEvalEventWriter(evalQuery),
 		userEvaluationStorage: userEvaluationStorage,
-		experimentClient: exClient,
-		logger: l,
+		experimentClient:      exClient,
+		logger:                l,
 	}, nil
 }
 

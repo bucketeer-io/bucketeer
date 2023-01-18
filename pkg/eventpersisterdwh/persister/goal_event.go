@@ -68,10 +68,10 @@ func NewGoalEventWriter(
 		return nil, err
 	}
 	return &goalEvtWriter{
-		writer: storage.NewGoalEventWriter(goalWriter),
+		writer:                storage.NewGoalEventWriter(goalWriter),
 		userEvaluationStorage: userEvaluationStorage,
-		experimentClient: exClient,
-		logger: l,
+		experimentClient:      exClient,
+		logger:                l,
 	}, nil
 }
 
