@@ -24,11 +24,11 @@ import (
 )
 
 type EvalEventWriter interface {
-	AppendRows(ctx context.Context, events []*epproto.EvaluationEvent) error
+	AppendRows(ctx context.Context, events []*epproto.EvaluationEvent) (map[string]bool, error)
 }
 
 type GoalEventWriter interface {
-	AppendRows(ctx context.Context, events []*epproto.GoalEvent) error
+	AppendRows(ctx context.Context, events []*epproto.GoalEvent) (map[string]bool, error)
 }
 
 type evalEventWriter struct {
@@ -62,37 +62,41 @@ func NewGoalEventWriter(q writer.Writer) GoalEventWriter {
 func (ew *evalEventWriter) AppendRows(
 	ctx context.Context,
 	events []*epproto.EvaluationEvent,
-) error {
+) (map[string]bool, error) {
+	fails := make(map[string]bool, len(events))
 	// Encode the messages into binary format.
 	encoded := make([][]byte, len(events))
 	for k, v := range events {
 		b, err := proto.Marshal(v)
 		if err != nil {
-			return err
+			fails[v.Id] = false
+			continue
 		}
 		encoded[k] = b
 	}
 	if err := ew.writer.AppendRows(ctx, encoded); err != nil {
-		return err
+		return fails, err
 	}
-	return nil
+	return fails, nil
 }
 
 func (gw *goalEventWriter) AppendRows(
 	ctx context.Context,
 	events []*epproto.GoalEvent,
-) error {
+) (map[string]bool, error) {
+	fails := make(map[string]bool, len(events))
 	// Encode the messages into binary format.
 	encoded := make([][]byte, len(events))
 	for k, v := range events {
 		b, err := proto.Marshal(v)
 		if err != nil {
-			return err
+			fails[v.Id] = false
+			continue
 		}
 		encoded[k] = b
 	}
 	if err := gw.writer.AppendRows(ctx, encoded); err != nil {
-		return err
+		return fails, err
 	}
-	return nil
+	return fails, nil
 }
