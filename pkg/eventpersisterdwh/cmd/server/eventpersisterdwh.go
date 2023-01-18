@@ -25,6 +25,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/persister"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
@@ -138,6 +139,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		ctx,
 		registerer,
 		logger,
+		btClient,
+		experimentClient,
 	)
 	if err != nil {
 		return err
@@ -215,6 +218,8 @@ func (s *server) newBigQueryWriter(
 	ctx context.Context,
 	r metrics.Registerer,
 	logger *zap.Logger,
+	bt bigtable.Client,
+	exClient ec.Client,
 ) (persister.Writer, error) {
 	var writer persister.Writer
 	var err error
@@ -223,6 +228,8 @@ func (s *server) newBigQueryWriter(
 			ctx,
 			r,
 			logger,
+			featurestorage.NewUserEvaluationsStorage(bt),
+			exClient,
 			*s.project,
 			*s.bigQueryDataSet,
 			*s.bigQueryBatchSize,
@@ -232,6 +239,8 @@ func (s *server) newBigQueryWriter(
 			ctx,
 			r,
 			logger,
+			featurestorage.NewUserEvaluationsStorage(bt),
+			exClient,
 			*s.project,
 			*s.bigQueryDataSet,
 			*s.bigQueryBatchSize,
