@@ -231,6 +231,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
   } = useFieldArray({
     control,
     name: 'rules',
+    keyName: 'key',
   });
 
   const newRolloutStrategy = [];
@@ -242,6 +243,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
   });
   const handleAddRule = useCallback(() => {
     appendRule({
+      id: uuid(),
       strategy: {
         option: {
           value: feature.variationsList[0].id,
