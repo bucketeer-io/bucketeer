@@ -21,7 +21,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -287,10 +286,6 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	startAt := time.Now()
-	stopAt := startAt.Local().Add(time.Hour * 1)
-	createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "OpsEventRateBatchWithoutTag", featureID, []string{goalID}, feature.Variations[0].Id, startAt, stopAt)
 	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
@@ -337,10 +332,6 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	createFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
-	startAt := time.Now()
-	stopAt := startAt.Local().Add(time.Hour * 1)
-	createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "GrpcOpsEventRateBatch", featureID, []string{goalID}, feature.Variations[0].Id, startAt, stopAt)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
 	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
@@ -388,10 +379,6 @@ func TestOpsEventRateBatch(t *testing.T) {
 	createFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
-	startAt := time.Now()
-	stopAt := startAt.Local().Add(time.Hour * 1)
-	createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "OpsEventRateBatch", featureID, []string{goalID}, feature.Variations[0].Id, startAt, stopAt)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
 	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
@@ -1193,40 +1180,4 @@ func createGoalID(t *testing.T) string {
 		return fmt.Sprintf("%s-%s-goal-id-%s", prefixTestName, *testID, newUUID(t))
 	}
 	return fmt.Sprintf("%s-goal-id-%s", prefixTestName, newUUID(t))
-}
-
-func createExperimentWithMultiGoals(
-	ctx context.Context,
-	t *testing.T,
-	client experimentclient.Client,
-	name string,
-	featureID string,
-	goalIDs []string,
-	baseVariationID string,
-	startAt, stopAt time.Time,
-) *experimentproto.Experiment {
-	cmd := &experimentproto.CreateExperimentCommand{
-		Name:            name + strings.Join(goalIDs, ","),
-		FeatureId:       featureID,
-		GoalIds:         goalIDs,
-		StartAt:         startAt.Unix(),
-		StopAt:          stopAt.Unix(),
-		BaseVariationId: baseVariationID,
-	}
-	resp, err := client.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{
-		Command:              cmd,
-		EnvironmentNamespace: *environmentNamespace,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = client.StartExperiment(ctx, &experimentproto.StartExperimentRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   resp.Experiment.Id,
-		Command:              &experimentproto.StartExperimentCommand{},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return resp.Experiment
 }
