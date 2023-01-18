@@ -18,7 +18,7 @@ import (
 	"log"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	dwh "github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/cmd"
+	dwh "github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/cmd/server"
 )
 
 var (
@@ -37,5 +37,5 @@ func main() {
 }
 
 func registerCommands(app *cli.App) {
-	dwh.RegisterServerCommand(app, app)
+	server.RegisterServerCommand(app, app)
 }
