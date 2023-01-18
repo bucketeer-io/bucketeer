@@ -63,7 +63,7 @@ var (
 	testID               = flag.String("test-id", "", "test ID")
 )
 
-func TestGrpcGoalCountV2(t *testing.T) {
+func TestGrpcExperimentGoalCount(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
@@ -110,15 +110,15 @@ func TestGrpcGoalCountV2(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 
-		resp := getGoalCountV2(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if len(resp.GoalCounts.RealtimeCounts) == 0 {
+		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
-		if resp.GoalCounts.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalCounts.GoalId)
+		if resp.GoalId != goalIDs[0] {
+			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
 		}
 
-		vcA := getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarA].Id)
+		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -138,7 +138,7 @@ func TestGrpcGoalCountV2(t *testing.T) {
 			continue
 		}
 
-		vcB := getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarB].Id)
+		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
@@ -161,7 +161,7 @@ func TestGrpcGoalCountV2(t *testing.T) {
 	}
 }
 
-func TestGoalCountV2(t *testing.T) {
+func TestExperimentGoalCount(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
@@ -208,15 +208,15 @@ func TestGoalCountV2(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 
-		resp := getGoalCountV2(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if len(resp.GoalCounts.RealtimeCounts) == 0 {
+		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
-		if resp.GoalCounts.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalCounts.GoalId)
+		if resp.GoalId != goalIDs[0] {
+			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
 		}
 
-		vcA := getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarA].Id)
+		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -236,7 +236,7 @@ func TestGoalCountV2(t *testing.T) {
 			continue
 		}
 
-		vcB := getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarB].Id)
+		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
@@ -933,15 +933,15 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		time.Sleep(time.Second)
 
 		// Goal 0.
-		resp := getGoalCountV2(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if len(resp.GoalCounts.RealtimeCounts) == 0 {
+		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
-		if resp.GoalCounts.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalCounts.GoalId)
+		if resp.GoalId != goalIDs[0] {
+			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
 		}
 
-		vcA := getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarA].Id)
+		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -955,7 +955,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 			continue
 		}
 
-		vcB := getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarB].Id)
+		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
@@ -970,15 +970,15 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		}
 
 		// Goal 1.
-		resp = getGoalCountV2(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
-		if len(resp.GoalCounts.RealtimeCounts) == 0 {
+		resp = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
+		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
-		if resp.GoalCounts.GoalId != goalIDs[1] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalCounts.GoalId)
+		if resp.GoalId != goalIDs[1] {
+			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
 		}
 
-		vcA = getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarA].Id)
+		vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -992,7 +992,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 			continue
 		}
 
-		vcB = getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarB].Id)
+		vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
@@ -1007,15 +1007,15 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		}
 
 		// Goal 2.
-		resp = getGoalCountV2(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
-		if len(resp.GoalCounts.RealtimeCounts) == 0 {
+		resp = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
+		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
-		if resp.GoalCounts.GoalId != goalIDs[2] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalCounts.GoalId)
+		if resp.GoalId != goalIDs[2] {
+			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
 		}
 
-		vcA = getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarA].Id)
+		vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -1029,7 +1029,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 			continue
 		}
 
-		vcB = getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarB].Id)
+		vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
@@ -1101,15 +1101,15 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		time.Sleep(time.Second)
 
 		// Goal 0.
-		resp := getGoalCountV2(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if len(resp.GoalCounts.RealtimeCounts) == 0 {
+		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
-		if resp.GoalCounts.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalCounts.GoalId)
+		if resp.GoalId != goalIDs[0] {
+			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
 		}
 
-		vcA := getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarA].Id)
+		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -1123,7 +1123,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 			continue
 		}
 
-		vcB := getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarB].Id)
+		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
@@ -1138,15 +1138,15 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		}
 
 		// Goal 1.
-		resp = getGoalCountV2(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
-		if len(resp.GoalCounts.RealtimeCounts) == 0 {
+		resp = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
+		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
-		if resp.GoalCounts.GoalId != goalIDs[1] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalCounts.GoalId)
+		if resp.GoalId != goalIDs[1] {
+			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
 		}
 
-		vcA = getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarA].Id)
+		vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -1160,7 +1160,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 			continue
 		}
 
-		vcB = getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarB].Id)
+		vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
@@ -1175,15 +1175,15 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		}
 
 		// Goal 2.
-		resp = getGoalCountV2(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
-		if len(resp.GoalCounts.RealtimeCounts) == 0 {
+		resp = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
+		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
-		if resp.GoalCounts.GoalId != goalIDs[2] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalCounts.GoalId)
+		if resp.GoalId != goalIDs[2] {
+			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
 		}
 
-		vcA = getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarA].Id)
+		vcA = getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -1197,7 +1197,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 			continue
 		}
 
-		vcB = getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarB].Id)
+		vcB = getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
@@ -1263,16 +1263,16 @@ func TestHTTPTrack(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 
-		resp := getGoalCountV2(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
-		if len(resp.GoalCounts.RealtimeCounts) == 0 {
+		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
-		if resp.GoalCounts.GoalId != goalIDs[0] {
-			t.Fatalf("goal ID is not correct: %s", resp.GoalCounts.GoalId)
+		if resp.GoalId != goalIDs[0] {
+			t.Fatalf("goal ID is not correct: %s", resp.GoalId)
 		}
 
 		// variation a
-		vcA := getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarA].Id)
+		vcA := getVariationCount(resp.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -1286,7 +1286,7 @@ func TestHTTPTrack(t *testing.T) {
 			continue
 		}
 		// variation b
-		vcB := getVariationCount(resp.GoalCounts.RealtimeCounts, variations[variationVarB].Id)
+		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -1303,7 +1303,7 @@ func TestHTTPTrack(t *testing.T) {
 	}
 }
 
-func TestGrpcEvaluationEventCountV2(t *testing.T) {
+func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
@@ -1337,11 +1337,11 @@ func TestGrpcEvaluationEventCountV2(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 
-		resp := getEvaluationCountV2(t, ecClient, featureID, f.Version, variationIDs)
+		resp := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
 		if resp == nil {
 			continue
 		}
-		ec := resp.Count
+		ec := resp
 		if ec.FeatureId != featureID {
 			t.Fatalf("feature ID is not correct: %s", ec.FeatureId)
 		}
@@ -1349,7 +1349,7 @@ func TestGrpcEvaluationEventCountV2(t *testing.T) {
 			t.Fatalf("feature version is not correct: %d", ec.FeatureVersion)
 		}
 
-		vcA := getVariationCount(ec.RealtimeCounts, variations[variationVarA].Id)
+		vcA := getVariationCount(ec.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -1363,7 +1363,7 @@ func TestGrpcEvaluationEventCountV2(t *testing.T) {
 			continue
 		}
 
-		vcB := getVariationCount(ec.RealtimeCounts, variations[variationVarB].Id)
+		vcB := getVariationCount(ec.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
@@ -1380,7 +1380,7 @@ func TestGrpcEvaluationEventCountV2(t *testing.T) {
 	}
 }
 
-func TestEvaluationEventCountV2(t *testing.T) {
+func TestExperimentEvaluationEventCount(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
@@ -1414,11 +1414,11 @@ func TestEvaluationEventCountV2(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 
-		resp := getEvaluationCountV2(t, ecClient, featureID, f.Version, variationIDs)
+		resp := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
 		if resp == nil {
 			continue
 		}
-		ec := resp.Count
+		ec := resp
 		if ec.FeatureId != featureID {
 			t.Fatalf("feature ID is not correct: %s", ec.FeatureId)
 		}
@@ -1426,7 +1426,7 @@ func TestEvaluationEventCountV2(t *testing.T) {
 			t.Fatalf("feature version is not correct: %d", ec.FeatureVersion)
 		}
 
-		vcA := getVariationCount(ec.RealtimeCounts, variations[variationVarA].Id)
+		vcA := getVariationCount(ec.VariationCounts, variations[variationVarA].Id)
 		if vcA == nil {
 			t.Fatalf("variation a is missing")
 		}
@@ -1440,7 +1440,7 @@ func TestEvaluationEventCountV2(t *testing.T) {
 			continue
 		}
 
-		vcB := getVariationCount(ec.RealtimeCounts, variations[variationVarB].Id)
+		vcB := getVariationCount(ec.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
 		}
@@ -1948,12 +1948,12 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) *
 	return response
 }
 
-func getEvaluationCountV2(t *testing.T, c ecclient.Client, featureID string, featureVersion int32, variationIDs []string) *ecproto.GetEvaluationCountV2Response {
+func getExperimentEvaluationCount(t *testing.T, c ecclient.Client, featureID string, featureVersion int32, variationIDs []string) *ecproto.GetExperimentEvaluationCountResponse {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	now := time.Now()
-	req := &ecproto.GetEvaluationCountV2Request{
+	req := &ecproto.GetExperimentEvaluationCountRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
 		EndAt:                now.Unix(),
@@ -1961,19 +1961,19 @@ func getEvaluationCountV2(t *testing.T, c ecclient.Client, featureID string, fea
 		FeatureVersion:       featureVersion,
 		VariationIds:         variationIDs,
 	}
-	response, err := c.GetEvaluationCountV2(ctx, req)
+	response, err := c.GetExperimentEvaluationCount(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return response
 }
 
-func getGoalCountV2(t *testing.T, c ecclient.Client, goalID, featureID string, featureVersion int32, variationIDs []string) *ecproto.GetGoalCountV2Response {
+func getExperimentGoalCount(t *testing.T, c ecclient.Client, goalID, featureID string, featureVersion int32, variationIDs []string) *ecproto.GetExperimentGoalCountResponse {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	now := time.Now()
-	req := &ecproto.GetGoalCountV2Request{
+	req := &ecproto.GetExperimentGoalCountRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
 		EndAt:                now.Unix(),
@@ -1982,7 +1982,7 @@ func getGoalCountV2(t *testing.T, c ecclient.Client, goalID, featureID string, f
 		FeatureVersion:       featureVersion,
 		VariationIds:         variationIDs,
 	}
-	response, err := c.GetGoalCountV2(ctx, req)
+	response, err := c.GetExperimentGoalCount(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	}
