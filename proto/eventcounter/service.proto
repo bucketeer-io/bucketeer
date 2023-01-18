@@ -147,6 +147,33 @@ message GetExperimentGoalCountResponse {
   repeated VariationCount variation_counts = 2;
 }
 
+message GetOpsEvaluationUserCountRequest {
+  string environment_namespace = 1;
+  string ops_rule_id = 2;
+  string feature_id = 3;
+  int32 feature_version = 4;
+  string variation_id = 5;
+}
+
+message GetOpsEvaluationUserCountResponse {
+  string ops_rule_id = 1;
+  int64 count = 2;
+}
+
+message GetOpsGoalUserCountRequest {
+  string environment_namespace = 1;
+  string ops_rule_id = 2;
+  string goal_id = 3;
+  string feature_id = 4;
+  int32 feature_version = 5;
+  string variation_id = 6;
+}
+
+message GetOpsGoalUserCountResponse {
+  string ops_rule_id = 1;
+  int64 count = 2;
+}
+
 message GetUserCountV2Request {
   string environment_namespace = 1;
   int64 start_at = 2;
@@ -205,4 +232,10 @@ service EventCounterService {
 
   rpc ListUserMetadata(ListUserMetadataRequest)
       returns (ListUserMetadataResponse) {}
+
+  rpc GetOpsEvaluationUserCount(GetOpsEvaluationUserCountRequest)
+      returns (GetOpsEvaluationUserCountResponse) {}
+
+  rpc GetOpsGoalUserCount(GetOpsGoalUserCountRequest)
+      returns (GetOpsGoalUserCountResponse) {}
 }
