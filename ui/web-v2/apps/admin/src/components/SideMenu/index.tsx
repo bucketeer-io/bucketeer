@@ -83,15 +83,16 @@ const createMenuItems = (
     target: null,
     iconElement: <MUBarChart />,
   });
-  items.push({
-    messageComponent: (
-      <span>{intl.formatMessage(messages.sideMenu.analysis)}</span>
-    ),
-    path: `/${environmentId}${PAGE_PATH_ANALYSIS}`,
-    external: null,
-    target: null,
-    iconElement: <MUShowChartIcon />,
-  });
+  // Disabling it temporary until the new data pipeline is release
+  // items.push({
+  //   messageComponent: (
+  //     <span>{intl.formatMessage(messages.sideMenu.analysis)}</span>
+  //   ),
+  //   path: `/${environmentId}${PAGE_PATH_ANALYSIS}`,
+  //   external: null,
+  //   target: null,
+  //   iconElement: <MUShowChartIcon />,
+  // });
   items.push({
     messageComponent: (
       <span>{intl.formatMessage(messages.sideMenu.userSegments)}</span>
