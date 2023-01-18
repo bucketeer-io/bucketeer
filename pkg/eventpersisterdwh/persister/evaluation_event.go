@@ -29,7 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersister-dwh"
+	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )

@@ -152,7 +152,7 @@ func NewPersisterDWH(
 	return &PersisterDWH{
 		experimentClient:      experimentClient,
 		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		logger:                dopts.logger.Named("persister-dwh"),
+		logger:                dopts.logger.Named("persister"),
 		ctx:                   ctx,
 		cancel:                cancel,
 		doneCh:                make(chan struct{}),
