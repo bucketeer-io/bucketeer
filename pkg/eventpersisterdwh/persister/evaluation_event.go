@@ -121,7 +121,7 @@ func (w *evalEvtWriter) Write(
 	fs, err := w.writer.AppendRows(ctx, evalEvents)
 	if err != nil {
 		w.logger.Error(
-			"failed to append rows to goal event",
+			"failed to append rows to evaluation event",
 			zap.Error(err),
 		)
 	}
