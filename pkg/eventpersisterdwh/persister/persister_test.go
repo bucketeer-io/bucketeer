@@ -32,7 +32,7 @@ import (
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
 	btstorage "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersister-dwh"
+	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
