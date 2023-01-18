@@ -48,6 +48,8 @@ func NewGoalEventWriter(
 	ctx context.Context,
 	r metrics.Registerer,
 	l *zap.Logger,
+	userEvaluationStorage featurestorage.UserEvaluationsStorage,
+	exClient ec.Client,
 	project, ds string,
 	size int,
 ) (Writer, error) {
@@ -67,6 +69,8 @@ func NewGoalEventWriter(
 	}
 	return &goalEvtWriter{
 		writer: storage.NewGoalEventWriter(goalWriter),
+		userEvaluationStorage: userEvaluationStorage,
+		experimentClient: exClient,
 		logger: l,
 	}, nil
 }
