@@ -118,11 +118,15 @@ func (w *goalEvtWriter) Write(
 			}
 		}
 	}
-	if err := w.writer.AppendRows(ctx, goalEvents); err != nil {
+	fs, err := w.writer.AppendRows(ctx, goalEvents)
+	if err != nil {
 		w.logger.Error(
 			"failed to append rows to goal event",
 			zap.Error(err),
 		)
+	}
+	for id, f := range fs {
+		fails[id] = f
 	}
 	return fails
 }
