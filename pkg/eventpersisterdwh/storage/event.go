@@ -40,21 +40,24 @@ type goalEventWriter struct {
 }
 
 type queryClient struct {
-	writer writer.Writer
+	writer    writer.Writer
+	batchSize int
 }
 
-func NewEvalEventWriter(q writer.Writer) EvalEventWriter {
+func NewEvalEventWriter(q writer.Writer, size int) EvalEventWriter {
 	return &evalEventWriter{
 		queryClient: &queryClient{
-			writer: q,
+			writer:    q,
+			batchSize: size,
 		},
 	}
 }
 
-func NewGoalEventWriter(q writer.Writer) GoalEventWriter {
+func NewGoalEventWriter(q writer.Writer, size int) GoalEventWriter {
 	return &goalEventWriter{
 		queryClient: &queryClient{
-			writer: q,
+			writer:    q,
+			batchSize: size,
 		},
 	}
 }
@@ -64,6 +67,7 @@ func (ew *evalEventWriter) AppendRows(
 	events []*epproto.EvaluationEvent,
 ) (map[string]bool, error) {
 	fails := make(map[string]bool, len(events))
+	var err error
 	// Encode the messages into binary format.
 	encoded := make([][]byte, len(events))
 	for k, v := range events {
@@ -74,10 +78,32 @@ func (ew *evalEventWriter) AppendRows(
 		}
 		encoded[k] = b
 	}
-	if err := ew.writer.AppendRows(ctx, encoded); err != nil {
-		return fails, err
+	batches := getBatch(encoded, ew.batchSize)
+	fs, err := ew.writer.AppendRows(ctx, batches)
+	failMap := ew.getFailMap(events, fs)
+	for id, f := range failMap {
+		fails[id] = f
 	}
-	return fails, nil
+	return fails, err
+}
+
+func (ew *evalEventWriter) getFailMap(
+	es []*epproto.EvaluationEvent,
+	fails []int,
+) map[string]bool {
+	failMap := map[string]bool{}
+	for _, f := range fails {
+		start := ew.batchSize * f
+		end := start + ew.batchSize
+		if end > len(es) {
+			end = len(es)
+		}
+		evts := es[start:end]
+		for _, evt := range evts {
+			failMap[evt.Id] = true
+		}
+	}
+	return failMap
 }
 
 func (gw *goalEventWriter) AppendRows(
@@ -85,6 +111,7 @@ func (gw *goalEventWriter) AppendRows(
 	events []*epproto.GoalEvent,
 ) (map[string]bool, error) {
 	fails := make(map[string]bool, len(events))
+	var err error
 	// Encode the messages into binary format.
 	encoded := make([][]byte, len(events))
 	for k, v := range events {
@@ -95,8 +122,43 @@ func (gw *goalEventWriter) AppendRows(
 		}
 		encoded[k] = b
 	}
-	if err := gw.writer.AppendRows(ctx, encoded); err != nil {
-		return fails, err
+	batches := getBatch(encoded, gw.batchSize)
+	fs, err := gw.writer.AppendRows(ctx, batches)
+	failMap := gw.getFailMap(events, fs)
+	for id, f := range failMap {
+		fails[id] = f
 	}
-	return fails, nil
+	return fails, err
+}
+
+func (gw *goalEventWriter) getFailMap(
+	es []*epproto.GoalEvent,
+	fails []int,
+) map[string]bool {
+	failMap := map[string]bool{}
+	for _, f := range fails {
+		start := gw.batchSize * f
+		end := start + gw.batchSize
+		if end > len(es) {
+			end = len(es)
+		}
+		evts := es[start:end]
+		for _, evt := range evts {
+			failMap[evt.Id] = true
+		}
+	}
+	return failMap
+}
+
+func getBatch(msgs [][]byte, batchSize int) [][][]byte {
+	batches := [][][]byte{}
+	for i := 0; i < len(msgs); i += batchSize {
+		end := i + batchSize
+		if end > len(msgs) {
+			end = len(msgs)
+		}
+		batch := msgs[i:end]
+		batches = append(batches, batch)
+	}
+	return batches
 }
