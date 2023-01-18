@@ -85,6 +85,11 @@ func (c *inMemoryCache) PFAdd(key string, els ...string) (int64, error) {
 	return 0, nil
 }
 
+func (c *inMemoryCache) PFCount(keys ...string) (int64, error) {
+	// TODO: implement
+	return 0, nil
+}
+
 func (c *inMemoryCache) Expire(key string, expiration time.Duration) (bool, error) {
 	// TODO: implement
 	return true, nil
