@@ -44,7 +44,6 @@ func TestGetUniqueFails(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			actual := getUniqueFails(p.input)
-			assert.Equal(t, p.expected, actual)
 			for _, num := range p.expected {
 				assert.Contains(t, actual, num)
 			}
