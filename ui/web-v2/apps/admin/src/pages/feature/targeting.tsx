@@ -150,6 +150,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
           feature.variationsList.find((v) => v.id === feature.offVariation)
         ),
       },
+      comment: '',
     };
 
     const methods = useForm({

@@ -12,6 +12,7 @@ import {
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import 'react-datepicker/dist/react-datepicker.css';
+import { v4 as uuid } from 'uuid';
 
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -73,14 +74,9 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     });
 
     const checkSaveBtnDisabled = useCallback(() => {
-      if (
-        Object.values(errors).some(Boolean) ||
-        isDirty === false ||
-        (feature.rulesList.length === 0 && rules.length === 0)
-      ) {
+      if (Object.values(errors).some(Boolean) || isDirty === false) {
         return true;
       }
-
       // find if all fields are dirty
       return !rules.every((rule) =>
         rule.clauses.every((clause) => {
@@ -255,6 +251,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
       },
       clauses: [
         {
+          id: uuid(),
           type: ClauseType.COMPARE,
           attribute: '',
           operator: Clause.Operator.EQUALS.toString(),
@@ -425,6 +422,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
   } = useFieldArray({
     control,
     name: clausesName,
+    keyName: 'key',
   });
 
   const segmentOptions = useSelector<AppState, Option[]>(
@@ -443,6 +441,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
       switch (type) {
         case ClauseType.COMPARE: {
           update(idx, {
+            id: uuid(),
             type: type,
             attribute: '',
             operator: Clause.Operator.EQUALS.toString(),
@@ -452,10 +451,11 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
         }
         case ClauseType.SEGMENT: {
           update(idx, {
+            id: uuid(),
             type: type,
             attribute: '',
             operator: Clause.Operator.SEGMENT.toString(),
-            values: [segmentOptions[0].value],
+            values: [segmentOptions[0]?.value],
           });
           dispatch(
             listSegments({
@@ -468,6 +468,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
         case ClauseType.DATE: {
           const now = String(Math.round(new Date().getTime() / 1000));
           update(idx, {
+            id: uuid(),
             type: type,
             attribute: '',
             operator: Clause.Operator.BEFORE.toString(),
@@ -482,6 +483,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
 
   const handleAdd = useCallback(() => {
     append({
+      id: uuid(),
       type: ClauseType.COMPARE,
       attribute: '',
       operator: Clause.Operator.EQUALS.toString(),
@@ -630,7 +632,6 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
                         name={clauseValues}
                         control={control}
                         render={({ field }) => {
-                          console.log(field);
                           return (
                             <Select
                               onChange={(o: Option) => {
