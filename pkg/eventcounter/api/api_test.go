@@ -1611,6 +1611,262 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 	}
 }
 
+func TestGetOpsEvaluationUserCount(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	environmentNamespace := "ns0"
+	opsRuleID := "orid0"
+	fID := "fid0"
+	fVersion := 2
+	vID0 := "vid0"
+	cacheKey := "ns0:ops_euc:orid0:fid0:2:vid0"
+	cacheKeyWithoutNS := "ops_euc:orid0:fid0:2:vid0"
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	patterns := []struct {
+		desc        string
+		setup       func(*eventCounterService)
+		input       *ecproto.GetOpsEvaluationUserCountRequest
+		expected    *ecproto.GetOpsEvaluationUserCountResponse
+		expectedErr error
+	}{
+		{
+			desc: "error: ErrOpsRuleIDRequired",
+			input: &ecproto.GetOpsEvaluationUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+				VariationId:          vID0,
+			},
+			expectedErr: createError(statusAutoOpsRuleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id")),
+		},
+		{
+			desc: "error: ErrFeatureIDRequired",
+			input: &ecproto.GetOpsEvaluationUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				FeatureVersion:       int32(fVersion),
+				VariationId:          vID0,
+			},
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+		},
+		{
+			desc: "error: ErrFeatureVersionRequired",
+			input: &ecproto.GetOpsEvaluationUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				FeatureId:            fID,
+				VariationId:          vID0,
+			},
+			expectedErr: createError(statusFeatureVersionRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_version")),
+		},
+		{
+			desc: "error: ErrVariationIDRequired",
+			input: &ecproto.GetOpsEvaluationUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+			},
+			expectedErr: createError(statusVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+		},
+		{
+			desc: "success",
+			setup: func(s *eventCounterService) {
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
+					GetUserCount(cacheKey).Return(int64(1234), nil)
+			},
+			input: &ecproto.GetOpsEvaluationUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+				VariationId:          vID0,
+			},
+			expected: &ecproto.GetOpsEvaluationUserCountResponse{
+				OpsRuleId: opsRuleID,
+				Count:     1234,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: without environment_namespace",
+			setup: func(s *eventCounterService) {
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
+					GetUserCount(cacheKeyWithoutNS).Return(int64(9876), nil)
+			},
+			input: &ecproto.GetOpsEvaluationUserCountRequest{
+				OpsRuleId:      opsRuleID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
+				VariationId:    vID0,
+			},
+			expected: &ecproto.GetOpsEvaluationUserCountResponse{
+				OpsRuleId: opsRuleID,
+				Count:     9876,
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newEventCounterService(t, mockController)
+			if p.setup != nil {
+				p.setup(gs)
+			}
+			actual, err := gs.GetOpsEvaluationUserCount(ctx, p.input)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
+func TestGetOpsGoalUserCount(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	environmentNamespace := "ns0"
+	opsRuleID := "orid0"
+	gID := "gid0"
+	fID := "fid0"
+	fVersion := 2
+	vID0 := "vid0"
+	cacheKey := "ns0:ops_guc:orid0:gid0:fid0:2:vid0"
+	cacheKeyWithoutNS := "ops_guc:orid0:gid0:fid0:2:vid0"
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	patterns := []struct {
+		desc        string
+		setup       func(*eventCounterService)
+		input       *ecproto.GetOpsGoalUserCountRequest
+		expected    *ecproto.GetOpsGoalUserCountResponse
+		expectedErr error
+	}{
+		{
+			desc: "error: ErrOpsRuleIDRequired",
+			input: &ecproto.GetOpsGoalUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				GoalId:               gID,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+				VariationId:          vID0,
+			},
+			expectedErr: createError(statusAutoOpsRuleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id")),
+		},
+		{
+			desc: "error: ErrGoalIDRequired",
+			input: &ecproto.GetOpsGoalUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+				VariationId:          vID0,
+			},
+			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+		},
+		{
+			desc: "error: ErrFeatureIDRequired",
+			input: &ecproto.GetOpsGoalUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				GoalId:               gID,
+				FeatureVersion:       int32(fVersion),
+				VariationId:          vID0,
+			},
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+		},
+		{
+			desc: "error: ErrFeatureVersionRequired",
+			input: &ecproto.GetOpsGoalUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				GoalId:               gID,
+				FeatureId:            fID,
+				VariationId:          vID0,
+			},
+			expectedErr: createError(statusFeatureVersionRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_version")),
+		},
+		{
+			desc: "error: ErrVariationIDRequired",
+			input: &ecproto.GetOpsGoalUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				GoalId:               gID,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+			},
+			expectedErr: createError(statusVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+		},
+		{
+			desc: "success",
+			setup: func(s *eventCounterService) {
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
+					GetUserCount(cacheKey).Return(int64(1234), nil)
+			},
+			input: &ecproto.GetOpsGoalUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				GoalId:               gID,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+				VariationId:          vID0,
+			},
+			expected: &ecproto.GetOpsGoalUserCountResponse{
+				OpsRuleId: opsRuleID,
+				Count:     1234,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: without environment_namespace",
+			setup: func(s *eventCounterService) {
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
+					GetUserCount(cacheKeyWithoutNS).Return(int64(9876), nil)
+			},
+			input: &ecproto.GetOpsGoalUserCountRequest{
+				OpsRuleId:      opsRuleID,
+				GoalId:         gID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
+				VariationId:    vID0,
+			},
+			expected: &ecproto.GetOpsGoalUserCountResponse{
+				OpsRuleId: opsRuleID,
+				Count:     9876,
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newEventCounterService(t, mockController)
+			if p.setup != nil {
+				p.setup(gs)
+			}
+			actual, err := gs.GetOpsGoalUserCount(ctx, p.input)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
 func getRandomNumberGroup(size int) [][]float64 {
 	group := make([][]float64, 0, size)
 	for i := 0; i < size; i++ {

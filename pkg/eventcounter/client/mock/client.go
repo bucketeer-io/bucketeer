@@ -209,6 +209,46 @@ func (mr *MockClientMockRecorder) GetMAUCount(ctx, in interface{}, opts ...inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMAUCount", reflect.TypeOf((*MockClient)(nil).GetMAUCount), varargs...)
 }
 
+// GetOpsEvaluationUserCount mocks base method.
+func (m *MockClient) GetOpsEvaluationUserCount(ctx context.Context, in *eventcounter.GetOpsEvaluationUserCountRequest, opts ...grpc.CallOption) (*eventcounter.GetOpsEvaluationUserCountResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetOpsEvaluationUserCount", varargs...)
+	ret0, _ := ret[0].(*eventcounter.GetOpsEvaluationUserCountResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOpsEvaluationUserCount indicates an expected call of GetOpsEvaluationUserCount.
+func (mr *MockClientMockRecorder) GetOpsEvaluationUserCount(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpsEvaluationUserCount", reflect.TypeOf((*MockClient)(nil).GetOpsEvaluationUserCount), varargs...)
+}
+
+// GetOpsGoalUserCount mocks base method.
+func (m *MockClient) GetOpsGoalUserCount(ctx context.Context, in *eventcounter.GetOpsGoalUserCountRequest, opts ...grpc.CallOption) (*eventcounter.GetOpsGoalUserCountResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetOpsGoalUserCount", varargs...)
+	ret0, _ := ret[0].(*eventcounter.GetOpsGoalUserCountResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOpsGoalUserCount indicates an expected call of GetOpsGoalUserCount.
+func (mr *MockClientMockRecorder) GetOpsGoalUserCount(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOpsGoalUserCount", reflect.TypeOf((*MockClient)(nil).GetOpsGoalUserCount), varargs...)
+}
+
 // GetUserCountV2 mocks base method.
 func (m *MockClient) GetUserCountV2(ctx context.Context, in *eventcounter.GetUserCountV2Request, opts ...grpc.CallOption) (*eventcounter.GetUserCountV2Response, error) {
 	m.ctrl.T.Helper()

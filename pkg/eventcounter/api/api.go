@@ -1259,7 +1259,8 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 		return nil, dt.Err()
 	}
 	return &ecproto.GetOpsEvaluationUserCountResponse{
-		Count: userCount,
+		OpsRuleId: req.OpsRuleId,
+		Count:     userCount,
 	}, nil
 }
 
@@ -1367,7 +1368,8 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 		return nil, dt.Err()
 	}
 	return &ecproto.GetOpsGoalUserCountResponse{
-		Count: userCount,
+		OpsRuleId: req.OpsRuleId,
+		Count:     userCount,
 	}, nil
 }
 
