@@ -49,7 +49,6 @@ var (
 )
 
 type PersisterDWH struct {
-	experimentClient      ec.Client
 	puller                puller.RateLimitedPuller
 	logger                *zap.Logger
 	ctx                   context.Context
