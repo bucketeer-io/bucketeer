@@ -62,7 +62,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 	}
 	evaluationEvent := &eventproto.EvaluationEvent{
 		Tag:            "tag",
-		Timestamp:      t1.Unix(),
+		Timestamp:      t1.UnixMicro(),
 		FeatureId:      "fid",
 		FeatureVersion: int32(1),
 		UserId:         "uid",
@@ -233,7 +233,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				Tag:                  evaluationEvent.Tag,
 				SourceId:             evaluationEvent.SourceId.String(),
 				EnvironmentNamespace: environmentNamespace,
-				Timestamp:            evaluationEvent.Timestamp,
+				Timestamp:            time.Unix(evaluationEvent.Timestamp, 0).UnixMicro(),
 			},
 			expectedErr:        nil,
 			expectedRepeatable: false,
@@ -257,6 +257,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	now := time.Now()
 
 	environmentNamespace := "ns"
 	ctx, cancel := context.WithCancel(context.Background())
@@ -293,7 +294,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: time.Now().Unix(),
+				Timestamp: now.Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
 				User: &userproto.User{
@@ -325,7 +326,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: time.Now().Unix(),
+				Timestamp: now.Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
 				User: &userproto.User{
@@ -364,7 +365,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: time.Now().Unix(),
+				Timestamp: now.Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
 				User: &userproto.User{
@@ -413,7 +414,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: time.Now().Unix(),
+				Timestamp: now.Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
 				User: &userproto.User{
@@ -462,7 +463,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: time.Now().Unix(),
+				Timestamp: now.Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
 				User: &userproto.User{
@@ -511,7 +512,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: time.Now().Unix(),
+				Timestamp: now.Unix(),
 				GoalId:    "gid",
 				UserId:    "uid",
 				User: &userproto.User{
@@ -565,7 +566,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:    eventproto.SourceId_ANDROID,
-				Timestamp:   time.Now().Unix(),
+				Timestamp:   now.Unix(),
 				GoalId:      "gid",
 				UserId:      "uid",
 				User:        user,
@@ -586,7 +587,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Reason:               featureproto.Reason_TARGET.String(),
 				UserData:             string(userData),
 				EnvironmentNamespace: environmentNamespace,
-				Timestamp:            time.Now().Unix(),
+				Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
 			},
 			expectedErr:        nil,
 			expectedRepeatable: false,
