@@ -346,8 +346,8 @@ class ExperimentCalculator:
         variation_ids: List[str],
     ) -> Dict[str, variation_count_pb2.VariationCount]:
         try:
-            resp = self._event_counter_stub.GetEvaluationCountV2(
-                ec_service_pb2.GetEvaluationCountV2Request(
+            resp = self._event_counter_stub.GetExperimentEvaluationCount(
+                ec_service_pb2.GetExperimentEvaluationCountRequest(
                     environment_namespace=environment_namespace,
                     start_at=start_at,
                     end_at=end_at,
@@ -358,7 +358,7 @@ class ExperimentCalculator:
                 self._grpc_timeout,
             )
             variation_counts = {}
-            for vc in resp.count.realtime_counts:
+            for vc in resp.variation_counts:
                 variation_counts[vc.variation_id] = vc
             return variation_counts
         except grpc.RpcError as rpc_error_call:
@@ -379,8 +379,8 @@ class ExperimentCalculator:
         variation_ids: List[str],
     ) -> Dict[str, variation_count_pb2.VariationCount]:
         try:
-            resp = self._event_counter_stub.GetGoalCountV2(
-                ec_service_pb2.GetGoalCountV2Request(
+            resp = self._event_counter_stub.GetExperimentGoalCount(
+                ec_service_pb2.GetExperimentGoalCountRequest(
                     environment_namespace=environment_namespace,
                     start_at=start_at,
                     end_at=end_at,
@@ -392,7 +392,7 @@ class ExperimentCalculator:
                 self._grpc_timeout,
             )
             variation_counts = {}
-            for vc in resp.goal_counts.realtime_counts:
+            for vc in resp.variation_counts:
                 variation_counts[vc.variation_id] = vc
             return variation_counts
         except grpc.RpcError as rpc_error_call:
