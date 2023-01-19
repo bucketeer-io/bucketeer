@@ -39,10 +39,8 @@ def test_get_evaluation_count(mocker):
     insmock = mocker.Mock()
     vr0 = variation_count_pb2.VariationCount(variation_id="vid0", user_count=0)
     vr1 = variation_count_pb2.VariationCount(variation_id="vid1", user_count=1)
-    evalCount = evaluation_count_pb2.EvaluationCount(
-        realtime_counts=[vr0, vr1],
-    )
-    resp = eventcounter_service_pb2.GetExperimentEvaluationCountResponse(count=evalCount)
+    counts=[vr0, vr1],
+    resp = eventcounter_service_pb2.GetExperimentEvaluationCountResponse(variation_counts=counts)
     insmock.GetExperimentEvaluationCount.return_value = resp
     mocker.patch.object(ec, "_event_counter_stub", insmock)
     actual = ec._get_evaluation_count("", 0, 0, "", 0, [])
@@ -55,8 +53,7 @@ def test_get_goal_count(mocker):
     insmock = mocker.Mock()
     vr0 = variation_count_pb2.VariationCount(variation_id="vid0", user_count=0)
     vr1 = variation_count_pb2.VariationCount(variation_id="vid1", user_count=1)
-    gc0 = experiment_count_pb2.GoalCounts(goal_id="gid0", realtime_counts=[vr0, vr1])
-    resp = eventcounter_service_pb2.GetExperimentGoalCountResponse(goal_counts=gc0)
+    resp = eventcounter_service_pb2.GetExperimentGoalCountResponse(goal_id="gid0", variation_counts=[vr0, vr1])
     insmock.GetExperimentGoalCount.return_value = resp
 
     mocker.patch.object(ec, "_event_counter_stub", insmock)
@@ -83,10 +80,8 @@ def test_create_experiment_result(mocker):
         event_count=12,
         value_sum=7,
     )
-    evalCount = evaluation_count_pb2.EvaluationCount(
-        realtime_counts=[eval_vr0, eval_vr1],
-    )
-    resp = eventcounter_service_pb2.GetExperimentEvaluationCountResponse(count=evalCount)
+    evalCount = [eval_vr0, eval_vr1],
+    resp = eventcounter_service_pb2.GetExperimentEvaluationCountResponse(variation_counts=evalCount)
     ec_insmock.GetExperimentEvaluationCount.return_value = resp
 
     goal_vr0 = variation_count_pb2.VariationCount(
@@ -105,10 +100,9 @@ def test_create_experiment_result(mocker):
         value_sum_per_user_mean=2.3,
         value_sum_per_user_variance=0.6,
     )
-    gc0 = experiment_count_pb2.GoalCounts(
-        goal_id="gid", realtime_counts=[goal_vr0, goal_vr1]
-    )
-    resp = eventcounter_service_pb2.GetExperimentGoalCountResponse(goal_counts=gc0)
+    gid="gid"
+    goal_count=[goal_vr0, goal_vr1]
+    resp = eventcounter_service_pb2.GetExperimentGoalCountResponse(goal_id=gid, variation_counts=goal_count)
     ec_insmock.GetExperimentGoalCount.return_value = resp
 
     mocker.patch.object(ec, "_event_counter_stub", ec_insmock)
