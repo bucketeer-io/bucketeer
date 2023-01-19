@@ -95,7 +95,7 @@ func (w *writer) AppendRows(
 	ctx context.Context,
 	batches [][][]byte,
 ) ([]int, error) {
-	fails := make([]int, len(batches))
+	fails := make([]int, 0, len(batches))
 	var err error
 	defer record()(operationQuery, &err)
 	results := []*managedwriter.AppendResult{}
