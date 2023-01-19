@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
@@ -166,7 +167,7 @@ func (w *goalEvtWriter) convToGoalEvent(
 		Tag:                  tag,
 		SourceId:             e.SourceId.String(),
 		EnvironmentNamespace: environmentNamespace,
-		Timestamp:            e.Timestamp,
+		Timestamp:            time.Unix(e.Timestamp, 0).UnixMicro(),
 		FeatureId:            eval.FeatureId,
 		FeatureVersion:       eval.FeatureVersion,
 		VariationId:          eval.VariationId,
