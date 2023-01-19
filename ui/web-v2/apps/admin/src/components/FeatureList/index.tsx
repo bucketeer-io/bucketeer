@@ -142,6 +142,7 @@ export enum FilterTypes {
   HAS_EXPERIMENT = 'has_experiment',
   ENABLED = 'enabled',
   ARCHIVED = 'archived',
+  TAGS = 'tags',
 }
 
 const filterOptions: Option[] = [
@@ -160,6 +161,10 @@ const filterOptions: Option[] = [
   {
     value: FilterTypes.ARCHIVED,
     label: intl.formatMessage(messages.feature.filter.archived),
+  },
+  {
+    value: FilterTypes.TAGS,
+    label: intl.formatMessage(messages.tags),
   },
 ];
 
@@ -461,6 +466,14 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 };
               })
             );
+            return;
+          case FilterTypes.TAGS:
+            setFilterValues([
+              {
+                label: 'tag 1',
+                value: 'tag1',
+              },
+            ]);
             return;
         }
       },

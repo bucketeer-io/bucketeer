@@ -1,8 +1,11 @@
+import { listTags } from '@/modules/features';
+import { AppDispatch } from '@/store';
 import { Popover, Transition } from '@headlessui/react';
 import { SelectorIcon } from '@heroicons/react/solid';
 import React, { FC, Fragment, memo, useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { usePopper } from 'react-popper';
+import { useDispatch } from 'react-redux';
 import ReactSelect from 'react-select';
 
 import { messages } from '../../lang/messages';
@@ -32,6 +35,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
     const popper = usePopper(referenceElement.current, popperElement.current, {
       placement: 'bottom-start',
     });
+    const dispatch = useDispatch<AppDispatch>();
 
     const handleKeyChange = (o: Option) => {
       setKey(o.value);
@@ -47,6 +51,10 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
       setKey(null);
       setValue(values[0]);
     };
+
+    useEffect(() => {
+      dispatch(listTags());
+    }, []);
 
     useEffect(() => {
       setValue(values[0]);
@@ -112,7 +120,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                             menuPortalTarget={document.body}
                             placeholder={f(messages.filter.add)}
                             onChange={handleKeyChange}
-                            isSearchable={false}
+                            isSearchable={true}
                             styles={{
                               menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                             }}

@@ -39,6 +39,8 @@ import {
   UpdateFeatureDetailsRequest,
   UpdateFeatureTargetingRequest,
   UpdateFeatureVariationsRequest,
+  ListTagsRequest,
+  ListTagsResponse,
 } from '../proto/feature/service_pb';
 import { Variation } from '../proto/feature/variation_pb';
 
@@ -174,6 +176,17 @@ export const listFeatures = createAsyncThunk<
   request.setMaintainer(params.maintainerId);
   await setupAuthToken();
   const result = await featureGrpc.listFeatures(request);
+  return result.response.toObject();
+});
+
+export const listTags = createAsyncThunk<
+  ListTagsResponse.AsObject,
+  undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/listTags`, async () => {
+  const request = new ListTagsRequest();
+  await setupAuthToken();
+  const result = await featureGrpc.listTags(request);
   return result.response.toObject();
 });
 
