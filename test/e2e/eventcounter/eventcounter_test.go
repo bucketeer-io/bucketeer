@@ -108,7 +108,7 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 
 		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
 		if len(resp.VariationCounts) == 0 {
@@ -206,7 +206,7 @@ func TestExperimentGoalCount(t *testing.T) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 
 		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
 		if len(resp.VariationCounts) == 0 {
@@ -930,7 +930,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 
 		// Goal 0.
 		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
@@ -1098,7 +1098,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 
 		// Goal 0.
 		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
@@ -1261,7 +1261,7 @@ func TestHTTPTrack(t *testing.T) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 
 		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
 		if len(resp.VariationCounts) == 0 {
@@ -1335,7 +1335,7 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 
 		resp := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
 		if resp == nil {
@@ -1412,7 +1412,7 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 
 		resp := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
 		if resp == nil {
