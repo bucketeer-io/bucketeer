@@ -192,7 +192,11 @@ export const AutoOpsRulesInput: FC<AutoOpsRulesInputProps> = memo(
                     </div>
                   )}
                 </div>
-                <AutoOpsRuleInput featureId={featureId} ruleIdx={ruleIdx} />
+                <AutoOpsRuleInput
+                  featureId={featureId}
+                  ruleIdx={ruleIdx}
+                  feature={feature}
+                />
               </div>
             );
           })}
@@ -212,14 +216,15 @@ export const AutoOpsRulesInput: FC<AutoOpsRulesInputProps> = memo(
 export interface AutoOpsRuleInputProps {
   featureId: string;
   ruleIdx: number;
+  feature: Feature.AsObject;
 }
 
 export const AutoOpsRuleInput: FC<AutoOpsRuleInputProps> = memo(
-  ({ featureId, ruleIdx }) => {
+  ({ featureId, ruleIdx, feature }) => {
     const editable = useIsEditable();
     const ruleName = `autoOpsRules.${ruleIdx}`;
     const methods = useFormContext();
-    const { control } = methods;
+    const { control, setValue } = methods;
     const rule = useWatch({
       control,
       name: ruleName,
@@ -233,6 +238,9 @@ export const AutoOpsRuleInput: FC<AutoOpsRuleInputProps> = memo(
           render={({ field }) => (
             <Select
               onChange={(o: Option) => {
+                setValue(`autoOpsRules.${ruleIdx}.clauses`, [
+                  createInitialClause(feature),
+                ]);
                 field.onChange(o.value);
               }}
               options={opsTypeOptions}
