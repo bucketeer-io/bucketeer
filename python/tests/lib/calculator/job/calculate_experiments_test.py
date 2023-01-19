@@ -39,8 +39,7 @@ def test_get_evaluation_count(mocker):
     insmock = mocker.Mock()
     vr0 = variation_count_pb2.VariationCount(variation_id="vid0", user_count=0)
     vr1 = variation_count_pb2.VariationCount(variation_id="vid1", user_count=1)
-    counts=[vr0, vr1],
-    resp = eventcounter_service_pb2.GetExperimentEvaluationCountResponse(variation_counts=counts)
+    resp = eventcounter_service_pb2.GetExperimentEvaluationCountResponse(variation_counts=[vr0, vr1])
     insmock.GetExperimentEvaluationCount.return_value = resp
     mocker.patch.object(ec, "_event_counter_stub", insmock)
     actual = ec._get_evaluation_count("", 0, 0, "", 0, [])
