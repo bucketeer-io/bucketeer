@@ -852,6 +852,7 @@ func (s *eventCounterService) GetExperimentGoalCount(
 		req.EnvironmentNamespace,
 		startAt,
 		endAt,
+		req.GoalId,
 		req.FeatureId,
 		req.FeatureVersion,
 	)
