@@ -5,7 +5,7 @@ SELECT
 FROM
     `%s`
 WHERE
-    _PARTITIONTIME BETWEEN TIMESTAMP(@startAt) AND TIMESTAMP(@endAt)
+    timestamp BETWEEN TIMESTAMP(@startAt) AND TIMESTAMP(@endAt)
     AND environment_namespace = @environmentNamespace
     AND feature_id = @featureID
     AND feature_version = @featureVersion
