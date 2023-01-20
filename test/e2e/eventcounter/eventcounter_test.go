@@ -26,6 +26,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
@@ -61,6 +63,7 @@ var (
 	serviceTokenPath     = flag.String("service-token", "", "Service token path")
 	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
 	testID               = flag.String("test-id", "", "test ID")
+	compareFloatOpt      = cmpopts.EquateApprox(0, 0.0001)
 )
 
 func TestGrpcExperimentGoalCount(t *testing.T) {
@@ -91,7 +94,7 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	startAt := time.Now().Local().Add(-1 * time.Hour)
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "TestGrpcGoalCountV2", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+		ctx, t, experimentClient, "TestGrpcExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
 	for _, v := range experiment.Variations {
@@ -128,13 +131,13 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		if vcA.EventCount != 2 {
 			continue
 		}
-		if vcA.ValueSum != float64(0.5) {
+		if diff := cmp.Diff(vcA.ValueSum, 0.5, compareFloatOpt); diff != "" {
 			continue
 		}
-		if vcA.ValueSumPerUserMean != float64(0.5) {
+		if diff := cmp.Diff(vcA.ValueSumPerUserMean, 0.5, compareFloatOpt); diff != "" {
 			continue
 		}
-		if vcA.ValueSumPerUserVariance != float64(0) {
+		if diff := cmp.Diff(vcA.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -189,7 +192,7 @@ func TestExperimentGoalCount(t *testing.T) {
 	startAt := time.Now().Local().Add(-1 * time.Hour)
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "TestGoalCountV2", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+		ctx, t, experimentClient, "TestExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
 	for _, v := range experiment.Variations {
@@ -226,13 +229,13 @@ func TestExperimentGoalCount(t *testing.T) {
 		if vcA.EventCount != 2 {
 			continue
 		}
-		if vcA.ValueSum != float64(0.5) {
+		if diff := cmp.Diff(vcA.ValueSum, 0.5, compareFloatOpt); diff != "" {
 			continue
 		}
-		if vcA.ValueSumPerUserMean != float64(0.5) {
+		if diff := cmp.Diff(vcA.ValueSumPerUserMean, 0.5, compareFloatOpt); diff != "" {
 			continue
 		}
-		if vcA.ValueSumPerUserVariance != float64(0) {
+		if diff := cmp.Diff(vcA.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -246,13 +249,13 @@ func TestExperimentGoalCount(t *testing.T) {
 		if vcB.EventCount != 0 {
 			continue
 		}
-		if vcB.ValueSum != float64(0) {
+		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
-		if vcB.ValueSumPerUserMean != float64(0.0) {
+		if diff := cmp.Diff(vcB.ValueSumPerUserMean, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
-		if vcB.ValueSumPerUserVariance != float64(0.0) {
+		if diff := cmp.Diff(vcB.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 		break
@@ -366,7 +369,7 @@ func TestExperimentResultWithoutTag(t *testing.T) {
 					if vr.ExperimentCount.UserCount != 3 {
 						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
 					}
-					if vr.ExperimentCount.ValueSum != float64(0.6) {
+					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.6, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
 					}
 					// cvr prob best
@@ -380,13 +383,13 @@ func TestExperimentResultWithoutTag(t *testing.T) {
 						t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", vv, vr.CvrProbBest.Rhat)
 					}
 					// cvr prob beat baseline
-					if vr.CvrProbBeatBaseline.Mean != float64(0.0) {
+					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", vv, vr.CvrProbBeatBaseline.Mean)
 					}
-					if vr.CvrProbBeatBaseline.Sd != float64(0.0) {
+					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Sd, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", vv, vr.CvrProbBeatBaseline.Sd)
 					}
-					if vr.CvrProbBeatBaseline.Rhat != float64(0.0) {
+					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Rhat, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", vv, vr.CvrProbBeatBaseline.Rhat)
 					}
 					// value sum per user prob best
@@ -394,7 +397,7 @@ func TestExperimentResultWithoutTag(t *testing.T) {
 						t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBest.Mean)
 					}
 					// value sum per user prob beat baseline
-					if vr.GoalValueSumPerUserProbBeatBaseline.Mean != float64(0.0) {
+					if diff := cmp.Diff(vr.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBeatBaseline.Mean)
 					}
 					continue
@@ -416,7 +419,7 @@ func TestExperimentResultWithoutTag(t *testing.T) {
 					if vr.ExperimentCount.UserCount != 2 {
 						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
 					}
-					if vr.ExperimentCount.ValueSum != float64(0.25) {
+					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.25, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
 					}
 					// cvr prob best
@@ -456,7 +459,7 @@ func TestExperimentResultWithoutTag(t *testing.T) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 	}
 }
 
@@ -569,7 +572,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 					if vr.ExperimentCount.UserCount != 3 {
 						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
 					}
-					if vr.ExperimentCount.ValueSum != float64(0.9) {
+					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.9, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
 					}
 					// cvr prob best
@@ -583,13 +586,13 @@ func TestGrpcExperimentResult(t *testing.T) {
 						t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", vv, vr.CvrProbBest.Rhat)
 					}
 					// cvr prob beat baseline
-					if vr.CvrProbBeatBaseline.Mean != float64(0.0) {
+					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", vv, vr.CvrProbBeatBaseline.Mean)
 					}
-					if vr.CvrProbBeatBaseline.Sd != float64(0.0) {
+					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Sd, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", vv, vr.CvrProbBeatBaseline.Sd)
 					}
-					if vr.CvrProbBeatBaseline.Rhat != float64(0.0) {
+					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Rhat, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", vv, vr.CvrProbBeatBaseline.Rhat)
 					}
 					// value sum per user prob best
@@ -597,7 +600,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 						t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBest.Mean)
 					}
 					// value sum per user prob beat baseline
-					if vr.GoalValueSumPerUserProbBeatBaseline.Mean != float64(0.0) {
+					if diff := cmp.Diff(vr.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBeatBaseline.Mean)
 					}
 					continue
@@ -619,7 +622,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 					if vr.ExperimentCount.UserCount != 2 {
 						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
 					}
-					if vr.ExperimentCount.ValueSum != float64(0.35) {
+					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.35, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
 					}
 					// cvr prob best
@@ -659,7 +662,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 	}
 	res := getExperiment(t, experimentClient, experiment.Id)
 	if res.Experiment.Status != experimentproto.Experiment_RUNNING {
@@ -778,7 +781,7 @@ func TestExperimentResult(t *testing.T) {
 					if vr.ExperimentCount.UserCount != 3 {
 						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
 					}
-					if vr.ExperimentCount.ValueSum != float64(0.9) {
+					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.9, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
 					}
 					// cvr prob best
@@ -792,13 +795,13 @@ func TestExperimentResult(t *testing.T) {
 						t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", vv, vr.CvrProbBest.Rhat)
 					}
 					// cvr prob beat baseline
-					if vr.CvrProbBeatBaseline.Mean != float64(0.0) {
+					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", vv, vr.CvrProbBeatBaseline.Mean)
 					}
-					if vr.CvrProbBeatBaseline.Sd != float64(0.0) {
+					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Sd, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", vv, vr.CvrProbBeatBaseline.Sd)
 					}
-					if vr.CvrProbBeatBaseline.Rhat != float64(0.0) {
+					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Rhat, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", vv, vr.CvrProbBeatBaseline.Rhat)
 					}
 					// value sum per user prob best
@@ -806,7 +809,7 @@ func TestExperimentResult(t *testing.T) {
 						t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBest.Mean)
 					}
 					// value sum per user prob beat baseline
-					if vr.GoalValueSumPerUserProbBeatBaseline.Mean != float64(0.0) {
+					if diff := cmp.Diff(vr.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBeatBaseline.Mean)
 					}
 					continue
@@ -828,7 +831,7 @@ func TestExperimentResult(t *testing.T) {
 					if vr.ExperimentCount.UserCount != 2 {
 						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
 					}
-					if vr.ExperimentCount.ValueSum != float64(0.35) {
+					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.35, compareFloatOpt); diff != "" {
 						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
 					}
 					// cvr prob best
@@ -868,7 +871,7 @@ func TestExperimentResult(t *testing.T) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(10 * time.Second)
 	}
 	res := getExperiment(t, experimentClient, experiment.Id)
 	if res.Experiment.Status != experimentproto.Experiment_RUNNING {
@@ -951,7 +954,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcA.EventCount != 2 {
 			continue
 		}
-		if vcA.ValueSum != float64(0.6) {
+		if diff := cmp.Diff(vcA.ValueSum, 0.6, compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -965,7 +968,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcB.EventCount != 0 {
 			continue
 		}
-		if vcB.ValueSum != float64(0) {
+		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -988,7 +991,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcA.EventCount != 0 {
 			continue
 		}
-		if vcA.ValueSum != float64(0) {
+		if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -1002,7 +1005,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcB.EventCount != 2 {
 			continue
 		}
-		if vcB.ValueSum != float64(0.4) {
+		if diff := cmp.Diff(vcB.ValueSum, 0.4, compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -1025,7 +1028,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcA.EventCount != 0 {
 			continue
 		}
-		if vcA.ValueSum != float64(0) {
+		if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -1039,7 +1042,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcB.EventCount != 0 {
 			continue
 		}
-		if vcB.ValueSum != float64(0) {
+		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 		break
@@ -1119,7 +1122,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcA.EventCount != 2 {
 			continue
 		}
-		if vcA.ValueSum != float64(0.6) {
+		if diff := cmp.Diff(vcA.ValueSum, 0.6, compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -1133,7 +1136,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcB.EventCount != 0 {
 			continue
 		}
-		if vcB.ValueSum != float64(0) {
+		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -1156,7 +1159,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcA.EventCount != 0 {
 			continue
 		}
-		if vcA.ValueSum != float64(0) {
+		if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -1170,7 +1173,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcB.EventCount != 2 {
 			continue
 		}
-		if vcB.ValueSum != float64(0.4) {
+		if diff := cmp.Diff(vcB.ValueSum, 0.4, compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -1193,7 +1196,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcA.EventCount != 0 {
 			continue
 		}
-		if vcA.ValueSum != float64(0) {
+		if diff := cmp.Diff(vcA.ValueSum, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 
@@ -1207,7 +1210,7 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		if vcB.EventCount != 0 {
 			continue
 		}
-		if vcB.ValueSum != float64(0) {
+		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 		break
@@ -1282,7 +1285,7 @@ func TestHTTPTrack(t *testing.T) {
 		if vcA.EventCount != 1 {
 			continue
 		}
-		if vcA.ValueSum != value {
+		if diff := cmp.Diff(vcA.ValueSum, value, compareFloatOpt); diff != "" {
 			continue
 		}
 		// variation b
@@ -1296,7 +1299,7 @@ func TestHTTPTrack(t *testing.T) {
 		if vcB.EventCount != 0 {
 			continue
 		}
-		if vcB.ValueSum != float64(0) {
+		if diff := cmp.Diff(vcB.ValueSum, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
 		break
@@ -1305,10 +1308,14 @@ func TestHTTPTrack(t *testing.T) {
 
 func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	ecClient := newEventCounterClient(t)
 	defer ecClient.Close()
+	experimentClient := newExperimentClient(t)
+	defer experimentClient.Close()
 	uuid := newUUID(t)
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -1328,6 +1335,20 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
+
+	goalIDs := createGoals(ctx, t, experimentClient, 1)
+	startAt := time.Now().Local().Add(-1 * time.Hour)
+	stopAt := startAt.Local().Add(time.Hour * 2)
+	createExperimentWithMultiGoals(
+		ctx,
+		t,
+		experimentClient,
+		"TestGrpcExperimentEvaluationEventCount",
+		featureID,
+		goalIDs,
+		f.Variations[0].Id,
+		startAt, stopAt,
+	)
 
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag)
 
@@ -1382,11 +1403,15 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 
 func TestExperimentEvaluationEventCount(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
 	ecClient := newEventCounterClient(t)
 	defer ecClient.Close()
 	uuid := newUUID(t)
+	experimentClient := newExperimentClient(t)
+	defer experimentClient.Close()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := createUserID(t, uuid)
@@ -1405,6 +1430,19 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
+	goalIDs := createGoals(ctx, t, experimentClient, 1)
+	startAt := time.Now().Local().Add(-1 * time.Hour)
+	stopAt := startAt.Local().Add(time.Hour * 2)
+	createExperimentWithMultiGoals(
+		ctx,
+		t,
+		experimentClient,
+		"TestExperimentEvaluationEventCount",
+		featureID,
+		goalIDs,
+		f.Variations[0].Id,
+		startAt, stopAt,
+	)
 
 	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag)
 
