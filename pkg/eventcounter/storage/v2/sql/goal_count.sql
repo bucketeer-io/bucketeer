@@ -9,6 +9,7 @@ WITH grouped_by_user_evaluation AS (
     WHERE
         timestamp BETWEEN TIMESTAMP(@startAt) AND TIMESTAMP(@endAt)
     AND environment_namespace = @environmentNamespace
+    AND goal_id = @goalID
     AND feature_id = @featureID
     AND feature_version = @featureVersion
 GROUP BY
@@ -16,12 +17,12 @@ GROUP BY
     variation_id
 )
 SELECT
-    variation_id as variation,
-    COUNT(DISTINCT user_id) as goal_user,
-    SUM(event_count) as goal_total,
-    SUM(value_sum) as goal_value_total,
-    AVG(value_sum) as goal_value_mean,
-    VAR_SAMP(value_sum) as goal_value_variance
+    variation_id as variationID,
+    COUNT(DISTINCT user_id) as goalUser,
+    SUM(event_count) as goalTotal,
+    SUM(value_sum) as goalValueTotal,
+    AVG(value_sum) as goalValueMean,
+    IFNULL(VAR_SAMP(value_sum), 0) as goalValueVariance
 FROM
     grouped_by_user_evaluation
 GROUP BY

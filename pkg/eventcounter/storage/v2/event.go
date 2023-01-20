@@ -53,7 +53,7 @@ type EventStorage interface {
 		ctx context.Context,
 		environmentNamespace string,
 		startAt, endAt time.Time,
-		featureID string,
+		goalID, featureID string,
 		featureVersion int32,
 	) ([]*GoalEventCount, error)
 }
@@ -173,7 +173,7 @@ func (es *eventStorage) QueryGoalCount(
 	ctx context.Context,
 	environmentNamespace string,
 	startAt, endAt time.Time,
-	featureID string,
+	goalID, featureID string,
 	featureVersion int32,
 ) ([]*GoalEventCount, error) {
 	fileName := GoalCountSQLFile
@@ -202,6 +202,10 @@ func (es *eventStorage) QueryGoalCount(
 		{
 			Name:  "endAt",
 			Value: endAt,
+		},
+		{
+			Name:  "goalID",
+			Value: goalID,
 		},
 		{
 			Name:  "featureID",
