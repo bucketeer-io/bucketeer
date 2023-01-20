@@ -15,74 +15,39 @@
 package writer
 
 import (
-	"strconv"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
-
-	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
-var defaultOptions = options{
-	logger:    zap.NewNop(),
-	batchSize: 10,
-}
-
-func TestCreateBatch(t *testing.T) {
+func TestGetUniqueFails(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
-		desc         string
-		size         int
-		expectedSize []int
+		desc     string
+		input    []int
+		expected []int
 	}{
 		{
-			desc:         "success: 15",
-			size:         15,
-			expectedSize: []int{10, 5},
+			desc:     "Same result as input",
+			input:    []int{1, 2, 3, 4, 5},
+			expected: []int{1, 2, 3, 4, 5},
 		},
 		{
-			desc:         "success: 11",
-			size:         11,
-			expectedSize: []int{10, 1},
-		},
-		{
-			desc:         "success: 20",
-			size:         20,
-			expectedSize: []int{10, 10},
+			desc:     "Remove duplicated",
+			input:    []int{1, 2, 3, 4, 4},
+			expected: []int{1, 2, 3, 4},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			evts := []*eventproto.GoalEvent{}
-			for i := 0; i < p.size; i++ {
-				evt := &eventproto.GoalEvent{
-					GoalId: strconv.Itoa(i),
-				}
-				evts = append(evts, evt)
+			actual := getUniqueFails(p.input)
+			for _, num := range p.expected {
+				assert.Contains(t, actual, num)
 			}
-			encoded := make([][]byte, len(evts))
-			for k, v := range evts {
-				b, err := proto.Marshal(v)
-				require.NoError(t, err)
-				encoded[k] = b
-			}
-			w := newWriter(mockController)
-			actual := w.getBatch(encoded)
-			for idx, exp := range p.expectedSize {
-				assert.Len(t, actual[idx], exp)
-			}
+			assert.Len(t, actual, len(p.expected))
 		})
-	}
-}
-
-func newWriter(c *gomock.Controller) *writer {
-	return &writer{
-		opts: &defaultOptions,
 	}
 }

@@ -63,13 +63,12 @@ func NewEvalEventWriter(
 		evt.ProtoReflect().Descriptor(),
 		writer.WithMetrics(r),
 		writer.WithLogger(l),
-		writer.WithBatchSize(size),
 	)
 	if err != nil {
 		return nil, err
 	}
 	return &evalEvtWriter{
-		writer:                storage.NewEvalEventWriter(evalQuery),
+		writer:                storage.NewEvalEventWriter(evalQuery, size),
 		userEvaluationStorage: userEvaluationStorage,
 		experimentClient:      exClient,
 		logger:                l,

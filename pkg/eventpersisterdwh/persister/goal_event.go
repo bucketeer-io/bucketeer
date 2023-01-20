@@ -63,13 +63,12 @@ func NewGoalEventWriter(
 		evt.ProtoReflect().Descriptor(),
 		writer.WithMetrics(r),
 		writer.WithLogger(l),
-		writer.WithBatchSize(size),
 	)
 	if err != nil {
 		return nil, err
 	}
 	return &goalEvtWriter{
-		writer:                storage.NewGoalEventWriter(goalWriter),
+		writer:                storage.NewGoalEventWriter(goalWriter, size),
 		userEvaluationStorage: userEvaluationStorage,
 		experimentClient:      exClient,
 		logger:                l,

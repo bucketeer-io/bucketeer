@@ -26,9 +26,8 @@ import (
 )
 
 type options struct {
-	logger    *zap.Logger
-	metrics   metrics.Registerer
-	batchSize int
+	logger  *zap.Logger
+	metrics metrics.Registerer
 }
 
 type QueryOption func(*options)
@@ -45,14 +44,8 @@ func WithMetrics(r metrics.Registerer) QueryOption {
 	}
 }
 
-func WithBatchSize(size int) QueryOption {
-	return func(opts *options) {
-		opts.batchSize = size
-	}
-}
-
 type Writer interface {
-	AppendRows(ctx context.Context, msgs [][]byte) error
+	AppendRows(ctx context.Context, batches [][][]byte) ([]int, error)
 	Close() error
 }
 
@@ -68,8 +61,7 @@ func NewWriter(
 	opts ...QueryOption,
 ) (Writer, error) {
 	dopts := &options{
-		logger:    zap.NewNop(),
-		batchSize: 10,
+		logger: zap.NewNop(),
 	}
 	for _, opt := range opts {
 		opt(dopts)
@@ -101,41 +93,41 @@ func NewWriter(
 
 func (w *writer) AppendRows(
 	ctx context.Context,
-	msgs [][]byte,
-) error {
+	batches [][][]byte,
+) ([]int, error) {
+	fails := make([]int, 0, len(batches))
 	var err error
 	defer record()(operationQuery, &err)
 	results := []*managedwriter.AppendResult{}
-	batches := w.getBatch(msgs)
-	for _, b := range batches {
+	for idx, b := range batches {
 		r, err := w.client.AppendRows(ctx, b)
 		if err != nil {
-			return err
+			// We can't use `continue` because index will be shifted in next for loop
+			fails = append(fails, idx)
 		}
 		results = append(results, r)
 	}
-	for _, r := range results {
+	for idx, r := range results {
 		_, err := r.GetResult(ctx)
 		if err != nil {
-			return err
+			fails = append(fails, idx)
 		}
 	}
-	return nil
+	return getUniqueFails(fails), err
 }
 
 func (w *writer) Close() error {
 	return w.client.Close()
 }
 
-func (w *writer) getBatch(msgs [][]byte) [][][]byte {
-	batches := [][][]byte{}
-	for i := 0; i < len(msgs); i += w.opts.batchSize {
-		end := i + w.opts.batchSize
-		if end > len(msgs) {
-			end = len(msgs)
-		}
-		batch := msgs[i:end]
-		batches = append(batches, batch)
+func getUniqueFails(fs []int) []int {
+	failMap := make(map[int]struct{})
+	for _, f := range fs {
+		failMap[f] = struct{}{}
 	}
-	return batches
+	fails := []int{}
+	for key := range failMap {
+		fails = append(fails, key)
+	}
+	return fails
 }
