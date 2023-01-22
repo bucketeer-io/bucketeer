@@ -1,26 +1,11 @@
-import { ListTagsRequest } from '@/proto/feature/service_pb';
-import { AppDispatch } from '@/store';
-import { Menu, Transition } from '@headlessui/react';
-import {
-  ArchiveIcon,
-  DuplicateIcon,
-  MenuIcon,
-  PlusIcon,
-} from '@heroicons/react/solid';
+import { PlusIcon } from '@heroicons/react/solid';
 import MUArchiveIcon from '@material-ui/icons/Archive';
 import MUFileCopyIcon from '@material-ui/icons/FileCopy';
 import MUUnarchiveIcon from '@material-ui/icons/Unarchive';
 import dayjs from 'dayjs';
-import React, {
-  FC,
-  Fragment,
-  useState,
-  memo,
-  useCallback,
-  useEffect,
-} from 'react';
+import React, { FC, useState, memo, useCallback, useEffect } from 'react';
 import { useIntl } from 'react-intl';
-import { shallowEqual, useSelector, useDispatch } from 'react-redux';
+import { shallowEqual, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { FEATURE_LIST_PAGE_SIZE } from '../../constants/feature';
@@ -35,7 +20,7 @@ import { AppState } from '../../modules';
 import { selectAll as selectAllAccounts } from '../../modules/accounts';
 import { selectAll as selectAllFeatures } from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
-import { listTags, selectAll as selectAllTags } from '../../modules/tags';
+import { selectAll as selectAllTags } from '../../modules/tags';
 import { Account } from '../../proto/account/account_pb';
 import { Feature, Tag } from '../../proto/feature/feature_pb';
 import { FeatureSearchOptions } from '../../types/feature';
@@ -460,8 +445,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       shallowEqual
     );
     const [filterValues, setFilterValues] = useState<Option[]>([]);
-    const currentEnvironment = useCurrentEnvironment();
-    const dispatch = useDispatch<AppDispatch>();
 
     const handleFilterKeyChange = useCallback(
       (key: string): void => {
@@ -536,18 +519,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       }
     };
 
-    useEffect(() => {
-      dispatch(
-        listTags({
-          environmentNamespace: currentEnvironment.namespace,
-          pageSize: 99999,
-          cursor: '',
-          orderBy: ListTagsRequest.OrderBy.DEFAULT,
-          orderDirection: ListTagsRequest.OrderDirection.ASC,
-          searchKeyword: null,
-        })
-      );
-    }, []);
+    useEffect(() => {}, []);
 
     return (
       <div

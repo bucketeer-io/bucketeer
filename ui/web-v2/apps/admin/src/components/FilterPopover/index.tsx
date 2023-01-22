@@ -21,7 +21,7 @@ export interface FilterPopoverProps {
   values: Option[];
   onChangeKey: (key: string) => void;
   onAdd: (key: string, value?: string) => void;
-  onAddMulti: (key: string, value?: string[]) => void;
+  onAddMulti?: (key: string, value?: string[]) => void;
 }
 
 export const FilterPopover: FC<FilterPopoverProps> = memo(
