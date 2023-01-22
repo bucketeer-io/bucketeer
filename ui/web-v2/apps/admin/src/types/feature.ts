@@ -24,4 +24,5 @@ export interface FeatureSearchOptions {
   enabled?: string;
   archived?: string;
   hasExperiment?: string;
+  tagIds?: string[];
 }

@@ -233,6 +233,7 @@
   "feature.filter.enabled": "Enabled",
   "feature.filter.hasExperiment": "Has experiment",
   "feature.filter.maintainer": "Maintainer",
+  "feature.filter.tags": "Tags",
   "feature.flagStatus.inactive": "Inactive",
   "feature.flagStatus.new": "New",
   "feature.flagStatus.receivingRequests": "Receiving requests",

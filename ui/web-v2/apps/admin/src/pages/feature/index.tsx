@@ -207,12 +207,14 @@ export const FeatureIndexPage: FC = memo(() => {
         options && options.hasExperiment
           ? options.hasExperiment === 'true'
           : null;
+      const tags = options && options.tagIds ? options.tagIds : [];
+
       dispatch(
         listFeatures({
           environmentNamespace: currentEnvironment.namespace,
           pageSize: FEATURE_LIST_PAGE_SIZE,
           cursor: String(cursor),
-          tags: [],
+          tags,
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
           searchKeyword: options && (options.q as string),

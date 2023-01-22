@@ -1,15 +1,13 @@
-import { listTags } from '@/modules/features';
-import { AppDispatch } from '@/store';
 import { Popover, Transition } from '@headlessui/react';
 import { SelectorIcon } from '@heroicons/react/solid';
 import React, { FC, Fragment, memo, useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { usePopper } from 'react-popper';
-import { useDispatch } from 'react-redux';
 import ReactSelect from 'react-select';
 
 import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
+import { FilterTypes } from '../FeatureList';
 
 export type FilterType = 'maintainer' | 'hasExperiment' | 'enabled';
 
@@ -23,42 +21,48 @@ export interface FilterPopoverProps {
   values: Option[];
   onChangeKey: (key: string) => void;
   onAdd: (key: string, value?: string) => void;
+  onAddMulti: (key: string, value?: string[]) => void;
 }
 
 export const FilterPopover: FC<FilterPopoverProps> = memo(
-  ({ keys, values, onChangeKey, onAdd }) => {
+  ({ keys, values, onChangeKey, onAdd, onAddMulti }) => {
     const { formatMessage: f } = useIntl();
     const [key, setKey] = useState<string>(null);
-    const [valueOption, setValue] = useState<Option>(values[0]);
     const referenceElement = useRef<HTMLButtonElement | null>(null);
     const popperElement = useRef<HTMLDivElement | null>(null);
     const popper = usePopper(referenceElement.current, popperElement.current, {
       placement: 'bottom-start',
     });
-    const dispatch = useDispatch<AppDispatch>();
+    const [valueOption, setValue] = useState<Option>(values[0]);
+    const [multiValueOption, setMultiValue] = useState<Option[]>([values[0]]);
+
+    const isMultiFilter = key === FilterTypes.TAGS;
 
     const handleKeyChange = (o: Option) => {
       setKey(o.value);
       onChangeKey(o.value);
     };
 
-    const handleValueChange = (o: Option) => {
-      setValue(o);
-    };
-
-    const handleOnClick = () => {
-      onAdd(key, valueOption.value);
+    const handleOnClickAdd = () => {
+      if (isMultiFilter) {
+        onAddMulti(
+          key,
+          multiValueOption.map((o) => o.value)
+        );
+      } else {
+        onAdd(key, valueOption.value);
+      }
       setKey(null);
       setValue(values[0]);
     };
 
     useEffect(() => {
-      dispatch(listTags());
-    }, []);
-
-    useEffect(() => {
-      setValue(values[0]);
-    }, [values, setValue]);
+      if (isMultiFilter) {
+        setMultiValue([values[0]]);
+      } else {
+        setValue(values[0]);
+      }
+    }, [values, setValue, isMultiFilter, setMultiValue]);
 
     return (
       <Popover>
@@ -120,7 +124,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                             menuPortalTarget={document.body}
                             placeholder={f(messages.filter.add)}
                             onChange={handleKeyChange}
-                            isSearchable={true}
+                            isSearchable={false}
                             styles={{
                               menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                             }}
@@ -155,9 +159,18 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                                     ...otherStyles
                                   }) => ({ ...otherStyles }),
                                 }}
-                                value={valueOption}
-                                onChange={handleValueChange}
+                                value={
+                                  isMultiFilter ? multiValueOption : valueOption
+                                }
+                                onChange={(o) => {
+                                  if (isMultiFilter) {
+                                    setMultiValue(o);
+                                  } else {
+                                    setValue(o);
+                                  }
+                                }}
                                 isSearchable={false}
+                                isMulti={isMultiFilter}
                               />
                               <div className={classNames('flex-none ml-4')}>
                                 <button
@@ -165,7 +178,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                                   className="btn-submit"
                                   disabled={false}
                                   onClick={() => {
-                                    handleOnClick();
+                                    handleOnClickAdd();
                                     close();
                                   }}
                                 >
