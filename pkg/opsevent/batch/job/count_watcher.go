@@ -35,10 +35,6 @@ import (
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
-const (
-	queryTimeRange = -30 * 24 * time.Hour
-)
-
 type countWatcher struct {
 	mysqlClient        mysql.Client
 	environmentLister  targetstore.EnvironmentLister
@@ -132,9 +128,11 @@ func (w *countWatcher) assessAutoOpsRule(
 				zap.Any("opsEventRateClause", c),
 			)
 		}
-		evaluationCount, err := w.getTargetEvaluationCount(ctx,
+		evaluationCount, err := w.getTargetOpsEvaluationCount(ctx,
 			logFunc,
 			env.Namespace,
+			a.Id,
+			id,
 			a.FeatureId,
 			c.VariationId,
 			featureVersion,
@@ -143,26 +141,27 @@ func (w *countWatcher) assessAutoOpsRule(
 			lastErr = err
 			continue
 		}
-		if evaluationCount == nil {
+		if evaluationCount == 0 {
 			continue
 		}
-		opsEventCount, err := w.getTargetOpsEventCount(
+		opsEventCount, err := w.getTargetOpsGoalEventCount(
 			ctx,
 			logFunc,
 			env.Namespace,
+			a.Id,
+			id,
 			a.FeatureId,
 			c.VariationId,
-			c.GoalId,
 			featureVersion,
 		)
 		if err != nil {
 			lastErr = err
 			continue
 		}
-		if opsEventCount == nil {
+		if opsEventCount == 0 {
 			continue
 		}
-		opsCount := opseventdomain.NewOpsCount(a.FeatureId, a.Id, id, opsEventCount.UserCount, evaluationCount.UserCount)
+		opsCount := opseventdomain.NewOpsCount(a.FeatureId, a.Id, id, opsEventCount, evaluationCount)
 		if err = w.persistOpsCount(ctx, env.Namespace, opsCount); err != nil {
 			lastErr = err
 			continue
@@ -197,11 +196,10 @@ func (w *countWatcher) getLatestFeatureVersion(
 
 func (w *countWatcher) assessRule(
 	opsEventRateClause *autoopsproto.OpsEventRateClause,
-	evaluationCount,
-	opsCount *ecproto.VariationCount,
+	evaluationCount, opsCount int64,
 ) bool {
-	rate := float64(opsCount.UserCount) / float64(evaluationCount.UserCount)
-	if opsCount.UserCount < opsEventRateClause.MinCount {
+	rate := float64(opsCount) / float64(evaluationCount)
+	if opsCount < opsEventRateClause.MinCount {
 		return false
 	}
 	switch opsEventRateClause.Operator {
@@ -217,124 +215,106 @@ func (w *countWatcher) assessRule(
 	return false
 }
 
-func (w *countWatcher) getTargetEvaluationCount(
+func (w *countWatcher) getTargetOpsEvaluationCount(
 	ctx context.Context,
 	logFunc func(string),
-	environmentNamespace, FeatureID, variationID string,
+	environmentNamespace, ruleID, clauseID, FeatureID, variationID string,
 	featureVersion int32,
-) (*ecproto.VariationCount, error) {
-	evaluationCount, err := w.getEvaluationCount(
+) (int64, error) {
+	count, err := w.getEvaluationCount(
 		ctx,
 		environmentNamespace,
+		ruleID,
+		clauseID,
 		FeatureID,
 		variationID,
 		featureVersion,
 	)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	if evaluationCount == nil {
-		logFunc("evaluationCount is nil")
-		return nil, nil
+	if count == 0 {
+		logFunc("Ops evaluation user count is zero")
 	}
-	if evaluationCount.UserCount == 0 {
-		logFunc("evaluationCount.UserCount is zero")
-		return nil, nil
-	}
-	return evaluationCount, nil
+	return count, nil
 }
 
 func (w *countWatcher) getEvaluationCount(
 	ctx context.Context,
-	environmentNamespace, FeatureID, variationID string,
+	environmentNamespace, ruleID, clauseID, FeatureID, variationID string,
 	featureVersion int32,
-) (*ecproto.VariationCount, error) {
-	endAt := time.Now()
-	startAt := endAt.Add(queryTimeRange)
-	resp, err := w.eventCounterClient.GetEvaluationCountV2(ctx, &ecproto.GetEvaluationCountV2Request{
+) (int64, error) {
+	resp, err := w.eventCounterClient.GetOpsEvaluationUserCount(ctx, &ecproto.GetOpsEvaluationUserCountRequest{
 		EnvironmentNamespace: environmentNamespace,
-		StartAt:              startAt.Unix(),
-		EndAt:                endAt.Unix(),
+		OpsRuleId:            ruleID,
+		ClauseId:             clauseID,
 		FeatureId:            FeatureID,
 		FeatureVersion:       featureVersion,
-		VariationIds:         []string{variationID},
+		VariationId:          variationID,
 	})
 	if err != nil {
-		w.logger.Error("Failed to get evaluation realtime count", zap.Error(err),
+		w.logger.Error("Failed to get ops evaluation count", zap.Error(err),
 			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("ruleId", ruleID),
+			zap.String("clauseId", clauseID),
 			zap.String("featureId", FeatureID),
 			zap.Int32("featureVersion", featureVersion),
 			zap.String("variationId", variationID),
 		)
-		return nil, err
+		return 0, err
 	}
-	if len(resp.Count.RealtimeCounts) == 0 {
-		return nil, nil
-	}
-	for _, vc := range resp.Count.RealtimeCounts {
-		if vc.VariationId == variationID {
-			return vc, nil
-		}
-	}
-	return nil, nil
+	return resp.Count, nil
 }
 
-func (w *countWatcher) getTargetOpsEventCount(
+func (w *countWatcher) getTargetOpsGoalEventCount(
 	ctx context.Context,
 	logFunc func(string),
-	environmentNamespace, FeatureID, variationID, goalID string,
+	environmentNamespace, ruleID, clauseID, FeatureID, variationID string,
 	featureVersion int32,
-) (*ecproto.VariationCount, error) {
-	opsCount, err := w.getOpsEventCount(
+) (int64, error) {
+	count, err := w.getOpsGoalEventCount(
 		ctx,
 		environmentNamespace,
+		ruleID,
+		clauseID,
 		FeatureID,
 		variationID,
-		goalID,
 		featureVersion,
 	)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	if opsCount == nil {
-		logFunc("opsCount is nil")
-		return nil, nil
+	if count == 0 {
+		logFunc("Ops goal user count is zero")
 	}
-	return opsCount, nil
+	return count, nil
 }
 
-func (w *countWatcher) getOpsEventCount(
+func (w *countWatcher) getOpsGoalEventCount(
 	ctx context.Context,
-	environmentNamespace, FeatureID, variationID, goalID string,
+	environmentNamespace, ruleID, clauseID, FeatureID, variationID string,
 	featureVersion int32,
-) (*ecproto.VariationCount, error) {
-	endAt := time.Now()
-	startAt := endAt.Add(queryTimeRange)
-	resp, err := w.eventCounterClient.GetGoalCountV2(ctx, &ecproto.GetGoalCountV2Request{
+) (int64, error) {
+	resp, err := w.eventCounterClient.GetOpsGoalUserCount(ctx, &ecproto.GetOpsGoalUserCountRequest{
 		EnvironmentNamespace: environmentNamespace,
-		StartAt:              startAt.Unix(),
-		EndAt:                endAt.Unix(),
+		OpsRuleId:            ruleID,
+		ClauseId:             clauseID,
 		FeatureId:            FeatureID,
 		FeatureVersion:       featureVersion,
-		VariationIds:         []string{variationID},
-		GoalId:               goalID,
+		VariationId:          variationID,
 	})
 	if err != nil {
-		w.logger.Error("Failed to get ops realtime variation count", zap.Error(err),
+		w.logger.Error("Failed to get ops goal count", zap.Error(err),
 			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("ruleId", ruleID),
+			zap.String("clauseId", clauseID),
 			zap.String("featureId", FeatureID),
 			zap.Int32("featureVersion", featureVersion),
 			zap.String("variationId", variationID),
-			zap.String("goalId", goalID),
 		)
-		return nil, err
+		return 0, err
 	}
-	for _, vc := range resp.GoalCounts.RealtimeCounts {
-		if vc.VariationId == variationID {
-			return vc, nil
-		}
-	}
-	return nil, nil
+	return resp.Count, nil
 }
 
 func (w *countWatcher) persistOpsCount(

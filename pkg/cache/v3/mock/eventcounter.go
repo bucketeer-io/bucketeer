@@ -77,3 +77,17 @@ func (mr *MockEventCounterCacheMockRecorder) GetUserCounts(keys interface{}) *go
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserCounts", reflect.TypeOf((*MockEventCounterCache)(nil).GetUserCounts), keys)
 }
+
+// UpdateUserCount mocks base method.
+func (m *MockEventCounterCache) UpdateUserCount(key, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUserCount", key, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateUserCount indicates an expected call of UpdateUserCount.
+func (mr *MockEventCounterCacheMockRecorder) UpdateUserCount(key, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserCount", reflect.TypeOf((*MockEventCounterCache)(nil).UpdateUserCount), key, userID)
+}
