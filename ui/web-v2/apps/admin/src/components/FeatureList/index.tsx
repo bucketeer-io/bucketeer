@@ -142,6 +142,10 @@ export enum FilterTypes {
 
 const filterOptions: Option[] = [
   {
+    value: FilterTypes.TAGS,
+    label: intl.formatMessage(messages.tags),
+  },
+  {
     value: FilterTypes.MAINTAINER,
     label: intl.formatMessage(messages.feature.filter.maintainer),
   },
@@ -156,10 +160,6 @@ const filterOptions: Option[] = [
   {
     value: FilterTypes.ARCHIVED,
     label: intl.formatMessage(messages.feature.filter.archived),
-  },
-  {
-    value: FilterTypes.TAGS,
-    label: intl.formatMessage(messages.tags),
   },
 ];
 
@@ -652,7 +652,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                   label={`${f(messages.feature.filter.tags)}: ${tagId}`}
                   onRemove={() =>
                     handleUpdateOption({
-                      tagIds: options.tagIds.filter((tId) => tId === tagId),
+                      tagIds: options.tagIds.filter((tId) => tId !== tagId),
                     })
                   }
                 />

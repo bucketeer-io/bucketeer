@@ -57,12 +57,8 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
     };
 
     useEffect(() => {
-      if (isMultiFilter) {
-        setMultiValue([values[0]]);
-      } else {
-        setValue(values[0]);
-      }
-    }, [values, setValue, isMultiFilter, setMultiValue]);
+      setValue(values[0]);
+    }, [values, setValue]);
 
     return (
       <Popover>
@@ -135,8 +131,16 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                                 {f(messages.feature.clause.operator.equal)}
                               </div>
                               <ReactSelect
+                                placeholder={f(
+                                  messages.feature.filter.tagsPlaceholder
+                                )}
+                                closeMenuOnSelect={isMultiFilter ? false : true}
                                 className={classNames(
-                                  'min-w-max text-sm text-gray-700 focus-visible:ring-white'
+                                  `${
+                                    isMultiFilter
+                                      ? 'min-w-[270px]'
+                                      : 'min-w-max'
+                                  } text-sm text-gray-700 focus-visible:ring-white`
                                 )}
                                 classNamePrefix="react-select"
                                 options={values}
