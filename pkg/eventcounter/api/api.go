@@ -1352,7 +1352,6 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 		opsGoalUserCountPrefix,
 		req.OpsRuleId,
 		req.ClauseId,
-		req.GoalId,
 		req.FeatureId,
 		int(req.FeatureVersion),
 		req.VariationId,
@@ -1367,7 +1366,6 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 				zap.String("opsRuleId", req.OpsRuleId),
 				zap.String("clauseId", req.ClauseId),
-				zap.String("goalId", req.GoalId),
 				zap.String("featureId", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion),
 				zap.String("variationId", req.VariationId),
@@ -1413,16 +1411,6 @@ func validateGetOpsGoalUserCountRequest(
 		}
 		return dt.Err()
 	}
-	if req.GoalId == "" {
-		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if req.FeatureId == "" {
 		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1457,13 +1445,13 @@ func validateGetOpsGoalUserCountRequest(
 }
 
 func newOpsGoalUserCountKey(
-	kind, opsRuleID, clauseID, goalID, featureID string,
+	kind, opsRuleID, clauseID, featureID string,
 	featureVersion int,
 	variationID, environmentNamespace string,
 ) string {
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%s:%s:%d:%s", opsRuleID, clauseID, goalID, featureID, featureVersion, variationID),
+		fmt.Sprintf("%s:%s:%s:%d:%s", opsRuleID, clauseID, featureID, featureVersion, variationID),
 		environmentNamespace,
 	)
 }

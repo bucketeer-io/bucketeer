@@ -166,10 +166,9 @@ message GetOpsGoalUserCountRequest {
   string environment_namespace = 1;
   string ops_rule_id = 2;
   string clause_id = 3;
-  string goal_id = 4;
-  string feature_id = 5;
-  int32 feature_version = 6;
-  string variation_id = 7;
+  string feature_id = 4;
+  int32 feature_version = 5;
+  string variation_id = 6;
 }
 
 message GetOpsGoalUserCountResponse {

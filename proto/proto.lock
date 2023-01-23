@@ -8084,21 +8084,16 @@
               },
               {
                 "id": 4,
-                "name": "goal_id",
-                "type": "string"
-              },
-              {
-                "id": 5,
                 "name": "feature_id",
                 "type": "string"
               },
               {
-                "id": 6,
+                "id": 5,
                 "name": "feature_version",
                 "type": "int32"
               },
               {
-                "id": 7,
+                "id": 6,
                 "name": "variation_id",
                 "type": "string"
               }

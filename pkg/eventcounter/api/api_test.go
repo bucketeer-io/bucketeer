@@ -1758,12 +1758,11 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	environmentNamespace := "ns0"
 	opsRuleID := "rule0"
 	clauseID := "clause0"
-	gID := "gid0"
 	fID := "fid0"
 	fVersion := 2
 	vID0 := "vid0"
-	cacheKey := "ns0:autoops:goal:rule0:clause0:gid0:fid0:2:vid0"
-	cacheKeyWithoutNS := "autoops:goal:rule0:clause0:gid0:fid0:2:vid0"
+	cacheKey := "ns0:autoops:goal:rule0:clause0:fid0:2:vid0"
+	cacheKeyWithoutNS := "autoops:goal:rule0:clause0:fid0:2:vid0"
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -1785,7 +1784,6 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				ClauseId:             clauseID,
-				GoalId:               gID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
 				VariationId:          vID0,
@@ -1797,7 +1795,6 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
-				GoalId:               gID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
 				VariationId:          vID0,
@@ -1805,24 +1802,11 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
 		},
 		{
-			desc: "error: ErrGoalIDRequired",
-			input: &ecproto.GetOpsGoalUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
-				VariationId:          vID0,
-			},
-			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
-		},
-		{
 			desc: "error: ErrFeatureIDRequired",
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
 				ClauseId:             clauseID,
-				GoalId:               gID,
 				FeatureVersion:       int32(fVersion),
 				VariationId:          vID0,
 			},
@@ -1834,7 +1818,6 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
 				ClauseId:             clauseID,
-				GoalId:               gID,
 				FeatureId:            fID,
 				VariationId:          vID0,
 			},
@@ -1846,7 +1829,6 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
 				ClauseId:             clauseID,
-				GoalId:               gID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
 			},
@@ -1862,7 +1844,6 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
 				ClauseId:             clauseID,
-				GoalId:               gID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
 				VariationId:          vID0,
@@ -1883,7 +1864,6 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				OpsRuleId:      opsRuleID,
 				ClauseId:       clauseID,
-				GoalId:         gID,
 				FeatureId:      fID,
 				FeatureVersion: int32(fVersion),
 				VariationId:    vID0,
