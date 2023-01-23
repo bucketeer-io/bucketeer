@@ -7,6 +7,7 @@ case $APP in
     "eventcounter") echo "event-counter" ;;
     "eventpersister") echo "event-persister" ;;
     "eventpersisterdwh") echo "event-persister-dwh" ;;
+    "eventpersisterops") echo "event-persister-ops" ;;
     "metricsevent") echo "metrics-event" ;;
     "opsevent") echo "ops-event" ;;
     *) echo $APP
