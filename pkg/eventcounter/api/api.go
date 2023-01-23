@@ -53,9 +53,11 @@ import (
 const listRequestPageSize = 500
 
 const (
-	eventCountPrefix   = "ec"
-	userCountPrefix    = "uc"
-	defaultVariationID = "default"
+	eventCountPrefix             = "ec"
+	userCountPrefix              = "uc"
+	opsEvaluationUserCountPrefix = "autoops:evaluation"
+	opsGoalUserCountPrefix       = "autoops:goal"
+	defaultVariationID           = "default"
 )
 
 var (
@@ -1212,6 +1214,246 @@ func (s *eventCounterService) getExperimentResultMySQL(
 		return nil, err
 	}
 	return result.ExperimentResult, nil
+}
+
+func (s *eventCounterService) GetOpsEvaluationUserCount(
+	ctx context.Context,
+	req *ecproto.GetOpsEvaluationUserCountRequest,
+) (*ecproto.GetOpsEvaluationUserCountResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateGetOpsEvaluationUserCountRequest(req, localizer); err != nil {
+		return nil, err
+	}
+	cacheKey := newOpsEvaluationUserCountKey(
+		opsEvaluationUserCountPrefix,
+		req.OpsRuleId,
+		req.ClauseId,
+		req.FeatureId,
+		int(req.FeatureVersion),
+		req.VariationId,
+		req.EnvironmentNamespace,
+	)
+	userCount, err := s.evaluationCountCacher.GetUserCount(cacheKey)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get ops evaluation user count",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("opsRuleId", req.OpsRuleId),
+				zap.String("clauseId", req.ClauseId),
+				zap.String("featureId", req.FeatureId),
+				zap.Int32("featureVersion", req.FeatureVersion),
+				zap.String("variationId", req.VariationId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &ecproto.GetOpsEvaluationUserCountResponse{
+		OpsRuleId: req.OpsRuleId,
+		ClauseId:  req.ClauseId,
+		Count:     userCount,
+	}, nil
+}
+
+func validateGetOpsEvaluationUserCountRequest(
+	req *ecproto.GetOpsEvaluationUserCountRequest,
+	localizer locale.Localizer,
+) error {
+	if req.OpsRuleId == "" {
+		dt, err := statusAutoOpsRuleIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ClauseId == "" {
+		dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.FeatureId == "" {
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.FeatureVersion == 0 {
+		dt, err := statusFeatureVersionRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_version"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.VariationId == "" {
+		dt, err := statusVariationIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func newOpsEvaluationUserCountKey(
+	kind, opsRuleID, clauseID, featureID string,
+	featureVersion int,
+	variationID, environmentNamespace string,
+) string {
+	return cache.MakeKey(
+		kind,
+		fmt.Sprintf("%s:%s:%s:%d:%s", opsRuleID, clauseID, featureID, featureVersion, variationID),
+		environmentNamespace,
+	)
+}
+
+func (s *eventCounterService) GetOpsGoalUserCount(
+	ctx context.Context,
+	req *ecproto.GetOpsGoalUserCountRequest,
+) (*ecproto.GetOpsGoalUserCountResponse, error) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateGetOpsGoalUserCountRequest(req, localizer); err != nil {
+		return nil, err
+	}
+	cacheKey := newOpsGoalUserCountKey(
+		opsGoalUserCountPrefix,
+		req.OpsRuleId,
+		req.ClauseId,
+		req.FeatureId,
+		int(req.FeatureVersion),
+		req.VariationId,
+		req.EnvironmentNamespace,
+	)
+	userCount, err := s.evaluationCountCacher.GetUserCount(cacheKey)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get ops goal user count",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("opsRuleId", req.OpsRuleId),
+				zap.String("clauseId", req.ClauseId),
+				zap.String("featureId", req.FeatureId),
+				zap.Int32("featureVersion", req.FeatureVersion),
+				zap.String("variationId", req.VariationId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &ecproto.GetOpsGoalUserCountResponse{
+		OpsRuleId: req.OpsRuleId,
+		ClauseId:  req.ClauseId,
+		Count:     userCount,
+	}, nil
+}
+
+func validateGetOpsGoalUserCountRequest(
+	req *ecproto.GetOpsGoalUserCountRequest,
+	localizer locale.Localizer,
+) error {
+	if req.OpsRuleId == "" {
+		dt, err := statusAutoOpsRuleIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ClauseId == "" {
+		dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.FeatureId == "" {
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.FeatureVersion == 0 {
+		dt, err := statusFeatureVersionRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_version"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.VariationId == "" {
+		dt, err := statusVariationIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func newOpsGoalUserCountKey(
+	kind, opsRuleID, clauseID, featureID string,
+	featureVersion int,
+	variationID, environmentNamespace string,
+) string {
+	return cache.MakeKey(
+		kind,
+		fmt.Sprintf("%s:%s:%s:%d:%s", opsRuleID, clauseID, featureID, featureVersion, variationID),
+		environmentNamespace,
+	)
 }
 
 func (s *eventCounterService) checkRole(

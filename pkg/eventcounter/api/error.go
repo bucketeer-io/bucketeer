@@ -24,18 +24,22 @@ import (
 )
 
 var (
-	statusInternal             = gstatus.New(codes.Internal, "eventcounter: internal")
-	statusFeatureIDRequired    = gstatus.New(codes.InvalidArgument, "eventcounter: feature id is required")
-	statusExperimentIDRequired = gstatus.New(codes.InvalidArgument, "eventcounter: experiment id is required")
-	statusMAUYearMonthRequired = gstatus.New(codes.InvalidArgument, "eventcounter: mau year month is required")
-	statusGoalIDRequired       = gstatus.New(codes.InvalidArgument, "eventcounter: goal id is required")
-	statusStartAtRequired      = gstatus.New(codes.InvalidArgument, "eventcounter: start at is required")
-	statusEndAtRequired        = gstatus.New(codes.InvalidArgument, "eventcounter: end at is required")
-	statusPeriodOutOfRange     = gstatus.New(codes.InvalidArgument, "eventcounter: period out of range")
-	statusStartAtIsAfterEndAt  = gstatus.New(codes.InvalidArgument, "eventcounter: start at is after end at")
-	statusNotFound             = gstatus.New(codes.NotFound, "eventcounter: not found")
-	statusUnauthenticated      = gstatus.New(codes.Unauthenticated, "feature: unauthenticated")
-	statusPermissionDenied     = gstatus.New(codes.PermissionDenied, "feature: permission denied")
+	statusInternal               = gstatus.New(codes.Internal, "eventcounter: internal")
+	statusFeatureIDRequired      = gstatus.New(codes.InvalidArgument, "eventcounter: feature id is required")
+	statusFeatureVersionRequired = gstatus.New(codes.InvalidArgument, "eventcounter: feature version is required")
+	statusVariationIDRequired    = gstatus.New(codes.InvalidArgument, "eventcounter: variation id is required")
+	statusExperimentIDRequired   = gstatus.New(codes.InvalidArgument, "eventcounter: experiment id is required")
+	statusMAUYearMonthRequired   = gstatus.New(codes.InvalidArgument, "eventcounter: mau year month is required")
+	statusGoalIDRequired         = gstatus.New(codes.InvalidArgument, "eventcounter: goal id is required")
+	statusStartAtRequired        = gstatus.New(codes.InvalidArgument, "eventcounter: start at is required")
+	statusEndAtRequired          = gstatus.New(codes.InvalidArgument, "eventcounter: end at is required")
+	statusPeriodOutOfRange       = gstatus.New(codes.InvalidArgument, "eventcounter: period out of range")
+	statusStartAtIsAfterEndAt    = gstatus.New(codes.InvalidArgument, "eventcounter: start at is after end at")
+	statusAutoOpsRuleIDRequired  = gstatus.New(codes.InvalidArgument, "eventcounter: auto ops rule id is required")
+	statusClauseIDRequired       = gstatus.New(codes.InvalidArgument, "eventcounter: clause id is required")
+	statusNotFound               = gstatus.New(codes.NotFound, "eventcounter: not found")
+	statusUnauthenticated        = gstatus.New(codes.Unauthenticated, "feature: unauthenticated")
+	statusPermissionDenied       = gstatus.New(codes.PermissionDenied, "feature: permission denied")
 
 	errInternalJaJP = status.MustWithDetails(
 		statusInternal,
@@ -116,6 +120,7 @@ var (
 	)
 )
 
+// localizedError is deprecated
 func localizedError(s *gstatus.Status, loc string) error {
 	// handle loc if multi-lang is necessary
 	switch s {

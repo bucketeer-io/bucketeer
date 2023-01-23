@@ -8010,6 +8010,116 @@
             ]
           },
           {
+            "name": "GetOpsEvaluationUserCountRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "ops_rule_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "clause_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "feature_version",
+                "type": "int32"
+              },
+              {
+                "id": 6,
+                "name": "variation_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetOpsEvaluationUserCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ops_rule_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "clause_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "GetOpsGoalUserCountRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "ops_rule_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "clause_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "feature_version",
+                "type": "int32"
+              },
+              {
+                "id": 6,
+                "name": "variation_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetOpsGoalUserCountResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ops_rule_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "clause_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
             "name": "GetUserCountV2Request",
             "fields": [
               {
@@ -8154,6 +8264,16 @@
                 "name": "ListUserMetadata",
                 "in_type": "ListUserMetadataRequest",
                 "out_type": "ListUserMetadataResponse"
+              },
+              {
+                "name": "GetOpsEvaluationUserCount",
+                "in_type": "GetOpsEvaluationUserCountRequest",
+                "out_type": "GetOpsEvaluationUserCountResponse"
+              },
+              {
+                "name": "GetOpsGoalUserCount",
+                "in_type": "GetOpsGoalUserCountRequest",
+                "out_type": "GetOpsGoalUserCountResponse"
               }
             ]
           }

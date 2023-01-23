@@ -45,10 +45,15 @@ type MultiGetDeleteCountCache interface {
 	Counter
 	PipeLiner
 	Expirer
+	PFGetter
 }
 
 type Getter interface {
 	Get(key interface{}) (interface{}, error)
+}
+
+type PFGetter interface {
+	PFCount(keys ...string) (int64, error)
 }
 
 type MultiGetter interface {

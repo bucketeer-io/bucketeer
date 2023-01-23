@@ -265,6 +265,25 @@ func (mr *MockMultiGetDeleteCountCacheMockRecorder) PFAdd(key interface{}, els .
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFAdd", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).PFAdd), varargs...)
 }
 
+// PFCount mocks base method.
+func (m *MockMultiGetDeleteCountCache) PFCount(keys ...string) (int64, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PFCount", varargs...)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PFCount indicates an expected call of PFCount.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) PFCount(keys ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFCount", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).PFCount), keys...)
+}
+
 // Pipeline mocks base method.
 func (m *MockMultiGetDeleteCountCache) Pipeline() v3.PipeClient {
 	m.ctrl.T.Helper()
@@ -345,6 +364,48 @@ func (m *MockGetter) Get(key interface{}) (interface{}, error) {
 func (mr *MockGetterMockRecorder) Get(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockGetter)(nil).Get), key)
+}
+
+// MockPFGetter is a mock of PFGetter interface.
+type MockPFGetter struct {
+	ctrl     *gomock.Controller
+	recorder *MockPFGetterMockRecorder
+}
+
+// MockPFGetterMockRecorder is the mock recorder for MockPFGetter.
+type MockPFGetterMockRecorder struct {
+	mock *MockPFGetter
+}
+
+// NewMockPFGetter creates a new mock instance.
+func NewMockPFGetter(ctrl *gomock.Controller) *MockPFGetter {
+	mock := &MockPFGetter{ctrl: ctrl}
+	mock.recorder = &MockPFGetterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPFGetter) EXPECT() *MockPFGetterMockRecorder {
+	return m.recorder
+}
+
+// PFCount mocks base method.
+func (m *MockPFGetter) PFCount(keys ...string) (int64, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PFCount", varargs...)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PFCount indicates an expected call of PFCount.
+func (mr *MockPFGetterMockRecorder) PFCount(keys ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFCount", reflect.TypeOf((*MockPFGetter)(nil).PFCount), keys...)
 }
 
 // MockMultiGetter is a mock of MultiGetter interface.

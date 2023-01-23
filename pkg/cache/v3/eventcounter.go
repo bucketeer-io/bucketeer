@@ -26,6 +26,7 @@ import (
 
 type EventCounterCache interface {
 	GetEventCounts(keys []string) ([]float64, error)
+	GetUserCount(key string) (int64, error)
 	GetUserCounts(keys []string) ([]float64, error)
 }
 
@@ -63,6 +64,10 @@ func getEventValues(vals []interface{}) ([]float64, error) {
 		eventVals = append(eventVals, float)
 	}
 	return eventVals, nil
+}
+
+func (c *eventCounterCache) GetUserCount(key string) (int64, error) {
+	return c.cache.PFCount(key)
 }
 
 func (c *eventCounterCache) GetUserCounts(keys []string) ([]float64, error) {
