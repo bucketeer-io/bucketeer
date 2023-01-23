@@ -36,6 +36,7 @@ var (
 	statusPeriodOutOfRange       = gstatus.New(codes.InvalidArgument, "eventcounter: period out of range")
 	statusStartAtIsAfterEndAt    = gstatus.New(codes.InvalidArgument, "eventcounter: start at is after end at")
 	statusAutoOpsRuleIDRequired  = gstatus.New(codes.InvalidArgument, "eventcounter: auto ops rule id is required")
+	statusClauseIDRequired       = gstatus.New(codes.InvalidArgument, "eventcounter: clause id is required")
 	statusNotFound               = gstatus.New(codes.NotFound, "eventcounter: not found")
 	statusUnauthenticated        = gstatus.New(codes.Unauthenticated, "feature: unauthenticated")
 	statusPermissionDenied       = gstatus.New(codes.PermissionDenied, "feature: permission denied")

@@ -1617,12 +1617,13 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	defer mockController.Finish()
 	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
 	environmentNamespace := "ns0"
-	opsRuleID := "orid0"
+	opsRuleID := "rule0"
+	clauseID := "clause0"
 	fID := "fid0"
 	fVersion := 2
 	vID0 := "vid0"
-	cacheKey := "ns0:ops_euc:orid0:fid0:2:vid0"
-	cacheKeyWithoutNS := "ops_euc:orid0:fid0:2:vid0"
+	cacheKey := "ns0:autoops:evaluation:rule0:clause0:fid0:2:vid0"
+	cacheKeyWithoutNS := "autoops:evaluation:rule0:clause0:fid0:2:vid0"
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -1643,6 +1644,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			desc: "error: ErrOpsRuleIDRequired",
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
+				ClauseId:             clauseID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
 				VariationId:          vID0,
@@ -1650,10 +1652,22 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			expectedErr: createError(statusAutoOpsRuleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id")),
 		},
 		{
+			desc: "error: ErrClauseIDRequired",
+			input: &ecproto.GetOpsEvaluationUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+				VariationId:          vID0,
+			},
+			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
+		},
+		{
 			desc: "error: ErrFeatureIDRequired",
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
 				FeatureVersion:       int32(fVersion),
 				VariationId:          vID0,
 			},
@@ -1664,6 +1678,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
 				FeatureId:            fID,
 				VariationId:          vID0,
 			},
@@ -1674,6 +1689,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
 			},
@@ -1688,12 +1704,14 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
 				VariationId:          vID0,
 			},
 			expected: &ecproto.GetOpsEvaluationUserCountResponse{
 				OpsRuleId: opsRuleID,
+				ClauseId:  clauseID,
 				Count:     1234,
 			},
 			expectedErr: nil,
@@ -1706,12 +1724,14 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			},
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
 				OpsRuleId:      opsRuleID,
+				ClauseId:       clauseID,
 				FeatureId:      fID,
 				FeatureVersion: int32(fVersion),
 				VariationId:    vID0,
 			},
 			expected: &ecproto.GetOpsEvaluationUserCountResponse{
 				OpsRuleId: opsRuleID,
+				ClauseId:  clauseID,
 				Count:     9876,
 			},
 			expectedErr: nil,
@@ -1736,13 +1756,14 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	defer mockController.Finish()
 	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
 	environmentNamespace := "ns0"
-	opsRuleID := "orid0"
+	opsRuleID := "rule0"
+	clauseID := "clause0"
 	gID := "gid0"
 	fID := "fid0"
 	fVersion := 2
 	vID0 := "vid0"
-	cacheKey := "ns0:ops_guc:orid0:gid0:fid0:2:vid0"
-	cacheKeyWithoutNS := "ops_guc:orid0:gid0:fid0:2:vid0"
+	cacheKey := "ns0:autoops:goal:rule0:clause0:gid0:fid0:2:vid0"
+	cacheKeyWithoutNS := "autoops:goal:rule0:clause0:gid0:fid0:2:vid0"
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -1763,6 +1784,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			desc: "error: ErrOpsRuleIDRequired",
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
+				ClauseId:             clauseID,
 				GoalId:               gID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
@@ -1771,10 +1793,23 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			expectedErr: createError(statusAutoOpsRuleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id")),
 		},
 		{
+			desc: "error: ErrClauseIDRequired",
+			input: &ecproto.GetOpsGoalUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				GoalId:               gID,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+				VariationId:          vID0,
+			},
+			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
+		},
+		{
 			desc: "error: ErrGoalIDRequired",
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
 				VariationId:          vID0,
@@ -1786,6 +1821,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
 				GoalId:               gID,
 				FeatureVersion:       int32(fVersion),
 				VariationId:          vID0,
@@ -1797,6 +1833,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
 				GoalId:               gID,
 				FeatureId:            fID,
 				VariationId:          vID0,
@@ -1808,6 +1845,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
 				GoalId:               gID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
@@ -1823,6 +1861,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				EnvironmentNamespace: environmentNamespace,
 				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
 				GoalId:               gID,
 				FeatureId:            fID,
 				FeatureVersion:       int32(fVersion),
@@ -1830,6 +1869,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			},
 			expected: &ecproto.GetOpsGoalUserCountResponse{
 				OpsRuleId: opsRuleID,
+				ClauseId:  clauseID,
 				Count:     1234,
 			},
 			expectedErr: nil,
@@ -1842,6 +1882,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			},
 			input: &ecproto.GetOpsGoalUserCountRequest{
 				OpsRuleId:      opsRuleID,
+				ClauseId:       clauseID,
 				GoalId:         gID,
 				FeatureId:      fID,
 				FeatureVersion: int32(fVersion),
@@ -1849,6 +1890,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			},
 			expected: &ecproto.GetOpsGoalUserCountResponse{
 				OpsRuleId: opsRuleID,
+				ClauseId:  clauseID,
 				Count:     9876,
 			},
 			expectedErr: nil,

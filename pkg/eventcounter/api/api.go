@@ -55,8 +55,8 @@ const listRequestPageSize = 500
 const (
 	eventCountPrefix             = "ec"
 	userCountPrefix              = "uc"
-	opsEvaluationUserCountPrefix = "ops_euc"
-	opsGoalUserCountPrefix       = "ops_guc"
+	opsEvaluationUserCountPrefix = "autoops:evaluation"
+	opsGoalUserCountPrefix       = "autoops:goal"
 	defaultVariationID           = "default"
 )
 
@@ -1231,6 +1231,7 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 	cacheKey := newOpsEvaluationUserCountKey(
 		opsEvaluationUserCountPrefix,
 		req.OpsRuleId,
+		req.ClauseId,
 		req.FeatureId,
 		int(req.FeatureVersion),
 		req.VariationId,
@@ -1244,6 +1245,7 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 				zap.Error(err),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 				zap.String("opsRuleId", req.OpsRuleId),
+				zap.String("clauseId", req.ClauseId),
 				zap.String("featureId", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion),
 				zap.String("variationId", req.VariationId),
@@ -1260,6 +1262,7 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 	}
 	return &ecproto.GetOpsEvaluationUserCountResponse{
 		OpsRuleId: req.OpsRuleId,
+		ClauseId:  req.ClauseId,
 		Count:     userCount,
 	}, nil
 }
@@ -1272,6 +1275,16 @@ func validateGetOpsEvaluationUserCountRequest(
 		dt, err := statusAutoOpsRuleIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ClauseId == "" {
+		dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -1312,13 +1325,13 @@ func validateGetOpsEvaluationUserCountRequest(
 }
 
 func newOpsEvaluationUserCountKey(
-	kind, opsRuleID, featureID string,
+	kind, opsRuleID, clauseID, featureID string,
 	featureVersion int,
 	variationID, environmentNamespace string,
 ) string {
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%d:%s", opsRuleID, featureID, featureVersion, variationID),
+		fmt.Sprintf("%s:%s:%s:%d:%s", opsRuleID, clauseID, featureID, featureVersion, variationID),
 		environmentNamespace,
 	)
 }
@@ -1338,6 +1351,7 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 	cacheKey := newOpsGoalUserCountKey(
 		opsGoalUserCountPrefix,
 		req.OpsRuleId,
+		req.ClauseId,
 		req.GoalId,
 		req.FeatureId,
 		int(req.FeatureVersion),
@@ -1352,6 +1366,7 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 				zap.Error(err),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 				zap.String("opsRuleId", req.OpsRuleId),
+				zap.String("clauseId", req.ClauseId),
 				zap.String("goalId", req.GoalId),
 				zap.String("featureId", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion),
@@ -1369,6 +1384,7 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 	}
 	return &ecproto.GetOpsGoalUserCountResponse{
 		OpsRuleId: req.OpsRuleId,
+		ClauseId:  req.ClauseId,
 		Count:     userCount,
 	}, nil
 }
@@ -1381,6 +1397,16 @@ func validateGetOpsGoalUserCountRequest(
 		dt, err := statusAutoOpsRuleIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ClauseId == "" {
+		dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -1431,13 +1457,13 @@ func validateGetOpsGoalUserCountRequest(
 }
 
 func newOpsGoalUserCountKey(
-	kind, opsRuleID, goalID, featureID string,
+	kind, opsRuleID, clauseID, goalID, featureID string,
 	featureVersion int,
 	variationID, environmentNamespace string,
 ) string {
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%s:%d:%s", opsRuleID, goalID, featureID, featureVersion, variationID),
+		fmt.Sprintf("%s:%s:%s:%s:%d:%s", opsRuleID, clauseID, goalID, featureID, featureVersion, variationID),
 		environmentNamespace,
 	)
 }
