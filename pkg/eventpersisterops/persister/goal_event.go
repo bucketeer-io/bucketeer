@@ -142,8 +142,8 @@ func (u *evalGoalUpdater) updateUserCount(
 	}
 	for _, tr := range targetRules {
 		// Find the latest feature version
-		fVersion := u.findFeatureVersion(tr.featureID, resp.Features)
-		if fVersion == 0 {
+		fVersion, err := u.findFeatureVersion(tr.featureID, resp.Features)
+		if err != nil {
 			u.logger.Error(
 				"Failed to find the feature version",
 				zap.Error(ErrFailedToFindFeatureVersion),
@@ -151,10 +151,10 @@ func (u *evalGoalUpdater) updateUserCount(
 				zap.String("environmentNamespace", environmentNamespace),
 			)
 			handledCounter.WithLabelValues(codeFailedToFindFeatureVersion).Inc()
-			return false, ErrFailedToFindFeatureVersion
+			return false, err
 		}
 		// Update the user count by rule
-		err := u.updateUserCountByRule(
+		err = u.updateUserCountByRule(
 			environmentNamespace,
 			tr.featureID,
 			fVersion,
@@ -249,13 +249,13 @@ func (u *evalGoalUpdater) findOpsRules(
 func (u *evalGoalUpdater) findFeatureVersion(
 	featureID string,
 	features []*featureproto.Feature,
-) int32 {
+) (int32, error) {
 	for _, f := range features {
 		if f.Id == featureID {
-			return f.Version
+			return f.Version, nil
 		}
 	}
-	return 0
+	return 0, ErrFailedToFindFeatureVersion
 }
 
 func (u *evalGoalUpdater) updateUserCountByRule(
