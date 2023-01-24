@@ -178,6 +178,9 @@ func (u *evalGoalUpdater) listAutoOpsRules(
 			aor := []*aoproto.AutoOpsRule{}
 			cursor := ""
 			for {
+				// We don't use the feature ID to filter the results in the request
+				// because it will increase access to the DB, which also will increase the costs.
+				// So we list all rules and use the singleflight implementation to share the response
 				resp, err := u.autoOpsClient.ListAutoOpsRules(ctx, &aoproto.ListAutoOpsRulesRequest{
 					EnvironmentNamespace: environmentNamespace,
 					PageSize:             listRequestSize,
