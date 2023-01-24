@@ -32,11 +32,6 @@ import (
 
 const opsEvalKeyPrefix = "autoops:evaluation"
 
-type evalTargetRule struct {
-	id        string
-	clauseIDs []string
-}
-
 type evalEvtUpdater struct {
 	ctx               context.Context
 	featureClient     featureclient.Client
@@ -119,29 +114,30 @@ func (u *evalEvtUpdater) updateUserCount(
 	if len(list) == 0 {
 		return false, ErrNoAutoOpsRules
 	}
-	// Find the rules
+	// Link the rules by feature ID
 	rules := u.findOpsRules(event.FeatureId, list)
 	if len(rules) == 0 {
 		return false, ErrAutoOpsRulesNotFound
 	}
-	// Find the event rate clauses by variation ID
-	targetRules := []*evalTargetRule{}
+	// Link the event rate clauses by variation ID
+	linkedRules := make(map[string][]string, len(rules))
 	for _, rule := range rules {
-		targetRule, err := u.findEventRateClauseIDs(rule, event.VariationId)
+		clauseIDs, err := u.findEventRateClauseIDs(rule, event.VariationId)
 		if err != nil {
 			return false, err
 		}
-		targetRules = append(targetRules, targetRule)
+		linkedRules[rule.Id] = clauseIDs
 	}
 	// Update the user count by rule
-	for _, tr := range targetRules {
+	for ruleID, clauseIDs := range linkedRules {
 		err := u.updateUserCountByRule(
 			environmentNamespace,
 			event.FeatureId,
 			event.FeatureVersion,
 			event.VariationId,
 			event.UserId,
-			tr,
+			ruleID,
+			clauseIDs,
 		)
 		if err != nil {
 			return true, err
@@ -200,7 +196,7 @@ func (u *evalEvtUpdater) findOpsRules(
 func (u *evalEvtUpdater) findEventRateClauseIDs(
 	rule *aoproto.AutoOpsRule,
 	targetVariationID string,
-) (*evalTargetRule, error) {
+) ([]string, error) {
 	r := &aodomain.AutoOpsRule{AutoOpsRule: rule}
 	clauses, err := r.ExtractOpsEventRateClauses()
 	if err != nil {
@@ -214,10 +210,7 @@ func (u *evalEvtUpdater) findEventRateClauseIDs(
 			ids = append(ids, id)
 		}
 	}
-	return &evalTargetRule{
-		id:        r.Id,
-		clauseIDs: ids,
-	}, nil
+	return ids, nil
 }
 
 func (u *evalEvtUpdater) updateUserCountByRule(
@@ -225,13 +218,14 @@ func (u *evalEvtUpdater) updateUserCountByRule(
 	featureID string,
 	featureVersion int32,
 	variationID,
-	userID string,
-	targetRule *evalTargetRule,
+	userID,
+	ruleID string,
+	clauseIDs []string,
 ) error {
-	for _, clauseID := range targetRule.clauseIDs {
+	for _, clauseID := range clauseIDs {
 		key := u.newUserCountKey(
 			environmentNamespace,
-			targetRule.id,
+			ruleID,
 			clauseID,
 			featureID,
 			variationID,
