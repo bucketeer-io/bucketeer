@@ -141,26 +141,26 @@ func (u *evalGoalUpdater) updateUserCount(
 		handledCounter.WithLabelValues(codeGetFeaturesReturnedEmpty).Inc()
 		return true, ErrFeatureEmptyList
 	}
-	for _, tr := range rules {
+	for _, r := range rules {
 		// Get the latest feature version
-		fVersion, err := u.getFeatureVersion(tr.featureID, resp.Features)
+		fVersion, err := u.getFeatureVersion(r.featureID, resp.Features)
 		if err != nil {
 			u.logger.Error(
 				"Failed to find the feature version",
 				zap.Error(ErrFailedToFindFeatureVersion),
-				zap.String("featureId", tr.featureID),
+				zap.String("featureId", r.featureID),
 				zap.String("environmentNamespace", environmentNamespace),
 			)
 			handledCounter.WithLabelValues(codeFailedToFindFeatureVersion).Inc()
 			return false, err
 		}
-		// Update the user count by rule
-		err = u.updateUserCountPerRule(
+		// Update the user count per clause
+		err = u.updateUserCountPerClause(
 			environmentNamespace,
-			tr.featureID,
+			r.featureID,
 			fVersion,
 			event.UserId,
-			tr,
+			r,
 		)
 		if err != nil {
 			return true, err
@@ -262,7 +262,7 @@ func (u *evalGoalUpdater) getFeatureVersion(
 	return 0, ErrFailedToFindFeatureVersion
 }
 
-func (u *evalGoalUpdater) updateUserCountPerRule(
+func (u *evalGoalUpdater) updateUserCountPerClause(
 	environmentNamespace,
 	featureID string,
 	featureVersion int32,
