@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "account"
 
-namespace:
+namespace: default
 
 env:
   project:

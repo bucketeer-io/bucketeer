@@ -5,7 +5,7 @@ image:
   tag: v2.27.0
   pullPolicy: IfNotPresent
 
-namespace:
+namespace: default
 
 affinity: {}
 

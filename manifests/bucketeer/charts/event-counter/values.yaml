@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "event-counter"
 
-namespace:
+namespace: default
 
 env:
   project:

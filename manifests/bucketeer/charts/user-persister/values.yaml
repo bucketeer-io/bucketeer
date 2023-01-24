@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "user-persister"
 
-namespace:
+namespace: default
 
 env:
   project:

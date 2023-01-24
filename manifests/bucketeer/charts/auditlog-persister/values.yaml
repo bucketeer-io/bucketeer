@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "auditlog-persister"
 
-namespace:
+namespace: default
 
 env:
   project:
@@ -32,7 +32,6 @@ nodeSelector: {}
 
 hpa:
   enabled:
-  namespace:
   minReplicas:
   maxReplicas:
   metrics:

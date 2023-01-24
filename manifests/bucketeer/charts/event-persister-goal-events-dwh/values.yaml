@@ -5,7 +5,7 @@ image:
 nameOverride: "event-persister-dwh"
 fullnameOverride: "event-persister-goal-events-dwh"
 
-namespace:
+namespace: default
 
 env:
   project:

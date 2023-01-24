@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "user"
 
-namespace:
+namespace: default
 
 env:
   project:
