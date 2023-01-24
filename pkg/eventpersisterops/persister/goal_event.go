@@ -123,7 +123,7 @@ func (u *evalGoalUpdater) updateUserCount(
 		return false, ErrNoAutoOpsRules
 	}
 	// Link the rules
-	featureIDs, targetRules := u.linkOpsRulesByGoalID(event.GoalId, list)
+	featureIDs, rules := u.linkOpsRulesByGoalID(event.GoalId, list)
 	if len(featureIDs) == 0 {
 		return false, ErrAutoOpsRulesNotFound
 	}
@@ -141,7 +141,7 @@ func (u *evalGoalUpdater) updateUserCount(
 		handledCounter.WithLabelValues(codeGetFeaturesReturnedEmpty).Inc()
 		return true, ErrFeatureEmptyList
 	}
-	for _, tr := range targetRules {
+	for _, tr := range rules {
 		// Get the latest feature version
 		fVersion, err := u.getFeatureVersion(tr.featureID, resp.Features)
 		if err != nil {
@@ -210,7 +210,7 @@ func (u *evalGoalUpdater) linkOpsRulesByGoalID(
 	listAutoOpsRules []*aoproto.AutoOpsRule,
 ) ([]string, []*linkGoalOpsRule) {
 	featureIDsMap := make(map[string]struct{})
-	targetRules := []*linkGoalOpsRule{}
+	linkedRules := []*linkGoalOpsRule{}
 	for _, aor := range listAutoOpsRules {
 		autoOpsRule := &aodomain.AutoOpsRule{AutoOpsRule: aor}
 		// We ignore the rules that are already triggered
@@ -226,20 +226,20 @@ func (u *evalGoalUpdater) linkOpsRulesByGoalID(
 			continue
 		}
 		// Link the clauses that contain the goal ID from the the goal event
-		targetClauses := make(map[string]*aoproto.OpsEventRateClause)
+		linkedClauses := make(map[string]*aoproto.OpsEventRateClause)
 		for id, clause := range clauses {
 			if clause.GoalId == goalID {
 				featureIDsMap[autoOpsRule.FeatureId] = struct{}{}
-				targetClauses[id] = clause
+				linkedClauses[id] = clause
 			}
 		}
-		if len(targetClauses) == 0 {
+		if len(linkedClauses) == 0 {
 			continue
 		}
-		targetRules = append(targetRules, &linkGoalOpsRule{
+		linkedRules = append(linkedRules, &linkGoalOpsRule{
 			id:        autoOpsRule.Id,
 			featureID: autoOpsRule.FeatureId,
-			clauses:   targetClauses,
+			clauses:   linkedClauses,
 		})
 	}
 	// Convert map to slice
@@ -247,7 +247,7 @@ func (u *evalGoalUpdater) linkOpsRulesByGoalID(
 	for id := range featureIDsMap {
 		featureIDs = append(featureIDs, id)
 	}
-	return featureIDs, targetRules
+	return featureIDs, linkedRules
 }
 
 func (u *evalGoalUpdater) getFeatureVersion(

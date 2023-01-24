@@ -199,7 +199,7 @@ func (u *evalEvtUpdater) linkOpsRulesByFeatureID(
 
 func (u *evalEvtUpdater) linkOpsEventRateByVariationID(
 	rule *aoproto.AutoOpsRule,
-	targetVariationID string,
+	variationID string,
 ) ([]string, error) {
 	r := &aodomain.AutoOpsRule{AutoOpsRule: rule}
 	clauses, err := r.ExtractOpsEventRateClauses()
@@ -209,8 +209,8 @@ func (u *evalEvtUpdater) linkOpsEventRateByVariationID(
 	}
 	ids := make([]string, 0, len(clauses))
 	for id, clause := range clauses {
-		// The variation must match
-		if clause.VariationId == targetVariationID {
+		// The variation must match to link
+		if clause.VariationId == variationID {
 			ids = append(ids, id)
 		}
 	}
