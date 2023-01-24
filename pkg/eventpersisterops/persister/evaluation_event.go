@@ -66,6 +66,7 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 				retriable, err := u.updateUserCount(ctx, environmentNamespace, evt)
 				if err != nil {
 					if err == ErrNoAutoOpsRules || err == ErrAutoOpsRulesNotFound {
+						// If there is nothing to link, we don't report it as an error
 						handledCounter.WithLabelValues(codeNoLink).Inc()
 						u.logger.Debug(
 							"There is no auto ops rules to link the evaluation event",
@@ -115,22 +116,22 @@ func (u *evalEvtUpdater) updateUserCount(
 		return false, ErrNoAutoOpsRules
 	}
 	// Link the rules by feature ID
-	rules := u.findOpsRules(event.FeatureId, list)
+	rules := u.linkOpsRulesByFeatureID(event.FeatureId, list)
 	if len(rules) == 0 {
 		return false, ErrAutoOpsRulesNotFound
 	}
 	// Link the event rate clauses by variation ID
-	linkedRules := make(map[string][]string, len(rules))
+	linkedOpsRules := make(map[string][]string, len(rules))
 	for _, rule := range rules {
-		clauseIDs, err := u.findEventRateClauseIDs(rule, event.VariationId)
+		clauseIDs, err := u.linkOpsEventRateByVariationID(rule, event.VariationId)
 		if err != nil {
 			return false, err
 		}
-		linkedRules[rule.Id] = clauseIDs
+		linkedOpsRules[rule.Id] = clauseIDs
 	}
-	// Update the user count by rule
-	for ruleID, clauseIDs := range linkedRules {
-		err := u.updateUserCountByRule(
+	// Update the user count per rule
+	for ruleID, clauseIDs := range linkedOpsRules {
+		err := u.updateUserCountPerRule(
 			environmentNamespace,
 			event.FeatureId,
 			event.FeatureVersion,
@@ -182,7 +183,7 @@ func (u *evalEvtUpdater) listAutoOpsRules(
 	return exp.([]*aoproto.AutoOpsRule), nil
 }
 
-func (u *evalEvtUpdater) findOpsRules(
+func (u *evalEvtUpdater) linkOpsRulesByFeatureID(
 	featureID string,
 	listAutoOpsRules []*aoproto.AutoOpsRule,
 ) []*aoproto.AutoOpsRule {
@@ -196,7 +197,7 @@ func (u *evalEvtUpdater) findOpsRules(
 	return rules
 }
 
-func (u *evalEvtUpdater) findEventRateClauseIDs(
+func (u *evalEvtUpdater) linkOpsEventRateByVariationID(
 	rule *aoproto.AutoOpsRule,
 	targetVariationID string,
 ) ([]string, error) {
@@ -216,7 +217,7 @@ func (u *evalEvtUpdater) findEventRateClauseIDs(
 	return ids, nil
 }
 
-func (u *evalEvtUpdater) updateUserCountByRule(
+func (u *evalEvtUpdater) updateUserCountPerRule(
 	environmentNamespace,
 	featureID string,
 	featureVersion int32,

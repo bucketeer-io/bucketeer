@@ -33,7 +33,7 @@ import (
 
 const opsGoalKeyPrefix = "autoops:goal"
 
-type goalTargetRule struct {
+type linkGoalOpsRule struct {
 	id        string
 	featureID string
 	clauses   map[string]*aoproto.OpsEventRateClause
@@ -73,6 +73,7 @@ func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentE
 				retriable, err := u.updateUserCount(ctx, environmentNamespace, evt)
 				if err != nil {
 					if err == ErrNoAutoOpsRules || err == ErrAutoOpsRulesNotFound {
+						// If there is nothing to link, we don't report it as an error
 						handledCounter.WithLabelValues(codeNoLink).Inc()
 						u.logger.Debug(
 							"There is no auto ops rules to link the goal event",
@@ -121,8 +122,8 @@ func (u *evalGoalUpdater) updateUserCount(
 	if len(list) == 0 {
 		return false, ErrNoAutoOpsRules
 	}
-	// Find the rules
-	featureIDs, targetRules := u.findOpsRules(event.GoalId, list)
+	// Link the rules
+	featureIDs, targetRules := u.linkOpsRulesByGoalID(event.GoalId, list)
 	if len(featureIDs) == 0 {
 		return false, ErrAutoOpsRulesNotFound
 	}
@@ -141,8 +142,8 @@ func (u *evalGoalUpdater) updateUserCount(
 		return true, ErrFeatureEmptyList
 	}
 	for _, tr := range targetRules {
-		// Find the latest feature version
-		fVersion, err := u.findFeatureVersion(tr.featureID, resp.Features)
+		// Get the latest feature version
+		fVersion, err := u.getFeatureVersion(tr.featureID, resp.Features)
 		if err != nil {
 			u.logger.Error(
 				"Failed to find the feature version",
@@ -154,7 +155,7 @@ func (u *evalGoalUpdater) updateUserCount(
 			return false, err
 		}
 		// Update the user count by rule
-		err = u.updateUserCountByRule(
+		err = u.updateUserCountPerRule(
 			environmentNamespace,
 			tr.featureID,
 			fVersion,
@@ -204,12 +205,12 @@ func (u *evalGoalUpdater) listAutoOpsRules(
 	return exp.([]*aoproto.AutoOpsRule), nil
 }
 
-func (u *evalGoalUpdater) findOpsRules(
+func (u *evalGoalUpdater) linkOpsRulesByGoalID(
 	goalID string,
 	listAutoOpsRules []*aoproto.AutoOpsRule,
-) ([]string, []*goalTargetRule) {
+) ([]string, []*linkGoalOpsRule) {
 	featureIDsMap := make(map[string]struct{})
-	targetRules := []*goalTargetRule{}
+	targetRules := []*linkGoalOpsRule{}
 	for _, aor := range listAutoOpsRules {
 		autoOpsRule := &aodomain.AutoOpsRule{AutoOpsRule: aor}
 		// We ignore the rules that are already triggered
@@ -224,7 +225,7 @@ func (u *evalGoalUpdater) findOpsRules(
 		if len(clauses) == 0 {
 			continue
 		}
-		// Find the clauses that contain the goal ID from the the goal event
+		// Link the clauses that contain the goal ID from the the goal event
 		targetClauses := make(map[string]*aoproto.OpsEventRateClause)
 		for id, clause := range clauses {
 			if clause.GoalId == goalID {
@@ -235,7 +236,7 @@ func (u *evalGoalUpdater) findOpsRules(
 		if len(targetClauses) == 0 {
 			continue
 		}
-		targetRules = append(targetRules, &goalTargetRule{
+		targetRules = append(targetRules, &linkGoalOpsRule{
 			id:        autoOpsRule.Id,
 			featureID: autoOpsRule.FeatureId,
 			clauses:   targetClauses,
@@ -249,7 +250,7 @@ func (u *evalGoalUpdater) findOpsRules(
 	return featureIDs, targetRules
 }
 
-func (u *evalGoalUpdater) findFeatureVersion(
+func (u *evalGoalUpdater) getFeatureVersion(
 	featureID string,
 	features []*featureproto.Feature,
 ) (int32, error) {
@@ -261,17 +262,17 @@ func (u *evalGoalUpdater) findFeatureVersion(
 	return 0, ErrFailedToFindFeatureVersion
 }
 
-func (u *evalGoalUpdater) updateUserCountByRule(
+func (u *evalGoalUpdater) updateUserCountPerRule(
 	environmentNamespace,
 	featureID string,
 	featureVersion int32,
 	userID string,
-	targetRule *goalTargetRule,
+	rule *linkGoalOpsRule,
 ) error {
-	for id, clause := range targetRule.clauses {
+	for id, clause := range rule.clauses {
 		key := u.newUserCountKey(
 			environmentNamespace,
-			targetRule.id,
+			rule.id,
 			id,
 			featureID,
 			clause.VariationId,
