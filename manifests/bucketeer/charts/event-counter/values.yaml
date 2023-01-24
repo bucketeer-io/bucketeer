@@ -24,6 +24,11 @@ env:
   mysqlDbName:
   port: 9090
   metricsPort: 9002
+  redis:
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
 
 affinity: {}
 
