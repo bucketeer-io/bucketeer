@@ -1,9 +1,13 @@
+import { AppState } from '@/modules';
+import { Tag } from '@/proto/feature/feature_pb';
 import { FC, memo } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { useIntl } from 'react-intl';
+import { shallowEqual, useSelector } from 'react-redux';
 
 import { messages } from '../../lang/messages';
 import { useIsEditable } from '../../modules/me';
+import { selectAll as selectAllTags } from '../../modules/tags';
 import { classNames } from '../../utils/css';
 import { CreatableSelect, Option } from '../CreatableSelect';
 
@@ -22,6 +26,11 @@ export const FeatureSettingsForm: FC<FeatureSettingsFormProps> = memo(
       formState: { errors, isDirty },
     } = methods;
     const isValid = Object.keys(errors).length == 0;
+
+    const tagsList = useSelector<AppState, Tag.AsObject[]>(
+      (state) => selectAllTags(state.tags),
+      shallowEqual
+    );
 
     return (
       <div className="p-10 bg-gray-100">
@@ -82,6 +91,10 @@ export const FeatureSettingsForm: FC<FeatureSettingsFormProps> = memo(
                 render={({ field }) => {
                   return (
                     <CreatableSelect
+                      options={tagsList.map((tag) => ({
+                        label: tag.id,
+                        value: tag.id,
+                      }))}
                       disabled={!editable}
                       defaultValues={field.value.map((tag) => {
                         return {
@@ -92,6 +105,7 @@ export const FeatureSettingsForm: FC<FeatureSettingsFormProps> = memo(
                       onChange={(options: Option[]) => {
                         field.onChange(options.map((o) => o.value));
                       }}
+                      closeMenuOnSelect={false}
                     />
                   );
                 }}
