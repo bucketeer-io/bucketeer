@@ -89,6 +89,7 @@ type PipeClient interface {
 	TTL(key string) *goredis.DurationCmd
 	Exec() ([]goredis.Cmder, error)
 	PFCount(keys ...string) *goredis.IntCmd
+	Get(key string) *goredis.StringCmd
 }
 
 type pipeClient struct {
@@ -455,4 +456,9 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 func (c *pipeClient) PFCount(keys ...string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfCountCmdName)
 	return c.pipe.PFCount(keys...)
+}
+
+func (c *pipeClient) Get(key string) *goredis.StringCmd {
+	c.cmds = append(c.cmds, getCmdName)
+	return c.pipe.Get(key)
 }
