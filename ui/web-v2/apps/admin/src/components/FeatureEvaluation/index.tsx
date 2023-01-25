@@ -54,6 +54,15 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
     feature.variationsList.forEach((v) => {
       variationMap.set(v.id, v);
     });
+
+    // The default variation corresponds to the default value used on the client.
+    // Because the SDK doesn't know what variation was used, we define it as "default".
+    // So the user can see how many times the default value was used.
+    const defaultVariation = new Variation();
+    defaultVariation.setId('default');
+    defaultVariation.setValue('default value');
+    variationMap.set(defaultVariation.getId(), defaultVariation.toObject());
+
     const variationTSs = type == 'userCount' ? userCounts : eventCounts;
     const variationValues = variationTSs.map((vt) => {
       return variationMap.get(vt.variationId)?.value;

@@ -1422,7 +1422,7 @@ func TestGetVariationIDs(t *testing.T) {
 	}
 }
 
-func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
+func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	t.Parallel()
 
 	mockController := gomock.NewController(t)
@@ -1591,7 +1591,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 			if p.setup != nil {
 				p.setup(ctx, s)
 			}
-			actual, err := s.GetEvaluationTimeseriesCountV2(ctx, p.input)
+			actual, err := s.GetEvaluationTimeseriesCount(ctx, p.input)
 			if p.expectedErr == nil {
 				for idx := range p.expected.EventCounts {
 					actualTs := actual.EventCounts[idx]
@@ -1922,124 +1922,6 @@ func getUserCountKeys(vID, fid, environmentNamespace string, timeStamps []int64)
 		userCountKeys = append(userCountKeys, uc)
 	}
 	return userCountKeys
-}
-
-func TestGetEvaluationTimeseriesCount(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	patterns := []struct {
-		desc        string
-		setup       func(*eventCounterService)
-		input       *ecproto.GetEvaluationTimeseriesCountRequest
-		expected    *ecproto.GetEvaluationTimeseriesCountResponse
-		expectedErr error
-	}{
-		{
-			desc: "error: ErrFeatureIDRequired",
-			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: "ns0",
-			},
-			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
-		},
-		{
-			desc: "success",
-			setup: func(s *eventCounterService) {
-				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(gomock.Any(), gomock.Any()).Return(
-					&featureproto.GetFeatureResponse{
-						Feature: &featureproto.Feature{
-							Id:         "fid",
-							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
-						},
-					}, nil)
-				s.druidQuerier.(*dmock.MockQuerier).EXPECT().QueryEvaluationTimeseriesCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
-					map[string]*ecproto.VariationTimeseries{
-						ecdruid.ColumnEvaluationTotal: {
-							VariationId: "vid0",
-							Timeseries: &ecproto.Timeseries{
-								Timestamps: []int64{int64(1)},
-								Values:     []float64{float64(1.2)},
-							},
-						},
-						ecdruid.ColumnEvaluationUser: {
-							VariationId: "vid0",
-							Timeseries: &ecproto.Timeseries{
-								Timestamps: []int64{int64(2)},
-								Values:     []float64{float64(2.3)},
-							},
-						},
-					}, nil)
-				s.druidQuerier.(*dmock.MockQuerier).EXPECT().QueryEvaluationTimeseriesCount(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(
-					map[string]*ecproto.VariationTimeseries{
-						ecdruid.ColumnEvaluationTotal: {
-							VariationId: "vid1",
-							Timeseries: &ecproto.Timeseries{
-								Timestamps: []int64{int64(3)},
-								Values:     []float64{float64(3.4)},
-							},
-						},
-						ecdruid.ColumnEvaluationUser: {
-							VariationId: "vid1",
-							Timeseries: &ecproto.Timeseries{
-								Timestamps: []int64{int64(4)},
-								Values:     []float64{float64(4.5)},
-							},
-						},
-					}, nil)
-			},
-			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: "ns0",
-				FeatureId:            "fid",
-			},
-			expected: &ecproto.GetEvaluationTimeseriesCountResponse{
-				EventCounts: []*ecproto.VariationTimeseries{
-					{
-						VariationId: "vid0",
-						Timeseries: &ecproto.Timeseries{
-							Timestamps: []int64{int64(1)},
-							Values:     []float64{float64(1.2)},
-						},
-					},
-					{
-						VariationId: "vid1",
-						Timeseries: &ecproto.Timeseries{
-							Timestamps: []int64{int64(3)},
-							Values:     []float64{float64(3.4)},
-						},
-					},
-				},
-				UserCounts: []*ecproto.VariationTimeseries{
-					{
-						VariationId: "vid0",
-						Timeseries: &ecproto.Timeseries{
-							Timestamps: []int64{int64(2)},
-							Values:     []float64{float64(2.3)},
-						},
-					},
-					{
-						VariationId: "vid1",
-						Timeseries: &ecproto.Timeseries{
-							Timestamps: []int64{int64(4)},
-							Values:     []float64{float64(4.5)},
-						},
-					},
-				},
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			s := newEventCounterService(t, mockController)
-			if p.setup != nil {
-				p.setup(s)
-			}
-			actual, err := s.GetEvaluationTimeseriesCount(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
-			assert.Equal(t, p.expected, actual)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
 }
 
 func getDate(t time.Time) int64 {
