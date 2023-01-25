@@ -34,7 +34,7 @@ import (
 const opsGoalKeyPrefix = "autoops:goal"
 
 type linkGoalOpsRule struct {
-	id        string
+	ruleID    string
 	featureID string
 	clauses   map[string]*aoproto.OpsEventRateClause
 }
@@ -236,7 +236,7 @@ func (u *evalGoalUpdater) linkOpsRulesByGoalID(
 			continue
 		}
 		linkedRules = append(linkedRules, &linkGoalOpsRule{
-			id:        autoOpsRule.Id,
+			ruleID:    autoOpsRule.Id,
 			featureID: autoOpsRule.FeatureId,
 			clauses:   linkedClauses,
 		})
@@ -274,7 +274,7 @@ func (u *evalGoalUpdater) updateUserCountPerClause(
 	for id, clause := range rule.clauses {
 		key := u.newUserCountKey(
 			environmentNamespace,
-			rule.id,
+			rule.ruleID,
 			id,
 			featureID,
 			clause.VariationId,
