@@ -34,13 +34,13 @@ import (
 const listRequestSize = 500
 
 var (
-	ErrAutoOpsRulesNotFound       = errors.New("eventpersister: auto ops rules not found")
-	ErrFailedToFindFeatureVersion = errors.New("eventpersister: failed to find the feature version")
-	ErrFeatureEmptyList           = errors.New("eventpersister: list feature returned empty")
-	ErrNoAutoOpsRules             = errors.New("eventpersister: no auto ops rules")
-	ErrNoExperiments              = errors.New("eventpersister: no experiments")
-	ErrNothingToLink              = errors.New("eventpersister: nothing to link")
-	ErrUnexpectedMessageType      = errors.New("eventpersister: unexpected message type")
+	ErrAutoOpsRulesNotFound   = errors.New("eventpersister: auto ops rules not found")
+	ErrFeatureEmptyList       = errors.New("eventpersister: list feature returned empty")
+	ErrFeatureVersionNotFound = errors.New("eventpersister: feature version not found")
+	ErrNoAutoOpsRules         = errors.New("eventpersister: no auto ops rules")
+	ErrNoExperiments          = errors.New("eventpersister: no experiments")
+	ErrNothingToLink          = errors.New("eventpersister: nothing to link")
+	ErrUnexpectedMessageType  = errors.New("eventpersister: unexpected message type")
 )
 
 type eventMap map[string]proto.Message

@@ -147,7 +147,7 @@ func (u *evalGoalUpdater) updateUserCount(
 		if err != nil {
 			u.logger.Error(
 				"Failed to find the feature version",
-				zap.Error(ErrFailedToFindFeatureVersion),
+				zap.Error(ErrFeatureVersionNotFound),
 				zap.String("featureId", r.featureID),
 				zap.String("environmentNamespace", environmentNamespace),
 			)
@@ -259,7 +259,7 @@ func (u *evalGoalUpdater) getFeatureVersion(
 			return f.Version, nil
 		}
 	}
-	return 0, ErrFailedToFindFeatureVersion
+	return 0, ErrFeatureVersionNotFound
 }
 
 func (u *evalGoalUpdater) updateUserCountPerClause(
