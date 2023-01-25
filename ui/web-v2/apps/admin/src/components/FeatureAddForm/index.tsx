@@ -152,6 +152,7 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                           onChange={(options: Option[]) => {
                             field.onChange(options.map((o) => o.value));
                           }}
+                          closeMenuOnSelect={false}
                         />
                       );
                     }}

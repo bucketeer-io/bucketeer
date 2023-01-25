@@ -11,12 +11,21 @@ export interface CreatableSelectProps {
   disabled?: boolean;
   isSearchable?: boolean;
   defaultValues?: Option[];
+  closeMenuOnSelect?: boolean;
   className?: string;
   onChange: (options: Option[]) => void;
 }
 
 export const CreatableSelect: FC<CreatableSelectProps> = memo(
-  ({ disabled, isSearchable, className, onChange, options, defaultValues }) => {
+  ({
+    disabled,
+    isSearchable,
+    className,
+    onChange,
+    options,
+    defaultValues,
+    closeMenuOnSelect,
+  }) => {
     const textColor = '#3F3F46';
     const textColorDisabled = '#6B7280';
     const backgroundColor = 'white';
@@ -82,6 +91,7 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
         isSearchable={isSearchable}
         defaultValue={defaultValues}
         onChange={onChange}
+        closeMenuOnSelect={closeMenuOnSelect}
       />
     );
   }

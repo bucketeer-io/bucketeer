@@ -115,6 +115,7 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
                             label: tag.id,
                             value: tag.id,
                           }))}
+                          closeMenuOnSelect={false}
                         />
                       );
                     }}
