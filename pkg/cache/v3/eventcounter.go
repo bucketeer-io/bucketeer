@@ -39,23 +39,32 @@ func NewEventCountCache(c cache.MultiGetDeleteCountCache) EventCounterCache {
 }
 
 func (c *eventCounterCache) GetEventCounts(keys []string) ([]float64, error) {
-	result, err := c.cache.GetMulti(keys)
-	if err != nil {
-		return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
+	pipe := c.cache.Pipeline()
+	sCmds := make([]*goredis.StringCmd, 0, len(keys))
+	for _, k := range keys {
+		c := pipe.Get(k)
+		sCmds = append(sCmds, c)
 	}
-	return getEventValues(result)
+	_, err := pipe.Exec()
+	if err != nil {
+		// Exec returns error of the first failed command.
+		// https://pkg.go.dev/github.com/redis/go-redis/v9#Pipeline.Exec
+		if err != goredis.Nil {
+			return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
+		}
+	}
+	return getEventValues(sCmds)
 }
 
-func getEventValues(vals []interface{}) ([]float64, error) {
-	eventVals := make([]float64, 0, len(vals))
-	for _, v := range vals {
-		if v == nil {
-			eventVals = append(eventVals, 0)
-			continue
-		}
-		str, ok := v.(string)
-		if !ok {
-			return []float64{}, fmt.Errorf("failed to cast value: %v", v)
+func getEventValues(cmds []*goredis.StringCmd) ([]float64, error) {
+	eventVals := make([]float64, 0, len(cmds))
+	for _, c := range cmds {
+		str, err := c.Result()
+		if err != nil {
+			if err != goredis.Nil {
+				return []float64{}, err
+			}
+			str = "0"
 		}
 		float, err := strconv.ParseFloat(str, 64)
 		if err != nil {
