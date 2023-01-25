@@ -1474,7 +1474,7 @@ export const messages = {
       }),
       tagsPlaceholder: defineMessage({
         id: 'feature.filter.tags.placeholder',
-        defaultMessage: 'Please select one or more tags',
+        defaultMessage: 'Select one or more tags',
       }),
     },
     sort: {

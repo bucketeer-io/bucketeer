@@ -234,7 +234,7 @@
   "feature.filter.hasExperiment": "Has experiment",
   "feature.filter.maintainer": "Maintainer",
   "feature.filter.tags": "Tags",
-  "feature.filter.tags.placeholder": "Please select one or more tags",
+  "feature.filter.tags.placeholder": "Select one or more tags",
   "feature.flagStatus.inactive": "Inactive",
   "feature.flagStatus.new": "New",
   "feature.flagStatus.receivingRequests": "Receiving requests",

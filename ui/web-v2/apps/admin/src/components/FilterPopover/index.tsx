@@ -34,7 +34,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
       placement: 'bottom-start',
     });
     const [valueOption, setValue] = useState<Option>(values[0]);
-    const [multiValueOption, setMultiValue] = useState<Option[]>([values[0]]);
+    const [multiValueOption, setMultiValue] = useState<Option[]>([]);
 
     const isMultiFilter = key === FilterTypes.TAGS;
 
@@ -56,6 +56,17 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
       setValue(values[0]);
     };
 
+    const onPopoverClose = (isPopoverClose: boolean) => {
+      if (isPopoverClose) {
+        if (multiValueOption.length > 0) {
+          setMultiValue([]);
+        }
+        if (valueOption) {
+          setValue(null);
+        }
+      }
+    };
+
     useEffect(() => {
       setValue(values[0]);
     }, [values, setValue]);
@@ -64,6 +75,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
       <Popover>
         {({ open }) => (
           <>
+            {onPopoverClose(open === false)}
             <Popover.Button
               ref={referenceElement}
               className={classNames(
@@ -110,7 +122,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                       )}
                     >
                       <div className="p-4 bg-gray-100">
-                        <div className="flex items-center">
+                        <div className="flex">
                           <ReactSelect
                             className={classNames(
                               'w-60 z-10 text-sm text-gray-700'
@@ -122,12 +134,15 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                             onChange={handleKeyChange}
                             isSearchable={false}
                             styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
                             }}
                           />
-                          {key != null && values.length > 0 && (
-                            <div className="flex items-center">
-                              <div className="mx-3">
+                          {(valueOption || multiValueOption.length > 0) && (
+                            <div className="flex">
+                              <div className="mx-3 pt-[6px]">
                                 {f(messages.feature.clause.operator.equal)}
                               </div>
                               <ReactSelect
