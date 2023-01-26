@@ -25,7 +25,6 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventcounter/api"
-	"github.com/bucketeer-io/bucketeer/pkg/eventcounter/druid"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
@@ -33,7 +32,6 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	storagedruid "github.com/bucketeer-io/bucketeer/pkg/storage/druid"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
@@ -43,32 +41,28 @@ const command = "server"
 
 type server struct {
 	*kingpin.CmdClause
-	port                  *int
-	project               *string
-	mysqlUser             *string
-	mysqlPass             *string
-	mysqlHost             *string
-	mysqlPort             *int
-	mysqlDBName           *string
-	experimentService     *string
-	featureService        *string
-	accountService        *string
-	certPath              *string
-	keyPath               *string
-	serviceTokenPath      *string
-	oauthKeyPath          *string
-	oauthClientID         *string
-	oauthIssuer           *string
-	druidURL              *string
-	druidDatasourcePrefix *string
-	druidUsername         *string
-	druidPassword         *string
-	redisServerName       *string
-	redisAddr             *string
-	redisPoolMaxIdle      *int
-	redisPoolMaxActive    *int
-	bigQueryDataSet       *string
-	bigQueryDataLocation  *string
+	port                 *int
+	project              *string
+	mysqlUser            *string
+	mysqlPass            *string
+	mysqlHost            *string
+	mysqlPort            *int
+	mysqlDBName          *string
+	experimentService    *string
+	featureService       *string
+	accountService       *string
+	certPath             *string
+	keyPath              *string
+	serviceTokenPath     *string
+	oauthKeyPath         *string
+	oauthClientID        *string
+	oauthIssuer          *string
+	redisServerName      *string
+	redisAddr            *string
+	redisPoolMaxIdle     *int
+	redisPoolMaxActive   *int
+	bigQueryDataSet      *string
+	bigQueryDataLocation *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -101,14 +95,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-key",
 			"Path to public key used to verify oauth token.",
 		).Required().String(),
-		oauthClientID:         cmd.Flag("oauth-client-id", "The oauth clientID registered at dex.").Required().String(),
-		oauthIssuer:           cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
-		druidURL:              cmd.Flag("druid-url", "Druid URL.").String(),
-		druidDatasourcePrefix: cmd.Flag("druid-datasource-prefix", "Druid datasource prefix.").String(),
-		druidUsername:         cmd.Flag("druid-username", "Druid username.").String(),
-		druidPassword:         cmd.Flag("druid-password", "Druid password.").String(),
-		redisServerName:       cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
-		redisAddr:             cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
+		oauthClientID:   cmd.Flag("oauth-client-id", "The oauth clientID registered at dex.").Required().String(),
+		oauthIssuer:     cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
+		redisServerName: cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
+		redisAddr:       cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		redisPoolMaxIdle: cmd.Flag(
 			"redis-pool-max-idle",
 			"Maximum number of idle connections in the pool.",
@@ -174,12 +164,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer accountClient.Close()
 
-	druidQuerier, err := s.createDruidQuerier(ctx, logger)
-	if err != nil {
-		logger.Error("Failed to create druid querier", zap.Error(err))
-		return err
-	}
-
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
@@ -212,7 +196,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentClient,
 		featureClient,
 		accountClient,
-		druidQuerier,
 		bigQueryQuerier,
 		bigQueryDataSet,
 		registerer,
@@ -261,17 +244,6 @@ func (s *server) createMySQLClient(
 		mysql.WithLogger(logger),
 		mysql.WithMetrics(registerer),
 	)
-}
-
-func (s *server) createDruidQuerier(ctx context.Context, logger *zap.Logger) (druid.Querier, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	brokerClient, err := storagedruid.NewBrokerClient(ctx, *s.druidURL, *s.druidUsername, *s.druidPassword)
-	if err != nil {
-		logger.Error("Failed to create druid broker client", zap.Error(err))
-		return nil, err
-	}
-	return druid.NewDruidQuerier(brokerClient, *s.druidDatasourcePrefix, druid.WithLogger(logger)), nil
 }
 
 func (s *server) createBigQueryQuerier(
