@@ -25,8 +25,9 @@ const (
 	codeFailedToListExperiments        = "FailedToListExperiments"
 	codeUpsertUserEvaluationFailed     = "UpsertUserEvaluationFailed"
 	codeUserEvaluationNotFound         = "UserEvaluationNotFound"
-	codeFailedToAppendEvaluationEvents = "codeFailedToAppendEvaluationEvents"
-	codeFailedToAppendGoalEvents       = "codeFailedToAppendGoalEvents"
+	codeFailedToAppendEvaluationEvents = "FailedToAppendEvaluationEvents"
+	codeFailedToAppendGoalEvents       = "FailedToAppendGoalEvents"
+	codeLinked                         = "Linked"
 	codeNoLink                         = "NoLink"
 )
 

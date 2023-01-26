@@ -110,6 +110,7 @@ func (w *evalEvtWriter) Write(
 					continue
 				}
 				evalEvents = append(evalEvents, e)
+				handledCounter.WithLabelValues(codeLinked).Inc()
 			default:
 				w.logger.Error(
 					"The event is an unexpected message type",

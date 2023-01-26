@@ -110,6 +110,7 @@ func (w *goalEvtWriter) Write(
 					continue
 				}
 				goalEvents = append(goalEvents, e)
+				handledCounter.WithLabelValues(codeLinked).Inc()
 			default:
 				w.logger.Error(
 					"The event is an unexpected message type",
