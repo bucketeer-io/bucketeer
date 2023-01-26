@@ -5,7 +5,7 @@ image:
 nameOverride: "event-persister-ops"
 fullnameOverride: "event-persister-goal-events-ops"
 
-namespace:
+namespace: default
 
 env:
   logLevel: info

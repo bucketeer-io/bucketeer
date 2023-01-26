@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "feature-segment-persister"
 
-namespace:
+namespace: default
 
 env:
   project:

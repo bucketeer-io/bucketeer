@@ -5,7 +5,9 @@ image:
   tag: v2.27.0
   pullPolicy: IfNotPresent
 
-namespace:
+fullnameOverride: "dex"
+
+namespace: default
 
 affinity: {}
 

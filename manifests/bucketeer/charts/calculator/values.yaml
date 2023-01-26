@@ -6,7 +6,7 @@ image:
 
 fullnameOverride: "calculator"
 
-namespace:
+namespace: default
 
 env:
   project:

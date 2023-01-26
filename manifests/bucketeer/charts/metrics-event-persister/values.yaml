@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "metrics-event-persister"
 
-namespace:
+namespace: default
 
 env:
   project:

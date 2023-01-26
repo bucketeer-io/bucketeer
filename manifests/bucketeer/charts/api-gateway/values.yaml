@@ -2,7 +2,7 @@ image:
   repository: ghcr.io/bucketeer-io/bucketeer-gateway
   pullPolicy: IfNotPresent
 fullnameOverride: "api-gateway"
-namespace:
+namespace: default
 env:
   project:
   bigtableInstance:

@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "experiment"
 
-namespace:
+namespace: default
 
 env:
   project:

@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "feature-tag-cacher"
 
-namespace:
+namespace: default
 
 env:
   project:

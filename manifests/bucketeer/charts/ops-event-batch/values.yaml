@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "ops-event-batch"
 
-namespace:
+namespace: default
 
 env:
   project:

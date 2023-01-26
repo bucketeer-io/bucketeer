@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "auth"
 
-namespace:
+namespace: default
 
 env:
   accountService: localhost:9001

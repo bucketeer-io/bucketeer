@@ -4,7 +4,7 @@ image:
 
 fullnameOverride: "auto-ops"
 
-namespace:
+namespace: default
 
 env:
   project:

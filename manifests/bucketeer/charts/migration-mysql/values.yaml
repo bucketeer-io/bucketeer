@@ -6,7 +6,7 @@ image:
 
 fullnameOverride: "migration-mysql"
 
-namespace:
+namespace: default
 
 env:
   logLevel: info

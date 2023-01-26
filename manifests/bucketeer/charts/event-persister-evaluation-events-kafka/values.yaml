@@ -5,7 +5,7 @@ image:
 nameOverride: "event-persister"
 fullnameOverride: "event-persister-evaluation-events-kafka"
 
-namespace:
+namespace: default
 
 env:
   project:
