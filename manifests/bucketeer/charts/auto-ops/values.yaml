@@ -35,12 +35,12 @@ pdb:
   maxUnavailable: 50%
 
 hpa:
-  enabled: true
+  enabled:
   minReplicas:
   maxReplicas:
   metrics:
     cpu:
-      targetAverageUtilization: 75
+      targetAverageUtilization:
 
 tls:
   service:
