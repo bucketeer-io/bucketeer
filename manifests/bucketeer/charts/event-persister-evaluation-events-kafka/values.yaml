@@ -9,19 +9,8 @@ namespace: default
 
 env:
   project:
-  experimentService: localhost:9001
-  featureService: localhost:9001
-  autoOpsService: localhost:9001
-  bigtableInstance:
-  location: asia-northeast1
   topic:
   subscription:
-  writer: kafka
-  kafkaUrl: kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
-  kafkaTopicPrefix:
-  kafkaTopicDataType: evaluation-events
-  kafkaUsername: service
-  kafkaPassword:
   logLevel: info
   port: 9090
   metricsPort: 9002

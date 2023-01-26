@@ -21,19 +21,15 @@ import (
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/persister"
-	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
@@ -49,13 +45,9 @@ type server struct {
 	topic                        *string
 	maxMPS                       *int
 	numWorkers                   *int
-	numWriters                   *int
 	flushSize                    *int
 	flushInterval                *time.Duration
 	flushTimeout                 *time.Duration
-	experimentService            *string
-	featureService               *string
-	autoOpsService               *string
 	certPath                     *string
 	keyPath                      *string
 	serviceTokenPath             *string
@@ -83,22 +75,12 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 		topic:        cmd.Flag("topic", "Google PubSub topic name.").String(),
 		maxMPS:       cmd.Flag("max-mps", "Maximum messages should be handled in a second.").Default("1000").Int(),
 		numWorkers:   cmd.Flag("num-workers", "Number of workers.").Default("2").Int(),
-		numWriters:   cmd.Flag("num-writers", "Number of writers.").Default("2").Int(),
 		flushSize: cmd.Flag(
 			"flush-size",
 			"Maximum number of messages to batch before writing to datastore.",
 		).Default("50").Int(),
-		flushInterval: cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
-		flushTimeout:  cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
-		experimentService: cmd.Flag(
-			"experiment-service",
-			"bucketeer-experiment-service address.",
-		).Default("experiment:9090").String(),
-		featureService: cmd.Flag("feature-service", "bucketeer-feature-service address.").Default("feature:9090").String(),
-		autoOpsService: cmd.Flag(
-			"auto-ops-service",
-			"bucketeer-auto-ops-service address.",
-		).Default("auto-ops:9090").String(),
+		flushInterval:    cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
+		flushTimeout:     cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -142,47 +124,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
-	if err != nil {
-		return err
-	}
-
-	experimentClient, err := ec.NewClient(*s.experimentService, *s.certPath,
-		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
-		client.WithBlock(),
-		client.WithMetrics(registerer),
-		client.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer experimentClient.Close()
-
-	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
-		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
-		client.WithBlock(),
-		client.WithMetrics(registerer),
-		client.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer featureClient.Close()
-
-	autoOpsClient, err := aoclient.NewClient(*s.autoOpsService, *s.certPath,
-		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
-		client.WithBlock(),
-		client.WithMetrics(registerer),
-		client.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer autoOpsClient.Close()
-
 	if err != nil {
 		return err
 	}
@@ -213,9 +154,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}()
 
 	p := persister.NewPersister(
-		experimentClient,
-		featureClient,
-		autoOpsClient,
 		puller,
 		mysqlClient,
 		redisV3Cache,

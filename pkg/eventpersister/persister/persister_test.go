@@ -26,9 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
-	aomock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
-	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
-	fcmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	pullermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
@@ -197,30 +194,24 @@ func TestGetVariationID(t *testing.T) {
 func newPersister(c *gomock.Controller) *Persister {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Persister{
-		experimentClient: ecmock.NewMockClient(c),
-		featureClient:    fcmock.NewMockClient(c),
-		autoOpsClient:    aomock.NewMockClient(c),
-		puller:           pullermock.NewMockRateLimitedPuller(c),
-		opts:             &defaultOptions,
-		logger:           defaultOptions.logger,
-		ctx:              ctx,
-		cancel:           cancel,
-		doneCh:           make(chan struct{}),
+		puller: pullermock.NewMockRateLimitedPuller(c),
+		opts:   &defaultOptions,
+		logger: defaultOptions.logger,
+		ctx:    ctx,
+		cancel: cancel,
+		doneCh: make(chan struct{}),
 	}
 }
 
 func newPersisterWithMysqlClient(c *gomock.Controller) *Persister {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Persister{
-		experimentClient: ecmock.NewMockClient(c),
-		featureClient:    fcmock.NewMockClient(c),
-		autoOpsClient:    aomock.NewMockClient(c),
-		puller:           pullermock.NewMockRateLimitedPuller(c),
-		opts:             &defaultOptions,
-		logger:           defaultOptions.logger,
-		ctx:              ctx,
-		cancel:           cancel,
-		doneCh:           make(chan struct{}),
-		mysqlClient:      mysqlmock.NewMockClient(c),
+		puller:      pullermock.NewMockRateLimitedPuller(c),
+		opts:        &defaultOptions,
+		logger:      defaultOptions.logger,
+		ctx:         ctx,
+		cancel:      cancel,
+		doneCh:      make(chan struct{}),
+		mysqlClient: mysqlmock.NewMockClient(c),
 	}
 }

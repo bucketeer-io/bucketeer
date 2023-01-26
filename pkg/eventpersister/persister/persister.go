@@ -24,12 +24,9 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
-	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersister/storage/v2"
-	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -117,9 +114,6 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type Persister struct {
-	experimentClient      ec.Client
-	featureClient         featureclient.Client
-	autoOpsClient         aoclient.Client
 	puller                puller.RateLimitedPuller
 	group                 errgroup.Group
 	opts                  *options
@@ -132,9 +126,6 @@ type Persister struct {
 }
 
 func NewPersister(
-	experimentClient ec.Client,
-	featureClient featureclient.Client,
-	autoOpsClient aoclient.Client,
 	p puller.Puller,
 	mysqlClient mysql.Client,
 	v3Cache cache.MultiGetDeleteCountCache,
@@ -156,9 +147,6 @@ func NewPersister(
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Persister{
-		experimentClient:      experimentClient,
-		featureClient:         featureClient,
-		autoOpsClient:         autoOpsClient,
 		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
 		opts:                  dopts,
 		logger:                dopts.logger.Named("persister"),
