@@ -87,6 +87,8 @@ func (w *evalEvtWriter) Write(
 			case *eventproto.EvaluationEvent:
 				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
+					// If there is nothing to link, we don't report it as an error
+					handledCounter.WithLabelValues(codeNoLink).Inc()
 					if err == ErrNoExperiments || err == ErrExperimentNotFound {
 						w.logger.Debug(
 							"There is no experiment to link",
@@ -120,6 +122,7 @@ func (w *evalEvtWriter) Write(
 	}
 	fs, err := w.writer.AppendRows(ctx, evalEvents)
 	if err != nil {
+		handledCounter.WithLabelValues(codeFailedToAppendEvaluationEvents).Inc()
 		w.logger.Error(
 			"failed to append rows to evaluation event",
 			zap.Error(err),
