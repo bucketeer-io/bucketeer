@@ -6,7 +6,6 @@ export const PAGE_PATH_FEATURES = '/features';
 export const PAGE_PATH_ADMIN = '/admin';
 export const PAGE_PATH_EXPERIMENTS = '/experiments';
 export const PAGE_PATH_GOALS = '/goals';
-export const PAGE_PATH_ANALYSIS = '/analysis';
 export const PAGE_PATH_APIKEYS = '/apikeys';
 export const PAGE_PATH_USER_SEGMENTS = '/segments';
 export const PAGE_PATH_USERS = '/users';

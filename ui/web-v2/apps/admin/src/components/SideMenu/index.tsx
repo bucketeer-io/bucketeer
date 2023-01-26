@@ -22,7 +22,6 @@ import {
   PAGE_PATH_EXPERIMENTS,
   PAGE_PATH_FEATURES,
   PAGE_PATH_GOALS,
-  PAGE_PATH_ANALYSIS,
   PAGE_PATH_APIKEYS,
   PAGE_PATH_USER_SEGMENTS,
   PAGE_PATH_USERS,
@@ -83,16 +82,6 @@ const createMenuItems = (
     target: null,
     iconElement: <MUBarChart />,
   });
-  // Disabling it temporary until the new data pipeline is release
-  // items.push({
-  //   messageComponent: (
-  //     <span>{intl.formatMessage(messages.sideMenu.analysis)}</span>
-  //   ),
-  //   path: `/${environmentId}${PAGE_PATH_ANALYSIS}`,
-  //   external: null,
-  //   target: null,
-  //   iconElement: <MUShowChartIcon />,
-  // });
   items.push({
     messageComponent: (
       <span>{intl.formatMessage(messages.sideMenu.userSegments)}</span>

@@ -12,7 +12,6 @@ import { evaluationTimeseriesCountSlice } from './evaluationTimeseriesCount';
 import { experimentResultSlice } from './experimentResult';
 import { experimentsSlice } from './experiments';
 import { featuresSlice } from './features';
-import { goalCountsSlice } from './goalCounts';
 import { goalsSlice } from './goals';
 import { meSlice } from './me';
 import { notificationSlice } from './notifications';
@@ -21,7 +20,6 @@ import { pushSlice } from './pushes';
 import { segmentsSlice } from './segments';
 import { tagsSlice } from './tags';
 import { toastsSlice } from './toasts';
-import { userMetadataSlice } from './userMetadata';
 
 export const reducers = combineReducers({
   accounts: accountsSlice.reducer,
@@ -31,7 +29,6 @@ export const reducers = combineReducers({
   auth: authSlice.reducer,
   autoOpsRules: autoOpsRulesSlice.reducer,
   environments: environmentsSlice.reducer,
-  goalCounts: goalCountsSlice.reducer,
   evaluationTimeseriesCount: evaluationTimeseriesCountSlice.reducer,
   experiments: experimentsSlice.reducer,
   experimentResults: experimentResultSlice.reducer,
@@ -43,7 +40,6 @@ export const reducers = combineReducers({
   segments: segmentsSlice.reducer,
   me: meSlice.reducer,
   toasts: toastsSlice.reducer,
-  userMetadata: userMetadataSlice.reducer,
   tags: tagsSlice.reducer,
 });
 

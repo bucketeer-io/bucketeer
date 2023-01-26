@@ -639,63 +639,6 @@ export const messages = {
       }),
     },
   },
-  analysis: {
-    header: {
-      title: defineMessage({
-        id: 'analysis.header.title',
-        defaultMessage: 'Analysis',
-      }),
-      description: defineMessage({
-        id: 'analysis.header.description',
-        defaultMessage:
-          'On this page, you can get insight by querying goal counts by feature flags and user metadata.',
-      }),
-    },
-    segment: defineMessage({
-      id: 'analysis.segment',
-      defaultMessage: 'Segment',
-    }),
-    clientData: defineMessage({
-      id: 'analysis.clientData',
-      defaultMessage: 'Client data',
-    }),
-    variation: defineMessage({
-      id: 'analysis.variation',
-      defaultMessage: 'Variation',
-    }),
-    evaluationUser: defineMessage({
-      id: 'analysis.evaluationUser',
-      defaultMessage: 'Evaluation user',
-    }),
-    evaluationTotal: defineMessage({
-      id: 'analysis.evaluationTotal',
-      defaultMessage: 'Evaluation total',
-    }),
-    goalUser: defineMessage({
-      id: 'analysis.goalUser',
-      defaultMessage: 'Goal user',
-    }),
-    goalTotal: defineMessage({
-      id: 'analysis.goalTotal',
-      defaultMessage: 'Goal total',
-    }),
-    goalValueTotal: defineMessage({
-      id: 'analysis.goalValueTotal',
-      defaultMessage: 'GoalValue total',
-    }),
-    goalValueMean: defineMessage({
-      id: 'analysis.goalValueMean',
-      defaultMessage: 'GoalValue mean',
-    }),
-    goalValueVariance: defineMessage({
-      id: 'analysis.goalValueVariance',
-      defaultMessage: 'GoalValue variance',
-    }),
-    conversionRate: defineMessage({
-      id: 'analysis.conversionRate',
-      defaultMessage: 'Conversion rate',
-    }),
-  },
   apiKey: {
     add: {
       header: {
@@ -2120,10 +2063,6 @@ export const messages = {
     goals: defineMessage({
       id: 'sideMenu.goals',
       defaultMessage: 'Goals',
-    }),
-    analysis: defineMessage({
-      id: 'sideMenu.analysis',
-      defaultMessage: 'Analysis',
     }),
     apiKeys: defineMessage({
       id: 'sideMenu.apiKeys',
