@@ -28,6 +28,7 @@ type EventCounterCache interface {
 	GetEventCounts(keys []string) ([]float64, error)
 	GetUserCount(key string) (int64, error)
 	GetUserCounts(keys []string) ([]float64, error)
+	UpdateUserCount(key, userID string) error
 }
 
 type eventCounterCache struct {
@@ -103,4 +104,12 @@ func getUserValues(cmds []*goredis.IntCmd) ([]float64, error) {
 		userVals = append(userVals, float64(val))
 	}
 	return userVals, nil
+}
+
+func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
+	_, err := c.cache.PFAdd(key, userID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

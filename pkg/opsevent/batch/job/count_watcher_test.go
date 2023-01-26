@@ -98,7 +98,7 @@ func TestRunCountWatcher(t *testing.T) {
 			expectedErr: status.Errorf(codes.Internal, "test"),
 		},
 		{
-			desc: "error: GetEvaluationRealtimeCount fails",
+			desc: "error: GetOpsEvaluationUserCount fails",
 			setup: func(t *testing.T, w *countWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{
@@ -117,7 +117,7 @@ func TestRunCountWatcher(t *testing.T) {
 						}},
 					},
 				)
-				w.eventCounterClient.(*eccmock.MockClient).EXPECT().GetEvaluationCountV2(gomock.Any(), gomock.Any()).Return(
+				w.eventCounterClient.(*eccmock.MockClient).EXPECT().GetOpsEvaluationUserCount(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.NotFound, "test"))
 				w.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(gomock.Any(), gomock.Any()).Return(
 					&ftproto.GetFeatureResponse{
@@ -129,7 +129,7 @@ func TestRunCountWatcher(t *testing.T) {
 			expectedErr: status.Errorf(codes.NotFound, "test"),
 		},
 		{
-			desc: "error: GetOpsRealtimeVariationCount fails",
+			desc: "error: GetOpsEvaluationUserCount fails",
 			setup: func(t *testing.T, w *countWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{
@@ -148,11 +148,13 @@ func TestRunCountWatcher(t *testing.T) {
 						}},
 					},
 				)
-				w.eventCounterClient.(*eccmock.MockClient).EXPECT().GetEvaluationCountV2(gomock.Any(), gomock.Any()).Return(
-					&ecproto.GetEvaluationCountV2Response{Count: &ecproto.EvaluationCount{
-						RealtimeCounts: []*ecproto.VariationCount{{VariationId: "vid1", UserCount: 1}},
-					}}, nil)
-				w.eventCounterClient.(*eccmock.MockClient).EXPECT().GetGoalCountV2(gomock.Any(), gomock.Any()).Return(
+				w.eventCounterClient.(*eccmock.MockClient).EXPECT().GetOpsEvaluationUserCount(gomock.Any(), gomock.Any()).Return(
+					&ecproto.GetOpsEvaluationUserCountResponse{
+						OpsRuleId: "rule-id",
+						ClauseId:  "clause-id",
+						Count:     1,
+					}, nil)
+				w.eventCounterClient.(*eccmock.MockClient).EXPECT().GetOpsGoalUserCount(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.NotFound, "test"))
 				w.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(gomock.Any(), gomock.Any()).Return(
 					&ftproto.GetFeatureResponse{
@@ -184,8 +186,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 	patterns := []struct {
 		desc               string
 		opsEventRateClause *autoopsproto.OpsEventRateClause
-		evaluationCount    *ecproto.VariationCount
-		opsCount           *ecproto.VariationCount
+		evaluationCount    int64
+		opsCount           int64
 		expected           bool
 	}{
 		{
@@ -197,8 +199,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 				ThreadsholdRate: float64(0.5),
 				Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 			},
-			evaluationCount: &ecproto.VariationCount{UserCount: 10},
-			opsCount:        &ecproto.VariationCount{UserCount: 4},
+			evaluationCount: 10,
+			opsCount:        4,
 			expected:        false,
 		},
 		{
@@ -210,8 +212,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 				ThreadsholdRate: float64(0.5),
 				Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 			},
-			evaluationCount: &ecproto.VariationCount{UserCount: 11},
-			opsCount:        &ecproto.VariationCount{UserCount: 5},
+			evaluationCount: 11,
+			opsCount:        5,
 			expected:        false,
 		},
 		{
@@ -223,8 +225,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 				ThreadsholdRate: float64(0.5),
 				Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 			},
-			evaluationCount: &ecproto.VariationCount{UserCount: 10},
-			opsCount:        &ecproto.VariationCount{UserCount: 5},
+			evaluationCount: 10,
+			opsCount:        5,
 			expected:        true,
 		},
 		{
@@ -236,8 +238,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 				ThreadsholdRate: float64(0.5),
 				Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 			},
-			evaluationCount: &ecproto.VariationCount{UserCount: 10},
-			opsCount:        &ecproto.VariationCount{UserCount: 6},
+			evaluationCount: 10,
+			opsCount:        6,
 			expected:        true,
 		},
 		{
@@ -249,8 +251,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 				ThreadsholdRate: float64(0.5),
 				Operator:        autoopsproto.OpsEventRateClause_LESS_OR_EQUAL,
 			},
-			evaluationCount: &ecproto.VariationCount{UserCount: 10},
-			opsCount:        &ecproto.VariationCount{UserCount: 4},
+			evaluationCount: 10,
+			opsCount:        4,
 			expected:        false,
 		},
 		{
@@ -262,8 +264,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 				ThreadsholdRate: float64(0.5),
 				Operator:        autoopsproto.OpsEventRateClause_LESS_OR_EQUAL,
 			},
-			evaluationCount: &ecproto.VariationCount{UserCount: 10},
-			opsCount:        &ecproto.VariationCount{UserCount: 6},
+			evaluationCount: 10,
+			opsCount:        6,
 			expected:        false,
 		},
 		{
@@ -275,8 +277,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 				ThreadsholdRate: float64(0.5),
 				Operator:        autoopsproto.OpsEventRateClause_LESS_OR_EQUAL,
 			},
-			evaluationCount: &ecproto.VariationCount{UserCount: 10},
-			opsCount:        &ecproto.VariationCount{UserCount: 5},
+			evaluationCount: 10,
+			opsCount:        5,
 			expected:        true,
 		},
 		{
@@ -288,8 +290,8 @@ func TestCountWatcherAssessRule(t *testing.T) {
 				ThreadsholdRate: float64(0.5),
 				Operator:        autoopsproto.OpsEventRateClause_LESS_OR_EQUAL,
 			},
-			evaluationCount: &ecproto.VariationCount{UserCount: 11},
-			opsCount:        &ecproto.VariationCount{UserCount: 5},
+			evaluationCount: 11,
+			opsCount:        5,
 			expected:        true,
 		},
 	}
