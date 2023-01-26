@@ -32,7 +32,6 @@ import (
 	aodomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersister/storage/v2"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -136,7 +135,6 @@ type Persister struct {
 	featureClient         featureclient.Client
 	autoOpsClient         aoclient.Client
 	puller                puller.RateLimitedPuller
-	datastore             datastore.Writer
 	userEvaluationStorage featurestorage.UserEvaluationsStorage
 	group                 errgroup.Group
 	opts                  *options
@@ -154,7 +152,6 @@ func NewPersister(
 	featureClient featureclient.Client,
 	autoOpsClient aoclient.Client,
 	p puller.Puller,
-	ds datastore.Writer,
 	bt bigtable.Client,
 	mysqlClient mysql.Client,
 	v3Cache cache.MultiGetDeleteCountCache,
@@ -180,7 +177,6 @@ func NewPersister(
 		featureClient:         featureClient,
 		autoOpsClient:         autoOpsClient,
 		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		datastore:             ds,
 		userEvaluationStorage: featurestorage.NewUserEvaluationsStorage(bt),
 		opts:                  dopts,
 		logger:                dopts.logger.Named("persister"),
@@ -316,19 +312,6 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 				continue
 			}
 			evs[id] = eventJSON
-		}
-		if len(evs) > 0 {
-			fs, err := p.datastore.Write(ctx, evs, environmentNamespace)
-			if err != nil {
-				p.logger.Error(
-					"could not write to datastore",
-					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
-				)
-			}
-			for id, f := range fs {
-				fails[id] = f
-			}
 		}
 	}
 	for id, m := range messages {
