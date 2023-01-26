@@ -1,9 +1,13 @@
+import { AppState } from '@/modules';
+import { Tag } from '@/proto/feature/feature_pb';
 import { Dialog } from '@headlessui/react';
 import { FC, memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
+import { shallowEqual, useSelector } from 'react-redux';
 
 import { messages } from '../../lang/messages';
+import { selectAll as selectAllTags } from '../../modules/tags';
 import { CreatableSelect, Option } from '../CreatableSelect';
 
 export interface PushAddFormProps {
@@ -20,6 +24,11 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
       control,
       formState: { errors, isValid, isSubmitted },
     } = methods;
+
+    const tagsList = useSelector<AppState, Tag.AsObject[]>(
+      (state) => selectAllTags(state.tags),
+      shallowEqual
+    );
 
     return (
       <div className="w-[500px]">
@@ -102,6 +111,11 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
                             field.onChange(options.map((o) => o.value));
                           }}
                           disabled={isSubmitted}
+                          options={tagsList.map((tag) => ({
+                            label: tag.id,
+                            value: tag.id,
+                          }))}
+                          closeMenuOnSelect={false}
                         />
                       );
                     }}

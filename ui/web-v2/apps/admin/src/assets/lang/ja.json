@@ -233,6 +233,8 @@
   "feature.filter.enabled": "有効 / 無効",
   "feature.filter.hasExperiment": "エクスペリメントがある",
   "feature.filter.maintainer": "管理者",
+  "feature.filter.tags": "タグ",
+  "feature.filter.tags.placeholder": "一つ以上タグを選択してください",
   "feature.filter": "フィルター",
   "feature.flagStatus.inactive": "休止",
   "feature.flagStatus.new": "新規作成",

@@ -19,6 +19,7 @@ import { notificationSlice } from './notifications';
 import { projectsSlice } from './projects';
 import { pushSlice } from './pushes';
 import { segmentsSlice } from './segments';
+import { tagsSlice } from './tags';
 import { toastsSlice } from './toasts';
 import { userMetadataSlice } from './userMetadata';
 
@@ -43,6 +44,7 @@ export const reducers = combineReducers({
   me: meSlice.reducer,
   toasts: toastsSlice.reducer,
   userMetadata: userMetadataSlice.reducer,
+  tags: tagsSlice.reducer,
 });
 
 export type AppState = ReturnType<typeof reducers>;

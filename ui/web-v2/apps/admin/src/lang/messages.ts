@@ -1468,6 +1468,14 @@ export const messages = {
         id: 'feature.filter.archived',
         defaultMessage: 'Archived',
       }),
+      tags: defineMessage({
+        id: 'feature.filter.tags',
+        defaultMessage: 'Tags',
+      }),
+      tagsPlaceholder: defineMessage({
+        id: 'feature.filter.tags.placeholder',
+        defaultMessage: 'Select one or more tags',
+      }),
     },
     sort: {
       nameAz: defineMessage({

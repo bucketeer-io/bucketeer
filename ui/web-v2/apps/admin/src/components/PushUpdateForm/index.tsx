@@ -1,10 +1,14 @@
+import { AppState } from '@/modules';
+import { Tag } from '@/proto/feature/feature_pb';
 import { Dialog } from '@headlessui/react';
 import { FC, memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
+import { shallowEqual, useSelector } from 'react-redux';
 
 import { messages } from '../../lang/messages';
 import { useIsEditable } from '../../modules/me';
+import { selectAll as selectAllTags } from '../../modules/tags';
 import { CreatableSelect, Option } from '../CreatableSelect';
 
 export interface PushUpdateFormProps {
@@ -22,6 +26,11 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
       control,
       formState: { errors, isValid, isDirty, isSubmitted },
     } = methods;
+
+    const tagsList = useSelector<AppState, Tag.AsObject[]>(
+      (state) => selectAllTags(state.tags),
+      shallowEqual
+    );
 
     return (
       <div className="w-[500px]">
@@ -103,6 +112,11 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                               label: tag,
                             };
                           })}
+                          options={tagsList.map((tag) => ({
+                            label: tag.id,
+                            value: tag.id,
+                          }))}
+                          closeMenuOnSelect={false}
                         />
                       );
                     }}

@@ -26,6 +26,8 @@ import {
   UpdateFeatureTargetingResponse,
   UpdateFeatureVariationsRequest,
   UpdateFeatureVariationsResponse,
+  ListTagsRequest,
+  ListTagsResponse,
 } from '../proto/feature/service_pb';
 import {
   FeatureServiceClient,
@@ -260,6 +262,27 @@ export function getFeature(
   return new Promise(
     (resolve: (result: GetFeatureResult) => void, reject): void => {
       client.getFeature(request, getMetaData(), (error, response): void => {
+        if (isNotNull(error) || isNull(response)) {
+          reject(
+            new FeatureServiceError(extractErrorMessage(error), request, error)
+          );
+        } else {
+          resolve({ request, response });
+        }
+      });
+    }
+  );
+}
+
+export interface ListTagsResult {
+  request: ListTagsRequest;
+  response: ListTagsResponse;
+}
+
+export function listTags(request: ListTagsRequest): Promise<ListTagsResult> {
+  return new Promise(
+    (resolve: (result: ListTagsResult) => void, reject): void => {
+      client.listTags(request, getMetaData(), (error, response): void => {
         if (isNotNull(error) || isNull(response)) {
           reject(
             new FeatureServiceError(extractErrorMessage(error), request, error)

@@ -1,15 +1,9 @@
-import { Menu, Transition } from '@headlessui/react';
-import {
-  ArchiveIcon,
-  DuplicateIcon,
-  MenuIcon,
-  PlusIcon,
-} from '@heroicons/react/solid';
+import { PlusIcon } from '@heroicons/react/solid';
 import MUArchiveIcon from '@material-ui/icons/Archive';
 import MUFileCopyIcon from '@material-ui/icons/FileCopy';
 import MUUnarchiveIcon from '@material-ui/icons/Unarchive';
 import dayjs from 'dayjs';
-import React, { FC, Fragment, useState, memo, useCallback } from 'react';
+import React, { FC, useState, memo, useCallback, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -26,8 +20,9 @@ import { AppState } from '../../modules';
 import { selectAll as selectAllAccounts } from '../../modules/accounts';
 import { selectAll as selectAllFeatures } from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
+import { selectAll as selectAllTags } from '../../modules/tags';
 import { Account } from '../../proto/account/account_pb';
-import { Feature } from '../../proto/feature/feature_pb';
+import { Feature, Tag } from '../../proto/feature/feature_pb';
 import { FeatureSearchOptions } from '../../types/feature';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
@@ -142,9 +137,14 @@ export enum FilterTypes {
   HAS_EXPERIMENT = 'has_experiment',
   ENABLED = 'enabled',
   ARCHIVED = 'archived',
+  TAGS = 'tags',
 }
 
 const filterOptions: Option[] = [
+  {
+    value: FilterTypes.TAGS,
+    label: intl.formatMessage(messages.tags),
+  },
   {
     value: FilterTypes.MAINTAINER,
     label: intl.formatMessage(messages.feature.filter.maintainer),
@@ -283,7 +283,8 @@ export const FeatureList: FC<FeatureListProps> = memo(
           searchOptions.enabled ||
           searchOptions.archived ||
           searchOptions.hasExperiment ||
-          searchOptions.maintainerId ? (
+          searchOptions.maintainerId ||
+          searchOptions.tagIds?.length > 0 ? (
             <div className="my-10 flex justify-center">
               <div className="text-gray-700">
                 <h1 className="text-lg">
@@ -439,7 +440,12 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       (state) => selectAllAccounts(state.accounts),
       shallowEqual
     );
+    const tagsList = useSelector<AppState, Tag.AsObject[]>(
+      (state) => selectAllTags(state.tags),
+      shallowEqual
+    );
     const [filterValues, setFilterValues] = useState<Option[]>([]);
+
     const handleFilterKeyChange = useCallback(
       (key: string): void => {
         switch (key) {
@@ -462,9 +468,17 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               })
             );
             return;
+          case FilterTypes.TAGS:
+            setFilterValues(
+              tagsList.map((tag) => ({
+                value: tag.id,
+                label: tag.id,
+              }))
+            );
+            return;
         }
       },
-      [setFilterValues, accounts]
+      [setFilterValues, accounts, tagsList]
     );
 
     const handleUpdateOption = (
@@ -497,6 +511,16 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           return;
       }
     };
+    const handleMultiFilterAdd = (key: string, value: string[]): void => {
+      if (key === FilterTypes.TAGS) {
+        handleUpdateOption({
+          tagIds: value,
+        });
+      }
+    };
+
+    useEffect(() => {}, []);
+
     return (
       <div
         className={classNames(
@@ -522,6 +546,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               values={filterValues}
               onChangeKey={handleFilterKeyChange}
               onAdd={handleFilterAdd}
+              onAddMulti={handleMultiFilterAdd}
             />
           </div>
           <div className="flex-grow" />
@@ -553,7 +578,8 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
         {(options.enabled ||
           options.archived ||
           options.hasExperiment ||
-          options.maintainerId) && (
+          options.maintainerId ||
+          options.tagIds?.length > 0) && (
           <div className="flex space-x-2 mt-2">
             {options.enabled && (
               <FilterChip
@@ -609,10 +635,33 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 }
               />
             )}
+            {typeof options.tagIds === 'string' && (
+              <FilterChip
+                label={`${f(messages.feature.filter.tags)}: ${options.tagIds}`}
+                onRemove={() =>
+                  handleUpdateOption({
+                    tagIds: null,
+                  })
+                }
+              />
+            )}
+            {Array.isArray(options.tagIds) &&
+              options.tagIds.map((tagId) => (
+                <FilterChip
+                  key={tagId}
+                  label={`${f(messages.feature.filter.tags)}: ${tagId}`}
+                  onRemove={() =>
+                    handleUpdateOption({
+                      tagIds: options.tagIds.filter((tId) => tId !== tagId),
+                    })
+                  }
+                />
+              ))}
             {(options.enabled ||
               options.archived ||
               options.hasExperiment ||
-              options.maintainerId) && (
+              options.maintainerId ||
+              options.tagIds) && (
               <FilterRemoveAllButtonProps onClick={onClear} />
             )}
           </div>

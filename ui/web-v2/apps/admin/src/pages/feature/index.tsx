@@ -1,3 +1,4 @@
+import { listTags } from '@/modules/tags';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { unwrapResult } from '@reduxjs/toolkit';
 import React, { useCallback, FC, memo, useEffect, useState } from 'react';
@@ -40,7 +41,10 @@ import {
 } from '../../modules/features';
 import { useCurrentEnvironment, useEnvironments } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
-import { ListFeaturesRequest } from '../../proto/feature/service_pb';
+import {
+  ListFeaturesRequest,
+  ListTagsRequest,
+} from '../../proto/feature/service_pb';
 import { AppDispatch } from '../../store';
 import { isFeatureSortOption, FeatureSortOption } from '../../types/feature';
 import {
@@ -207,12 +211,14 @@ export const FeatureIndexPage: FC = memo(() => {
         options && options.hasExperiment
           ? options.hasExperiment === 'true'
           : null;
+      const tags = options && options.tagIds ? options.tagIds : [];
+
       dispatch(
         listFeatures({
           environmentNamespace: currentEnvironment.namespace,
           pageSize: FEATURE_LIST_PAGE_SIZE,
           cursor: String(cursor),
-          tags: [],
+          tags,
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
           searchKeyword: options && (options.q as string),
@@ -458,6 +464,16 @@ export const FeatureIndexPage: FC = memo(() => {
     updateFeatureList(
       searchOptions,
       searchOptions.page ? Number(searchOptions.page) : 1
+    );
+    dispatch(
+      listTags({
+        environmentNamespace: currentEnvironment.namespace,
+        pageSize: 99999,
+        cursor: '',
+        orderBy: ListTagsRequest.OrderBy.DEFAULT,
+        orderDirection: ListTagsRequest.OrderDirection.ASC,
+        searchKeyword: null,
+      })
     );
   }, [dispatch, updateFeatureList]);
 

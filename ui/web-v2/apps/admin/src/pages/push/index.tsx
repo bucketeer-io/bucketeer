@@ -1,3 +1,5 @@
+import { listTags } from '@/modules/tags';
+import { ListTagsRequest } from '@/proto/feature/service_pb';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -302,6 +304,19 @@ export const PushIndexPage: FC = memo(() => {
       searchOptions.page ? Number(searchOptions.page) : 1
     );
   }, [updatePushList]);
+
+  useEffect(() => {
+    dispatch(
+      listTags({
+        environmentNamespace: currentEnvironment.namespace,
+        pageSize: 99999,
+        cursor: '',
+        orderBy: ListTagsRequest.OrderBy.DEFAULT,
+        orderDirection: ListTagsRequest.OrderDirection.ASC,
+        searchKeyword: null,
+      })
+    );
+  }, []);
 
   return (
     <>

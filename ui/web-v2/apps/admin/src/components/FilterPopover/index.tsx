@@ -7,6 +7,7 @@ import ReactSelect from 'react-select';
 
 import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
+import { FilterTypes } from '../FeatureList';
 
 export type FilterType = 'maintainer' | 'hasExperiment' | 'enabled';
 
@@ -20,32 +21,50 @@ export interface FilterPopoverProps {
   values: Option[];
   onChangeKey: (key: string) => void;
   onAdd: (key: string, value?: string) => void;
+  onAddMulti?: (key: string, value?: string[]) => void;
 }
 
 export const FilterPopover: FC<FilterPopoverProps> = memo(
-  ({ keys, values, onChangeKey, onAdd }) => {
+  ({ keys, values, onChangeKey, onAdd, onAddMulti }) => {
     const { formatMessage: f } = useIntl();
     const [key, setKey] = useState<string>(null);
-    const [valueOption, setValue] = useState<Option>(values[0]);
     const referenceElement = useRef<HTMLButtonElement | null>(null);
     const popperElement = useRef<HTMLDivElement | null>(null);
     const popper = usePopper(referenceElement.current, popperElement.current, {
       placement: 'bottom-start',
     });
+    const [valueOption, setValue] = useState<Option>(values[0]);
+    const [multiValueOption, setMultiValue] = useState<Option[]>([]);
+
+    const isMultiFilter = key === FilterTypes.TAGS;
 
     const handleKeyChange = (o: Option) => {
       setKey(o.value);
       onChangeKey(o.value);
     };
 
-    const handleValueChange = (o: Option) => {
-      setValue(o);
-    };
-
-    const handleOnClick = () => {
-      onAdd(key, valueOption.value);
+    const handleOnClickAdd = () => {
+      if (isMultiFilter) {
+        onAddMulti(
+          key,
+          multiValueOption.map((o) => o.value)
+        );
+      } else {
+        onAdd(key, valueOption.value);
+      }
       setKey(null);
       setValue(values[0]);
+    };
+
+    const onPopoverClose = (isPopoverClose: boolean) => {
+      if (isPopoverClose) {
+        if (multiValueOption.length > 0) {
+          setMultiValue([]);
+        }
+        if (valueOption) {
+          setValue(null);
+        }
+      }
     };
 
     useEffect(() => {
@@ -56,6 +75,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
       <Popover>
         {({ open }) => (
           <>
+            {onPopoverClose(open === false)}
             <Popover.Button
               ref={referenceElement}
               className={classNames(
@@ -102,7 +122,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                       )}
                     >
                       <div className="p-4 bg-gray-100">
-                        <div className="flex items-center">
+                        <div className="flex">
                           <ReactSelect
                             className={classNames(
                               'w-60 z-10 text-sm text-gray-700'
@@ -114,17 +134,28 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                             onChange={handleKeyChange}
                             isSearchable={false}
                             styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
                             }}
                           />
-                          {key != null && values.length > 0 && (
-                            <div className="flex items-center">
-                              <div className="mx-3">
+                          {(valueOption || multiValueOption.length > 0) && (
+                            <div className="flex">
+                              <div className="mx-3 pt-[6px]">
                                 {f(messages.feature.clause.operator.equal)}
                               </div>
                               <ReactSelect
+                                placeholder={f(
+                                  messages.feature.filter.tagsPlaceholder
+                                )}
+                                closeMenuOnSelect={isMultiFilter ? false : true}
                                 className={classNames(
-                                  'min-w-max text-sm text-gray-700 focus-visible:ring-white'
+                                  `${
+                                    isMultiFilter
+                                      ? 'min-w-[270px]'
+                                      : 'min-w-max'
+                                  } text-sm text-gray-700 focus-visible:ring-white`
                                 )}
                                 classNamePrefix="react-select"
                                 options={values}
@@ -147,9 +178,18 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                                     ...otherStyles
                                   }) => ({ ...otherStyles }),
                                 }}
-                                value={valueOption}
-                                onChange={handleValueChange}
+                                value={
+                                  isMultiFilter ? multiValueOption : valueOption
+                                }
+                                onChange={(o) => {
+                                  if (isMultiFilter) {
+                                    setMultiValue(o);
+                                  } else {
+                                    setValue(o);
+                                  }
+                                }}
                                 isSearchable={false}
+                                isMulti={isMultiFilter}
                               />
                               <div className={classNames('flex-none ml-4')}>
                                 <button
@@ -157,7 +197,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                                   className="btn-submit"
                                   disabled={false}
                                   onClick={() => {
-                                    handleOnClick();
+                                    handleOnClickAdd();
                                     close();
                                   }}
                                 >

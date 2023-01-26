@@ -1,9 +1,13 @@
+import { AppState } from '@/modules';
+import { Tag } from '@/proto/feature/feature_pb';
 import { Dialog } from '@headlessui/react';
 import { FC, memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
+import { shallowEqual, useSelector } from 'react-redux';
 
 import { messages } from '../../lang/messages';
+import { selectAll as selectAllTags } from '../../modules/tags';
 import { CreatableSelect, Option } from '../CreatableSelect';
 import { Select } from '../Select';
 import { VariationInput } from '../VariationInput';
@@ -25,6 +29,10 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
       setValue,
       watch,
     } = methods;
+    const tagsList = useSelector<AppState, Tag.AsObject[]>(
+      (state) => selectAllTags(state.tags),
+      shallowEqual
+    );
 
     const variationsOptions = getValues('variations').map((variation, idx) => {
       return {
@@ -137,9 +145,14 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                     render={({ field }) => {
                       return (
                         <CreatableSelect
+                          options={tagsList.map((tag) => ({
+                            label: tag.id,
+                            value: tag.id,
+                          }))}
                           onChange={(options: Option[]) => {
                             field.onChange(options.map((o) => o.value));
                           }}
+                          closeMenuOnSelect={false}
                         />
                       );
                     }}
