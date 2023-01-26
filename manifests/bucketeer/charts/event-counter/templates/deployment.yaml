@@ -56,16 +56,6 @@ spec:
               value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_EVENT_COUNTER_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
-            {{ if .Values.env.druidPassword }}
-            - name: BUCKETEER_EVENT_COUNTER_DRUID_URL
-              value: "{{ .Values.env.druidUrl }}"
-            - name: BUCKETEER_EVENT_COUNTER_DRUID_DATASOURCE_PREFIX
-              value: "{{ .Values.env.druidDatasourcePrefix }}"
-            - name: BUCKETEER_EVENT_COUNTER_DRUID_USERNAME
-              value: "{{ .Values.env.druidUsername }}"
-            - name: BUCKETEER_EVENT_COUNTER_DRUID_PASSWORD
-              value: "{{ .Values.env.druidPassword }}"
-            {{ end }}
             - name: BUCKETEER_EVENT_COUNTER_BIGQUERY_DATA_SET
               value: "{{ .Values.env.bigQueryDataSet }}"
             - name: BUCKETEER_EVENT_COUNTER_BIGQUERY_DATA_LOCATION
