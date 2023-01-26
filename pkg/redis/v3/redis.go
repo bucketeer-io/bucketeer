@@ -446,6 +446,8 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 	switch err {
 	case nil:
 		code = redis.CodeSuccess
+	case ErrNil:
+		code = redis.CodeNotFound
 	}
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, cmdName, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, cmdName, code).Observe(
