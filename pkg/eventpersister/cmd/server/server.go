@@ -34,7 +34,6 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
@@ -46,7 +45,6 @@ type server struct {
 	*kingpin.CmdClause
 	port                         *int
 	project                      *string
-	bigtableInstance             *string
 	subscription                 *string
 	topic                        *string
 	maxMPS                       *int
@@ -78,15 +76,14 @@ type server struct {
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the server")
 	server := &server{
-		CmdClause:        cmd,
-		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:          cmd.Flag("project", "Google Cloud project name.").String(),
-		bigtableInstance: cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
-		subscription:     cmd.Flag("subscription", "Google PubSub subscription name.").String(),
-		topic:            cmd.Flag("topic", "Google PubSub topic name.").String(),
-		maxMPS:           cmd.Flag("max-mps", "Maximum messages should be handled in a second.").Default("1000").Int(),
-		numWorkers:       cmd.Flag("num-workers", "Number of workers.").Default("2").Int(),
-		numWriters:       cmd.Flag("num-writers", "Number of writers.").Default("2").Int(),
+		CmdClause:    cmd,
+		port:         cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:      cmd.Flag("project", "Google Cloud project name.").String(),
+		subscription: cmd.Flag("subscription", "Google PubSub subscription name.").String(),
+		topic:        cmd.Flag("topic", "Google PubSub topic name.").String(),
+		maxMPS:       cmd.Flag("max-mps", "Maximum messages should be handled in a second.").Default("1000").Int(),
+		numWorkers:   cmd.Flag("num-workers", "Number of workers.").Default("2").Int(),
+		numWriters:   cmd.Flag("num-writers", "Number of writers.").Default("2").Int(),
 		flushSize: cmd.Flag(
 			"flush-size",
 			"Maximum number of messages to batch before writing to datastore.",
@@ -144,12 +141,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-
-	btClient, err := s.createBigtableClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-	defer btClient.Close()
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
@@ -226,7 +217,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureClient,
 		autoOpsClient,
 		puller,
-		btClient,
 		mysqlClient,
 		redisV3Cache,
 		persister.WithMaxMPS(*s.maxMPS),
@@ -292,18 +282,5 @@ func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.P
 		pubsub.WithNumGoroutines(*s.pullerNumGoroutines),
 		pubsub.WithMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
 		pubsub.WithMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
-	)
-}
-
-func (s *server) createBigtableClient(
-	ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (bigtable.Client, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	return bigtable.NewBigtableClient(ctx, *s.project, *s.bigtableInstance,
-		bigtable.WithMetrics(registerer),
-		bigtable.WithLogger(logger),
 	)
 }
