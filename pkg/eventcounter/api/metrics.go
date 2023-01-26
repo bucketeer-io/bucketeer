@@ -26,14 +26,6 @@ const (
 )
 
 var (
-	cacheCounter = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "bucketeer",
-			Subsystem: "event_counter",
-			Name:      "api_cache_requests_total",
-			Help:      "Total number of cache requests",
-		}, []string{"type", "layer", "code"})
-
 	listExperimentCountsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -69,7 +61,6 @@ var (
 
 func registerMetrics(r metrics.Registerer) {
 	r.MustRegister(
-		cacheCounter,
 		listExperimentCountsCounter,
 		listExperimentResultsCounter,
 		getExperimentCountsCounter,
