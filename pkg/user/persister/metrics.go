@@ -36,20 +36,11 @@ var (
 			Name:      "persister_handled_total",
 			Help:      "Total number of handled messages",
 		}, []string{"code"})
-
-	cacheCounter = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "bucketeer",
-			Subsystem: "user",
-			Name:      "api_cache_requests_total",
-			Help:      "Total number of cache requests",
-		}, []string{"type", "layer", "code"})
 )
 
 func registerMetrics(r metrics.Registerer) {
 	r.MustRegister(
 		receivedCounter,
 		handledCounter,
-		cacheCounter,
 	)
 }
