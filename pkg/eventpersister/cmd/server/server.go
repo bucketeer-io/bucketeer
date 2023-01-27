@@ -30,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
 const (
@@ -143,25 +142,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
-	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if mysqlClient != nil {
-			defer mysqlClient.Close()
-		}
-	}()
-
 	p := persister.NewPersister(
 		puller,
-		mysqlClient,
 		redisV3Cache,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
 		persister.WithFlushInterval(*s.flushInterval),
-		persister.WithFlushTimeout(*s.flushTimeout),
 		persister.WithMetrics(registerer),
 		persister.WithLogger(logger),
 	)
@@ -186,26 +173,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	<-ctx.Done()
 	return nil
-}
-
-func (s *server) createMySQLClient(
-	ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (mysql.Client, error) {
-	if *s.mysqlUser == "" || *s.mysqlPass == "" || *s.mysqlHost == "" || *s.mysqlPort == 0 || *s.mysqlDbName == "" {
-		return nil, nil
-	}
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	return mysql.NewClient(
-		ctx,
-		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost,
-		*s.mysqlPort,
-		*s.mysqlDbName,
-		mysql.WithLogger(logger),
-		mysql.WithMetrics(registerer),
-	)
 }
 
 func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.Puller, error) {

@@ -207,6 +207,12 @@ func (p *persister) runWorker() error {
 			}
 			timer.Reset(p.opts.flushInterval)
 		case <-p.ctx.Done():
+			chunkSize := len(chunk)
+			p.logger.Info("Context is done", zap.Int("chunkSize", chunkSize))
+			if chunkSize > 0 {
+				p.handleChunk(chunk)
+				p.logger.Info("All the left messages are processed successfully", zap.Int("chunkSize", chunkSize))
+			}
 			return nil
 		}
 	}
@@ -215,9 +221,6 @@ func (p *persister) runWorker() error {
 func (p *persister) handleChunk(chunk map[string]*puller.Message) {
 	for _, msg := range chunk {
 		event, err := p.unmarshalMessage(msg)
-		// The message is acked no matter what error is returned,
-		// because the data will be sent again from the SDK from time to time.
-		msg.Ack()
 		if err != nil {
 			handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
 			continue
@@ -229,12 +232,15 @@ func (p *persister) handleChunk(chunk map[string]*puller.Message) {
 		ok, repeatable := p.upsert(event)
 		if !ok {
 			if repeatable {
+				msg.Nack()
 				handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 			} else {
+				msg.Ack()
 				handledCounter.WithLabelValues(codes.NonRepeatableError.String()).Inc()
 			}
 			continue
 		}
+		msg.Ack()
 		handledCounter.WithLabelValues(codes.OK.String()).Inc()
 	}
 }
@@ -266,6 +272,16 @@ func (p *persister) unmarshalMessage(msg *puller.Message) (*eventproto.UserEvent
 }
 
 func (p *persister) upsert(event *eventproto.UserEvent) (ok, repeatable bool) {
+	if err := p.upsertMAU(event); err != nil {
+		p.logger.Error(
+			"Failed to store the mau",
+			zap.Error(err),
+			zap.String("environmentNamespace", event.EnvironmentNamespace),
+			zap.String("userId", event.UserId),
+			zap.String("tag", event.Tag),
+		)
+		return false, true
+	}
 	exist, err := p.getUser(event.UserId, event.EnvironmentNamespace)
 	if err != nil && err != ustorage.ErrUserNotFound {
 		p.logger.Error("Failed to get User",
@@ -300,6 +316,11 @@ func (p *persister) upsert(event *eventproto.UserEvent) (ok, repeatable bool) {
 		handledCounter.WithLabelValues(codes.NewID.String()).Inc()
 	}
 	return true, false
+}
+
+func (p *persister) upsertMAU(event *eventproto.UserEvent) error {
+	s := ustorage.NewMysqlMAUStorage(p.mysqlClient)
+	return s.UpsertMAU(p.ctx, event, event.EnvironmentNamespace)
 }
 
 func (p *persister) getUser(userID, environmentNamespace string) (*userproto.User, error) {
