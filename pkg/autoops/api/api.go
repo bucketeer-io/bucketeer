@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/url"
 	"strconv"
 	"time"
@@ -47,8 +46,6 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
-
-var errAlreadyTriggered = errors.New("auto ops Rule has already triggered")
 
 type options struct {
 	logger *zap.Logger
@@ -836,6 +833,13 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	if err := s.validateExecuteAutoOpsRequest(req, localizer); err != nil {
 		return nil, err
 	}
+	triggered, err := s.checkIfHasAlreadyTriggered(ctx, localizer, req.Id, req.EnvironmentNamespace)
+	if err != nil {
+		return nil, err
+	}
+	if triggered {
+		return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true}, nil
+	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -859,23 +863,36 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if err != nil {
 			return err
 		}
-		if autoOpsRule.AlreadyTriggered() {
-			return errAlreadyTriggered
-		}
 		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
 		if err := handler.Handle(ctx, req.ChangeAutoOpsRuleTriggeredAtCommand); err != nil {
 			return err
 		}
 		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace); err != nil {
+			if err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
+				s.logger.Warn(
+					"No rows were affected",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("id", req.Id),
+						zap.String("environmentNamespace", req.EnvironmentNamespace),
+					)...,
+				)
+				return nil
+			}
 			return err
 		}
 		return ExecuteOperation(ctx, req.EnvironmentNamespace, autoOpsRule, s.featureClient, s.logger)
 	})
 	if err != nil {
-		if err == errAlreadyTriggered {
-			return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true}, nil
-		}
-		if err == v2as.ErrAutoOpsRuleNotFound || err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
+		if err == v2as.ErrAutoOpsRuleNotFound {
+			s.logger.Warn(
+				"Auto Ops Rule not found",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+				)...,
+			)
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -929,6 +946,63 @@ func (s *AutoOpsService) validateExecuteAutoOpsRequest(
 		return dt.Err()
 	}
 	return nil
+}
+
+func (s *AutoOpsService) checkIfHasAlreadyTriggered(
+	ctx context.Context,
+	localizer locale.Localizer,
+	ruleID,
+	environmentNamespace string,
+) (bool, error) {
+	storage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
+	autoOpsRule, err := storage.GetAutoOpsRule(ctx, ruleID, environmentNamespace)
+	if err != nil {
+		if err == v2as.ErrAutoOpsRuleNotFound {
+			s.logger.Warn(
+				"Auto Ops Rule not found",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("ruleID", ruleID),
+					zap.String("environmentNamespace", environmentNamespace),
+				)...,
+			)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return false, statusInternal.Err()
+			}
+			return false, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to get auto ops rule",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return false, statusInternal.Err()
+		}
+		return false, dt.Err()
+	}
+	if autoOpsRule.AlreadyTriggered() {
+		s.logger.Warn(
+			"Auto Ops Rule already triggered",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("ruleID", ruleID),
+				zap.String("environmentNamespace", environmentNamespace),
+			)...,
+		)
+		return true, nil
+	}
+	return false, nil
 }
 
 func (s *AutoOpsService) ListOpsCounts(
