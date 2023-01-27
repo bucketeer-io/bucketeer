@@ -60,17 +60,29 @@ func enableFeature(
 		EnvironmentNamespace: environmentNamespace,
 	}
 	_, err := featureClient.EnableFeature(ctx, req)
-	if code := status.Code(err); code == codes.FailedPrecondition {
-		logger.Warn(
-			"Failed to enable feature",
+	if err != nil {
+		if code := status.Code(err); code == codes.FailedPrecondition {
+			logger.Warn(
+				"Feature flag is already enabled",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("featureId", req.Id),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+				)...,
+			)
+			return nil
+		}
+		logger.Error(
+			"Failed to enable feature flag",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.String("featureId", req.Id),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil
+		return err
 	}
-	return err
+	return nil
 }
 
 func disableFeature(
@@ -86,15 +98,27 @@ func disableFeature(
 		EnvironmentNamespace: environmentNamespace,
 	}
 	_, err := featureClient.DisableFeature(ctx, req)
-	if code := status.Code(err); code == codes.FailedPrecondition {
-		logger.Warn(
-			"Failed to disable feature",
+	if err != nil {
+		if code := status.Code(err); code == codes.FailedPrecondition {
+			logger.Warn(
+				"Feature flag is already disabled",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("featureId", req.Id),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+				)...,
+			)
+			return nil
+		}
+		logger.Error(
+			"Failed to disable feature flag",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.String("featureId", req.Id),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
 			)...,
 		)
-		return nil
+		return err
 	}
-	return err
+	return nil
 }
