@@ -52,6 +52,8 @@ const (
 	retryTimes     = 360
 )
 
+const defaultVariationID = "default"
+
 var (
 	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
 	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
@@ -1495,6 +1497,83 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 	}
 }
 
+func TestGetEvaluationTimeseriesCount(t *testing.T) {
+	t.Parallel()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+	ecClient := newEventCounterClient(t)
+	defer ecClient.Close()
+	uuid := newUUID(t)
+	featureID := createFeatureID(t, uuid)
+	cmd := newCreateFeatureCommand(featureID, []string{"a", "b"})
+	createFeature(t, featureClient, cmd)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	userIDs := []string{}
+	for i := 0; i < 8; i++ {
+		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
+	}
+	addTag(t, tag, featureID, featureClient)
+	enableFeature(t, featureID, featureClient)
+	f := getFeature(t, featureClient, featureID)
+	// Register variation
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[2], f.Variations[0].Id, tag)
+	// Increment evaluation event count
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag)
+	// Register variation
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag)
+	// Increment evaluation event count
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag)
+	// Register variation
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[5], defaultVariationID, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[6], defaultVariationID, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[7], defaultVariationID, tag)
+	expectedUserVal := []float64{3, 2, 3}
+	expectedEventVal := []float64{4, 3, 3}
+	i := 0
+LOOP:
+	for {
+		time.Sleep(10 * time.Second)
+		i++
+		if i == retryTimes {
+			t.Fatalf("retry timeout")
+		}
+		res := getEvaluationTimeseriesCount(t, featureID, ecClient)
+		if len(res.UserCounts) != 3 {
+			t.Fatalf("the number of user counts is not correct: %d", len(res.UserCounts))
+		}
+		expectedVIDs := []string{f.Variations[0].Id, f.Variations[1].Id, defaultVariationID}
+		if len(res.EventCounts) != len(expectedVIDs) {
+			t.Fatalf("the number of event counts is not correct: %d", len(res.UserCounts))
+		}
+		for idx, uc := range res.UserCounts {
+			if uc.VariationId != expectedVIDs[idx] {
+				t.Fatalf("variation ID is not correct: %s", uc.VariationId)
+			}
+			if len(uc.Timeseries.Timestamps) != 31 {
+				t.Fatalf("the number of user counts is not correct: %d", len(uc.Timeseries.Timestamps))
+			}
+			if uc.Timeseries.Values[len(uc.Timeseries.Values)-1] != expectedUserVal[idx] {
+				continue LOOP
+			}
+		}
+		for idx, ec := range res.EventCounts {
+			if ec.VariationId != expectedVIDs[idx] {
+				t.Fatalf("variation ID is not correct: %s", ec.VariationId)
+			}
+			if len(ec.Timeseries.Timestamps) != 31 {
+				t.Fatalf("the number of event counts is not correct: %d", len(ec.Timeseries.Timestamps))
+			}
+			if ec.Timeseries.Values[len(ec.Timeseries.Values)-1] != expectedEventVal[idx] {
+				continue LOOP
+			}
+		}
+		break
+	}
+}
+
 func getVariationCount(vcs []*ecproto.VariationCount, id string) *ecproto.VariationCount {
 	for _, vc := range vcs {
 		if vc.VariationId == id {
@@ -2061,4 +2140,26 @@ func createUserID(t *testing.T, uuid string) string {
 		return fmt.Sprintf("%s-%s-user-id-%s", prefixTestName, *testID, uuid)
 	}
 	return fmt.Sprintf("%s-user-id-%s", prefixTestName, uuid)
+}
+
+func getEvaluationTimeseriesCount(
+	t *testing.T,
+	featureID string,
+	c ecclient.Client,
+) *ecproto.GetEvaluationTimeseriesCountResponse {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req := &ecproto.GetEvaluationTimeseriesCountRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		FeatureId:            featureID,
+	}
+	res, err := c.GetEvaluationTimeseriesCount(
+		ctx,
+		req,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return res
 }
