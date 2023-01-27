@@ -19,7 +19,6 @@ env:
   numWriters: 2
   flushSize: 100
   flushInterval: 2s
-  flushTimeout: 30s
   redis:
     serverName:
     addr:

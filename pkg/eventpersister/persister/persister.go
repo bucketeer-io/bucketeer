@@ -26,14 +26,11 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersister/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	esproto "github.com/bucketeer-io/bucketeer/proto/event/service"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -64,7 +61,6 @@ type options struct {
 	numWorkers    int
 	flushSize     int
 	flushInterval time.Duration
-	flushTimeout  time.Duration
 	metrics       metrics.Registerer
 	logger        *zap.Logger
 }
@@ -95,12 +91,6 @@ func WithFlushInterval(i time.Duration) Option {
 	}
 }
 
-func WithFlushTimeout(timeout time.Duration) Option {
-	return func(opts *options) {
-		opts.flushTimeout = timeout
-	}
-}
-
 func WithMetrics(r metrics.Registerer) Option {
 	return func(opts *options) {
 		opts.metrics = r
@@ -121,13 +111,11 @@ type Persister struct {
 	ctx                   context.Context
 	cancel                func()
 	doneCh                chan struct{}
-	mysqlClient           mysql.Client
 	evaluationCountCacher cache.MultiGetDeleteCountCache
 }
 
 func NewPersister(
 	p puller.Puller,
-	mysqlClient mysql.Client,
 	v3Cache cache.MultiGetDeleteCountCache,
 	opts ...Option,
 ) *Persister {
@@ -136,7 +124,6 @@ func NewPersister(
 		numWorkers:    1,
 		flushSize:     50,
 		flushInterval: 5 * time.Second,
-		flushTimeout:  20 * time.Second,
 		logger:        zap.NewNop(),
 	}
 	for _, opt := range opts {
@@ -153,7 +140,6 @@ func NewPersister(
 		ctx:                   ctx,
 		cancel:                cancel,
 		doneCh:                make(chan struct{}),
-		mysqlClient:           mysqlClient,
 		evaluationCountCacher: v3Cache,
 	}
 }
@@ -237,8 +223,6 @@ func (p *Persister) batch() error {
 }
 
 func (p *Persister) send(messages map[string]*puller.Message) {
-	ctx, cancel := context.WithTimeout(context.Background(), p.opts.flushTimeout)
-	defer cancel()
 	envEvents := p.extractEvents(messages)
 	if len(envEvents) == 0 {
 		p.logger.Error("all messages were bad")
@@ -247,16 +231,6 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 	fails := make(map[string]bool, len(messages))
 	for environmentNamespace, events := range envEvents {
 		for id, event := range events {
-			if err := p.upsertMAU(ctx, event, environmentNamespace); err != nil {
-				p.logger.Error(
-					"Failed to store a mau",
-					zap.Error(err),
-					zap.String("id", id),
-					zap.String("environmentNamespace", environmentNamespace),
-				)
-				fails[id] = true
-				continue
-			}
 			if err := p.upsertEvaluationCount(event, environmentNamespace); err != nil {
 				p.logger.Error(
 					"Failed to upsert an evaluation event in redis",
@@ -309,17 +283,6 @@ func (p *Persister) extractEvents(messages map[string]*puller.Message) environme
 		envEvents[event.EnvironmentNamespace] = eventMap{event.Id: innerEvent.Message}
 	}
 	return envEvents
-}
-
-func (p *Persister) upsertMAU(ctx context.Context, event proto.Message, environmentNamespace string) error {
-	if p.mysqlClient == nil {
-		return nil
-	}
-	if e, ok := event.(*esproto.UserEvent); ok {
-		s := storage.NewMysqlMAUStorage(p.mysqlClient)
-		return s.UpsertMAU(ctx, e, environmentNamespace)
-	}
-	return nil
 }
 
 func getVariationID(reason featureproto.Reason_Type, vID string) string {

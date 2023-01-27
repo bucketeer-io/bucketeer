@@ -90,8 +90,30 @@ func TestUpsert(t *testing.T) {
 		expected           *userproto.User
 	}{
 		{
+			desc: "upsert mau error",
+			setup: func(p *persister) {
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("internal"))
+			},
+			input: &eventproto.UserEvent{
+				EnvironmentNamespace: "ns0",
+				UserId:               "id-1",
+				LastSeen:             3,
+			},
+			expectedOK:         false,
+			expectedRepeatable: true,
+			expected: &userproto.User{
+				Id:       "id-1",
+				LastSeen: 3,
+			},
+		},
+		{
 			desc: "get user error",
 			setup: func(p *persister) {
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("internal"))
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
@@ -113,6 +135,9 @@ func TestUpsert(t *testing.T) {
 		{
 			desc: "upsert error",
 			setup: func(p *persister) {
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
@@ -137,6 +162,9 @@ func TestUpsert(t *testing.T) {
 		{
 			desc: "upsert success",
 			setup: func(p *persister) {
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
