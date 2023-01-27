@@ -1,5 +1,0 @@
-apiVersion: v1
-appVersion: "1.0"
-description: A Helm chart for bucketeer-event-persister-goal-events-kafka
-name: event-persister-goal-events-kafka
-version: 1.0.0
