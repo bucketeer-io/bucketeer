@@ -9,10 +9,6 @@ import {
   GetEvaluationTimeseriesCountResponse,
   GetExperimentResultRequest,
   GetExperimentResultResponse,
-  GetGoalCountRequest,
-  GetGoalCountResponse,
-  ListUserMetadataRequest,
-  ListUserMetadataResponse,
 } from '../proto/eventcounter/service_pb';
 import {
   EventCounterServiceClient,
@@ -75,64 +71,6 @@ export function getExperimentResult(
               );
               return;
             }
-            reject(
-              new EventCounterServiceError(
-                extractErrorMessage(error),
-                request,
-                error
-              )
-            );
-          } else {
-            resolve({ request, response });
-          }
-        }
-      );
-    }
-  );
-}
-
-export interface GetGoalCountResult {
-  request: GetGoalCountRequest;
-  response: GetGoalCountResponse;
-}
-
-export function getGoalCount(
-  request: GetGoalCountRequest
-): Promise<GetGoalCountResult> {
-  return new Promise(
-    (resolve: (result: GetGoalCountResult) => void, reject): void => {
-      client.getGoalCount(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new EventCounterServiceError(
-              extractErrorMessage(error),
-              request,
-              error
-            )
-          );
-        } else {
-          resolve({ request, response });
-        }
-      });
-    }
-  );
-}
-
-export interface ListUserMetadataResult {
-  request: ListUserMetadataRequest;
-  response: ListUserMetadataResponse;
-}
-
-export function listUserMetadata(
-  request: ListUserMetadataRequest
-): Promise<ListUserMetadataResult> {
-  return new Promise(
-    (resolve: (result: ListUserMetadataResult) => void, reject): void => {
-      client.listUserMetadata(
-        request,
-        getMetaData(),
-        (error, response): void => {
-          if (isNotNull(error) || isNull(response)) {
             reject(
               new EventCounterServiceError(
                 extractErrorMessage(error),

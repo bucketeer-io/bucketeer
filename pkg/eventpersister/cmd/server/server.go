@@ -21,22 +21,15 @@ import (
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/datastore"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/persister"
-	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/kafka"
-	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
@@ -48,23 +41,13 @@ type server struct {
 	*kingpin.CmdClause
 	port                         *int
 	project                      *string
-	bigtableInstance             *string
 	subscription                 *string
 	topic                        *string
 	maxMPS                       *int
 	numWorkers                   *int
-	kafkaURL                     *string
-	kafkaTopicPrefix             *string
-	kafkaTopicDataType           *string
-	kafkaUsername                *string
-	kafkaPassword                *string
-	numWriters                   *int
 	flushSize                    *int
 	flushInterval                *time.Duration
 	flushTimeout                 *time.Duration
-	experimentService            *string
-	featureService               *string
-	autoOpsService               *string
 	certPath                     *string
 	keyPath                      *string
 	serviceTokenPath             *string
@@ -85,35 +68,19 @@ type server struct {
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the server")
 	server := &server{
-		CmdClause:          cmd,
-		port:               cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:            cmd.Flag("project", "Google Cloud project name.").String(),
-		bigtableInstance:   cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
-		subscription:       cmd.Flag("subscription", "Google PubSub subscription name.").String(),
-		topic:              cmd.Flag("topic", "Google PubSub topic name.").String(),
-		maxMPS:             cmd.Flag("max-mps", "Maximum messages should be handled in a second.").Default("1000").Int(),
-		numWorkers:         cmd.Flag("num-workers", "Number of workers.").Default("2").Int(),
-		kafkaURL:           cmd.Flag("kafka-url", "Kafka URL.").String(),
-		kafkaTopicPrefix:   cmd.Flag("kafka-topic-prefix", "Kafka topic dataset section prefix.").String(),
-		kafkaTopicDataType: cmd.Flag("kafka-topic-data-type", "Kafka topic data type.").String(),
-		kafkaUsername:      cmd.Flag("kafka-username", "Kafka username.").String(),
-		kafkaPassword:      cmd.Flag("kafka-password", "Kafka password.").String(),
-		numWriters:         cmd.Flag("num-writers", "Number of writers.").Default("2").Int(),
+		CmdClause:    cmd,
+		port:         cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:      cmd.Flag("project", "Google Cloud project name.").String(),
+		subscription: cmd.Flag("subscription", "Google PubSub subscription name.").String(),
+		topic:        cmd.Flag("topic", "Google PubSub topic name.").String(),
+		maxMPS:       cmd.Flag("max-mps", "Maximum messages should be handled in a second.").Default("1000").Int(),
+		numWorkers:   cmd.Flag("num-workers", "Number of workers.").Default("2").Int(),
 		flushSize: cmd.Flag(
 			"flush-size",
 			"Maximum number of messages to batch before writing to datastore.",
 		).Default("50").Int(),
-		flushInterval: cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
-		flushTimeout:  cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
-		experimentService: cmd.Flag(
-			"experiment-service",
-			"bucketeer-experiment-service address.",
-		).Default("experiment:9090").String(),
-		featureService: cmd.Flag("feature-service", "bucketeer-feature-service address.").Default("feature:9090").String(),
-		autoOpsService: cmd.Flag(
-			"auto-ops-service",
-			"bucketeer-auto-ops-service address.",
-		).Default("auto-ops:9090").String(),
+		flushInterval:    cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
+		flushTimeout:     cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -157,59 +124,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	datastore, err := s.createWriters(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-	defer datastore.Close()
-
-	btClient, err := s.createBigtableClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-	defer btClient.Close()
-
-	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
-	if err != nil {
-		return err
-	}
-
-	experimentClient, err := ec.NewClient(*s.experimentService, *s.certPath,
-		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
-		client.WithBlock(),
-		client.WithMetrics(registerer),
-		client.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer experimentClient.Close()
-
-	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
-		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
-		client.WithBlock(),
-		client.WithMetrics(registerer),
-		client.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer featureClient.Close()
-
-	autoOpsClient, err := aoclient.NewClient(*s.autoOpsService, *s.certPath,
-		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
-		client.WithBlock(),
-		client.WithMetrics(registerer),
-		client.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer autoOpsClient.Close()
-
 	if err != nil {
 		return err
 	}
@@ -240,12 +154,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}()
 
 	p := persister.NewPersister(
-		experimentClient,
-		featureClient,
-		autoOpsClient,
 		puller,
-		datastore,
-		btClient,
 		mysqlClient,
 		redisV3Cache,
 		persister.WithMaxMPS(*s.maxMPS),
@@ -311,70 +220,5 @@ func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.P
 		pubsub.WithNumGoroutines(*s.pullerNumGoroutines),
 		pubsub.WithMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
 		pubsub.WithMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
-	)
-}
-
-func (s *server) createWriters(
-	ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (datastore.Writer, error) {
-	writers := make([]datastore.Writer, 0, *s.numWriters)
-	for i := 0; i < *s.numWriters; i++ {
-		writer, err := s.createKafkaWriter(ctx, registerer, logger)
-		if err != nil {
-			return nil, err
-		}
-		writers = append(writers, writer)
-	}
-	if len(writers) == 1 {
-		logger.Info("Created a single writer", zap.Int("numWriters", *s.numWriters))
-		return writers[0], nil
-	}
-	logger.Info("Created a writer pool", zap.Int("numWriters", *s.numWriters), zap.Int("poolSize", len(writers)))
-	return datastore.NewWriterPool(writers), nil
-}
-
-func (s *server) createKafkaWriter(
-	ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (datastore.Writer, error) {
-	logger.Debug("createKafkaWriter")
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	kafkaProducer, err := kafka.NewProducer(
-		ctx,
-		*s.project,
-		*s.kafkaURL,
-		*s.kafkaUsername,
-		*s.kafkaPassword)
-	if err != nil {
-		logger.Error("Failed to create Kafka producer", zap.Error(err))
-		return nil, err
-	}
-	writer, err := datastore.NewKafkaWriter(kafkaProducer,
-		*s.kafkaTopicPrefix,
-		*s.kafkaTopicDataType,
-		datastore.WithMetrics(registerer),
-		datastore.WithLogger(logger),
-	)
-	if err != nil {
-		logger.Error("Failed to create Kafka writer", zap.Error(err))
-		return nil, err
-	}
-	return writer, nil
-}
-
-func (s *server) createBigtableClient(
-	ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (bigtable.Client, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	return bigtable.NewBigtableClient(ctx, *s.project, *s.bigtableInstance,
-		bigtable.WithMetrics(registerer),
-		bigtable.WithLogger(logger),
 	)
 }

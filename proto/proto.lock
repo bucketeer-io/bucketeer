@@ -7473,53 +7473,6 @@
       }
     },
     {
-      "protopath": "eventcounter:/:filter.proto",
-      "def": {
-        "enums": [
-          {
-            "name": "Filter.Operator",
-            "enum_fields": [
-              {
-                "name": "EQUALS"
-              }
-            ]
-          }
-        ],
-        "messages": [
-          {
-            "name": "Filter",
-            "fields": [
-              {
-                "id": 1,
-                "name": "key",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "operator",
-                "type": "Operator"
-              },
-              {
-                "id": 3,
-                "name": "values",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "bucketeer.eventcounter"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
-          }
-        ]
-      }
-    },
-    {
       "protopath": "eventcounter:/:goal_result.proto",
       "def": {
         "messages": [
@@ -7593,52 +7546,6 @@
       "protopath": "eventcounter:/:service.proto",
       "def": {
         "messages": [
-          {
-            "name": "GetEvaluationCountV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "start_at",
-                "type": "int64"
-              },
-              {
-                "id": 3,
-                "name": "end_at",
-                "type": "int64"
-              },
-              {
-                "id": 4,
-                "name": "feature_id",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "feature_version",
-                "type": "int32"
-              },
-              {
-                "id": 6,
-                "name": "variation_ids",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "GetEvaluationCountV2Response",
-            "fields": [
-              {
-                "id": 1,
-                "name": "count",
-                "type": "EvaluationCount"
-              }
-            ]
-          },
           {
             "name": "GetExperimentEvaluationCountRequest",
             "fields": [
@@ -7783,172 +7690,6 @@
                   "name": "results",
                   "type": "ExperimentResult"
                 }
-              }
-            ]
-          },
-          {
-            "name": "ListUserDataKeysRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ListUserDataKeysResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "keys",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "ListUserDataValuesRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "key",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ListUserDataValuesResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "values",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "GetGoalCountRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "feature_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "feature_version",
-                "type": "int32"
-              },
-              {
-                "id": 4,
-                "name": "goal_id",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "start_at",
-                "type": "int64"
-              },
-              {
-                "id": 6,
-                "name": "end_at",
-                "type": "int64"
-              },
-              {
-                "id": 7,
-                "name": "filters",
-                "type": "Filter",
-                "is_repeated": true
-              },
-              {
-                "id": 8,
-                "name": "segments",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 9,
-                "name": "reason",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetGoalCountResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "headers",
-                "type": "Row"
-              },
-              {
-                "id": 2,
-                "name": "rows",
-                "type": "Row",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "GetGoalCountV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "start_at",
-                "type": "int64"
-              },
-              {
-                "id": 3,
-                "name": "end_at",
-                "type": "int64"
-              },
-              {
-                "id": 4,
-                "name": "goal_id",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "feature_id",
-                "type": "string"
-              },
-              {
-                "id": 6,
-                "name": "feature_version",
-                "type": "int32"
-              },
-              {
-                "id": 7,
-                "name": "variation_ids",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "GetGoalCountV2Response",
-            "fields": [
-              {
-                "id": 1,
-                "name": "goal_counts",
-                "type": "GoalCounts"
               }
             ]
           },
@@ -8120,41 +7861,6 @@
             ]
           },
           {
-            "name": "GetUserCountV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "start_at",
-                "type": "int64"
-              },
-              {
-                "id": 3,
-                "name": "end_at",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "GetUserCountV2Response",
-            "fields": [
-              {
-                "id": 1,
-                "name": "event_count",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "user_count",
-                "type": "int64"
-              }
-            ]
-          },
-          {
             "name": "GetMAUCountRequest",
             "fields": [
               {
@@ -8183,27 +7889,6 @@
                 "type": "int64"
               }
             ]
-          },
-          {
-            "name": "ListUserMetadataRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ListUserMetadataResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "data",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
           }
         ],
         "services": [
@@ -8214,11 +7899,6 @@
                 "name": "GetExperimentEvaluationCount",
                 "in_type": "GetExperimentEvaluationCountRequest",
                 "out_type": "GetExperimentEvaluationCountResponse"
-              },
-              {
-                "name": "GetEvaluationCountV2",
-                "in_type": "GetEvaluationCountV2Request",
-                "out_type": "GetEvaluationCountV2Response"
               },
               {
                 "name": "GetEvaluationTimeseriesCount",
@@ -8236,34 +7916,14 @@
                 "out_type": "ListExperimentResultsResponse"
               },
               {
-                "name": "GetGoalCount",
-                "in_type": "GetGoalCountRequest",
-                "out_type": "GetGoalCountResponse"
-              },
-              {
-                "name": "GetGoalCountV2",
-                "in_type": "GetGoalCountV2Request",
-                "out_type": "GetGoalCountV2Response"
-              },
-              {
                 "name": "GetExperimentGoalCount",
                 "in_type": "GetExperimentGoalCountRequest",
                 "out_type": "GetExperimentGoalCountResponse"
               },
               {
-                "name": "GetUserCountV2",
-                "in_type": "GetUserCountV2Request",
-                "out_type": "GetUserCountV2Response"
-              },
-              {
                 "name": "GetMAUCount",
                 "in_type": "GetMAUCountRequest",
                 "out_type": "GetMAUCountResponse"
-              },
-              {
-                "name": "ListUserMetadata",
-                "in_type": "ListUserMetadataRequest",
-                "out_type": "ListUserMetadataResponse"
               },
               {
                 "name": "GetOpsEvaluationUserCount",
@@ -8283,86 +7943,13 @@
             "path": "google/protobuf/wrappers.proto"
           },
           {
-            "path": "proto/eventcounter/evaluation_count.proto"
-          },
-          {
-            "path": "proto/eventcounter/experiment_count.proto"
-          },
-          {
             "path": "proto/eventcounter/experiment_result.proto"
-          },
-          {
-            "path": "proto/eventcounter/filter.proto"
-          },
-          {
-            "path": "proto/eventcounter/table.proto"
           },
           {
             "path": "proto/eventcounter/timeseries.proto"
           },
           {
             "path": "proto/eventcounter/variation_count.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.eventcounter"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
-          }
-        ]
-      }
-    },
-    {
-      "protopath": "eventcounter:/:table.proto",
-      "def": {
-        "enums": [
-          {
-            "name": "Cell.Type",
-            "enum_fields": [
-              {
-                "name": "STRING"
-              },
-              {
-                "name": "DOUBLE",
-                "integer": 2
-              }
-            ]
-          }
-        ],
-        "messages": [
-          {
-            "name": "Row",
-            "fields": [
-              {
-                "id": 1,
-                "name": "cells",
-                "type": "Cell",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "Cell",
-            "fields": [
-              {
-                "id": 1,
-                "name": "type",
-                "type": "Type"
-              },
-              {
-                "id": 2,
-                "name": "value",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "valueDouble",
-                "type": "double"
-              }
-            ]
           }
         ],
         "package": {

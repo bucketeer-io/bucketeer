@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -31,7 +30,6 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	ecdruid "github.com/bucketeer-io/bucketeer/pkg/eventcounter/druid"
 	v2ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -68,7 +66,6 @@ type eventCounterService struct {
 	experimentClient             experimentclient.Client
 	featureClient                featureclient.Client
 	accountClient                accountclient.Client
-	druidQuerier                 ecdruid.Querier
 	eventStorage                 v2ecstorage.EventStorage
 	mysqlExperimentResultStorage v2ecstorage.ExperimentResultStorage
 	userCountStorage             v2ecstorage.UserCountStorage
@@ -82,7 +79,6 @@ func NewEventCounterService(
 	e experimentclient.Client,
 	f featureclient.Client,
 	a accountclient.Client,
-	d ecdruid.Querier,
 	b bqquerier.Client,
 	bigQueryDataSet string,
 	r metrics.Registerer,
@@ -94,7 +90,6 @@ func NewEventCounterService(
 		experimentClient:             e,
 		featureClient:                f,
 		accountClient:                a,
-		druidQuerier:                 d,
 		eventStorage:                 v2ecstorage.NewEventStorage(b, bigQueryDataSet, l),
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
 		userCountStorage:             v2ecstorage.NewUserCountStorage(mc),
@@ -230,145 +225,6 @@ func (s *eventCounterService) convertEvaluationCounts(
 	}
 	sort.SliceStable(vcs, func(i, j int) bool { return vcs[i].VariationId < vcs[j].VariationId })
 	return vcs
-}
-
-func (s *eventCounterService) GetEvaluationCountV2(
-	ctx context.Context,
-	req *ecproto.GetEvaluationCountV2Request,
-) (*ecproto.GetEvaluationCountV2Response, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
-	if err != nil {
-		return nil, err
-	}
-	if err = validateGetEvaluationCountV2Request(req); err != nil {
-		return nil, err
-	}
-	startAt := time.Unix(req.StartAt, 0)
-	endAt := time.Unix(req.EndAt, 0)
-	headers, rows, err := s.druidQuerier.QueryEvaluationCount(
-		ctx,
-		req.EnvironmentNamespace,
-		startAt,
-		endAt,
-		req.FeatureId,
-		req.FeatureVersion,
-		"",
-		[]string{}, []*ecproto.Filter{},
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to query evaluation counts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
-				zap.Time("startAt", startAt),
-				zap.Time("endAt", endAt),
-				zap.String("featureId", req.FeatureId),
-				zap.Int32("featureVersion", req.FeatureVersion),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	vcs, err := convToVariationCounts(headers, rows, req.VariationIds)
-	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	return &ecproto.GetEvaluationCountV2Response{
-		Count: &ecproto.EvaluationCount{
-			FeatureId:      req.FeatureId,
-			FeatureVersion: req.FeatureVersion,
-			RealtimeCounts: vcs,
-		},
-	}, nil
-}
-
-func validateGetEvaluationCountV2Request(req *ecproto.GetEvaluationCountV2Request) error {
-	if req.StartAt == 0 {
-		return localizedError(statusStartAtRequired, locale.JaJP)
-	}
-	if req.EndAt == 0 {
-		return localizedError(statusEndAtRequired, locale.JaJP)
-	}
-	if req.StartAt > req.EndAt {
-		return localizedError(statusStartAtIsAfterEndAt, locale.JaJP)
-	}
-	if req.FeatureId == "" {
-		return localizedError(statusFeatureIDRequired, locale.JaJP)
-	}
-	return nil
-}
-
-func convToVariationCounts(
-	headers *ecproto.Row,
-	rows []*ecproto.Row,
-	variationIDs []string,
-) ([]*ecproto.VariationCount, error) {
-	vcsMap := map[string]*ecproto.VariationCount{}
-	for _, id := range variationIDs {
-		vcsMap[id] = &ecproto.VariationCount{VariationId: id}
-	}
-	varIdx, err := variationIdx(headers)
-	if err != nil {
-		return nil, err
-	}
-	for _, row := range rows {
-		vid := row.Cells[varIdx].Value
-		vc, ok := vcsMap[vid]
-		if !ok {
-			continue
-		}
-		for i, cell := range row.Cells {
-			switch headers.Cells[i].Value {
-			// Evaluation.
-			case ecdruid.ColumnEvaluationTotal:
-				vc.EventCount = int64(cell.ValueDouble)
-			case ecdruid.ColumnEvaluationUser:
-				vc.UserCount = int64(cell.ValueDouble)
-			// Goal.
-			case ecdruid.ColumnGoalTotal:
-				vc.EventCount = int64(cell.ValueDouble)
-			case ecdruid.ColumnGoalUser:
-				vc.UserCount = int64(cell.ValueDouble)
-			case ecdruid.ColumnGoalValueTotal:
-				vc.ValueSum = cell.ValueDouble
-			case ecdruid.ColumnGoalValueMean:
-				vc.ValueSumPerUserMean = cell.ValueDouble
-			case ecdruid.ColumnGoalValueVariance:
-				vc.ValueSumPerUserVariance = cell.ValueDouble
-			}
-		}
-		vcsMap[vid] = vc
-	}
-	vcs := []*ecproto.VariationCount{}
-	for _, vc := range vcsMap {
-		vcs = append(vcs, vc)
-	}
-	sort.SliceStable(vcs, func(i, j int) bool { return vcs[i].VariationId < vcs[j].VariationId })
-	return vcs, nil
-}
-
-func variationIdx(headers *ecproto.Row) (int, error) {
-	for i, cell := range headers.Cells {
-		if cell.Value == ecdruid.ColumnVariation {
-			return i, nil
-		}
-	}
-	return 0, errors.New("eventcounter: variation header not found")
 }
 
 func (s *eventCounterService) GetEvaluationTimeseriesCount(
@@ -676,76 +532,6 @@ func (s *eventCounterService) listExperiments(
 	}
 }
 
-func (s *eventCounterService) GetGoalCount(
-	ctx context.Context,
-	req *ecproto.GetGoalCountRequest,
-) (*ecproto.GetGoalCountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateGetGoalCountsRequest(req); err != nil {
-		return nil, err
-	}
-	startAt := time.Unix(req.StartAt, 0)
-	endAt := time.Unix(req.EndAt, 0)
-	headers, rows, err := s.druidQuerier.QueryCount(
-		ctx,
-		req.EnvironmentNamespace,
-		startAt,
-		endAt,
-		req.GoalId,
-		req.FeatureId,
-		req.FeatureVersion,
-		req.Reason,
-		req.Segments,
-		req.Filters,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to query goal counts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
-				zap.Time("startAt", startAt),
-				zap.Time("endAt", endAt),
-				zap.String("featureId", req.FeatureId),
-				zap.Int32("featureVersion", req.FeatureVersion),
-				zap.Strings("segments", req.Segments),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	return &ecproto.GetGoalCountResponse{Headers: headers, Rows: rows}, nil
-}
-
-func validateGetGoalCountsRequest(req *ecproto.GetGoalCountRequest) error {
-	if req.StartAt == 0 {
-		return localizedError(statusStartAtRequired, locale.JaJP)
-	}
-	if req.EndAt == 0 {
-		return localizedError(statusEndAtRequired, locale.JaJP)
-	}
-	if req.StartAt > req.EndAt {
-		return localizedError(statusStartAtIsAfterEndAt, locale.JaJP)
-	}
-	if req.StartAt < time.Now().Add(-31*24*time.Hour).Unix() {
-		return localizedError(statusPeriodOutOfRange, locale.JaJP)
-	}
-	if req.GoalId == "" {
-		return localizedError(statusGoalIDRequired, locale.JaJP)
-	}
-	return nil
-}
-
 func (s *eventCounterService) GetExperimentGoalCount(
 	ctx context.Context,
 	req *ecproto.GetExperimentGoalCountRequest,
@@ -883,128 +669,6 @@ func (s *eventCounterService) convertGoalCounts(
 	return vcs
 }
 
-func (s *eventCounterService) GetGoalCountV2(
-	ctx context.Context,
-	req *ecproto.GetGoalCountV2Request,
-) (*ecproto.GetGoalCountV2Response, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
-	if err != nil {
-		return nil, err
-	}
-	if err = validateGetGoalCountV2Request(req); err != nil {
-		return nil, err
-	}
-	startAt := time.Unix(req.StartAt, 0)
-	endAt := time.Unix(req.EndAt, 0)
-	headers, rows, err := s.druidQuerier.QueryGoalCount(
-		ctx,
-		req.EnvironmentNamespace,
-		startAt,
-		endAt,
-		req.GoalId,
-		req.FeatureId,
-		req.FeatureVersion,
-		"",
-		[]string{}, []*ecproto.Filter{},
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to query goal counts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
-				zap.Time("startAt", startAt),
-				zap.Time("endAt", endAt),
-				zap.String("featureId", req.FeatureId),
-				zap.Int32("featureVersion", req.FeatureVersion),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	vcs, err := convToVariationCounts(headers, rows, req.VariationIds)
-	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	return &ecproto.GetGoalCountV2Response{
-		GoalCounts: &ecproto.GoalCounts{
-			GoalId:         req.GoalId,
-			RealtimeCounts: vcs,
-		},
-	}, nil
-}
-
-func validateGetGoalCountV2Request(req *ecproto.GetGoalCountV2Request) error {
-	if req.StartAt == 0 {
-		return localizedError(statusStartAtRequired, locale.JaJP)
-	}
-	if req.EndAt == 0 {
-		return localizedError(statusEndAtRequired, locale.JaJP)
-	}
-	if req.StartAt > req.EndAt {
-		return localizedError(statusStartAtIsAfterEndAt, locale.JaJP)
-	}
-	if req.GoalId == "" {
-		return localizedError(statusGoalIDRequired, locale.JaJP)
-	}
-	return nil
-}
-
-func (s *eventCounterService) GetUserCountV2(
-	ctx context.Context,
-	req *ecproto.GetUserCountV2Request,
-) (*ecproto.GetUserCountV2Response, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
-	if err != nil {
-		return nil, err
-	}
-	if err = validateGetUserCountV2Request(req); err != nil {
-		return nil, err
-	}
-	startAt := time.Unix(req.StartAt, 0)
-	endAt := time.Unix(req.EndAt, 0)
-	headers, rows, err := s.druidQuerier.QueryUserCount(ctx, req.EnvironmentNamespace, startAt, endAt)
-	if err != nil {
-		s.logger.Error(
-			"Failed to query user count",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
-				zap.Time("startAt", startAt),
-				zap.Time("endAt", endAt),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	eventCount, userCount := convToUserCount(headers, rows)
-	return &ecproto.GetUserCountV2Response{
-		EventCount: eventCount,
-		UserCount:  userCount,
-	}, nil
-}
-
 func (s *eventCounterService) GetMAUCount(
 	ctx context.Context,
 	req *ecproto.GetMAUCountRequest,
@@ -1047,63 +711,6 @@ func (s *eventCounterService) GetMAUCount(
 		UserCount:  userCount,
 		EventCount: eventCount,
 	}, nil
-}
-
-func validateGetUserCountV2Request(req *ecproto.GetUserCountV2Request) error {
-	if req.StartAt == 0 {
-		return localizedError(statusStartAtRequired, locale.JaJP)
-	}
-	if req.EndAt == 0 {
-		return localizedError(statusEndAtRequired, locale.JaJP)
-	}
-	if req.StartAt > req.EndAt {
-		return localizedError(statusStartAtIsAfterEndAt, locale.JaJP)
-	}
-	return nil
-}
-
-func convToUserCount(headers *ecproto.Row, rows []*ecproto.Row) (eventCount, userCount int64) {
-	for _, row := range rows {
-		for i, cell := range row.Cells {
-			switch headers.Cells[i].Value {
-			case ecdruid.ColumnUserTotal:
-				eventCount = int64(cell.ValueDouble)
-			case ecdruid.ColumnUserCount:
-				userCount = int64(cell.ValueDouble)
-			}
-		}
-	}
-	return
-}
-
-func (s *eventCounterService) ListUserMetadata(
-	ctx context.Context,
-	req *ecproto.ListUserMetadataRequest,
-) (*ecproto.ListUserMetadataResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
-	if err != nil {
-		return nil, err
-	}
-	data, err := s.druidQuerier.QuerySegmentMetadata(ctx, req.EnvironmentNamespace, ecdruid.DataTypeGoalEvents)
-	if err != nil {
-		s.logger.Error(
-			"Failed to query segment metadata",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	return &ecproto.ListUserMetadataResponse{Data: data}, nil
 }
 
 func (s *eventCounterService) getExperimentResultMySQL(

@@ -11,10 +11,6 @@ env:
   experimentService: localhost:9001
   featureService: localhost:9001
   accountService: localhost:9001
-  druidUrl:
-  druidDatasourcePrefix:
-  druidUsername:
-  druidPassword:
   bigQueryDataSet:
   bigQueryDataLocation:
   mysqlUser:

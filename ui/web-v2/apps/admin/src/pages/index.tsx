@@ -19,7 +19,6 @@ import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_CLONE,
   PAGE_PATH_GOALS,
-  PAGE_PATH_ANALYSIS,
   PAGE_PATH_APIKEYS,
   PAGE_PATH_USER_SEGMENTS,
   PAGE_PATH_USERS,
@@ -41,7 +40,6 @@ import { AppDispatch } from '../store';
 
 import { AccountIndexPage } from './account';
 import { AdminIndexPage } from './admin';
-import { AnalysisIndexPage } from './analysis';
 import { APIKeyIndexPage } from './apiKey';
 import { AuditLogIndexPage } from './auditLog';
 import { AuthCallbackPage } from './auth';
@@ -194,10 +192,6 @@ export const EnvironmentRoot: FC = memo(() => {
         >
           <GoalIndexPage />
         </Route>
-        {/* Disabling this feature temporarily until the new data pipeline is done.
-        <Route exact path={[`${url}${PAGE_PATH_ANALYSIS}`]}>
-          <AnalysisIndexPage />
-        </Route> */}
         <Route
           exact
           path={[

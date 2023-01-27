@@ -53,28 +53,10 @@ spec:
               value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_EVENT_PERSISTER_AUTO_OPS_SERVICE
               value: "{{ .Values.env.autoOpsService }}"
-            - name: BUCKETEER_EVENT_PERSISTER_BIGTABLE_INSTANCE
-              value: "{{ .Values.env.bigtableInstance }}"
-            - name: BUCKETEER_EVENT_PERSISTER_LOCATION
-              value: "{{ .Values.env.location }}"
             - name: BUCKETEER_EVENT_PERSISTER_TOPIC
               value: "{{ .Values.env.topic }}"
             - name: BUCKETEER_EVENT_PERSISTER_SUBSCRIPTION
               value: "{{ .Values.env.subscription }}"
-            - name: BUCKETEER_EVENT_PERSISTER_WRITER
-              value: "{{ .Values.env.writer }}"
-            {{ if .Values.env.kafkaPassword }}
-            - name: BUCKETEER_EVENT_PERSISTER_KAFKA_URL
-              value: "{{ .Values.env.kafkaUrl }}"
-            - name: BUCKETEER_EVENT_PERSISTER_KAFKA_TOPIC_PREFIX
-              value: "{{ .Values.env.kafkaTopicPrefix }}"
-            - name: BUCKETEER_EVENT_PERSISTER_KAFKA_TOPIC_DATA_TYPE
-              value: "{{ .Values.env.kafkaTopicDataType }}"
-            - name: BUCKETEER_EVENT_PERSISTER_KAFKA_USERNAME
-              value: "{{ .Values.env.kafkaUsername }}"
-            - name: BUCKETEER_EVENT_PERSISTER_KAFKA_PASSWORD
-              value: "{{ .Values.env.kafkaPassword }}"
-            {{ end }}
             - name: BUCKETEER_EVENT_PERSISTER_PORT
               value: "{{ .Values.env.port }}"
             - name: BUCKETEER_EVENT_PERSISTER_METRICS_PORT
@@ -85,8 +67,6 @@ spec:
               value: "{{ .Values.env.maxMps }}"
             - name: BUCKETEER_EVENT_PERSISTER_NUM_WORKERS
               value: "{{ .Values.env.numWorkers }}"
-            - name: BUCKETEER_EVENT_PERSISTER_NUM_WRITERS
-              value: "{{ .Values.env.numWriters }}"
             - name: BUCKETEER_EVENT_PERSISTER_FLUSH_SIZE
               value: "{{ .Values.env.flushSize }}"
             - name: BUCKETEER_EVENT_PERSISTER_FLUSH_INTERVAL

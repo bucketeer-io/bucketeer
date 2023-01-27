@@ -20,17 +20,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
 
-const (
-	codeFailedToExtractOpsEventRateClauses = "FailedToExtractOpsEventRateClauses"
-	codeFailedToGetFeatures                = "FailedToGetFeatures"
-	codeFailedToGetUserEvaluation          = "FailedToGetUserEvaluation"
-	codeFailedToListAutoOpsRules           = "FailedToListAutoOpsRules"
-	codeFailedToListExperiments            = "FailedToListExperiments"
-	codeNothingToLink                      = "NothingToLink"
-	codeUpsertUserEvaluationFailed         = "UpsertUserEvaluationFailed"
-	codeUserEvaluationNotFound             = "UserEvaluationNotFound"
-)
-
 var (
 	receivedCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
