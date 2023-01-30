@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
+  name: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
-    chart: {{ template "event-persister-evaluation-events-kafka.chart" . }}
-    release: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
+    app: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
+    chart: {{ template "event-persister-evaluation-events-evaluation-count.chart" . }}
+    release: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
     heritage: {{ .Release.Service }}
     envoy: "true"
     metrics: "true"
@@ -25,5 +25,5 @@ spec:
       port: {{ .Values.envoy.adminPort }}
       protocol: TCP
   selector:
-    app: {{ template "event-persister-evaluation-events-kafka.name" . }}
-    release: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
+    app: {{ template "event-persister-evaluation-events-evaluation-count.name" . }}
+    release: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}

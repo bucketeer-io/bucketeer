@@ -3,7 +3,7 @@ image:
   pullPolicy: IfNotPresent
 
 nameOverride: "event-persister"
-fullnameOverride: "event-persister-evaluation-events-kafka"
+fullnameOverride: "event-persister-evaluation-events-evaluation-count"
 
 namespace: default
 
