@@ -88,6 +88,8 @@ func (w *goalEvtWriter) Write(
 				e, retriable, err := w.convToGoalEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {
 					if err == ErrNoExperiments || err == ErrExperimentNotFound {
+						// If there is nothing to link, we don't report it as an error
+						handledCounter.WithLabelValues(codeNoLink).Inc()
 						w.logger.Debug(
 							"There is no experiment to link",
 							zap.Error(err),
@@ -108,6 +110,7 @@ func (w *goalEvtWriter) Write(
 					continue
 				}
 				goalEvents = append(goalEvents, e)
+				handledCounter.WithLabelValues(codeLinked).Inc()
 			default:
 				w.logger.Error(
 					"The event is an unexpected message type",
@@ -120,6 +123,7 @@ func (w *goalEvtWriter) Write(
 	}
 	fs, err := w.writer.AppendRows(ctx, goalEvents)
 	if err != nil {
+		handledCounter.WithLabelValues(codeFailedToAppendGoalEvents).Inc()
 		w.logger.Error(
 			"failed to append rows to goal event",
 			zap.Error(err),
