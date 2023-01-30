@@ -2,13 +2,13 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
+  name: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
   namespace: {{ .Values.namespace }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
+    name: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
   minReplicas: {{ .Values.hpa.minReplicas }}
   maxReplicas: {{ .Values.hpa.maxReplicas }}
   metrics:

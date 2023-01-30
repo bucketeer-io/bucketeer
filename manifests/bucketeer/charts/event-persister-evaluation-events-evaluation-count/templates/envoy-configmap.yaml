@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "event-persister-evaluation-events-kafka.fullname" . }}-envoy-config
+  name: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}-envoy-config
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
-    chart: {{ template "event-persister-evaluation-events-kafka.chart" . }}
-    release: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
+    app: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
+    chart: {{ template "event-persister-evaluation-events-evaluation-count.chart" . }}
+    release: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
     heritage: {{ .Release.Service }}
 data:
   config.yaml: |-
@@ -22,13 +22,13 @@ data:
           port_value: 8001
     static_resources:
       clusters:
-        - name: event-persister-evaluation-events-kafka
+        - name: event-persister-evaluation-events-evaluation-count
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           lb_policy: round_robin
           load_assignment:
-            cluster_name: event-persister-evaluation-events-kafka
+            cluster_name: event-persister-evaluation-events-evaluation-count
             endpoints:
               - lb_endpoints:
                   - endpoint:
@@ -84,7 +84,7 @@ data:
                         typed_config:
                           '@type': type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
                           cluster_min_healthy_percentages:
-                            event-persister-evaluation-events-kafka:
+                            event-persister-evaluation-events-evaluation-count:
                               value: 25
                           headers:
                             - name: :path
@@ -105,7 +105,7 @@ data:
                                       exact: application/grpc
                                 prefix: /
                               route:
-                                cluster: event-persister-evaluation-events-kafka
+                                cluster: event-persister-evaluation-events-evaluation-count
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx

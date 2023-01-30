@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
+  name: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
-    chart: {{ template "event-persister-evaluation-events-kafka.chart" . }}
-    release: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
+    app: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
+    chart: {{ template "event-persister-evaluation-events-evaluation-count.chart" . }}
+    release: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
   selector:
     matchLabels:
-      app: {{ template "event-persister-evaluation-events-kafka.name" . }}
-      release: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
+      app: {{ template "event-persister-evaluation-events-evaluation-count.name" . }}
+      release: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
   template:
     metadata:
       labels:
-        app: {{ template "event-persister-evaluation-events-kafka.name" . }}
-        release: {{ template "event-persister-evaluation-events-kafka.fullname" . }}
+        app: {{ template "event-persister-evaluation-events-evaluation-count.name" . }}
+        release: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
@@ -31,14 +31,14 @@ spec:
       volumes:
         - name: envoy-config
           configMap:
-            name: {{ template "event-persister-evaluation-events-kafka.fullname" . }}-envoy-config
+            name: {{ template "event-persister-evaluation-events-evaluation-count.fullname" . }}-envoy-config
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }}
-      serviceAccountName: {{ template "event-persister-evaluation-events-kafka.name" . }}
+      serviceAccountName: {{ template "event-persister-evaluation-events-evaluation-count.name" . }}
       containers:
         - name: "event-persister"
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
