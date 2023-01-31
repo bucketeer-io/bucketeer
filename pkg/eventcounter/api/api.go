@@ -849,7 +849,7 @@ func newOpsEvaluationUserCountKey(
 ) string {
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%s:%d:%s", opsRuleID, clauseID, featureID, featureVersion, variationID),
+		fmt.Sprintf("%s:%d:%s:%s:%s", featureID, featureVersion, opsRuleID, clauseID, variationID),
 		environmentNamespace,
 	)
 }
@@ -969,7 +969,7 @@ func newOpsGoalUserCountKey(
 ) string {
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%s:%d:%s", opsRuleID, clauseID, featureID, featureVersion, variationID),
+		fmt.Sprintf("%s:%d:%s:%s:%s", featureID, featureVersion, opsRuleID, clauseID, variationID),
 		environmentNamespace,
 	)
 }

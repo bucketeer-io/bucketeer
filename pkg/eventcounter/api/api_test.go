@@ -1070,8 +1070,8 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	fID := "fid0"
 	fVersion := 2
 	vID0 := "vid0"
-	cacheKey := "ns0:autoops:evaluation:rule0:clause0:fid0:2:vid0"
-	cacheKeyWithoutNS := "autoops:evaluation:rule0:clause0:fid0:2:vid0"
+	cacheKey := "ns0:autoops:evaluation:fid0:2:rule0:clause0:vid0"
+	cacheKeyWithoutNS := "autoops:evaluation:fid0:2:rule0:clause0:vid0"
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -1209,8 +1209,8 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	fID := "fid0"
 	fVersion := 2
 	vID0 := "vid0"
-	cacheKey := "ns0:autoops:goal:rule0:clause0:fid0:2:vid0"
-	cacheKeyWithoutNS := "autoops:goal:rule0:clause0:fid0:2:vid0"
+	cacheKey := "ns0:autoops:goal:fid0:2:rule0:clause0:vid0"
+	cacheKeyWithoutNS := "autoops:goal:fid0:2:rule0:clause0:vid0"
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{

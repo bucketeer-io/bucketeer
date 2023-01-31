@@ -298,11 +298,11 @@ func (u *evalGoalUpdater) newUserCountKey(
 	ruleID, clauseID, featureID, variationID string,
 	featureVersion int32,
 ) string {
-	key := fmt.Sprintf("%s:%s:%s:%d:%s",
-		ruleID,
-		clauseID,
+	key := fmt.Sprintf("%s:%d:%s:%s:%s",
 		featureID,
 		featureVersion,
+		ruleID,
+		clauseID,
 		variationID,
 	)
 	return cache.MakeKey(
