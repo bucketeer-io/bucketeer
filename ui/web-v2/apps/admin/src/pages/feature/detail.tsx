@@ -57,6 +57,7 @@ export const FeatureDetailPage: FC = memo(() => {
     ],
     shallowEqual
   );
+
   const isLoading = useSelector<AppState, boolean>(
     (state) => state.features.loading,
     shallowEqual
@@ -73,7 +74,8 @@ export const FeatureDetailPage: FC = memo(() => {
     }
   }, [featureId, dispatch, currentEnvironment]);
 
-  if (!feature || isLoading) {
+  if (!feature) {
+    // if (!feature || isLoading) {
     return <div>loading</div>;
   }
 

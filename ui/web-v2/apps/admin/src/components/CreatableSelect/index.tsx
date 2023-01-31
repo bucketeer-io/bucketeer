@@ -34,6 +34,7 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
     const fontSize = '0.875rem';
     const lineHeight = '1.25rem';
     const minHeight = '2.5rem';
+
     const colourStyles = {
       control: (styles, { isDisabled }) => ({
         ...styles,

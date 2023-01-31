@@ -1,3 +1,4 @@
+import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import { createVariationLabel } from '@/utils/variation';
 import { MinusCircleIcon, XIcon } from '@heroicons/react/solid';
 import { SerializedError } from '@reduxjs/toolkit';
@@ -14,10 +15,15 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import 'react-datepicker/dist/react-datepicker.css';
 import { v4 as uuid } from 'uuid';
 
+import { DetailSkeleton } from '../../components/DetailSkeleton';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
-import { selectById as selectFeatureById } from '../../modules/features';
+import {
+  selectById as selectFeatureById,
+  selectAll as selectAllFeatures,
+  listFeatures,
+} from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import { listSegments, selectAll } from '../../modules/segments';
 import { Clause } from '../../proto/feature/clause_pb';
@@ -107,6 +113,12 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 />
               )}
             />
+            <div>
+              <label className="input-section-label">Prerequisites</label>
+              <div className="bg-white rounded-md p-3 border">
+                <PrerequisiteInput feature={feature} />
+              </div>
+            </div>
             <div>
               <label className="input-section-label">
                 {`${f(messages.feature.targetingUsers)}`}
@@ -207,6 +219,194 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
             </div>
           )}
         </form>
+      </div>
+    );
+  }
+);
+
+export interface PrerequisiteInputProps {
+  feature: Feature.AsObject;
+}
+
+export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
+  ({ feature }) => {
+    const { formatMessage: f } = useIntl();
+    const dispatch = useDispatch<AppDispatch>();
+    const editable = useIsEditable();
+    const methods = useFormContext();
+    const currentEnvironment = useCurrentEnvironment();
+
+    const {
+      control,
+      formState: { errors },
+    } = methods;
+    const {
+      fields: prerequisites,
+      append: appendPrerequisite,
+      remove,
+      update,
+    } = useFieldArray({
+      control,
+      name: 'prerequisites',
+      keyName: 'key',
+    });
+
+    const isFeaturesLoading = useSelector<AppState, boolean>(
+      (state) => state.features.loading,
+      shallowEqual
+    );
+
+    const features = useSelector<AppState, Feature.AsObject[]>(
+      (state) => selectAllFeatures(state.features),
+      shallowEqual
+    );
+
+    const handleAddPrerequisite = useCallback(() => {
+      appendPrerequisite({
+        featureId: null,
+        variationId: null,
+      });
+    }, []);
+
+    const handleRemovePrerequisite = useCallback(
+      (idx) => {
+        remove(idx);
+      },
+      [remove]
+    );
+
+    const dispatchListFeatures = () => {
+      dispatch(
+        listFeatures({
+          environmentNamespace: currentEnvironment.namespace,
+          pageSize: 99999,
+          cursor: '',
+          tags: [],
+          searchKeyword: null,
+          enabled: null,
+          hasExperiment: null,
+          maintainerId: null,
+          archived: false,
+          orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
+          orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+        })
+      );
+    };
+
+    useEffect(() => {
+      if (prerequisites?.length > 0) {
+        dispatchListFeatures();
+      }
+    }, [prerequisites]);
+
+    return (
+      <div className="space-y-2">
+        {prerequisites.map((p: any, prerequisitesIdx) => {
+          const featureIdName = `prerequisites[${prerequisitesIdx}].featureId`;
+          const variationIdName = `prerequisites[${prerequisitesIdx}].variationId`;
+
+          const variationList = features.find(
+            (f) => f.id === p.featureId
+          )?.variationsList;
+
+          const variationOptions = variationList?.map((v) => ({
+            label: v.value,
+            value: v.id,
+          }));
+
+          const featureFlagOptions = features
+            .filter((f) => f.id !== feature.id)
+            .filter(
+              (f) =>
+                !prerequisites.some(
+                  (p2: any) =>
+                    p2.featureId === f.id && p2.featureId !== p.featureId
+                )
+            )
+            .map((f) => {
+              return {
+                value: f.id,
+                label: f.name,
+              };
+            });
+
+          return (
+            <div key={p.key} className="flex space-x-2">
+              <Controller
+                name={featureIdName}
+                control={control}
+                render={({ field }) => {
+                  return (
+                    <Select
+                      placeholder="Select a flag"
+                      options={featureFlagOptions}
+                      className="w-full"
+                      onChange={(e) => {
+                        field.onChange(e.value);
+                        update(prerequisitesIdx, {
+                          ...p,
+                          featureId: e.value,
+                          variationId: null,
+                        });
+                      }}
+                      value={featureFlagOptions.find(
+                        (o) => o.value === field.value
+                      )}
+                    />
+                  );
+                }}
+              />
+              <Controller
+                name={variationIdName}
+                control={control}
+                render={({ field }) => {
+                  return (
+                    <Select
+                      placeholder="Select a variation"
+                      options={variationOptions}
+                      className="w-full"
+                      onChange={(e) => {
+                        field.onChange(e.value);
+                        update(prerequisitesIdx, {
+                          ...p,
+                          variationId: e.value,
+                        });
+                      }}
+                      value={
+                        variationOptions?.find(
+                          (o) => o.value === p.variationId
+                        ) ?? null
+                      }
+                    />
+                  );
+                }}
+              />
+              {editable && (
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePrerequisite(prerequisitesIdx)}
+                    className="minus-circle-icon"
+                  >
+                    <MinusCircleIcon aria-hidden="true" />
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {editable && (
+          <div className="pt-4 flex">
+            <button
+              type="button"
+              className="btn-submit"
+              onClick={handleAddPrerequisite}
+            >
+              {/* {f(messages.button.addRule)} */}
+              Add Prerequisite
+            </button>
+          </div>
+        )}
       </div>
     );
   }

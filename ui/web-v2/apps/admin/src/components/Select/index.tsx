@@ -16,6 +16,7 @@ export interface SelectProps {
   value?: Option;
   className?: string;
   onChange: ((option: Option) => void) | ((option: Option[]) => void);
+  placeholder?: string;
 }
 
 export const Select: FC<SelectProps> = memo(
@@ -29,6 +30,7 @@ export const Select: FC<SelectProps> = memo(
     onChange,
     options,
     value,
+    placeholder,
   }) => {
     const textColor = '#3F3F46';
     const textColorDisabled = '#6B7280';
@@ -99,7 +101,7 @@ export const Select: FC<SelectProps> = memo(
         isMulti={isMulti}
         isSearchable={isSearchable}
         isLoading={isLoading}
-        placeholder={''}
+        placeholder={placeholder ? placeholder : ''}
         value={value}
         onChange={onChange}
       />
