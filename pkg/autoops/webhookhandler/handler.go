@@ -28,6 +28,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/crypto"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 
 	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
@@ -120,6 +121,7 @@ func NewHandler(
 
 func (h *handler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	if ctx.Err() == context.Canceled {
 		h.logger.Warn(
 			"Request was canceled",
@@ -196,7 +198,7 @@ func (h *handler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 				lastErr = err
 			}
 			if asmt {
-				if err = h.executeAutoOps(ctx, rule, ws.GetEnvironmentNamespace(), autoOpsRuleStorage); err != nil {
+				if err = h.executeAutoOps(ctx, rule, ws.GetEnvironmentNamespace(), autoOpsRuleStorage, localizer); err != nil {
 					lastErr = err
 				}
 			}
@@ -304,6 +306,7 @@ func (h *handler) executeAutoOps(
 	rule *autoopsdomain.AutoOpsRule,
 	environmentNamespace string,
 	storage v2as.AutoOpsRuleStorage,
+	localizer locale.Localizer,
 ) error {
 	if rule.AlreadyTriggered() {
 		return errAlreadyTriggered
@@ -315,5 +318,5 @@ func (h *handler) executeAutoOps(
 	if err := storage.UpdateAutoOpsRule(ctx, rule, environmentNamespace); err != nil {
 		return err
 	}
-	return autoopsapi.ExecuteOperation(ctx, environmentNamespace, rule, h.featureClient, h.logger)
+	return autoopsapi.ExecuteOperation(ctx, environmentNamespace, rule, h.featureClient, h.logger, localizer)
 }

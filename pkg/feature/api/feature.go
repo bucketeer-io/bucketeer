@@ -54,7 +54,7 @@ func (s *FeatureService) GetFeature(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetFeatureRequest(req); err != nil {
+	if err := validateGetFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
@@ -107,7 +107,7 @@ func (s *FeatureService) GetFeatures(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetFeaturesRequest(req); err != nil {
+	if err := validateGetFeaturesRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
@@ -616,7 +616,14 @@ func (s *FeatureService) UpdateFeatureDetails(
 		return nil, err
 	}
 	if req.Id == "" {
-		return nil, localizedError(statusMissingID, locale.JaJP)
+		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	runningExperimentExists, err := s.existsRunningExperiment(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
@@ -630,7 +637,14 @@ func (s *FeatureService) UpdateFeatureDetails(
 		return nil, dt.Err()
 	}
 	if runningExperimentExists {
-		return nil, localizedError(statusWaitingOrRunningExperimentExists, locale.JaJP)
+		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -956,7 +970,14 @@ func (s *FeatureService) updateFeature(
 		return err
 	}
 	if id == "" {
-		return localizedError(statusMissingID, locale.JaJP)
+		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if cmd == nil {
 		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
@@ -980,7 +1001,14 @@ func (s *FeatureService) updateFeature(
 		return dt.Err()
 	}
 	if runningExperimentExists {
-		return localizedError(statusWaitingOrRunningExperimentExists, locale.JaJP)
+		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -1075,11 +1103,32 @@ func (s *FeatureService) convUpdateFeatureError(err error, localizer locale.Loca
 	case v2fs.ErrFeatureNotFound,
 		v2fs.ErrFeatureUnexpectedAffectedRows,
 		storage.ErrKeyNotFound:
-		return localizedError(statusNotFound, locale.JaJP)
+		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NotFoundError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	case domain.ErrAlreadyDisabled:
-		return localizedError(statusNothingChange, locale.JaJP)
+		dt, err := statusNothingChange.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NothingChange),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	case domain.ErrAlreadyEnabled:
-		return localizedError(statusNothingChange, locale.JaJP)
+		dt, err := statusNothingChange.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NothingChange),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	default:
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1102,7 +1151,14 @@ func (s *FeatureService) UpdateFeatureVariations(
 		return nil, err
 	}
 	if req.Id == "" {
-		return nil, localizedError(statusMissingID, locale.JaJP)
+		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	runningExperimentExists, err := s.existsRunningExperiment(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
@@ -1116,7 +1172,14 @@ func (s *FeatureService) UpdateFeatureVariations(
 		return nil, dt.Err()
 	}
 	if runningExperimentExists {
-		return nil, localizedError(statusWaitingOrRunningExperimentExists, locale.JaJP)
+		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	commands := make([]command.Command, 0, len(req.Commands))
 	for _, c := range req.Commands {
@@ -1175,7 +1238,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 			return err
 		}
 		for _, cmd := range commands {
-			if err := validateFeatureVariationsCommand(features, cmd); err != nil {
+			if err := validateFeatureVariationsCommand(features, cmd, localizer); err != nil {
 				s.logger.Info(
 					"Invalid argument",
 					log.FieldsFromImcomingContext(ctx).AddFields(
@@ -1278,7 +1341,14 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		return nil, err
 	}
 	if req.Id == "" {
-		return nil, localizedError(statusMissingID, locale.JaJP)
+		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	commands := make([]command.Command, 0, len(req.Commands))
 	for _, c := range req.Commands {
@@ -1307,7 +1377,14 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		return nil, dt.Err()
 	}
 	if runningExperimentExists {
-		return nil, localizedError(statusWaitingOrRunningExperimentExists, locale.JaJP)
+		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	// TODO: clean this up.
 	// Problem: Changes in the UI should be atomic meaning either all or no changes will be made.
@@ -1711,7 +1788,7 @@ func (s *FeatureService) EvaluateFeatures(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateEvaluateFeatures(req); err != nil {
+	if err := validateEvaluateFeatures(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(

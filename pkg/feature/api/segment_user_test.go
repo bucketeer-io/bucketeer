@@ -64,7 +64,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			role:                 accountproto.Account_OWNER,
 			segmentID:            "",
 			cmd:                  nil,
-			expectedErr:          errMissingSegmentIDJaJP,
+			expectedErr:          createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
 		},
 		{
 			desc:                 "ErrMissingCommand",
@@ -82,7 +82,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			role:                 accountproto.Account_OWNER,
 			segmentID:            "id",
 			cmd:                  &featureproto.BulkUploadSegmentUsersCommand{},
-			expectedErr:          errMissingSegmentUsersDataJaJP,
+			expectedErr:          createError(statusMissingSegmentUsersData, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_data")),
 		},
 		{
 			desc:                 "ErrExceededMaxSegmentUsersDataSize",
@@ -93,7 +93,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data: []byte(strings.Repeat("a", maxSegmentUsersDataSize+1)),
 			},
-			expectedErr: errExceededMaxSegmentUsersDataSizeJaJP,
+			expectedErr: createError(statusExceededMaxSegmentUsersDataSize, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_data_state")),
 		},
 		{
 			desc:                 "ErrUnknownSegmentUserState",
@@ -105,7 +105,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				Data:  []byte("data"),
 				State: featureproto.SegmentUser_State(99),
 			},
-			expectedErr: errUnknownSegmentUserStateJaJP,
+			expectedErr: createError(statusUnknownSegmentUserState, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_state")),
 		},
 		{
 			desc: "ErrSegmentNotFound",
@@ -122,7 +122,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				Data:  []byte("data"),
 				State: featureproto.SegmentUser_INCLUDED,
 			},
-			expectedErr: errSegmentNotFoundJaJP,
+			expectedErr: createError(statusSegmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "ErrSegmentUsersAlreadyUploading",
@@ -130,7 +130,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(localizedError(statusSegmentUsersAlreadyUploading, locale.JaJP))
+				).Return(createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)))
 			},
 			environmentNamespace: "ns0",
 			role:                 accountproto.Account_OWNER,
@@ -139,7 +139,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				Data:  []byte("data"),
 				State: featureproto.SegmentUser_INCLUDED,
 			},
-			expectedErr: errSegmentUsersAlreadyUploadingJaJP,
+			expectedErr: createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)),
 		},
 		{
 			desc: "Success",
@@ -183,6 +183,16 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	testcases := []struct {
 		desc                 string
 		setup                func(*FeatureService)
@@ -197,7 +207,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			environmentNamespace: "ns0",
 			segmentID:            "",
 			state:                featureproto.SegmentUser_INCLUDED,
-			expectedErr:          errMissingSegmentIDJaJP,
+			expectedErr:          createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
 		},
 		{
 			desc:                 "ErrUnknownSegmentUserState",
@@ -205,7 +215,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			environmentNamespace: "ns0",
 			segmentID:            "id",
 			state:                featureproto.SegmentUser_State(99),
-			expectedErr:          errUnknownSegmentUserStateJaJP,
+			expectedErr:          createError(statusUnknownSegmentUserState, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_state")),
 		},
 		{
 			desc: "ErrSegmentNotFound",
@@ -219,7 +229,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			environmentNamespace: "ns0",
 			segmentID:            "id",
 			state:                featureproto.SegmentUser_INCLUDED,
-			expectedErr:          errSegmentNotFoundJaJP,
+			expectedErr:          createError(statusSegmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "ErrSegmentStatusNotSuceeded",
@@ -233,7 +243,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			environmentNamespace: "ns0",
 			segmentID:            "id",
 			state:                featureproto.SegmentUser_INCLUDED,
-			expectedErr:          errSegmentStatusNotSuceededJaJP,
+			expectedErr:          createError(statusSegmentStatusNotSuceeded, localizer.MustLocalize(locale.SegmentStatusNotSuceeded)),
 		},
 	}
 	for _, tc := range testcases {

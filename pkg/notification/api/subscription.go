@@ -175,29 +175,63 @@ func (s *NotificationService) validateCreateSubscriptionRequest(
 		}
 		return dt.Err()
 	}
-	if err := s.validateRecipient(req.Command.Recipient); err != nil {
+	if err := s.validateRecipient(req.Command.Recipient, localizer); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *NotificationService) validateRecipient(recipient *notificationproto.Recipient) error {
+func (s *NotificationService) validateRecipient(
+	recipient *notificationproto.Recipient,
+	localizer locale.Localizer,
+) error {
 	if recipient == nil {
-		return localizedError(statusRecipientRequired, locale.JaJP)
+		dt, err := statusRecipientRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "recipant"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if recipient.Type == notificationproto.Recipient_SlackChannel {
-		return s.validateSlackRecipient(recipient.SlackChannelRecipient)
+		return s.validateSlackRecipient(recipient.SlackChannelRecipient, localizer)
 	}
-	return localizedError(statusUnknownRecipient, locale.JaJP)
+	dt, err := statusUnknownRecipient.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "recipant"),
+	})
+	if err != nil {
+		return statusInternal.Err()
+	}
+	return dt.Err()
 }
 
-func (s *NotificationService) validateSlackRecipient(sr *notificationproto.SlackChannelRecipient) error {
+func (s *NotificationService) validateSlackRecipient(
+	sr *notificationproto.SlackChannelRecipient,
+	localizer locale.Localizer,
+) error {
 	// TODO: Check ping to the webhook URL?
 	if sr == nil {
-		return localizedError(statusSlackRecipientRequired, locale.JaJP)
+		dt, err := statusSlackRecipientRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "slack_recipant"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if sr.WebhookUrl == "" {
-		return localizedError(statusSlackRecipientWebhookURLRequired, locale.JaJP)
+		dt, err := statusSlackRecipientWebhookURLRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_url"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -397,7 +431,14 @@ func (s *NotificationService) updateSubscription(
 	})
 	if err != nil {
 		if err == v2ss.ErrSubscriptionNotFound || err == v2ss.ErrSubscriptionUnexpectedAffectedRows {
-			return localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update subscription",

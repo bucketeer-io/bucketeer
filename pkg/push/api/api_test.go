@@ -91,7 +91,7 @@ func TestCreatePushMySQL(t *testing.T) {
 			req: &pushproto.CreatePushRequest{
 				Command: nil,
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc:  "err: ErrFCMAPIKeyRequired",
@@ -99,7 +99,7 @@ func TestCreatePushMySQL(t *testing.T) {
 			req: &pushproto.CreatePushRequest{
 				Command: &pushproto.CreatePushCommand{},
 			},
-			expectedErr: localizedError(statusFCMAPIKeyRequired, locale.JaJP),
+			expectedErr: createError(statusFCMAPIKeyRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_api_key")),
 		},
 		{
 			desc:  "err: ErrTagsRequired",
@@ -120,7 +120,7 @@ func TestCreatePushMySQL(t *testing.T) {
 					Tags:      []string{"tag-0"},
 				},
 			},
-			expectedErr: localizedError(statusNameRequired, locale.JaJP),
+			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
 			desc: "err: ErrAlreadyExists",
@@ -220,14 +220,14 @@ func TestUpdatePushMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &pushproto.UpdatePushRequest{},
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrNoCommand",
 			req: &pushproto.UpdatePushRequest{
 				Id: "key-0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "err: ErrTagsRequired: delete",
@@ -251,7 +251,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 				Id:                "key-0",
 				RenamePushCommand: &pushproto.RenamePushCommand{Name: ""},
 			},
-			expectedErr: localizedError(statusNameRequired, locale.JaJP),
+			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -403,14 +403,14 @@ func TestDeletePushMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &pushproto.DeletePushRequest{},
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrNoCommand",
 			req: &pushproto.DeletePushRequest{
 				Id: "key-0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -461,6 +461,16 @@ func TestListPushesMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*PushService)
@@ -473,7 +483,7 @@ func TestListPushesMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &pushproto.ListPushesRequest{Cursor: "XXX"},
 			expected:    nil,
-			expectedErr: localizedError(statusInvalidCursor, locale.JaJP),
+			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -484,7 +494,7 @@ func TestListPushesMySQL(t *testing.T) {
 			},
 			input:       &pushproto.ListPushesRequest{},
 			expected:    nil,
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",

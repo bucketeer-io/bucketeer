@@ -52,7 +52,7 @@ func (s *EnvironmentService) GetProject(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetProjectRequest(req); err != nil {
+	if err := validateGetProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	project, err := s.getProject(ctx, req.Id, localizer)
@@ -64,9 +64,16 @@ func (s *EnvironmentService) GetProject(
 	}, nil
 }
 
-func validateGetProjectRequest(req *environmentproto.GetProjectRequest) error {
+func validateGetProjectRequest(req *environmentproto.GetProjectRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		return localizedError(statusProjectIDRequired, locale.JaJP)
+		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -80,7 +87,14 @@ func (s *EnvironmentService) getProject(
 	project, err := projectStorage.GetProject(ctx, id)
 	if err != nil {
 		if err == v2es.ErrProjectNotFound {
-			return nil, localizedError(statusProjectNotFound, locale.JaJP)
+			dt, err := statusProjectNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -227,7 +241,14 @@ func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, lo
 		return dt.Err()
 	}
 	if !projectIDRegex.MatchString(req.Command.Id) {
-		return localizedError(statusInvalidProjectID, locale.JaJP)
+		dt, err := statusInvalidProjectID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -266,7 +287,14 @@ func (s *EnvironmentService) createProject(
 	})
 	if err != nil {
 		if err == v2es.ErrProjectAlreadyExists {
-			return localizedError(statusProjectAlreadyExists, locale.JaJP)
+			dt, err := statusProjectAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create project",
@@ -306,7 +334,14 @@ func (s *EnvironmentService) CreateTrialProject(
 		return nil, err
 	}
 	if existingProject != nil {
-		return nil, localizedError(statusProjectAlreadyExists, locale.JaJP)
+		dt, err := statusProjectAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.AlreadyExistsError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	project := domain.NewProject(req.Command.Id, "", editor.Email, true)
 	if err := s.createProject(ctx, req.Command, project, editor, localizer); err != nil {
@@ -333,10 +368,24 @@ func validateCreateTrialProjectRequest(
 		return dt.Err()
 	}
 	if !projectIDRegex.MatchString(req.Command.Id) {
-		return localizedError(statusInvalidProjectID, locale.JaJP)
+		dt, err := statusInvalidProjectID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if !emailRegex.MatchString(req.Command.Email) {
-		return localizedError(statusInvalidProjectCreatorEmail, locale.JaJP)
+		dt, err := statusInvalidProjectCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -350,7 +399,14 @@ func (s *EnvironmentService) getTrialProjectByEmail(
 	project, err := projectStorage.GetTrialProjectByEmail(ctx, email, false, true)
 	if err != nil {
 		if err == v2es.ErrProjectNotFound {
-			return nil, localizedError(statusProjectNotFound, locale.JaJP)
+			dt, err := statusProjectNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -465,7 +521,14 @@ func validateUpdateProjectRequest(id string, commands []command.Command, localiz
 		return dt.Err()
 	}
 	if id == "" {
-		return localizedError(statusProjectIDRequired, locale.JaJP)
+		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -510,7 +573,14 @@ func (s *EnvironmentService) updateProject(
 	})
 	if err != nil {
 		if err == v2es.ErrProjectNotFound || err == v2es.ErrProjectUnexpectedAffectedRows {
-			return localizedError(statusProjectNotFound, locale.JaJP)
+			dt, err := statusProjectNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update project",
@@ -558,7 +628,14 @@ func validateEnableProjectRequest(req *environmentproto.EnableProjectRequest, lo
 		return dt.Err()
 	}
 	if req.Id == "" {
-		return localizedError(statusProjectIDRequired, locale.JaJP)
+		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -593,7 +670,14 @@ func validateDisableProjectRequest(req *environmentproto.DisableProjectRequest, 
 		return dt.Err()
 	}
 	if req.Id == "" {
-		return localizedError(statusProjectIDRequired, locale.JaJP)
+		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -631,7 +715,14 @@ func validateConvertTrialProjectRequest(
 		return dt.Err()
 	}
 	if req.Id == "" {
-		return localizedError(statusProjectIDRequired, locale.JaJP)
+		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }

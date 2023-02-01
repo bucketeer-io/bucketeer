@@ -139,12 +139,28 @@ func (s *PushService) CreatePush(
 		return nil, dt.Err()
 	}
 	if s.containsFCMKey(ctx, pushes, req.Command.FcmApiKey) {
-		return nil, localizedError(statusFCMKeyAlreadyExists, locale.JaJP)
+		if status.Code(err) == codes.AlreadyExists {
+			dt, err := statusFCMKeyAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
 	}
 	err = s.containsTags(ctx, pushes, req.Command.Tags, localizer)
 	if err != nil {
 		if status.Code(err) == codes.AlreadyExists {
-			return nil, localizedError(statusTagAlreadyExists, locale.JaJP)
+			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to validate tag existence",
@@ -234,7 +250,14 @@ func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest
 		return dt.Err()
 	}
 	if req.Command.FcmApiKey == "" {
-		return localizedError(statusFCMAPIKeyRequired, locale.JaJP)
+		dt, err := statusFCMAPIKeyRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_api_key"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if len(req.Command.Tags) == 0 {
 		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{

@@ -306,7 +306,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 		{
 			desc:        "error: ErrExperimentIDRequired",
 			input:       &ecproto.GetExperimentResultRequest{EnvironmentNamespace: "ns0"},
-			expectedErr: localizedError(statusExperimentIDRequired, locale.JaJP),
+			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "experiment_id")),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -373,7 +373,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 		{
 			desc:        "error: ErrFeatureIDRequired",
 			input:       &ecproto.ListExperimentResultsRequest{EnvironmentNamespace: "ns0"},
-			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -402,7 +402,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success: no results",
@@ -904,7 +904,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
 			desc: "error: get feature failed",

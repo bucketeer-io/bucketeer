@@ -42,7 +42,14 @@ func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalReque
 		return nil, err
 	}
 	if req.Id == "" {
-		return nil, localizedError(statusGoalIDRequired, locale.JaJP)
+		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	goal, err := s.getGoalMySQL(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
@@ -296,13 +303,34 @@ func validateCreateGoalRequest(req *proto.CreateGoalRequest, localizer locale.Lo
 		return dt.Err()
 	}
 	if req.Command.Id == "" {
-		return localizedError(statusGoalIDRequired, locale.JaJP)
+		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if !goalIDRegex.MatchString(req.Command.Id) {
-		return localizedError(statusInvalidGoalID, locale.JaJP)
+		dt, err := statusInvalidGoalID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command.Name == "" {
-		return localizedError(statusGoalNameRequired, locale.JaJP)
+		dt, err := statusGoalNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -317,7 +345,14 @@ func (s *experimentService) UpdateGoal(
 		return nil, err
 	}
 	if req.Id == "" {
-		return nil, localizedError(statusGoalIDRequired, locale.JaJP)
+		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	commands := make([]command.Command, 0)
 	if req.RenameCommand != nil {
@@ -327,7 +362,14 @@ func (s *experimentService) UpdateGoal(
 		commands = append(commands, req.ChangeDescriptionCommand)
 	}
 	if len(commands) == 0 {
-		return nil, localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.updateGoal(
 		ctx,
@@ -360,10 +402,24 @@ func (s *experimentService) ArchiveGoal(
 		return nil, err
 	}
 	if req.Id == "" {
-		return nil, localizedError(statusGoalIDRequired, locale.JaJP)
+		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if req.Command == nil {
-		return nil, localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.updateGoal(
 		ctx,
@@ -396,10 +452,24 @@ func (s *experimentService) DeleteGoal(
 		return nil, err
 	}
 	if req.Id == "" {
-		return nil, localizedError(statusGoalIDRequired, locale.JaJP)
+		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if req.Command == nil {
-		return nil, localizedError(statusNoCommand, locale.JaJP)
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	err = s.updateGoal(
 		ctx,
@@ -462,7 +532,14 @@ func (s *experimentService) updateGoal(
 	})
 	if err != nil {
 		if err == v2es.ErrGoalNotFound || err == v2es.ErrGoalUnexpectedAffectedRows {
-			return localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

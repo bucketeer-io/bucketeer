@@ -20,6 +20,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	gstatus "google.golang.org/grpc/status"
 
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
@@ -33,6 +36,15 @@ func TestGetUserEvaluations(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []struct {
 		desc        string
 		setup       func(context.Context, ftstorage.UserEvaluationsStorage)
@@ -51,7 +63,7 @@ func TestGetUserEvaluations(t *testing.T) {
 				UserId:               userID,
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusMissingFeatureTag, locale.JaJP),
+			expectedErr: createError(statusMissingFeatureTag, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
 		},
 		{
 			desc:  "ErrMissingUserID",
@@ -63,7 +75,7 @@ func TestGetUserEvaluations(t *testing.T) {
 				UserId:               "",
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusMissingUserID, locale.JaJP),
+			expectedErr: createError(statusMissingUserID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id")),
 		},
 		{
 			desc: "ErrInternal",
@@ -82,7 +94,7 @@ func TestGetUserEvaluations(t *testing.T) {
 				UserId:               userID,
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "Success",
@@ -127,6 +139,15 @@ func TestUpsertUserEvaluation(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []struct {
 		desc        string
 		setup       func(context.Context, ftstorage.UserEvaluationsStorage)
@@ -145,7 +166,7 @@ func TestUpsertUserEvaluation(t *testing.T) {
 				Tag:                  tag,
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusPermissionDenied, locale.JaJP),
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc:  "ErrMissingFeatureTag",
@@ -157,7 +178,7 @@ func TestUpsertUserEvaluation(t *testing.T) {
 				Evaluation:           evaluation,
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusMissingFeatureTag, locale.JaJP),
+			expectedErr: createError(statusMissingFeatureTag, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
 		},
 		{
 			desc:  "ErrMissingEvaluation",
@@ -169,7 +190,7 @@ func TestUpsertUserEvaluation(t *testing.T) {
 				Evaluation:           nil,
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusMissingEvaluation, locale.JaJP),
+			expectedErr: createError(statusMissingEvaluation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "evaluation")),
 		},
 		{
 			desc: "ErrInternal",
@@ -188,7 +209,7 @@ func TestUpsertUserEvaluation(t *testing.T) {
 				Tag:                  tag,
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "Success",
