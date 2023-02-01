@@ -60,7 +60,9 @@ SELECT
   IFNULL(SUM(event_count), 0) as event_count
 FROM
   mau
-where yearmonth = '2022-12'
+where
+  environment_namespace = 'namespace' AND
+  yearmonth = '202212'
 ```
 
 ## Server changes
@@ -73,18 +75,18 @@ We will add the upsert implementation in the `event-persister-user-event`.
 
 ### Event Counter
 
-We will add a new API called `GetUserCount` in the `event-counter` service to retrieve the count from the new DB instead of Druid, using the same response format.<br />
+We will add a new API called `GetMAUCount` in the `event-counter` service to retrieve the count from the new DB instead of Druid, using the same response format.<br />
 We also need to make these changes in the [service.proto](https://github.com/bucketeer-io/bucketeer/blob/main/proto/eventcounter/service.proto#L155) file.
 
 **Note:** We will delete the old `GetUserCountV2` API once we have gathered the entire month's events.
 
 ### Notification Sender
 
-We will change the API name from `GetUserCountV2` to `GetUserCount` in the `notification-sender` service.
+We will change the API name from `GetUserCountV2` to `GetMAUCount` in the `notification-sender` service.
 
 ### Send MAU script
 
-We will change the API name from `GetUserCountV2` to `GetUserCount`.
+We will change the API name from `GetUserCountV2` to `GetMAUCount`.
 
 ## Data Deletion
 
