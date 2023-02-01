@@ -4166,6 +4166,26 @@
             ]
           },
           {
+            "name": "UnknownErrorMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "ApiId"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
             "name": "OpsEvent",
             "fields": [
               {

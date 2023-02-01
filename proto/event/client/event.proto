@@ -178,6 +178,11 @@ message InternalSdkErrorMetricsEvent {
   map<string, string> labels = 2;
 }
 
+message UnknownErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
 message OpsEvent {
   int64 timestamp = 1;
   string feature_id = 2;
