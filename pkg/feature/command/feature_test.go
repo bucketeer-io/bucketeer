@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	protobuf "github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -438,7 +439,8 @@ func TestAddPrerequisite(t *testing.T) {
 			}
 			err := cmd.Handle(ctx, p.cmd)
 			assert.Equal(t, p.expected, err)
-			assert.NotEmpty(t, f.Feature.Prerequisites)
+			assert.Equal(t, 1, len(f.Feature.Prerequisites))
+			assert.True(t, protobuf.Equal(p.cmd.Prerequisite, f.Feature.Prerequisites[0]))
 		})
 	}
 }

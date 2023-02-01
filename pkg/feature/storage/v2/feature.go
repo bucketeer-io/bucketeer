@@ -259,7 +259,7 @@ func (s *featureStorage) GetFeature(
 		&mysql.JSONObject{Val: &feature.Tags},
 		&feature.Maintainer,
 		&feature.SamplingSeed,
-		&mysql.JSONObject{Val: feature.Prerequisites},
+		&mysql.JSONObject{Val: &feature.Prerequisites},
 	)
 	if err != nil {
 		if err == mysql.ErrNoRows {
@@ -336,7 +336,7 @@ func (s *featureStorage) ListFeatures(
 			&mysql.JSONObject{Val: &feature.Tags},
 			&feature.Maintainer,
 			&feature.SamplingSeed,
-			&mysql.JSONObject{Val: feature.Prerequisites},
+			&mysql.JSONObject{Val: &feature.Prerequisites},
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -434,7 +434,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 			&mysql.JSONObject{Val: &feature.Tags},
 			&feature.Maintainer,
 			&feature.SamplingSeed,
-			&mysql.JSONObject{Val: feature.Prerequisites},
+			&mysql.JSONObject{Val: &feature.Prerequisites},
 		)
 		if err != nil {
 			return nil, 0, 0, err
