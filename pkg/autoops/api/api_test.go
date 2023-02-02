@@ -223,7 +223,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusOpsEventRateClauseInvalidThredshold, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "thredshold")),
+			expectedErr: createError(statusOpsEventRateClauseInvalidThredshold, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "threshold")),
 		},
 		{
 			desc: "err: ErrOpsEventRateClauseInvalidThredshold: greater",
