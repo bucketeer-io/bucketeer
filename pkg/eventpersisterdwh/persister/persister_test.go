@@ -273,7 +273,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		desc               string
 		setup              func(context.Context, *goalEvtWriter)
 		input              *eventproto.GoalEvent
-		expected           *epproto.GoalEvent
+		expected           []*epproto.GoalEvent
 		expectedErr        error
 		expectedRepeatable bool
 	}{
@@ -548,6 +548,12 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
 						},
+						{
+							Id:             "experiment-id-2",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid-2",
+							FeatureVersion: int32(1),
+						},
 					},
 				}, nil)
 				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
@@ -563,6 +569,19 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 					VariationId:    "vid",
 					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
 				}, nil)
+				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+					ctx,
+					"uid",
+					environmentNamespace,
+					"tag",
+					"fid-2",
+					int32(1),
+				).Return(&featureproto.Evaluation{
+					FeatureId:      "fid-2",
+					FeatureVersion: int32(1),
+					VariationId:    "vid-2",
+					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+				}, nil)
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:    eventproto.SourceId_ANDROID,
@@ -574,20 +593,37 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Evaluations: nil,
 				Tag:         "tag",
 			},
-			expected: &epproto.GoalEvent{
-				SourceId:             eventproto.SourceId_ANDROID.String(),
-				Id:                   eventID,
-				GoalId:               "gid",
-				UserId:               "uid",
-				Value:                1.2,
-				Tag:                  "tag",
-				FeatureId:            "fid",
-				FeatureVersion:       int32(1),
-				VariationId:          "vid",
-				Reason:               featureproto.Reason_TARGET.String(),
-				UserData:             string(userData),
-				EnvironmentNamespace: environmentNamespace,
-				Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
+			expected: []*epproto.GoalEvent{
+				{
+					SourceId:             eventproto.SourceId_ANDROID.String(),
+					Id:                   eventID,
+					GoalId:               "gid",
+					UserId:               "uid",
+					Value:                1.2,
+					Tag:                  "tag",
+					FeatureId:            "fid",
+					FeatureVersion:       int32(1),
+					VariationId:          "vid",
+					Reason:               featureproto.Reason_TARGET.String(),
+					UserData:             string(userData),
+					EnvironmentNamespace: environmentNamespace,
+					Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
+				},
+				{
+					SourceId:             eventproto.SourceId_ANDROID.String(),
+					Id:                   eventID,
+					GoalId:               "gid",
+					UserId:               "uid",
+					Value:                1.2,
+					Tag:                  "tag",
+					FeatureId:            "fid-2",
+					FeatureVersion:       int32(1),
+					VariationId:          "vid-2",
+					Reason:               featureproto.Reason_TARGET.String(),
+					UserData:             string(userData),
+					EnvironmentNamespace: environmentNamespace,
+					Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
+				},
 			},
 			expectedErr:        nil,
 			expectedRepeatable: false,
@@ -599,7 +635,12 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			if p.setup != nil {
 				p.setup(ctx, persister)
 			}
-			actual, repeatable, err := persister.convToGoalEvent(ctx, p.input, eventID, environmentNamespace)
+			actual, repeatable, err := persister.convToGoalEvents(
+				ctx,
+				p.input,
+				eventID,
+				environmentNamespace,
+			)
 			assert.Equal(t, p.expectedRepeatable, repeatable)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)

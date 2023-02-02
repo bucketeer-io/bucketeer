@@ -85,7 +85,7 @@ func (w *goalEvtWriter) Write(
 		for id, event := range events {
 			switch evt := event.(type) {
 			case *eventproto.GoalEvent:
-				e, retriable, err := w.convToGoalEvent(ctx, evt, id, environmentNamespace)
+				e, retriable, err := w.convToGoalEvents(ctx, evt, id, environmentNamespace)
 				if err != nil {
 					if err == ErrNoExperiments || err == ErrExperimentNotFound {
 						// If there is nothing to link, we don't report it as an error
@@ -109,7 +109,7 @@ func (w *goalEvtWriter) Write(
 					fails[id] = retriable
 					continue
 				}
-				goalEvents = append(goalEvents, e)
+				goalEvents = append(goalEvents, e...)
 				handledCounter.WithLabelValues(codeLinked).Inc()
 			default:
 				w.logger.Error(
@@ -135,20 +135,38 @@ func (w *goalEvtWriter) Write(
 	return fails
 }
 
-func (w *goalEvtWriter) convToGoalEvent(
+// Convert one or more goal events
+func (w *goalEvtWriter) convToGoalEvents(
 	ctx context.Context,
 	e *eventproto.GoalEvent,
 	id, environmentNamespace string,
-) (*epproto.GoalEvent, bool, error) {
+) ([]*epproto.GoalEvent, bool, error) {
 	tag := e.Tag
 	if tag == "" {
 		// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
 		tag = "none"
 	}
-	eval, retriable, err := w.linkGoalEvent(ctx, e, environmentNamespace, tag)
+	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentNamespace, tag)
 	if err != nil {
 		return nil, retriable, err
 	}
+	events := make([]*epproto.GoalEvent, 0, len(evals))
+	for _, eval := range evals {
+		event, retriable, err := w.convToGoalEvent(ctx, e, eval, id, tag, environmentNamespace)
+		if err != nil {
+			return nil, retriable, err
+		}
+		events = append(events, event)
+	}
+	return events, false, nil
+}
+
+func (w *goalEvtWriter) convToGoalEvent(
+	ctx context.Context,
+	e *eventproto.GoalEvent,
+	eval *featureproto.Evaluation,
+	id, tag, environmentNamespace string,
+) (*epproto.GoalEvent, bool, error) {
 	var ud []byte
 	if e.User != nil {
 		var err error
@@ -182,7 +200,7 @@ func (w *goalEvtWriter) linkGoalEvent(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
 	environmentNamespace, tag string,
-) (*featureproto.Evaluation, bool, error) {
+) ([]*featureproto.Evaluation, bool, error) {
 	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, environmentNamespace, tag)
 	if err != nil {
 		return nil, retriable, err
@@ -190,11 +208,12 @@ func (w *goalEvtWriter) linkGoalEvent(
 	return evalExp, false, nil
 }
 
+// Link one or more experiments by goal ID
 func (w *goalEvtWriter) linkGoalEventByExperiment(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
 	environmentNamespace, tag string,
-) (*featureproto.Evaluation, bool, error) {
+) ([]*featureproto.Evaluation, bool, error) {
 	// List experiments
 	experiments, err := w.listExperiments(ctx, environmentNamespace)
 	if err != nil {
@@ -207,29 +226,32 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 	// TODO: we must change the console UI not to allow creating
 	// multiple experiments running at the same time,
 	// using the same feature flag id and goal id
-	var experiment *exproto.Experiment
+	exps := []*exproto.Experiment{}
 	for _, exp := range experiments {
 		if w.findGoalID(event.GoalId, exp.GoalIds) {
-			experiment = exp
-			break
+			exps = append(exps, exp)
 		}
 	}
-	if experiment == nil {
+	if len(exps) == 0 {
 		return nil, false, ErrExperimentNotFound
 	}
-	// Get the user evaluation using the experiment info
-	ev, err := w.getUserEvaluation(
-		ctx,
-		environmentNamespace,
-		event.UserId,
-		tag,
-		experiment.FeatureId,
-		experiment.FeatureVersion,
-	)
-	if err != nil {
-		return nil, true, err
+	evals := make([]*featureproto.Evaluation, 0, len(exps))
+	for _, exp := range exps {
+		// Get the user evaluation using the experiment info
+		ev, err := w.getUserEvaluation(
+			ctx,
+			environmentNamespace,
+			event.UserId,
+			tag,
+			exp.FeatureId,
+			exp.FeatureVersion,
+		)
+		if err != nil {
+			return nil, true, err
+		}
+		evals = append(evals, ev)
 	}
-	return ev, false, nil
+	return evals, false, nil
 }
 
 func (w *goalEvtWriter) findGoalID(id string, goalIDs []string) bool {
