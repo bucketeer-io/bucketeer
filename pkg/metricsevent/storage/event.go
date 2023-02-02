@@ -31,10 +31,7 @@ type Storage interface {
 	SaveInternalErrorCountMetricsEvent(tag string)
 	SaveLatencyMetricsEvent(tag, status, sdkVersion string, api eventproto.ApiId, duration time.Duration)
 	SaveSizeMetricsEvent(tag, status, sdkVersion string, api eventproto.ApiId, sizeByte int32)
-	SaveTimeoutErrorMetricsEvent(tag, sdkVersion string, api eventproto.ApiId)
-	SaveInternalErrorMetricsEvent(tag, sdkVersion string, api eventproto.ApiId)
-	SaveNetworkErrorMetricsEvent(tag, sdkVersion string, api eventproto.ApiId)
-	SaveInternalSdkErrorMetricsEvent(tag, sdkVersion string, api eventproto.ApiId)
+	SaveErrorMetricsEvent(tag, errorType, sdkVersion string, api eventproto.ApiId)
 }
 
 type storage struct {
@@ -74,18 +71,6 @@ func (s *storage) SaveSizeMetricsEvent(tag, status, sdkVersion string, api event
 	sdkSizeHistogram.WithLabelValues(tag, status, api.String(), sdkVersion).Observe(float64(sizeByte))
 }
 
-func (s *storage) SaveTimeoutErrorMetricsEvent(tag, sdkVersion string, api eventproto.ApiId) {
-	sdkTimeoutError.WithLabelValues(tag, api.String(), sdkVersion).Inc()
-}
-
-func (s *storage) SaveInternalErrorMetricsEvent(tag, sdkVersion string, api eventproto.ApiId) {
-	sdkInternalError.WithLabelValues(tag, api.String(), sdkVersion).Inc()
-}
-
-func (s *storage) SaveNetworkErrorMetricsEvent(tag, sdkVersion string, api eventproto.ApiId) {
-	sdkNetworkError.WithLabelValues(tag, api.String(), sdkVersion).Inc()
-}
-
-func (s *storage) SaveInternalSdkErrorMetricsEvent(tag, sdkVersion string, api eventproto.ApiId) {
-	sdkInternalSdkError.WithLabelValues(tag, api.String(), sdkVersion).Inc()
+func (s *storage) SaveErrorMetricsEvent(tag, errorType, sdkVersion string, api eventproto.ApiId) {
+	sdkErrorCounter.WithLabelValues(tag, errorType, api.String(), sdkVersion).Inc()
 }

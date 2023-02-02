@@ -29,6 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	metricsmock "github.com/bucketeer-io/bucketeer/pkg/metrics/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/metricsevent/storage"
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/metricsevent/storage/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	pullermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/mock"
@@ -378,7 +379,7 @@ func TestSaveMetrics(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "SizeMetricsEvent: error: unknown api id",
+			desc: "SizeMetricsEvent: success",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
 				pst.storage.(*storagemock.MockStorage).EXPECT().SaveSizeMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.SizeMetricsEvent{
@@ -394,9 +395,121 @@ func TestSaveMetrics(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "TimeoutErrorMetricsEvent: error: unknown api id",
+			desc: "BadRequestErrorMetricsEvent: success",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
-				pst.storage.(*storagemock.MockStorage).EXPECT().SaveTimeoutErrorMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeBadRequest, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.BadRequestErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "UnauthorizedErrorMetricsEvent: success",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeUnauthenticated, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.UnauthorizedErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "ForbiddenErrorMetricsEvent: success",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeForbidden, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.ForbiddenErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "NotFoundErrorMetricsEvent: success",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeNotFound, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.NotFoundErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "ClientClosedRequestErrorMetricsEvent: success",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeClientClosedRequest, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.ClientClosedRequestErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "InternalServerErrorMetricsEvent: success",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeInternalServerError, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.InternalServerErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "ServiceUnavailableErrorMetricsEvent: success",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeServiceUnavailable, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.ServiceUnavailableErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "TimeoutErrorMetricsEvent: success",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeTimeout, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.TimeoutErrorMetricsEvent{
 					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "test"},
@@ -410,9 +523,9 @@ func TestSaveMetrics(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "InternalErrorMetricsEvent: error: unknown api id",
+			desc: "InternalErrorMetricsEvent: success",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
-				pst.storage.(*storagemock.MockStorage).EXPECT().SaveInternalErrorMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeInternal, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.InternalErrorMetricsEvent{
 					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "test"},
@@ -426,9 +539,9 @@ func TestSaveMetrics(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "NetworkErrorMetrics: error: unknown api id",
+			desc: "NetworkErrorMetrics: success",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
-				pst.storage.(*storagemock.MockStorage).EXPECT().SaveNetworkErrorMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeNetwork, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.NetworkErrorMetricsEvent{
 					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "test"},
@@ -442,10 +555,26 @@ func TestSaveMetrics(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "InternalSdkErrorMetricsEvent: error: unknown api id",
+			desc: "InternalSdkErrorMetricsEvent: sucess",
 			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
-				pst.storage.(*storagemock.MockStorage).EXPECT().SaveInternalSdkErrorMetricsEvent(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(1)
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeSDKInternal, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
 				e, err := ptypes.MarshalAny(&clientevent.InternalSdkErrorMetricsEvent{
+					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
+					Labels: map[string]string{"tag": "test"},
+				})
+				require.NoError(t, err)
+				return &clientevent.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+					Event:     e,
+				}
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "UnknownErrorMetricsEvent: success",
+			setup: func(t *testing.T, pst *persister) *clientevent.MetricsEvent {
+				pst.storage.(*storagemock.MockStorage).EXPECT().SaveErrorMetricsEvent("test", storage.ErrorTypeUnknown, "", clientevent.ApiId_GET_EVALUATIONS).Return().Times(1)
+				e, err := ptypes.MarshalAny(&clientevent.UnknownErrorMetricsEvent{
 					ApiId:  clientevent.ApiId_GET_EVALUATIONS,
 					Labels: map[string]string{"tag": "test"},
 				})

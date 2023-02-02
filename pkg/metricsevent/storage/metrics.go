@@ -20,6 +20,21 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
 
+const (
+	ErrorTypeBadRequest          = "BadRequest"
+	ErrorTypeUnauthenticated     = "Unauthenticated"
+	ErrorTypeForbidden           = "Forbidden"
+	ErrorTypeNotFound            = "NotFound"
+	ErrorTypeClientClosedRequest = "ClientClosedRequest"
+	ErrorTypeInternalServerError = "InternalServerError"
+	ErrorTypeServiceUnavailable  = "ServiceUnavailable"
+	ErrorTypeTimeout             = "Timeout"
+	ErrorTypeInternal            = "Internal"
+	ErrorTypeNetwork             = "Network"
+	ErrorTypeSDKInternal         = "SDKInternal"
+	ErrorTypeUnknown             = "Unknown"
+)
+
 var (
 	// TODO: Remove this event after grpc server is removed.
 	sdkGetEvaluationsLatencyHistogram = prometheus.NewHistogramVec(
@@ -78,37 +93,13 @@ var (
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"tag", "state", "api", "sdk_version"})
 
-	sdkTimeoutError = prometheus.NewCounterVec(
+	sdkErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "metrics_event",
-			Name:      "sdk_api_timeout_error_total",
-			Help:      "Total number of sdk timeout errors",
-		}, []string{"tag", "api", "sdk_version"})
-
-	sdkInternalError = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "bucketeer",
-			Subsystem: "metrics_event",
-			Name:      "sdk_api_internal_error_total",
-			Help:      "Total number of sdk internal errors",
-		}, []string{"tag", "api", "sdk_version"})
-
-	sdkNetworkError = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "bucketeer",
-			Subsystem: "metrics_event",
-			Name:      "sdk_api_network_error_total",
-			Help:      "Total number of sdk network errors",
-		}, []string{"tag", "api", "sdk_version"})
-
-	sdkInternalSdkError = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "bucketeer",
-			Subsystem: "metrics_event",
-			Name:      "sdk_api_internal_sdk_error_total",
-			Help:      "Total number of sdk internal sdk errors",
-		}, []string{"tag", "api", "sdk_version"})
+			Name:      "sdk_error_total",
+			Help:      "Total number of sdk errors",
+		}, []string{"tag", "error_type", "api", "sdk_version"})
 )
 
 func registerMetrics(r metrics.Registerer) {
@@ -119,9 +110,6 @@ func registerMetrics(r metrics.Registerer) {
 		sdkInternalErrorCounter,
 		sdkLatencyHistogram,
 		sdkSizeHistogram,
-		sdkTimeoutError,
-		sdkInternalError,
-		sdkNetworkError,
-		sdkInternalSdkError,
+		sdkErrorCounter,
 	)
 }

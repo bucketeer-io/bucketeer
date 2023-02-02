@@ -37,16 +37,24 @@ var (
 	ErrInvalidDuration = errors.New("metricsevent persister: invalid duration")
 	ErrUnknownApiId    = errors.New("metricsevent persister: unknown api id")
 
-	getEvaluationLatencyMetricsEvent = &eventproto.GetEvaluationLatencyMetricsEvent{}
-	getEvaluationSizeMetricsEvent    = &eventproto.GetEvaluationSizeMetricsEvent{}
-	timeoutErrorCountMetricsEvent    = &eventproto.TimeoutErrorCountMetricsEvent{}
-	internalErrorCountMetricsEvent   = &eventproto.InternalErrorCountMetricsEvent{}
-	latencyMetricsEvent              = &eventproto.LatencyMetricsEvent{}
-	sizeMetricsEvent                 = &eventproto.SizeMetricsEvent{}
-	timeoutErrorMetricsEvent         = &eventproto.TimeoutErrorMetricsEvent{}
-	internalErrorMetricsEvent        = &eventproto.InternalErrorMetricsEvent{}
-	networkErrorMetricsEvent         = &eventproto.NetworkErrorMetricsEvent{}
-	internalSdkErrorMetricsEvent     = &eventproto.InternalSdkErrorMetricsEvent{}
+	getEvaluationLatencyMetricsEvent     = &eventproto.GetEvaluationLatencyMetricsEvent{}
+	getEvaluationSizeMetricsEvent        = &eventproto.GetEvaluationSizeMetricsEvent{}
+	timeoutErrorCountMetricsEvent        = &eventproto.TimeoutErrorCountMetricsEvent{}
+	internalErrorCountMetricsEvent       = &eventproto.InternalErrorCountMetricsEvent{}
+	latencyMetricsEvent                  = &eventproto.LatencyMetricsEvent{}
+	sizeMetricsEvent                     = &eventproto.SizeMetricsEvent{}
+	badRequestErrorMetricsEvent          = &eventproto.BadRequestErrorMetricsEvent{}
+	unauthorizedErrorMetricsEvent        = &eventproto.UnauthorizedErrorMetricsEvent{}
+	forbiddenErrorMetricsEvent           = &eventproto.ForbiddenErrorMetricsEvent{}
+	notFoundErrorMetricsEvent            = &eventproto.NotFoundErrorMetricsEvent{}
+	clientClosedRequestErrorMetricsEvent = &eventproto.ClientClosedRequestErrorMetricsEvent{}
+	internalServerErrorMetricsEvent      = &eventproto.InternalServerErrorMetricsEvent{}
+	serviceUnavailableErrorMetricsEvent  = &eventproto.ServiceUnavailableErrorMetricsEvent{}
+	timeoutErrorMetricsEvent             = &eventproto.TimeoutErrorMetricsEvent{}
+	internalErrorMetricsEvent            = &eventproto.InternalErrorMetricsEvent{}
+	networkErrorMetricsEvent             = &eventproto.NetworkErrorMetricsEvent{}
+	internalSdkErrorMetricsEvent         = &eventproto.InternalSdkErrorMetricsEvent{}
+	unknownErrorMetricsEvent             = &eventproto.UnknownErrorMetricsEvent{}
 )
 
 type options struct {
@@ -246,6 +254,27 @@ func (p *persister) saveMetrics(event *eventproto.MetricsEvent) error {
 	if ptypes.Is(event.Event, sizeMetricsEvent) {
 		return p.saveSizeMetricsEvent(event)
 	}
+	if ptypes.Is(event.Event, badRequestErrorMetricsEvent) {
+		return p.saveBadRequestError(event)
+	}
+	if ptypes.Is(event.Event, unauthorizedErrorMetricsEvent) {
+		return p.saveUnauthorizedError(event)
+	}
+	if ptypes.Is(event.Event, forbiddenErrorMetricsEvent) {
+		return p.saveForbiddenError(event)
+	}
+	if ptypes.Is(event.Event, notFoundErrorMetricsEvent) {
+		return p.saveNotFoundError(event)
+	}
+	if ptypes.Is(event.Event, clientClosedRequestErrorMetricsEvent) {
+		return p.saveClientClosedRequestError(event)
+	}
+	if ptypes.Is(event.Event, internalServerErrorMetricsEvent) {
+		return p.saveInternalServerError(event)
+	}
+	if ptypes.Is(event.Event, serviceUnavailableErrorMetricsEvent) {
+		return p.saveServiceUnavailableError(event)
+	}
 	if ptypes.Is(event.Event, timeoutErrorMetricsEvent) {
 		return p.saveTimeoutError(event)
 	}
@@ -257,6 +286,9 @@ func (p *persister) saveMetrics(event *eventproto.MetricsEvent) error {
 	}
 	if ptypes.Is(event.Event, internalSdkErrorMetricsEvent) {
 		return p.saveInternalSdkError(event)
+	}
+	if ptypes.Is(event.Event, unknownErrorMetricsEvent) {
+		return p.saveUnknownError(event)
 	}
 	return ErrUnknownEvent
 }
@@ -352,7 +384,127 @@ func (p *persister) saveSizeMetricsEvent(event *eventproto.MetricsEvent) error {
 	return nil
 }
 
+func (p *persister) saveBadRequestError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeBadRequest
+	ev := &eventproto.BadRequestErrorMetricsEvent{}
+	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+		return err
+	}
+	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
+		return ErrUnknownApiId
+	}
+	var tag string
+	if ev.Labels != nil {
+		tag = ev.Labels["tag"]
+	}
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
+	return nil
+}
+
+func (p *persister) saveUnauthorizedError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeUnauthenticated
+	ev := &eventproto.UnauthorizedErrorMetricsEvent{}
+	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+		return err
+	}
+	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
+		return ErrUnknownApiId
+	}
+	var tag string
+	if ev.Labels != nil {
+		tag = ev.Labels["tag"]
+	}
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
+	return nil
+}
+
+func (p *persister) saveForbiddenError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeForbidden
+	ev := &eventproto.ForbiddenErrorMetricsEvent{}
+	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+		return err
+	}
+	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
+		return ErrUnknownApiId
+	}
+	var tag string
+	if ev.Labels != nil {
+		tag = ev.Labels["tag"]
+	}
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
+	return nil
+}
+
+func (p *persister) saveNotFoundError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeNotFound
+	ev := &eventproto.NotFoundErrorMetricsEvent{}
+	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+		return err
+	}
+	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
+		return ErrUnknownApiId
+	}
+	var tag string
+	if ev.Labels != nil {
+		tag = ev.Labels["tag"]
+	}
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
+	return nil
+}
+
+func (p *persister) saveClientClosedRequestError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeClientClosedRequest
+	ev := &eventproto.ClientClosedRequestErrorMetricsEvent{}
+	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+		return err
+	}
+	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
+		return ErrUnknownApiId
+	}
+	var tag string
+	if ev.Labels != nil {
+		tag = ev.Labels["tag"]
+	}
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
+	return nil
+}
+
+func (p *persister) saveInternalServerError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeInternalServerError
+	ev := &eventproto.InternalServerErrorMetricsEvent{}
+	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+		return err
+	}
+	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
+		return ErrUnknownApiId
+	}
+	var tag string
+	if ev.Labels != nil {
+		tag = ev.Labels["tag"]
+	}
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
+	return nil
+}
+
+func (p *persister) saveServiceUnavailableError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeServiceUnavailable
+	ev := &eventproto.ServiceUnavailableErrorMetricsEvent{}
+	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+		return err
+	}
+	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
+		return ErrUnknownApiId
+	}
+	var tag string
+	if ev.Labels != nil {
+		tag = ev.Labels["tag"]
+	}
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
+	return nil
+}
+
 func (p *persister) saveTimeoutError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeTimeout
 	ev := &eventproto.TimeoutErrorMetricsEvent{}
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
@@ -364,11 +516,12 @@ func (p *persister) saveTimeoutError(event *eventproto.MetricsEvent) error {
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
 	}
-	p.storage.SaveTimeoutErrorMetricsEvent(tag, event.SdkVersion, ev.ApiId)
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
 	return nil
 }
 
 func (p *persister) saveInternalError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeInternal
 	ev := &eventproto.InternalErrorMetricsEvent{}
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
@@ -380,11 +533,12 @@ func (p *persister) saveInternalError(event *eventproto.MetricsEvent) error {
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
 	}
-	p.storage.SaveInternalErrorMetricsEvent(tag, event.SdkVersion, ev.ApiId)
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
 	return nil
 }
 
 func (p *persister) saveNetworkError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeNetwork
 	ev := &eventproto.NetworkErrorMetricsEvent{}
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
@@ -396,11 +550,12 @@ func (p *persister) saveNetworkError(event *eventproto.MetricsEvent) error {
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
 	}
-	p.storage.SaveNetworkErrorMetricsEvent(tag, event.SdkVersion, ev.ApiId)
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
 	return nil
 }
 
 func (p *persister) saveInternalSdkError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeSDKInternal
 	ev := &eventproto.InternalSdkErrorMetricsEvent{}
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
@@ -412,6 +567,23 @@ func (p *persister) saveInternalSdkError(event *eventproto.MetricsEvent) error {
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
 	}
-	p.storage.SaveInternalSdkErrorMetricsEvent(tag, event.SdkVersion, ev.ApiId)
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
+	return nil
+}
+
+func (p *persister) saveUnknownError(event *eventproto.MetricsEvent) error {
+	errorType := storage.ErrorTypeUnknown
+	ev := &eventproto.UnknownErrorMetricsEvent{}
+	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+		return err
+	}
+	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
+		return ErrUnknownApiId
+	}
+	var tag string
+	if ev.Labels != nil {
+		tag = ev.Labels["tag"]
+	}
+	p.storage.SaveErrorMetricsEvent(tag, errorType, event.SdkVersion, ev.ApiId)
 	return nil
 }

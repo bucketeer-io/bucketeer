@@ -36,6 +36,18 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
 }
 
+// SaveErrorMetricsEvent mocks base method.
+func (m *MockStorage) SaveErrorMetricsEvent(tag, errorType, sdkVersion string, api client.ApiId) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SaveErrorMetricsEvent", tag, errorType, sdkVersion, api)
+}
+
+// SaveErrorMetricsEvent indicates an expected call of SaveErrorMetricsEvent.
+func (mr *MockStorageMockRecorder) SaveErrorMetricsEvent(tag, errorType, sdkVersion, api interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveErrorMetricsEvent", reflect.TypeOf((*MockStorage)(nil).SaveErrorMetricsEvent), tag, errorType, sdkVersion, api)
+}
+
 // SaveGetEvaluationLatencyMetricsEvent mocks base method.
 func (m *MockStorage) SaveGetEvaluationLatencyMetricsEvent(tag, status string, duration time.Duration) {
 	m.ctrl.T.Helper()
@@ -72,30 +84,6 @@ func (mr *MockStorageMockRecorder) SaveInternalErrorCountMetricsEvent(tag interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveInternalErrorCountMetricsEvent", reflect.TypeOf((*MockStorage)(nil).SaveInternalErrorCountMetricsEvent), tag)
 }
 
-// SaveInternalErrorMetricsEvent mocks base method.
-func (m *MockStorage) SaveInternalErrorMetricsEvent(tag, sdkVersion string, api client.ApiId) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SaveInternalErrorMetricsEvent", tag, sdkVersion, api)
-}
-
-// SaveInternalErrorMetricsEvent indicates an expected call of SaveInternalErrorMetricsEvent.
-func (mr *MockStorageMockRecorder) SaveInternalErrorMetricsEvent(tag, sdkVersion, api interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveInternalErrorMetricsEvent", reflect.TypeOf((*MockStorage)(nil).SaveInternalErrorMetricsEvent), tag, sdkVersion, api)
-}
-
-// SaveInternalSdkErrorMetricsEvent mocks base method.
-func (m *MockStorage) SaveInternalSdkErrorMetricsEvent(tag, sdkVersion string, api client.ApiId) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SaveInternalSdkErrorMetricsEvent", tag, sdkVersion, api)
-}
-
-// SaveInternalSdkErrorMetricsEvent indicates an expected call of SaveInternalSdkErrorMetricsEvent.
-func (mr *MockStorageMockRecorder) SaveInternalSdkErrorMetricsEvent(tag, sdkVersion, api interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveInternalSdkErrorMetricsEvent", reflect.TypeOf((*MockStorage)(nil).SaveInternalSdkErrorMetricsEvent), tag, sdkVersion, api)
-}
-
 // SaveLatencyMetricsEvent mocks base method.
 func (m *MockStorage) SaveLatencyMetricsEvent(tag, status, sdkVersion string, api client.ApiId, duration time.Duration) {
 	m.ctrl.T.Helper()
@@ -106,18 +94,6 @@ func (m *MockStorage) SaveLatencyMetricsEvent(tag, status, sdkVersion string, ap
 func (mr *MockStorageMockRecorder) SaveLatencyMetricsEvent(tag, status, sdkVersion, api, duration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLatencyMetricsEvent", reflect.TypeOf((*MockStorage)(nil).SaveLatencyMetricsEvent), tag, status, sdkVersion, api, duration)
-}
-
-// SaveNetworkErrorMetricsEvent mocks base method.
-func (m *MockStorage) SaveNetworkErrorMetricsEvent(tag, sdkVersion string, api client.ApiId) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SaveNetworkErrorMetricsEvent", tag, sdkVersion, api)
-}
-
-// SaveNetworkErrorMetricsEvent indicates an expected call of SaveNetworkErrorMetricsEvent.
-func (mr *MockStorageMockRecorder) SaveNetworkErrorMetricsEvent(tag, sdkVersion, api interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveNetworkErrorMetricsEvent", reflect.TypeOf((*MockStorage)(nil).SaveNetworkErrorMetricsEvent), tag, sdkVersion, api)
 }
 
 // SaveSizeMetricsEvent mocks base method.
@@ -142,16 +118,4 @@ func (m *MockStorage) SaveTimeoutErrorCountMetricsEvent(tag string) {
 func (mr *MockStorageMockRecorder) SaveTimeoutErrorCountMetricsEvent(tag interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveTimeoutErrorCountMetricsEvent", reflect.TypeOf((*MockStorage)(nil).SaveTimeoutErrorCountMetricsEvent), tag)
-}
-
-// SaveTimeoutErrorMetricsEvent mocks base method.
-func (m *MockStorage) SaveTimeoutErrorMetricsEvent(tag, sdkVersion string, api client.ApiId) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SaveTimeoutErrorMetricsEvent", tag, sdkVersion, api)
-}
-
-// SaveTimeoutErrorMetricsEvent indicates an expected call of SaveTimeoutErrorMetricsEvent.
-func (mr *MockStorageMockRecorder) SaveTimeoutErrorMetricsEvent(tag, sdkVersion, api interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveTimeoutErrorMetricsEvent", reflect.TypeOf((*MockStorage)(nil).SaveTimeoutErrorMetricsEvent), tag, sdkVersion, api)
 }
