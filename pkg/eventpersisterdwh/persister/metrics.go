@@ -21,11 +21,14 @@ import (
 )
 
 const (
-	codeFailedToGetUserEvaluation      = "FailedToGetUserEvaluation"
+	codeEvaluationsAreEmpty            = "EvaluationsAreEmpty"
+	codeFailedToEvaluateFeature        = "FailedToEvaluateFeature"
+	codeFailedToGetFeature             = "FailedToGetFeature"
 	codeFailedToListExperiments        = "FailedToListExperiments"
-	codeUserEvaluationNotFound         = "UserEvaluationNotFound"
+	codeFailedToListSegmentUsers       = "FailedToListSegmentUsers"
 	codeFailedToAppendEvaluationEvents = "FailedToAppendEvaluationEvents"
 	codeFailedToAppendGoalEvents       = "FailedToAppendGoalEvents"
+	codeFeatureNotFound                = "FeatureNotFound"
 	codeLinked                         = "Linked"
 	codeNoLink                         = "NoLink"
 )

@@ -22,15 +22,20 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	ft "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
 const goalEventTable = "goal_event"
@@ -38,6 +43,7 @@ const goalEventTable = "goal_event"
 type goalEvtWriter struct {
 	writer           storage.GoalEventWriter
 	experimentClient ec.Client
+	featureClient    ft.Client
 	flightgroup      singleflight.Group
 	logger           *zap.Logger
 }
@@ -47,6 +53,7 @@ func NewGoalEventWriter(
 	r metrics.Registerer,
 	l *zap.Logger,
 	exClient ec.Client,
+	ftClient ft.Client,
 	project, ds string,
 	size int,
 ) (Writer, error) {
@@ -66,6 +73,7 @@ func NewGoalEventWriter(
 	return &goalEvtWriter{
 		writer:           storage.NewGoalEventWriter(goalWriter, size),
 		experimentClient: exClient,
+		featureClient:    ftClient,
 		logger:           l,
 	}, nil
 }
@@ -136,18 +144,13 @@ func (w *goalEvtWriter) convToGoalEvents(
 	e *eventproto.GoalEvent,
 	id, environmentNamespace string,
 ) ([]*epproto.GoalEvent, bool, error) {
-	tag := e.Tag
-	if tag == "" {
-		// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
-		tag = "none"
-	}
-	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentNamespace, tag)
+	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentNamespace, e.Tag)
 	if err != nil {
 		return nil, retriable, err
 	}
 	events := make([]*epproto.GoalEvent, 0, len(evals))
 	for _, eval := range evals {
-		event, retriable, err := w.convToGoalEvent(ctx, e, eval, id, tag, environmentNamespace)
+		event, retriable, err := w.convToGoalEvent(ctx, e, eval, id, e.Tag, environmentNamespace)
 		if err != nil {
 			return nil, retriable, err
 		}
@@ -235,13 +238,16 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 		// Get the user evaluation using the experiment info
 		ev, err := w.getUserEvaluation(
 			ctx,
+			event.User,
 			environmentNamespace,
-			event.UserId,
 			tag,
 			exp.FeatureId,
 			exp.FeatureVersion,
 		)
 		if err != nil {
+			if err == ErrEvaluationsAreEmpty || err == ErrFailedToEvaluateFeature {
+				return nil, false, err
+			}
 			return nil, true, err
 		}
 		evals = append(evals, ev)
@@ -295,13 +301,130 @@ func (w *goalEvtWriter) listExperiments(
 	return exp.([]*exproto.Experiment), nil
 }
 
+// TODO: Evaluate the user based on Feature Flag ID and version.
+// By evaluating the user using the latest feature version,
+// it could affect the experiment conversion accuracy
 func (w *goalEvtWriter) getUserEvaluation(
 	ctx context.Context,
-	environmentNamespace,
-	userID,
-	tag,
-	featureID string,
+	user *userproto.User,
+	environmentNamespace, tag, featureID string,
 	featureVersion int32,
 ) (*featureproto.Evaluation, error) {
-	return nil, nil
+	req := &featureproto.GetFeatureRequest{
+		EnvironmentNamespace: environmentNamespace,
+		Id:                   featureID,
+	}
+	// Get Feature to evaluate the user
+	resp, err := w.featureClient.GetFeature(ctx, req)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			handledCounter.WithLabelValues(codeFeatureNotFound).Inc()
+			w.logger.Error(
+				"Feature not found",
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("userId", user.Id),
+				zap.String("featureId", featureID),
+				zap.Int32("featureVersion", featureVersion),
+				zap.String("tag", tag),
+			)
+			return nil, ErrFeatureNotFound
+		}
+		w.logger.Error(
+			"Failed to get feature",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("userId", user.Id),
+			zap.String("featureId", featureID),
+			zap.Int32("featureVersion", featureVersion),
+			zap.String("tag", tag),
+		)
+		handledCounter.WithLabelValues(codeFailedToGetFeature).Inc()
+		return nil, ErrFailedToGetFeature
+	}
+	// List segment users
+	mapSegmentUsers, err := w.listSegmentUsers(ctx, resp.Feature, user.Id, environmentNamespace)
+	if err != nil {
+		handledCounter.WithLabelValues(codeFailedToListSegmentUsers).Inc()
+		w.logger.Error(
+			"Failed to list segments",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("userId", user.Id),
+			zap.String("featureId", featureID),
+			zap.Int32("featureVersion", featureVersion),
+			zap.String("tag", tag),
+		)
+		return nil, ErrFailedToListSegmentUsers
+	}
+	// Evalute user
+	evs, err := ftdomain.EvaluateFeatures(
+		[]*featureproto.Feature{resp.Feature},
+		user,
+		mapSegmentUsers,
+		tag,
+	)
+	if err != nil {
+		handledCounter.WithLabelValues(codeFailedToEvaluateFeature).Inc()
+		w.logger.Error(
+			"Failed to evaluate user",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("userId", user.Id),
+			zap.String("featureId", featureID),
+			zap.Int32("featureVersion", featureVersion),
+			zap.String("tag", tag),
+		)
+		return nil, ErrFailedToEvaluateFeature
+	}
+	if len(evs.Evaluations) == 0 {
+		handledCounter.WithLabelValues(codeEvaluationsAreEmpty).Inc()
+		w.logger.Error(
+			"Evaluations are empty",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("userId", user.Id),
+			zap.String("featureId", featureID),
+			zap.Int32("featureVersion", featureVersion),
+			zap.String("tag", tag),
+		)
+		return nil, ErrEvaluationsAreEmpty
+	}
+	return evs.Evaluations[0], nil
+}
+
+func (w *goalEvtWriter) listSegmentUsers(
+	ctx context.Context,
+	feature *featureproto.Feature,
+	userID string,
+	environmentNamespace string,
+) (map[string][]*featureproto.SegmentUser, error) {
+	f := &ftdomain.Feature{Feature: feature}
+	if len(f.ListSegmentIDs()) == 0 {
+		return nil, nil
+	}
+	users := make(map[string][]*featureproto.SegmentUser)
+	for _, segmentID := range f.ListSegmentIDs() {
+		s, err, _ := w.flightgroup.Do(w.segmentFlightID(environmentNamespace, segmentID), func() (interface{}, error) {
+			req := &featureproto.ListSegmentUsersRequest{
+				SegmentId:            segmentID,
+				EnvironmentNamespace: environmentNamespace,
+			}
+			resp, err := w.featureClient.ListSegmentUsers(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+			return resp.Users, nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		segmentUsers := s.([]*featureproto.SegmentUser)
+		users[segmentID] = segmentUsers
+	}
+	return users, nil
+}
+
+func (w *goalEvtWriter) segmentFlightID(environmentNamespace, segmentID string) string {
+	return environmentNamespace + ":" + segmentID
 }
