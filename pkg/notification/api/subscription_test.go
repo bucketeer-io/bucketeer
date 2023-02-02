@@ -57,7 +57,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 			input: &proto.CreateSubscriptionRequest{
 				Command: nil,
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "err: ErrSourceTypesRequired",
@@ -83,7 +83,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusRecipientRequired, locale.JaJP),
+			expectedErr: createError(statusRecipientRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "recipant")),
 		},
 		{
 			desc: "err: ErrSlackRecipientRequired",
@@ -99,7 +99,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusSlackRecipientRequired, locale.JaJP),
+			expectedErr: createError(statusSlackRecipientRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "slack_recipant")),
 		},
 		{
 			desc: "err: ErrSlackRecipientWebhookURLRequired",
@@ -116,7 +116,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusSlackRecipientWebhookURLRequired, locale.JaJP),
+			expectedErr: createError(statusSlackRecipientWebhookURLRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_url")),
 		},
 		{
 			desc: "err: ErrNameRequired",
@@ -132,7 +132,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusNameRequired, locale.JaJP),
+			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
 			desc: "success",
@@ -198,14 +198,14 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			input:       &proto.UpdateSubscriptionRequest{},
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrNoCommand",
 			input: &proto.UpdateSubscriptionRequest{
 				Id: "key-0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "err: add notification types: ErrSourceTypesRequired",
@@ -240,7 +240,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusNotFound, locale.JaJP),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "success: addSourceTypes",
@@ -331,6 +331,15 @@ func TestEnableSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc        string
@@ -341,14 +350,14 @@ func TestEnableSubscriptionMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			input:       &proto.EnableSubscriptionRequest{},
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrNoCommand",
 			input: &proto.EnableSubscriptionRequest{
 				Id: "key-0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "success",
@@ -385,6 +394,15 @@ func TestDisableSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc        string
@@ -395,14 +413,14 @@ func TestDisableSubscriptionMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			input:       &proto.DisableSubscriptionRequest{},
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrNoCommand",
 			input: &proto.DisableSubscriptionRequest{
 				Id: "key-0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "success",
@@ -439,6 +457,15 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc        string
@@ -449,14 +476,14 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			input:       &proto.DeleteSubscriptionRequest{},
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrNoCommand",
 			input: &proto.DeleteSubscriptionRequest{
 				Id: "key-0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "success",
@@ -493,6 +520,15 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc        string
@@ -503,7 +539,7 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			input:       &proto.GetSubscriptionRequest{},
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "success",

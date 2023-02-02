@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -37,6 +38,7 @@ func ExecuteOperation(
 	autoOpsRule *domain.AutoOpsRule,
 	featureClient featureclient.Client,
 	logger *zap.Logger,
+	localizer locale.Localizer,
 ) error {
 	switch autoOpsRule.OpsType {
 	case autoopsproto.OpsType_ENABLE_FEATURE:
@@ -44,7 +46,14 @@ func ExecuteOperation(
 	case autoopsproto.OpsType_DISABLE_FEATURE:
 		return disableFeature(ctx, environmentNamespace, autoOpsRule, featureClient, logger)
 	}
-	return localizedError(statusUnknownOpsType, locale.JaJP)
+	dt, err := statusUnknownOpsType.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+	})
+	if err != nil {
+		return statusInternal.Err()
+	}
+	return dt.Err()
 }
 
 func enableFeature(

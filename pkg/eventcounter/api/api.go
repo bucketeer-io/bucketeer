@@ -237,7 +237,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		return nil, err
 	}
 	if req.FeatureId == "" {
-		return nil, localizedError(statusFeatureIDRequired, locale.JaJP)
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
 		EnvironmentNamespace: req.EnvironmentNamespace,
@@ -398,7 +405,14 @@ func (s *eventCounterService) GetExperimentResult(
 		return nil, err
 	}
 	if req.ExperimentId == "" {
-		return nil, localizedError(statusExperimentIDRequired, locale.JaJP)
+		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "experiment_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, req.ExperimentId, req.EnvironmentNamespace)
 	if err != nil {
@@ -444,7 +458,14 @@ func (s *eventCounterService) ListExperimentResults(
 		return nil, err
 	}
 	if req.FeatureId == "" {
-		return nil, localizedError(statusFeatureIDRequired, locale.JaJP)
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	experiments, err := s.listExperiments(ctx, req.FeatureId, req.FeatureVersion, req.EnvironmentNamespace)
 	if err != nil {

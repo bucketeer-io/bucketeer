@@ -38,7 +38,7 @@ func (s *userService) GetUser(ctx context.Context, req *userproto.GetUserRequest
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateGetUserRequest(req); err != nil {
+	if err := s.validateGetUserRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	user, err := s.getUser(ctx, req.UserId, req.EnvironmentNamespace, localizer)
@@ -50,9 +50,16 @@ func (s *userService) GetUser(ctx context.Context, req *userproto.GetUserRequest
 	}, nil
 }
 
-func (s *userService) validateGetUserRequest(req *userproto.GetUserRequest) error {
+func (s *userService) validateGetUserRequest(req *userproto.GetUserRequest, localizer locale.Localizer) error {
 	if req.UserId == "" {
-		return localizedError(statusMissingUserID, locale.JaJP)
+		dt, err := statusMissingUserID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }

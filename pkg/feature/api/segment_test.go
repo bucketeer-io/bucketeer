@@ -73,7 +73,7 @@ func TestCreateSegmentMySQL(t *testing.T) {
 				Description: "description",
 			},
 			environmentNamespace: "ns0",
-			expected:             errMissingNameJaJP,
+			expected:             createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -134,7 +134,7 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 			id:                   "",
 			cmd:                  nil,
 			environmentNamespace: "ns0",
-			expected:             errMissingIDJaJP,
+			expected:             createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup:                nil,
@@ -167,7 +167,7 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 			id:                   "id",
 			cmd:                  &featureproto.DeleteSegmentCommand{},
 			environmentNamespace: "ns0",
-			expected:             errNotFoundJaJP,
+			expected:             createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -244,7 +244,7 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 			id:                   "",
 			cmds:                 nil,
 			environmentNamespace: "ns0",
-			expected:             errMissingIDJaJP,
+			expected:             createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup:                nil,
@@ -313,7 +313,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 			setup:                nil,
 			id:                   "",
 			environmentNamespace: "ns0",
-			expected:             errMissingIDJaJP,
+			expected:             createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -359,6 +359,16 @@ func TestListSegmentsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	testcases := []struct {
 		setup                func(*FeatureService)
 		pageSize             int64
@@ -369,7 +379,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 			setup:                nil,
 			pageSize:             int64(maxPageSizePerRequest + 1),
 			environmentNamespace: "ns0",
-			expected:             errExceededMaxPageSizePerRequestJaJP,
+			expected:             createError(statusExceededMaxPageSizePerRequest, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "page_size")),
 		},
 		{
 			setup: func(s *FeatureService) {

@@ -32,15 +32,23 @@ var (
 )
 
 const (
-	FeatureFlagID         = "FeatureFlagID"
-	RequiredFieldTemplate = "RequiredField"
-	InternalServerError   = "InternalServerError"
-	NotFoundError         = "NotFoundError"
-	InvalidArgumentError  = "InvalidArgumentError"
-	UnauthenticatedError  = "UnauthenticatedError"
-	PermissionDenied      = "PermissionDenied"
-	AlreadyExistsError    = "AlreadyExistsError"
-	StartAtIsAfterEnd     = "StartAtIsAfterEnd"
+	FeatureFlagID                    = "FeatureFlagID"
+	RequiredFieldTemplate            = "RequiredField"
+	InternalServerError              = "InternalServerError"
+	NotFoundError                    = "NotFoundError"
+	InvalidArgumentError             = "InvalidArgumentError"
+	UnauthenticatedError             = "UnauthenticatedError"
+	PermissionDenied                 = "PermissionDenied"
+	AlreadyExistsError               = "AlreadyExistsError"
+	AlreadyDeletedError              = "AlreadyDeletedError"
+	StartAtIsAfterEnd                = "StartAtIsAfterEnd"
+	ProjectDisabled                  = "ProjectDisabled"
+	SegmentInUse                     = "SegmentInUse"
+	SegmentUsersAlreadyUploading     = "SegmentUsersAlreadyUploading"
+	SegmentStatusNotSuceeded         = "SegmentStatusNotSuceeded"
+	WaitingOrRunningExperimentExists = "WaitingOrRunningExperimentExists"
+	NothingChange                    = "NothingChange"
+	DifferentVariationsSize          = "DifferentVariationsSize"
 )
 
 func init() {

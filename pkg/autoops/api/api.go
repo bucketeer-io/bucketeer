@@ -178,7 +178,14 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 				"Goal does not exist",
 				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentNamespace", req.EnvironmentNamespace))...,
 			)
-			return nil, localizedError(statusOpsEventRateClauseGoalNotFound, locale.JaJP)
+			dt, err := statusOpsEventRateClauseGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -251,95 +258,198 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 		return dt.Err()
 	}
 	if req.Command.FeatureId == "" {
-		return localizedError(statusFeatureIDRequired, locale.JaJP)
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if len(req.Command.OpsEventRateClauses) == 0 &&
 		len(req.Command.DatetimeClauses) == 0 &&
 		len(req.Command.WebhookClauses) == 0 {
-		return localizedError(statusClauseRequired, locale.JaJP)
+		dt, err := statusClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command.OpsType == autoopsproto.OpsType_ENABLE_FEATURE && len(req.Command.OpsEventRateClauses) > 0 {
-		return localizedError(statusIncompatibleOpsType, locale.JaJP)
+		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
-	if err := s.validateOpsEventRateClauses(req.Command.OpsEventRateClauses); err != nil {
+	if err := s.validateOpsEventRateClauses(req.Command.OpsEventRateClauses, localizer); err != nil {
 		return err
 	}
-	if err := s.validateDatetimeClauses(req.Command.DatetimeClauses); err != nil {
+	if err := s.validateDatetimeClauses(req.Command.DatetimeClauses, localizer); err != nil {
 		return err
 	}
-	if err := s.validateWebhookClauses(req.Command.WebhookClauses); err != nil {
+	if err := s.validateWebhookClauses(req.Command.WebhookClauses, localizer); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *AutoOpsService) validateOpsEventRateClauses(clauses []*autoopsproto.OpsEventRateClause) error {
+func (s *AutoOpsService) validateOpsEventRateClauses(
+	clauses []*autoopsproto.OpsEventRateClause,
+	localizer locale.Localizer,
+) error {
 	for _, c := range clauses {
-		if err := s.validateOpsEventRateClause(c); err != nil {
+		if err := s.validateOpsEventRateClause(c, localizer); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *AutoOpsService) validateOpsEventRateClause(clause *autoopsproto.OpsEventRateClause) error {
+func (s *AutoOpsService) validateOpsEventRateClause(
+	clause *autoopsproto.OpsEventRateClause,
+	localizer locale.Localizer,
+) error {
 	if clause.VariationId == "" {
-		return localizedError(statusOpsEventRateClauseVariationIDRequired, locale.JaJP)
+		dt, err := statusOpsEventRateClauseVariationIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if clause.GoalId == "" {
-		return localizedError(statusOpsEventRateClauseGoalIDRequired, locale.JaJP)
+		dt, err := statusOpsEventRateClauseGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if clause.MinCount <= 0 {
-		return localizedError(statusOpsEventRateClauseMinCountRequired, locale.JaJP)
+		dt, err := statusOpsEventRateClauseMinCountRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "min_count"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if clause.ThreadsholdRate > 1 || clause.ThreadsholdRate <= 0 {
-		return localizedError(statusOpsEventRateClauseInvalidThredshold, locale.JaJP)
+		dt, err := statusOpsEventRateClauseInvalidThredshold.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "threshold"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func (s *AutoOpsService) validateDatetimeClauses(clauses []*autoopsproto.DatetimeClause) error {
+func (s *AutoOpsService) validateDatetimeClauses(
+	clauses []*autoopsproto.DatetimeClause,
+	localizer locale.Localizer,
+) error {
 	for _, c := range clauses {
-		if err := s.validateDatetimeClause(c); err != nil {
+		if err := s.validateDatetimeClause(c, localizer); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeClause) error {
+func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeClause, localizer locale.Localizer) error {
 	if clause.Time <= time.Now().Unix() {
-		return localizedError(statusDatetimeClauseInvalidTime, locale.JaJP)
+		dt, err := statusDatetimeClauseInvalidTime.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
 
-func (s *AutoOpsService) validateWebhookClauses(clauses []*autoopsproto.WebhookClause) error {
+func (s *AutoOpsService) validateWebhookClauses(
+	clauses []*autoopsproto.WebhookClause,
+	localizer locale.Localizer,
+) error {
 	for _, c := range clauses {
-		if err := s.validateWebhookClause(c); err != nil {
+		if err := s.validateWebhookClause(c, localizer); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *AutoOpsService) validateWebhookClause(clause *autoopsproto.WebhookClause) error {
+func (s *AutoOpsService) validateWebhookClause(clause *autoopsproto.WebhookClause, localizer locale.Localizer) error {
 	if clause.WebhookId == "" {
-		return localizedError(statusWebhookClauseWebhookIDRequired, locale.JaJP)
+		dt, err := statusWebhookClauseWebhookIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if len(clause.Conditions) == 0 {
-		return localizedError(statusWebhookClauseConditionRequired, locale.JaJP)
+		dt, err := statusWebhookClauseConditionRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	for _, c := range clause.Conditions {
 		if c.Filter == "" {
-			return localizedError(statusWebhookClauseConditionFilterRequired, locale.JaJP)
+			dt, err := statusWebhookClauseConditionFilterRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition_filter"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		if c.Value == "" {
-			return localizedError(statusWebhookClauseConditionValueRequired, locale.JaJP)
+			dt, err := statusWebhookClauseConditionValueRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition_value"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		_, ok := autoopsproto.WebhookClause_Condition_Operator_name[int32(c.Operator)]
 		if !ok {
-			return localizedError(statusWebhookClauseConditionInvalidOperator, locale.JaJP)
+			dt, err := statusWebhookClauseConditionInvalidOperator.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "condition_operator"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 	}
 	return nil
@@ -476,7 +586,14 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				"Goal does not exist",
 				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentNamespace", req.EnvironmentNamespace))...,
 			)
-			return nil, localizedError(statusOpsEventRateClauseGoalNotFound, locale.JaJP)
+			dt, err := statusOpsEventRateClauseGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	}
 	commands := s.createUpdateAutoOpsRuleCommands(req)
@@ -506,10 +623,24 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		if req.ChangeAutoOpsRuleOpsTypeCommand != nil {
 			if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_ENABLE_FEATURE &&
 				len(req.AddOpsEventRateClauseCommands) > 0 {
-				return localizedError(statusIncompatibleOpsType, locale.JaJP)
+				dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
 			}
 		} else if autoOpsRule.OpsType == autoopsproto.OpsType_ENABLE_FEATURE && len(req.AddOpsEventRateClauseCommands) > 0 {
-			return localizedError(statusIncompatibleOpsType, locale.JaJP)
+			dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
 		for _, command := range commands {
@@ -578,63 +709,133 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 	}
 	for _, c := range req.AddOpsEventRateClauseCommands {
 		if c.OpsEventRateClause == nil {
-			return localizedError(statusOpsEventRateClauseRequired, locale.JaJP)
+			dt, err := statusOpsEventRateClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_event_rate_clause"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		if err := s.validateOpsEventRateClause(c.OpsEventRateClause); err != nil {
+		if err := s.validateOpsEventRateClause(c.OpsEventRateClause, localizer); err != nil {
 			return err
 		}
 	}
 	for _, c := range req.ChangeOpsEventRateClauseCommands {
 		if c.Id == "" {
-			return localizedError(statusClauseIDRequired, locale.JaJP)
+			dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		if c.OpsEventRateClause == nil {
-			return localizedError(statusOpsEventRateClauseRequired, locale.JaJP)
+			dt, err := statusOpsEventRateClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_event_rate_clause"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		if err := s.validateOpsEventRateClause(c.OpsEventRateClause); err != nil {
+		if err := s.validateOpsEventRateClause(c.OpsEventRateClause, localizer); err != nil {
 			return err
 		}
 	}
 	for _, c := range req.DeleteClauseCommands {
 		if c.Id == "" {
-			return localizedError(statusClauseIDRequired, locale.JaJP)
+			dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 	}
 	for _, c := range req.AddDatetimeClauseCommands {
 		if c.DatetimeClause == nil {
-			return localizedError(statusDatetimeClauseRequired, locale.JaJP)
+			dt, err := statusDatetimeClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "datetime_clause"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		if err := s.validateDatetimeClause(c.DatetimeClause); err != nil {
+		if err := s.validateDatetimeClause(c.DatetimeClause, localizer); err != nil {
 			return err
 		}
 	}
 	for _, c := range req.ChangeDatetimeClauseCommands {
 		if c.Id == "" {
-			return localizedError(statusClauseIDRequired, locale.JaJP)
+			dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		if c.DatetimeClause == nil {
-			return localizedError(statusDatetimeClauseRequired, locale.JaJP)
+			dt, err := statusDatetimeClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "datetime_clause"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		if err := s.validateDatetimeClause(c.DatetimeClause); err != nil {
+		if err := s.validateDatetimeClause(c.DatetimeClause, localizer); err != nil {
 			return err
 		}
 	}
 	for _, c := range req.AddWebhookClauseCommands {
 		if c.WebhookClause == nil {
-			return localizedError(statusWebhookClauseRequired, locale.JaJP)
+			dt, err := statusWebhookClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_clause"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		if err := s.validateWebhookClause(c.WebhookClause); err != nil {
+		if err := s.validateWebhookClause(c.WebhookClause, localizer); err != nil {
 			return err
 		}
 	}
 	for _, c := range req.ChangeWebhookClauseCommands {
 		if c.Id == "" {
-			return localizedError(statusClauseIDRequired, locale.JaJP)
+			dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		if c.WebhookClause == nil {
-			return localizedError(statusWebhookClauseRequired, locale.JaJP)
+			dt, err := statusWebhookClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_clause"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		if err := s.validateWebhookClause(c.WebhookClause); err != nil {
+		if err := s.validateWebhookClause(c.WebhookClause, localizer); err != nil {
 			return err
 		}
 	}
@@ -716,7 +917,14 @@ func (s *AutoOpsService) GetAutoOpsRule(
 		return nil, dt.Err()
 	}
 	if autoOpsRule.Deleted {
-		return nil, localizedError(statusAlreadyDeleted, locale.JaJP)
+		dt, err := statusAlreadyDeleted.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.AlreadyDeletedError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &autoopsproto.GetAutoOpsRuleResponse{
 		AutoOpsRule: autoOpsRule.AutoOpsRule,
@@ -791,7 +999,15 @@ func (s *AutoOpsService) listAutoOpsRules(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, "", localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, "", statusInternal.Err()
+		}
+		return nil, "", dt.Err()
+
 	}
 	autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
 	autoOpsRules, nextCursor, err := autoOpsRuleStorage.ListAutoOpsRules(
@@ -881,7 +1097,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			}
 			return err
 		}
-		return ExecuteOperation(ctx, req.EnvironmentNamespace, autoOpsRule, s.featureClient, s.logger)
+		return ExecuteOperation(ctx, req.EnvironmentNamespace, autoOpsRule, s.featureClient, s.logger, localizer)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound {
@@ -1064,7 +1280,15 @@ func (s *AutoOpsService) listOpsCounts(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		return nil, "", localizedError(statusInvalidCursor, locale.JaJP)
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, "", statusInternal.Err()
+		}
+		return nil, "", dt.Err()
+
 	}
 	opsCountStorage := v2os.NewOpsCountStorage(s.mysqlClient)
 	opsCounts, nextCursor, err := opsCountStorage.ListOpsCounts(

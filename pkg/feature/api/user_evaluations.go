@@ -35,7 +35,7 @@ func (s *FeatureService) GetUserEvaluations(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetUserEvaluationsRequest(req); err != nil {
+	if err := validateGetUserEvaluationsRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	evaluations, err := s.userEvaluationStorage.GetUserEvaluations(
@@ -77,7 +77,7 @@ func (s *FeatureService) UpsertUserEvaluation(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateUpsertUserEvaluationRequest(req); err != nil {
+	if err := validateUpsertUserEvaluationRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.userEvaluationStorage.UpsertUserEvaluation(

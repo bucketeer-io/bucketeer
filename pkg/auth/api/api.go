@@ -142,7 +142,14 @@ func (s *authService) GetAuthCodeURL(
 
 func validateGetAuthCodeURLRequest(req *authproto.GetAuthCodeURLRequest, localizer locale.Localizer) error {
 	if req.State == "" {
-		return localizedError(statusMissingState, locale.JaJP)
+		dt, err := statusMissingState.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "state"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.RedirectUrl == "" {
 		dt, err := statusMissingRedirectURL.WithDetails(&errdetails.LocalizedMessage{
@@ -178,7 +185,14 @@ func (s *authService) ExchangeToken(
 			return nil, dt.Err()
 		}
 		if err == oidc.ErrBadRequest {
-			return nil, localizedError(statusInvalidCode, locale.JaJP)
+			dt, err := statusInvalidCode.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to exchange token",
@@ -202,7 +216,14 @@ func (s *authService) ExchangeToken(
 
 func validateExchangeTokenRequest(req *authproto.ExchangeTokenRequest, localizer locale.Localizer) error {
 	if req.Code == "" {
-		return localizedError(statusMissingCode, locale.JaJP)
+		dt, err := statusMissingCode.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "code"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.RedirectUrl == "" {
 		dt, err := statusMissingRedirectURL.WithDetails(&errdetails.LocalizedMessage{
@@ -238,7 +259,14 @@ func (s *authService) RefreshToken(
 			return nil, dt.Err()
 		}
 		if err == oidc.ErrBadRequest {
-			return nil, localizedError(statusInvalidRefreshToken, locale.JaJP)
+			dt, err := statusInvalidRefreshToken.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "refresh_token"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to refresh token",
@@ -262,7 +290,14 @@ func (s *authService) RefreshToken(
 
 func validateRefreshTokenRequest(req *authproto.RefreshTokenRequest, localizer locale.Localizer) error {
 	if req.RefreshToken == "" {
-		return localizedError(statusMissingRefreshToken, locale.JaJP)
+		dt, err := statusMissingRefreshToken.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "refresh_token"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.RedirectUrl == "" {
 		dt, err := statusMissingRedirectURL.WithDetails(&errdetails.LocalizedMessage{
@@ -312,7 +347,7 @@ func (s *authService) generateToken(
 		}
 		return nil, dt.Err()
 	}
-	if err := s.maybeCheckEmail(ctx, claims.Email); err != nil {
+	if err := s.maybeCheckEmail(ctx, claims.Email, localizer); err != nil {
 		return nil, err
 	}
 	resp, err := s.accountClient.GetMeByEmail(ctx, &accountproto.GetMeByEmailRequest{
@@ -324,7 +359,14 @@ func (s *authService) generateToken(
 				"Unabled to generate token for an unapproved account",
 				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", claims.Email))...,
 			)
-			return nil, localizedError(statusUnapprovedAccount, locale.JaJP)
+			dt, err := statusUnapprovedAccount.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get account",
@@ -379,7 +421,7 @@ func (s *authService) generateToken(
 	}, nil
 }
 
-func (s *authService) maybeCheckEmail(ctx context.Context, email string) error {
+func (s *authService) maybeCheckEmail(ctx context.Context, email string, localizer locale.Localizer) error {
 	if s.opts.emailFilter == nil {
 		return nil
 	}
@@ -390,5 +432,12 @@ func (s *authService) maybeCheckEmail(ctx context.Context, email string) error {
 		"Access denied email",
 		log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", email))...,
 	)
-	return localizedError(statusAccessDeniedEmail, locale.JaJP)
+	dt, err := statusAccessDeniedEmail.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.PermissionDenied),
+	})
+	if err != nil {
+		return statusInternal.Err()
+	}
+	return dt.Err()
 }

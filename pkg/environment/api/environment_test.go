@@ -22,6 +22,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	gstatus "google.golang.org/grpc/status"
 
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -35,6 +38,16 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*EnvironmentService)
@@ -45,7 +58,7 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 			desc:        "err: ErrEnvironmentIDRequired",
 			setup:       nil,
 			id:          "",
-			expectedErr: localizedError(statusEnvironmentIDRequired, locale.JaJP),
+			expectedErr: createError(statusEnvironmentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrEnvironmentNotFound",
@@ -57,7 +70,7 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 				).Return(row)
 			},
 			id:          "id-0",
-			expectedErr: localizedError(statusEnvironmentNotFound, locale.JaJP),
+			expectedErr: createError(statusEnvironmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -69,7 +82,7 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 				).Return(row)
 			},
 			id:          "id-1",
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -105,6 +118,16 @@ func TestGetEnvironmentByNamespaceMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*EnvironmentService)
@@ -121,7 +144,7 @@ func TestGetEnvironmentByNamespaceMySQL(t *testing.T) {
 				).Return(row)
 			},
 			namespace:   "ns-0",
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "err: ErrEnvironmentNotFound",
@@ -133,7 +156,7 @@ func TestGetEnvironmentByNamespaceMySQL(t *testing.T) {
 				).Return(row)
 			},
 			namespace:   "ns-1",
-			expectedErr: localizedError(statusEnvironmentNotFound, locale.JaJP),
+			expectedErr: createError(statusEnvironmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "success",
@@ -169,6 +192,16 @@ func TestListEnvironmentsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*EnvironmentService)
@@ -181,7 +214,7 @@ func TestListEnvironmentsMySQL(t *testing.T) {
 			setup:       nil,
 			input:       &proto.ListEnvironmentsRequest{Cursor: "XXX"},
 			expected:    nil,
-			expectedErr: localizedError(statusInvalidCursor, locale.JaJP),
+			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -192,7 +225,7 @@ func TestListEnvironmentsMySQL(t *testing.T) {
 			},
 			input:       &proto.ListEnvironmentsRequest{},
 			expected:    nil,
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -233,6 +266,16 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*EnvironmentService)
@@ -245,7 +288,7 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			req: &proto.CreateEnvironmentRequest{
 				Command: nil,
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentID: empty id",
@@ -253,7 +296,7 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: ""},
 			},
-			expectedErr: localizedError(statusInvalidEnvironmentID, locale.JaJP),
+			expectedErr: createError(statusInvalidEnvironmentID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentID: can't use uppercase",
@@ -261,7 +304,7 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: "NS-1"},
 			},
-			expectedErr: localizedError(statusInvalidEnvironmentID, locale.JaJP),
+			expectedErr: createError(statusInvalidEnvironmentID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
 		},
 		{
 			desc:  "err: ErrInvalidEnvironmentID: max id length exceeded",
@@ -269,7 +312,7 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: strings.Repeat("a", 51)},
 			},
-			expectedErr: localizedError(statusInvalidEnvironmentID, locale.JaJP),
+			expectedErr: createError(statusInvalidEnvironmentID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
 		},
 		{
 			desc:  "err: ErrProjectIDRequired",
@@ -277,7 +320,7 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: "ns-0", ProjectId: ""},
 			},
-			expectedErr: localizedError(statusProjectIDRequired, locale.JaJP),
+			expectedErr: createError(statusProjectIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "project_id")),
 		},
 		{
 			desc: "err: ErrProjectNotFound",
@@ -291,7 +334,7 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: "ns-0", ProjectId: "project-id-0"},
 			},
-			expectedErr: localizedError(statusProjectNotFound, locale.JaJP),
+			expectedErr: createError(statusProjectNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "err: ErrEnvironmentAlreadyExists",
@@ -309,7 +352,7 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: "ns-0", ProjectId: "project-id-0"},
 			},
-			expectedErr: localizedError(statusEnvironmentAlreadyExists, locale.JaJP),
+			expectedErr: createError(statusEnvironmentAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -323,7 +366,7 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 			req: &proto.CreateEnvironmentRequest{
 				Command: &proto.CreateEnvironmentCommand{Id: "ns-1", ProjectId: "project-id-0"},
 			},
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -362,6 +405,16 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*EnvironmentService)
@@ -374,7 +427,7 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 			req: &proto.UpdateEnvironmentRequest{
 				Id: "ns0",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc:  "err: ErrEnvironmentIDRequired",
@@ -382,7 +435,7 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 			req: &proto.UpdateEnvironmentRequest{
 				RenameCommand: &proto.RenameEnvironmentCommand{Name: "name-0"},
 			},
-			expectedErr: localizedError(statusEnvironmentIDRequired, locale.JaJP),
+			expectedErr: createError(statusEnvironmentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrEnvironmentNotFound",
@@ -396,7 +449,7 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 				Id:            "ns0",
 				RenameCommand: &proto.RenameEnvironmentCommand{Name: "name-0"},
 			},
-			expectedErr: localizedError(statusEnvironmentNotFound, locale.JaJP),
+			expectedErr: createError(statusEnvironmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -410,7 +463,7 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 				Id:            "ns1",
 				RenameCommand: &proto.RenameEnvironmentCommand{Name: "name-1"},
 			},
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -446,6 +499,16 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*EnvironmentService)
@@ -456,7 +519,7 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 			desc:        "err: ErrNoCommand",
 			setup:       nil,
 			req:         &proto.DeleteEnvironmentRequest{},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc:  "err: ErrEnvironmentIDRequired",
@@ -464,7 +527,7 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 			req: &proto.DeleteEnvironmentRequest{
 				Command: &proto.DeleteEnvironmentCommand{},
 			},
-			expectedErr: localizedError(statusEnvironmentIDRequired, locale.JaJP),
+			expectedErr: createError(statusEnvironmentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrEnvironmentNotFound",
@@ -478,7 +541,7 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 				Id:      "ns0",
 				Command: &proto.DeleteEnvironmentCommand{},
 			},
-			expectedErr: localizedError(statusEnvironmentNotFound, locale.JaJP),
+			expectedErr: createError(statusEnvironmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "err: ErrInternal",
@@ -492,7 +555,7 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 				Id:      "ns1",
 				Command: &proto.DeleteEnvironmentCommand{},
 			},
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -526,6 +589,15 @@ func TestEnvironmentPermissionDeniedMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc     string
@@ -538,7 +610,7 @@ func TestEnvironmentPermissionDeniedMySQL(t *testing.T) {
 				_, err := es.CreateEnvironment(ctx, &proto.CreateEnvironmentRequest{})
 				return err
 			},
-			expected: localizedError(statusPermissionDenied, locale.JaJP),
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "UpdateEnvironment",
@@ -546,7 +618,7 @@ func TestEnvironmentPermissionDeniedMySQL(t *testing.T) {
 				_, err := es.UpdateEnvironment(ctx, &proto.UpdateEnvironmentRequest{})
 				return err
 			},
-			expected: localizedError(statusPermissionDenied, locale.JaJP),
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "DeleteEnvironment",
@@ -554,7 +626,7 @@ func TestEnvironmentPermissionDeniedMySQL(t *testing.T) {
 				_, err := es.DeleteEnvironment(ctx, &proto.DeleteEnvironmentRequest{})
 				return err
 			},
-			expected: localizedError(statusPermissionDenied, locale.JaJP),
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 	}
 	for _, p := range patterns {

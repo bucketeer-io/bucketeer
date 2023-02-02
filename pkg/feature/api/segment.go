@@ -235,7 +235,14 @@ func (s *FeatureService) checkSegmentInUse(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
-		return localizedError(statusSegmentInUse, locale.JaJP)
+		dt, err := statusSegmentInUse.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -370,7 +377,14 @@ func (s *FeatureService) updateSegment(
 	})
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound || err == v2fs.ErrSegmentUnexpectedAffectedRows {
-			return localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update segment",
@@ -400,7 +414,7 @@ func (s *FeatureService) GetSegment(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetSegmentRequest(req); err != nil {
+	if err := validateGetSegmentRequest(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -452,7 +466,7 @@ func (s *FeatureService) ListSegments(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateListSegmentsRequest(req); err != nil {
+	if err := validateListSegmentsRequest(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(

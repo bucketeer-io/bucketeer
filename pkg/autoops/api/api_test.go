@@ -92,6 +92,16 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AutoOpsService)
@@ -101,14 +111,14 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrNoCommand",
 			req:         &autoopsproto.CreateAutoOpsRuleRequest{},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "err: ErrFeatureIDRequired",
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{},
 			},
-			expectedErr: localizedError(statusFeatureIDRequired, locale.JaJP),
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
 			desc: "err: ErrClauseRequired",
@@ -118,7 +128,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					OpsType:   autoopsproto.OpsType_ENABLE_FEATURE,
 				},
 			},
-			expectedErr: localizedError(statusClauseRequired, locale.JaJP),
+			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause")),
 		},
 		{
 			desc: "err: ErrIncompatibleOpsType",
@@ -137,7 +147,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusIncompatibleOpsType, locale.JaJP),
+			expectedErr: createError(statusIncompatibleOpsType, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type")),
 		},
 		{
 			desc: "err: ErrOpsEventRateClauseVariationIDRequired",
@@ -156,7 +166,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusOpsEventRateClauseVariationIDRequired, locale.JaJP),
+			expectedErr: createError(statusOpsEventRateClauseVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
 			desc: "err: ErrOpsEventRateClauseGoalIDRequired",
@@ -175,7 +185,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusOpsEventRateClauseGoalIDRequired, locale.JaJP),
+			expectedErr: createError(statusOpsEventRateClauseGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
 			desc: "err: ErrOpsEventRateClauseMinCountRequired",
@@ -194,7 +204,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusOpsEventRateClauseMinCountRequired, locale.JaJP),
+			expectedErr: createError(statusOpsEventRateClauseMinCountRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "min_count")),
 		},
 		{
 			desc: "err: ErrOpsEventRateClauseInvalidThredshold: less",
@@ -213,7 +223,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusOpsEventRateClauseInvalidThredshold, locale.JaJP),
+			expectedErr: createError(statusOpsEventRateClauseInvalidThredshold, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "threshold")),
 		},
 		{
 			desc: "err: ErrOpsEventRateClauseInvalidThredshold: greater",
@@ -232,7 +242,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusOpsEventRateClauseInvalidThredshold, locale.JaJP),
+			expectedErr: createError(statusOpsEventRateClauseInvalidThredshold, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "threshold")),
 		},
 		{
 			desc: "err: ErrDatetimeClauseInvalidTime",
@@ -245,7 +255,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusDatetimeClauseInvalidTime, locale.JaJP),
+			expectedErr: createError(statusDatetimeClauseInvalidTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
 		},
 		{
 			desc: "err: ErrWebhookClauseWebhookIDRequired",
@@ -267,7 +277,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusWebhookClauseWebhookIDRequired, locale.JaJP),
+			expectedErr: createError(statusWebhookClauseWebhookIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_id")),
 		},
 		{
 			desc: "err: ErrWebhookClauseWebhookClauseConditionRequired",
@@ -283,7 +293,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusWebhookClauseConditionRequired, locale.JaJP),
+			expectedErr: createError(statusWebhookClauseConditionRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition")),
 		},
 		{
 			desc: "err: ErrWebhookClauseWebhookClauseConditionFilterRequired",
@@ -305,7 +315,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusWebhookClauseConditionFilterRequired, locale.JaJP),
+			expectedErr: createError(statusWebhookClauseConditionFilterRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition_filter")),
 		},
 		{
 			desc: "success",
@@ -368,6 +378,16 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AutoOpsService)
@@ -379,7 +399,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 			desc:        "err: ErrIDRequired",
 			req:         &autoopsproto.UpdateAutoOpsRuleRequest{},
 			expected:    nil,
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrNoCommand",
@@ -387,7 +407,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				Id: "aid1",
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "err: ErrOpsEventRateClauseRequired",
@@ -396,7 +416,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				AddOpsEventRateClauseCommands: []*autoopsproto.AddOpsEventRateClauseCommand{{}},
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusOpsEventRateClauseRequired, locale.JaJP),
+			expectedErr: createError(statusOpsEventRateClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_event_rate_clause")),
 		},
 		{
 			desc: "err: DeleteClauseCommand: ErrClauseIdRequired",
@@ -405,7 +425,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				DeleteClauseCommands: []*autoopsproto.DeleteClauseCommand{{}},
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusClauseIDRequired, locale.JaJP),
+			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
 		},
 		{
 			desc: "err: ChangeOpsEventRateClauseCommand: ErrClauseIdRequired",
@@ -414,7 +434,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				ChangeOpsEventRateClauseCommands: []*autoopsproto.ChangeOpsEventRateClauseCommand{{}},
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusClauseIDRequired, locale.JaJP),
+			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
 		},
 		{
 			desc: "err: ChangeOpsEventRateClauseCommand: ErrOpsEventRateClauseRequired",
@@ -425,7 +445,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				}},
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusOpsEventRateClauseRequired, locale.JaJP),
+			expectedErr: createError(statusOpsEventRateClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_event_rate_clause")),
 		},
 		{
 			desc: "err: ErrDatetimeClauseReqired",
@@ -434,7 +454,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				AddDatetimeClauseCommands: []*autoopsproto.AddDatetimeClauseCommand{{}},
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusDatetimeClauseRequired, locale.JaJP),
+			expectedErr: createError(statusDatetimeClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "datetime_clause")),
 		},
 		{
 			desc: "err: ChangeDatetimeClauseCommand: ErrDatetimeClauseInvalidTime",
@@ -446,7 +466,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				}},
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusDatetimeClauseInvalidTime, locale.JaJP),
+			expectedErr: createError(statusDatetimeClauseInvalidTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
 		},
 		{
 			desc: "err: ErrWebhookClauseRequired",
@@ -455,7 +475,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				AddWebhookClauseCommands: []*autoopsproto.AddWebhookClauseCommand{{}},
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusWebhookClauseRequired, locale.JaJP),
+			expectedErr: createError(statusWebhookClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_clause")),
 		},
 		{
 			desc: "err: ChangeWebhookClauseCommand: ErrWebhookClauseWebhookClauseConditionRequired",
@@ -472,7 +492,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				},
 			},
 			expected:    nil,
-			expectedErr: localizedError(statusWebhookClauseConditionRequired, locale.JaJP),
+			expectedErr: createError(statusWebhookClauseConditionRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition")),
 		},
 		{
 			desc: "success",
@@ -528,6 +548,16 @@ func TestDeleteAutoOpsRuleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*AutoOpsService)
@@ -537,14 +567,14 @@ func TestDeleteAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &autoopsproto.DeleteAutoOpsRuleRequest{},
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrNoCommand",
 			req: &autoopsproto.DeleteAutoOpsRuleRequest{
 				Id: "aid1",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "success",
@@ -598,7 +628,7 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &autoopsproto.GetAutoOpsRuleRequest{},
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -695,14 +725,14 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			req:         &autoopsproto.ExecuteAutoOpsRequest{},
-			expectedErr: localizedError(statusIDRequired, locale.JaJP),
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "err: ErrNoCommand",
 			req: &autoopsproto.ExecuteAutoOpsRequest{
 				Id: "aid",
 			},
-			expectedErr: localizedError(statusNoCommand, locale.JaJP),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			desc: "err: ErrNotFound",

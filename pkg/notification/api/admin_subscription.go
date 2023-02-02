@@ -172,7 +172,7 @@ func (s *NotificationService) validateCreateAdminSubscriptionRequest(
 		}
 		return dt.Err()
 	}
-	if err := s.validateRecipient(req.Command.Recipient); err != nil {
+	if err := s.validateRecipient(req.Command.Recipient, localizer); err != nil {
 		return err
 	}
 	return nil
@@ -421,7 +421,14 @@ func (s *NotificationService) updateAdminSubscription(
 	})
 	if err != nil {
 		if err == v2ss.ErrAdminSubscriptionNotFound || err == v2ss.ErrAdminSubscriptionUnexpectedAffectedRows {
-			return localizedError(statusNotFound, locale.JaJP)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update admin subscription",

@@ -39,6 +39,15 @@ import (
 const userKind = "User"
 
 func TestValidateGetUserRequest(t *testing.T) {
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []struct {
 		input    *userproto.GetUserRequest
 		expected error
@@ -49,12 +58,12 @@ func TestValidateGetUserRequest(t *testing.T) {
 		},
 		{
 			input:    &userproto.GetUserRequest{EnvironmentNamespace: "ns0"},
-			expected: localizedError(statusMissingUserID, locale.JaJP),
+			expected: createError(statusMissingUserID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id")),
 		},
 	}
 	s := userService{}
 	for _, p := range patterns {
-		err := s.validateGetUserRequest(p.input)
+		err := s.validateGetUserRequest(p.input, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -102,7 +111,7 @@ func TestGetUserRequest(t *testing.T) {
 			},
 			input:       &userproto.GetUserRequest{UserId: "user-id-1", EnvironmentNamespace: "ns0"},
 			expected:    nil,
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success",

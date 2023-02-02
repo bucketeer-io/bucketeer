@@ -43,14 +43,21 @@ func (s *EnvironmentService) GetEnvironment(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetEnvironmentRequest(req); err != nil {
+	if err := validateGetEnvironmentRequest(req, localizer); err != nil {
 		return nil, err
 	}
 	environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
 	environment, err := environmentStorage.GetEnvironment(ctx, req.Id)
 	if err != nil {
 		if err == v2es.ErrEnvironmentNotFound {
-			return nil, localizedError(statusEnvironmentNotFound, locale.JaJP)
+			dt, err := statusEnvironmentNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -62,16 +69,30 @@ func (s *EnvironmentService) GetEnvironment(
 		return nil, dt.Err()
 	}
 	if environment.Deleted {
-		return nil, localizedError(statusEnvironmentAlreadyDeleted, locale.JaJP)
+		dt, err := statusEnvironmentAlreadyDeleted.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.AlreadyDeletedError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &environmentproto.GetEnvironmentResponse{
 		Environment: environment.Environment,
 	}, nil
 }
 
-func validateGetEnvironmentRequest(req *environmentproto.GetEnvironmentRequest) error {
+func validateGetEnvironmentRequest(req *environmentproto.GetEnvironmentRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		return localizedError(statusEnvironmentIDRequired, locale.JaJP)
+		dt, err := statusEnvironmentIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -103,7 +124,14 @@ func (s *EnvironmentService) getEnvironmentByNamespace(
 	environment, err := environmentStorage.GetEnvironmentByNamespace(ctx, namespace, false)
 	if err != nil {
 		if err == v2es.ErrEnvironmentNotFound {
-			return nil, localizedError(statusEnvironmentNotFound, locale.JaJP)
+			dt, err := statusEnvironmentNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -275,7 +303,14 @@ func (s *EnvironmentService) createEnvironment(
 	})
 	if err != nil {
 		if err == v2es.ErrEnvironmentAlreadyExists {
-			return localizedError(statusEnvironmentAlreadyExists, locale.JaJP)
+			dt, err := statusEnvironmentAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create environment",
@@ -308,10 +343,24 @@ func validateCreateEnvironmentRequest(
 		return dt.Err()
 	}
 	if !environmentIDRegex.MatchString(req.Command.Id) {
-		return localizedError(statusInvalidEnvironmentID, locale.JaJP)
+		dt, err := statusInvalidEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command.ProjectId == "" {
-		return localizedError(statusProjectIDRequired, locale.JaJP)
+		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "project_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -327,7 +376,14 @@ func (s *EnvironmentService) checkProjectExistence(
 		return err
 	}
 	if existingProject.Disabled {
-		return localizedError(statusProjectDisabled, locale.JaJP)
+		dt, err := statusProjectDisabled.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.ProjectDisabled),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -378,7 +434,14 @@ func (s *EnvironmentService) UpdateEnvironment(
 	})
 	if err != nil {
 		if err == v2es.ErrEnvironmentNotFound || err == v2es.ErrEnvironmentUnexpectedAffectedRows {
-			return nil, localizedError(statusEnvironmentNotFound, locale.JaJP)
+			dt, err := statusEnvironmentNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update environment",
@@ -419,7 +482,14 @@ func validateUpdateEnvironmentRequest(id string, commands []command.Command, loc
 		return dt.Err()
 	}
 	if id == "" {
-		return localizedError(statusEnvironmentIDRequired, locale.JaJP)
+		dt, err := statusEnvironmentIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -467,7 +537,14 @@ func (s *EnvironmentService) DeleteEnvironment(
 	})
 	if err != nil {
 		if err == v2es.ErrEnvironmentNotFound || err == v2es.ErrEnvironmentUnexpectedAffectedRows {
-			return nil, localizedError(statusEnvironmentNotFound, locale.JaJP)
+			dt, err := statusEnvironmentNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update environment",
@@ -500,7 +577,14 @@ func validateDeleteEnvironmentRequest(
 		return dt.Err()
 	}
 	if req.Id == "" {
-		return localizedError(statusEnvironmentIDRequired, locale.JaJP)
+		dt, err := statusEnvironmentIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }

@@ -43,6 +43,15 @@ func TestGetFeatureMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc     string
@@ -53,7 +62,7 @@ func TestGetFeatureMySQL(t *testing.T) {
 		{
 			desc:     "error: id is empty",
 			input:    "",
-			expected: errMissingIDJaJP,
+			expected: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "success",
@@ -96,6 +105,15 @@ func TestGetFeaturesMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc     string
@@ -106,12 +124,12 @@ func TestGetFeaturesMySQL(t *testing.T) {
 		{
 			desc:     "error: id is nil",
 			input:    nil,
-			expected: errMissingIDsJaJP,
+			expected: createError(statusMissingIDs, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ids")),
 		},
 		{
 			desc:     "error: contains empty id",
 			input:    []string{"id", ""},
-			expected: errMissingIDsJaJP,
+			expected: createError(statusMissingIDs, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ids")),
 		},
 		{
 			desc: "success",
@@ -271,7 +289,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentNamespace:     "ns0",
-			expected:                 errMissingIDJaJP,
+			expected:                 createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup:                    nil,
@@ -283,7 +301,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentNamespace:     "ns0",
-			expected:                 errInvalidIDJaJP,
+			expected:                 createError(statusInvalidID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
 		},
 		{
 			setup:                    nil,
@@ -295,7 +313,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentNamespace:     "ns0",
-			expected:                 errMissingNameJaJP,
+			expected:                 createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
 			setup:                    nil,
@@ -307,7 +325,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentNamespace:     "ns0",
-			expected:                 errMissingFeatureVariationsJaJP,
+			expected:                 createError(statusMissingFeatureVariations, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variations")),
 		},
 		{
 			setup:                nil,
@@ -317,7 +335,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			variations:           variations,
 			tags:                 nil,
 			environmentNamespace: "ns0",
-			expected:             errMissingFeatureTagsJaJP,
+			expected:             createError(statusMissingFeatureTags, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tags")),
 		},
 		{
 			setup:                    nil,
@@ -329,7 +347,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
 			environmentNamespace:     "ns0",
-			expected:                 errMissingDefaultOnVariationJaJP,
+			expected:                 createError(statusMissingDefaultOnVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_on_variation")),
 		},
 		{
 			setup:                    nil,
@@ -341,7 +359,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: nil,
 			environmentNamespace:     "ns0",
-			expected:                 errMissingDefaultOffVariationJaJP,
+			expected:                 createError(statusMissingDefaultOffVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_off_variation")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -443,33 +461,41 @@ func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
 func TestConvUpdateFeatureError(t *testing.T) {
 	t.Parallel()
 	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []struct {
 		input       error
 		expectedErr error
 	}{
 		{
 			input:       v2fs.ErrFeatureNotFound,
-			expectedErr: errNotFoundJaJP,
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			input:       v2fs.ErrFeatureUnexpectedAffectedRows,
-			expectedErr: errNotFoundJaJP,
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			input:       storage.ErrKeyNotFound,
-			expectedErr: errNotFoundJaJP,
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			input:       domain.ErrAlreadyDisabled,
-			expectedErr: errNothingChangeJaJP,
+			expectedErr: createError(statusNothingChange, localizer.MustLocalize(locale.NothingChange)),
 		},
 		{
 			input:       domain.ErrAlreadyEnabled,
-			expectedErr: errNothingChangeJaJP,
+			expectedErr: createError(statusNothingChange, localizer.MustLocalize(locale.NothingChange)),
 		},
 		{
 			input:       errors.New("test"),
-			expectedErr: errInternalJaJP,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 	}
 	for _, p := range patterns {
@@ -488,6 +514,16 @@ func TestEvaluateFeatures(t *testing.T) {
 	vID3 := newUUID(t)
 	vID4 := newUUID(t)
 
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		setup       func(*FeatureService)
@@ -500,21 +536,21 @@ func TestEvaluateFeatures(t *testing.T) {
 			setup:       nil,
 			input:       &featureproto.EvaluateFeaturesRequest{},
 			expected:    nil,
-			expectedErr: errMissingUserJaJP,
+			expectedErr: createError(statusMissingUser, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user")),
 		},
 		{
 			desc:        "fail: ErrMissingUserID",
 			setup:       nil,
 			input:       &featureproto.EvaluateFeaturesRequest{User: &userproto.User{}},
 			expected:    nil,
-			expectedErr: errMissingUserIDJaJP,
+			expectedErr: createError(statusMissingUserID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id")),
 		},
 		{
 			desc:        "fail: ErrMissingFeatureTag",
 			setup:       nil,
 			input:       &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0"},
 			expected:    nil,
-			expectedErr: errMissingFeatureTagJaJP,
+			expectedErr: createError(statusMissingFeatureTag, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
 		},
 		{
 			desc: "fail: return errInternal when getting features",
@@ -527,7 +563,7 @@ func TestEvaluateFeatures(t *testing.T) {
 			},
 			input:       &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
 			expected:    nil,
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success: get from cache",
@@ -851,7 +887,7 @@ func TestEvaluateFeatures(t *testing.T) {
 			},
 			input:       &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
 			expected:    nil,
-			expectedErr: localizedError(statusInternal, locale.JaJP),
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
 			desc: "success: get users from storage",
@@ -952,6 +988,15 @@ func TestUnauthenticated(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -967,7 +1012,7 @@ func TestUnauthenticated(t *testing.T) {
 				_, err := fs.GetFeature(ctx, &featureproto.GetFeatureRequest{})
 				return err
 			},
-			expected: errUnauthenticatedJaJP,
+			expected: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
 		},
 		{
 			desc: "GetFeatures",
@@ -975,7 +1020,7 @@ func TestUnauthenticated(t *testing.T) {
 				_, err := fs.GetFeatures(ctx, &featureproto.GetFeaturesRequest{})
 				return err
 			},
-			expected: errUnauthenticatedJaJP,
+			expected: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
 		},
 		{
 			desc: "ListFeatures",
@@ -983,7 +1028,7 @@ func TestUnauthenticated(t *testing.T) {
 				_, err := fs.ListFeatures(ctx, &featureproto.ListFeaturesRequest{})
 				return err
 			},
-			expected: errUnauthenticatedJaJP,
+			expected: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
 		},
 		{
 			desc: "ListFeaturesEnabled",
@@ -991,7 +1036,7 @@ func TestUnauthenticated(t *testing.T) {
 				_, err := fs.ListEnabledFeatures(ctx, &featureproto.ListEnabledFeaturesRequest{})
 				return err
 			},
-			expected: errUnauthenticatedJaJP,
+			expected: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
 		},
 		{
 			desc: "EvaluateFeatures",
@@ -999,7 +1044,7 @@ func TestUnauthenticated(t *testing.T) {
 				_, err := fs.EvaluateFeatures(ctx, &featureproto.EvaluateFeaturesRequest{})
 				return err
 			},
-			expected: errUnauthenticatedJaJP,
+			expected: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
 		},
 	}
 	for _, p := range patterns {
@@ -1012,6 +1057,15 @@ func TestPermissionDenied(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	ctx := createContextWithTokenRoleUnassigned()
 	service := createFeatureService(mockController)
@@ -1026,7 +1080,7 @@ func TestPermissionDenied(t *testing.T) {
 				_, err := fs.CreateFeature(ctx, &featureproto.CreateFeatureRequest{})
 				return err
 			},
-			expected: errPermissionDeniedJaJP,
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "EnableFeature",
@@ -1037,7 +1091,7 @@ func TestPermissionDenied(t *testing.T) {
 				})
 				return err
 			},
-			expected: errPermissionDeniedJaJP,
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "DisableFeature",
@@ -1048,7 +1102,7 @@ func TestPermissionDenied(t *testing.T) {
 				})
 				return err
 			},
-			expected: errPermissionDeniedJaJP,
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "UnarchiveFeature",
@@ -1059,7 +1113,7 @@ func TestPermissionDenied(t *testing.T) {
 				})
 				return err
 			},
-			expected: errPermissionDeniedJaJP,
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "DeleteFeature",
@@ -1070,7 +1124,7 @@ func TestPermissionDenied(t *testing.T) {
 				})
 				return err
 			},
-			expected: errPermissionDeniedJaJP,
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "UpdateFeatureVariations",
@@ -1078,7 +1132,7 @@ func TestPermissionDenied(t *testing.T) {
 				_, err := fs.UpdateFeatureVariations(ctx, &featureproto.UpdateFeatureVariationsRequest{})
 				return err
 			},
-			expected: errPermissionDeniedJaJP,
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "UpdateFeatureTargeting",
@@ -1086,7 +1140,7 @@ func TestPermissionDenied(t *testing.T) {
 				_, err := fs.UpdateFeatureTargeting(ctx, &featureproto.UpdateFeatureTargetingRequest{})
 				return err
 			},
-			expected: errPermissionDeniedJaJP,
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "CloneFeature",
@@ -1100,7 +1154,7 @@ func TestPermissionDenied(t *testing.T) {
 				})
 				return err
 			},
-			expected: errPermissionDeniedJaJP,
+			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 	}
 	for _, p := range patterns {
@@ -1134,7 +1188,7 @@ func TestEnableFeatureMySQL(t *testing.T) {
 			req: &featureproto.EnableFeatureRequest{
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errMissingIDJaJP,
+			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup: nil,
@@ -1156,7 +1210,7 @@ func TestEnableFeatureMySQL(t *testing.T) {
 				Command:              &featureproto.EnableFeatureCommand{},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errNotFoundJaJP,
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -1209,7 +1263,7 @@ func TestDisableFeatureMySQL(t *testing.T) {
 			req: &featureproto.DisableFeatureRequest{
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errMissingIDJaJP,
+			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup: nil,
@@ -1231,7 +1285,7 @@ func TestDisableFeatureMySQL(t *testing.T) {
 				Command:              &featureproto.DisableFeatureCommand{},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errNotFoundJaJP,
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -1287,7 +1341,7 @@ func TestValidateArchiveFeature(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 			},
 			fs:          nil,
-			expectedErr: errMissingIDJaJP,
+			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			req: &featureproto.ArchiveFeatureRequest{
@@ -1339,7 +1393,7 @@ func TestValidateArchiveFeature(t *testing.T) {
 					Id: f5.Id,
 				},
 			},
-			expectedErr: localizedError(statusInvalidArchive, locale.JaJP),
+			expectedErr: createError(statusInvalidArchive, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive")),
 		},
 		{
 			req: &featureproto.ArchiveFeatureRequest{
@@ -1414,7 +1468,7 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 			req: &featureproto.UnarchiveFeatureRequest{
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errMissingIDJaJP,
+			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup: nil,
@@ -1436,7 +1490,7 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 				Command:              &featureproto.UnarchiveFeatureCommand{},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errNotFoundJaJP,
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -1489,7 +1543,7 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 			req: &featureproto.DeleteFeatureRequest{
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errMissingIDJaJP,
+			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup: nil,
@@ -1511,7 +1565,7 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 				Command:              &featureproto.DeleteFeatureCommand{},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errNotFoundJaJP,
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -1564,7 +1618,7 @@ func TestCloneFeatureMySQL(t *testing.T) {
 			req: &featureproto.CloneFeatureRequest{
 				Id: "",
 			},
-			expectedErr: errMissingIDJaJP,
+			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup: nil,
@@ -1583,7 +1637,7 @@ func TestCloneFeatureMySQL(t *testing.T) {
 				},
 				EnvironmentNamespace: "ns0",
 			},
-			expectedErr: errIncorrectDestinationEnvironmentJaJP,
+			expectedErr: createError(statusIncorrectDestinationEnvironment, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "environment")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -1652,7 +1706,15 @@ func TestAddFixedStrategyRule(t *testing.T) {
 			FixedStrategy: &featureproto.FixedStrategy{Variation: vID},
 		},
 	}
-
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []struct {
 		rule     *featureproto.Rule
 		expected error
@@ -1665,7 +1727,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 					FixedStrategy: &featureproto.FixedStrategy{Variation: vID},
 				},
 			},
-			expected: localizedError(statusMissingRuleID, locale.JaJP),
+			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -1675,14 +1737,14 @@ func TestAddFixedStrategyRule(t *testing.T) {
 					FixedStrategy: &featureproto.FixedStrategy{Variation: vID},
 				},
 			},
-			expected: localizedError(statusIncorrectUUIDFormat, locale.JaJP),
+			expected: createError(statusIncorrectUUIDFormat, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
 		},
 		{
 			rule: &featureproto.Rule{
 				Id:       rID,
 				Strategy: nil,
 			},
-			expected: localizedError(statusMissingRuleStrategy, locale.JaJP),
+			expected: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -1692,7 +1754,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 					FixedStrategy: &featureproto.FixedStrategy{},
 				},
 			},
-			expected: localizedError(statusMissingVariationID, locale.JaJP),
+			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
 			rule:     expected,
@@ -1700,7 +1762,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		err := validateRule(f.Variations, p.rule)
+		err := validateRule(f.Variations, p.rule, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -1729,6 +1791,15 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 			},
 		},
 	}
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []*struct {
 		rule     *featureproto.Rule
 		expected error
@@ -1752,7 +1823,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusMissingRuleID, locale.JaJP),
+			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -1773,14 +1844,14 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusIncorrectUUIDFormat, locale.JaJP),
+			expected: createError(statusIncorrectUUIDFormat, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
 		},
 		{
 			rule: &featureproto.Rule{
 				Id:       rID,
 				Strategy: nil,
 			},
-			expected: localizedError(statusMissingRuleStrategy, locale.JaJP),
+			expected: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -1797,7 +1868,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusDifferentVariationsSize, locale.JaJP),
+			expected: createError(statusDifferentVariationsSize, localizer.MustLocalize(locale.DifferentVariationsSize)),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -1818,7 +1889,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusMissingVariationID, locale.JaJP),
+			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -1839,7 +1910,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusMissingVariationID, locale.JaJP),
+			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -1860,7 +1931,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusIncorrectVariationWeight, locale.JaJP),
+			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -1881,7 +1952,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusIncorrectVariationWeight, locale.JaJP),
+			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			rule: &featureproto.Rule{
@@ -1902,7 +1973,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusExceededMaxVariationWeight, locale.JaJP),
+			expected: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			rule:     expected,
@@ -1910,7 +1981,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		err := validateRule(f.Variations, p.rule)
+		err := validateRule(f.Variations, p.rule, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -1925,6 +1996,15 @@ func TestChangeRuleToFixedStrategy(t *testing.T) {
 		Type:          featureproto.Strategy_FIXED,
 		FixedStrategy: &featureproto.FixedStrategy{Variation: vID},
 	}
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []*struct {
 		ruleID   string
 		strategy *featureproto.Strategy
@@ -1933,19 +2013,19 @@ func TestChangeRuleToFixedStrategy(t *testing.T) {
 		{
 			ruleID:   "",
 			strategy: expected,
-			expected: localizedError(statusMissingRuleID, locale.JaJP),
+			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
 		},
 		{
 			ruleID:   rID,
 			strategy: nil,
-			expected: localizedError(statusMissingRuleStrategy, locale.JaJP),
+			expected: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
 		},
 		{
 			ruleID: rID,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_FIXED,
 			},
-			expected: localizedError(statusMissingFixedStrategy, locale.JaJP),
+			expected: createError(statusMissingFixedStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fixed_strategy")),
 		},
 		{
 			ruleID: rID,
@@ -1953,12 +2033,12 @@ func TestChangeRuleToFixedStrategy(t *testing.T) {
 				Type:          featureproto.Strategy_FIXED,
 				FixedStrategy: &featureproto.FixedStrategy{},
 			},
-			expected: localizedError(statusMissingVariationID, locale.JaJP),
+			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
 			ruleID:   "",
 			strategy: nil,
-			expected: localizedError(statusMissingRuleID, locale.JaJP),
+			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
 		},
 		{
 			ruleID:   rID,
@@ -1971,7 +2051,7 @@ func TestChangeRuleToFixedStrategy(t *testing.T) {
 			RuleId:   p.ruleID,
 			Strategy: p.strategy,
 		}
-		err := validateChangeRuleStrategy(f.Variations, cmd)
+		err := validateChangeRuleStrategy(f.Variations, cmd, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -1983,6 +2063,15 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 	rID := r.Id
 	vID1 := f.Variations[0].Id
 	vID2 := f.Variations[1].Id
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	expected := &featureproto.Strategy{
 		Type: featureproto.Strategy_ROLLOUT,
 		RolloutStrategy: &featureproto.RolloutStrategy{
@@ -2008,13 +2097,13 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 			desc:     "fail: errMissingRuleID",
 			ruleID:   "",
 			strategy: expected,
-			expected: localizedError(statusMissingRuleID, locale.JaJP),
+			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
 		},
 		{
 			desc:     "fail: errMissingRuleStrategy",
 			ruleID:   rID,
 			strategy: nil,
-			expected: localizedError(statusMissingRuleStrategy, locale.JaJP),
+			expected: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
 		},
 		{
 			desc:   "fail: errDifferentVariationsSizeJaJP",
@@ -2030,7 +2119,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusDifferentVariationsSize, locale.JaJP),
+			expected: createError(statusDifferentVariationsSize, localizer.MustLocalize(locale.DifferentVariationsSize)),
 		},
 		{
 			desc:   "fail: errMissingVariationIDJaJP: idx-0",
@@ -2050,7 +2139,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusMissingVariationID, locale.JaJP),
+			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
 			desc:   "fail: errMissingVariationIDJaJP: idx-1",
@@ -2070,7 +2159,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusMissingVariationID, locale.JaJP),
+			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
 			desc:   "fail: errIncorrectVariationWeightJaJP: idx-0",
@@ -2090,7 +2179,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusIncorrectVariationWeight, locale.JaJP),
+			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			desc:   "fail: errIncorrectVariationWeightJaJP: idx-1",
@@ -2110,7 +2199,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusIncorrectVariationWeight, locale.JaJP),
+			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			desc:   "fail: errIncorrectVariationWeightJaJP: more than total weight",
@@ -2130,7 +2219,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusExceededMaxVariationWeight, locale.JaJP),
+			expected: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			desc:   "fail: errIncorrectVariationWeightJaJP: less than total weight",
@@ -2150,7 +2239,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 					},
 				},
 			},
-			expected: localizedError(statusExceededMaxVariationWeight, locale.JaJP),
+			expected: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			desc:     "success",
@@ -2165,7 +2254,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 				RuleId:   p.ruleID,
 				Strategy: p.strategy,
 			}
-			err := validateChangeRuleStrategy(f.Variations, cmd)
+			err := validateChangeRuleStrategy(f.Variations, cmd, localizer)
 			assert.Equal(t, p.expected, err)
 		})
 	}
@@ -2177,6 +2266,15 @@ func TestChangeFixedStrategy(t *testing.T) {
 	r := f.Rules[0]
 	rID := r.Id
 	vID := f.Variations[0].Id
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []*struct {
 		ruleID   string
 		strategy *featureproto.FixedStrategy
@@ -2185,22 +2283,22 @@ func TestChangeFixedStrategy(t *testing.T) {
 		{
 			ruleID:   "",
 			strategy: &featureproto.FixedStrategy{Variation: vID},
-			expected: localizedError(statusMissingRuleID, locale.JaJP),
+			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
 		},
 		{
 			ruleID:   rID,
 			strategy: nil,
-			expected: localizedError(statusMissingFixedStrategy, locale.JaJP),
+			expected: createError(statusMissingFixedStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fixed_strategy")),
 		},
 		{
 			ruleID:   rID,
 			strategy: &featureproto.FixedStrategy{},
-			expected: localizedError(statusMissingVariationID, locale.JaJP),
+			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
 			ruleID:   "",
 			strategy: nil,
-			expected: localizedError(statusMissingRuleID, locale.JaJP),
+			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
 		},
 		{
 			ruleID:   rID,
@@ -2213,7 +2311,7 @@ func TestChangeFixedStrategy(t *testing.T) {
 			RuleId:   p.ruleID,
 			Strategy: p.strategy,
 		}
-		err := validateChangeFixedStrategy(cmd)
+		err := validateChangeFixedStrategy(cmd, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -2235,6 +2333,15 @@ func TestChangeRolloutStrategy(t *testing.T) {
 			Weight:    30000,
 		},
 	}}
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []*struct {
 		ruleID   string
 		strategy *featureproto.RolloutStrategy
@@ -2243,12 +2350,12 @@ func TestChangeRolloutStrategy(t *testing.T) {
 		{
 			ruleID:   "",
 			strategy: &featureproto.RolloutStrategy{},
-			expected: localizedError(statusMissingRuleID, locale.JaJP),
+			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
 		},
 		{
 			ruleID:   rID,
 			strategy: nil,
-			expected: localizedError(statusMissingRolloutStrategy, locale.JaJP),
+			expected: createError(statusMissingRolloutStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rollout_strategy")),
 		},
 		{
 			ruleID: rID,
@@ -2258,7 +2365,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    70000,
 				},
 			}},
-			expected: localizedError(statusDifferentVariationsSize, locale.JaJP),
+			expected: createError(statusDifferentVariationsSize, localizer.MustLocalize(locale.DifferentVariationsSize)),
 		},
 		{
 			ruleID: rID,
@@ -2272,7 +2379,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    30000,
 				},
 			}},
-			expected: localizedError(statusMissingVariationID, locale.JaJP),
+			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
 			ruleID: rID,
@@ -2286,7 +2393,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    30000,
 				},
 			}},
-			expected: localizedError(statusMissingVariationID, locale.JaJP),
+			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
 			ruleID: rID,
@@ -2300,7 +2407,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    30000,
 				},
 			}},
-			expected: localizedError(statusIncorrectVariationWeight, locale.JaJP),
+			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			ruleID: rID,
@@ -2314,7 +2421,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    -1,
 				},
 			}},
-			expected: localizedError(statusIncorrectVariationWeight, locale.JaJP),
+			expected: createError(statusIncorrectVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			ruleID: rID,
@@ -2328,12 +2435,12 @@ func TestChangeRolloutStrategy(t *testing.T) {
 					Weight:    59000,
 				},
 			}},
-			expected: localizedError(statusExceededMaxVariationWeight, locale.JaJP),
+			expected: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			ruleID:   "",
 			strategy: nil,
-			expected: localizedError(statusMissingRuleID, locale.JaJP),
+			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
 		},
 		{
 			ruleID:   rID,
@@ -2346,7 +2453,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 			RuleId:   p.ruleID,
 			Strategy: p.strategy,
 		}
-		err := validateChangeRolloutStrategy(f.Variations, cmd)
+		err := validateChangeRolloutStrategy(f.Variations, cmd, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -2354,6 +2461,15 @@ func TestChangeRolloutStrategy(t *testing.T) {
 func TestChangeDefaultStrategy(t *testing.T) {
 	t.Parallel()
 	f := makeFeature("feature-id")
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	patterns := []struct {
 		desc        string
 		strategy    *featureproto.Strategy
@@ -2362,7 +2478,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 		{
 			desc:        "fail: errMissingRuleStrategy",
 			strategy:    nil,
-			expectedErr: localizedError(statusMissingRuleStrategy, locale.JaJP),
+			expectedErr: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
 		},
 		{
 			desc: "fail: errIncorrectVariationWeightJaJP: more than total weight",
@@ -2381,7 +2497,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusExceededMaxVariationWeight, locale.JaJP),
+			expectedErr: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			desc: "fail: errIncorrectVariationWeightJaJP: less than total weight",
@@ -2400,7 +2516,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: localizedError(statusExceededMaxVariationWeight, locale.JaJP),
+			expectedErr: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
 			desc: "success",
@@ -2427,7 +2543,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 			cmd := &featureproto.ChangeDefaultStrategyCommand{
 				Strategy: p.strategy,
 			}
-			err := validateChangeDefaultStrategy(f.Variations, cmd)
+			err := validateChangeDefaultStrategy(f.Variations, cmd, localizer)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -2441,6 +2557,15 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 	fID3 := "fID-3"
 	fID4 := "fID-4"
 	fID5 := "fID-5"
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	pattens := []*struct {
 		cmd         command.Command
 		fs          []*featureproto.Feature
@@ -2504,7 +2629,7 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 					Id: fID5,
 				},
 			},
-			expectedErr: localizedError(statusInvalidChangingVariation, locale.JaJP),
+			expectedErr: createError(statusInvalidChangingVariation, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation")),
 		},
 		{
 			cmd: &featureproto.RemoveVariationCommand{
@@ -2552,20 +2677,28 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 		},
 	}
 	for _, p := range pattens {
-		err := validateFeatureVariationsCommand(p.fs, p.cmd)
+		err := validateFeatureVariationsCommand(p.fs, p.cmd, localizer)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
 
 func TestValidateAddPrerequisite(t *testing.T) {
 	t.Parallel()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	fID0 := "fID-0"
 	fID1 := "fID-1"
 	fID2 := "fID-2"
 	fID3 := "fID-3"
 	fID4 := "fID-4"
 	fID5 := "fID-5"
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	pattens := []*struct {
 		prerequisite *featureproto.Prerequisite
 		fs           []*featureproto.Feature
@@ -2628,7 +2761,7 @@ func TestValidateAddPrerequisite(t *testing.T) {
 					Prerequisites: []*featureproto.Prerequisite{},
 				},
 			},
-			expectedErr: localizedError(statusCycleExists, locale.JaJP),
+			expectedErr: createError(statusCycleExists, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "prerequisite")),
 		},
 		{
 			prerequisite: &featureproto.Prerequisite{
@@ -2728,7 +2861,7 @@ func TestValidateAddPrerequisite(t *testing.T) {
 					Id: fID5,
 				},
 			},
-			expectedErr: localizedError(statusInvalidPrerequisite, locale.JaJP),
+			expectedErr: createError(statusInvalidPrerequisite, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "prerequisite")),
 		},
 		{
 			prerequisite: &featureproto.Prerequisite{
@@ -2784,7 +2917,7 @@ func TestValidateAddPrerequisite(t *testing.T) {
 					Id: fID5,
 				},
 			},
-			expectedErr: localizedError(statusInvalidPrerequisite, locale.JaJP),
+			expectedErr: createError(statusInvalidPrerequisite, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "prerequisite")),
 		},
 		{
 			prerequisite: &featureproto.Prerequisite{
@@ -2834,7 +2967,7 @@ func TestValidateAddPrerequisite(t *testing.T) {
 					Id: fID5,
 				},
 			},
-			expectedErr: localizedError(statusInvalidVariationID, locale.JaJP),
+			expectedErr: createError(statusInvalidVariationID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_id")),
 		},
 	}
 	for _, p := range pattens {
@@ -2845,13 +2978,21 @@ func TestValidateAddPrerequisite(t *testing.T) {
 
 func TestValidateChangePrerequisiteVariation(t *testing.T) {
 	t.Parallel()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
 	fID0 := "fID-0"
 	fID1 := "fID-1"
 	fID2 := "fID-2"
 	fID3 := "fID-3"
 	fID4 := "fID-4"
 	fID5 := "fID-5"
+	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 	pattens := []*struct {
 		prerequisite *featureproto.Prerequisite
 		fs           []*featureproto.Feature
@@ -2955,7 +3096,7 @@ func TestValidateChangePrerequisiteVariation(t *testing.T) {
 					Id: fID5,
 				},
 			},
-			expectedErr: localizedError(statusInvalidVariationID, locale.JaJP),
+			expectedErr: createError(statusInvalidVariationID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_id")),
 		},
 	}
 	for _, p := range pattens {

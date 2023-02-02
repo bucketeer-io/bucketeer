@@ -57,7 +57,7 @@ func (s *FeatureService) AddSegmentUser(
 		)
 		return nil, err
 	}
-	if err := validateAddSegmentUserCommand(req.Command); err != nil {
+	if err := validateAddSegmentUserCommand(req.Command, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -102,7 +102,7 @@ func (s *FeatureService) DeleteSegmentUser(
 		)
 		return nil, err
 	}
-	if err := validateDeleteSegmentUserCommand(req.Command); err != nil {
+	if err := validateDeleteSegmentUserCommand(req.Command, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -209,7 +209,14 @@ func (s *FeatureService) updateSegmentUser(
 	})
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound || err == v2fs.ErrSegmentUnexpectedAffectedRows {
-			return localizedError(statusSegmentNotFound, locale.JaJP)
+			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		s.logger.Error(
 			"Failed to upsert segment user",
@@ -239,7 +246,7 @@ func (s *FeatureService) GetSegmentUser(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateGetSegmentUserRequest(req); err != nil {
+	if err := validateGetSegmentUserRequest(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -293,7 +300,7 @@ func (s *FeatureService) ListSegmentUsers(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateListSegmentUsersRequest(req); err != nil {
+	if err := validateListSegmentUsersRequest(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -380,7 +387,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		)
 		return nil, err
 	}
-	if err := validateBulkUploadSegmentUsersCommand(req.Command); err != nil {
+	if err := validateBulkUploadSegmentUsersCommand(req.Command, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -414,10 +421,24 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 			return err
 		}
 		if segment.IsInUseStatus {
-			return localizedError(statusSegmentInUse, locale.JaJP)
+			dt, err := statusSegmentInUse.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.SegmentInUse),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		if segment.Status == featureproto.Segment_UPLOADING {
-			return localizedError(statusSegmentUsersAlreadyUploading, locale.JaJP)
+			dt, err := statusSegmentUsersAlreadyUploading.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.SegmentUsersAlreadyUploading),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		handler := command.NewSegmentCommandHandler(
 			editor,
@@ -449,7 +470,14 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	})
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound || err == v2fs.ErrFeatureUnexpectedAffectedRows {
-			return nil, localizedError(statusSegmentNotFound, locale.JaJP)
+			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		if status.Code(err) == codes.FailedPrecondition {
 			return nil, err
@@ -505,7 +533,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateBulkDownloadSegmentUsersRequest(req); err != nil {
+	if err := validateBulkDownloadSegmentUsersRequest(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -519,7 +547,14 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	segment, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound {
-			return nil, localizedError(statusSegmentNotFound, locale.JaJP)
+			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get segment",
@@ -538,7 +573,14 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 		return nil, dt.Err()
 	}
 	if segment.Status != featureproto.Segment_SUCEEDED {
-		return nil, localizedError(statusSegmentStatusNotSuceeded, locale.JaJP)
+		dt, err := statusSegmentStatusNotSuceeded.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.SegmentStatusNotSuceeded),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("segment_id", "=", req.SegmentId),
