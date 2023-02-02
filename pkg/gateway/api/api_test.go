@@ -2177,6 +2177,10 @@ func TestGetMetricsEvent(t *testing.T) {
 		Labels:   map[string]string{"tag": "test", "status": "success"},
 		Duration: time.Duration(1),
 	})
+	bBadRequest, err := json.Marshal(&badRequestErrorMetricsEvent{
+		ApiId:  eventproto.ApiId_GET_EVALUATION,
+		Labels: map[string]string{"tag": "test"},
+	})
 	if err != nil {
 		t.Fatal("could not serialize goal event")
 	}
@@ -2191,17 +2195,29 @@ func TestGetMetricsEvent(t *testing.T) {
 			desc: "error: invalid message type",
 			input: metricsEvent{
 				Timestamp: time.Now().Unix(),
-				Event:     json.RawMessage(string(bLatencyEvent)),
+				Event:     json.RawMessage(bLatencyEvent),
 				Type:      0,
 			},
 			expectedErr: errInvalidType,
 		},
 		{
-			desc: "success",
+			desc: "latencyMetricsEvent: success",
 			input: metricsEvent{
 				Timestamp: time.Now().Unix(),
-				Event:     json.RawMessage(string(bLatencyEvent)),
+				Event:     json.RawMessage(bLatencyEvent),
 				Type:      latencyMetricsEventType,
+			},
+			expected: &eventproto.MetricsEvent{
+				Timestamp: time.Now().Unix(),
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "badRequestErrorMetricsEvent: success",
+			input: metricsEvent{
+				Timestamp: time.Now().Unix(),
+				Event:     json.RawMessage(bBadRequest),
+				Type:      badRequestErrorMetricsEventType,
 			},
 			expected: &eventproto.MetricsEvent{
 				Timestamp: time.Now().Unix(),

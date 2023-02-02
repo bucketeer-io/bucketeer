@@ -224,6 +224,46 @@ type internalSdkErrorMetricsEvent struct {
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
+type badRequestErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type unauthorizedErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type forbiddenErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type notFoundErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type clientClosedRequestErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type internalServerErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type serviceUnavailableErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+type unknownErrorMetricsEvent struct {
+	ApiId  eventproto.ApiId  `json:"api_id,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
 func (s *gatewayService) ping(w http.ResponseWriter, req *http.Request) {
 	rest.ReturnSuccessResponse(
 		w,
@@ -1029,18 +1069,22 @@ func (s *gatewayService) getMetricsEvent(
 	if err != nil {
 		return nil, errorCode, err
 	}
+	errLogFunc := func(id, metricsType string) {
+		s.logger.Error(
+			"Failed to extract metricsEvent",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", id),
+				zap.String("metricsType", metricsType),
+			)...,
+		)
+	}
 	var eventAny *anypb.Any
 	switch metricsEvt.Type {
 	case latencyMetricsEventType:
 		latency := &latencyMetricsEvent{}
 		if err := json.Unmarshal(metricsEvt.Event, latency); err != nil {
-			s.logger.Error(
-				"Failed to extract latencyMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", event.ID),
-				)...,
-			)
+			errLogFunc(event.ID, metricsEvt.Type.String())
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
 		apiID := getApiID(latency.ApiId)
@@ -1055,13 +1099,7 @@ func (s *gatewayService) getMetricsEvent(
 	case sizeMetricsEventType:
 		size := &sizeMetricsEvent{}
 		if err := json.Unmarshal(metricsEvt.Event, size); err != nil {
-			s.logger.Error(
-				"Failed to extract sizeMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", event.ID),
-				)...,
-			)
+			errLogFunc(event.ID, metricsEvt.Type.String())
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
 		apiID := getApiID(size.ApiId)
@@ -1076,13 +1114,7 @@ func (s *gatewayService) getMetricsEvent(
 	case timeoutErrorMetricsEventType:
 		timeout := &timeoutErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, timeout); err != nil {
-			s.logger.Error(
-				"Failed to extract timeoutErrorMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", event.ID),
-				)...,
-			)
+			errLogFunc(event.ID, metricsEvt.Type.String())
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
 		eventAny, err = ptypes.MarshalAny(&eventproto.TimeoutErrorMetricsEvent{
@@ -1095,13 +1127,7 @@ func (s *gatewayService) getMetricsEvent(
 	case internalErrorMetricsEventType:
 		internal := &internalErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, internal); err != nil {
-			s.logger.Error(
-				"Failed to extract internalErrorMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", event.ID),
-				)...,
-			)
+			errLogFunc(event.ID, metricsEvt.Type.String())
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
 		eventAny, err = ptypes.MarshalAny(&eventproto.InternalErrorMetricsEvent{
@@ -1114,13 +1140,7 @@ func (s *gatewayService) getMetricsEvent(
 	case networkErrorMetricsEventType:
 		network := &networkErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, network); err != nil {
-			s.logger.Error(
-				"Failed to extract networkErrorMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", event.ID),
-				)...,
-			)
+			errLogFunc(event.ID, metricsEvt.Type.String())
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
 		eventAny, err = ptypes.MarshalAny(&eventproto.NetworkErrorMetricsEvent{
@@ -1133,18 +1153,116 @@ func (s *gatewayService) getMetricsEvent(
 	case internalSdkErrorMetricsEventType:
 		internalSdk := &internalSdkErrorMetricsEvent{}
 		if err := json.Unmarshal(event.Event, internalSdk); err != nil {
-			s.logger.Error(
-				"Failed to extract internalSdkErrorMetrics event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", event.ID),
-				)...,
-			)
+			errLogFunc(event.ID, metricsEvt.Type.String())
 			return nil, codeUnmarshalFailed, errUnmarshalFailed
 		}
 		eventAny, err = ptypes.MarshalAny(&eventproto.InternalErrorMetricsEvent{
 			ApiId:  internalSdk.ApiId,
 			Labels: internalSdk.Labels,
+		})
+		if err != nil {
+			return nil, codeMarshalAnyFailed, err
+		}
+	case badRequestErrorMetricsEventType:
+		e := &badRequestErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, e); err != nil {
+			errLogFunc(event.ID, metricsEvt.Type.String())
+			return nil, codeUnmarshalFailed, errUnmarshalFailed
+		}
+		eventAny, err = ptypes.MarshalAny(&eventproto.BadRequestErrorMetricsEvent{
+			ApiId:  e.ApiId,
+			Labels: e.Labels,
+		})
+		if err != nil {
+			return nil, codeMarshalAnyFailed, err
+		}
+	case unauthorizedErrorMetricsEventType:
+		e := &unauthorizedErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, e); err != nil {
+			errLogFunc(event.ID, metricsEvt.Type.String())
+			return nil, codeUnmarshalFailed, errUnmarshalFailed
+		}
+		eventAny, err = ptypes.MarshalAny(&eventproto.UnauthorizedErrorMetricsEvent{
+			ApiId:  e.ApiId,
+			Labels: e.Labels,
+		})
+		if err != nil {
+			return nil, codeMarshalAnyFailed, err
+		}
+	case forbiddenErrorMetricsEventType:
+		e := &forbiddenErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, e); err != nil {
+			errLogFunc(event.ID, metricsEvt.Type.String())
+			return nil, codeUnmarshalFailed, errUnmarshalFailed
+		}
+		eventAny, err = ptypes.MarshalAny(&eventproto.ForbiddenErrorMetricsEvent{
+			ApiId:  e.ApiId,
+			Labels: e.Labels,
+		})
+		if err != nil {
+			return nil, codeMarshalAnyFailed, err
+		}
+	case notFoundErrorMetricsEventType:
+		e := &notFoundErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, e); err != nil {
+			errLogFunc(event.ID, metricsEvt.Type.String())
+			return nil, codeUnmarshalFailed, errUnmarshalFailed
+		}
+		eventAny, err = ptypes.MarshalAny(&eventproto.NotFoundErrorMetricsEvent{
+			ApiId:  e.ApiId,
+			Labels: e.Labels,
+		})
+		if err != nil {
+			return nil, codeMarshalAnyFailed, err
+		}
+	case clientClosedRequestErrorMetricsEventType:
+		e := &clientClosedRequestErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, e); err != nil {
+			errLogFunc(event.ID, metricsEvt.Type.String())
+			return nil, codeUnmarshalFailed, errUnmarshalFailed
+		}
+		eventAny, err = ptypes.MarshalAny(&eventproto.ClientClosedRequestErrorMetricsEvent{
+			ApiId:  e.ApiId,
+			Labels: e.Labels,
+		})
+		if err != nil {
+			return nil, codeMarshalAnyFailed, err
+		}
+	case internalServerErrorMetricsEventType:
+		e := &internalServerErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, e); err != nil {
+			errLogFunc(event.ID, metricsEvt.Type.String())
+			return nil, codeUnmarshalFailed, errUnmarshalFailed
+		}
+		eventAny, err = ptypes.MarshalAny(&eventproto.InternalServerErrorMetricsEvent{
+			ApiId:  e.ApiId,
+			Labels: e.Labels,
+		})
+		if err != nil {
+			return nil, codeMarshalAnyFailed, err
+		}
+	case serviceUnavailableErrorMetricsEventType:
+		e := &serviceUnavailableErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, e); err != nil {
+			errLogFunc(event.ID, metricsEvt.Type.String())
+			return nil, codeUnmarshalFailed, errUnmarshalFailed
+		}
+		eventAny, err = ptypes.MarshalAny(&eventproto.ServiceUnavailableErrorMetricsEvent{
+			ApiId:  e.ApiId,
+			Labels: e.Labels,
+		})
+		if err != nil {
+			return nil, codeMarshalAnyFailed, err
+		}
+	case unknownErrorMetricsEventType:
+		e := &unknownErrorMetricsEvent{}
+		if err := json.Unmarshal(event.Event, e); err != nil {
+			errLogFunc(event.ID, metricsEvt.Type.String())
+			return nil, codeUnmarshalFailed, errUnmarshalFailed
+		}
+		eventAny, err = ptypes.MarshalAny(&eventproto.UnknownErrorMetricsEvent{
+			ApiId:  e.ApiId,
+			Labels: e.Labels,
 		})
 		if err != nil {
 			return nil, codeMarshalAnyFailed, err

@@ -20,4 +20,33 @@ const (
 	internalErrorMetricsEventType
 	networkErrorMetricsEventType
 	internalSdkErrorMetricsEventType
+	badRequestErrorMetricsEventType
+	unauthorizedErrorMetricsEventType
+	forbiddenErrorMetricsEventType
+	notFoundErrorMetricsEventType
+	clientClosedRequestErrorMetricsEventType
+	internalServerErrorMetricsEventType
+	serviceUnavailableErrorMetricsEventType
+	unknownErrorMetricsEventType
 )
+
+var metricsEventTypeValueMap = map[metricsDetailEventType]string{
+	latencyMetricsEventType:                  "LatencyMetricsEvent",
+	sizeMetricsEventType:                     "SizeMetricsEvent",
+	timeoutErrorMetricsEventType:             "TimeoutErrorMetricsEvent",
+	internalErrorMetricsEventType:            "InternalErrorMetricsEvent",
+	networkErrorMetricsEventType:             "NetworkErrorMetricsEvent",
+	internalSdkErrorMetricsEventType:         "InternalSdkErrorMetricsEvent",
+	badRequestErrorMetricsEventType:          "badRequestErrorMetricsEvent",
+	unauthorizedErrorMetricsEventType:        "unauthorizedErrorMetricsEvent",
+	forbiddenErrorMetricsEventType:           "forbiddenErrorMetricsEvent",
+	notFoundErrorMetricsEventType:            "notFoundErrorMetricsEvent",
+	clientClosedRequestErrorMetricsEventType: "clientClosedRequestErrorMetricsEvent",
+	internalServerErrorMetricsEventType:      "internalServerErrorMetricsEvent",
+	serviceUnavailableErrorMetricsEventType:  "serviceUnavailableErrorMetricsEvent",
+	unknownErrorMetricsEventType:             "unknownErrorMetricsEvent",
+}
+
+func (m metricsDetailEventType) String() string {
+	return metricsEventTypeValueMap[m]
+}
