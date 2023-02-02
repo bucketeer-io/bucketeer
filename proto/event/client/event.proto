@@ -116,6 +116,48 @@ message InternalErrorCountMetricsEvent {
   string tag = 1;
 }
 
+// HTTP Mapping: 400 Bad Request
+message BadRequestErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+// HTTP Mapping: 401 Unauthorized
+message UnauthorizedErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+// HTTP Mapping: 403 Forbidden
+message ForbiddenErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+// HTTP Mapping: 404 Not Found
+message NotFoundErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+// HTTP Mapping: 499 Client Closed Request
+message ClientClosedRequestErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+// HTTP Mapping: 500 Internal Server Error
+message InternalServerErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+// HTTP Mapping: 503 Service Unavailable
+message ServiceUnavailableErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
 message TimeoutErrorMetricsEvent {
   ApiId api_id = 1;
   map<string, string> labels = 2;
@@ -132,6 +174,11 @@ message NetworkErrorMetricsEvent {
 }
 
 message InternalSdkErrorMetricsEvent {
+  ApiId api_id = 1;
+  map<string, string> labels = 2;
+}
+
+message UnknownErrorMetricsEvent {
   ApiId api_id = 1;
   map<string, string> labels = 2;
 }
