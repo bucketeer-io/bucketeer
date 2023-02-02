@@ -1362,6 +1362,7 @@ func validateAddPrerequisite(
 	if err := validateVariationID(fs, p, localizer); err != nil {
 		return err
 	}
+	prevPrerequisites := tarF.Prerequisites
 	tarF.Prerequisites = append(tarF.Prerequisites, p)
 	_, err := domain.TopologicalSort(fs)
 	if err != nil {
@@ -1384,6 +1385,7 @@ func validateAddPrerequisite(
 		}
 		return dt.Err()
 	}
+	tarF.Prerequisites = prevPrerequisites
 	return nil
 }
 

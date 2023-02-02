@@ -2971,7 +2971,11 @@ func TestValidateAddPrerequisite(t *testing.T) {
 		},
 	}
 	for _, p := range pattens {
+		prevPre := p.fs[0].Prerequisites
 		err := validateAddPrerequisite(p.fs, p.fs[0], p.prerequisite, localizer)
+		if err == nil {
+			assert.Equal(t, p.fs[0].Prerequisites, prevPre)
+		}
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
