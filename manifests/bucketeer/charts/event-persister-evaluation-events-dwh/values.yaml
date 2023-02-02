@@ -12,7 +12,6 @@ env:
   logLevel: info
   port: 9090
   metricsPort: 9002
-  bigtableInstance:
   experimentService: localhost:9001
   # option
   maxMps: "1000"

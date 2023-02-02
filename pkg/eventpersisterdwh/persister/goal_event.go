@@ -25,10 +25,8 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
-	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -38,18 +36,16 @@ import (
 const goalEventTable = "goal_event"
 
 type goalEvtWriter struct {
-	writer                storage.GoalEventWriter
-	userEvaluationStorage featurestorage.UserEvaluationsStorage
-	experimentClient      ec.Client
-	flightgroup           singleflight.Group
-	logger                *zap.Logger
+	writer           storage.GoalEventWriter
+	experimentClient ec.Client
+	flightgroup      singleflight.Group
+	logger           *zap.Logger
 }
 
 func NewGoalEventWriter(
 	ctx context.Context,
 	r metrics.Registerer,
 	l *zap.Logger,
-	userEvaluationStorage featurestorage.UserEvaluationsStorage,
 	exClient ec.Client,
 	project, ds string,
 	size int,
@@ -68,10 +64,9 @@ func NewGoalEventWriter(
 		return nil, err
 	}
 	return &goalEvtWriter{
-		writer:                storage.NewGoalEventWriter(goalWriter, size),
-		userEvaluationStorage: userEvaluationStorage,
-		experimentClient:      exClient,
-		logger:                l,
+		writer:           storage.NewGoalEventWriter(goalWriter, size),
+		experimentClient: exClient,
+		logger:           l,
 	}, nil
 }
 
@@ -308,21 +303,5 @@ func (w *goalEvtWriter) getUserEvaluation(
 	featureID string,
 	featureVersion int32,
 ) (*featureproto.Evaluation, error) {
-	evaluation, err := w.userEvaluationStorage.GetUserEvaluation(
-		ctx,
-		userID,
-		environmentNamespace,
-		tag,
-		featureID,
-		featureVersion,
-	)
-	if err != nil {
-		if err == bigtable.ErrKeyNotFound {
-			handledCounter.WithLabelValues(codeUserEvaluationNotFound).Inc()
-		} else {
-			handledCounter.WithLabelValues(codeFailedToGetUserEvaluation).Inc()
-		}
-		return nil, err
-	}
-	return evaluation, nil
+	return nil, nil
 }

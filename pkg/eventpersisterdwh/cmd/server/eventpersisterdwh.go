@@ -25,14 +25,12 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/persister"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 )
 
 const (
@@ -115,11 +113,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	btClient, err := s.createBigtableClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-	defer btClient.Close()
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
 		return err
@@ -139,7 +132,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		ctx,
 		registerer,
 		logger,
-		btClient,
 		experimentClient,
 	)
 	if err != nil {
@@ -148,7 +140,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	p := persister.NewPersisterDWH(
 		puller,
 		registerer,
-		btClient,
 		writer,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
@@ -200,24 +191,10 @@ func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.P
 	)
 }
 
-func (s *server) createBigtableClient(
-	ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (bigtable.Client, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	return bigtable.NewBigtableClient(ctx, *s.project, *s.bigtableInstance,
-		bigtable.WithMetrics(registerer),
-		bigtable.WithLogger(logger),
-	)
-}
-
 func (s *server) newBigQueryWriter(
 	ctx context.Context,
 	r metrics.Registerer,
 	logger *zap.Logger,
-	bt bigtable.Client,
 	exClient ec.Client,
 ) (persister.Writer, error) {
 	var writer persister.Writer
@@ -227,7 +204,6 @@ func (s *server) newBigQueryWriter(
 			ctx,
 			r,
 			logger,
-			featurestorage.NewUserEvaluationsStorage(bt),
 			exClient,
 			*s.project,
 			*s.bigQueryDataSet,
@@ -238,7 +214,6 @@ func (s *server) newBigQueryWriter(
 			ctx,
 			r,
 			logger,
-			featurestorage.NewUserEvaluationsStorage(bt),
 			exClient,
 			*s.project,
 			*s.bigQueryDataSet,

@@ -24,12 +24,10 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
-	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
@@ -48,15 +46,14 @@ var (
 )
 
 type PersisterDWH struct {
-	puller                puller.RateLimitedPuller
-	logger                *zap.Logger
-	ctx                   context.Context
-	cancel                func()
-	group                 errgroup.Group
-	doneCh                chan struct{}
-	userEvaluationStorage featurestorage.UserEvaluationsStorage
-	writer                Writer
-	opts                  *options
+	puller puller.RateLimitedPuller
+	logger *zap.Logger
+	ctx    context.Context
+	cancel func()
+	group  errgroup.Group
+	doneCh chan struct{}
+	writer Writer
+	opts   *options
 }
 
 type eventMap map[string]proto.Message
@@ -126,7 +123,6 @@ func WithBatchSize(size int) Option {
 func NewPersisterDWH(
 	p puller.Puller,
 	r metrics.Registerer,
-	bt bigtable.Client,
 	writer Writer,
 	opts ...Option,
 ) *PersisterDWH {
@@ -147,14 +143,13 @@ func NewPersisterDWH(
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &PersisterDWH{
-		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		logger:                dopts.logger.Named("persister"),
-		ctx:                   ctx,
-		cancel:                cancel,
-		doneCh:                make(chan struct{}),
-		writer:                writer,
-		userEvaluationStorage: featurestorage.NewUserEvaluationsStorage(bt),
-		opts:                  dopts,
+		puller: puller.NewRateLimitedPuller(p, dopts.maxMPS),
+		logger: dopts.logger.Named("persister"),
+		ctx:    ctx,
+		cancel: cancel,
+		doneCh: make(chan struct{}),
+		writer: writer,
+		opts:   dopts,
 	}
 }
 

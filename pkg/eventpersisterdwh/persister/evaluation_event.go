@@ -25,31 +25,26 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 const evaluationEventTable = "evaluation_event"
 
 type evalEvtWriter struct {
-	writer                storage.EvalEventWriter
-	userEvaluationStorage featurestorage.UserEvaluationsStorage
-	experimentClient      ec.Client
-	flightgroup           singleflight.Group
-	logger                *zap.Logger
+	writer           storage.EvalEventWriter
+	experimentClient ec.Client
+	flightgroup      singleflight.Group
+	logger           *zap.Logger
 }
 
 func NewEvalEventWriter(
 	ctx context.Context,
 	r metrics.Registerer,
 	l *zap.Logger,
-	userEvaluationStorage featurestorage.UserEvaluationsStorage,
 	exClient ec.Client,
 	project, ds string,
 	size int,
@@ -68,10 +63,9 @@ func NewEvalEventWriter(
 		return nil, err
 	}
 	return &evalEvtWriter{
-		writer:                storage.NewEvalEventWriter(evalQuery, size),
-		userEvaluationStorage: userEvaluationStorage,
-		experimentClient:      exClient,
-		logger:                l,
+		writer:           storage.NewEvalEventWriter(evalQuery, size),
+		experimentClient: exClient,
+		logger:           l,
 	}, nil
 }
 
@@ -151,9 +145,6 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 	if !exist {
 		return nil, false, ErrExperimentNotFound
 	}
-	if err := w.upsertUserEvaluation(ctx, e, environmentNamespace); err != nil {
-		return nil, true, err
-	}
 	var ud []byte
 	if e.User != nil {
 		var err error
@@ -230,49 +221,4 @@ func (w *evalEvtWriter) listExperiments(
 		return nil, err
 	}
 	return exp.([]*exproto.Experiment), nil
-}
-
-func (w *evalEvtWriter) upsertUserEvaluation(
-	ctx context.Context,
-	event *eventproto.EvaluationEvent,
-	environmentNamespace string,
-) error {
-	evaluation, tag := w.convToEvaluation(ctx, event)
-	if err := w.userEvaluationStorage.UpsertUserEvaluation(
-		ctx,
-		evaluation,
-		environmentNamespace,
-		tag,
-	); err != nil {
-		handledCounter.WithLabelValues(codeUpsertUserEvaluationFailed).Inc()
-		return err
-	}
-	return nil
-}
-
-func (w *evalEvtWriter) convToEvaluation(
-	ctx context.Context,
-	event *eventproto.EvaluationEvent,
-) (*featureproto.Evaluation, string) {
-	evaluation := &featureproto.Evaluation{
-		Id: featuredomain.EvaluationID(
-			event.FeatureId,
-			event.FeatureVersion,
-			event.UserId,
-		),
-		FeatureId:      event.FeatureId,
-		FeatureVersion: event.FeatureVersion,
-		UserId:         event.UserId,
-		VariationId:    event.VariationId,
-		Reason:         event.Reason,
-	}
-	// For requests that doesn't have the tag info,
-	// it will insert none instead, until all SDK clients are updated
-	var tag string
-	if event.Tag == "" {
-		tag = "none"
-	} else {
-		tag = event.Tag
-	}
-	return evaluation, tag
 }

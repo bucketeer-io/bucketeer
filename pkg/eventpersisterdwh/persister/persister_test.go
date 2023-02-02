@@ -22,14 +22,12 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
 	btstorage "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
@@ -179,12 +177,6 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						},
 					},
 				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					ctx,
-					evaluation,
-					environmentNamespace,
-					"tag",
-				).Return(btstorage.ErrInternal)
 			},
 			input:              evaluationEvent,
 			expected:           nil,
@@ -214,12 +206,6 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						},
 					},
 				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					ctx,
-					evaluation,
-					environmentNamespace,
-					"tag",
-				).Return(nil)
 			},
 			input: evaluationEvent,
 			expected: &epproto.EvaluationEvent{
@@ -403,14 +389,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						},
 					},
 				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
-					ctx,
-					"uid",
-					"ns",
-					"tag",
-					"fid",
-					int32(1),
-				).Return(nil, btstorage.ErrKeyNotFound)
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
@@ -452,14 +430,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						},
 					},
 				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
-					ctx,
-					"uid",
-					environmentNamespace,
-					"tag",
-					"fid",
-					int32(1),
-				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
@@ -501,14 +471,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						},
 					},
 				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
-					ctx,
-					"uid",
-					environmentNamespace,
-					"none",
-					"fid",
-					int32(1),
-				).Return(nil, errors.New("internal"))
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
@@ -555,32 +517,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							FeatureVersion: int32(1),
 						},
 					},
-				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
-					ctx,
-					"uid",
-					environmentNamespace,
-					"tag",
-					"fid",
-					int32(1),
-				).Return(&featureproto.Evaluation{
-					FeatureId:      "fid",
-					FeatureVersion: int32(1),
-					VariationId:    "vid",
-					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
-				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
-					ctx,
-					"uid",
-					environmentNamespace,
-					"tag",
-					"fid-2",
-					int32(1),
-				).Return(&featureproto.Evaluation{
-					FeatureId:      "fid-2",
-					FeatureVersion: int32(1),
-					VariationId:    "vid-2",
-					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
 				}, nil)
 			},
 			input: &eventproto.GoalEvent{
@@ -648,95 +584,16 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	}
 }
 
-func TestConvToEvaluationDwh(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	tag := "tag"
-	evaluationEventWithTag := &eventproto.EvaluationEvent{
-		FeatureId:      "feature-id",
-		FeatureVersion: 2,
-		UserId:         "user-id",
-		VariationId:    "variation-id",
-		User:           &userproto.User{Id: "user-id"},
-		Reason: &featureproto.Reason{
-			Type: featureproto.Reason_DEFAULT,
-		},
-		Tag:       tag,
-		Timestamp: time.Now().Unix(),
-	}
-	evaluationEventWithoutTag := &eventproto.EvaluationEvent{
-		FeatureId:      "feature-id",
-		FeatureVersion: 2,
-		UserId:         "user-id",
-		VariationId:    "variation-id",
-		User:           &userproto.User{Id: "user-id"},
-		Reason: &featureproto.Reason{
-			Type: featureproto.Reason_DEFAULT,
-		},
-		Timestamp: time.Now().Unix(),
-	}
-	patterns := []struct {
-		desc        string
-		input       *eventproto.EvaluationEvent
-		expected    *featureproto.Evaluation
-		expectedTag string
-	}{
-		{
-			desc:  "success without tag",
-			input: evaluationEventWithoutTag,
-			expected: &featureproto.Evaluation{
-				Id: featuredomain.EvaluationID(
-					evaluationEventWithoutTag.FeatureId,
-					evaluationEventWithoutTag.FeatureVersion,
-					evaluationEventWithoutTag.UserId,
-				),
-				FeatureId:      evaluationEventWithoutTag.FeatureId,
-				FeatureVersion: evaluationEventWithoutTag.FeatureVersion,
-				UserId:         evaluationEventWithoutTag.UserId,
-				VariationId:    evaluationEventWithoutTag.VariationId,
-				Reason:         evaluationEventWithoutTag.Reason,
-			},
-			expectedTag: "none",
-		},
-		{
-			desc:  "success with tag",
-			input: evaluationEventWithTag,
-			expected: &featureproto.Evaluation{
-				Id: featuredomain.EvaluationID(
-					evaluationEventWithTag.FeatureId,
-					evaluationEventWithTag.FeatureVersion,
-					evaluationEventWithTag.UserId,
-				),
-				FeatureId:      evaluationEventWithTag.FeatureId,
-				FeatureVersion: evaluationEventWithTag.FeatureVersion,
-				UserId:         evaluationEventWithTag.UserId,
-				VariationId:    evaluationEventWithTag.VariationId,
-				Reason:         evaluationEventWithTag.Reason,
-			},
-			expectedTag: tag,
-		},
-	}
-	for _, p := range patterns {
-		persister := newEvalEventWriter(mockController)
-		ev, tag := persister.convToEvaluation(context.Background(), p.input)
-		assert.True(t, proto.Equal(p.expected, ev), p.desc)
-		assert.Equal(t, p.expectedTag, tag, p.desc)
-	}
-}
-
 func newEvalEventWriter(c *gomock.Controller) *evalEvtWriter {
 	return &evalEvtWriter{
-		experimentClient:      ecmock.NewMockClient(c),
-		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),
-		logger:                defaultOptions.logger,
+		experimentClient: ecmock.NewMockClient(c),
+		logger:           defaultOptions.logger,
 	}
 }
 
 func newGoalEventWriter(c *gomock.Controller) *goalEvtWriter {
 	return &goalEvtWriter{
-		experimentClient:      ecmock.NewMockClient(c),
-		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),
-		logger:                defaultOptions.logger,
+		experimentClient: ecmock.NewMockClient(c),
+		logger:           defaultOptions.logger,
 	}
 }
