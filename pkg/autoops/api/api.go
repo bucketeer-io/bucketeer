@@ -350,7 +350,7 @@ func (s *AutoOpsService) validateOpsEventRateClause(
 	if clause.ThreadsholdRate > 1 || clause.ThreadsholdRate <= 0 {
 		dt, err := statusOpsEventRateClauseInvalidThredshold.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "thredshold"),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "threshold"),
 		})
 		if err != nil {
 			return statusInternal.Err()
