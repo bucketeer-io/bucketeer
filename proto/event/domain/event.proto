@@ -214,6 +214,7 @@ message FeatureCreatedEvent {
   google.protobuf.Int32Value default_on_variation_index = 6;
   google.protobuf.Int32Value default_off_variation_index = 7;
   bucketeer.feature.Feature.VariationType variation_type = 8;
+  repeated string tags = 9;
 }
 
 message FeatureEnabledEvent {

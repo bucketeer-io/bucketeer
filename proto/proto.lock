@@ -4980,6 +4980,12 @@
                 "id": 8,
                 "name": "variation_type",
                 "type": "bucketeer.feature.Feature.VariationType"
+              },
+              {
+                "id": 9,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
