@@ -1850,11 +1850,11 @@ func TestAddPrerequisite(t *testing.T) {
 			variationID: "vid1",
 			expected: []*proto.Prerequisite{
 				{
-					FeatureId: "pfid1",
+					FeatureId:   "pfid1",
 					VariationId: "vid1",
 				},
 				{
-					FeatureId: "pfid2",
+					FeatureId:   "pfid2",
 					VariationId: "vid2",
 				},
 			},
@@ -1865,15 +1865,15 @@ func TestAddPrerequisite(t *testing.T) {
 			variationID: "different_vid",
 			expected: []*proto.Prerequisite{
 				{
-					FeatureId: "pfid1",
+					FeatureId:   "pfid1",
 					VariationId: "vid1",
 				},
 				{
-					FeatureId: "pfid2",
+					FeatureId:   "pfid2",
 					VariationId: "vid2",
 				},
 				{
-					FeatureId: "pfid1",
+					FeatureId:   "pfid1",
 					VariationId: "different_vid",
 				},
 			},
@@ -1884,15 +1884,15 @@ func TestAddPrerequisite(t *testing.T) {
 			variationID: "different_vid",
 			expected: []*proto.Prerequisite{
 				{
-					FeatureId: "pfid1",
+					FeatureId:   "pfid1",
 					VariationId: "vid1",
 				},
 				{
-					FeatureId: "pfid2",
+					FeatureId:   "pfid2",
 					VariationId: "vid2",
 				},
 				{
-					FeatureId: "different_fid",
+					FeatureId:   "different_fid",
 					VariationId: "different_vid",
 				},
 			},
@@ -1903,11 +1903,11 @@ func TestAddPrerequisite(t *testing.T) {
 			// initialize prerequisite
 			f.Prerequisites = []*proto.Prerequisite{
 				{
-					FeatureId: "pfid1",
+					FeatureId:   "pfid1",
 					VariationId: "vid1",
 				},
 				{
-					FeatureId: "pfid2",
+					FeatureId:   "pfid2",
 					VariationId: "vid2",
 				},
 			}
