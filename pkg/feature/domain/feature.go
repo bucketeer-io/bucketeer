@@ -17,6 +17,7 @@ package domain
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -704,8 +705,22 @@ func (f *Feature) ResetSamplingSeed() error {
 func (f *Feature) AddPrerequisite(fID, variationID string) error {
 	p := &feature.Prerequisite{FeatureId: fID, VariationId: variationID}
 	f.Prerequisites = append(f.Prerequisites, p)
+	f.Prerequisites = f.getUniquePrerequisite()
 	f.UpdatedAt = time.Now().Unix()
 	return nil
+}
+
+func (f *Feature) getUniquePrerequisite() []*feature.Prerequisite {
+	psMap := make(map[string]*feature.Prerequisite)
+	// Users can configure same feature id and different variation id as prerequisites.
+	for _, p := range f.Prerequisites {
+		psMap[fmt.Sprintf("%s:%s", p.FeatureId, p.VariationId)] = p
+	}
+	prerequisites := []*feature.Prerequisite{}
+	for _, p := range psMap {
+		prerequisites = append(prerequisites, p)
+	}
+	return prerequisites
 }
 
 func (f *Feature) ChangePrerequisiteVariation(fID, variationID string) error {

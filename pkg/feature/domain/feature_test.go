@@ -1834,3 +1834,88 @@ func TestResetSamplingSeed(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, f.SamplingSeed)
 }
+
+func TestAddPrerequisite(t *testing.T) {
+	t.Parallel()
+	f := makeFeature("test-feature")
+	patterns := []struct {
+		desc        string
+		featureID   string
+		variationID string
+		expected    []*proto.Prerequisite
+	}{
+		{
+			desc:        "same feature id, same variation id",
+			featureID:   "pfid1",
+			variationID: "vid1",
+			expected: []*proto.Prerequisite{
+				{
+					FeatureId: "pfid1",
+					VariationId: "vid1",
+				},
+				{
+					FeatureId: "pfid2",
+					VariationId: "vid2",
+				},
+			},
+		},
+		{
+			desc:        "same feature id, different variation id",
+			featureID:   "pfid1",
+			variationID: "different_vid",
+			expected: []*proto.Prerequisite{
+				{
+					FeatureId: "pfid1",
+					VariationId: "vid1",
+				},
+				{
+					FeatureId: "pfid2",
+					VariationId: "vid2",
+				},
+				{
+					FeatureId: "pfid1",
+					VariationId: "different_vid",
+				},
+			},
+		},
+		{
+			desc:        "different feature id, different variation id",
+			featureID:   "different_fid",
+			variationID: "different_vid",
+			expected: []*proto.Prerequisite{
+				{
+					FeatureId: "pfid1",
+					VariationId: "vid1",
+				},
+				{
+					FeatureId: "pfid2",
+					VariationId: "vid2",
+				},
+				{
+					FeatureId: "different_fid",
+					VariationId: "different_vid",
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			// initialize prerequisite
+			f.Prerequisites = []*proto.Prerequisite{
+				{
+					FeatureId: "pfid1",
+					VariationId: "vid1",
+				},
+				{
+					FeatureId: "pfid2",
+					VariationId: "vid2",
+				},
+			}
+			f.AddPrerequisite(p.featureID, p.variationID)
+			assert.Len(t, f.Prerequisites, len(p.expected))
+			for _, p := range p.expected {
+				assert.Contains(t, f.Prerequisites, p)
+			}
+		})
+	}
+}
