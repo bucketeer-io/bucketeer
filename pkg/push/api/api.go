@@ -100,7 +100,7 @@ func (s *PushService) CreatePush(
 	ctx context.Context,
 	req *pushproto.CreatePushRequest,
 ) (*pushproto.CreatePushResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -286,7 +286,7 @@ func (s *PushService) UpdatePush(
 	ctx context.Context,
 	req *pushproto.UpdatePushRequest,
 ) (*pushproto.UpdatePushResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -480,7 +480,7 @@ func (s *PushService) DeletePush(
 	ctx context.Context,
 	req *pushproto.DeletePushRequest,
 ) (*pushproto.DeletePushResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -670,7 +670,7 @@ func (s *PushService) ListPushes(
 	ctx context.Context,
 	req *pushproto.ListPushesRequest,
 ) (*pushproto.ListPushesResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err

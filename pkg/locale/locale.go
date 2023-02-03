@@ -14,8 +14,14 @@
 
 package locale
 
+import (
+	"context"
+
+	"google.golang.org/grpc/metadata"
+)
+
 const (
-	JaJP = "ja-JP"
+	JaJP = "ja"
 	EnUS = "en-US"
 )
 
@@ -35,4 +41,16 @@ func NewLocale(l string) Locale {
 
 func (l *locale) GetLocale() string {
 	return l.locale
+}
+
+func getAcceptLang(ctx context.Context) string {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return JaJP
+	}
+	keys, ok := md["accept-language"]
+	if !ok || len(keys) == 0 || keys[0] == "" {
+		return JaJP
+	}
+	return keys[0]
 }

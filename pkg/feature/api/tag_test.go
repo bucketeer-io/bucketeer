@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -35,7 +36,10 @@ func TestListTagsMySQL(t *testing.T) {
 	defer mockController.Finish()
 	ctx := createContextWithToken()
 	service := createFeatureServiceNew(mockController)
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(msg string, status *status.Status) error {
 		status, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

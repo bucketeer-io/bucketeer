@@ -49,7 +49,7 @@ func (s *FeatureService) GetFeature(
 	ctx context.Context,
 	req *featureproto.GetFeatureRequest,
 ) (*featureproto.GetFeatureResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (s *FeatureService) GetFeatures(
 	ctx context.Context,
 	req *featureproto.GetFeaturesRequest,
 ) (*featureproto.GetFeaturesResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (s *FeatureService) ListFeatures(
 	ctx context.Context,
 	req *featureproto.ListFeaturesRequest,
 ) (*featureproto.ListFeaturesResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -213,7 +213,7 @@ func (s *FeatureService) listFeatures(
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
 	environmentNamespace string,
 ) ([]*featureproto.Feature, string, int64, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
 		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
@@ -304,7 +304,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	hasExperiment bool,
 	environmentNamespace string,
 ) ([]*featureproto.Feature, string, int64, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("feature.deleted", "=", false),
 		mysql.NewFilter("experiment.deleted", "=", false),
@@ -422,7 +422,7 @@ func (s *FeatureService) ListEnabledFeatures(
 	ctx context.Context,
 	req *featureproto.ListEnabledFeaturesRequest,
 ) (*featureproto.ListEnabledFeaturesResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -490,7 +490,7 @@ func (s *FeatureService) CreateFeature(
 	ctx context.Context,
 	req *featureproto.CreateFeatureRequest,
 ) (*featureproto.CreateFeatureResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -610,7 +610,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureDetailsRequest,
 ) (*featureproto.UpdateFeatureDetailsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -823,7 +823,7 @@ func (s *FeatureService) EnableFeature(
 	ctx context.Context,
 	req *featureproto.EnableFeatureRequest,
 ) (*featureproto.EnableFeatureResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	if err := validateEnableFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -848,7 +848,7 @@ func (s *FeatureService) DisableFeature(
 	ctx context.Context,
 	req *featureproto.DisableFeatureRequest,
 ) (*featureproto.DisableFeatureResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	if err := validateDisableFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -871,7 +871,7 @@ func (s *FeatureService) ArchiveFeature(
 	ctx context.Context,
 	req *featureproto.ArchiveFeatureRequest,
 ) (*featureproto.ArchiveFeatureResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("archived", "=", false),
 		mysql.NewFilter("deleted", "=", false),
@@ -917,7 +917,7 @@ func (s *FeatureService) UnarchiveFeature(
 	ctx context.Context,
 	req *featureproto.UnarchiveFeatureRequest,
 ) (*featureproto.UnarchiveFeatureResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	if err := validateUnarchiveFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -940,7 +940,7 @@ func (s *FeatureService) DeleteFeature(
 	ctx context.Context,
 	req *featureproto.DeleteFeatureRequest,
 ) (*featureproto.DeleteFeatureResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	if err := validateDeleteFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -1145,7 +1145,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureVariationsRequest,
 ) (*featureproto.UpdateFeatureVariationsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -1335,7 +1335,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureTargetingRequest,
 ) (*featureproto.UpdateFeatureTargetingResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -1783,7 +1783,7 @@ func (s *FeatureService) EvaluateFeatures(
 	ctx context.Context,
 	req *featureproto.EvaluateFeaturesRequest,
 ) (*featureproto.EvaluateFeaturesResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -1848,7 +1848,7 @@ func (s *FeatureService) CloneFeature(
 	ctx context.Context,
 	req *featureproto.CloneFeatureRequest,
 ) (*featureproto.CloneFeatureResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	if err := validateCloneFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}

@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -76,7 +77,10 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 	fVersion := int32(1)
 	vID1 := "vid01"
 	vID2 := "vid02"
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -287,7 +291,11 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -353,7 +361,11 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -511,7 +523,10 @@ func TestGetExperimentGoalCount(t *testing.T) {
 	vID1 := "vid01"
 	vID2 := "vid02"
 	gID := "gid"
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -683,7 +698,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.GetExperimentGoalCount(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			actual, err := s.GetExperimentGoalCount(ctx, p.input)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -695,7 +710,10 @@ func TestGetMAUCount(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -881,8 +899,10 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	vID0 := "vid0"
 	vID1 := "vid1"
 	randomNumberGroup := getRandomNumberGroup(3)
-
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1072,7 +1092,10 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	vID0 := "vid0"
 	cacheKey := "ns0:autoops:evaluation:fid0:2:rule0:clause0:vid0"
 	cacheKeyWithoutNS := "autoops:evaluation:fid0:2:rule0:clause0:vid0"
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1211,7 +1234,10 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	vID0 := "vid0"
 	cacheKey := "ns0:autoops:goal:fid0:2:rule0:clause0:vid0"
 	cacheKeyWithoutNS := "autoops:goal:fid0:2:rule0:clause0:vid0"
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

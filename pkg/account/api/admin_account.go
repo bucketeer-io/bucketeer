@@ -39,7 +39,7 @@ func (s *AccountService) GetMe(
 	ctx context.Context,
 	req *accountproto.GetMeRequest,
 ) (*accountproto.GetMeResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	t, ok := rpc.GetIDToken(ctx)
 	if !ok {
 		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
@@ -72,7 +72,7 @@ func (s *AccountService) GetMeByEmail(
 	ctx context.Context,
 	req *accountproto.GetMeByEmailRequest,
 ) (*accountproto.GetMeResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -274,7 +274,7 @@ func (s *AccountService) CreateAdminAccount(
 	ctx context.Context,
 	req *accountproto.CreateAdminAccountRequest,
 ) (*accountproto.CreateAdminAccountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -390,7 +390,7 @@ func (s *AccountService) EnableAdminAccount(
 	ctx context.Context,
 	req *accountproto.EnableAdminAccountRequest,
 ) (*accountproto.EnableAdminAccountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -433,7 +433,7 @@ func (s *AccountService) DisableAdminAccount(
 	ctx context.Context,
 	req *accountproto.DisableAdminAccountRequest,
 ) (*accountproto.DisableAdminAccountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -506,7 +506,7 @@ func (s *AccountService) ConvertAccount(
 	ctx context.Context,
 	req *accountproto.ConvertAccountRequest,
 ) (*accountproto.ConvertAccountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -636,7 +636,7 @@ func (s *AccountService) GetAdminAccount(
 	ctx context.Context,
 	req *accountproto.GetAdminAccountRequest,
 ) (*accountproto.GetAdminAccountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -696,7 +696,7 @@ func (s *AccountService) ListAdminAccounts(
 	ctx context.Context,
 	req *accountproto.ListAdminAccountsRequest,
 ) (*accountproto.ListAdminAccountsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err

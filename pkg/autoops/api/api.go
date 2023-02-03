@@ -111,7 +111,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.CreateAutoOpsRuleRequest,
 ) (*autoopsproto.CreateAutoOpsRuleResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -459,7 +459,7 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.DeleteAutoOpsRuleRequest,
 ) (*autoopsproto.DeleteAutoOpsRuleResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -554,7 +554,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.UpdateAutoOpsRuleRequest,
 ) (*autoopsproto.UpdateAutoOpsRuleResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -886,7 +886,7 @@ func (s *AutoOpsService) GetAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.GetAutoOpsRuleRequest,
 ) (*autoopsproto.GetAutoOpsRuleResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -952,7 +952,7 @@ func (s *AutoOpsService) ListAutoOpsRules(
 	ctx context.Context,
 	req *autoopsproto.ListAutoOpsRulesRequest,
 ) (*autoopsproto.ListAutoOpsRulesResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -1041,7 +1041,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	ctx context.Context,
 	req *autoopsproto.ExecuteAutoOpsRequest,
 ) (*autoopsproto.ExecuteAutoOpsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -1225,7 +1225,7 @@ func (s *AutoOpsService) ListOpsCounts(
 	ctx context.Context,
 	req *autoopsproto.ListOpsCountsRequest,
 ) (*autoopsproto.ListOpsCountsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err

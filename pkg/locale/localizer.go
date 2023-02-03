@@ -15,6 +15,7 @@
 package locale
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"strconv"
@@ -78,7 +79,8 @@ type Localizer interface {
 	MustLocalizeWithTemplate(id string, fields ...string) string
 }
 
-func NewLocalizer(locale Locale, fopts ...Option) Localizer {
+func NewLocalizer(ctx context.Context, fopts ...Option) Localizer {
+	locale := NewLocale(getAcceptLang(ctx))
 	opts := defaultOptions()
 	for _, fo := range fopts {
 		fo.apply(&opts)

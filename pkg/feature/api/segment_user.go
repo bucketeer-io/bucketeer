@@ -42,7 +42,7 @@ func (s *FeatureService) AddSegmentUser(
 	ctx context.Context,
 	req *featureproto.AddSegmentUserRequest,
 ) (*featureproto.AddSegmentUserResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (s *FeatureService) DeleteSegmentUser(
 	ctx context.Context,
 	req *featureproto.DeleteSegmentUserRequest,
 ) (*featureproto.DeleteSegmentUserResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -241,7 +241,7 @@ func (s *FeatureService) GetSegmentUser(
 	ctx context.Context,
 	req *featureproto.GetSegmentUserRequest,
 ) (*featureproto.GetSegmentUserResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -295,7 +295,7 @@ func (s *FeatureService) ListSegmentUsers(
 	ctx context.Context,
 	req *featureproto.ListSegmentUsersRequest,
 ) (*featureproto.ListSegmentUsersResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -372,7 +372,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	ctx context.Context,
 	req *featureproto.BulkUploadSegmentUsersRequest,
 ) (*featureproto.BulkUploadSegmentUsersResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -528,7 +528,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	ctx context.Context,
 	req *featureproto.BulkDownloadSegmentUsersRequest,
 ) (*featureproto.BulkDownloadSegmentUsersResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err

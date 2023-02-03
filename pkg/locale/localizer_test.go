@@ -15,70 +15,91 @@
 package locale
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestMustLocalizeWithTemplate(t *testing.T) {
-	lJA := NewLocalizer(NewLocale(JaJP))
-	lEN := NewLocalizer(NewLocale(EnUS))
 	cases := []struct {
 		name     string
 		id       string
 		fields   []string
-		l        Localizer
+		l        string
 		expected string
 	}{
 		{
 			name:     "succeed",
 			id:       RequiredFieldTemplate,
 			fields:   []string{"field-1"},
-			l:        lJA,
+			l:        "",
 			expected: "field-1は必須です",
 		},
 		{
 			name:     "succeed",
 			id:       RequiredFieldTemplate,
 			fields:   []string{"field-1"},
-			l:        lEN,
+			l:        JaJP,
+			expected: "field-1は必須です",
+		},
+		{
+			name:     "succeed",
+			id:       RequiredFieldTemplate,
+			fields:   []string{"field-1"},
+			l:        EnUS,
 			expected: "field-1 is required",
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			actual := c.l.MustLocalizeWithTemplate(c.id, c.fields...)
+			ctx := context.TODO()
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{c.l},
+			})
+			loc := NewLocalizer(ctx)
+			actual := loc.MustLocalizeWithTemplate(c.id, c.fields...)
 			assert.Equal(t, c.expected, actual)
 		})
 	}
 }
 
 func TestMustLocalize(t *testing.T) {
-	lJA := NewLocalizer(NewLocale(JaJP))
-	lEN := NewLocalizer(NewLocale(EnUS))
 	cases := []struct {
 		name     string
 		id       string
-		l        Localizer
+		l        string
 		expected string
 	}{
 		{
 			name:     "succeed",
 			id:       FeatureFlagID,
-			l:        lJA,
+			l:        "",
 			expected: "フィーチャーフラグID",
 		},
 		{
 			name:     "succeed",
 			id:       FeatureFlagID,
-			l:        lEN,
+			l:        JaJP,
+			expected: "フィーチャーフラグID",
+		},
+		{
+			name:     "succeed",
+			id:       FeatureFlagID,
+			l:        EnUS,
 			expected: "feature flag ID",
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			actual := c.l.MustLocalize(c.id)
+			ctx := context.TODO()
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{c.l},
+			})
+			loc := NewLocalizer(ctx)
+			actual := loc.MustLocalize(c.id)
 			assert.Equal(t, c.expected, actual)
 		})
 	}
