@@ -22,7 +22,7 @@ import (
 
 const (
 	JaJP = "ja"
-	EnUS = "en-US"
+	En   = "en"
 )
 
 type locale struct {
