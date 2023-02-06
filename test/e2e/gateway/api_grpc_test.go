@@ -245,6 +245,18 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	internalSDKErr, err := ptypes.MarshalAny(&eventproto.InternalSdkErrorMetricsEvent{
+		ApiId:  eventproto.ApiId_GET_EVALUATIONS,
+		Labels: map[string]string{"tag": "iOS"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	metrics, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+		Timestamp:  time.Now().Unix(),
+		Event:      internalSDKErr,
+		SdkVersion: "test",
+	})
 	req := &gatewayproto.RegisterEventsRequest{
 		Events: []*eventproto.Event{
 			{
@@ -255,6 +267,11 @@ func TestGrpcRegisterEvents(t *testing.T) {
 			{
 				Id:                   newUUID(t),
 				Event:                goal,
+				EnvironmentNamespace: "",
+			},
+			{
+				Id:                   newUUID(t),
+				Event:                metrics,
 				EnvironmentNamespace: "",
 			},
 		},
