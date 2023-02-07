@@ -71,8 +71,9 @@ enum SourceId {
 message MetricsEvent {
   int64 timestamp = 1;
   google.protobuf.Any event = 2;
-  string sdk_version = 3;
-  map<string, string> metadata = 4;
+  SourceId source_id = 3;
+  string sdk_version = 4;
+  map<string, string> metadata = 5;
 }
 
 message GetEvaluationLatencyMetricsEvent {

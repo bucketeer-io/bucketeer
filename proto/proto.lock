@@ -3796,6 +3796,11 @@
               },
               {
                 "id": 3,
+                "name": "source_id",
+                "type": "SourceId"
+              },
+              {
+                "id": 4,
                 "name": "sdk_version",
                 "type": "string"
               }
@@ -3804,7 +3809,7 @@
               {
                 "key_type": "string",
                 "field": {
-                  "id": 4,
+                  "id": 5,
                   "name": "metadata",
                   "type": "string"
                 }
