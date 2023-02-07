@@ -227,6 +227,11 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 	exps := []*exproto.Experiment{}
 	for _, exp := range experiments {
 		if w.findGoalID(event.GoalId, exp.GoalIds) {
+			// If the goal event was issued before the experiment started running,
+			// we ignore those events to avoid issues in the conversion rate
+			if exp.StartAt > event.Timestamp {
+				continue
+			}
 			exps = append(exps, exp)
 		}
 	}

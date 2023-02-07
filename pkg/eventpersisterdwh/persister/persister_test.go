@@ -472,6 +472,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -520,6 +521,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -568,6 +570,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -625,6 +628,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -691,6 +695,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -757,12 +762,23 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
 						},
 						{
 							Id:             "experiment-id-2",
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid-2",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
+						},
+						// This experiment won't be computed
+						// because the startAt is higher than the goal event timestamp
+						{
+							Id:             "experiment-id-3",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid-2",
+							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(time.Hour).Unix(),
 						},
 					},
 				}, nil)

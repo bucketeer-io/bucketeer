@@ -117,8 +117,10 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2))
-	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3))
+	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-time.Hour).Unix())
 
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
 
@@ -227,8 +229,10 @@ func TestExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2))
-	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3))
+	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-time.Hour).Unix())
 
 	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
 
@@ -338,11 +342,13 @@ func TestGrpcExperimentResult(t *testing.T) {
 
 	// CVRs is 3/4
 	// Register goal variation
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-time.Hour).Unix())
 	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	// Register 3 events and 2 user counts for user 1, 2 and 3
 	// Register variation a
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
@@ -353,10 +359,12 @@ func TestGrpcExperimentResult(t *testing.T) {
 
 	// CVRs is 2/3
 	// Register goal
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-time.Hour).Unix())
 	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
 	// Register 3 events and 2 user counts for user 4 and 5
 	// Register variation
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
@@ -563,11 +571,13 @@ func TestExperimentResult(t *testing.T) {
 
 	// CVRs is 3/4
 	// Register goal variation
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2))
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1))
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-time.Hour).Unix())
 	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	// Register 3 events and 2 user counts for user 1, 2 and 3
 	// Register variation a
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
@@ -578,10 +588,12 @@ func TestExperimentResult(t *testing.T) {
 
 	// CVRs is 2/3
 	// Register goal
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15))
+	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-time.Hour).Unix())
 	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
+	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
 	// Register 3 events and 2 user counts for user 4 and 5
 	// Register variation
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
@@ -792,10 +804,12 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
-	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-time.Hour).Unix())
 
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
@@ -973,10 +987,12 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
-	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-time.Hour).Unix())
 
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
@@ -1581,6 +1597,7 @@ func grpcRegisterGoalEvent(
 	t *testing.T,
 	goalID, userID, tag string,
 	value float64,
+	timestamp int64,
 ) {
 	t.Helper()
 	c := newGatewayClient(t)
@@ -1588,7 +1605,7 @@ func grpcRegisterGoalEvent(
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
-		Timestamp: time.Now().Unix(),
+		Timestamp: timestamp,
 		GoalId:    goalID,
 		UserId:    userID,
 		Value:     value,
@@ -1621,12 +1638,13 @@ func registerGoalEvent(
 	t *testing.T,
 	goalID, userID, tag string,
 	value float64,
+	timestamp int64,
 ) {
 	t.Helper()
 	c := newGatewayClient(t)
 	defer c.Close()
 	goal, err := protojson.Marshal(&eventproto.GoalEvent{
-		Timestamp: time.Now().Unix(),
+		Timestamp: timestamp,
 		GoalId:    goalID,
 		UserId:    userID,
 		Value:     value,
