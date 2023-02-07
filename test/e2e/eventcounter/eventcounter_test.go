@@ -106,7 +106,7 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	f = getFeature(t, featureClient, featureID)
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
@@ -218,7 +218,7 @@ func TestExperimentGoalCount(t *testing.T) {
 	f = getFeature(t, featureClient, featureID)
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
@@ -335,7 +335,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 	f = getFeature(t, featureClient, featureID)
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
@@ -564,7 +564,7 @@ func TestExperimentResult(t *testing.T) {
 	f = getFeature(t, featureClient, featureID)
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
@@ -792,7 +792,7 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	f = getFeature(t, featureClient, featureID)
 
 	goalIDs := createGoals(ctx, t, experimentClient, 3)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
@@ -975,7 +975,7 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	f = getFeature(t, featureClient, featureID)
 
 	goalIDs := createGoals(ctx, t, experimentClient, 3)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
