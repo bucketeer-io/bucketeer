@@ -114,7 +114,9 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
               )}
             />
             <div>
-              <label className="input-section-label">Prerequisites</label>
+              <label className="input-section-label">
+                {`${f(messages.feature.prerequisites)}`}
+              </label>
               <div className="bg-white rounded-md p-3 border">
                 <PrerequisiteInput feature={feature} />
               </div>
@@ -262,11 +264,14 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
     );
 
     const handleAddPrerequisite = useCallback(() => {
+      if (prerequisites.length === 0) {
+        dispatchListFeatures();
+      }
       appendPrerequisite({
         featureId: null,
         variationId: null,
       });
-    }, []);
+    }, [prerequisites]);
 
     const handleRemovePrerequisite = useCallback(
       (idx) => {
@@ -297,7 +302,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
       if (prerequisites?.length > 0) {
         dispatchListFeatures();
       }
-    }, [prerequisites]);
+    }, []);
 
     return (
       <div className="space-y-2">
@@ -338,16 +343,18 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                 render={({ field }) => {
                   return (
                     <Select
-                      placeholder="Select a flag"
+                      placeholder={f(messages.feature.selectFlag)}
                       options={featureFlagOptions}
                       className="w-full"
                       onChange={(e) => {
-                        field.onChange(e.value);
-                        update(prerequisitesIdx, {
-                          ...p,
-                          featureId: e.value,
-                          variationId: null,
-                        });
+                        if (field.value !== e.value) {
+                          field.onChange(e.value);
+                          update(prerequisitesIdx, {
+                            ...p,
+                            featureId: e.value,
+                            variationId: null,
+                          });
+                        }
                       }}
                       value={featureFlagOptions.find(
                         (o) => o.value === field.value
@@ -362,7 +369,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                 render={({ field }) => {
                   return (
                     <Select
-                      placeholder="Select a variation"
+                      placeholder={f(messages.feature.selectVariation)}
                       options={variationOptions}
                       className="w-full"
                       onChange={(e) => {
@@ -402,8 +409,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
               className="btn-submit"
               onClick={handleAddPrerequisite}
             >
-              {/* {f(messages.button.addRule)} */}
-              Add Prerequisite
+              {f(messages.feature.addPrerequisites)}
             </button>
           </div>
         )}

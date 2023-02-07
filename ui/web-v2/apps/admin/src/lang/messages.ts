@@ -1286,6 +1286,22 @@ export const messages = {
       defaultMessage:
         'Enable targeting settings. You can configure targeting users, complex rules, default strategy, and off variation.',
     }),
+    prerequisites: defineMessage({
+      id: 'feature.prerequisites',
+      defaultMessage: 'Prerequisites',
+    }),
+    addPrerequisites: defineMessage({
+      id: 'feature.addPrerequisites',
+      defaultMessage: 'Add Prerequisites',
+    }),
+    selectFlag: defineMessage({
+      id: 'feature.selectFlag',
+      defaultMessage: 'Select a flag',
+    }),
+    selectVariation: defineMessage({
+      id: 'feature.selectVariation',
+      defaultMessage: 'Select a variation',
+    }),
     targetingUsers: defineMessage({
       id: 'feature.targetings',
       defaultMessage: 'Targetings',
