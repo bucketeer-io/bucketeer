@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	JaJP = "ja"
-	En   = "en"
+	Ja = "ja"
+	En = "en"
 )
 
 type locale struct {
@@ -46,11 +46,11 @@ func (l *locale) GetLocale() string {
 func getAcceptLang(ctx context.Context) string {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return JaJP
+		return Ja
 	}
 	keys, ok := md["accept-language"]
 	if !ok || len(keys) == 0 || keys[0] == "" {
-		return JaJP
+		return Ja
 	}
 	return keys[0]
 }

@@ -34,7 +34,7 @@ func TestLocalizedMessage(t *testing.T) {
 			desc:           "unknown match",
 			inputEventType: proto.Event_UNKNOWN,
 			expected: &proto.LocalizedMessage{
-				Locale:  locale.JaJP,
+				Locale:  locale.Ja,
 				Message: "不明な操作を実行しました",
 			},
 		},
@@ -42,14 +42,14 @@ func TestLocalizedMessage(t *testing.T) {
 			desc:           "unmatch",
 			inputEventType: proto.Event_Type(-1),
 			expected: &proto.LocalizedMessage{
-				Locale:  locale.JaJP,
+				Locale:  locale.Ja,
 				Message: "不明な操作を実行しました",
 			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual := LocalizedMessage(p.inputEventType, locale.JaJP)
+			actual := LocalizedMessage(p.inputEventType, locale.Ja)
 			assert.Equal(t, p.expected, actual)
 		})
 	}
@@ -59,7 +59,7 @@ func TestLocalizedMessage(t *testing.T) {
 func TestImplementedLocalizedMessage(t *testing.T) {
 	t.Parallel()
 	unknown := &proto.LocalizedMessage{
-		Locale:  locale.JaJP,
+		Locale:  locale.Ja,
 		Message: "不明な操作を実行しました",
 	}
 	for k, v := range proto.Event_Type_name {
@@ -67,7 +67,7 @@ func TestImplementedLocalizedMessage(t *testing.T) {
 			continue
 		}
 		t.Run(v, func(t *testing.T) {
-			actual := LocalizedMessage(proto.Event_Type(k), locale.JaJP)
+			actual := LocalizedMessage(proto.Event_Type(k), locale.Ja)
 			assert.NotEqual(t, unknown, actual)
 		})
 	}

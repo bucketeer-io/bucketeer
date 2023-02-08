@@ -34,15 +34,15 @@ const (
 var (
 	errUnknownMsgType   = errors.New("notification: unknown message type")
 	msgFeatureStaleJaJP = &errdetails.LocalizedMessage{
-		Locale:  locale.JaJP,
+		Locale:  locale.Ja,
 		Message: "%d日以上使用されていないフィーチャーフラグがあります。",
 	}
 	msgExperimentResultJaJP = &errdetails.LocalizedMessage{
-		Locale:  locale.JaJP,
+		Locale:  locale.Ja,
 		Message: "実行中のエクスペリメントがあります。",
 	}
 	msgMAUCountJaJP = &errdetails.LocalizedMessage{
-		Locale:  locale.JaJP,
+		Locale:  locale.Ja,
 		Message: "%d月のMAUです。",
 	}
 )

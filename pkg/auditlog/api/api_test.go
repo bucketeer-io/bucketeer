@@ -282,7 +282,7 @@ func newAuditLogService(t *testing.T, mockController *gomock.Controller) *auditl
 
 func createAuditLogs(t *testing.T) []*proto.AuditLog {
 	t.Helper()
-	msgUnknown := domainevent.LocalizedMessage(domaineventproto.Event_UNKNOWN, locale.JaJP)
+	msgUnknown := domainevent.LocalizedMessage(domaineventproto.Event_UNKNOWN, locale.Ja)
 	return []*proto.AuditLog{
 		{Id: "id-0", LocalizedMessage: msgUnknown},
 		{Id: "id-1", LocalizedMessage: msgUnknown},
