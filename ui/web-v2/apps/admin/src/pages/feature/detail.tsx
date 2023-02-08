@@ -75,7 +75,6 @@ export const FeatureDetailPage: FC = memo(() => {
   }, [featureId, dispatch, currentEnvironment]);
 
   if (!feature) {
-    // if (!feature || isLoading) {
     return <div>loading</div>;
   }
 
