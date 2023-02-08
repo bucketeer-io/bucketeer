@@ -109,14 +109,6 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     const { formatMessage: f } = useIntl();
     const dispatch = useDispatch<AppDispatch>();
 
-    const isFeatureLoading = useSelector<AppState, boolean>(
-      (state) => state.features.loading
-    );
-    const isSegmentLoading = useSelector<AppState, boolean>(
-      (state) => state.features.loading
-    );
-    const isLoading = isFeatureLoading || isSegmentLoading;
-
     const currentEnvironment = useCurrentEnvironment();
     const [feature, getFeatureError] = useSelector<
       AppState,
@@ -252,14 +244,6 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         })
       );
     }, [dispatch, currentEnvironment]);
-
-    // if (isLoading) {
-    //   return (
-    //     <div className="p-9 bg-gray-100">
-    //       <DetailSkeleton />
-    //     </div>
-    //   );
-    // }
 
     return (
       <FormProvider {...methods}>

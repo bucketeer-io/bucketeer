@@ -132,9 +132,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
               <label className="input-section-label">
                 {`${f(messages.feature.prerequisites)}`}
               </label>
-              <div className="bg-white rounded-md p-3 border">
-                <PrerequisiteInput feature={feature} />
-              </div>
+              <PrerequisiteInput feature={feature} />
             </div>
             <div>
               <label className="input-section-label">
@@ -319,111 +317,122 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
       }
     }, []);
 
+    const disableAddPrerequisite = useCallback(() => {
+      return prerequisites.length === features.length - 1;
+    }, [prerequisites, features]);
+
     return (
-      <div className="space-y-2">
-        {prerequisites.map((p: any, prerequisitesIdx) => {
-          const featureIdName = `prerequisites[${prerequisitesIdx}].featureId`;
-          const variationIdName = `prerequisites[${prerequisitesIdx}].variationId`;
+      <div className="">
+        {prerequisites.length > 0 && (
+          <div className="bg-white rounded-md p-3 border space-y-2">
+            {prerequisites.map((p: any, prerequisitesIdx) => {
+              const featureIdName = `prerequisites[${prerequisitesIdx}].featureId`;
+              const variationIdName = `prerequisites[${prerequisitesIdx}].variationId`;
 
-          const variationList = features.find(
-            (f) => f.id === p.featureId
-          )?.variationsList;
+              const variationList = features.find(
+                (f) => f.id === p.featureId
+              )?.variationsList;
 
-          const variationOptions = variationList?.map((v) => ({
-            label: v.value,
-            value: v.id,
-          }));
+              const variationOptions = variationList?.map((v) => ({
+                label: v.value,
+                value: v.id,
+              }));
 
-          const featureFlagOptions = features
-            .filter((f) => f.id !== feature.id)
-            .filter(
-              (f) =>
-                !prerequisites.some(
-                  (p2: any) =>
-                    p2.featureId === f.id && p2.featureId !== p.featureId
+              const featureFlagOptions = features
+                .filter((f) => f.id !== feature.id)
+                .filter(
+                  (f) =>
+                    !prerequisites.some(
+                      (p2: any) =>
+                        p2.featureId === f.id && p2.featureId !== p.featureId
+                    )
                 )
-            )
-            .map((f) => {
-              return {
-                value: f.id,
-                label: f.name,
-              };
-            });
+                .map((f) => {
+                  return {
+                    value: f.id,
+                    label: f.name,
+                  };
+                });
 
-          return (
-            <div key={p.key} className="flex space-x-2">
-              <Controller
-                name={featureIdName}
-                control={control}
-                render={({ field }) => {
-                  return (
-                    <Select
-                      placeholder={f(messages.feature.selectFlag)}
-                      options={featureFlagOptions}
-                      className="w-full"
-                      onChange={(e) => {
-                        if (field.value !== e.value) {
-                          field.onChange(e.value);
-                          update(prerequisitesIdx, {
-                            ...p,
-                            featureId: e.value,
-                            variationId: null,
-                          });
+              return (
+                <div key={p.key} className="flex space-x-2">
+                  <Controller
+                    name={featureIdName}
+                    control={control}
+                    render={({ field }) => {
+                      return (
+                        <Select
+                          placeholder={f(messages.feature.selectFlag)}
+                          options={featureFlagOptions}
+                          className="w-full"
+                          onChange={(e) => {
+                            if (field.value !== e.value) {
+                              field.onChange(e.value);
+                              update(prerequisitesIdx, {
+                                ...p,
+                                featureId: e.value,
+                                variationId: null,
+                              });
+                            }
+                          }}
+                          value={featureFlagOptions.find(
+                            (o) => o.value === field.value
+                          )}
+                        />
+                      );
+                    }}
+                  />
+
+                  <Controller
+                    name={variationIdName}
+                    control={control}
+                    render={({ field }) => {
+                      return (
+                        <Select
+                          placeholder={f(messages.feature.selectVariation)}
+                          options={variationOptions}
+                          className="w-full"
+                          onChange={(e) => {
+                            field.onChange(e.value);
+                            update(prerequisitesIdx, {
+                              ...p,
+                              variationId: e.value,
+                            });
+                          }}
+                          value={
+                            variationOptions?.find(
+                              (o) => o.value === p.variationId
+                            ) ?? null
+                          }
+                        />
+                      );
+                    }}
+                  />
+                  {editable && (
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleRemovePrerequisite(prerequisitesIdx)
                         }
-                      }}
-                      value={featureFlagOptions.find(
-                        (o) => o.value === field.value
-                      )}
-                    />
-                  );
-                }}
-              />
-
-              <Controller
-                name={variationIdName}
-                control={control}
-                render={({ field }) => {
-                  return (
-                    <Select
-                      placeholder={f(messages.feature.selectVariation)}
-                      options={variationOptions}
-                      className="w-full"
-                      onChange={(e) => {
-                        field.onChange(e.value);
-                        update(prerequisitesIdx, {
-                          ...p,
-                          variationId: e.value,
-                        });
-                      }}
-                      value={
-                        variationOptions?.find(
-                          (o) => o.value === p.variationId
-                        ) ?? null
-                      }
-                    />
-                  );
-                }}
-              />
-              {editable && (
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => handleRemovePrerequisite(prerequisitesIdx)}
-                    className="minus-circle-icon"
-                  >
-                    <MinusCircleIcon aria-hidden="true" />
-                  </button>
+                        className="minus-circle-icon"
+                      >
+                        <MinusCircleIcon aria-hidden="true" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        )}
         {editable && (
           <div className="pt-4 flex">
             <button
               type="button"
               className="btn-submit"
               onClick={handleAddPrerequisite}
+              disabled={disableAddPrerequisite()}
             >
               {f(messages.feature.addPrerequisites)}
             </button>
