@@ -22,6 +22,7 @@ import (
 
 const (
 	codeEvaluationsAreEmpty            = "EvaluationsAreEmpty"
+	codeGoalEventOlderThanExperiment   = "GoalEventOlderThanExperiment"
 	codeFailedToEvaluateFeature        = "FailedToEvaluateFeature"
 	codeFailedToGetFeature             = "FailedToGetFeature"
 	codeFailedToListExperiments        = "FailedToListExperiments"
