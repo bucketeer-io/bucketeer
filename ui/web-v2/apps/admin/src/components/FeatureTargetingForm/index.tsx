@@ -54,7 +54,10 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       control,
       name: 'targets',
     });
+
     const rules = watch('rules');
+    const prerequisites = watch('prerequisites');
+
     const [feature, _] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
@@ -80,11 +83,13 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     });
 
     const checkSaveBtnDisabled = useCallback(() => {
-      if (Object.values(errors).some(Boolean) || isDirty === false) {
-        return true;
-      }
-      // find if all fields are dirty
-      return !rules.every((rule) =>
+      // check if all prerequisites fields are dirty
+      const checkPrerequisites = prerequisites.every(
+        (p) => p.featureId && p.variationId
+      );
+
+      // check if all rules fields are dirty
+      const checkRules = rules.every((rule) =>
         rule.clauses.every((clause) => {
           if (clause.type === ClauseType.SEGMENT) {
             return clause.values.length > 0;
@@ -92,7 +97,17 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
           return clause.attribute && clause.values.length > 0;
         })
       );
-    }, [rules, isDirty, errors]);
+
+      if (
+        !checkPrerequisites ||
+        !checkRules ||
+        Object.values(errors).some(Boolean) ||
+        !isDirty
+      ) {
+        return true;
+      }
+      return false;
+    }, [rules, isDirty, errors, prerequisites]);
 
     return (
       <div className="p-10 bg-gray-100">
@@ -363,6 +378,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                   );
                 }}
               />
+
               <Controller
                 name={variationIdName}
                 control={control}

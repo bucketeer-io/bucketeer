@@ -246,7 +246,7 @@
   "feature.resetRandomSampling": "Reset random sampling",
   "feature.rule": "Rule rollout percentage",
   "feature.search.placeholder": "ID, Name, Description",
-  "feature.selectFlag": "Select a flag",
+  "feature.selectFlag": "Select a feature flag",
   "feature.selectVariation": "Select a variation",
   "feature.sort.nameAz": "Name A-Z",
   "feature.sort.nameZa": "Name Z-A",
