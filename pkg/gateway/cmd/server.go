@@ -244,7 +244,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,
-		metricsPublisher,
 		redisV3Cache,
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
