@@ -49,7 +49,9 @@ var (
 	unknownErrorMetricsEventP             = &eventproto.UnknownErrorMetricsEvent{}
 )
 
-func (s *grpcGatewayService) saveMetricsEventsAsync(metricsEvents []*eventproto.MetricsEvent, environmentNamespace string) {
+func (s *grpcGatewayService) saveMetricsEventsAsync(
+	metricsEvents []*eventproto.MetricsEvent, environmentNamespace string,
+) {
 	// TODO: using buffered channel to reduce the number of go routines
 	go func() {
 		for i := range metricsEvents {
