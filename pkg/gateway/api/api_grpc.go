@@ -809,7 +809,7 @@ func (s *grpcGatewayService) containsInvalidTimestampError(errs map[string]*gwpr
 	return false
 }
 
-func (s *grpcGatewayService) mergeMaps(
+func (*grpcGatewayService) mergeMaps(
 	maps ...map[string]*gwproto.RegisterEventsResponse_Error,
 ) map[string]*gwproto.RegisterEventsResponse_Error {
 	result := make(map[string]*gwproto.RegisterEventsResponse_Error, 0)
