@@ -52,5 +52,6 @@ func getAcceptLang(ctx context.Context) string {
 	if !ok || len(keys) == 0 || keys[0] == "" {
 		return Ja
 	}
-	return keys[0]
+	// TODO: change this part after writing en.yaml
+	return Ja
 }
