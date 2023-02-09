@@ -49,7 +49,7 @@ func TestMustLocalizeWithTemplate(t *testing.T) {
 			id:       RequiredFieldTemplate,
 			fields:   []string{"field-1"},
 			l:        En,
-			expected: "field-1 is required",
+			expected: "field-1は必須です",
 		},
 	}
 	for _, c := range cases {
@@ -88,7 +88,7 @@ func TestMustLocalize(t *testing.T) {
 			name:     "succeed",
 			id:       FeatureFlagID,
 			l:        En,
-			expected: "feature flag ID",
+			expected: "フィーチャーフラグID",
 		},
 	}
 
