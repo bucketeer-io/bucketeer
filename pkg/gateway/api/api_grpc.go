@@ -50,21 +50,22 @@ const (
 )
 
 var (
-	ErrUserRequired      = status.Error(codes.InvalidArgument, "gateway: user is required")
-	ErrUserIDRequired    = status.Error(codes.InvalidArgument, "gateway: user id is required")
-	ErrGoalIDRequired    = status.Error(codes.InvalidArgument, "gateway: goal id is required")
-	ErrFeatureIDRequired = status.Error(codes.InvalidArgument, "gateway: feature id is required")
-	ErrTagRequired       = status.Error(codes.InvalidArgument, "gateway: tag is required")
-	ErrMissingEvents     = status.Error(codes.InvalidArgument, "gateway: missing events")
-	ErrMissingEventID    = status.Error(codes.InvalidArgument, "gateway: missing event id")
-	ErrInvalidTimestamp  = status.Error(codes.InvalidArgument, "gateway: invalid timestamp")
-	ErrContextCanceled   = status.Error(codes.Canceled, "gateway: context canceled")
-	ErrFeatureNotFound   = status.Error(codes.NotFound, "gateway: feature not found")
-	ErrMissingAPIKey     = status.Error(codes.Unauthenticated, "gateway: missing APIKey")
-	ErrInvalidAPIKey     = status.Error(codes.PermissionDenied, "gateway: invalid APIKey")
-	ErrDisabledAPIKey    = status.Error(codes.PermissionDenied, "gateway: disabled APIKey")
-	ErrBadRole           = status.Error(codes.PermissionDenied, "gateway: bad role")
-	ErrInternal          = status.Error(codes.Internal, "gateway: internal")
+	ErrUserRequired       = status.Error(codes.InvalidArgument, "gateway: user is required")
+	ErrUserIDRequired     = status.Error(codes.InvalidArgument, "gateway: user id is required")
+	ErrGoalIDRequired     = status.Error(codes.InvalidArgument, "gateway: goal id is required")
+	ErrFeatureIDRequired  = status.Error(codes.InvalidArgument, "gateway: feature id is required")
+	ErrTagRequired        = status.Error(codes.InvalidArgument, "gateway: tag is required")
+	ErrMissingEvents      = status.Error(codes.InvalidArgument, "gateway: missing events")
+	ErrMissingEventID     = status.Error(codes.InvalidArgument, "gateway: missing event id")
+	ErrInvalidTimestamp   = status.Error(codes.InvalidArgument, "gateway: invalid timestamp")
+	ErrContextCanceled    = status.Error(codes.Canceled, "gateway: context canceled")
+	ErrFeatureNotFound    = status.Error(codes.NotFound, "gateway: feature not found")
+	ErrEvaluationNotFound = status.Error(codes.NotFound, "gateway: evaluation not found")
+	ErrMissingAPIKey      = status.Error(codes.Unauthenticated, "gateway: missing APIKey")
+	ErrInvalidAPIKey      = status.Error(codes.PermissionDenied, "gateway: invalid APIKey")
+	ErrDisabledAPIKey     = status.Error(codes.PermissionDenied, "gateway: disabled APIKey")
+	ErrBadRole            = status.Error(codes.PermissionDenied, "gateway: bad role")
+	ErrInternal           = status.Error(codes.Internal, "gateway: internal")
 
 	grpcGoalEvent       = &eventproto.GoalEvent{}
 	grpcEvaluationEvent = &eventproto.EvaluationEvent{}
@@ -387,8 +388,12 @@ func (s *grpcGatewayService) GetEvaluation(
 		)
 		return nil, ErrInternal
 	}
+	eval, err := s.findEvaluation(evaluations.Evaluations, req.FeatureId)
+	if err != nil {
+		return nil, err
+	}
 	return &gwproto.GetEvaluationResponse{
-		Evaluation: evaluations.Evaluations[0],
+		Evaluation: eval,
 	}, nil
 }
 
@@ -410,6 +415,15 @@ func (*grpcGatewayService) findFeature(fs []*featureproto.Feature, id string) (*
 		}
 	}
 	return nil, ErrFeatureNotFound
+}
+
+func (*grpcGatewayService) findEvaluation(evals []*featureproto.Evaluation, id string) (*featureproto.Evaluation, error) {
+	for _, e := range evals {
+		if e.FeatureId == id {
+			return e, nil
+		}
+	}
+	return nil, ErrEvaluationNotFound
 }
 
 func (s *grpcGatewayService) validateGetEvaluationRequest(req *gwproto.GetEvaluationRequest) error {
