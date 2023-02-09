@@ -21,12 +21,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/gateway/client"
@@ -217,6 +217,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+	// Evaluation Event
 	evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      "feature-id",
@@ -232,6 +233,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// GoalEvent
 	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
 		Timestamp: time.Now().Unix(),
 		GoalId:    "goal-id",
@@ -245,17 +247,101 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// InternalSDKErrorMetricsEvent
+	internalSDKErr, err := ptypes.MarshalAny(&eventproto.InternalSdkErrorMetricsEvent{
+		ApiId:  eventproto.ApiId_GET_EVALUATIONS,
+		Labels: map[string]string{"tag": "iOS"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	metricsInternalSDK, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+		Timestamp:  time.Now().Unix(),
+		Event:      internalSDKErr,
+		SdkVersion: "v0.0.1-e2e",
+		SourceId:   eventproto.SourceId_IOS,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// BadRequestErrorMetricsEvent
+	badRequestErr, err := ptypes.MarshalAny(&eventproto.BadRequestErrorMetricsEvent{
+		ApiId:  eventproto.ApiId_REGISTER_EVENTS,
+		Labels: map[string]string{"tag": "Android"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	metricsBadRequest, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+		Timestamp:  time.Now().Unix(),
+		Event:      badRequestErr,
+		SdkVersion: "v0.0.1-e2e",
+		SourceId:   eventproto.SourceId_ANDROID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// SizeMetricsEvent
+	size, err := ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
+		ApiId:    eventproto.ApiId_REGISTER_EVENTS,
+		Labels:   map[string]string{"tag": "web"},
+		SizeByte: 99,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	metricsSize, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+		Timestamp:  time.Now().Unix(),
+		Event:      size,
+		SdkVersion: "v0.0.1-e2e",
+		SourceId:   eventproto.SourceId_WEB,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// LatencyMetricsEvent
+	latency, err := ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
+		ApiId:    eventproto.ApiId_REGISTER_EVENTS,
+		Labels:   map[string]string{"tag": "go-server-sdk"},
+		Duration: durationpb.New(time.Duration(99)),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	metricsLatency, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+		Timestamp:  time.Now().Unix(),
+		Event:      latency,
+		SdkVersion: "v0.0.1-e2e",
+		SourceId:   eventproto.SourceId_GO_SERVER,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	req := &gatewayproto.RegisterEventsRequest{
 		Events: []*eventproto.Event{
 			{
-				Id:                   newUUID(t),
-				Event:                evaluation,
-				EnvironmentNamespace: "",
+				Id:    newUUID(t),
+				Event: evaluation,
 			},
 			{
-				Id:                   newUUID(t),
-				Event:                goal,
-				EnvironmentNamespace: "",
+				Id:    newUUID(t),
+				Event: goal,
+			},
+			{
+				Id:    newUUID(t),
+				Event: metricsInternalSDK,
+			},
+			{
+				Id:    newUUID(t),
+				Event: metricsBadRequest,
+			},
+			{
+				Id:    newUUID(t),
+				Event: metricsSize,
+			},
+			{
+				Id:    newUUID(t),
+				Event: metricsLatency,
 			},
 		},
 	}

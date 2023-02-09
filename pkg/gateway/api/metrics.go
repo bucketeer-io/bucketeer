@@ -54,16 +54,6 @@ const (
 
 var (
 	registerOnce sync.Once
-
-	/* TODO: After deleting "gateway" service, we need to do the following things:
-	1. Rename cacheCounter to grpccacheCounter
-	2. Rename api_cache_requests_total to api_grpc_cache_requests_total
-	3. Rename api_register_events_total to api_grpc_register_events_total
-	4. Rename restCacheCounter to cacheCounter
-	5. Rename api_rest_cache_requests_total to api_cache_requests_total
-	6. Rename api_rest_register_events_total to api_register_events_total
-	*/
-
 	cacheCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -71,7 +61,6 @@ var (
 			Name:      "api_cache_requests_total",
 			Help:      "Total number of cache requests",
 		}, []string{"caller", "type", "layer", "code"})
-
 	eventCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -79,7 +68,7 @@ var (
 			Name:      "api_register_events_total",
 			Help:      "Total number of registered events",
 		}, []string{"caller", "type", "code"})
-
+	// TODO: Remove after deleting api-gateway REST server
 	restCacheCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -87,7 +76,7 @@ var (
 			Name:      "api_rest_cache_requests_total",
 			Help:      "Total number of cache requests",
 		}, []string{"caller", "type", "layer", "code"})
-
+	// TODO: Remove after deleting api-gateway REST server
 	restEventCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -95,10 +84,77 @@ var (
 			Name:      "api_rest_register_events_total",
 			Help:      "Total number of registered events",
 		}, []string{"caller", "type", "code"})
+	// TODO: Remove after deleting api-gateway REST server
+	sdkGetEvaluationsLatencyHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_get_evaluations_handling_seconds",
+			Help:      "Histogram of get evaluations response latency (seconds).",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"environment_namespace", "tag", "state"})
+	// TODO: Remove after deleting api-gateway REST server
+	sdkGetEvaluationsSizeHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_get_evaluations_size",
+			Help:      "Histogram of get evaluations response size (byte).",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"environment_namespace", "tag", "state"})
+	// TODO: Remove after deleting api-gateway REST server
+	sdkTimeoutErrorCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_timeout_error_total",
+			Help:      "Total number of sdk timeout errors",
+		}, []string{"environment_namespace", "tag"})
+	// TODO: Remove after deleting api-gateway REST server
+	sdkInternalErrorCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_internal_error_total",
+			Help:      "Total number of sdk internal errors",
+		}, []string{"environment_namespace", "tag"})
+	sdkLatencyHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_api_handling_seconds",
+			Help:      "Histogram of get evaluations response latency (seconds).",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"environment_namespace", "tag", "api", "sdk_version", "source_id"})
+	sdkSizeHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_api_response_size",
+			Help:      "Histogram of get evaluations response size (byte).",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"environment_namespace", "tag", "api", "sdk_version", "source_id"})
+	sdkErrorCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "metrics_event",
+			Name:      "sdk_api_error_total",
+			Help:      "Total number of sdk errors",
+		}, []string{"environment_namespace", "tag", "error_type", "api", "sdk_version", "source_id"})
 )
 
 func registerMetrics(r metrics.Registerer) {
 	registerOnce.Do(func() {
-		r.MustRegister(cacheCounter, eventCounter)
+		r.MustRegister(
+			cacheCounter,
+			eventCounter,
+			sdkGetEvaluationsLatencyHistogram,
+			sdkGetEvaluationsSizeHistogram,
+			sdkTimeoutErrorCounter,
+			sdkInternalErrorCounter,
+			sdkLatencyHistogram,
+			sdkSizeHistogram,
+			sdkErrorCounter,
+		)
 	})
 }

@@ -134,7 +134,6 @@ type grpcGatewayService struct {
 	goalPublisher          publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
-	metricsPublisher       publisher.Publisher
 	featuresCache          cachev3.FeaturesCache
 	segmentUsersCache      cachev3.SegmentUsersCache
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache
@@ -149,7 +148,6 @@ func NewGrpcGatewayService(
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
-	mp publisher.Publisher,
 	v3Cache cache.MultiGetCache,
 	opts ...Option,
 ) rpc.Service {
@@ -166,7 +164,6 @@ func NewGrpcGatewayService(
 		goalPublisher:          gp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,
-		metricsPublisher:       mp,
 		featuresCache:          cachev3.NewFeaturesCache(v3Cache),
 		segmentUsersCache:      cachev3.NewSegmentUsersCache(v3Cache),
 		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(v3Cache),
@@ -691,8 +688,13 @@ func (s *grpcGatewayService) RegisterEvents(
 	errs := make(map[string]*gwproto.RegisterEventsResponse_Error)
 	goalMessages := make([]publisher.Message, 0)
 	evaluationMessages := make([]publisher.Message, 0)
-	metricsMessages := make([]publisher.Message, 0)
-	publish := func(p publisher.Publisher, messages []publisher.Message, typ string) {
+	metricsEvents := make([]*eventproto.MetricsEvent, 0)
+	publish := func(
+		p publisher.Publisher,
+		messages []publisher.Message,
+		typ string,
+	) map[string]*gwproto.RegisterEventsResponse_Error {
+		errs := make(map[string]*gwproto.RegisterEventsResponse_Error)
 		errors := p.PublishMulti(ctx, messages)
 		var repeatableErrors, nonRepeateableErrors float64
 		for id, err := range errors {
@@ -707,6 +709,7 @@ func (s *grpcGatewayService) RegisterEvents(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+					zap.String("eventType", typ),
 					zap.String("id", id),
 				)...,
 			)
@@ -718,8 +721,9 @@ func (s *grpcGatewayService) RegisterEvents(
 		eventCounter.WithLabelValues(callerGatewayService, typ, codeNonRepeatableError).Add(nonRepeateableErrors)
 		eventCounter.WithLabelValues(callerGatewayService, typ, codeRepeatableError).Add(repeatableErrors)
 		eventCounter.WithLabelValues(callerGatewayService, typ, codeOK).Add(float64(len(messages) - len(errors)))
+		return errs
 	}
-	for _, event := range req.Events {
+	for i, event := range req.Events {
 		event.EnvironmentNamespace = envAPIKey.EnvironmentNamespace
 		if event.Id == "" {
 			return nil, ErrMissingEventID
@@ -769,12 +773,23 @@ func (s *grpcGatewayService) RegisterEvents(
 				}
 				continue
 			}
-			metricsMessages = append(metricsMessages, event)
+			m := &eventproto.MetricsEvent{}
+			if err := ptypes.UnmarshalAny(req.Events[i].Event, m); err != nil {
+				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeUnmarshalFailed).Inc()
+				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{
+					Retriable: false,
+					Message:   err.Error(),
+				}
+				continue
+			}
+			metricsEvents = append(metricsEvents, m)
 		}
 	}
-	publish(s.goalPublisher, goalMessages, typeGoal)
-	publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
-	publish(s.metricsPublisher, metricsMessages, typeMetrics)
+	// MetricsEvents are saved asynchronously for performance, since there is no user impact even if they are lost.
+	s.saveMetricsEventsAsync(metricsEvents, envAPIKey.EnvironmentNamespace)
+	goalErrors := publish(s.goalPublisher, goalMessages, typeGoal)
+	evalErrors := publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
+	errs = s.mergeMaps(errs, goalErrors, evalErrors)
 	if len(errs) > 0 {
 		if s.containsInvalidTimestampError(errs) {
 			eventCounter.WithLabelValues(callerGatewayService, typeRegisterEvent, codeInvalidTimestampRequest).Inc()
@@ -792,6 +807,18 @@ func (s *grpcGatewayService) containsInvalidTimestampError(errs map[string]*gwpr
 		}
 	}
 	return false
+}
+
+func (*grpcGatewayService) mergeMaps(
+	maps ...map[string]*gwproto.RegisterEventsResponse_Error,
+) map[string]*gwproto.RegisterEventsResponse_Error {
+	result := make(map[string]*gwproto.RegisterEventsResponse_Error, 0)
+	for _, m := range maps {
+		for k, v := range m {
+			result[k] = v
+		}
+	}
+	return result
 }
 
 func (s *grpcGatewayService) checkTrackRequest(
