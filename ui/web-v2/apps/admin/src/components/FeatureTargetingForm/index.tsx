@@ -312,10 +312,15 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
     };
 
     useEffect(() => {
-      dispatchListFeatures();
+      if (prerequisites.length > 0) {
+        dispatchListFeatures();
+      }
     }, []);
 
     const disableAddPrerequisite = useCallback(() => {
+      if (prerequisites.length === 0) {
+        return false;
+      }
       return prerequisites.length === features.length - 1;
     }, [prerequisites, features]);
 
