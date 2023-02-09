@@ -320,34 +320,28 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	req := &gatewayproto.RegisterEventsRequest{
 		Events: []*eventproto.Event{
 			{
-				Id:                   newUUID(t),
-				Event:                evaluation,
-				EnvironmentNamespace: "",
+				Id:    newUUID(t),
+				Event: evaluation,
 			},
 			{
-				Id:                   newUUID(t),
-				Event:                goal,
-				EnvironmentNamespace: "",
+				Id:    newUUID(t),
+				Event: goal,
 			},
 			{
-				Id:                   newUUID(t),
-				Event:                metricsInternalSDK,
-				EnvironmentNamespace: "",
+				Id:    newUUID(t),
+				Event: metricsInternalSDK,
 			},
 			{
-				Id:                   newUUID(t),
-				Event:                metricsBadRequest,
-				EnvironmentNamespace: "",
+				Id:    newUUID(t),
+				Event: metricsBadRequest,
 			},
 			{
-				Id:                   newUUID(t),
-				Event:                metricsSize,
-				EnvironmentNamespace: "",
+				Id:    newUUID(t),
+				Event: metricsSize,
 			},
 			{
-				Id:                   newUUID(t),
-				Event:                metricsLatency,
-				EnvironmentNamespace: "",
+				Id:    newUUID(t),
+				Event: metricsLatency,
 			},
 		},
 	}
