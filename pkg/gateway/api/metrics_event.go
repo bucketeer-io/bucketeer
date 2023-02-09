@@ -184,10 +184,9 @@ func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEv
 	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
 		return MetricsSaveErrUnknownApiId
 	}
-	var tag, status string
+	var tag string
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
-		status = ev.Labels["state"]
 	}
 	dur, err := ptypes.Duration(ev.Duration)
 	if err != nil {
@@ -196,7 +195,6 @@ func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEv
 	sdkLatencyHistogram.WithLabelValues(
 		env,
 		tag,
-		status,
 		ev.ApiId.String(),
 		event.SdkVersion,
 		event.SourceId.String(),
@@ -212,15 +210,13 @@ func (s *grpcGatewayService) saveSizeMetricsEvent(event *eventproto.MetricsEvent
 	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
 		return MetricsSaveErrUnknownApiId
 	}
-	var tag, status string
+	var tag string
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
-		status = ev.Labels["state"]
 	}
 	sdkSizeHistogram.WithLabelValues(
 		env,
 		tag,
-		status,
 		ev.ApiId.String(),
 		event.SdkVersion,
 		event.SourceId.String(),
