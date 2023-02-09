@@ -417,7 +417,10 @@ func (*grpcGatewayService) findFeature(fs []*featureproto.Feature, id string) (*
 	return nil, ErrFeatureNotFound
 }
 
-func (*grpcGatewayService) findEvaluation(evals []*featureproto.Evaluation, id string) (*featureproto.Evaluation, error) {
+func (*grpcGatewayService) findEvaluation(
+	evals []*featureproto.Evaluation,
+	id string,
+) (*featureproto.Evaluation, error) {
 	for _, e := range evals {
 		if e.FeatureId == id {
 			return e, nil
