@@ -107,7 +107,7 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	ctx context.Context,
 	req *ecproto.GetExperimentEvaluationCountRequest,
 ) (*ecproto.GetExperimentEvaluationCountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -231,7 +231,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	ctx context.Context,
 	req *ecproto.GetEvaluationTimeseriesCountRequest,
 ) (*ecproto.GetEvaluationTimeseriesCountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -399,7 +399,7 @@ func (s *eventCounterService) GetExperimentResult(
 	ctx context.Context,
 	req *ecproto.GetExperimentResultRequest,
 ) (*ecproto.GetExperimentResultResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -452,7 +452,7 @@ func (s *eventCounterService) ListExperimentResults(
 	ctx context.Context,
 	req *ecproto.ListExperimentResultsRequest,
 ) (*ecproto.ListExperimentResultsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -557,7 +557,7 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	ctx context.Context,
 	req *ecproto.GetExperimentGoalCountRequest,
 ) (*ecproto.GetExperimentGoalCountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -694,7 +694,7 @@ func (s *eventCounterService) GetMAUCount(
 	ctx context.Context,
 	req *ecproto.GetMAUCountRequest,
 ) (*ecproto.GetMAUCountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -759,7 +759,7 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 	ctx context.Context,
 	req *ecproto.GetOpsEvaluationUserCountRequest,
 ) (*ecproto.GetOpsEvaluationUserCountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -879,7 +879,7 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 	ctx context.Context,
 	req *ecproto.GetOpsGoalUserCountRequest,
 ) (*ecproto.GetOpsGoalUserCountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err

@@ -43,7 +43,7 @@ func (s *AutoOpsService) CreateWebhook(
 	ctx context.Context,
 	req *autoopspb.CreateWebhookRequest,
 ) (*autoopspb.CreateWebhookResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -161,7 +161,7 @@ func (s *AutoOpsService) GetWebhook(
 	ctx context.Context,
 	req *autoopspb.GetWebhookRequest,
 ) (*autoopspb.GetWebhookResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountpb.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -230,7 +230,7 @@ func (s *AutoOpsService) ListWebhooks(
 	ctx context.Context,
 	req *autoopspb.ListWebhooksRequest,
 ) (*autoopspb.ListWebhooksResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountpb.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -328,7 +328,7 @@ func (s *AutoOpsService) UpdateWebhook(
 	ctx context.Context,
 	req *autoopspb.UpdateWebhookRequest,
 ) (*autoopspb.UpdateWebhookResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -430,7 +430,7 @@ func (s *AutoOpsService) DeleteWebhook(
 	ctx context.Context,
 	req *autoopspb.DeleteWebhookRequest,
 ) (*autoopspb.DeleteWebhookResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err

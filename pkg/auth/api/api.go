@@ -102,7 +102,7 @@ func (s *authService) GetAuthCodeURL(
 	ctx context.Context,
 	req *authproto.GetAuthCodeURLRequest,
 ) (*authproto.GetAuthCodeURLResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	// The state parameter is used to help mitigate CSRF attacks.
 	// Before sending a request to get authCodeURL, the client has to generate a random string,
 	// store it in local and set to the state parameter in GetAuthCodeURLRequest.
@@ -168,7 +168,7 @@ func (s *authService) ExchangeToken(
 	ctx context.Context,
 	req *authproto.ExchangeTokenRequest,
 ) (*authproto.ExchangeTokenResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	if err := validateExchangeTokenRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -242,7 +242,7 @@ func (s *authService) RefreshToken(
 	ctx context.Context,
 	req *authproto.RefreshTokenRequest,
 ) (*authproto.RefreshTokenResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	if err := validateRefreshTokenRequest(req, localizer); err != nil {
 		return nil, err
 	}

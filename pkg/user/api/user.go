@@ -33,7 +33,7 @@ import (
 const maxPageSizePerRequest = 50
 
 func (s *userService) GetUser(ctx context.Context, req *userproto.GetUserRequest) (*userproto.GetUserResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (s *userService) ListUsers(
 	ctx context.Context,
 	req *userproto.ListUsersRequest,
 ) (*userproto.ListUsersResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err

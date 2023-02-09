@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
 	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
@@ -37,7 +38,11 @@ func TestGetGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -139,7 +144,11 @@ func TestCreateGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -229,7 +238,11 @@ func TestUpdateGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -304,7 +317,11 @@ func TestArchiveGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -379,7 +396,11 @@ func TestDeleteGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -456,7 +477,10 @@ func TestGoalPermissionDenied(t *testing.T) {
 	ctx := createContextWithTokenRoleUnassigned()
 	s := storeclient.NewInMemoryStorage()
 	service := createExperimentService(mockController, s)
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

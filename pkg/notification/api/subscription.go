@@ -38,7 +38,7 @@ func (s *NotificationService) CreateSubscription(
 	ctx context.Context,
 	req *notificationproto.CreateSubscriptionRequest,
 ) (*notificationproto.CreateSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -240,7 +240,7 @@ func (s *NotificationService) UpdateSubscription(
 	ctx context.Context,
 	req *notificationproto.UpdateSubscriptionRequest,
 ) (*notificationproto.UpdateSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -269,7 +269,7 @@ func (s *NotificationService) EnableSubscription(
 	ctx context.Context,
 	req *notificationproto.EnableSubscriptionRequest,
 ) (*notificationproto.EnableSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -330,7 +330,7 @@ func (s *NotificationService) DisableSubscription(
 	ctx context.Context,
 	req *notificationproto.DisableSubscriptionRequest,
 ) (*notificationproto.DisableSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -544,7 +544,7 @@ func (s *NotificationService) DeleteSubscription(
 	ctx context.Context,
 	req *notificationproto.DeleteSubscriptionRequest,
 ) (*notificationproto.DeleteSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -680,7 +680,7 @@ func (s *NotificationService) GetSubscription(
 	ctx context.Context,
 	req *notificationproto.GetSubscriptionRequest,
 ) (*notificationproto.GetSubscriptionResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -738,7 +738,7 @@ func (s *NotificationService) ListSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListSubscriptionsRequest,
 ) (*notificationproto.ListSubscriptionsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -822,7 +822,7 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListEnabledSubscriptionsRequest,
 ) (*notificationproto.ListEnabledSubscriptionsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err

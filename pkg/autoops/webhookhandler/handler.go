@@ -121,7 +121,7 @@ func NewHandler(
 
 func (h *handler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	if ctx.Err() == context.Canceled {
 		h.logger.Warn(
 			"Request was canceled",

@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -36,7 +37,11 @@ func TestCreateWebhook(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(msg string) error {
 		st, err := statusInvalidRequest.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -109,7 +114,11 @@ func TestGetWebhook(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(msg string) error {
 		status, err := statusInvalidRequest.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -118,7 +127,6 @@ func TestGetWebhook(t *testing.T) {
 		require.NoError(t, err)
 		return status.Err()
 	}
-	ctx := createContextWithTokenRoleOwner(t)
 	service := createAutoOpsService(mockController, nil)
 
 	patterns := []struct {
@@ -178,7 +186,10 @@ func TestListWebhooks(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	ctx := createContextWithTokenRoleOwner(t)
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(msg string) error {
 		status, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -256,7 +267,11 @@ func TestUpdateWebhook(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(msg string) error {
 		status, err := statusInvalidRequest.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -265,7 +280,6 @@ func TestUpdateWebhook(t *testing.T) {
 		require.NoError(t, err)
 		return status.Err()
 	}
-	ctx := createContextWithTokenRoleOwner(t)
 	service := createAutoOpsService(mockController, nil)
 
 	patterns := []struct {
@@ -336,7 +350,11 @@ func TestDeleteWebhook(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(msg string, status *status.Status) error {
 		status, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -345,7 +363,6 @@ func TestDeleteWebhook(t *testing.T) {
 		require.NoError(t, err)
 		return status.Err()
 	}
-	ctx := createContextWithTokenRoleOwner(t)
 	service := createAutoOpsService(mockController, nil)
 
 	patterns := []struct {

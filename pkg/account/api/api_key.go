@@ -35,7 +35,7 @@ func (s *AccountService) CreateAPIKey(
 	ctx context.Context,
 	req *proto.CreateAPIKeyRequest,
 ) (*proto.CreateAPIKeyResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (s *AccountService) ChangeAPIKeyName(
 	ctx context.Context,
 	req *proto.ChangeAPIKeyNameRequest,
 ) (*proto.ChangeAPIKeyNameResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -173,7 +173,7 @@ func (s *AccountService) EnableAPIKey(
 	ctx context.Context,
 	req *proto.EnableAPIKeyRequest,
 ) (*proto.EnableAPIKeyResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -223,7 +223,7 @@ func (s *AccountService) DisableAPIKey(
 	ctx context.Context,
 	req *proto.DisableAPIKeyRequest,
 ) (*proto.DisableAPIKeyResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -300,7 +300,7 @@ func (s *AccountService) updateAPIKeyMySQL(
 }
 
 func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequest) (*proto.GetAPIKeyResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, proto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -352,7 +352,7 @@ func (s *AccountService) ListAPIKeys(
 	ctx context.Context,
 	req *proto.ListAPIKeysRequest,
 ) (*proto.ListAPIKeysResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, proto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -457,7 +457,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 	ctx context.Context,
 	req *proto.GetAPIKeyBySearchingAllEnvironmentsRequest,
 ) (*proto.GetAPIKeyBySearchingAllEnvironmentsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err

@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
@@ -38,7 +39,11 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -118,7 +123,11 @@ func TestGetEnvironmentByNamespaceMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -192,7 +201,11 @@ func TestListEnvironmentsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -266,7 +279,11 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -405,7 +422,11 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -499,7 +520,11 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -589,7 +614,11 @@ func TestEnvironmentPermissionDeniedMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

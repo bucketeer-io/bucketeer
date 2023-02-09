@@ -37,7 +37,7 @@ func (s *AccountService) CreateAccount(
 	ctx context.Context,
 	req *accountproto.CreateAccountRequest,
 ) (*accountproto.CreateAccountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (s *AccountService) ChangeAccountRole(
 	ctx context.Context,
 	req *accountproto.ChangeAccountRoleRequest,
 ) (*accountproto.ChangeAccountRoleResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -200,7 +200,7 @@ func (s *AccountService) EnableAccount(
 	ctx context.Context,
 	req *accountproto.EnableAccountRequest,
 ) (*accountproto.EnableAccountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -249,7 +249,7 @@ func (s *AccountService) DisableAccount(
 	ctx context.Context,
 	req *accountproto.DisableAccountRequest,
 ) (*accountproto.DisableAccountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -328,7 +328,7 @@ func (s *AccountService) GetAccount(
 	ctx context.Context,
 	req *accountproto.GetAccountRequest,
 ) (*accountproto.GetAccountResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -392,7 +392,7 @@ func (s *AccountService) ListAccounts(
 	ctx context.Context,
 	req *accountproto.ListAccountsRequest,
 ) (*accountproto.ListAccountsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err

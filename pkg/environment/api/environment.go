@@ -38,7 +38,7 @@ func (s *EnvironmentService) GetEnvironment(
 	ctx context.Context,
 	req *environmentproto.GetEnvironmentRequest,
 ) (*environmentproto.GetEnvironmentResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (s *EnvironmentService) GetEnvironmentByNamespace(
 	ctx context.Context,
 	req *environmentproto.GetEnvironmentByNamespaceRequest,
 ) (*environmentproto.GetEnvironmentByNamespaceResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -149,7 +149,7 @@ func (s *EnvironmentService) ListEnvironments(
 	ctx context.Context,
 	req *environmentproto.ListEnvironmentsRequest,
 ) (*environmentproto.ListEnvironmentsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -251,7 +251,7 @@ func (s *EnvironmentService) CreateEnvironment(
 	ctx context.Context,
 	req *environmentproto.CreateEnvironmentRequest,
 ) (*environmentproto.CreateEnvironmentResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -392,7 +392,7 @@ func (s *EnvironmentService) UpdateEnvironment(
 	ctx context.Context,
 	req *environmentproto.UpdateEnvironmentRequest,
 ) (*environmentproto.UpdateEnvironmentResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -498,7 +498,7 @@ func (s *EnvironmentService) DeleteEnvironment(
 	ctx context.Context,
 	req *environmentproto.DeleteEnvironmentRequest,
 ) (*environmentproto.DeleteEnvironmentResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err

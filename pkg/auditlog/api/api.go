@@ -97,7 +97,7 @@ func (s *auditlogService) ListAuditLogs(
 	ctx context.Context,
 	req *proto.ListAuditLogsRequest,
 ) (*proto.ListAuditLogsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -163,7 +163,7 @@ func (s *auditlogService) ListAuditLogs(
 		return nil, dt.Err()
 	}
 	for _, auditlog := range auditlogs {
-		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, locale.JaJP)
+		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, locale.Ja)
 	}
 	return &proto.ListAuditLogsResponse{
 		AuditLogs:  auditlogs,
@@ -203,7 +203,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 	ctx context.Context,
 	req *proto.ListAdminAuditLogsRequest,
 ) (*proto.ListAdminAuditLogsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
@@ -267,7 +267,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 		return nil, dt.Err()
 	}
 	for _, auditlog := range auditlogs {
-		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, locale.JaJP)
+		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, locale.Ja)
 	}
 	return &proto.ListAdminAuditLogsResponse{
 		AuditLogs:  auditlogs,
@@ -307,7 +307,7 @@ func (s *auditlogService) ListFeatureHistory(
 	ctx context.Context,
 	req *proto.ListFeatureHistoryRequest,
 ) (*proto.ListFeatureHistoryResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -376,7 +376,7 @@ func (s *auditlogService) ListFeatureHistory(
 		return nil, dt.Err()
 	}
 	for _, auditlog := range auditlogs {
-		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, locale.JaJP)
+		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, locale.Ja)
 	}
 	return &proto.ListFeatureHistoryResponse{
 		AuditLogs:  auditlogs,

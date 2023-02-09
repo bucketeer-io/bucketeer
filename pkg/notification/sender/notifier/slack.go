@@ -156,7 +156,7 @@ func (n *slackNotifier) createDomainEventAttachment(
 	notification *senderproto.DomainEventNotification,
 ) (*slack.Attachment, error) {
 	// handle loc if multi-lang is necessary
-	localizedMessage := domainevent.LocalizedMessage(notification.Type, locale.JaJP)
+	localizedMessage := domainevent.LocalizedMessage(notification.Type, locale.Ja)
 	url, err := domainevent.URL(
 		notification.EntityType,
 		n.webURL,
@@ -195,7 +195,7 @@ func (n *slackNotifier) createFeatureStaleAttachment(
 		featureListMsg = featureListMsg + newLine
 	}
 	// handle loc if multi-lang is necessary
-	msg, err := localizedMessage(msgTypeFeatureStale, locale.JaJP)
+	msg, err := localizedMessage(msgTypeFeatureStale, locale.Ja)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +231,7 @@ func (n *slackNotifier) createExperimentRunningAttachment(
 		listMsg = listMsg + newLine
 	}
 	// handle loc if multi-lang is necessary
-	msg, err := localizedMessage(msgTypeExperimentResult, locale.JaJP)
+	msg, err := localizedMessage(msgTypeExperimentResult, locale.Ja)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func (n *slackNotifier) createExperimentRunningAttachment(
 func (n *slackNotifier) createMAUCountAttachment(
 	notification *senderproto.MauCountNotification,
 ) (*slack.Attachment, error) {
-	msg, err := localizedMessage(msgTypeMAUCount, locale.JaJP)
+	msg, err := localizedMessage(msgTypeMAUCount, locale.Ja)
 	if err != nil {
 		return nil, err
 	}

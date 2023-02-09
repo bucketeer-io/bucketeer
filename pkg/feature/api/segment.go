@@ -36,7 +36,7 @@ func (s *FeatureService) CreateSegment(
 	ctx context.Context,
 	req *featureproto.CreateSegmentRequest,
 ) (*featureproto.CreateSegmentResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (s *FeatureService) DeleteSegment(
 	ctx context.Context,
 	req *featureproto.DeleteSegmentRequest,
 ) (*featureproto.DeleteSegmentResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -268,7 +268,7 @@ func (s *FeatureService) UpdateSegment(
 	ctx context.Context,
 	req *featureproto.UpdateSegmentRequest,
 ) (*featureproto.UpdateSegmentResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		s.logger.Info(
@@ -409,7 +409,7 @@ func (s *FeatureService) GetSegment(
 	ctx context.Context,
 	req *featureproto.GetSegmentRequest,
 ) (*featureproto.GetSegmentResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
@@ -461,7 +461,7 @@ func (s *FeatureService) ListSegments(
 	ctx context.Context,
 	req *featureproto.ListSegmentsRequest,
 ) (*featureproto.ListSegmentsResponse, error) {
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err

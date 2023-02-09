@@ -15,12 +15,14 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -36,7 +38,11 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -197,7 +203,11 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -364,7 +374,11 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -438,7 +452,11 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -505,7 +523,11 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -572,7 +594,11 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -635,7 +661,11 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -708,7 +738,11 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
