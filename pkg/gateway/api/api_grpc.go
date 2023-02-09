@@ -370,15 +370,9 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 	fs := f.([]*featureproto.Feature)
-	var features []*featureproto.Feature
-	for _, f := range fs {
-		if f.Id == req.FeatureId {
-			features = append(features, f)
-			break
-		}
-	}
-	if len(features) == 0 {
-		return nil, ErrFeatureNotFound
+	features, err := s.getTargetFeatures(fs, req.FeatureId)
+	if err != nil {
+		return nil, err
 	}
 	evaluations, err := s.evaluateFeatures(ctx, req.User, features, envAPIKey.EnvironmentNamespace, req.Tag)
 	if err != nil {
@@ -396,6 +390,26 @@ func (s *grpcGatewayService) GetEvaluation(
 	return &gwproto.GetEvaluationResponse{
 		Evaluation: evaluations.Evaluations[0],
 	}, nil
+}
+
+func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {
+	feature, err := s.findFeature(fs, id)
+	if err != nil {
+		return nil, err
+	}
+	if len(feature.Prerequisites) > 0 {
+		return fs, nil
+	}
+	return []*featureproto.Feature{feature}, nil
+}
+
+func (*grpcGatewayService) findFeature(fs []*featureproto.Feature, id string) (*featureproto.Feature, error) {
+	for _, f := range fs {
+		if f.Id == id {
+			return f, nil
+		}
+	}
+	return nil, ErrFeatureNotFound
 }
 
 func (s *grpcGatewayService) validateGetEvaluationRequest(req *gwproto.GetEvaluationRequest) error {

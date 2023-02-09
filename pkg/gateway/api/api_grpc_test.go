@@ -2153,6 +2153,89 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 	}
 }
 
+func TestGetTargetFeatures(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	multipleFs := []*featureproto.Feature{
+		{
+			Id: "fid3",
+		},
+		{
+			Id: "fid2",
+		},
+		{
+			Id: "fid10",
+		},
+		{
+			Id: "fid",
+		},
+	}
+	multiplePreFs := []*featureproto.Feature{
+		{
+			Id: "fid3",
+			Prerequisites: []*featureproto.Prerequisite{
+				{
+					FeatureId: "fid10",
+				},
+			},
+		},
+		{
+			Id: "fid2",
+		},
+		{
+			Id: "fid10",
+		},
+		{
+			Id: "fid",
+			Prerequisites: []*featureproto.Prerequisite{
+				{
+					FeatureId: "fid3",
+				},
+			},
+		},
+	}
+	patterns := []struct {
+		desc        string
+		fs          []*featureproto.Feature
+		id          string
+		expected    []*featureproto.Feature
+		expectedErr error
+	}{
+		{
+			desc:        "err: not found feature",
+			id:          "not_found",
+			fs:          multipleFs,
+			expected:    nil,
+			expectedErr: ErrFeatureNotFound,
+		},
+		{
+			desc: "success: not configure prerequisite",
+			id:   "fid",
+			fs:   multipleFs,
+			expected: []*featureproto.Feature{
+				multipleFs[3],
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:        "success: configure prerequisite",
+			id:          "fid",
+			fs:          multiplePreFs,
+			expected:    multiplePreFs,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			actual, err := gs.getTargetFeatures(p.fs, p.id)
+			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func newUUID(t *testing.T) string {
 	t.Helper()
 	id, err := uuid.NewUUID()
