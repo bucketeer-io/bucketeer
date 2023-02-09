@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	experimentdomain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
@@ -486,10 +487,29 @@ func (s *FeatureService) ListEnabledFeatures(
 	}, nil
 }
 
+func getAcceptLang(ctx context.Context) []string {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return []string{"failed to find"}
+	}
+	keys, ok := md["accept-language"]
+	if !ok || len(keys) == 0 || keys[0] == "" {
+		return []string{"this is zero"}
+	}
+	return keys
+}
+
 func (s *FeatureService) CreateFeature(
 	ctx context.Context,
 	req *featureproto.CreateFeatureRequest,
 ) (*featureproto.CreateFeatureResponse, error) {
+	lang := getAcceptLang(ctx)
+	s.logger.Error(
+		"debug lang",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.Strings("langs", lang),
+		)...
+	)
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
