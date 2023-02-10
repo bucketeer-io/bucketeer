@@ -57,6 +57,9 @@ func (s *grpcGatewayService) saveMetricsEventsAsync(
 		for i := range metricsEvents {
 			if err := s.saveMetrics(metricsEvents[i], environmentNamespace); err != nil {
 				s.logger.Error("Failed to store metrics event to prometheus client", zap.Error(err))
+				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeNonRepeatableError).Inc()
+			} else {
+				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeOK).Inc()
 			}
 		}
 	}()
