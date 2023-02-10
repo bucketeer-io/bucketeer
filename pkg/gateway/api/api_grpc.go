@@ -403,6 +403,8 @@ func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id st
 		return nil, err
 	}
 	if len(feature.Prerequisites) > 0 {
+		// If we select only the prerequisite feature flags, we have to get them recursively.
+		// Thus, we evaluate all features to avoid the complex logic.
 		return fs, nil
 	}
 	return []*featureproto.Feature{feature}, nil
