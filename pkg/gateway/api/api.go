@@ -106,21 +106,22 @@ const (
 )
 
 var (
-	errContextCanceled   = rest.NewErrStatus(http.StatusBadRequest, "gateway: context canceled")
-	errMissingAPIKey     = rest.NewErrStatus(http.StatusUnauthorized, "gateway: missing APIKey")
-	errInvalidAPIKey     = rest.NewErrStatus(http.StatusUnauthorized, "gateway: invalid APIKey")
-	errInternal          = rest.NewErrStatus(http.StatusInternalServerError, "gateway: internal")
-	errInvalidHttpMethod = rest.NewErrStatus(http.StatusMethodNotAllowed, "gateway: invalid http method")
-	errTagRequired       = rest.NewErrStatus(http.StatusBadRequest, "gateway: tag is required")
-	errUserRequired      = rest.NewErrStatus(http.StatusBadRequest, "gateway: user is required")
-	errUserIDRequired    = rest.NewErrStatus(http.StatusBadRequest, "gateway: user id is required")
-	errBadRole           = rest.NewErrStatus(http.StatusUnauthorized, "gateway: bad role")
-	errDisabledAPIKey    = rest.NewErrStatus(http.StatusUnauthorized, "gateway: disabled APIKey")
-	errFeatureNotFound   = rest.NewErrStatus(http.StatusNotFound, "gateway: feature not found")
-	errFeatureIDRequired = rest.NewErrStatus(http.StatusBadRequest, "gateway: feature id is required")
-	errMissingEventID    = rest.NewErrStatus(http.StatusBadRequest, "gateway: missing event id")
-	errMissingEvents     = rest.NewErrStatus(http.StatusBadRequest, "gateway: missing events")
-	errBodyRequired      = rest.NewErrStatus(http.StatusBadRequest, "gateway: body is required")
+	errContextCanceled    = rest.NewErrStatus(http.StatusBadRequest, "gateway: context canceled")
+	errMissingAPIKey      = rest.NewErrStatus(http.StatusUnauthorized, "gateway: missing APIKey")
+	errInvalidAPIKey      = rest.NewErrStatus(http.StatusUnauthorized, "gateway: invalid APIKey")
+	errInternal           = rest.NewErrStatus(http.StatusInternalServerError, "gateway: internal")
+	errInvalidHttpMethod  = rest.NewErrStatus(http.StatusMethodNotAllowed, "gateway: invalid http method")
+	errTagRequired        = rest.NewErrStatus(http.StatusBadRequest, "gateway: tag is required")
+	errUserRequired       = rest.NewErrStatus(http.StatusBadRequest, "gateway: user is required")
+	errUserIDRequired     = rest.NewErrStatus(http.StatusBadRequest, "gateway: user id is required")
+	errBadRole            = rest.NewErrStatus(http.StatusUnauthorized, "gateway: bad role")
+	errDisabledAPIKey     = rest.NewErrStatus(http.StatusUnauthorized, "gateway: disabled APIKey")
+	errFeatureNotFound    = rest.NewErrStatus(http.StatusNotFound, "gateway: feature not found")
+	errFeatureIDRequired  = rest.NewErrStatus(http.StatusBadRequest, "gateway: feature id is required")
+	errMissingEventID     = rest.NewErrStatus(http.StatusBadRequest, "gateway: missing event id")
+	errMissingEvents      = rest.NewErrStatus(http.StatusBadRequest, "gateway: missing events")
+	errBodyRequired       = rest.NewErrStatus(http.StatusBadRequest, "gateway: body is required")
+	errEvaluationNotFound = rest.NewErrStatus(http.StatusNotFound, "gateway: evaluation not found")
 )
 
 var (
@@ -317,15 +318,9 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		return
 	}
 	fs := f.([]*featureproto.Feature)
-	var features []*featureproto.Feature
-	for _, f := range fs {
-		if f.Id == reqBody.FeatureID {
-			features = append(features, f)
-			break
-		}
-	}
-	if len(features) == 0 {
-		rest.ReturnFailureResponse(w, errFeatureNotFound)
+	features, err := s.getTargetFeatures(fs, reqBody.FeatureID)
+	if err != nil {
+		rest.ReturnFailureResponse(w, err)
 		return
 	}
 	evaluations, err := s.evaluateFeatures(
@@ -348,12 +343,51 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		rest.ReturnFailureResponse(w, errInternal)
 		return
 	}
+	eval, err := s.findEvaluation(evaluations.Evaluations, reqBody.FeatureID)
+	if err != nil {
+		rest.ReturnFailureResponse(w, err)
+		return
+	}
 	rest.ReturnSuccessResponse(
 		w,
 		&getEvaluationResponse{
-			Evaluation: evaluations.Evaluations[0],
+			Evaluation: eval,
 		},
 	)
+}
+
+func (s *gatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {
+	feature, err := s.findFeature(fs, id)
+	if err != nil {
+		return nil, err
+	}
+	if len(feature.Prerequisites) > 0 {
+		// If we select only the prerequisite feature flags, we have to get them recursively.
+		// Thus, we evaluate all features here to avoid complex logic.
+		return fs, nil
+	}
+	return []*featureproto.Feature{feature}, nil
+}
+
+func (*gatewayService) findFeature(fs []*featureproto.Feature, id string) (*featureproto.Feature, error) {
+	for _, f := range fs {
+		if f.Id == id {
+			return f, nil
+		}
+	}
+	return nil, errFeatureNotFound
+}
+
+func (*gatewayService) findEvaluation(
+	evals []*featureproto.Evaluation,
+	id string,
+) (*featureproto.Evaluation, error) {
+	for _, e := range evals {
+		if e.FeatureId == id {
+			return e, nil
+		}
+	}
+	return nil, errEvaluationNotFound
 }
 
 func (s *gatewayService) checkGetEvaluationsRequest(
