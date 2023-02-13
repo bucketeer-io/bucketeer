@@ -42,8 +42,12 @@ import (
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
-const getMultiChunkSize = 1000
-const listRequestSize = 500
+const (
+	getMultiChunkSize = 1000
+	listRequestSize   = 500
+)
+
+var errEvaluationNotFound = status.Error(codes.NotFound, "feature: evaluation not found")
 
 func (s *FeatureService) GetFeature(
 	ctx context.Context,
@@ -1542,35 +1546,12 @@ func findFeature(fs []*featureproto.Feature, id string, localizer locale.Localiz
 
 func (s *FeatureService) evaluateFeatures(
 	ctx context.Context,
+	features []*featureproto.Feature,
 	user *userproto.User,
 	environmentNamespace string,
 	tag string,
 	localizer locale.Localizer,
 ) (*featureproto.UserEvaluations, error) {
-	fs, err, _ := s.flightgroup.Do(
-		environmentNamespace,
-		func() (interface{}, error) {
-			return s.getFeatures(ctx, environmentNamespace)
-		},
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to list features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	features := fs.([]*featureproto.Feature)
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
 		feature := &domain.Feature{Feature: f}
@@ -1585,6 +1566,8 @@ func (s *FeatureService) evaluateFeatures(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("userId", user.Id),
+				zap.String("tag", tag),
 			)...,
 		)
 		return nil, err
@@ -1596,8 +1579,18 @@ func (s *FeatureService) evaluateFeatures(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("userId", user.Id),
+				zap.String("tag", tag),
 			)...,
 		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return userEvaluations, nil
 }
@@ -1798,7 +1791,49 @@ func (s *FeatureService) EvaluateFeatures(
 		)
 		return nil, err
 	}
-	userEvaluations, err := s.evaluateFeatures(ctx, req.User, req.EnvironmentNamespace, req.Tag, localizer)
+	fs, err, _ := s.flightgroup.Do(
+		req.EnvironmentNamespace,
+		func() (interface{}, error) {
+			return s.getFeatures(ctx, req.EnvironmentNamespace)
+		},
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list features",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	// If the feature ID is set in the request, it will evaluate a single feature.
+	features, err := s.getTargetFeatures(fs.([]*featureproto.Feature), req.FeatureId, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get target features",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	userEvaluations, err := s.evaluateFeatures(ctx, features, req.User, req.EnvironmentNamespace, req.Tag, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
@@ -1816,7 +1851,66 @@ func (s *FeatureService) EvaluateFeatures(
 		}
 		return nil, dt.Err()
 	}
+	// If the feature ID is set, it will return a single evaluation
+	if req.FeatureId != "" {
+		eval, err := s.findEvaluation(userEvaluations.Evaluations, req.FeatureId)
+		if err != nil {
+			s.logger.Error(
+				"Failed to find evaluation",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		return &featureproto.EvaluateFeaturesResponse{
+			UserEvaluations: &featureproto.UserEvaluations{
+				Id:          userEvaluations.Id,
+				Evaluations: []*featureproto.Evaluation{eval},
+				CreatedAt:   userEvaluations.CreatedAt,
+			}}, nil
+	}
 	return &featureproto.EvaluateFeaturesResponse{UserEvaluations: userEvaluations}, nil
+}
+
+func (s *FeatureService) getTargetFeatures(
+	fs []*featureproto.Feature,
+	id string,
+	localizer locale.Localizer,
+) ([]*featureproto.Feature, error) {
+	if id == "" {
+		return fs, nil
+	}
+	feature, err := findFeature(fs, id, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if len(feature.Prerequisites) > 0 {
+		// If we select only the prerequisite feature flags, we have to get them recursively.
+		// Thus, we evaluate all features here to avoid complex logic.
+		return fs, nil
+	}
+	return []*featureproto.Feature{feature}, nil
+}
+
+func (*FeatureService) findEvaluation(
+	evals []*featureproto.Evaluation,
+	id string,
+) (*featureproto.Evaluation, error) {
+	for _, e := range evals {
+		if e.FeatureId == id {
+			return e, nil
+		}
+	}
+	return nil, errEvaluationNotFound
 }
 
 func (s *FeatureService) listExperiments(

@@ -301,6 +301,7 @@ message EvaluateFeaturesRequest {
   bucketeer.user.User user = 1;
   string environment_namespace = 2;
   string tag = 3;
+  string feature_id = 4;  // it will evaluate a single feature if set
 }
 
 message EvaluateFeaturesResponse {
