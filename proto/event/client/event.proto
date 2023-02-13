@@ -62,10 +62,11 @@ enum SourceId {
   UNKNOWN = 0;
   ANDROID = 1;
   IOS = 2;
-  WEB = 3;
+  WEB = 3 [deprecated = true];
   reserved 4;  // GOAL_BATCH = 4;
   GO_SERVER = 5;
   NODE_SERVER = 6;
+  JAVASCRIPT = 7;
 }
 
 message MetricsEvent {

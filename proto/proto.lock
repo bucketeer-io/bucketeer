@@ -3592,7 +3592,13 @@
               },
               {
                 "name": "WEB",
-                "integer": 3
+                "integer": 3,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "GO_SERVER",
@@ -3601,6 +3607,10 @@
               {
                 "name": "NODE_SERVER",
                 "integer": 6
+              },
+              {
+                "name": "JAVASCRIPT",
+                "integer": 7
               }
             ],
             "reserved_ids": [
