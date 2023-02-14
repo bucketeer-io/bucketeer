@@ -3447,6 +3447,109 @@ func TestValidateChangePrerequisiteVariation(t *testing.T) {
 	}
 }
 
+func TestGetTargetFeatures(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	multipleFs := []*featureproto.Feature{
+		{
+			Id: "fid3",
+		},
+		{
+			Id: "fid2",
+		},
+		{
+			Id: "fid10",
+		},
+		{
+			Id: "fid",
+		},
+	}
+	multiplePreFs := []*featureproto.Feature{
+		{
+			Id: "fid3",
+			Prerequisites: []*featureproto.Prerequisite{
+				{
+					FeatureId: "fid10",
+				},
+			},
+		},
+		{
+			Id: "fid2",
+		},
+		{
+			Id: "fid10",
+		},
+		{
+			Id: "fid",
+			Prerequisites: []*featureproto.Prerequisite{
+				{
+					FeatureId: "fid3",
+				},
+			},
+		},
+	}
+	patterns := []struct {
+		desc        string
+		fs          []*featureproto.Feature
+		id          string
+		expected    []*featureproto.Feature
+		expectedErr error
+	}{
+		{
+			desc:        "err: feature not found",
+			id:          "not_found",
+			fs:          multipleFs,
+			expected:    nil,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc:        "success: feature id is empty",
+			id:          "",
+			fs:          multipleFs,
+			expected:    multipleFs,
+			expectedErr: nil,
+		},
+		{
+			desc: "success: prerequisite not configured",
+			id:   "fid",
+			fs:   multipleFs,
+			expected: []*featureproto.Feature{
+				multipleFs[3],
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:        "success: prerequisite configured",
+			id:          "fid",
+			fs:          multiplePreFs,
+			expected:    multiplePreFs,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createFeatureService(mockController)
+			actual, err := service.getTargetFeatures(p.fs, p.id, localizer)
+			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func makeFeature(id string) *domain.Feature {
 	return &domain.Feature{
 		Feature: &featureproto.Feature{
