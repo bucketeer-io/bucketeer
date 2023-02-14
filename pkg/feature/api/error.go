@@ -36,6 +36,7 @@ var (
 	statusInvalidDefaultOffVariation = gstatus.New(codes.InvalidArgument, "feature: invalid default off variation")
 	statusMissingVariationID         = gstatus.New(codes.InvalidArgument, "feature: missing variation id")
 	statusInvalidVariationID         = gstatus.New(codes.InvalidArgument, "feature: invalid variation id")
+	statusMissingFeatureID                  = gstatus.New(codes.InvalidArgument, "feature: missing feature id")
 	statusDifferentVariationsSize    = gstatus.New(
 		codes.InvalidArgument,
 		"feature: feature variations and rollout variations must have the same size",

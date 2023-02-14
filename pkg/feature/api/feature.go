@@ -1772,16 +1772,16 @@ func (s *FeatureService) setLastUsedInfosToFeature(
 	return nil
 }
 
-func (s *FeatureService) EvaluateFeatures(
+func (s *FeatureService) EvaluateFeature(
 	ctx context.Context,
-	req *featureproto.EvaluateFeaturesRequest,
+	req *featureproto.EvaluateFeatureRequest,
 ) (*featureproto.EvaluateFeaturesResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateEvaluateFeatures(req, localizer); err != nil {
+	if err := validateEvaluateFeature(req, localizer); err != nil {
 		s.logger.Info(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -1851,32 +1851,91 @@ func (s *FeatureService) EvaluateFeatures(
 		}
 		return nil, dt.Err()
 	}
-	// If the feature ID is set, it will return a single evaluation
-	if req.FeatureId != "" {
-		eval, err := s.findEvaluation(userEvaluations.Evaluations, req.FeatureId)
+	eval, err := s.findEvaluation(userEvaluations.Evaluations, req.FeatureId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to find evaluation",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
 		if err != nil {
-			s.logger.Error(
-				"Failed to find evaluation",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, statusInternal.Err()
 		}
-		return &featureproto.EvaluateFeaturesResponse{
-			UserEvaluations: &featureproto.UserEvaluations{
-				Id:          userEvaluations.Id,
-				Evaluations: []*featureproto.Evaluation{eval},
-				CreatedAt:   userEvaluations.CreatedAt,
-			}}, nil
+		return nil, dt.Err()
+	}
+	return &featureproto.EvaluateFeaturesResponse{
+		UserEvaluations: &featureproto.UserEvaluations{
+			Id:          userEvaluations.Id,
+			Evaluations: []*featureproto.Evaluation{eval},
+			CreatedAt:   userEvaluations.CreatedAt,
+		}}, nil
+}
+
+func (s *FeatureService) EvaluateFeatures(
+	ctx context.Context,
+	req *featureproto.EvaluateFeaturesRequest,
+) (*featureproto.EvaluateFeaturesResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateEvaluateFeatures(req, localizer); err != nil {
+		s.logger.Info(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		return nil, err
+	}
+	fs, err, _ := s.flightgroup.Do(
+		req.EnvironmentNamespace,
+		func() (interface{}, error) {
+			return s.getFeatures(ctx, req.EnvironmentNamespace)
+		},
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list features",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	userEvaluations, err := s.evaluateFeatures(ctx, fs.([]*featureproto.Feature), req.User, req.EnvironmentNamespace, req.Tag, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Failed to evaluate features",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.EvaluateFeaturesResponse{UserEvaluations: userEvaluations}, nil
 }
@@ -1886,9 +1945,6 @@ func (s *FeatureService) getTargetFeatures(
 	id string,
 	localizer locale.Localizer,
 ) ([]*featureproto.Feature, error) {
-	if id == "" {
-		return fs, nil
-	}
 	feature, err := findFeature(fs, id, localizer)
 	if err != nil {
 		return nil, err
