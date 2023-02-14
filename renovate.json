@@ -13,7 +13,7 @@
       "addLabels": ["automerge by renovate"]
     }
   ],
-  "automergeSchedule": ["* 11 * * tue-thu"],
+  "automergeSchedule": ["* 2 * * tue-thu"],
   "automergeStrategy": "squash",
   "reviewers": ["team:renovate-reviewers"]
 }
