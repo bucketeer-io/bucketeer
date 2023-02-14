@@ -1000,9 +1000,9 @@ func TestEvaluateFeatures(t *testing.T) {
 		}
 		resp, err := service.EvaluateFeatures(ctx, p.input)
 		if err == nil {
-			if len(resp.UserEvaluations.Evaluations) > 0 {
+			if len(resp.UserEvaluations.Evaluations) == 1 {
 				assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].VariationId, resp.UserEvaluations.Evaluations[0].VariationId, p.desc)
-				assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].Reason, resp.UserEvaluations.Evaluations[0].Reason)
+				assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].Reason, resp.UserEvaluations.Evaluations[0].Reason, p.desc)
 			} else {
 				assert.Equal(t, p.expected.UserEvaluations.Evaluations, resp.UserEvaluations.Evaluations, p.desc)
 			}
@@ -1010,6 +1010,244 @@ func TestEvaluateFeatures(t *testing.T) {
 			assert.Equal(t, p.expected, resp, p.desc)
 		}
 		assert.Equal(t, p.expectedErr, err, p.desc)
+	}
+}
+
+func TestEvaluateSingleFeature(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	vID1 := newUUID(t)
+	vID2 := newUUID(t)
+	vID3 := newUUID(t)
+	vID4 := newUUID(t)
+
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	patterns := []struct {
+		desc     string
+		setup    func(*FeatureService)
+		input    *featureproto.EvaluateFeaturesRequest
+		expected *featureproto.EvaluateFeaturesResponse
+	}{
+		{
+			desc: "success: evaluate single feature",
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id: "fid-1",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID1,
+										Value: "true",
+									},
+									{
+										Id:    vID2,
+										Value: "false",
+									},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type: featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{
+												Variation: vID2,
+											},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values: []string{
+													"id-0",
+												},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID2,
+									},
+								},
+								Tags: []string{"android"},
+							},
+							{
+								Id: "fid-2",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID3,
+										Value: "true",
+									},
+									{
+										Id:    vID4,
+										Value: "false",
+									},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type: featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{
+												Variation: vID4,
+											},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values: []string{
+													"id-0",
+												},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID4,
+									},
+								},
+								Tags: []string{"android"},
+							},
+						}}, nil)
+				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("random error"))
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			input: &featureproto.EvaluateFeaturesRequest{
+				User:                 &userproto.User{Id: "user-id"},
+				EnvironmentNamespace: "ns0",
+				Tag:                  "android",
+				FeatureId:            "fid-2",
+			},
+			expected: &featureproto.EvaluateFeaturesResponse{
+				UserEvaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{
+						{
+							FeatureId:   "fid-2",
+							VariationId: vID4,
+							Reason: &featureproto.Reason{
+								Type: featureproto.Reason_DEFAULT,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "success: evaluate single feature with prerequisite",
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "fid-1",
+								Enabled: true,
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID1,
+										Value: "true",
+									},
+									{
+										Id:    vID2,
+										Value: "false",
+									},
+								},
+								Prerequisites: []*featureproto.Prerequisite{
+									{
+										FeatureId:   "fid-2",
+										VariationId: vID4,
+									},
+								},
+								Targets: []*featureproto.Target{
+									{
+										Variation: vID1,
+										Users:     []string{"user-id"},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID2,
+									},
+								},
+								Tags:         []string{"android"},
+								OffVariation: vID2,
+							},
+							{
+								Id:      "fid-2",
+								Enabled: true,
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID3,
+										Value: "true",
+									},
+									{
+										Id:    vID4,
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID4,
+									},
+								},
+								OffVariation: vID3,
+								Tags:         []string{"android"},
+							},
+						}}, nil)
+			},
+			input: &featureproto.EvaluateFeaturesRequest{
+				User:                 &userproto.User{Id: "user-id"},
+				EnvironmentNamespace: "ns0",
+				Tag:                  "android",
+				FeatureId:            "fid-1",
+			},
+			expected: &featureproto.EvaluateFeaturesResponse{
+				UserEvaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{
+						{
+							FeatureId:   "fid-1",
+							VariationId: vID1,
+							Reason: &featureproto.Reason{
+								Type: featureproto.Reason_TARGET,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		ctx := createContextWithToken()
+		service := createFeatureService(mockController)
+		if p.setup != nil {
+			p.setup(service)
+		}
+		resp, _ := service.EvaluateFeatures(ctx, p.input)
+		assert.True(t, len(resp.UserEvaluations.Evaluations) == 1)
+		assert.Equal(t, p.input.FeatureId, p.expected.UserEvaluations.Evaluations[0].FeatureId, p.desc)
+		assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].VariationId, resp.UserEvaluations.Evaluations[0].VariationId, p.desc)
+		assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].Reason, resp.UserEvaluations.Evaluations[0].Reason, p.desc)
 	}
 }
 
@@ -3206,6 +3444,109 @@ func TestValidateChangePrerequisiteVariation(t *testing.T) {
 	for _, p := range pattens {
 		err := validateChangePrerequisiteVariation(p.fs, p.prerequisite, localizer)
 		assert.Equal(t, p.expectedErr, err)
+	}
+}
+
+func TestGetTargetFeatures(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	multipleFs := []*featureproto.Feature{
+		{
+			Id: "fid3",
+		},
+		{
+			Id: "fid2",
+		},
+		{
+			Id: "fid10",
+		},
+		{
+			Id: "fid",
+		},
+	}
+	multiplePreFs := []*featureproto.Feature{
+		{
+			Id: "fid3",
+			Prerequisites: []*featureproto.Prerequisite{
+				{
+					FeatureId: "fid10",
+				},
+			},
+		},
+		{
+			Id: "fid2",
+		},
+		{
+			Id: "fid10",
+		},
+		{
+			Id: "fid",
+			Prerequisites: []*featureproto.Prerequisite{
+				{
+					FeatureId: "fid3",
+				},
+			},
+		},
+	}
+	patterns := []struct {
+		desc        string
+		fs          []*featureproto.Feature
+		id          string
+		expected    []*featureproto.Feature
+		expectedErr error
+	}{
+		{
+			desc:        "err: feature not found",
+			id:          "not_found",
+			fs:          multipleFs,
+			expected:    nil,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc:        "success: feature id is empty",
+			id:          "",
+			fs:          multipleFs,
+			expected:    multipleFs,
+			expectedErr: nil,
+		},
+		{
+			desc: "success: prerequisite not configured",
+			id:   "fid",
+			fs:   multipleFs,
+			expected: []*featureproto.Feature{
+				multipleFs[3],
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:        "success: prerequisite configured",
+			id:          "fid",
+			fs:          multiplePreFs,
+			expected:    multiplePreFs,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createFeatureService(mockController)
+			actual, err := service.getTargetFeatures(p.fs, p.id, localizer)
+			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
+		})
 	}
 }
 

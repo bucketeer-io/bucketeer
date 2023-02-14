@@ -11963,6 +11963,11 @@
                 "id": 3,
                 "name": "tag",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "feature_id",
+                "type": "string"
               }
             ]
           },
