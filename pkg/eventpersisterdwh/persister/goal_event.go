@@ -22,13 +22,10 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	ft "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
@@ -251,7 +248,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			exp.FeatureVersion,
 		)
 		if err != nil {
-			if err == ErrEvaluationsAreEmpty || err == ErrFailedToEvaluateFeature {
+			if err == ErrEvaluationsAreEmpty {
 				return nil, false, err
 			}
 			return nil, true, err
@@ -316,62 +313,13 @@ func (w *goalEvtWriter) getUserEvaluation(
 	environmentNamespace, tag, featureID string,
 	featureVersion int32,
 ) (*featureproto.Evaluation, error) {
-	req := &featureproto.GetFeatureRequest{
+	resp, err := w.featureClient.EvaluateFeatures(ctx, &featureproto.EvaluateFeaturesRequest{
 		EnvironmentNamespace: environmentNamespace,
-		Id:                   featureID,
-	}
-	// Get Feature to evaluate the user
-	resp, err := w.featureClient.GetFeature(ctx, req)
+		FeatureId:            featureID,
+		Tag:                  tag,
+		User:                 user,
+	})
 	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			handledCounter.WithLabelValues(codeFeatureNotFound).Inc()
-			w.logger.Error(
-				"Feature not found",
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-				zap.String("userId", user.Id),
-				zap.String("featureId", featureID),
-				zap.Int32("featureVersion", featureVersion),
-				zap.String("tag", tag),
-			)
-			return nil, ErrFeatureNotFound
-		}
-		w.logger.Error(
-			"Failed to get feature",
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.String("userId", user.Id),
-			zap.String("featureId", featureID),
-			zap.Int32("featureVersion", featureVersion),
-			zap.String("tag", tag),
-		)
-		handledCounter.WithLabelValues(codeFailedToGetFeature).Inc()
-		return nil, ErrFailedToGetFeature
-	}
-	// List segment users
-	mapSegmentUsers, err := w.listSegmentUsers(ctx, resp.Feature, user.Id, environmentNamespace)
-	if err != nil {
-		handledCounter.WithLabelValues(codeFailedToListSegmentUsers).Inc()
-		w.logger.Error(
-			"Failed to list segments",
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.String("userId", user.Id),
-			zap.String("featureId", featureID),
-			zap.Int32("featureVersion", featureVersion),
-			zap.String("tag", tag),
-		)
-		return nil, ErrFailedToListSegmentUsers
-	}
-	// Evalute user
-	evs, err := ftdomain.EvaluateFeatures(
-		[]*featureproto.Feature{resp.Feature},
-		user,
-		mapSegmentUsers,
-		tag,
-	)
-	if err != nil {
-		handledCounter.WithLabelValues(codeFailedToEvaluateFeature).Inc()
 		w.logger.Error(
 			"Failed to evaluate user",
 			zap.Error(err),
@@ -381,9 +329,10 @@ func (w *goalEvtWriter) getUserEvaluation(
 			zap.Int32("featureVersion", featureVersion),
 			zap.String("tag", tag),
 		)
-		return nil, ErrFailedToEvaluateFeature
+		handledCounter.WithLabelValues(codeFailedToEvaluateUser).Inc()
+		return nil, ErrFailedToEvaluateUser
 	}
-	if len(evs.Evaluations) == 0 {
+	if len(resp.UserEvaluations.Evaluations) == 0 {
 		handledCounter.WithLabelValues(codeEvaluationsAreEmpty).Inc()
 		w.logger.Error(
 			"Evaluations are empty",
@@ -396,41 +345,5 @@ func (w *goalEvtWriter) getUserEvaluation(
 		)
 		return nil, ErrEvaluationsAreEmpty
 	}
-	return evs.Evaluations[0], nil
-}
-
-func (w *goalEvtWriter) listSegmentUsers(
-	ctx context.Context,
-	feature *featureproto.Feature,
-	userID string,
-	environmentNamespace string,
-) (map[string][]*featureproto.SegmentUser, error) {
-	f := &ftdomain.Feature{Feature: feature}
-	if len(f.ListSegmentIDs()) == 0 {
-		return nil, nil
-	}
-	users := make(map[string][]*featureproto.SegmentUser)
-	for _, segmentID := range f.ListSegmentIDs() {
-		s, err, _ := w.flightgroup.Do(w.segmentFlightID(environmentNamespace, segmentID), func() (interface{}, error) {
-			req := &featureproto.ListSegmentUsersRequest{
-				SegmentId:            segmentID,
-				EnvironmentNamespace: environmentNamespace,
-			}
-			resp, err := w.featureClient.ListSegmentUsers(ctx, req)
-			if err != nil {
-				return nil, err
-			}
-			return resp.Users, nil
-		})
-		if err != nil {
-			return nil, err
-		}
-		segmentUsers := s.([]*featureproto.SegmentUser)
-		users[segmentID] = segmentUsers
-	}
-	return users, nil
-}
-
-func (w *goalEvtWriter) segmentFlightID(environmentNamespace, segmentID string) string {
-	return environmentNamespace + ":" + segmentID
+	return resp.UserEvaluations.Evaluations[0], nil
 }

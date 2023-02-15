@@ -23,13 +23,10 @@ import (
 const (
 	codeEvaluationsAreEmpty            = "EvaluationsAreEmpty"
 	codeGoalEventOlderThanExperiment   = "GoalEventOlderThanExperiment"
-	codeFailedToEvaluateFeature        = "FailedToEvaluateFeature"
-	codeFailedToGetFeature             = "FailedToGetFeature"
+	codeFailedToEvaluateUser           = "FailedToEvaluateUser"
 	codeFailedToListExperiments        = "FailedToListExperiments"
-	codeFailedToListSegmentUsers       = "FailedToListSegmentUsers"
 	codeFailedToAppendEvaluationEvents = "FailedToAppendEvaluationEvents"
 	codeFailedToAppendGoalEvents       = "FailedToAppendGoalEvents"
-	codeFeatureNotFound                = "FeatureNotFound"
 	codeLinked                         = "Linked"
 	codeNoLink                         = "NoLink"
 )

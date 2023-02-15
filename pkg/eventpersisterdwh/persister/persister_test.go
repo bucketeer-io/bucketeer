@@ -25,14 +25,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/metadata"
 
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -322,7 +319,11 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	now := time.Now()
 
 	environmentNamespace := "ns"
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	eventID := "event-id"
 	user := &userproto.User{
@@ -331,16 +332,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	}
 	userData, err := json.Marshal(user.Data)
 	require.NoError(t, err)
-
-	localizer := locale.NewLocalizer(locale.NewLocale(locale.JaJP))
-	createError := func(status *status.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 	patterns := []struct {
 		desc               string
 		setup              func(context.Context, *goalEvtWriter)
@@ -453,7 +444,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "ErrFeatureNotFound",
+			desc: "err: ErrFailedToEvaluateUser",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
@@ -476,61 +467,9 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						},
 					},
 				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
-					&featureproto.GetFeatureRequest{
-						Id:                   "fid",
-						EnvironmentNamespace: environmentNamespace,
-					},
-				).Return(nil, createError(status.New(codes.NotFound, "feature not found"), localizer.MustLocalize(locale.NotFoundError)))
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: now.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected:           nil,
-			expectedErr:        ErrFeatureNotFound,
-			expectedRepeatable: true,
-		},
-		{
-			desc: "ErrFailedToGetFeature",
-			setup: func(ctx context.Context, p *goalEvtWriter) {
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-						},
-					},
-				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(
-					ctx,
-					&featureproto.GetFeatureRequest{
-						Id:                   "fid",
-						EnvironmentNamespace: environmentNamespace,
-					},
+					gomock.Any(),
 				).Return(nil, errors.New("internal error"))
 			},
 			input: &eventproto.GoalEvent{
@@ -547,11 +486,11 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           nil,
-			expectedErr:        ErrFailedToGetFeature,
+			expectedErr:        ErrFailedToEvaluateUser,
 			expectedRepeatable: true,
 		},
 		{
-			desc: "ErrFailedToListSegmentUsers",
+			desc: "err: ErrEvaluationsAreEmpty",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
@@ -574,22 +513,12 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						},
 					},
 				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
-					&featureproto.GetFeatureRequest{
-						Id:                   "fid",
-						EnvironmentNamespace: environmentNamespace,
-					},
-				).Return(&featureproto.GetFeatureResponse{
-					Feature: feature,
+					gomock.Any(),
+				).Return(&featureproto.EvaluateFeaturesResponse{
+					UserEvaluations: &featureproto.UserEvaluations{},
 				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().ListSegmentUsers(
-					ctx,
-					&featureproto.ListSegmentUsersRequest{
-						SegmentId:            "segmentID",
-						EnvironmentNamespace: environmentNamespace,
-					},
-				).Return(nil, errors.New("internal error"))
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
@@ -603,140 +532,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Value:       float64(1.2),
 				Evaluations: nil,
 				Tag:         "tag",
-			},
-			expected:           nil,
-			expectedErr:        ErrFailedToListSegmentUsers,
-			expectedRepeatable: true,
-		},
-		{
-			desc: "ErrFailedToEvaluateFeature",
-			setup: func(ctx context.Context, p *goalEvtWriter) {
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-						},
-					},
-				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(
-					ctx,
-					&featureproto.GetFeatureRequest{
-						Id:                   "fid",
-						EnvironmentNamespace: environmentNamespace,
-					},
-				).Return(&featureproto.GetFeatureResponse{
-					Feature: featureForError,
-				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().ListSegmentUsers(
-					ctx,
-					&featureproto.ListSegmentUsersRequest{
-						SegmentId:            "segmentID",
-						EnvironmentNamespace: environmentNamespace,
-					},
-				).Return(&featureproto.ListSegmentUsersResponse{
-					Users: []*featureproto.SegmentUser{
-						{
-							Id:        "segmentUserID",
-							SegmentId: "segmentID",
-							UserId:    "userID",
-							State:     featureproto.SegmentUser_INCLUDED,
-						},
-					},
-				}, nil)
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: now.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "",
-			},
-			expected:           nil,
-			expectedErr:        ErrFailedToEvaluateFeature,
-			expectedRepeatable: false,
-		},
-		{
-			desc: "ErrEvaluationsAreEmpty",
-			setup: func(ctx context.Context, p *goalEvtWriter) {
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-						},
-					},
-				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(
-					ctx,
-					&featureproto.GetFeatureRequest{
-						Id:                   "fid",
-						EnvironmentNamespace: environmentNamespace,
-					},
-				).Return(&featureproto.GetFeatureResponse{
-					Feature: feature,
-				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().ListSegmentUsers(
-					ctx,
-					&featureproto.ListSegmentUsersRequest{
-						SegmentId:            "segmentID",
-						EnvironmentNamespace: environmentNamespace,
-					},
-				).Return(&featureproto.ListSegmentUsersResponse{
-					Users: []*featureproto.SegmentUser{
-						{
-							Id:        "segmentUserID",
-							SegmentId: "segmentID",
-							UserId:    "userID",
-							State:     featureproto.SegmentUser_INCLUDED,
-						},
-					},
-				}, nil)
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: now.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "",
 			},
 			expected:           nil,
 			expectedErr:        ErrEvaluationsAreEmpty,
@@ -782,54 +577,56 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						},
 					},
 				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
-					&featureproto.GetFeatureRequest{
-						Id:                   "fid",
+					&featureproto.EvaluateFeaturesRequest{
 						EnvironmentNamespace: environmentNamespace,
+						FeatureId:            "fid",
+						Tag:                  "tag",
+						User:                 user,
 					},
-				).Return(&featureproto.GetFeatureResponse{
-					Feature: feature,
-				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(
-					ctx,
-					&featureproto.GetFeatureRequest{
-						Id:                   "fid-2",
-						EnvironmentNamespace: environmentNamespace,
-					},
-				).Return(&featureproto.GetFeatureResponse{
-					Feature: feature2,
-				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().ListSegmentUsers(
-					ctx,
-					&featureproto.ListSegmentUsersRequest{
-						SegmentId:            "segmentID",
-						EnvironmentNamespace: environmentNamespace,
-					},
-				).Return(&featureproto.ListSegmentUsersResponse{
-					Users: []*featureproto.SegmentUser{
-						{
-							Id:        "segmentUserID",
-							SegmentId: "segmentID",
-							UserId:    "uid",
-							State:     featureproto.SegmentUser_INCLUDED,
+				).Return(&featureproto.EvaluateFeaturesResponse{
+					UserEvaluations: &featureproto.UserEvaluations{
+						Id: "",
+						Evaluations: []*featureproto.Evaluation{
+							{
+								Id:             "eval-id",
+								FeatureId:      "fid",
+								FeatureVersion: int32(1),
+								VariationId:    "variationID_B",
+								Reason: &featureproto.Reason{
+									Type: featureproto.Reason_RULE,
+								},
+								UserId: user.Id,
+							},
 						},
+						CreatedAt: time.Now().Unix(),
 					},
 				}, nil)
-				p.featureClient.(*ftmock.MockClient).EXPECT().ListSegmentUsers(
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
-					&featureproto.ListSegmentUsersRequest{
-						SegmentId:            "segmentID-2",
+					&featureproto.EvaluateFeaturesRequest{
 						EnvironmentNamespace: environmentNamespace,
+						FeatureId:            "fid-2",
+						Tag:                  "tag",
+						User:                 user,
 					},
-				).Return(&featureproto.ListSegmentUsersResponse{
-					Users: []*featureproto.SegmentUser{
-						{
-							Id:        "segmentUserID-2",
-							SegmentId: "segmentID-2",
-							UserId:    "userID-2",
-							State:     featureproto.SegmentUser_INCLUDED,
+				).Return(&featureproto.EvaluateFeaturesResponse{
+					UserEvaluations: &featureproto.UserEvaluations{
+						Id: "",
+						Evaluations: []*featureproto.Evaluation{
+							{
+								Id:             "eval-id",
+								FeatureId:      "fid-2",
+								FeatureVersion: int32(1),
+								VariationId:    "variationID-2_A",
+								Reason: &featureproto.Reason{
+									Type: featureproto.Reason_DEFAULT,
+								},
+								UserId: user.Id,
+							},
 						},
+						CreatedAt: time.Now().Unix(),
 					},
 				}, nil)
 			},
