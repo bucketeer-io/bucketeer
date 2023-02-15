@@ -1,3 +1,4 @@
+import { getSelectedLanguage, LanguageTypes } from '@/lang/getSelectedLanguage';
 import { FC, memo } from 'react';
 import { FormattedDate } from 'react-intl';
 import { register, format } from 'timeago.js';
@@ -9,8 +10,13 @@ export interface RelativeDateTextProps {
   date: Date;
 }
 
-export const RelativeDateText: FC<RelativeDateTextProps> = memo(({ date }) => {
+const isLanguageJapanese = getSelectedLanguage() === LanguageTypes.JAPAN;
+
+if (isLanguageJapanese) {
   register('ja', ja);
+}
+
+export const RelativeDateText: FC<RelativeDateTextProps> = memo(({ date }) => {
   return (
     <HoverPopover
       render={() => {
@@ -21,7 +27,7 @@ export const RelativeDateText: FC<RelativeDateTextProps> = memo(({ date }) => {
               year="numeric"
               month="long"
               day="numeric"
-              weekday="narrow"
+              weekday="short"
               hour="2-digit"
               minute="2-digit"
             />
@@ -29,7 +35,7 @@ export const RelativeDateText: FC<RelativeDateTextProps> = memo(({ date }) => {
         );
       }}
     >
-      <span>{`${format(date, 'ja')}`}</span>
+      <span>{`${format(date, isLanguageJapanese ? 'ja' : null)}`}</span>
     </HoverPopover>
   );
 });
