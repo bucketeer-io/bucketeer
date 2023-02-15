@@ -67,6 +67,7 @@ message ListFeaturesRequest {
   google.protobuf.BoolValue has_experiment = 9;
   string search_keyword = 10;
   google.protobuf.BoolValue archived = 11;
+  google.protobuf.BoolValue has_prerequisites = 12;
 }
 
 message ListFeaturesResponse {

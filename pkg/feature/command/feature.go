@@ -143,6 +143,9 @@ func (h *FeatureCommandHandler) CreateFeature(ctx context.Context, cmd *proto.Cr
 		DefaultOffVariationIndex: cmd.DefaultOffVariationIndex,
 		VariationType:            cmd.VariationType,
 		Tags:                     h.feature.Tags,
+		Prerequisites:            h.feature.Prerequisites,
+		Targets:                  h.feature.Targets,
+		Rules:                    h.feature.Rules,
 	})
 	if err != nil {
 		return err

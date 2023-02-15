@@ -173,6 +173,7 @@ func (s *FeatureService) ListFeatures(
 			req.Maintainer,
 			req.Enabled,
 			req.Archived,
+			req.HasPrerequisites,
 			req.SearchKeyword,
 			req.OrderBy,
 			req.OrderDirection,
@@ -187,6 +188,7 @@ func (s *FeatureService) ListFeatures(
 			req.Maintainer,
 			req.Enabled,
 			req.Archived,
+			req.HasPrerequisites,
 			req.SearchKeyword,
 			req.OrderBy,
 			req.OrderDirection,
@@ -212,6 +214,7 @@ func (s *FeatureService) listFeatures(
 	maintainer string,
 	enabled *wrappers.BoolValue,
 	archived *wrappers.BoolValue,
+	hasPrerequisites *wrappers.BoolValue,
 	searchKeyword string,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
@@ -240,6 +243,19 @@ func (s *FeatureService) listFeatures(
 	}
 	if archived != nil {
 		whereParts = append(whereParts, mysql.NewFilter("archived", "=", archived.Value))
+	}
+	if hasPrerequisites != nil {
+		if hasPrerequisites.Value {
+			whereParts = append(
+				whereParts,
+				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
+			)
+		} else {
+			whereParts = append(
+				whereParts,
+				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
+			)
+		}
 	}
 	if searchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, searchKeyword))
@@ -302,6 +318,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	maintainer string,
 	enabled *wrappers.BoolValue,
 	archived *wrappers.BoolValue,
+	hasPrerequisites *wrappers.BoolValue,
 	searchKeyword string,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
@@ -333,6 +350,19 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	}
 	if archived != nil {
 		whereParts = append(whereParts, mysql.NewFilter("feature.archived", "=", archived.Value))
+	}
+	if hasPrerequisites != nil {
+		if hasPrerequisites.Value {
+			whereParts = append(
+				whereParts,
+				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
+			)
+		} else {
+			whereParts = append(
+				whereParts,
+				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
+			)
+		}
 	}
 	if searchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, searchKeyword))
@@ -1616,6 +1646,7 @@ func (s *FeatureService) getFeatures(
 		"",
 		nil,
 		"",
+		nil,
 		nil,
 		nil,
 		"",

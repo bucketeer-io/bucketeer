@@ -77,6 +77,9 @@ func NewFeature(
 		VariationType: variationType,
 		CreatedAt:     time.Now().Unix(),
 		Maintainer:    maintainer,
+		Prerequisites: []*feature.Prerequisite{},
+		Targets:       []*feature.Target{},
+		Rules:         []*feature.Rule{},
 	}}
 	for i := range variations {
 		id, err := uuid.NewUUID()
