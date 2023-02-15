@@ -1815,6 +1815,8 @@ func TestNewClonedFeature(t *testing.T) {
 				assert.Equal(t, actual.Variations[i].Id, actual.DefaultStrategy.RolloutStrategy.Variations[i].Variation)
 			}
 		}
+		assert.NotNil(t, actual.Prerequisites)
+		assert.Equal(t, len(actual.Prerequisites), 0)
 		for i := range actual.Rules {
 			if actual.Rules[i].Strategy.Type == feature.Strategy_FIXED {
 				assert.Equal(t, actual.Rules[i].Strategy.FixedStrategy.Variation, actual.Variations[i].Id)

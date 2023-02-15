@@ -821,6 +821,7 @@ func (f *Feature) Clone(
 		CreatedAt:       now,
 		UpdatedAt:       now,
 		Variations:      f.Variations,
+		Prerequisites:   []*feature.Prerequisite{},
 		Targets:         f.Targets,
 		Rules:           f.Rules,
 		DefaultStrategy: f.DefaultStrategy,
