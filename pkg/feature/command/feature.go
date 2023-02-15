@@ -259,6 +259,7 @@ func (h *FeatureCommandHandler) CloneFeature(ctx context.Context, cmd *proto.Clo
 		Tags:            h.feature.Tags,
 		Maintainer:      h.feature.Maintainer,
 		VariationType:   h.feature.VariationType,
+		Prerequisites:   h.feature.Prerequisites,
 	})
 	if err != nil {
 		return err

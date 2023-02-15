@@ -403,6 +403,7 @@ message FeatureClonedEvent {
   repeated string tags = 9;
   string maintainer = 10;
   bucketeer.feature.Feature.VariationType variation_type = 11;
+  repeated bucketeer.feature.Prerequisite prerequisites = 12;
 }
 
 message FeatureSamplingSeedResetEvent {
