@@ -40,6 +40,238 @@
 | API throttling(Tokyo region) |               | 1500 -> 300 transactions per second (3000 if high throughput) |                             |
 | messages only once           |               | ◯                                                            |                             |
 
+#### How to use SNS, SQS
+
+##### SNS
+
+```go
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX - License - Identifier: Apache - 2.0
+// snippet-start:[sns.go-v2.Publish]
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
+)
+
+// SNSPublishAPI defines the interface for the Publish function.
+// We use this interface to test the function using a mocked service.
+type SNSPublishAPI interface {
+	Publish(ctx context.Context,
+		params *sns.PublishInput,
+		optFns ...func(*sns.Options)) (*sns.PublishOutput, error)
+}
+
+// PublishMessage publishes a message to an Amazon Simple Notification Service (Amazon SNS) topic
+// Inputs:
+//     c is the context of the method call, which includes the Region
+//     api is the interface that defines the method call
+//     input defines the input arguments to the service call.
+// Output:
+//     If success, a PublishOutput object containing the result of the service call and nil
+//     Otherwise, nil and an error from the call to Publish
+func PublishMessage(c context.Context, api SNSPublishAPI, input *sns.PublishInput) (*sns.PublishOutput, error) {
+	return api.Publish(c, input)
+}
+
+func main() {
+	msg := flag.String("m", "", "The message to send to the subscribed users of the topic")
+	topicARN := flag.String("t", "", "The ARN of the topic to which the user subscribes")
+
+	flag.Parse()
+
+	if *msg == "" || *topicARN == "" {
+		fmt.Println("You must supply a message and topic ARN")
+		fmt.Println("-m MESSAGE -t TOPIC-ARN")
+		return
+	}
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("ap-northeast-1"))
+	if err != nil {
+		panic("configuration error, " + err.Error())
+	}
+
+	client := sns.NewFromConfig(cfg)
+
+	msgs := []string{"1", "2", "3", "4", "5"}
+
+	for _, m := range msgs {
+		input := &sns.PublishInput{
+			Message:  &m,
+			TopicArn: topicARN,
+		}
+
+		_, err := PublishMessage(context.TODO(), client, input)
+		if err != nil {
+			fmt.Println("Got an error publishing the message:")
+			fmt.Println(err)
+			return
+		}
+	}
+
+	// fmt.Println("Message ID: " + *result.MessageId)
+}
+```
+
+##### SQS
+
+```go
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX - License - Identifier: Apache - 2.0
+// snippet-start:[sqs.go-v2.ReceiveMessage]
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+)
+
+// SQSReceiveMessageAPI defines the interface for the GetQueueUrl function.
+// We use this interface to test the function using a mocked service.
+type SQSReceiveMessageAPI interface {
+	GetQueueUrl(ctx context.Context,
+		params *sqs.GetQueueUrlInput,
+		optFns ...func(*sqs.Options)) (*sqs.GetQueueUrlOutput, error)
+
+	ReceiveMessage(ctx context.Context,
+		params *sqs.ReceiveMessageInput,
+		optFns ...func(*sqs.Options)) (*sqs.ReceiveMessageOutput, error)
+}
+
+type SQSDeleteMessageAPI interface {
+	GetQueueUrl(ctx context.Context,
+		params *sqs.GetQueueUrlInput,
+		optFns ...func(*sqs.Options)) (*sqs.GetQueueUrlOutput, error)
+
+	DeleteMessage(ctx context.Context,
+		params *sqs.DeleteMessageInput,
+		optFns ...func(*sqs.Options)) (*sqs.DeleteMessageOutput, error)
+}
+
+// GetQueueURL gets the URL of an Amazon SQS queue.
+// Inputs:
+//     c is the context of the method call, which includes the AWS Region.
+//     api is the interface that defines the method call.
+//     input defines the input arguments to the service call.
+// Output:
+//     If success, a GetQueueUrlOutput object containing the result of the service call and nil.
+//     Otherwise, nil and an error from the call to GetQueueUrl.
+func GetQueueURL(c context.Context, api SQSReceiveMessageAPI, input *sqs.GetQueueUrlInput) (*sqs.GetQueueUrlOutput, error) {
+	return api.GetQueueUrl(c, input)
+}
+
+// RemoveMessage deletes a message from an Amazon SQS queue.
+// Inputs:
+//     c is the context of the method call, which includes the AWS Region.
+//     api is the interface that defines the method call.
+//     input defines the input arguments to the service call.
+// Output:
+//     If success, a DeleteMessageOutput object containing the result of the service call and nil.
+//     Otherwise, nil and an error from the call to DeleteMessage.
+func RemoveMessage(c context.Context, api SQSDeleteMessageAPI, input *sqs.DeleteMessageInput) (*sqs.DeleteMessageOutput, error) {
+	return api.DeleteMessage(c, input)
+}
+
+// GetMessages gets the most recent message from an Amazon SQS queue.
+// Inputs:
+//     c is the context of the method call, which includes the AWS Region.
+//     api is the interface that defines the method call.
+//     input defines the input arguments to the service call.
+// Output:
+//     If success, a ReceiveMessageOutput object containing the result of the service call and nil.
+//     Otherwise, nil and an error from the call to ReceiveMessage.
+func GetMessages(c context.Context, api SQSReceiveMessageAPI, input *sqs.ReceiveMessageInput) (*sqs.ReceiveMessageOutput, error) {
+	return api.ReceiveMessage(c, input)
+}
+
+func main() {
+	queue := flag.String("q", "", "The name of the queue")
+	timeout := flag.Int("t", 5, "How long, in seconds, that the message is hidden from others")
+	flag.Parse()
+
+	if *queue == "" {
+		fmt.Println("You must supply the name of a queue (-q QUEUE)")
+		return
+	}
+
+	if *timeout < 0 {
+		*timeout = 0
+	}
+
+	if *timeout > 12*60*60 {
+		*timeout = 12 * 60 * 60
+	}
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("ap-northeast-1"))
+	if err != nil {
+		panic("configuration error, " + err.Error())
+	}
+
+	client := sqs.NewFromConfig(cfg)
+
+	gQInput := &sqs.GetQueueUrlInput{
+		QueueName: queue,
+	}
+
+	// Get URL of queue
+	urlResult, err := GetQueueURL(context.TODO(), client, gQInput)
+	if err != nil {
+		fmt.Println("Got an error getting the queue URL:")
+		fmt.Println(err)
+		return
+	}
+
+	queueURL := urlResult.QueueUrl
+
+	gMInput := &sqs.ReceiveMessageInput{
+		MessageAttributeNames: []string{
+			string(types.QueueAttributeNameAll),
+		},
+		QueueUrl:            queueURL,
+		MaxNumberOfMessages: 1,
+		VisibilityTimeout:   int32(*timeout),
+	}
+
+	msgResult, err := GetMessages(context.TODO(), client, gMInput)
+	if err != nil {
+		fmt.Println("Got an error receiving messages:")
+		fmt.Println(err)
+		return
+	}
+
+	for _, m := range msgResult.Messages {
+		fmt.Println("Message ID:     " + *m.MessageId)
+		fmt.Println("Message Handle: " + *m.ReceiptHandle)
+		fmt.Println("Message Handle: " + *m.Body)
+
+		dMInput := &sqs.DeleteMessageInput{
+			QueueUrl:      queueURL,
+			ReceiptHandle: m.ReceiptHandle,
+		}
+
+		_, err = RemoveMessage(context.TODO(), client, dMInput)
+		if err != nil {
+			fmt.Println("Got an error deleting the message:")
+			fmt.Println(err)
+			return
+		}
+	}
+}
+
+// snippet-end:[sqs.go-v2.ReceiveMessage]
+
+```
+
 ### Cloud SQL
 
 #### Comparison Table
@@ -55,13 +287,156 @@
 |        | AlloyDB | Amazon Aurora | Azure SQL Database |
 | SLA(%) | >=99.99 | >=99.99       | >=99.995           |
 
+
+#### How to use RDS
+
+##### Normal Way
+
+```go
+package main
+
+import (
+	"database/sql"
+	"fmt"
+
+	_ "github.com/go-sql-driver/mysql"
+)
+
+func main() {
+
+	var dbName string = "mydb"
+	var dbUser string = "admin"
+	var dbHost string = "xxxxxxxxxxxxxxxxxxxxxxxx.rds.amazonaws.com"
+	var dbPort int = 3306
+	var dbEndpoint string = fmt.Sprintf("%s:%d", dbHost, dbPort)
+	var dbPass = "PASS"
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?collation=utf8mb4_bin",
+		dbUser, dbPass, dbEndpoint, dbName,
+	)
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("hoge")
+
+	err = db.Ping()
+	if err != nil {
+		panic(err)
+	}
+	var sample Sample
+
+	err = db.QueryRow("select * from sample where id = 'hogehoge';").Scan(&sample.id, &sample.num)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(sample.id, sample.num)
+}
+
+type Sample struct {
+	id  string
+	num int
+}
+```
+
+##### IAM authentication
+
+```go
+package main
+
+import (
+	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"database/sql"
+	"fmt"
+	"io/ioutil"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
+	"github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
+)
+
+type Sample struct {
+	id  string
+	num int
+}
+
+func main() {
+
+	var dbName string = "mydb"
+	var dbUser string = "iam_user"
+	var dbHost string = "xxxxxxxxxxxxxxxxxxxx.rds.amazonaws.com"
+	var dbPort int = 3306
+	var dbEndpoint string = fmt.Sprintf("%s:%d", dbHost, dbPort)
+	var region string = "ap-northeast-1"
+	var pemFile string = "xxxxxxxxxx.pem"
+
+	caCertPool := x509.NewCertPool()
+	pem, err := ioutil.ReadFile(pemFile)
+	if err != nil {
+		panic(err)
+	}
+	if ok := caCertPool.AppendCertsFromPEM(pem); !ok {
+		panic("fail")
+	}
+	mysql.RegisterTLSConfig("rds", &tls.Config{
+		ClientCAs:          caCertPool,
+		InsecureSkipVerify: true,
+	})
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		panic("configuration error: " + err.Error())
+	}
+
+	authenticationToken, err := auth.BuildAuthToken(
+		context.TODO(), dbEndpoint, region, dbUser, cfg.Credentials)
+	if err != nil {
+		panic("failed to create authentication token: " + err.Error())
+	}
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?allowCleartextPasswords=true&tls=rds",
+		dbUser, authenticationToken, dbEndpoint, dbName,
+	)
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("hoge")
+
+	err = db.Ping()
+	if err != nil {
+		panic(err)
+	}
+	var sample Sample
+
+	err = db.QueryRow("select * from sample where id = 'hogehoge';").Scan(&sample.id, &sample.num)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(sample.id, sample.num)
+}
+
+```
+
 ### BigQuery
 
 #### Comparison Table
 
-|      | GCP      | AWS                                                      | Azure                   |
-| ---- | -------- | -------------------------------------------------------- | ----------------------- |
-|      | BigQuery | Amazon Athena, Amazon Redshift, Amazon Redshift Spectrum | Azure Synapse Analytics |
+|      | GCP        | AWS1          | AWS2                | AWS3                       | Azure                   |
+| ---- | ---------- | ------------- | ------------------- | -------------------------- | ----------------------- |
+|      | BigQuery   | Amazon Athena | Amazon Redshift     | , Amazon Redshift Spectrum | Azure Synapse Analytics |
+| SLA  | \>= 99.99% | \>= 99.9%     | >=99.9%(Multi Node) | ?                          | \>= 99.9%               |
 
 ### MemoryStore
 
@@ -71,6 +446,112 @@
 | ------ | ----------- | ------------------ | ---------------------- |
 |        | Memorystore | Amazon ElastiCache | Azure Cache            |
 | SLA(%) | >=99.9      | >=99.9             | >=99.9 (from Standard) |
+
+#### How to use Amazon ElastiCache
+
+```go
+// Based on https://github.com/aws-samples/amazon-elasticache-samples
+package main
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/go-redis/redis/v8"
+	_ "github.com/go-sql-driver/mysql"
+)
+
+var ctx = context.Background()
+
+type redisClient struct {
+	redis *redis.Client
+	mysql *sql.DB
+}
+
+func (c *redisClient) fetch(ctx context.Context, query string) (interface{}, error) {
+	val, err := c.redis.Get(ctx, query).Bytes()
+	if err != nil {
+		return "", err
+	}
+	samples := []Sample{}
+	err = json.Unmarshal(val, &samples)
+	return samples, err
+}
+
+var dbName string = "tutorial"
+var dbUser string = "admin"
+var dbHost string = "xxxxxxxxxxxxxxxxxxx.rds.amazonaws.com"
+var dbPort int = 3306
+var dbEndpoint string = fmt.Sprintf("%s:%d", dbHost, dbPort)
+var dbPass = "PASS"
+var query = "SELECT * FROM planet"
+
+func main() {
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?collation=utf8mb4_bin",
+		dbUser, dbPass, dbEndpoint, dbName,
+	)
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		panic(err)
+	}
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr: "xxxxxxxxxxxxxxxxxxx.cache.amazonaws.com:6379",
+	})
+
+	client := redisClient{redis: rdb}
+	a, err := client.redis.Ping(ctx).Result()
+	fmt.Println(a)
+
+	val, err := client.fetch(ctx, query)
+	if err != nil {
+		if err == redis.Nil {
+			samples := []Sample{}
+			var sample Sample
+
+			rows, err := db.Query(query)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer rows.Close()
+
+			for rows.Next() {
+				if err := rows.Scan(&sample.Id, &sample.Name); err != nil {
+					log.Fatal(err)
+				}
+				samples = append(samples, sample)
+			}
+
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Println(samples)
+
+			decoded, err := json.Marshal(samples)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("%s\n", decoded)
+
+			rdb.SetEX(ctx, query, string(decoded), 5*time.Second).Err()
+		}
+	}
+	fmt.Println("key", val)
+}
+
+type Sample struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+```
 
 #### Controversial topic
 ##### 1. Can we configure Memorystore as optional?
