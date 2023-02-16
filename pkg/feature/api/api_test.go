@@ -26,7 +26,6 @@ import (
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
-	featurestoragemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -101,7 +100,6 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 	e.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(&experimentproto.ListExperimentsResponse{}, nil).AnyTimes()
 	return &FeatureService{
 		mysqlmock.NewMockClient(c),
-		nil,
 		a,
 		e,
 		cachev3mock.NewMockFeaturesCache(c),
@@ -127,7 +125,6 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 	a.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &FeatureService{
 		mysqlClient:           mysqlmock.NewMockClient(c),
-		userEvaluationStorage: featurestoragemock.NewMockUserEvaluationsStorage(c),
 		accountClient:         a,
 		experimentClient:      experimentclientmock.NewMockClient(c),
 		featuresCache:         cachev3mock.NewMockFeaturesCache(c),

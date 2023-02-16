@@ -389,26 +389,6 @@ func (mr *MockClientMockRecorder) GetSegmentUser(ctx, in interface{}, opts ...in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentUser", reflect.TypeOf((*MockClient)(nil).GetSegmentUser), varargs...)
 }
 
-// GetUserEvaluations mocks base method.
-func (m *MockClient) GetUserEvaluations(ctx context.Context, in *feature.GetUserEvaluationsRequest, opts ...grpc.CallOption) (*feature.GetUserEvaluationsResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetUserEvaluations", varargs...)
-	ret0, _ := ret[0].(*feature.GetUserEvaluationsResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserEvaluations indicates an expected call of GetUserEvaluations.
-func (mr *MockClientMockRecorder) GetUserEvaluations(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserEvaluations", reflect.TypeOf((*MockClient)(nil).GetUserEvaluations), varargs...)
-}
-
 // ListEnabledFeatures mocks base method.
 func (m *MockClient) ListEnabledFeatures(ctx context.Context, in *feature.ListEnabledFeaturesRequest, opts ...grpc.CallOption) (*feature.ListEnabledFeaturesResponse, error) {
 	m.ctrl.T.Helper()
@@ -607,24 +587,4 @@ func (mr *MockClientMockRecorder) UpdateSegment(ctx, in interface{}, opts ...int
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSegment", reflect.TypeOf((*MockClient)(nil).UpdateSegment), varargs...)
-}
-
-// UpsertUserEvaluation mocks base method.
-func (m *MockClient) UpsertUserEvaluation(ctx context.Context, in *feature.UpsertUserEvaluationRequest, opts ...grpc.CallOption) (*feature.UpsertUserEvaluationResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "UpsertUserEvaluation", varargs...)
-	ret0, _ := ret[0].(*feature.UpsertUserEvaluationResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpsertUserEvaluation indicates an expected call of UpsertUserEvaluation.
-func (mr *MockClientMockRecorder) UpsertUserEvaluation(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertUserEvaluation", reflect.TypeOf((*MockClient)(nil).UpsertUserEvaluation), varargs...)
 }

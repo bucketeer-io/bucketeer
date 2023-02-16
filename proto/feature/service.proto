@@ -309,22 +309,6 @@ message EvaluateFeaturesResponse {
   bucketeer.feature.UserEvaluations user_evaluations = 1;
 }
 
-message GetUserEvaluationsRequest {
-  string environment_namespace = 1;
-  string tag = 2;
-  string user_id = 3;
-}
-
-message GetUserEvaluationsResponse {
-  repeated bucketeer.feature.Evaluation evaluations = 1;
-}
-
-message UpsertUserEvaluationRequest {
-  string environment_namespace = 1;
-  string tag = 2;
-  bucketeer.feature.Evaluation evaluation = 3;
-}
-
 message ListTagsRequest {
   enum OrderBy {
     DEFAULT = 0;
@@ -349,8 +333,6 @@ message ListTagsResponse {
   string cursor = 2;
   int64 total_count = 3;
 }
-
-message UpsertUserEvaluationResponse {}
 
 service FeatureService {
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {}
@@ -401,9 +383,5 @@ service FeatureService {
       returns (BulkDownloadSegmentUsersResponse) {}
   rpc EvaluateFeatures(EvaluateFeaturesRequest)
       returns (EvaluateFeaturesResponse) {}
-  rpc GetUserEvaluations(GetUserEvaluationsRequest)
-      returns (GetUserEvaluationsResponse) {}
-  rpc UpsertUserEvaluation(UpsertUserEvaluationRequest)
-      returns (UpsertUserEvaluationResponse) {}
   rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {}
 }
