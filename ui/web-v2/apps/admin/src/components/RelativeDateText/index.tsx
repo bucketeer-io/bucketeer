@@ -10,7 +10,7 @@ export interface RelativeDateTextProps {
   date: Date;
 }
 
-const isLanguageJapanese = getSelectedLanguage() === LanguageTypes.JAPAN;
+const isLanguageJapanese = getSelectedLanguage() === LanguageTypes.JAPANESE;
 
 if (isLanguageJapanese) {
   register('ja', ja);

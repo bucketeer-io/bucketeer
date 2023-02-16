@@ -4,4 +4,4 @@ import { localEn } from './en';
 import { localJp } from './jp';
 
 export const yupLocale =
-  getSelectedLanguage() === LanguageTypes.JAPAN ? localJp : localEn;
+  getSelectedLanguage() === LanguageTypes.JAPANESE ? localJp : localEn;

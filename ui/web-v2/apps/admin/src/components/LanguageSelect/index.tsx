@@ -11,7 +11,7 @@ interface ILanguageItem {
 }
 
 const languageList: ILanguageItem[] = [
-  { label: '日本国', value: LanguageTypes.JAPAN },
+  { label: '日本語', value: LanguageTypes.JAPANESE },
   { label: 'English', value: LanguageTypes.ENGLISH },
 ];
 

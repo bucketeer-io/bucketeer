@@ -6,7 +6,7 @@ import { getSelectedLanguage, LanguageTypes } from './getSelectedLanguage';
 
 let messages = en;
 
-if (getSelectedLanguage() === LanguageTypes.JAPAN) {
+if (getSelectedLanguage() === LanguageTypes.JAPANESE) {
   messages = ja;
 }
 
