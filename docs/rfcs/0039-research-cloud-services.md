@@ -569,6 +569,92 @@ Yes. We can configure memory store as a optional in YAML file.
 |        | Cloud KMS | AWS Key Management Service (KMS) | Azure Key Vault |
 | SLA(%) | >=99.99   | >=99.999                         | >=99.99         |
 
+
+#### How to use AWS KMS
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
+)
+
+const keyID = "<KEY ID>"
+
+func main() {
+	ctx := context.TODO()
+	str := `{"body":{"Alert id": 123}}`
+
+	a, _ := NewAwsKMSCrypto(ctx, keyID, "ap-northeast-1")
+	json := []byte(str)
+	result, err := a.Encrypt(ctx, json)
+	if err != nil {
+		log.Fatal(err)
+	}
+	decripted, err := a.Decrypt(ctx, result)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(string(decripted)) // => {"body":{"Alert id": 123}}
+}
+
+type EncrypterDecrypter interface {
+	Encrypt(ctx context.Context, data []byte) ([]byte, error)
+	Decrypt(ctx context.Context, data []byte) ([]byte, error)
+}
+
+type awsKMSCrypto struct {
+	client *kms.Client
+	keyID  string
+}
+
+func NewAwsKMSCrypto(
+	ctx context.Context,
+	keyID, region string,
+) (EncrypterDecrypter, error) {
+	cfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion(region),
+	)
+	if err != nil {
+		return nil, err
+	}
+	client := kms.NewFromConfig(cfg)
+	return awsKMSCrypto{
+		client: client,
+		keyID:  keyID,
+	}, nil
+}
+
+func (c awsKMSCrypto) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
+	resp, err := c.client.Encrypt(ctx, &kms.EncryptInput{
+		Plaintext: data,
+		KeyId:     &c.keyID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.CiphertextBlob, nil
+}
+
+func (c awsKMSCrypto) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
+	resp, err := c.client.Decrypt(ctx, &kms.DecryptInput{
+		CiphertextBlob: data,
+		KeyId:          &c.keyID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Plaintext, nil
+}
+
+```
+
 ## Ref
 
 Order guarantee
