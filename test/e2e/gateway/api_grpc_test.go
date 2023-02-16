@@ -18,6 +18,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -250,7 +251,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	// InternalSDKErrorMetricsEvent
 	internalSDKErr, err := ptypes.MarshalAny(&eventproto.InternalSdkErrorMetricsEvent{
 		ApiId:  eventproto.ApiId_GET_EVALUATIONS,
-		Labels: map[string]string{"tag": "iOS"},
+		Labels: map[string]string{"tag": "IOS"},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -267,7 +268,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	// BadRequestErrorMetricsEvent
 	badRequestErr, err := ptypes.MarshalAny(&eventproto.BadRequestErrorMetricsEvent{
 		ApiId:  eventproto.ApiId_REGISTER_EVENTS,
-		Labels: map[string]string{"tag": "Android"},
+		Labels: map[string]string{"tag": "ANDROID"},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -284,7 +285,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	// SizeMetricsEvent
 	size, err := ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
 		ApiId:    eventproto.ApiId_REGISTER_EVENTS,
-		Labels:   map[string]string{"tag": "web"},
+		Labels:   map[string]string{"tag": "JAVASCRIPT"},
 		SizeByte: 99,
 	})
 	if err != nil {
@@ -294,7 +295,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 		Timestamp:  time.Now().Unix(),
 		Event:      size,
 		SdkVersion: "v0.0.1-e2e",
-		SourceId:   eventproto.SourceId_WEB,
+		SourceId:   eventproto.SourceId_JAVASCRIPT,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -302,7 +303,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 	// LatencyMetricsEvent
 	latency, err := ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
 		ApiId:    eventproto.ApiId_REGISTER_EVENTS,
-		Labels:   map[string]string{"tag": "go-server-sdk"},
+		Labels:   map[string]string{"tag": "GO_SERVER"},
 		Duration: durationpb.New(time.Duration(99)),
 	})
 	if err != nil {
@@ -344,6 +345,119 @@ func TestGrpcRegisterEvents(t *testing.T) {
 				Event: metricsLatency,
 			},
 		},
+	}
+	response, err := c.RegisterEvents(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response.Errors) > 0 {
+		t.Fatalf("Failed to register events. Error: %v", response.Errors)
+	}
+}
+
+func TestRegisterEventsForMetricsEvent(t *testing.T) {
+	t.Parallel()
+	c := newGatewayClient(t)
+	defer c.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	sdkVersion := "v0.0.1-e2e"
+	apiIDs := []eventproto.ApiId{
+		eventproto.ApiId_GET_EVALUATION,
+		eventproto.ApiId_GET_EVALUATIONS,
+		eventproto.ApiId_REGISTER_EVENTS,
+	}
+	sourceIds := []eventproto.SourceId{
+		eventproto.SourceId_ANDROID,
+		eventproto.SourceId_IOS,
+		eventproto.SourceId_GO_SERVER,
+		eventproto.SourceId_NODE_SERVER,
+		eventproto.SourceId_JAVASCRIPT,
+	}
+	events := make([]*eventproto.Event, 0, 0)
+
+	for _, apiID := range apiIDs {
+		for _, sourceID := range sourceIds {
+			// InternalSDKErrorMetricsEvent
+			internalSDKErr, err := ptypes.MarshalAny(&eventproto.InternalSdkErrorMetricsEvent{
+				ApiId:  apiID,
+				Labels: map[string]string{"tag": sourceID.String()},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			metricsInternalSDK, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+				Timestamp:  time.Now().Unix(),
+				Event:      internalSDKErr,
+				SdkVersion: sdkVersion,
+				SourceId:   sourceID,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsInternalSDK})
+			// BadRequestErrorMetricsEvent
+			badRequestErr, err := ptypes.MarshalAny(&eventproto.BadRequestErrorMetricsEvent{
+				ApiId:  apiID,
+				Labels: map[string]string{"tag": sourceID.String()},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			metricsBadRequest, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+				Timestamp:  time.Now().Unix(),
+				Event:      badRequestErr,
+				SdkVersion: sdkVersion,
+				SourceId:   sourceID,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsBadRequest})
+			// SizeMetricsEvent
+			size, err := ptypes.MarshalAny(&eventproto.SizeMetricsEvent{
+				ApiId:    apiID,
+				Labels:   map[string]string{"tag": sourceID.String()},
+				SizeByte: rand.Int31n(100),
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			metricsSize, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+				Timestamp:  time.Now().Unix(),
+				Event:      size,
+				SdkVersion: sdkVersion,
+				SourceId:   sourceID,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsSize})
+			// LatencyMetricsEvent
+			latency, err := ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
+				ApiId:    apiID,
+				Labels:   map[string]string{"tag": sourceID.String()},
+				Duration: durationpb.New(time.Duration(rand.Intn(100))),
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			metricsLatency, err := ptypes.MarshalAny(&eventproto.MetricsEvent{
+				Timestamp:  time.Now().Unix(),
+				Event:      latency,
+				SdkVersion: sdkVersion,
+				SourceId:   sourceID,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsLatency})
+		}
+	}
+
+	req := &gatewayproto.RegisterEventsRequest{
+		Events: events,
 	}
 	response, err := c.RegisterEvents(ctx, req)
 	if err != nil {
