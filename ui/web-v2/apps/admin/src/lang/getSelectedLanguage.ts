@@ -1,5 +1,5 @@
 export enum LanguageTypes {
-  JAPAN = 'ja',
+  JAPANESE = 'ja',
   ENGLISH = 'en',
 }
 
@@ -10,7 +10,7 @@ export const getSelectedLanguage = () => {
     return language;
   }
 
-  const supportedLanguages = [LanguageTypes.JAPAN, LanguageTypes.ENGLISH];
+  const supportedLanguages = [LanguageTypes.JAPANESE, LanguageTypes.ENGLISH];
 
   const foundLanguage = supportedLanguages.find(
     (lang) => lang === window.navigator.language?.slice(0, 2)
