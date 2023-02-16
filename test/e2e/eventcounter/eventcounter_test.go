@@ -28,6 +28,7 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
@@ -49,7 +50,7 @@ import (
 const (
 	prefixTestName = "e2e-test"
 	timeout        = 20 * time.Second
-	retryTimes     = 360
+	retryTimes     = 30
 )
 
 const defaultVariationID = "default"
@@ -92,8 +93,20 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	addTag(t, tag, featureID, featureClient)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
+
+	// Because we set the user to the individual targeting,
+	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+	// evaluates the user
+	reason := &featureproto.Reason{
+		Type: featureproto.Reason_TARGET,
+	}
+	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+	// Get the latest version after all changes in the feature flag
+	f = getFeature(t, featureClient, featureID)
+
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
@@ -104,10 +117,12 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2))
-	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3))
+	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-time.Hour).Unix())
 
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -190,8 +205,20 @@ func TestExperimentGoalCount(t *testing.T) {
 	addTag(t, tag, featureID, featureClient)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
+
+	// Because we set the user to the individual targeting,
+	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+	// evaluates the user
+	reason := &featureproto.Reason{
+		Type: featureproto.Reason_TARGET,
+	}
+	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+	// Get the latest version after all changes in the feature flag
+	f = getFeature(t, featureClient, featureID)
+
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
@@ -202,10 +229,12 @@ func TestExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2))
-	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3))
+	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-time.Hour).Unix())
 
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -264,207 +293,6 @@ func TestExperimentGoalCount(t *testing.T) {
 	}
 }
 
-// Test for old SDK client. Tag is not set in the EvaluationEvent and GoalEvent
-// Evaluation field in the GoalEvent is deprecated.
-func TestExperimentResultWithoutTag(t *testing.T) {
-	t.Parallel()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-	ecClient := newEventCounterClient(t)
-	defer ecClient.Close()
-	uuid := newUUID(t)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userIDs := []string{}
-	for i := 0; i < 5; i++ {
-		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
-	}
-	featureID := createFeatureID(t, uuid)
-
-	cmd := newCreateFeatureCommand(featureID, []string{"a", "b"})
-	createFeature(t, featureClient, cmd)
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
-	f := getFeature(t, featureClient, featureID)
-	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
-	stopAt := startAt.Local().Add(time.Hour * 2)
-	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "TestExperimentResultWithoutTag", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-
-	// CVRs is 3/4
-	// Register goal variation
-	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[0], experiment.Variations[0].Id, float64(0.3))
-	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[1], experiment.Variations[0].Id, float64(0.2))
-	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[2], experiment.Variations[0].Id, float64(0.1))
-	// Register 3 events and 2 user counts for user 1, 2 and 3
-	// Register variation a
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, "")
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[0].Id, "")
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, "")
-	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, "")
-
-	// CVRs is 2/3
-	// Register goal
-	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[3], experiment.Variations[1].Id, float64(0.1))
-	registerGoalEventWithEvaluations(t, featureID, f.Version, goalIDs[0], userIDs[4], experiment.Variations[1].Id, float64(0.15))
-	// Register 3 events and 2 user counts for user 4 and 5
-	// Register variation
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, "")
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, "")
-	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, "")
-
-	for i := 0; i < retryTimes; i++ {
-		resp := getExperimentResult(t, ecClient, experiment.Id)
-		if resp != nil {
-			er := resp.ExperimentResult
-			if er.Id != experiment.Id {
-				t.Fatalf("experiment ID is not correct: %s", er.Id)
-			}
-			if len(er.GoalResults) == 0 {
-				continue
-			}
-			if len(er.GoalResults) != 1 {
-				t.Fatalf("the number of goal results is not correct: %d", len(er.GoalResults))
-			}
-			gr := er.GoalResults[0]
-			if gr.GoalId != goalIDs[0] {
-				t.Fatalf("goal ID is not correct: %s", gr.GoalId)
-			}
-			if len(gr.VariationResults) != 2 {
-				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
-			}
-			if gr.VariationResults[0].EvaluationCount.EventCount == 0 && // variation A
-				gr.VariationResults[0].EvaluationCount.UserCount == 0 &&
-				gr.VariationResults[1].EvaluationCount.EventCount == 0 && // variation B
-				gr.VariationResults[1].EvaluationCount.UserCount == 0 {
-				continue
-			}
-			if gr.VariationResults[0].ExperimentCount.EventCount == 0 && // variation A
-				gr.VariationResults[0].ExperimentCount.UserCount == 0 &&
-				gr.VariationResults[1].ExperimentCount.EventCount == 0 && // variation B
-				gr.VariationResults[1].ExperimentCount.UserCount == 0 {
-				continue
-			}
-			for _, vr := range gr.VariationResults {
-				// variation a
-				if vr.VariationId == experiment.Variations[0].Id {
-					vv := experiment.Variations[0].Value
-					// Evaluation
-					if vr.EvaluationCount.EventCount != 4 {
-						t.Fatalf("variation: %s: evaluation event count is not correct: %d", vv, vr.EvaluationCount.EventCount)
-					}
-					if vr.EvaluationCount.UserCount != 3 {
-						t.Fatalf("variation: %s: evaluation user count is not correct: %d", vv, vr.EvaluationCount.UserCount)
-					}
-					// Experiment
-					if vr.ExperimentCount.EventCount != 3 {
-						t.Fatalf("variation: %s: experiment event count is not correct: %d", vv, vr.ExperimentCount.EventCount)
-					}
-					if vr.ExperimentCount.UserCount != 3 {
-						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
-					}
-					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.6, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
-					}
-					// cvr prob best
-					if vr.CvrProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", vv, vr.CvrProbBest.Mean)
-					}
-					if vr.CvrProbBest.Sd <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", vv, vr.CvrProbBest.Sd)
-					}
-					if vr.CvrProbBest.Rhat <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", vv, vr.CvrProbBest.Rhat)
-					}
-					// cvr prob beat baseline
-					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", vv, vr.CvrProbBeatBaseline.Mean)
-					}
-					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Sd, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", vv, vr.CvrProbBeatBaseline.Sd)
-					}
-					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Rhat, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", vv, vr.CvrProbBeatBaseline.Rhat)
-					}
-					// value sum per user prob best
-					if vr.GoalValueSumPerUserProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBest.Mean)
-					}
-					// value sum per user prob beat baseline
-					if diff := cmp.Diff(vr.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBeatBaseline.Mean)
-					}
-					continue
-				}
-				// variation b
-				if vr.VariationId == experiment.Variations[1].Id {
-					vv := experiment.Variations[1].Value
-					// Evaluation
-					if vr.EvaluationCount.EventCount != 3 {
-						t.Fatalf("variation: %s: evaluation event count is not correct: %d", vv, vr.EvaluationCount.EventCount)
-					}
-					if vr.EvaluationCount.UserCount != 2 {
-						t.Fatalf("variation: %s: evaluation user count is not correct: %d", vv, vr.EvaluationCount.UserCount)
-					}
-					// Experiment
-					if vr.ExperimentCount.EventCount != 2 {
-						t.Fatalf("variation: %s: experiment event count is not correct: %d", vv, vr.ExperimentCount.EventCount)
-					}
-					if vr.ExperimentCount.UserCount != 2 {
-						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
-					}
-					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.25, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
-					}
-					// cvr prob best
-					if vr.CvrProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", vv, vr.CvrProbBest.Mean)
-					}
-					if vr.CvrProbBest.Sd <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", vv, vr.CvrProbBest.Sd)
-					}
-					if vr.CvrProbBest.Rhat <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", vv, vr.CvrProbBest.Rhat)
-					}
-					// cvr prob beat baseline
-					if vr.CvrProbBeatBaseline.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", vv, vr.CvrProbBeatBaseline.Mean)
-					}
-					if vr.CvrProbBeatBaseline.Sd <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", vv, vr.CvrProbBeatBaseline.Sd)
-					}
-					if vr.CvrProbBeatBaseline.Rhat <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", vv, vr.CvrProbBeatBaseline.Rhat)
-					}
-					// value sum per user prob best
-					if vr.GoalValueSumPerUserProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBest.Mean)
-					}
-					// value sum per user prob beat baseline
-					if vr.GoalValueSumPerUserProbBeatBaseline.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBeatBaseline.Mean)
-					}
-					continue
-				}
-				t.Fatalf("unknown variation results: %s", vr.VariationId)
-			}
-			break
-		}
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(10 * time.Second)
-	}
-}
-
 func TestGrpcExperimentResult(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
@@ -490,41 +318,65 @@ func TestGrpcExperimentResult(t *testing.T) {
 	addTag(t, tag, featureID, featureClient)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
+
+	// Because we set the user to the individual targeting,
+	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+	// evaluates the user
+	reason := &featureproto.Reason{
+		Type: featureproto.Reason_TARGET,
+	}
+	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
+	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[0].Id, featureClient)
+	addFeatureIndividualTargeting(t, featureID, userIDs[2], f.Variations[0].Id, featureClient)
+	addFeatureIndividualTargeting(t, featureID, userIDs[3], f.Variations[1].Id, featureClient)
+	addFeatureIndividualTargeting(t, featureID, userIDs[4], f.Variations[1].Id, featureClient)
+
+	// Get the latest version after all changes in the feature flag
+	f = getFeature(t, featureClient, featureID)
+
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
 	// CVRs is 3/4
 	// Register goal variation
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-time.Hour).Unix())
 	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	// Register 3 events and 2 user counts for user 1, 2 and 3
 	// Register variation a
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[0].Id, tag)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, tag)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, tag, reason)
 	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
 
 	// CVRs is 2/3
 	// Register goal
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-time.Hour).Unix())
 	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
 	// Register 3 events and 2 user counts for user 4 and 5
 	// Register variation
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag, reason)
 	// Increment evaluation event count
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout")
+		}
+		time.Sleep(10 * time.Second)
 		resp := getExperimentResult(t, ecClient, experiment.Id)
 		if resp != nil {
 			er := resp.ExperimentResult
@@ -544,15 +396,15 @@ func TestGrpcExperimentResult(t *testing.T) {
 			if len(gr.VariationResults) != 2 {
 				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
 			}
-			if gr.VariationResults[0].EvaluationCount.EventCount == 0 && // variation A
-				gr.VariationResults[0].EvaluationCount.UserCount == 0 &&
-				gr.VariationResults[1].EvaluationCount.EventCount == 0 && // variation B
+			if gr.VariationResults[0].EvaluationCount.EventCount == 0 || // variation A
+				gr.VariationResults[0].EvaluationCount.UserCount == 0 ||
+				gr.VariationResults[1].EvaluationCount.EventCount == 0 || // variation B
 				gr.VariationResults[1].EvaluationCount.UserCount == 0 {
 				continue
 			}
-			if gr.VariationResults[0].ExperimentCount.EventCount == 0 && // variation A
-				gr.VariationResults[0].ExperimentCount.UserCount == 0 &&
-				gr.VariationResults[1].ExperimentCount.EventCount == 0 && // variation B
+			if gr.VariationResults[0].ExperimentCount.EventCount == 0 || // variation A
+				gr.VariationResults[0].ExperimentCount.UserCount == 0 ||
+				gr.VariationResults[1].ExperimentCount.EventCount == 0 || // variation B
 				gr.VariationResults[1].ExperimentCount.UserCount == 0 {
 				continue
 			}
@@ -661,10 +513,6 @@ func TestGrpcExperimentResult(t *testing.T) {
 			}
 			break
 		}
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(10 * time.Second)
 	}
 	res := getExperiment(t, experimentClient, experiment.Id)
 	if res.Experiment.Status != experimentproto.Experiment_RUNNING {
@@ -699,41 +547,65 @@ func TestExperimentResult(t *testing.T) {
 	addTag(t, tag, featureID, featureClient)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
+
+	// Because we set the user to the individual targeting,
+	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+	// evaluates the user
+	reason := &featureproto.Reason{
+		Type: featureproto.Reason_TARGET,
+	}
+	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
+	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[0].Id, featureClient)
+	addFeatureIndividualTargeting(t, featureID, userIDs[2], f.Variations[0].Id, featureClient)
+	addFeatureIndividualTargeting(t, featureID, userIDs[3], f.Variations[1].Id, featureClient)
+	addFeatureIndividualTargeting(t, featureID, userIDs[4], f.Variations[1].Id, featureClient)
+
+	// Get the latest version after all changes in the feature flag
+	f = getFeature(t, featureClient, featureID)
+
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
 	// CVRs is 3/4
 	// Register goal variation
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2))
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1))
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-time.Hour).Unix())
 	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	// Register 3 events and 2 user counts for user 1, 2 and 3
 	// Register variation a
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[0].Id, tag)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[2], experiment.Variations[0].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[2], f.Variations[0].Id, tag, reason)
 	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
 
 	// CVRs is 2/3
 	// Register goal
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15))
+	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-time.Hour).Unix())
 	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1))
+	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
 	// Register 3 events and 2 user counts for user 4 and 5
 	// Register variation
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag, reason)
 	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout")
+		}
+		time.Sleep(10 * time.Second)
 		resp := getExperimentResult(t, ecClient, experiment.Id)
 		if resp != nil {
 			er := resp.ExperimentResult
@@ -753,15 +625,15 @@ func TestExperimentResult(t *testing.T) {
 			if len(gr.VariationResults) != 2 {
 				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
 			}
-			if gr.VariationResults[0].EvaluationCount.EventCount == 0 && // variation A
-				gr.VariationResults[0].EvaluationCount.UserCount == 0 &&
-				gr.VariationResults[1].EvaluationCount.EventCount == 0 && // variation B
+			if gr.VariationResults[0].EvaluationCount.EventCount == 0 || // variation A
+				gr.VariationResults[0].EvaluationCount.UserCount == 0 ||
+				gr.VariationResults[1].EvaluationCount.EventCount == 0 || // variation B
 				gr.VariationResults[1].EvaluationCount.UserCount == 0 {
 				continue
 			}
-			if gr.VariationResults[0].ExperimentCount.EventCount == 0 && // variation A
-				gr.VariationResults[0].ExperimentCount.UserCount == 0 &&
-				gr.VariationResults[1].ExperimentCount.EventCount == 0 && // variation B
+			if gr.VariationResults[0].ExperimentCount.EventCount == 0 || // variation A
+				gr.VariationResults[0].ExperimentCount.UserCount == 0 ||
+				gr.VariationResults[1].ExperimentCount.EventCount == 0 || // variation B
 				gr.VariationResults[1].ExperimentCount.UserCount == 0 {
 				continue
 			}
@@ -870,10 +742,6 @@ func TestExperimentResult(t *testing.T) {
 			}
 			break
 		}
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(10 * time.Second)
 	}
 	res := getExperiment(t, experimentClient, experiment.Id)
 	if res.Experiment.Status != experimentproto.Experiment_RUNNING {
@@ -883,7 +751,7 @@ func TestExperimentResult(t *testing.T) {
 	}
 }
 
-func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
+func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
@@ -910,11 +778,24 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 	addTag(t, tag, featureID, featureClient)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
+
+	// Because we set the user to the individual targeting,
+	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+	// evaluates the user
+	reason := &featureproto.Reason{
+		Type: featureproto.Reason_TARGET,
+	}
+	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
+	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[1].Id, featureClient)
+
+	// Get the latest version after all changes in the feature flag
+	f = getFeature(t, featureClient, featureID)
+
 	goalIDs := createGoals(ctx, t, experimentClient, 3)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "GrpcMultiGoalsEventCounterRealtime", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+		ctx, t, experimentClient, "TestGrpcMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
@@ -923,13 +804,15 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
-	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-time.Hour).Unix())
 
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[1].Id, tag)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -1051,7 +934,7 @@ func TestGrpcMultiGoalsEventCounterRealtime(t *testing.T) {
 	}
 }
 
-func TestMultiGoalsEventCounterRealtime(t *testing.T) {
+func TestMultiGoalsEventCounter(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
@@ -1078,11 +961,24 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 	addTag(t, tag, featureID, featureClient)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
+
+	// Because we set the user to the individual targeting,
+	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+	// evaluates the user
+	reason := &featureproto.Reason{
+		Type: featureproto.Reason_TARGET,
+	}
+	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
+	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[1].Id, featureClient)
+
+	// Get the latest version after all changes in the feature flag
+	f = getFeature(t, featureClient, featureID)
+
 	goalIDs := createGoals(ctx, t, experimentClient, 3)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
+	startAt := time.Now().Local()
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
-		ctx, t, experimentClient, "GrpcMultiGoalsEventCounterRealtime", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+		ctx, t, experimentClient, "TestMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
@@ -1091,13 +987,15 @@ func TestMultiGoalsEventCounterRealtime(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3))
-	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
-	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2))
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-time.Hour).Unix())
 
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -1244,6 +1142,18 @@ func TestHTTPTrack(t *testing.T) {
 	addTag(t, tag, featureID, featureClient)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
+
+	// Because we set the user to the individual targeting,
+	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+	// evaluates the user
+	reason := &featureproto.Reason{
+		Type: featureproto.Reason_TARGET,
+	}
+	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+	// Get the latest version after all changes in the feature flag
+	f = getFeature(t, featureClient, featureID)
+
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local().Add(-1 * time.Hour)
 	stopAt := startAt.Local().Add(time.Hour * 2)
@@ -1259,7 +1169,7 @@ func TestHTTPTrack(t *testing.T) {
 
 	// Send track events.
 	sendHTTPTrack(t, userID, goalIDs[0], tag, value)
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
 
 	// Check the count
 	for i := 0; i < retryTimes; i++ {
@@ -1331,6 +1241,18 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	addTag(t, tag, featureID, featureClient)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
+
+	// Because we set the user to the individual targeting,
+	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+	// evaluates the user
+	reason := &featureproto.Reason{
+		Type: featureproto.Reason_TARGET,
+	}
+	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+	// Get the latest version after all changes in the feature flag
+	f = getFeature(t, featureClient, featureID)
+
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
 	for _, v := range f.Variations {
@@ -1352,7 +1274,7 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		startAt, stopAt,
 	)
 
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -1426,6 +1348,18 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 	addTag(t, tag, featureID, featureClient)
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
+
+	// Because we set the user to the individual targeting,
+	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
+	// evaluates the user
+	reason := &featureproto.Reason{
+		Type: featureproto.Reason_TARGET,
+	}
+	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+	// Get the latest version after all changes in the feature flag
+	f = getFeature(t, featureClient, featureID)
+
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
 	for _, v := range f.Variations {
@@ -1446,8 +1380,7 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		startAt, stopAt,
 	)
 
-	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag)
-
+	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
@@ -1516,20 +1449,20 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	enableFeature(t, featureID, featureClient)
 	f := getFeature(t, featureClient, featureID)
 	// Register variation
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[2], f.Variations[0].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, nil)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag, nil)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[2], f.Variations[0].Id, tag, nil)
 	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, nil)
 	// Register variation
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, nil)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag, nil)
 	// Increment evaluation event count
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, nil)
 	// Register variation
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[5], defaultVariationID, tag)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[6], defaultVariationID, tag)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[7], defaultVariationID, tag)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[5], defaultVariationID, tag, nil)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[6], defaultVariationID, tag, nil)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[7], defaultVariationID, tag, nil)
 	expectedUserVal := []float64{3, 2, 3}
 	expectedEventVal := []float64{4, 3, 3}
 	i := 0
@@ -1664,6 +1597,7 @@ func grpcRegisterGoalEvent(
 	t *testing.T,
 	goalID, userID, tag string,
 	value float64,
+	timestamp int64,
 ) {
 	t.Helper()
 	c := newGatewayClient(t)
@@ -1671,12 +1605,14 @@ func grpcRegisterGoalEvent(
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
-		Timestamp: time.Now().Unix(),
+		Timestamp: timestamp,
 		GoalId:    goalID,
 		UserId:    userID,
 		Value:     value,
-		User:      &userproto.User{},
-		Tag:       tag,
+		User: &userproto.User{
+			Id:   userID,
+			Data: map[string]string{"appVersion": "0.1.0"}},
+		Tag: tag,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -1702,17 +1638,20 @@ func registerGoalEvent(
 	t *testing.T,
 	goalID, userID, tag string,
 	value float64,
+	timestamp int64,
 ) {
 	t.Helper()
 	c := newGatewayClient(t)
 	defer c.Close()
 	goal, err := protojson.Marshal(&eventproto.GoalEvent{
-		Timestamp: time.Now().Unix(),
+		Timestamp: timestamp,
 		GoalId:    goalID,
 		UserId:    userID,
 		Value:     value,
-		User:      &userproto.User{},
-		Tag:       tag,
+		User: &userproto.User{
+			Id:   userID,
+			Data: map[string]string{"appVersion": "0.1.0"}},
+		Tag: tag,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -1810,21 +1749,27 @@ func grpcRegisterEvaluationEvent(
 	featureID string,
 	featureVersion int32,
 	userID, variationID, tag string,
+	reason *featureproto.Reason,
 ) {
 	t.Helper()
 	c := newGatewayClient(t)
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+	if reason == nil {
+		reason = &featureproto.Reason{}
+	}
 	evaluation, err := ptypes.MarshalAny(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: featureVersion,
 		UserId:         userID,
 		VariationId:    variationID,
-		User:           &userproto.User{Data: map[string]string{"appVersion": "0.1.0"}},
-		Reason:         &featureproto.Reason{},
-		Tag:            tag,
+		User: &userproto.User{
+			Id:   userID,
+			Data: map[string]string{"appVersion": "0.1.0"}},
+		Reason: reason,
+		Tag:    tag,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -1851,17 +1796,23 @@ func registerEvaluationEvent(
 	featureID string,
 	featureVersion int32,
 	userID, variationID, tag string,
+	reason *featureproto.Reason,
 ) {
 	t.Helper()
+	if reason == nil {
+		reason = &featureproto.Reason{}
+	}
 	evaluation, err := protojson.Marshal(&eventproto.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: featureVersion,
 		UserId:         userID,
 		VariationId:    variationID,
-		User:           &userproto.User{},
-		Reason:         &featureproto.Reason{},
-		Tag:            tag,
+		User: &userproto.User{
+			Id:   userID,
+			Data: map[string]string{"appVersion": "0.1.0"}},
+		Reason: reason,
+		Tag:    tag,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -2009,6 +1960,30 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 	defer cancel()
 	if _, err := client.EnableFeature(ctx, enableReq); err != nil {
 		t.Fatalf("Failed to enable feature id: %s. Error: %v", featureID, err)
+	}
+}
+
+func addFeatureIndividualTargeting(t *testing.T, featureID, userID, variationID string, client featureclient.Client) {
+	t.Helper()
+	c := &featureproto.AddUserToVariationCommand{
+		Id:   variationID,
+		User: userID,
+	}
+	cmd, err := ptypes.MarshalAny(c)
+	assert.NoError(t, err)
+	req := &featureproto.UpdateFeatureTargetingRequest{
+		Id: featureID,
+		Commands: []*featureproto.Command{
+			{
+				Command: cmd,
+			},
+		},
+		EnvironmentNamespace: *environmentNamespace,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeatureTargeting(ctx, req); err != nil {
+		t.Fatalf("Failed add user to individual targeting: %s. Error: %v", featureID, err)
 	}
 }
 

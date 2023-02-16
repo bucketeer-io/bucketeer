@@ -94,6 +94,38 @@ data:
               explicit_http_config:
                 http2_protocol_options: {}
           ignore_health_on_host_removal: true
+        - name: feature
+          connect_timeout: 5s
+          dns_lookup_family: V4_ONLY
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: feature
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: feature.{{ .Values.namespace }}.svc.cluster.local
+                          port_value: 9000
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols:
+                  - h2
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          type: strict_dns
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          ignore_health_on_host_removal: true
       listeners:
         - name: ingress
           address:
@@ -189,6 +221,18 @@ data:
                                 prefix: /bucketeer.experiment.ExperimentService
                               route:
                                 cluster: experiment
+                                retry_policy:
+                                  num_retries: 3
+                                  retry_on: 5xx
+                                timeout: 15s
+                            - match:
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
+                                prefix: /bucketeer.feature.FeatureService
+                              route:
+                                cluster: feature
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx

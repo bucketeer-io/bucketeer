@@ -16,7 +16,7 @@ package server
 
 import (
 	"context"
-	"strings"
+	"errors"
 	"time"
 
 	"go.uber.org/zap"
@@ -25,25 +25,26 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/persister"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
+	ft "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 )
 
 const (
-	command = "server"
+	command         = "server"
+	evalEvtSvcName  = "event-persister-evaluation-events-dwh"
+	evalGoalSvcName = "event-persister-goal-events-dwh"
 )
+
+var errUnknownSvcName = errors.New("persister: unknown service name")
 
 type server struct {
 	*kingpin.CmdClause
-	port             *int
-	project          *string
-	bigtableInstance *string
+	serviceName *string
 	// option
 	maxMPS        *int
 	numWorkers    *int
@@ -51,16 +52,19 @@ type server struct {
 	flushInterval *time.Duration
 	flushTimeout  *time.Duration
 	// pubsub
+	project                      *string
 	subscription                 *string
 	topic                        *string
 	pullerNumGoroutines          *int
 	pullerMaxOutstandingMessages *int
 	pullerMaxOutstandingBytes    *int
 	// rpc
+	port              *int
 	serviceTokenPath  *string
 	certPath          *string
 	keyPath           *string
 	experimentService *string
+	featureService    *string
 	// bigquery
 	bigQueryDataSet   *string
 	bigQueryBatchSize *int
@@ -69,12 +73,12 @@ type server struct {
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the server")
 	server := &server{
-		CmdClause:        cmd,
-		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:          cmd.Flag("project", "Google Cloud project name.").Required().String(),
-		bigtableInstance: cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
-		maxMPS:           cmd.Flag("max-mps", "Maximum messages should be handled in a second.").Default("1000").Int(),
-		numWorkers:       cmd.Flag("num-workers", "Number of workers.").Default("2").Int(),
+		CmdClause:   cmd,
+		serviceName: cmd.Flag("service-name", "Service name.").Required().String(),
+		port:        cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:     cmd.Flag("project", "Google Cloud project name.").Required().String(),
+		maxMPS:      cmd.Flag("max-mps", "Maximum messages should be handled in a second.").Default("1000").Int(),
+		numWorkers:  cmd.Flag("num-workers", "Number of workers.").Default("2").Int(),
 		flushSize: cmd.Flag(
 			"flush-size",
 			"Maximum number of messages to batch before writing to datastore.",
@@ -102,6 +106,10 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"experiment-service",
 			"bucketeer-experiment-service address.",
 		).Default("experiment:9090").String(),
+		featureService: cmd.Flag(
+			"feature-service",
+			"bucketeer-feature-service address.",
+		).Default("featureService:9090").String(),
 		bigQueryDataSet:   cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").Required().String(),
 		bigQueryBatchSize: cmd.Flag("bigquery-batch-size", "BigQuery Size of rows to be sent at once").Default("10").Int(),
 	}
@@ -115,11 +123,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	btClient, err := s.createBigtableClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-	defer btClient.Close()
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
 		return err
@@ -135,12 +138,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer experimentClient.Close()
+	featureClient, err := ft.NewClient(*s.featureService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer featureClient.Close()
 	writer, err := s.newBigQueryWriter(
 		ctx,
 		registerer,
 		logger,
-		btClient,
 		experimentClient,
+		featureClient,
 	)
 	if err != nil {
 		return err
@@ -148,7 +162,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	p := persister.NewPersisterDWH(
 		puller,
 		registerer,
-		btClient,
 		writer,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
@@ -200,53 +213,39 @@ func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.P
 	)
 }
 
-func (s *server) createBigtableClient(
-	ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (bigtable.Client, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	return bigtable.NewBigtableClient(ctx, *s.project, *s.bigtableInstance,
-		bigtable.WithMetrics(registerer),
-		bigtable.WithLogger(logger),
-	)
-}
-
 func (s *server) newBigQueryWriter(
 	ctx context.Context,
 	r metrics.Registerer,
 	logger *zap.Logger,
-	bt bigtable.Client,
 	exClient ec.Client,
+	ftClient ft.Client,
 ) (persister.Writer, error) {
 	var writer persister.Writer
 	var err error
-	if strings.HasSuffix(*s.topic, "evaluation-events") {
+	switch *s.serviceName {
+	case evalEvtSvcName:
 		writer, err = persister.NewEvalEventWriter(
 			ctx,
 			r,
 			logger,
-			featurestorage.NewUserEvaluationsStorage(bt),
 			exClient,
 			*s.project,
 			*s.bigQueryDataSet,
 			*s.bigQueryBatchSize,
 		)
-	} else {
+	case evalGoalSvcName:
 		writer, err = persister.NewGoalEventWriter(
 			ctx,
 			r,
 			logger,
-			featurestorage.NewUserEvaluationsStorage(bt),
 			exClient,
+			ftClient,
 			*s.project,
 			*s.bigQueryDataSet,
 			*s.bigQueryBatchSize,
 		)
+	default:
+		return nil, errUnknownSvcName
 	}
-	if err != nil {
-		return nil, err
-	}
-	return writer, nil
+	return writer, err
 }

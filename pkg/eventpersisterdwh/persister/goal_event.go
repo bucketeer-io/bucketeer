@@ -25,32 +25,32 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
+	ft "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
-	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
 const goalEventTable = "goal_event"
 
 type goalEvtWriter struct {
-	writer                storage.GoalEventWriter
-	userEvaluationStorage featurestorage.UserEvaluationsStorage
-	experimentClient      ec.Client
-	flightgroup           singleflight.Group
-	logger                *zap.Logger
+	writer           storage.GoalEventWriter
+	experimentClient ec.Client
+	featureClient    ft.Client
+	flightgroup      singleflight.Group
+	logger           *zap.Logger
 }
 
 func NewGoalEventWriter(
 	ctx context.Context,
 	r metrics.Registerer,
 	l *zap.Logger,
-	userEvaluationStorage featurestorage.UserEvaluationsStorage,
 	exClient ec.Client,
+	ftClient ft.Client,
 	project, ds string,
 	size int,
 ) (Writer, error) {
@@ -68,10 +68,10 @@ func NewGoalEventWriter(
 		return nil, err
 	}
 	return &goalEvtWriter{
-		writer:                storage.NewGoalEventWriter(goalWriter, size),
-		userEvaluationStorage: userEvaluationStorage,
-		experimentClient:      exClient,
-		logger:                l,
+		writer:           storage.NewGoalEventWriter(goalWriter, size),
+		experimentClient: exClient,
+		featureClient:    ftClient,
+		logger:           l,
 	}, nil
 }
 
@@ -141,18 +141,13 @@ func (w *goalEvtWriter) convToGoalEvents(
 	e *eventproto.GoalEvent,
 	id, environmentNamespace string,
 ) ([]*epproto.GoalEvent, bool, error) {
-	tag := e.Tag
-	if tag == "" {
-		// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
-		tag = "none"
-	}
-	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentNamespace, tag)
+	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentNamespace, e.Tag)
 	if err != nil {
 		return nil, retriable, err
 	}
 	events := make([]*epproto.GoalEvent, 0, len(evals))
 	for _, eval := range evals {
-		event, retriable, err := w.convToGoalEvent(ctx, e, eval, id, tag, environmentNamespace)
+		event, retriable, err := w.convToGoalEvent(ctx, e, eval, id, e.Tag, environmentNamespace)
 		if err != nil {
 			return nil, retriable, err
 		}
@@ -229,6 +224,12 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 	exps := []*exproto.Experiment{}
 	for _, exp := range experiments {
 		if w.findGoalID(event.GoalId, exp.GoalIds) {
+			// If the goal event was issued before the experiment started running,
+			// we ignore those events to avoid issues in the conversion rate
+			if exp.StartAt > event.Timestamp {
+				handledCounter.WithLabelValues(codeGoalEventOlderThanExperiment).Inc()
+				continue
+			}
 			exps = append(exps, exp)
 		}
 	}
@@ -240,13 +241,16 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 		// Get the user evaluation using the experiment info
 		ev, err := w.getUserEvaluation(
 			ctx,
+			event.User,
 			environmentNamespace,
-			event.UserId,
 			tag,
 			exp.FeatureId,
 			exp.FeatureVersion,
 		)
 		if err != nil {
+			if err == ErrEvaluationsAreEmpty {
+				return nil, false, err
+			}
 			return nil, true, err
 		}
 		evals = append(evals, ev)
@@ -300,29 +304,46 @@ func (w *goalEvtWriter) listExperiments(
 	return exp.([]*exproto.Experiment), nil
 }
 
+// TODO: Evaluate the user based on Feature Flag ID and version.
+// By evaluating the user using the latest feature version,
+// it could affect the experiment conversion accuracy
 func (w *goalEvtWriter) getUserEvaluation(
 	ctx context.Context,
-	environmentNamespace,
-	userID,
-	tag,
-	featureID string,
+	user *userproto.User,
+	environmentNamespace, tag, featureID string,
 	featureVersion int32,
 ) (*featureproto.Evaluation, error) {
-	evaluation, err := w.userEvaluationStorage.GetUserEvaluation(
-		ctx,
-		userID,
-		environmentNamespace,
-		tag,
-		featureID,
-		featureVersion,
-	)
+	resp, err := w.featureClient.EvaluateFeatures(ctx, &featureproto.EvaluateFeaturesRequest{
+		EnvironmentNamespace: environmentNamespace,
+		FeatureId:            featureID,
+		Tag:                  tag,
+		User:                 user,
+	})
 	if err != nil {
-		if err == bigtable.ErrKeyNotFound {
-			handledCounter.WithLabelValues(codeUserEvaluationNotFound).Inc()
-		} else {
-			handledCounter.WithLabelValues(codeFailedToGetUserEvaluation).Inc()
-		}
-		return nil, err
+		w.logger.Error(
+			"Failed to evaluate user",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("userId", user.Id),
+			zap.String("featureId", featureID),
+			zap.Int32("featureVersion", featureVersion),
+			zap.String("tag", tag),
+		)
+		handledCounter.WithLabelValues(codeFailedToEvaluateUser).Inc()
+		return nil, ErrFailedToEvaluateUser
 	}
-	return evaluation, nil
+	if len(resp.UserEvaluations.Evaluations) == 0 {
+		handledCounter.WithLabelValues(codeEvaluationsAreEmpty).Inc()
+		w.logger.Error(
+			"Evaluations are empty",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("userId", user.Id),
+			zap.String("featureId", featureID),
+			zap.Int32("featureVersion", featureVersion),
+			zap.String("tag", tag),
+		)
+		return nil, ErrEvaluationsAreEmpty
+	}
+	return resp.UserEvaluations.Evaluations[0], nil
 }

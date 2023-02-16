@@ -22,15 +22,14 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
+	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/mock"
-	btstorage "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -38,9 +37,110 @@ import (
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
-var defaultOptions = options{
-	logger: zap.NewNop(),
-}
+var (
+	feature = &featureproto.Feature{
+		Id:      "fid",
+		Version: int32(1),
+		Tags:    []string{"tag"},
+		Rules: []*featureproto.Rule{
+			{
+				Id: "ruleID",
+				Clauses: []*featureproto.Clause{
+					{
+						Id:       "clauseID",
+						Values:   []string{"segmentID"},
+						Operator: featureproto.Clause_SEGMENT,
+					},
+				},
+				Strategy: &featureproto.Strategy{
+					FixedStrategy: &featureproto.FixedStrategy{
+						Variation: "variationID_B",
+					},
+				},
+			},
+		},
+		Variations: []*featureproto.Variation{
+			{
+				Id:    "variationID_A",
+				Value: "true",
+			},
+			{
+				Id:    "variationID_B",
+				Value: "false",
+			},
+		},
+		VariationType: featureproto.Feature_BOOLEAN,
+		DefaultStrategy: &featureproto.Strategy{
+			FixedStrategy: &featureproto.FixedStrategy{
+				Variation: "variationID_A",
+			},
+		},
+	}
+
+	feature2 = &featureproto.Feature{
+		Id:      "fid-2",
+		Version: int32(1),
+		Tags:    []string{"tag"},
+		Rules: []*featureproto.Rule{
+			{
+				Id: "ruleID-2",
+				Clauses: []*featureproto.Clause{
+					{
+						Id:       "clauseID-2",
+						Values:   []string{"segmentID-2"},
+						Operator: featureproto.Clause_SEGMENT,
+					},
+				},
+				Strategy: &featureproto.Strategy{
+					FixedStrategy: &featureproto.FixedStrategy{
+						Variation: "variationID-2_A",
+					},
+				},
+			},
+		},
+		Variations: []*featureproto.Variation{
+			{
+				Id:    "variationID-2_A",
+				Value: "true",
+			},
+			{
+				Id:    "variationID-2_B",
+				Value: "false",
+			},
+		},
+		VariationType: featureproto.Feature_BOOLEAN,
+		DefaultStrategy: &featureproto.Strategy{
+			FixedStrategy: &featureproto.FixedStrategy{
+				Variation: "variationID-2_A",
+			},
+		},
+	}
+
+	featureForError = &featureproto.Feature{
+		Id: "fid-2",
+		Rules: []*featureproto.Rule{
+			{
+				Id: "ruleID",
+				Clauses: []*featureproto.Clause{
+					{
+						Id:       "clauseID",
+						Values:   []string{"segmentID"},
+						Operator: featureproto.Clause_SEGMENT,
+					},
+				},
+				Strategy: &featureproto.Strategy{
+					FixedStrategy: &featureproto.FixedStrategy{
+						Variation: "variationID_B",
+					},
+				},
+			},
+		},
+	}
+
+	defaultOptions = options{
+		logger: zap.NewNop(),
+	}
+)
 
 func TestConvToEvaluationEvent(t *testing.T) {
 	t.Parallel()
@@ -157,41 +257,6 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "error: failed to upsert user evaluation",
-			setup: func(ctx context.Context, p *evalEvtWriter) {
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"goal-id"},
-							FeatureId:      evaluationEvent.FeatureId,
-							FeatureVersion: evaluation.FeatureVersion,
-						},
-					},
-				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					ctx,
-					evaluation,
-					environmentNamespace,
-					"tag",
-				).Return(btstorage.ErrInternal)
-			},
-			input:              evaluationEvent,
-			expected:           nil,
-			expectedErr:        btstorage.ErrInternal,
-			expectedRepeatable: true,
-		},
-		{
 			desc: "success: evaluation event",
 			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
@@ -214,12 +279,6 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						},
 					},
 				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().UpsertUserEvaluation(
-					ctx,
-					evaluation,
-					environmentNamespace,
-					"tag",
-				).Return(nil)
 			},
 			input: evaluationEvent,
 			expected: &epproto.EvaluationEvent{
@@ -260,7 +319,11 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	now := time.Now()
 
 	environmentNamespace := "ns"
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	eventID := "event-id"
 	user := &userproto.User{
@@ -381,7 +444,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "err: get evaluation not found",
+			desc: "err: ErrFailedToEvaluateUser",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
@@ -400,17 +463,14 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
 						},
 					},
 				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
-					"uid",
-					"ns",
-					"tag",
-					"fid",
-					int32(1),
-				).Return(nil, btstorage.ErrKeyNotFound)
+					gomock.Any(),
+				).Return(nil, errors.New("internal error"))
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
@@ -426,11 +486,11 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           nil,
-			expectedErr:        btstorage.ErrKeyNotFound,
+			expectedErr:        ErrFailedToEvaluateUser,
 			expectedRepeatable: true,
 		},
 		{
-			desc: "err: get evaluation internal",
+			desc: "err: ErrEvaluationsAreEmpty",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
@@ -449,17 +509,16 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
 						},
 					},
 				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
-					"uid",
-					environmentNamespace,
-					"tag",
-					"fid",
-					int32(1),
-				).Return(nil, errors.New("internal"))
+					gomock.Any(),
+				).Return(&featureproto.EvaluateFeaturesResponse{
+					UserEvaluations: &featureproto.UserEvaluations{},
+				}, nil)
 			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
@@ -475,57 +534,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Tag:         "tag",
 			},
 			expected:           nil,
-			expectedErr:        errors.New("internal"),
-			expectedRepeatable: true,
-		},
-		{
-			desc: "err: get evaluation internal using empty tag",
-			setup: func(ctx context.Context, p *goalEvtWriter) {
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid",
-							FeatureVersion: int32(1),
-						},
-					},
-				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
-					ctx,
-					"uid",
-					environmentNamespace,
-					"none",
-					"fid",
-					int32(1),
-				).Return(nil, errors.New("internal"))
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: now.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "",
-			},
-			expected:           nil,
-			expectedErr:        errors.New("internal"),
-			expectedRepeatable: true,
+			expectedErr:        ErrEvaluationsAreEmpty,
+			expectedRepeatable: false,
 		},
 		{
 			desc: "success",
@@ -547,40 +557,77 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
 						},
 						{
 							Id:             "experiment-id-2",
 							GoalIds:        []string{"gid"},
 							FeatureId:      "fid-2",
 							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
+						},
+						// This experiment won't be computed
+						// because the startAt is higher than the goal event timestamp
+						{
+							Id:             "experiment-id-3",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid-2",
+							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(time.Hour).Unix(),
 						},
 					},
 				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
-					"uid",
-					environmentNamespace,
-					"tag",
-					"fid",
-					int32(1),
-				).Return(&featureproto.Evaluation{
-					FeatureId:      "fid",
-					FeatureVersion: int32(1),
-					VariationId:    "vid",
-					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+					&featureproto.EvaluateFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						FeatureId:            "fid",
+						Tag:                  "tag",
+						User:                 user,
+					},
+				).Return(&featureproto.EvaluateFeaturesResponse{
+					UserEvaluations: &featureproto.UserEvaluations{
+						Id: "",
+						Evaluations: []*featureproto.Evaluation{
+							{
+								Id:             "eval-id",
+								FeatureId:      "fid",
+								FeatureVersion: int32(1),
+								VariationId:    "variationID_B",
+								Reason: &featureproto.Reason{
+									Type: featureproto.Reason_RULE,
+								},
+								UserId: user.Id,
+							},
+						},
+						CreatedAt: time.Now().Unix(),
+					},
 				}, nil)
-				p.userEvaluationStorage.(*ftmock.MockUserEvaluationsStorage).EXPECT().GetUserEvaluation(
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
-					"uid",
-					environmentNamespace,
-					"tag",
-					"fid-2",
-					int32(1),
-				).Return(&featureproto.Evaluation{
-					FeatureId:      "fid-2",
-					FeatureVersion: int32(1),
-					VariationId:    "vid-2",
-					Reason:         &featureproto.Reason{Type: featureproto.Reason_TARGET},
+					&featureproto.EvaluateFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						FeatureId:            "fid-2",
+						Tag:                  "tag",
+						User:                 user,
+					},
+				).Return(&featureproto.EvaluateFeaturesResponse{
+					UserEvaluations: &featureproto.UserEvaluations{
+						Id: "",
+						Evaluations: []*featureproto.Evaluation{
+							{
+								Id:             "eval-id",
+								FeatureId:      "fid-2",
+								FeatureVersion: int32(1),
+								VariationId:    "variationID-2_A",
+								Reason: &featureproto.Reason{
+									Type: featureproto.Reason_DEFAULT,
+								},
+								UserId: user.Id,
+							},
+						},
+						CreatedAt: time.Now().Unix(),
+					},
 				}, nil)
 			},
 			input: &eventproto.GoalEvent{
@@ -603,8 +650,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 					Tag:                  "tag",
 					FeatureId:            "fid",
 					FeatureVersion:       int32(1),
-					VariationId:          "vid",
-					Reason:               featureproto.Reason_TARGET.String(),
+					VariationId:          "variationID_B",
+					Reason:               featureproto.Reason_RULE.String(),
 					UserData:             string(userData),
 					EnvironmentNamespace: environmentNamespace,
 					Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
@@ -618,8 +665,8 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 					Tag:                  "tag",
 					FeatureId:            "fid-2",
 					FeatureVersion:       int32(1),
-					VariationId:          "vid-2",
-					Reason:               featureproto.Reason_TARGET.String(),
+					VariationId:          "variationID-2_A",
+					Reason:               featureproto.Reason_DEFAULT.String(),
 					UserData:             string(userData),
 					EnvironmentNamespace: environmentNamespace,
 					Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
@@ -648,95 +695,17 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 	}
 }
 
-func TestConvToEvaluationDwh(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	tag := "tag"
-	evaluationEventWithTag := &eventproto.EvaluationEvent{
-		FeatureId:      "feature-id",
-		FeatureVersion: 2,
-		UserId:         "user-id",
-		VariationId:    "variation-id",
-		User:           &userproto.User{Id: "user-id"},
-		Reason: &featureproto.Reason{
-			Type: featureproto.Reason_DEFAULT,
-		},
-		Tag:       tag,
-		Timestamp: time.Now().Unix(),
-	}
-	evaluationEventWithoutTag := &eventproto.EvaluationEvent{
-		FeatureId:      "feature-id",
-		FeatureVersion: 2,
-		UserId:         "user-id",
-		VariationId:    "variation-id",
-		User:           &userproto.User{Id: "user-id"},
-		Reason: &featureproto.Reason{
-			Type: featureproto.Reason_DEFAULT,
-		},
-		Timestamp: time.Now().Unix(),
-	}
-	patterns := []struct {
-		desc        string
-		input       *eventproto.EvaluationEvent
-		expected    *featureproto.Evaluation
-		expectedTag string
-	}{
-		{
-			desc:  "success without tag",
-			input: evaluationEventWithoutTag,
-			expected: &featureproto.Evaluation{
-				Id: featuredomain.EvaluationID(
-					evaluationEventWithoutTag.FeatureId,
-					evaluationEventWithoutTag.FeatureVersion,
-					evaluationEventWithoutTag.UserId,
-				),
-				FeatureId:      evaluationEventWithoutTag.FeatureId,
-				FeatureVersion: evaluationEventWithoutTag.FeatureVersion,
-				UserId:         evaluationEventWithoutTag.UserId,
-				VariationId:    evaluationEventWithoutTag.VariationId,
-				Reason:         evaluationEventWithoutTag.Reason,
-			},
-			expectedTag: "none",
-		},
-		{
-			desc:  "success with tag",
-			input: evaluationEventWithTag,
-			expected: &featureproto.Evaluation{
-				Id: featuredomain.EvaluationID(
-					evaluationEventWithTag.FeatureId,
-					evaluationEventWithTag.FeatureVersion,
-					evaluationEventWithTag.UserId,
-				),
-				FeatureId:      evaluationEventWithTag.FeatureId,
-				FeatureVersion: evaluationEventWithTag.FeatureVersion,
-				UserId:         evaluationEventWithTag.UserId,
-				VariationId:    evaluationEventWithTag.VariationId,
-				Reason:         evaluationEventWithTag.Reason,
-			},
-			expectedTag: tag,
-		},
-	}
-	for _, p := range patterns {
-		persister := newEvalEventWriter(mockController)
-		ev, tag := persister.convToEvaluation(context.Background(), p.input)
-		assert.True(t, proto.Equal(p.expected, ev), p.desc)
-		assert.Equal(t, p.expectedTag, tag, p.desc)
-	}
-}
-
 func newEvalEventWriter(c *gomock.Controller) *evalEvtWriter {
 	return &evalEvtWriter{
-		experimentClient:      ecmock.NewMockClient(c),
-		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),
-		logger:                defaultOptions.logger,
+		experimentClient: ecmock.NewMockClient(c),
+		logger:           defaultOptions.logger,
 	}
 }
 
 func newGoalEventWriter(c *gomock.Controller) *goalEvtWriter {
 	return &goalEvtWriter{
-		experimentClient:      ecmock.NewMockClient(c),
-		userEvaluationStorage: ftmock.NewMockUserEvaluationsStorage(c),
-		logger:                defaultOptions.logger,
+		experimentClient: ecmock.NewMockClient(c),
+		featureClient:    ftmock.NewMockClient(c),
+		logger:           defaultOptions.logger,
 	}
 }

@@ -12,8 +12,9 @@ env:
   logLevel: info
   port: 9090
   metricsPort: 9002
-  bigtableInstance:
+  # egress services
   experimentService: localhost:9001
+  featureService: localhost:9001
   # option
   maxMps: "1000"
   numWorkers: 5

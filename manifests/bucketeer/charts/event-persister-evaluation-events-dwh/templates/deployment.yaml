@@ -43,12 +43,14 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_SERVICE_NAME
+              value: "{{ template "event-persister-evaluation-events-dwh.fullname" . }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_PROJECT
               value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_FEATURE_SERVICE
+              value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_EXPERIMENT_SERVICE
               value: "{{ .Values.env.experimentService }}"
-            - name: BUCKETEER_EVENT_PERSISTER_DWH_BIGTABLE_INSTANCE
-              value: "{{ .Values.env.bigtableInstance }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_TOPIC
               value: "{{ .Values.env.topic }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_SUBSCRIPTION

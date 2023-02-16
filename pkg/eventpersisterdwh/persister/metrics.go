@@ -21,10 +21,10 @@ import (
 )
 
 const (
-	codeFailedToGetUserEvaluation      = "FailedToGetUserEvaluation"
+	codeEvaluationsAreEmpty            = "EvaluationsAreEmpty"
+	codeGoalEventOlderThanExperiment   = "GoalEventOlderThanExperiment"
+	codeFailedToEvaluateUser           = "FailedToEvaluateUser"
 	codeFailedToListExperiments        = "FailedToListExperiments"
-	codeUpsertUserEvaluationFailed     = "UpsertUserEvaluationFailed"
-	codeUserEvaluationNotFound         = "UserEvaluationNotFound"
 	codeFailedToAppendEvaluationEvents = "FailedToAppendEvaluationEvents"
 	codeFailedToAppendGoalEvents       = "FailedToAppendGoalEvents"
 	codeLinked                         = "Linked"
