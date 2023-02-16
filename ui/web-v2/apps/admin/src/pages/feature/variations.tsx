@@ -130,6 +130,7 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
     const defaultValues = {
       variationType: feature.variationType.toString(),
       variations: feature.variationsList,
+      comment: '',
     };
     const methods = useForm({
       resolver: yupResolver(variationsFormSchema),
