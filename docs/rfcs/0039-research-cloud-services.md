@@ -4,12 +4,13 @@
 
 | Currently used middlewares | Usage                                                 |
 | -------------------------- | ----------------------------------------------------- |
-| Cloud Pub/Sub & Bigtable   | Event-driven-architecture                             |
-| Cloud SQL & Memorystore    | Almost Util data such as feature, segmentUser, apiKey |
-| Druid (GCS) & Kafka        | Calculator                                            |
+| Cloud Pub/Sub              | Event-driven-architecture                             |
+| Cloud SQL                  | Almost Util data such as feature, segmentUser, apiKey |
+| BigQuery                   | A/B test                                              |
 | Cloud KMS                  | Webhook                                               |
+| MemoryStore                | Feature Flag such as auto ops and evaluation count    |
 
-### Cloud Pub/Sub & Bigtable
+### Cloud Pub/Sub
 
 ![event-pipeline](./images/0039-image1.png)
 
@@ -29,19 +30,6 @@
 | Retry logic about subscription     | redelivers every subsequent message with the same ordering key, including acknowledged messages | redelivers only the messages                                 | redelivers only the messages                                 |
 | SLA(%)                             | >=99.95                                                      | >=99.9                                                       | >=99.9                                                       |
 
-
-
-|      | GCP      | AWS             | Azure           |
-| ---- | -------- | --------------- | --------------- |
-|      | Bigtable | Amazon DynamoDB | Azure Cosmos DB |
-|      |          |                 |                 |
-
-#### Controversial topic
-
-##### 1. Can we stop using Bigtable?
-
-We use Bigtable to store userEvaluation because PubSub doesn't guarantee order in the default. However, we can stop it if we use the order guarantee feature.
-
 **Comparison table about order guarantee**
 
 |                              | Cloud Pub/Sub | Amazon Simple Notification Service（SNS）、Amazon Simple Queueing Service（SQS） | Azure Service Bus Messaging |
@@ -52,45 +40,7 @@ We use Bigtable to store userEvaluation because PubSub doesn't guarantee order i
 | API throttling(Tokyo region) |               | 1500 -> 300 transactions per second (3000 if high throughput) |                             |
 | messages only once           |               | ◯                                                            |                             |
 
-**Important notice about enabling order guarantee**
-
-* GCP
-  * Possibility of increasing latency
-  * Increase the number of duplicates
-  * We have to design the ordering key so that granularity is not increased.
-* AWS
-  * By default, it limits up to 300 messages per second.
-    * However, it can be configured to handle 6000 messages by enabling throughput mode.
-* Azure
-  * We have to design the session id so that granularity is not increased.
-
-In conclusion, we can enable an order guarantee because we can set the key for each evaluation(userEvaluations + goalEvaluations). In short, we can design the key with fine granularity.
-
-**Conversion plan from existing subscriber to ordering subscriber**
-
-1. Create the new pubsub topic(bucketeer-xxx-evaluation-goal-events) in terraform.
-
-2. Create the new subscription(bucketeer-xxx-evaluation-goal-events-event-persister) with turning on ordering feature and target topic.
-
-3. Implement for enabling message ordering
-  * Publisher
-    * https://cloud.google.com/pubsub/docs/publisher#using-ordering-keys
-  * Subscriber
-    * https://cloud.google.com/pubsub/docs/ordering#enabling_message_ordering
-  * Stores all events into dummy table such as dummy_evaluation_event, dummy_goal_event
-
-4. Check if all messages are correctly stored into dummy tables correctly.
-
-5. Move evaluations from BigTable into RDB.
-
-6. Remove evaluation event persister and goal event persister.
-
-7. Stop using Bigtable
-
-
-### Cloud SQL & Memorystore
-
-![event-pipeline](./images/0039-image3.png)
+### Cloud SQL
 
 #### Comparison Table
 
@@ -98,102 +48,34 @@ In conclusion, we can enable an order guarantee because we can set the key for e
 | ---- | ---------- | ------------------------------------------------------- | ---------------------------------------------------------- |
 |      | Cloud  SQL | Amazon Relational Database Service (RDS), Amazon Aurora | Azure Database for MySQL and Azure Database for PostgreSQL |
 
-|        | GCP         | AWS                | Azure                  |
-| ------ | ----------- | ------------------ | ---------------------- |
-|        | Memorystore | Amazon ElastiCache | Azure Cache            |
-| SLA(%) | >=99.9      | >=99.9             | >=99.9 (from Standard) |
-
-#### Controversial topic
-
-##### 1. Can we configure Memorystore as optional?
-
-Yes. We can configure memory store as a optional in YAML file.
-
-### Druid (GCS) & Kafka
-
-![data-pipeline](./images/0039-image4.png)
-
-We use Druid as a relay DB and usual DB(fething data directory) and Kafka as an intereface for Druid. The amount of data is a huge and we have to handle them as a high performance when fething data directory.
-
-#### Controversial topic
-
-##### 1. Can we stop using Druid & Kafka?
-
-We have the following problems when using Druid & Kafka.
-
-* It's hard to maintainance self-hosted service.
-* It's hard to solve the problem when something such as error occurs.
-
-Therefore, We have the following options:
-
-**1.  Replace with managed service**
+**Comparison table about AlloyDB**
 
 |        | GCP     | AWS           | Azure              |
 | ------ | ------- | ------------- | ------------------ |
 |        | AlloyDB | Amazon Aurora | Azure SQL Database |
 | SLA(%) | >=99.99 | >=99.99       | >=99.995           |
 
-Pros
+### BigQuery
 
-* If we can use AlloyDB, there is a possibility that we can use single DB.
+#### Comparison Table
 
-Cons
+|      | GCP      | AWS                                                      | Azure                   |
+| ---- | -------- | -------------------------------------------------------- | ----------------------- |
+|      | BigQuery | Amazon Athena, Amazon Redshift, Amazon Redshift Spectrum | Azure Synapse Analytics |
 
-* AlloyDB may not match with our use cases. For example, it takes time longer than Druid.
+### MemoryStore
 
-**2.  Preprocess evaluation data** 
+#### Comparison Table
 
-![data-pipeline2](./images/0039-image5.png)
+|        | GCP         | AWS                | Azure                  |
+| ------ | ----------- | ------------------ | ---------------------- |
+|        | Memorystore | Amazon ElastiCache | Azure Cache            |
+| SLA(%) | >=99.9      | >=99.9             | >=99.9 (from Standard) |
 
-Pros
+#### Controversial topic
+##### 1. Can we configure Memorystore as optional?
 
-* This architecture can be consistent with Calculator.
-* EventCounter service can access to only single DB.
-* We don't need high performance DB.
-
-Cons
-
-* It takes time longer than 1 to finish this task.
-
-##### Conclusion
-
-We decided not to conclude this topic. Instead, we decided to store Evaluation Event to another DB, too. Therefore we can divide features into single feature flag service and A/B test service. 
-
-Because Evaluation Event is a large data, we need to switch MySQL and PostgreSQL. Since PostgreSQL is ORDBMS, we need to define table as follows:
-
-MySQL
-
-```mysql
-CREATE TABLE IF NOT EXISTS `feature` (
-  `id` VARCHAR(255) NOT NULL,
-  `tags` JSON NOT NULL,
-  ...
-  PRIMARY KEY (`id`, `environment_namespace`)
-);
-CREATE TABLE IF NOT EXISTS `tag` (
-  `id` VARCHAR(255) NOT NULL,
-  `created_at` BIGINT(20) NOT NULL,
-  `updated_at` BIGINT(20) NOT NULL,
-  `environment_namespace` VARCHAR(255) NOT NULL,
-  PRIMARY KEY (`id`, `environment_namespace`)
-);
-```
-
-PostgreSQL
-
-```postgresql
-CREATE TABLE IF NOT EXISTS "feature" (
-  "id" VARCHAR(255) NOT NULL,
-  "tags" tags NOT NULL,
-  ...
-  PRIMARY KEY ("id", "environment_namespace")
-);
-
-INSERT INTO feature VALUES ('id', ROW('id', 1667370510, 1667370510, 'production'), ...);
-...
-```
-
-
+Yes. We can configure memory store as a optional in YAML file.
 
 ### Cloud KMS
 
