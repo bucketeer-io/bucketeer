@@ -199,6 +199,7 @@ func (s *FeatureService) checkSegmentInUse(
 			"",
 			nil,
 			nil,
+			nil,
 			"",
 			featureproto.ListFeaturesRequest_DEFAULT,
 			featureproto.ListFeaturesRequest_ASC,

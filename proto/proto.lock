@@ -5001,6 +5001,24 @@
                 "name": "tags",
                 "type": "string",
                 "is_repeated": true
+              },
+              {
+                "id": 10,
+                "name": "prerequisites",
+                "type": "bucketeer.feature.Prerequisite",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "rules",
+                "type": "bucketeer.feature.Rule",
+                "is_repeated": true
+              },
+              {
+                "id": 12,
+                "name": "targets",
+                "type": "bucketeer.feature.Target",
+                "is_repeated": true
               }
             ]
           },
@@ -5600,6 +5618,12 @@
                 "id": 11,
                 "name": "variation_type",
                 "type": "bucketeer.feature.Feature.VariationType"
+              },
+              {
+                "id": 12,
+                "name": "prerequisites",
+                "type": "bucketeer.feature.Prerequisite",
+                "is_repeated": true
               }
             ]
           },
@@ -11247,6 +11271,11 @@
               {
                 "id": 11,
                 "name": "archived",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 12,
+                "name": "has_prerequisites",
                 "type": "google.protobuf.BoolValue"
               }
             ]

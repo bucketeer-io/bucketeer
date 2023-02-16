@@ -215,6 +215,9 @@ message FeatureCreatedEvent {
   google.protobuf.Int32Value default_off_variation_index = 7;
   bucketeer.feature.Feature.VariationType variation_type = 8;
   repeated string tags = 9;
+  repeated bucketeer.feature.Prerequisite prerequisites = 10;
+  repeated bucketeer.feature.Rule rules = 11;
+  repeated bucketeer.feature.Target targets = 12;
 }
 
 message FeatureEnabledEvent {
@@ -400,6 +403,7 @@ message FeatureClonedEvent {
   repeated string tags = 9;
   string maintainer = 10;
   bucketeer.feature.Feature.VariationType variation_type = 11;
+  repeated bucketeer.feature.Prerequisite prerequisites = 12;
 }
 
 message FeatureSamplingSeedResetEvent {

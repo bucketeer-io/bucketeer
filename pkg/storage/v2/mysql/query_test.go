@@ -163,6 +163,46 @@ func TestJSONFilterSQLString(t *testing.T) {
 			expectedSQL:  "JSON_CONTAINS(enums, ?)",
 			expectedArgs: []interface{}{`["abc", "xyz"]`},
 		},
+		{
+			desc: "Success: JSONLengthGreaterThan empty",
+			input: &JSONFilter{
+				Column: "enums",
+				Func:   JSONLengthGreaterThan,
+				Values: []interface{}{},
+			},
+			expectedSQL:  "",
+			expectedArgs: nil,
+		},
+		{
+			desc: "Success: JSONLengthGreaterThan",
+			input: &JSONFilter{
+				Column: "enums",
+				Func:   JSONLengthGreaterThan,
+				Values: []interface{}{"1"},
+			},
+			expectedSQL:  "JSON_LENGTH(enums) > 1",
+			expectedArgs: nil,
+		},
+		{
+			desc: "Success: JSONLengthSmallerThan empty",
+			input: &JSONFilter{
+				Column: "enums",
+				Func:   JSONLengthSmallerThan,
+				Values: []interface{}{},
+			},
+			expectedSQL:  "",
+			expectedArgs: nil,
+		},
+		{
+			desc: "Success: JSONLengthSmallerThan",
+			input: &JSONFilter{
+				Column: "enums",
+				Func:   JSONLengthSmallerThan,
+				Values: []interface{}{"1"},
+			},
+			expectedSQL:  "JSON_LENGTH(enums) < 1",
+			expectedArgs: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {

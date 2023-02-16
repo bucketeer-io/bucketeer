@@ -143,6 +143,9 @@ func (h *FeatureCommandHandler) CreateFeature(ctx context.Context, cmd *proto.Cr
 		DefaultOffVariationIndex: cmd.DefaultOffVariationIndex,
 		VariationType:            cmd.VariationType,
 		Tags:                     h.feature.Tags,
+		Prerequisites:            h.feature.Prerequisites,
+		Targets:                  h.feature.Targets,
+		Rules:                    h.feature.Rules,
 	})
 	if err != nil {
 		return err
@@ -256,6 +259,7 @@ func (h *FeatureCommandHandler) CloneFeature(ctx context.Context, cmd *proto.Clo
 		Tags:            h.feature.Tags,
 		Maintainer:      h.feature.Maintainer,
 		VariationType:   h.feature.VariationType,
+		Prerequisites:   h.feature.Prerequisites,
 	})
 	if err != nil {
 		return err

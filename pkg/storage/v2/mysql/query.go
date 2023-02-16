@@ -112,6 +112,8 @@ const (
 	_ JSONFilterFunc = iota
 	JSONContainsNumber
 	JSONContainsString
+	JSONLengthGreaterThan
+	JSONLengthSmallerThan
 )
 
 type JSONFilter struct {
@@ -158,6 +160,18 @@ func (f *JSONFilter) SQLString() (sql string, args []interface{}) {
 		}
 		sb.WriteString("]")
 		args = append(args, sb.String())
+		return
+	case JSONLengthGreaterThan:
+		if len(f.Values) == 0 {
+			return "", nil
+		}
+		sql = fmt.Sprintf("JSON_LENGTH(%s) > %s", f.Column, f.Values[0])
+		return
+	case JSONLengthSmallerThan:
+		if len(f.Values) == 0 {
+			return "", nil
+		}
+		sql = fmt.Sprintf("JSON_LENGTH(%s) < %s", f.Column, f.Values[0])
 		return
 	default:
 		return "", nil

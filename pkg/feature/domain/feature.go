@@ -77,6 +77,9 @@ func NewFeature(
 		VariationType: variationType,
 		CreatedAt:     time.Now().Unix(),
 		Maintainer:    maintainer,
+		Prerequisites: []*feature.Prerequisite{},
+		Targets:       []*feature.Target{},
+		Rules:         []*feature.Rule{},
 	}}
 	for i := range variations {
 		id, err := uuid.NewUUID()
@@ -818,6 +821,7 @@ func (f *Feature) Clone(
 		CreatedAt:       now,
 		UpdatedAt:       now,
 		Variations:      f.Variations,
+		Prerequisites:   []*feature.Prerequisite{},
 		Targets:         f.Targets,
 		Rules:           f.Rules,
 		DefaultStrategy: f.DefaultStrategy,
