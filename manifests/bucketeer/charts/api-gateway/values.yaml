@@ -5,7 +5,6 @@ fullnameOverride: "api-gateway"
 namespace: default
 env:
   project:
-  bigtableInstance:
   goalTopic:
   evaluationTopic:
   userTopic:

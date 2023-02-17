@@ -12011,57 +12011,6 @@
             ]
           },
           {
-            "name": "GetUserEvaluationsRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "tag",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "user_id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetUserEvaluationsResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "evaluations",
-                "type": "bucketeer.feature.Evaluation",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "UpsertUserEvaluationRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "tag",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "evaluation",
-                "type": "bucketeer.feature.Evaluation"
-              }
-            ]
-          },
-          {
             "name": "ListTagsRequest",
             "fields": [
               {
@@ -12116,9 +12065,6 @@
                 "type": "int64"
               }
             ]
-          },
-          {
-            "name": "UpsertUserEvaluationResponse"
           }
         ],
         "services": [
@@ -12284,16 +12230,6 @@
                 "name": "EvaluateFeatures",
                 "in_type": "EvaluateFeaturesRequest",
                 "out_type": "EvaluateFeaturesResponse"
-              },
-              {
-                "name": "GetUserEvaluations",
-                "in_type": "GetUserEvaluationsRequest",
-                "out_type": "GetUserEvaluationsResponse"
-              },
-              {
-                "name": "UpsertUserEvaluation",
-                "in_type": "UpsertUserEvaluationRequest",
-                "out_type": "UpsertUserEvaluationResponse"
               },
               {
                 "name": "ListTags",

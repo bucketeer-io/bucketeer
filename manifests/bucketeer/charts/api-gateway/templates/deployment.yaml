@@ -50,8 +50,6 @@ spec:
           env:
             - name: BUCKETEER_GATEWAY_PROJECT
               value: "{{ .Values.env.project }}"
-            - name: BUCKETEER_GATEWAY_BIGTABLE_INSTANCE
-              value: "{{ .Values.env.bigtableInstance }}"
             - name: BUCKETEER_GATEWAY_GOAL_TOPIC
               value: "{{ .Values.env.goalTopic }}"
             - name: BUCKETEER_GATEWAY_EVALUATION_TOPIC

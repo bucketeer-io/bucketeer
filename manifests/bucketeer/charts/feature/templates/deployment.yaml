@@ -62,8 +62,6 @@ spec:
               value: "{{ .Values.env.mysqlPort }}"
             - name: BUCKETEER_FEATURE_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
-            - name: BUCKETEER_FEATURE_BIGTABLE_INSTANCE
-              value: "{{ .Values.env.bigtableInstance }}"
             - name: BUCKETEER_FEATURE_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_FEATURE_EXPERIMENT_SERVICE

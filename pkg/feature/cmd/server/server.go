@@ -32,7 +32,6 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
@@ -48,7 +47,6 @@ type server struct {
 	mysqlHost                          *string
 	mysqlPort                          *int
 	mysqlDBName                        *string
-	bigtableInstance                   *string
 	accountService                     *string
 	experimentService                  *string
 	redisServerName                    *string
@@ -69,15 +67,14 @@ type server struct {
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the gRPC server")
 	server := &server{
-		CmdClause:        cmd,
-		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:          cmd.Flag("project", "Google Cloud project name.").Required().String(),
-		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:        cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
-		bigtableInstance: cmd.Flag("bigtable-instance", "Instance name to use Bigtable.").Required().String(),
+		CmdClause:   cmd,
+		port:        cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:     cmd.Flag("project", "Google Cloud project name.").Required().String(),
+		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -120,12 +117,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer mysqlClient.Close()
-
-	btClient, err := s.createBigtableClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-	defer btClient.Close()
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
@@ -187,7 +178,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	service := api.NewFeatureService(
 		mysqlClient,
-		btClient,
 		accountClient,
 		experimentClient,
 		redisV3Cache,
@@ -256,17 +246,4 @@ func (s *server) createPubsubClient(
 		return nil, err
 	}
 	return client, nil
-}
-
-func (s *server) createBigtableClient(
-	ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (bigtable.Client, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	return bigtable.NewBigtableClient(ctx, *s.project, *s.bigtableInstance,
-		bigtable.WithMetrics(registerer),
-		bigtable.WithLogger(logger),
-	)
 }

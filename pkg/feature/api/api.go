@@ -28,12 +28,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	featurestorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/role"
-	bigtable "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigtable"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -54,7 +52,6 @@ func WithLogger(l *zap.Logger) Option {
 
 type FeatureService struct {
 	mysqlClient           mysql.Client
-	userEvaluationStorage featurestorage.UserEvaluationsStorage
 	accountClient         accountclient.Client
 	experimentClient      experimentclient.Client
 	featuresCache         cachev3.FeaturesCache
@@ -68,7 +65,6 @@ type FeatureService struct {
 
 func NewFeatureService(
 	mysqlClient mysql.Client,
-	btClient bigtable.Client,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	v3Cache cache.MultiGetCache,
@@ -84,7 +80,6 @@ func NewFeatureService(
 	}
 	return &FeatureService{
 		mysqlClient:           mysqlClient,
-		userEvaluationStorage: featurestorage.NewUserEvaluationsStorage(btClient),
 		accountClient:         accountClient,
 		experimentClient:      experimentClient,
 		featuresCache:         cachev3.NewFeaturesCache(v3Cache),

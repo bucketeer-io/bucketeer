@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	cloud.google.com/go/bigquery v1.44.0
-	cloud.google.com/go/bigtable v1.0.0
 	cloud.google.com/go/kms v1.6.0
 	cloud.google.com/go/profiler v0.3.0
 	cloud.google.com/go/pubsub v1.27.1
@@ -50,7 +49,6 @@ require (
 	cloud.google.com/go/compute v1.13.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.2 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
-	cloud.google.com/go/longrunning v0.3.0 // indirect
 	cloud.google.com/go/monitoring v1.8.0 // indirect
 	cloud.google.com/go/trace v1.4.0 // indirect
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
