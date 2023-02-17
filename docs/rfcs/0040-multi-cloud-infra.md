@@ -177,15 +177,16 @@ Since Bucketeer uses Kubernetes, using YAML file and Helm fits into our cases.
 
 ### Controversial topic
 
-#### 1. How to support other cloud?
+#### 1. Which middleware requires its own implementation?
 
-| Currently used middlewares | Require to implement in each cloud |
-| -------------------------- | ---------------------------------- |
-| Cloud Pub/Sub              | Yes                                |
-| Cloud SQL                  | No                                 |
-| BigQuery                   | Yes                                |
-| Cloud KMS                  | Yes                                |
-| MemoryStore                | No                                 |
+| Currently used middlewares | Require to implement in each cloud                           |
+| -------------------------- | ------------------------------------------------------------ |
+| Cloud Pub/Sub              | Yes                                                          |
+| Cloud SQL                  | No (If we support IAM authentication, we need to use AWS SDK) |
+| BigQuery                   | Yes                                                          |
+| Cloud KMS                  | Yes                                                          |
+| MemoryStore                | No                                                           |
 
+##### 2. How to get multiple 
 
-
+プリフィックスにAWSをつけて渡す
