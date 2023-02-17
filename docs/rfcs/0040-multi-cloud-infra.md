@@ -249,4 +249,16 @@ amazonRedshift:
     ...
 ```
 
+As a altenative way, we can write as follows:
+
+```yaml
+bigQuery:
+    dataSet:
+aws:
+    athena:
+        ...
+    redshift:
+        ...
+```
+
 ##### 3. Do we set up terraform for each cloud?
