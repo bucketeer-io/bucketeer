@@ -193,72 +193,99 @@ In the future, we might make it possible to deploy by updating only one YAML fil
 
 ##### 2. How to pass each cloud's information as a flag to services?
 
-###### Cloud SQL, MemoryStore
-
-We don't need to consider about Cloud SQL and MemoryStore because their information is same in AWS.
-We can use the following configuration without modification:
+##### Cloud platform
 
 ```yaml
-mysqlUser:
-mysqlPass:
-mysqlHost:
-mysqlPort: 3306
-mysqlDbName:
+cloudPlatform: gcp
+```
 
-redis:
-    serverName:
-    addr:
-    poolMaxIdle: 25
-    poolMaxActive: 25
+###### Cloud SQL
+
+```yaml
+relationalDatabase:
+  type: mysql
+  password:
+  port:
+```
+
+##### MemoryStore
+
+```yaml
+inMemoryDataStore:
+  password:
+  port:
 ```
 
 ###### Cloud KMS
 
 ```yaml
-awsKms:
-    keyId:
-
-cloudKms:
-    resourceName:
+keyManagement:
+  gcp:
+    kms:
+      keyId: 
+  aws:
+    kms:
+      ...
 ```
 
 ###### Cloud Pub/Sub
 
 ```yaml
-cloudPubsub:
-    topic:
-    subscription:
-    pullerNumGoroutines: 5
-    pullerMaxOutstandingMessages: "1000"
-    pullerMaxOutstandingBytes: "1000000000"
-amazonSns:
-    topicArn:
-amazonSqs:
-    queue:
-    timeout:
+messaging:
+  gcp:
+    pubsub:
+      topic:
+      subscription:
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: "1000"
+      pullerMaxOutstandingBytes: "1000000000"
 ```
 
 ###### BigQuery
 
 ```yaml
-bigQuery:
-    dataSet:
-amazonAthena:
-    ...
-amazonRedshift:
-    ...
+bigData:
+  gcp:
+    bigQuery:
+      dataset:
 ```
 
-As a altenative way, we can write as follows:
+##### 3. Design of directory 
 
-```yaml
-bigQuery:
-    dataSet:
-aws:
-    athena:
-        ...
-    redshift:
-        ...
+###### pkg directory
+
+The pkg directory will be as follows:
+
+```
+pkg
+├── bigdata
+│   ├── athena
+│   └── bigquery
+├── inmemory
+│   └── redis
+├── kms
+│   ├── aws
+│   └── gcp
+├── messaging
+│   ├── pubsub
+│   ├── sns
+│   └── sqs
+└── rdb
+    ├── alloydb
+    ├── aurora
+    ├── mysql
+    └── postgres
+...
 ```
 
-##### 3. Do we set up terraform for each cloud?
+###### cmd package in each micro service
+
+The cmd package in each micro service will have aws.go and gcp.go as follows:
+
+```
+pkg/auth/cmd
+└── server
+    ├── aws.go
+    ├── gcp.go
+    └── server.go
+```
