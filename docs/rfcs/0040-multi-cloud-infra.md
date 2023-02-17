@@ -280,7 +280,7 @@ pkg
 
 ###### cmd package in each micro service
 
-The cmd package in each micro service will have aws.go and gcp.go as follows:
+The cmd package in each service will have aws.go and gcp.go as follows:
 
 ```
 pkg/auth/cmd
@@ -288,4 +288,15 @@ pkg/auth/cmd
     ├── aws.go
     ├── gcp.go
     └── server.go
+```
+
+##### 4. Changes in deployment.yaml
+
+deployment.yaml in each each service will be changed as follows:
+
+```yaml
+{{- if eq .Values.env.relationalDatabase.type "mysql" }}
+  - name: BUCKETEER_EVENT_COUNTER_MYSQL_USER
+    value: "{{ .Values.env.relationalDatabase.user }}"
+{{- end }}
 ```
