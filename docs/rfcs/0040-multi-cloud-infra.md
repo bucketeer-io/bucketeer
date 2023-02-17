@@ -2,10 +2,6 @@
 
 First, we'll start implementing AWS. Later, we'll support Azure.
 
-## Self-host Bucketeer
-
-[Prototype of design for YAML file](./utils/sample.yml)
-
 ### Other services
 
 **PipeCD**
@@ -174,6 +170,14 @@ https://github.com/PostHog/charts-clickhouse
 ### Conclusion
 
 Since Bucketeer uses Kubernetes, using YAML file and Helm fits into our cases.
+
+## Self-host Bucketeer
+
+Basically, we'll start support self-host by updating each values.yaml.
+
+In the future, we might make it possible to deploy by updating only one YAML file as follows:
+
+[Prototype of design for YAML file](./utils/sample.yml)
 
 ### Controversial topic
 
