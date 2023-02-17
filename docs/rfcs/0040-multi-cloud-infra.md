@@ -248,3 +248,5 @@ amazonAthena:
 amazonRedshift:
     ...
 ```
+
+##### 3. Do we set up terraform for each cloud?
