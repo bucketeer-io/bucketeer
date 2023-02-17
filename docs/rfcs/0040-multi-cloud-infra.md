@@ -191,9 +191,9 @@ In the future, we might make it possible to deploy by updating only one YAML fil
 | Cloud KMS                  | Yes                                                          |
 | MemoryStore                | No                                                           |
 
-##### 2. How to pass each cloud's information as a flag to services?
+##### 2. How to configure values.yaml?
 
-##### Cloud platform
+###### Cloud platform
 
 ```yaml
 cloudPlatform: gcp
