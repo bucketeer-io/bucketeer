@@ -360,7 +360,7 @@ export function createDatetimeClause(
   dtc: DatetimeClauseSchema
 ): DatetimeClause {
   const clause = new DatetimeClause();
-  clause.setTime(dtc.time.getTime() / 1000);
+  clause.setTime(Math.round(dtc.time.getTime() / 1000));
   return clause;
 }
 
