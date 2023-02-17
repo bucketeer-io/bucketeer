@@ -12,8 +12,6 @@
 
 ### Cloud Pub/Sub
 
-![event-pipeline](./images/0039-image1.png)
-
 #### Comparison Table
 
 |                                    | GCP                                                          | AWS                                                          | Azure                                                        |
@@ -40,9 +38,7 @@
 | API throttling(Tokyo region) |               | 1500 -> 300 transactions per second (3000 if high throughput) |                             |
 | messages only once           |               | ◯                                                            |                             |
 
-#### How to use SNS, SQS
-
-##### SNS
+#### How to use SNS
 
 ```go
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -118,7 +114,7 @@ func main() {
 }
 ```
 
-##### SQS
+#### How to use SQS
 
 ```go
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -559,8 +555,6 @@ type Sample struct {
 Yes. We can configure memory store as a optional in YAML file.
 
 ### Cloud KMS
-
-![webhook](./images/0039-image2.png)
 
 #### Comparison Table
 
