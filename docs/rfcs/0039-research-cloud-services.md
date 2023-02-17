@@ -1,5 +1,7 @@
 ## Overview
 
+This rfc summarizes the result of comparision for each cloud platform.
+
 ## Current middlewares we use
 
 | Currently used middlewares | Usage                                                 |
