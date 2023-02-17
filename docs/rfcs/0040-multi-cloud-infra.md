@@ -187,6 +187,60 @@ Since Bucketeer uses Kubernetes, using YAML file and Helm fits into our cases.
 | Cloud KMS                  | Yes                                                          |
 | MemoryStore                | No                                                           |
 
-##### 2. How to get multiple 
+##### 2. How to pass each cloud's information as a flag to services?
 
-プリフィックスにAWSをつけて渡す
+###### Cloud SQL, MemoryStore
+
+We don't need to consider about Cloud SQL and MemoryStore because their information is same in AWS.
+We can use the following configuration without modification:
+
+```yaml
+mysqlUser:
+mysqlPass:
+mysqlHost:
+mysqlPort: 3306
+mysqlDbName:
+
+redis:
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
+```
+
+###### Cloud KMS
+
+```yaml
+awsKms:
+    keyId:
+
+cloudKms:
+    resourceName:
+```
+
+###### Cloud Pub/Sub
+
+```yaml
+cloudPubsub:
+    topic:
+    subscription:
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+amazonSns:
+    topicArn:
+amazonSqs:
+    queue:
+    timeout:
+```
+
+###### BigQuery
+
+```yaml
+bigQuery:
+    dataSet:
+amazonAthena:
+    ...
+amazonRedshift:
+    ...
+```
