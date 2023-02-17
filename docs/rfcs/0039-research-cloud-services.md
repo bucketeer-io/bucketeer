@@ -435,8 +435,8 @@ func main() {
 
 |      | GCP        | AWS1          | AWS2                | AWS3                       | Azure                   |
 | ---- | ---------- | ------------- | ------------------- | -------------------------- | ----------------------- |
-|      | BigQuery   | Amazon Athena | Amazon Redshift     | , Amazon Redshift Spectrum | Azure Synapse Analytics |
-| SLA  | \>= 99.99% | \>= 99.9%     | >=99.9%(Multi Node) | ?                          | \>= 99.9%               |
+|      | BigQuery   | Amazon Athena | Amazon Redshift     | Amazon Redshift Spectrum   | Azure Synapse Analytics |
+| SLA  | >= 99.99%  |  >= 99.9%     | >=99.9%(Multi Node) | ?                          | \>= 99.9%               |
 
 ### MemoryStore
 
@@ -716,3 +716,11 @@ https://azure.microsoft.com/ja-jp/support/legal/sla/azure-sql-database/v1_8/
 https://aws.amazon.com/rds/aurora/sla/
 
 https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues-understanding-logic.html
+
+
+
+https://cloud.google.com/bigquery/sla
+
+https://aws.amazon.com/athena/sla/
+
+https://aws.amazon.com/redshift/sla/
