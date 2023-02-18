@@ -35,8 +35,8 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       (state) => selectAllFeatures(state.features),
       shallowEqual
     );
-    const isFeatureLoading = useSelector<AppState, boolean>(
-      (state) => state.features.loading,
+    const isListFeatureLoading = useSelector<AppState, boolean>(
+      (state) => state.features.listFeaturesLoading,
       shallowEqual
     );
     const goals = useSelector<AppState, Goal.AsObject[]>(
@@ -47,7 +47,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       (state) => state.goals.loading,
       shallowEqual
     );
-    const isLoading = isFeatureLoading || isGoalLoading;
+    const isLoading = isListFeatureLoading || isGoalLoading;
     const featureOptions = features.map((feature) => {
       return {
         value: feature.id,

@@ -120,6 +120,15 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       ],
       shallowEqual
     );
+    const [isResetTargeting, setIsResetTargeting] = useState(false);
+
+    const isFeatureLoading = useSelector<AppState, boolean>(
+      (state) => state.features.loading
+    );
+    const isSegmentLoading = useSelector<AppState, boolean>(
+      (state) => state.segments.loading
+    );
+    const isLoading = isFeatureLoading || isSegmentLoading;
 
     const defaultValues = {
       prerequisites: feature.prerequisitesList,
@@ -169,6 +178,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     const {
       handleSubmit,
       formState: { dirtyFields },
+      reset,
     } = methods;
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
@@ -230,7 +240,9 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
               environmentNamespace: currentEnvironment.namespace,
               id: featureId,
             })
-          );
+          ).then(() => {
+            setIsResetTargeting(true);
+          });
         });
       },
       [dispatch, dirtyFields, defaultValues]
@@ -244,6 +256,21 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         })
       );
     }, [dispatch, currentEnvironment]);
+
+    useEffect(() => {
+      if (isResetTargeting) {
+        reset(defaultValues);
+        setIsResetTargeting(false);
+      }
+    }, [feature, isResetTargeting]);
+
+    if (isLoading) {
+      return (
+        <div className="p-9 bg-gray-100">
+          <DetailSkeleton />
+        </div>
+      );
+    }
 
     return (
       <FormProvider {...methods}>
