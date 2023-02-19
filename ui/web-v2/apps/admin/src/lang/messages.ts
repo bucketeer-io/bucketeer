@@ -2022,6 +2022,95 @@ export const messages = {
       },
     },
   },
+  webhook: {
+    add: {
+      header: {
+        title: defineMessage({
+          id: 'webhook.add.header.title',
+          defaultMessage: 'Create a webhook',
+        }),
+        // description: defineMessage({
+        //   id: 'webhook.add.header.description',
+        //   defaultMessage:
+        //     'By using the push feature, the SDK can be updated in real-time. Every time a feature flag is updated, a notification is sent to the client.',
+        // }),
+      },
+    },
+    confirm: {
+      deleteTitle: defineMessage({
+        id: 'webhook.confirm.delete.title',
+        defaultMessage: 'Delete webhook',
+      }),
+      deleteDescription: defineMessage({
+        id: 'webhook.confirm.delete.description',
+        defaultMessage:
+          'The {webhookName} webhook will be deleted permanently.',
+      }),
+    },
+    list: {
+      header: {
+        description: defineMessage({
+          id: 'webhook.list.header.description',
+          defaultMessage:
+            'Select a webhook to manage the settings or click on the Add button to add a new one.',
+        }),
+        title: defineMessage({
+          id: 'webhook.list.header.title',
+          defaultMessage: 'Webhook',
+        }),
+      },
+      // noData: {
+      //   description: defineMessage({
+      //     id: 'push.list.noData.description',
+      //     defaultMessage:
+      //       'You can create a push to update the SDK client in real-time. Every time a feature flag is updated, a notification is sent to the client.',
+      //   }),
+      // },
+      noResult: {
+        searchKeyword: defineMessage({
+          id: 'webhook.list.noResult.searchKeyword',
+          defaultMessage: 'Name',
+        }),
+      },
+    },
+    search: {
+      placeholder: defineMessage({
+        id: 'webhook.search.placeholder',
+        defaultMessage: 'Name',
+      }),
+    },
+    sort: {
+      nameAz: defineMessage({
+        id: 'webhook.sort.nameAz',
+        defaultMessage: 'Name A-Z',
+      }),
+      nameZa: defineMessage({
+        id: 'webhook.sort.nameZa',
+        defaultMessage: 'Name Z-A',
+      }),
+      newest: defineMessage({
+        id: 'webhook.sort.newest',
+        defaultMessage: 'Newest',
+      }),
+      oldest: defineMessage({
+        id: 'webhook.sort.oldest',
+        defaultMessage: 'Oldest',
+      }),
+    },
+    update: {
+      header: {
+        title: defineMessage({
+          id: 'webhook.update.header.title',
+          defaultMessage: 'Update the webhook',
+        }),
+        // description: defineMessage({
+        //   id: 'webhook.update.header.description',
+        //   defaultMessage:
+        //     'By using the push feature, the SDK can be updated in real-time. Every time a feature flag is updated, a notification is sent to the client.',
+        // }),
+      },
+    },
+  },
   settings: {
     list: {
       header: {
