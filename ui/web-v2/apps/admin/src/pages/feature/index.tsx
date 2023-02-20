@@ -211,6 +211,10 @@ export const FeatureIndexPage: FC = memo(() => {
         options && options.hasExperiment
           ? options.hasExperiment === 'true'
           : null;
+      const hasPrerequisites =
+        options && options.hasPrerequisites
+          ? options.hasPrerequisites === 'true'
+          : null;
       const tags = options && options.tagIds ? options.tagIds : [];
 
       dispatch(
@@ -225,6 +229,7 @@ export const FeatureIndexPage: FC = memo(() => {
           enabled: enabled,
           archived: archived,
           hasExperiment: hasExperiment,
+          hasPrerequisites: hasPrerequisites,
           maintainerId: options && (options.maintainerId as string),
         })
       );

@@ -138,6 +138,7 @@ export enum FilterTypes {
   ENABLED = 'enabled',
   ARCHIVED = 'archived',
   TAGS = 'tags',
+  HAS_PREREQUISITES = 'prerequisites',
 }
 
 const filterOptions: Option[] = [
@@ -160,6 +161,10 @@ const filterOptions: Option[] = [
   {
     value: FilterTypes.ARCHIVED,
     label: intl.formatMessage(messages.feature.filter.archived),
+  },
+  {
+    value: FilterTypes.HAS_PREREQUISITES,
+    label: intl.formatMessage(messages.feature.filter.hasPrerequisites),
   },
 ];
 
@@ -186,6 +191,17 @@ const hasExperimentOptions: Option[] = [
 ];
 
 const archivedOptions: Option[] = [
+  {
+    value: 'true',
+    label: intl.formatMessage(messages.yes),
+  },
+  {
+    value: 'false',
+    label: intl.formatMessage(messages.no),
+  },
+];
+
+const hasPrerequisitesOptions: Option[] = [
   {
     value: 'true',
     label: intl.formatMessage(messages.yes),
@@ -468,6 +484,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               })
             );
             return;
+          case FilterTypes.HAS_PREREQUISITES:
+            setFilterValues(hasPrerequisitesOptions);
+            return;
           case FilterTypes.TAGS:
             setFilterValues(
               tagsList.map((tag) => ({
@@ -502,6 +521,11 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
         case FilterTypes.HAS_EXPERIMENT:
           handleUpdateOption({
             hasExperiment: value,
+          });
+          return;
+        case FilterTypes.HAS_PREREQUISITES:
+          handleUpdateOption({
+            hasPrerequisites: value,
           });
           return;
         case FilterTypes.MAINTAINER:
@@ -578,6 +602,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
         {(options.enabled ||
           options.archived ||
           options.hasExperiment ||
+          options.hasPrerequisites ||
           options.maintainerId ||
           options.tagIds?.length > 0) && (
           <div className="flex space-x-2 mt-2">
@@ -623,6 +648,20 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 }
               />
             )}
+            {options.hasPrerequisites && (
+              <FilterChip
+                label={`${f(messages.feature.filter.hasPrerequisites)}: ${
+                  hasPrerequisitesOptions.find(
+                    (option) => option.value === options.hasPrerequisites
+                  ).label
+                }`}
+                onRemove={() =>
+                  handleUpdateOption({
+                    hasPrerequisites: null,
+                  })
+                }
+              />
+            )}
             {options.maintainerId && (
               <FilterChip
                 label={`${f(messages.feature.filter.maintainer)}: ${
@@ -660,6 +699,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             {(options.enabled ||
               options.archived ||
               options.hasExperiment ||
+              options.hasPrerequisites ||
               options.maintainerId ||
               options.tagIds) && (
               <FilterRemoveAllButtonProps onClick={onClear} />

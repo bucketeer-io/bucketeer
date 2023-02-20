@@ -219,6 +219,7 @@
   "feature.filter.archived": "Archived",
   "feature.filter.enabled": "Enabled",
   "feature.filter.hasExperiment": "Has experiment",
+  "feature.filter.hasPrerequisites": "Has prerequisites",
   "feature.filter.maintainer": "Maintainer",
   "feature.filter.tags": "Tags",
   "feature.filter.tags.placeholder": "Select one or more tags",
