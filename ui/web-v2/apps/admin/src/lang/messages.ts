@@ -1479,6 +1479,10 @@ export const messages = {
         id: 'feature.filter.tags.placeholder',
         defaultMessage: 'Select one or more tags',
       }),
+      hasPrerequisites: defineMessage({
+        id: 'feature.filter.hasPrerequisites',
+        defaultMessage: 'Has prerequisites',
+      }),
     },
     sort: {
       nameAz: defineMessage({

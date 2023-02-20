@@ -223,6 +223,7 @@
   "feature.filter.archived": "アーカイブ",
   "feature.filter.enabled": "有効 / 無効",
   "feature.filter.hasExperiment": "エクスペリメントがある",
+  "feature.filter.hasPrerequisites": "前提条件",
   "feature.filter.maintainer": "管理者",
   "feature.filter.tags": "タグ",
   "feature.filter.tags.placeholder": "一つ以上タグを選択してください",

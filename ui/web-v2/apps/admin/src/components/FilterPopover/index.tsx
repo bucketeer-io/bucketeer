@@ -27,7 +27,7 @@ export interface FilterPopoverProps {
 export const FilterPopover: FC<FilterPopoverProps> = memo(
   ({ keys, values, onChangeKey, onAdd, onAddMulti }) => {
     const { formatMessage: f } = useIntl();
-    const [key, setKey] = useState<string>(null);
+    const [selectedFilterType, setSelectedFilterType] = useState<Option>(null);
     const referenceElement = useRef<HTMLButtonElement | null>(null);
     const popperElement = useRef<HTMLDivElement | null>(null);
     const popper = usePopper(referenceElement.current, popperElement.current, {
@@ -36,34 +36,28 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
     const [valueOption, setValue] = useState<Option>(values[0]);
     const [multiValueOption, setMultiValue] = useState<Option[]>([]);
 
-    const isMultiFilter = key === FilterTypes.TAGS;
+    const isMultiFilter = selectedFilterType?.value === FilterTypes.TAGS;
 
     const handleKeyChange = (o: Option) => {
-      setKey(o.value);
+      setSelectedFilterType(o);
       onChangeKey(o.value);
     };
 
     const handleOnClickAdd = () => {
       if (isMultiFilter) {
         onAddMulti(
-          key,
+          selectedFilterType.value,
           multiValueOption.map((o) => o.value)
         );
       } else {
-        onAdd(key, valueOption.value);
+        onAdd(selectedFilterType.value, valueOption.value);
       }
-      setKey(null);
       setValue(values[0]);
     };
 
     const onPopoverClose = (isPopoverClose: boolean) => {
       if (isPopoverClose) {
-        if (multiValueOption.length > 0) {
-          setMultiValue([]);
-        }
-        if (valueOption) {
-          setValue(null);
-        }
+        setSelectedFilterType(null);
       }
     };
 
@@ -124,6 +118,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                       <div className="p-4 bg-gray-100">
                         <div className="flex">
                           <ReactSelect
+                            value={selectedFilterType}
                             className={classNames(
                               'w-60 z-10 text-sm text-gray-700'
                             )}
@@ -140,7 +135,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                               }),
                             }}
                           />
-                          {(valueOption || multiValueOption.length > 0) && (
+                          {selectedFilterType && (
                             <div className="flex">
                               <div className="mx-3 pt-[6px]">
                                 {f(messages.feature.clause.operator.equal)}

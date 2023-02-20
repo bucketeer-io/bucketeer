@@ -151,6 +151,7 @@ export interface ListFeaturesParams {
   enabled?: boolean;
   archived?: boolean;
   hasExperiment?: boolean;
+  hasPrerequisites?: boolean;
   maintainerId: string;
 }
 
@@ -173,6 +174,10 @@ export const listFeatures = createAsyncThunk<
     request.setArchived(new BoolValue().setValue(params.archived));
   params.hasExperiment != null &&
     request.setHasExperiment(new BoolValue().setValue(params.hasExperiment));
+  params.hasPrerequisites != null &&
+    request.setHasPrerequisites(
+      new BoolValue().setValue(params.hasPrerequisites)
+    );
   request.setMaintainer(params.maintainerId);
   await setupAuthToken();
   const result = await featureGrpc.listFeatures(request);

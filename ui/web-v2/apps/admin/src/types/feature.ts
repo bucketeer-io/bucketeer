@@ -25,4 +25,5 @@ export interface FeatureSearchOptions {
   archived?: string;
   hasExperiment?: string;
   tagIds?: string[];
+  hasPrerequisites?: string;
 }
