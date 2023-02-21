@@ -260,11 +260,17 @@ The pkg directory will be as follows:
 
 ```
 pkg
-├── bigdata
-│   ├── athena
-│   └── bigquery
-├── inmemory
-│   └── redis
+├── storage
+│   ├── bigdata
+│       ├── athena
+│       └── bigquery
+│   ├── inmemory
+│       └── redis
+│   └── rdb
+│       ├── alloydb
+│       ├── aurora
+│       ├── mysql
+│       └── postgres
 ├── kms
 │   ├── aws
 │   └── gcp
@@ -272,11 +278,7 @@ pkg
 │   ├── pubsub
 │   ├── sns
 │   └── sqs
-└── rdb
-    ├── alloydb
-    ├── aurora
-    ├── mysql
-    └── postgres
+
 ...
 ```
 
