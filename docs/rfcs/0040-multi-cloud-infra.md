@@ -304,3 +304,13 @@ deployment.yaml in each each service will be changed as follows:
     value: "{{ .Values.env.relationalDatabase.user }}"
 {{- end }}
 ```
+
+Also, we'll determine which cloud is used by checking `cloudPlatform` field in values.yaml as follows:
+
+```yaml
+{{- if eq .Values.env.cloudPlatform "gcp" }}
+  ...
+{{- else eq .Values.env.cloudPlatform "aws" }}
+  ...
+{{- end }}
+```
