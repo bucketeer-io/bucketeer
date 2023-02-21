@@ -147,6 +147,10 @@ const filterOptions: Option[] = [
     label: intl.formatMessage(messages.tags),
   },
   {
+    value: FilterTypes.HAS_PREREQUISITES,
+    label: intl.formatMessage(messages.feature.filter.hasPrerequisites),
+  },
+  {
     value: FilterTypes.MAINTAINER,
     label: intl.formatMessage(messages.feature.filter.maintainer),
   },
@@ -161,10 +165,6 @@ const filterOptions: Option[] = [
   {
     value: FilterTypes.ARCHIVED,
     label: intl.formatMessage(messages.feature.filter.archived),
-  },
-  {
-    value: FilterTypes.HAS_PREREQUISITES,
-    label: intl.formatMessage(messages.feature.filter.hasPrerequisites),
   },
 ];
 
