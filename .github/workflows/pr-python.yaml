@@ -45,4 +45,7 @@ jobs:
           source .venv/bin/activate
           make gen
           make test
-
+      - name: Build python
+        run: |
+          source .venv/bin/activate
+          make gen
