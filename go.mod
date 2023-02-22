@@ -25,7 +25,7 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/mna/redisc v1.1.2
 	github.com/nicksnyder/go-i18n/v2 v2.2.0
-	github.com/prometheus/client_golang v1.2.1
+	github.com/prometheus/client_golang v1.11.1
 	github.com/robfig/cron v0.0.0-20171101201047-2315d5715e36
 	github.com/slack-go/slack v0.6.4
 	github.com/stretchr/testify v1.8.1
