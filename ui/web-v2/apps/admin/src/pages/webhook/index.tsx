@@ -8,6 +8,7 @@ import { useHistory, useRouteMatch, useParams } from 'react-router-dom';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Overlay } from '../../components/Overlay';
 import { WebhookAddForm } from '../../components/WebhookAddForm';
+import { WebhookList } from '../../components/WebhookList';
 import { WebhookUpdateForm } from '../../components/WebhookUpdateForm';
 import { PUSH_LIST_PAGE_SIZE } from '../../constants/push';
 import {
@@ -299,14 +300,14 @@ export const WebhookIndexPage: FC = memo(() => {
   return (
     <>
       <div className="m-10">
-        {/* <WebhookList
+        <WebhookList
           searchOptions={searchOptions}
           onChangePage={handlePageChange}
           onChangeSearchOptions={handleSearchOptionsChange}
           onAdd={handleOnClickAdd}
           onUpdate={handleOnClickUpdate}
           onDelete={handleOnClickDelete}
-        /> */}
+        />
         <Overlay open={open} onClose={handleOnClose}>
           {isNew && (
             <FormProvider {...addMethod}>
