@@ -1,4 +1,5 @@
 import { Dialog } from '@headlessui/react';
+import FileCopyOutlined from '@material-ui/icons/FileCopyOutlined';
 import { FC, memo, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
@@ -12,7 +13,6 @@ import { useIsEditable, useCurrentEnvironment } from '../../modules/me';
 import { getWebhook } from '../../modules/webhooks';
 import { AppDispatch } from '../../store';
 import { DetailSkeleton } from '../DetailSkeleton';
-
 export interface WebhookUpdateFormProps {
   onSubmit: () => void;
   onCancel: () => void;
@@ -61,11 +61,11 @@ export const WebhookUpdateForm: FC<WebhookUpdateFormProps> = memo(
                   {f(messages.webhook.update.header.title)}
                 </Dialog.Title>
               </div>
-              {/* <div className="mt-1">
+              <div className="mt-1">
                 <p className="text-sm text-indigo-300">
                   {f(messages.webhook.update.header.description)}
                 </p>
-              </div> */}
+              </div>
             </div>
             <div className="flex-1 flex flex-col justify-between">
               <div className="space-y-6 px-5 pt-6 pb-5 flex flex-col">
@@ -116,12 +116,9 @@ export const WebhookUpdateForm: FC<WebhookUpdateFormProps> = memo(
                 </div>
                 <div className="">
                   <label htmlFor="description" className="block">
-                    <span className="input-label">
-                      {/* {f(messages.description)} */}
-                      Webhook Url
-                    </span>
+                    <span className="input-label">Webhook URL</span>
                   </label>
-                  <div className="mt-1">
+                  <div className="mt-1 relative">
                     <input
                       type="text"
                       name="name"
@@ -130,11 +127,9 @@ export const WebhookUpdateForm: FC<WebhookUpdateFormProps> = memo(
                       disabled={true}
                       value={webhookUrl}
                     />
-                  </div>
-                  <div className="flex justify-end">
-                    <div className="border rounded px-2 mt-2 cursor-pointer border-gray-600 text-sm">
+                    <div className="absolute right-[2px] bottom-[1px] top-[1px] h-[38px] pl-3 pr-2 bg-gray-100 cursor-pointer border-l border-gray-300 flex items-center">
                       <CopyChip key={webhookUrl} text={webhookUrl}>
-                        <span>Copy</span>
+                        <FileCopyOutlined fontSize="small" />
                       </CopyChip>
                     </div>
                   </div>

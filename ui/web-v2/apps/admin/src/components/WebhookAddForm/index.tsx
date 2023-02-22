@@ -29,11 +29,11 @@ export const WebhookAddForm: FC<WebhookAddFormProps> = memo(
                   {f(messages.webhook.add.header.title)}
                 </Dialog.Title>
               </div>
-              {/* <div className="mt-1">
+              <div className="mt-1">
                 <p className="text-sm text-indigo-300">
-                  {f(messages.push.add.header.description)}
+                  {f(messages.webhook.add.header.description)}
                 </p>
-              </div> */}
+              </div>
             </div>
             <div className="flex-1 flex flex-col justify-between">
               <div className="space-y-6 px-5 pt-6 pb-5 flex flex-col">

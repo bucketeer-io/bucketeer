@@ -62,15 +62,6 @@ export const SettingsIndexPage: FC = memo(() => {
         <Switch>
           <Route
             exact
-            path={[
-              `${url}${PAGE_PATH_WEBHOOKS}`,
-              `${url}${PAGE_PATH_WEBHOOKS}/:webhookId`,
-            ]}
-          >
-            <WebhookIndexPage />
-          </Route>
-          <Route
-            exact
             path={`${url}`}
             component={() => <Redirect to={`${url}${PAGE_PATH_PUSHES}`} />}
           />
@@ -91,6 +82,15 @@ export const SettingsIndexPage: FC = memo(() => {
             ]}
           >
             <NotificationIndexPage />
+          </Route>
+          <Route
+            exact
+            path={[
+              `${url}${PAGE_PATH_WEBHOOKS}`,
+              `${url}${PAGE_PATH_WEBHOOKS}/:webhookId`,
+            ]}
+          >
+            <WebhookIndexPage />
           </Route>
         </Switch>
       </div>
@@ -114,8 +114,7 @@ const createTabs = (): Array<TabItem> => {
       to: PAGE_PATH_NOTIFICATIONS,
     },
     {
-      message: 'Webhook',
-      // message: intl.formatMessage(messages.settings.tab.pushes),
+      message: intl.formatMessage(messages.settings.tab.webhooks),
       to: PAGE_PATH_WEBHOOKS,
     },
   ];

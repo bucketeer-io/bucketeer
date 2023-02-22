@@ -51,6 +51,11 @@ export const WebhookList: FC<WebhookListProps> = memo(
 
     return (
       <div className="w-full">
+        <div className="flex items-stretch mb-8 text-sm">
+          <p className="text-gray-700">
+            {f(messages.webhook.list.header.description)}
+          </p>
+        </div>
         <div className="min-w-max bg-white border border-gray-300 rounded-md">
           <div>
             <WebhookSearch
@@ -92,9 +97,9 @@ export const WebhookList: FC<WebhookListProps> = memo(
                       title: f(messages.webhook.list.header.title),
                     })}
                   </h1>
-                  {/* <p className="mt-5">
-                    {f(messages.push.list.noData.description)}
-                  </p> */}
+                  <p className="mt-5">
+                    {f(messages.webhook.list.noData.description)}
+                  </p>
                 </div>
               </div>
             )
