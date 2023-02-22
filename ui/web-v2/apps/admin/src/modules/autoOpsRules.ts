@@ -1,3 +1,4 @@
+import { ChangeWebhookClauseCommand } from './../proto/autoops/command_pb.d';
 import {
   createSlice,
   createEntityAdapter,
@@ -9,6 +10,7 @@ import { AutoOpsRule } from '../proto/autoops/auto_ops_rule_pb';
 import {
   AddDatetimeClauseCommand,
   AddOpsEventRateClauseCommand,
+  AddWebhookClauseCommand,
   ChangeAutoOpsRuleOpsTypeCommand,
   ChangeDatetimeClauseCommand,
   ChangeOpsEventRateClauseCommand,
@@ -76,7 +78,9 @@ export interface UpdateAutoOpsRuleParams {
   id: string;
   changeAutoOpsRuleOpsTypeCommand?: ChangeAutoOpsRuleOpsTypeCommand;
   addOpsEventRateClauseCommands?: Array<AddOpsEventRateClauseCommand>;
+  addWebhookClauseCommands?: Array<AddWebhookClauseCommand>;
   changeOpsEventRateClauseCommands?: Array<ChangeOpsEventRateClauseCommand>;
+  changeWebhookClauseCommands?: Array<ChangeWebhookClauseCommand>;
   addDatetimeClauseCommands?: Array<AddDatetimeClauseCommand>;
   changeDatetimeClauseCommands?: Array<ChangeDatetimeClauseCommand>;
   deleteClauseCommands?: Array<DeleteClauseCommand>;
@@ -98,9 +102,15 @@ export const updateAutoOpsRule = createAsyncThunk<
     request.setAddOpsEventRateClauseCommandsList(
       params.addOpsEventRateClauseCommands
     );
+  params.addWebhookClauseCommands?.length > 0 &&
+    request.setAddWebhookClauseCommandsList(params.addWebhookClauseCommands);
   params.changeOpsEventRateClauseCommands?.length > 0 &&
     request.setChangeOpsEventRateClauseCommandsList(
       params.changeOpsEventRateClauseCommands
+    );
+  params.changeWebhookClauseCommands?.length > 0 &&
+    request.setChangeWebhookClauseCommandsList(
+      params.changeWebhookClauseCommands
     );
   params.addDatetimeClauseCommands?.length > 0 &&
     request.setAddDatetimeClauseCommandsList(params.addDatetimeClauseCommands);

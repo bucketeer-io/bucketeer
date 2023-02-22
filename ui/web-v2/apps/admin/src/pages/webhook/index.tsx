@@ -10,7 +10,6 @@ import { Overlay } from '../../components/Overlay';
 import { WebhookAddForm } from '../../components/WebhookAddForm';
 import { WebhookList } from '../../components/WebhookList';
 import { WebhookUpdateForm } from '../../components/WebhookUpdateForm';
-import { PUSH_LIST_PAGE_SIZE } from '../../constants/push';
 import {
   ID_NEW,
   PAGE_PATH_SETTINGS,
@@ -18,6 +17,7 @@ import {
   PAGE_PATH_ROOT,
   PAGE_PATH_WEBHOOKS,
 } from '../../constants/routing';
+import { WEBHOOK_LIST_PAGE_SIZE } from '../../constants/webhook';
 import { messages } from '../../lang/messages';
 import { useCurrentEnvironment } from '../../modules/me';
 import {
@@ -101,11 +101,11 @@ export const WebhookIndexPage: FC = memo(() => {
           ? options.sort
           : '-createdAt'
       );
-      const cursor = (page - 1) * PUSH_LIST_PAGE_SIZE;
+      const cursor = (page - 1) * WEBHOOK_LIST_PAGE_SIZE;
       dispatch(
         listWebhooks({
           environmentNamespace: currentEnvironment.namespace,
-          pageSize: PUSH_LIST_PAGE_SIZE,
+          pageSize: WEBHOOK_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
           orderBy: sort.orderBy,

@@ -164,6 +164,55 @@ const autoOpsRulesSchema = yup.array().of(
               .max(100),
             operator: yup.string(),
           }),
+          webhookClause: yup.object().shape({
+            webhookId: yup
+              .string()
+              .nullable()
+              .test(
+                'required',
+                intl.formatMessage(messages.input.error.required),
+                function (value) {
+                  const { from } = this as any;
+                  if (from[1].value.clauseType == ClauseType.WEBHOOK) {
+                    return !!value;
+                  }
+                  return true;
+                }
+              ),
+            conditionsList: yup.array().of(
+              yup.object().shape({
+                filter: yup
+                  .string()
+                  .nullable()
+                  .test(
+                    'required',
+                    intl.formatMessage(messages.input.error.required),
+                    function (value) {
+                      const { from } = this as any;
+                      if (from[2].value.clauseType == ClauseType.WEBHOOK) {
+                        return !!value;
+                      }
+                      return true;
+                    }
+                  ),
+                operator: yup.string(),
+                value: yup
+                  .string()
+                  .nullable()
+                  .test(
+                    'required',
+                    intl.formatMessage(messages.input.error.required),
+                    function (value) {
+                      const { from } = this as any;
+                      if (from[2].value.clauseType == ClauseType.WEBHOOK) {
+                        return !!value;
+                      }
+                      return true;
+                    }
+                  ),
+              })
+            ),
+          }),
           datetimeClause: yup.object().shape({
             time: yup
               .date()
