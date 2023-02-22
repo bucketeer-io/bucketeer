@@ -201,7 +201,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			return err
 		}
 	case hcv:
-		webhookCryptoUtil, err = crypto.NewHashicorpvaultCrypto(ctx, *s.webhookKMSResourceName, "", "vaulttoken")
+		webhookCryptoUtil, err = crypto.NewHashicorpvaultCrypto(ctx, *s.webhookKMSResourceName, "", "root")
 		if err != nil {
 			return err
 		}
