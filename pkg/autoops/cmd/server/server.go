@@ -47,6 +47,7 @@ const (
 	webhookPath = "hook"
 	gcp         = "gcp"
 	aws         = "aws"
+	hcv         = "hcv"
 )
 
 type server struct {
@@ -196,6 +197,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	switch *s.cloudService {
 	case gcp:
 		webhookCryptoUtil, err = crypto.NewCloudKMSCrypto(ctx, *s.webhookKMSResourceName)
+		if err != nil {
+			return err
+		}
+	case hcv:
+		webhookCryptoUtil, err = crypto.NewHashicorpvaultCrypto(ctx, *s.webhookKMSResourceName, "", "vaulttoken")
 		if err != nil {
 			return err
 		}
