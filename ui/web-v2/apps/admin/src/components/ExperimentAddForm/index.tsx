@@ -20,6 +20,7 @@ import { AppDispatch } from '../../store';
 import { DatetimePicker } from '../DatetimePicker';
 import { DetailSkeleton } from '../DetailSkeleton';
 import { Option, Select } from '../Select';
+import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 
 export interface ExperimentAddFormProps {
   onSubmit: () => void;
@@ -48,10 +49,11 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       shallowEqual
     );
     const isLoading = isListFeatureLoading || isGoalLoading;
-    const featureOptions = features.map((feature) => {
+    const featureFlagOptions = features.map((feature) => {
       return {
         value: feature.id,
         label: `${feature.id}(${feature.name})`,
+        enabled: feature.enabled,
       };
     });
     const goalOptions = goals.map((goal) => {
@@ -210,14 +212,14 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
                     control={control}
                     render={({ field }) => {
                       return (
-                        <Select
-                          options={featureOptions}
+                        <SelectFeatureFlag
+                          options={featureFlagOptions}
                           className="w-full"
-                          onChange={(e) => {
+                          onChange={(e: OptionFeatureFlag) => {
                             field.onChange(e.value);
                             handleOnChangeFeature(e.value);
                           }}
-                          value={featureOptions.find(
+                          value={featureFlagOptions.find(
                             (o) => o.value === field.value
                           )}
                         />

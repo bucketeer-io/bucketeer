@@ -33,6 +33,7 @@ import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
 import { CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
+import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 import { Switch } from '../Switch';
 
 interface FeatureTargetingFormProps {
@@ -354,6 +355,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                   return {
                     value: f.id,
                     label: f.name,
+                    enabled: f.enabled,
                   };
                 });
 
@@ -364,11 +366,11 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                     control={control}
                     render={({ field }) => {
                       return (
-                        <Select
+                        <SelectFeatureFlag
                           placeholder={f(messages.feature.selectFlag)}
                           options={featureFlagOptions}
                           className="w-full"
-                          onChange={(e) => {
+                          onChange={(e: OptionFeatureFlag) => {
                             if (field.value !== e.value) {
                               field.onChange(e.value);
                               update(prerequisitesIdx, {
