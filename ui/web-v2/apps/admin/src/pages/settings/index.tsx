@@ -15,12 +15,14 @@ import {
   PAGE_PATH_NOTIFICATIONS,
   PAGE_PATH_NEW,
   PAGE_PATH_ROOT,
+  PAGE_PATH_WEBHOOKS,
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { useCurrentEnvironment } from '../../modules/me';
 import { NotificationIndexPage } from '../notification';
 import { PushIndexPage } from '../push';
+import { WebhookIndexPage } from '../webhook';
 
 export const SettingsIndexPage: FC = memo(() => {
   const { url } = useRouteMatch();
@@ -81,6 +83,15 @@ export const SettingsIndexPage: FC = memo(() => {
           >
             <NotificationIndexPage />
           </Route>
+          <Route
+            exact
+            path={[
+              `${url}${PAGE_PATH_WEBHOOKS}`,
+              `${url}${PAGE_PATH_WEBHOOKS}/:webhookId`,
+            ]}
+          >
+            <WebhookIndexPage />
+          </Route>
         </Switch>
       </div>
     </div>
@@ -101,6 +112,10 @@ const createTabs = (): Array<TabItem> => {
     {
       message: intl.formatMessage(messages.settings.tab.notifications),
       to: PAGE_PATH_NOTIFICATIONS,
+    },
+    {
+      message: intl.formatMessage(messages.settings.tab.webhooks),
+      to: PAGE_PATH_WEBHOOKS,
     },
   ];
 };
