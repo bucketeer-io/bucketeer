@@ -4,3 +4,10 @@ vault:
   dev:
     enabled: true 
     devRootToken: "root"
+
+mysql:
+  auth:
+    database: "bucketeer"
+    username: "bucketeer"
+    existingSecret: "mysql-secrets"
+    
