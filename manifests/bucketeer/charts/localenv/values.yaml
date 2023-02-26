@@ -6,6 +6,9 @@ vault:
     devRootToken: "root"
 
 mysql:
+  initdbScriptsConfigMap: mysql-initdb
+  volumePermissions:
+    enabled: true
   auth:
     database: "bucketeer"
     username: "bucketeer"
