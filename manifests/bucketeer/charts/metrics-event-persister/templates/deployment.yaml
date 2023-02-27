@@ -35,7 +35,9 @@ spec:
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
+      {{- if not .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "metrics-event-persister.name" . }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"

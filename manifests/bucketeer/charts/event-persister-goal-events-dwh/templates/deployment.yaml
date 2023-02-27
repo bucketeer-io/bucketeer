@@ -36,7 +36,9 @@ spec:
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }}
+      {{- if not .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "event-persister-goal-events-dwh.name" . }}
+      {{- end }}
       containers:
         - name: "event-persister-dwh"
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"

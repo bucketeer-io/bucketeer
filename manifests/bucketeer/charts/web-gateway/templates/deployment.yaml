@@ -67,7 +67,9 @@ spec:
         - name: bucketeer-jp-cert-secret
           secret:
             secretName: {{ template "bucketeer-jp-cert-secret" . }}
+      {{- if not .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "web-gateway.name" . }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
