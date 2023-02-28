@@ -115,6 +115,8 @@
   "autoOps.opsEventRateClause.goal": "Goal",
   "autoOps.opsEventRateClause.minCount": "Minimum count",
   "autoOps.rule": "Rule",
+  "autoOps.webhookClause.filter": "Filter",
+  "autoOps.webhookClause.value": "Value",
   "autoOps.webhookClauseType": "Webhook",
   "button.add": "Add",
   "button.addCondition": "Add condition",

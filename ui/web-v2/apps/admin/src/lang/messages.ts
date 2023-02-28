@@ -387,10 +387,6 @@ export const messages = {
       }),
     },
     webhookClause: {
-      webhookName: defineMessage({
-        id: 'autoOps.webhookClause.webhookName',
-        defaultMessage: 'Webhook Name',
-      }),
       filter: defineMessage({
         id: 'autoOps.webhookClause.filter',
         defaultMessage: 'Filter',

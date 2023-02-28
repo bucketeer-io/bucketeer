@@ -539,9 +539,7 @@ export const ClauseInput: FC<ClauseInputProps> = ({
           <div>
             <div className="pt-1">
               <label htmlFor="webhookName">
-                <span className="input-label">
-                  {f(messages.autoOps.webhookClause.webhookName)}
-                </span>
+                <span className="input-label">Webhook</span>
               </label>
               <Controller
                 name={`${clauseName}.webhookClause.webhookId`}
