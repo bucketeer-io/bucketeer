@@ -1,0 +1,49 @@
+rdbms:
+  type: mysql or postgres
+  params: 
+    host: localhost
+    port: 5432
+    usernameFile: path/to/usernameFile
+    passwordFile: path/to/passwordFile
+    database: growthbook
+nosql:
+  type: redis
+  params:
+    url:
+    passwordFile: path/to/passwordFile 
+messageService:
+  type: pubsub or sns/sqs or azure service bus
+  domainEvent:
+    publisher: bucketeer-domain-events
+    subscriber:
+      accountApiKeyCacher: bucketeer-domain-events-account-apikey-cacher
+      auditlogPersister: bucketeer-domain-events-auditlog-persister
+      featureTagCacher: bucketeer-domain-events-feature-tag-cacher
+      notificationSender: bucketeer-domain-events-notification-sender
+      pushSender: bucketeer-domain-events-push-sender
+  evaluationEvent:
+    publisher: bucketeer-evaluation-events
+    subscriber:
+      eventFeatureRecorder: bucketeer-evaluation-events-event-feature-recorder
+      evaluationEventPersister: bucketeer-evaluation-events-evaluation-event-persister
+  userEvent:
+    publisher: bucketeer-user-events
+    subscriber:
+      userPersister: bucketeer-user-events-user-persister
+  metricsEvent:
+    publisher: bucketeer-metrics-events
+    subscriber:
+      metricsEventPersister: bucketeer-metrics-events-metrics-event-persister
+  goalEvent:
+    publisher: bucketeer-goal-events
+    subscriber:
+      goalEventPersister: bucketeer-goal-events-goal-event-persister
+  goalBatchEvent:
+    publisher: bucketeer-goal-batch-events
+    subscriber:
+      goalBatchTransformer: bucketeer-goal-batch-events-goal-batch-transformer
+kms:
+  type: cloudKms or awsKms, azureKeyVault
+  params:
+    keyName: 
+    region: # for AWS

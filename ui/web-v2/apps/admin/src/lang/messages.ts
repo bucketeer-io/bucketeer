@@ -2022,6 +2022,94 @@ export const messages = {
       },
     },
   },
+  webhook: {
+    add: {
+      header: {
+        title: defineMessage({
+          id: 'webhook.add.header.title',
+          defaultMessage: 'Create a webhook',
+        }),
+        description: defineMessage({
+          id: 'webhook.add.header.description',
+          defaultMessage:
+            'The Webhook feature lets you control the Feature Flag on/off status. You can integrate it into your monitoring system for automation.',
+        }),
+      },
+    },
+    confirm: {
+      deleteTitle: defineMessage({
+        id: 'webhook.confirm.delete.title',
+        defaultMessage: 'Delete webhook',
+      }),
+      deleteDescription: defineMessage({
+        id: 'webhook.confirm.delete.description',
+        defaultMessage:
+          'The {webhookName} webhook will be deleted permanently.',
+      }),
+    },
+    list: {
+      header: {
+        description: defineMessage({
+          id: 'webhook.list.header.description',
+          defaultMessage:
+            'Select a webhook to manage the settings or click on the Add button to add a new one.',
+        }),
+        title: defineMessage({
+          id: 'webhook.list.header.title',
+          defaultMessage: 'Webhook',
+        }),
+      },
+      noData: {
+        description: defineMessage({
+          id: 'webhook.list.noData.description',
+          defaultMessage: `You can create a Webhook to control the Feature Flag on/off status. After creating it, you can configure it in the Feature Flag's Auto Ops tab.`,
+        }),
+      },
+      noResult: {
+        searchKeyword: defineMessage({
+          id: 'webhook.list.noResult.searchKeyword',
+          defaultMessage: 'Name',
+        }),
+      },
+    },
+    search: {
+      placeholder: defineMessage({
+        id: 'webhook.search.placeholder',
+        defaultMessage: 'Name',
+      }),
+    },
+    sort: {
+      nameAz: defineMessage({
+        id: 'webhook.sort.nameAz',
+        defaultMessage: 'Name A-Z',
+      }),
+      nameZa: defineMessage({
+        id: 'webhook.sort.nameZa',
+        defaultMessage: 'Name Z-A',
+      }),
+      newest: defineMessage({
+        id: 'webhook.sort.newest',
+        defaultMessage: 'Newest',
+      }),
+      oldest: defineMessage({
+        id: 'webhook.sort.oldest',
+        defaultMessage: 'Oldest',
+      }),
+    },
+    update: {
+      header: {
+        title: defineMessage({
+          id: 'webhook.update.header.title',
+          defaultMessage: 'Update the webhook',
+        }),
+        description: defineMessage({
+          id: 'webhook.update.header.description',
+          defaultMessage:
+            'The Webhook feature lets you control the Feature Flag on/off status. You can integrate it into your monitoring system for automation.',
+        }),
+      },
+    },
+  },
   settings: {
     list: {
       header: {
@@ -2044,6 +2132,10 @@ export const messages = {
       notifications: defineMessage({
         id: 'settings.tab.notifications',
         defaultMessage: 'Notifications',
+      }),
+      webhooks: defineMessage({
+        id: 'settings.tab.webhooks',
+        defaultMessage: 'Webhooks',
       }),
     },
   },

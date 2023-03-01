@@ -14,6 +14,7 @@ export const PAGE_PATH_ACCOUNTS = '/accounts';
 export const PAGE_PATH_DOCUMENTATION = 'https://bucketeer.io/docs';
 export const PAGE_PATH_SETTINGS = '/settings';
 export const PAGE_PATH_PUSHES = '/pushes';
+export const PAGE_PATH_WEBHOOKS = '/webhooks';
 export const PAGE_PATH_NOTIFICATIONS = '/notifications';
 export const PAGE_PATH_PROJECTS = '/projects';
 export const PAGE_PATH_ENVIRONMENTS = '/environments';
