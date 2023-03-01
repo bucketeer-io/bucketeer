@@ -1,3 +1,4 @@
+import { getSelectedLanguage, LanguageTypes } from '@/lang/getSelectedLanguage';
 import { grpc } from '@improbable-eng/grpc-web';
 import { BrowserHeaders } from 'browser-headers';
 import * as jspb from 'google-protobuf';
@@ -6,6 +7,7 @@ import { getToken } from '../storage/token';
 
 type MetaData = {
   authorization: string;
+  'accept-language': LanguageTypes;
 };
 
 export const isSuccess = (output: grpc.UnaryOutput<jspb.Message>): boolean =>
@@ -20,6 +22,7 @@ export const getMetaData = (): MetaData => {
   const token = getToken();
   return {
     authorization: `bearer ${token ? token.idToken : ''}`,
+    'accept-language': getSelectedLanguage(),
   };
 };
 
@@ -27,5 +30,6 @@ export const getMetaDataForClient = (): BrowserHeaders => {
   const token = getToken();
   return new BrowserHeaders({
     authorization: `bearer ${token ? token.idToken : ''}`,
+    'accept-language': getSelectedLanguage(),
   });
 };
