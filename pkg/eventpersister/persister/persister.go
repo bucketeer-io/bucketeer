@@ -305,16 +305,38 @@ func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamesp
 		if err := p.countEvent(eck); err != nil {
 			return err
 		}
+		uckv2 := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
+		if err := p.countUser(uckv2, e.UserId); err != nil {
+			return err
+		}
+		eckv2 := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
+		if err := p.countEvent(eckv2); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
+// TODO: Remove this method
 func (p *Persister) newEvaluationCountkey(
 	kind, featureID, variationID, environmentNamespace string,
 	timestamp int64,
 ) string {
 	t := time.Unix(timestamp, 0)
 	date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, jpLocation)
+	return cache.MakeKey(
+		kind,
+		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
+		environmentNamespace,
+	)
+}
+
+func (p *Persister) newEvaluationCountkeyV2(
+	kind, featureID, variationID, environmentNamespace string,
+	timestamp int64,
+) string {
+	t := time.Unix(timestamp, 0)
+	date := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, time.UTC)
 	return cache.MakeKey(
 		kind,
 		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),

@@ -79,6 +79,53 @@ func TestEvaluationCountkey(t *testing.T) {
 	}
 }
 
+func TestEvaluationCountkeyV2(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	featureID := "feature_id"
+	variationID := "variation_id"
+	unix := time.Now().Unix()
+	environmentNamespace := "en-1"
+	now := time.Unix(unix, 0)
+	date := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
+	patterns := []struct {
+		desc                 string
+		kind                 string
+		featureID            string
+		variationID          string
+		environmentNamespace string
+		timestamp            int64
+		expected             string
+	}{
+		{
+			desc:                 "userCount",
+			kind:                 userCountKey,
+			featureID:            featureID,
+			variationID:          variationID,
+			environmentNamespace: environmentNamespace,
+			timestamp:            unix,
+			expected:             fmt.Sprintf("%s:%s:%d:%s:%s", environmentNamespace, userCountKey, date.Unix(), featureID, variationID),
+		},
+		{
+			desc:                 "eventCount",
+			kind:                 eventCountKey,
+			featureID:            featureID,
+			variationID:          variationID,
+			environmentNamespace: environmentNamespace,
+			timestamp:            unix,
+			expected:             fmt.Sprintf("%s:%s:%d:%s:%s", environmentNamespace, eventCountKey, date.Unix(), featureID, variationID),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			persister := newPersister(mockController)
+			actual := persister.newEvaluationCountkeyV2(p.kind, p.featureID, p.variationID, p.environmentNamespace, p.timestamp)
+			assert.Equal(t, p.expected, actual)
+		})
+	}
+}
+
 func TestGetVariationID(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
