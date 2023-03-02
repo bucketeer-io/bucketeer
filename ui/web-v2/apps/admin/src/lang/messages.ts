@@ -479,9 +479,9 @@ export const messages = {
     id: 'disabled',
     defaultMessage: 'Disabled',
   }),
-  showLess: defineMessage({
-    id: 'showLess',
-    defaultMessage: 'Show less',
+  close: defineMessage({
+    id: 'close',
+    defaultMessage: 'Close',
   }),
   showMore: defineMessage({
     id: 'showMore',
@@ -1436,6 +1436,15 @@ export const messages = {
         id: 'feature.confirm.unarchiveDescription',
         defaultMessage:
           'Are you sure you want to unarchive the feature flag "{featureId}"?',
+      }),
+      flagUsedAsPrerequisite: defineMessage({
+        id: 'feature.confirm.flagUsedAsPrerequisite',
+        defaultMessage: `You can't archive while other flags use this flag as a
+          prerequisite.`,
+      }),
+      flagNotRequested: defineMessage({
+        id: 'feature.confirm.flagNotRequested',
+        defaultMessage: 'Flag has not been requested in the last 7 days',
       }),
     },
     list: {

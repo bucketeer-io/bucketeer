@@ -537,6 +537,9 @@ export const FeatureIndexPage: FC = memo(() => {
       </FormProvider>
       <FormProvider {...archiveMethod}>
         <FeatureConfirmDialog
+          isArchive={true}
+          featureId={archiveMethod.getValues().feature?.id}
+          feature={archiveMethod.getValues().feature}
           open={isArchiveConfirmDialogOpen}
           handleSubmit={archiveHandleSubmit(handleArchive)}
           onClose={() => setIsArchiveConfirmDialogOpen(false)}

@@ -44,7 +44,7 @@ import { SortItem, SortSelect } from '../SortSelect';
 import { Switch } from '../Switch';
 import { TagChips } from '../TagsChips';
 
-enum FlagStatus {
+export enum FlagStatus {
   NEW, // This flag is new and has not been requested yet.
   RECEIVING_REQUESTS, // It is receiving one more requests in the last 7 days.
   INACTIVE, // It is not receiving requests for 7 days.
@@ -93,7 +93,7 @@ const sortItems: SortItem[] = [
   },
 ];
 
-function getFlagStatus(
+export function getFlagStatus(
   feature: Feature.AsObject,
   relativeDate: Date
 ): FlagStatus {

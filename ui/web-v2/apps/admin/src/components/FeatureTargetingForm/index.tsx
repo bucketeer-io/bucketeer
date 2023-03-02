@@ -315,7 +315,7 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
           className="flex space-x-1 cursor-pointer self-start items-center mt-1"
         >
           <span className="text-sm font-semibold text-gray-600">
-            {isShowMore ? f(messages.showLess) : f(messages.showMore)}
+            {isShowMore ? f(messages.close) : f(messages.showMore)}
           </span>
           {isShowMore ? (
             <ChevronUpIcon className="w-5 text-gray-600" />
@@ -337,7 +337,7 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
                     className="link text-left"
                     to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
                   >
-                    {flag.name}
+                    <p className="truncate w-96">{flag.name}</p>
                   </Link>
                 </li>
               ))}
