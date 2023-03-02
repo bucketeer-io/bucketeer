@@ -1,6 +1,12 @@
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import { createVariationLabel } from '@/utils/variation';
-import { MinusCircleIcon, XIcon } from '@heroicons/react/solid';
+import {
+  MinusCircleIcon,
+  XIcon,
+  InformationCircleIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+} from '@heroicons/react/solid';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import ReactDatePicker from 'react-datepicker';
@@ -13,6 +19,7 @@ import {
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import 'react-datepicker/dist/react-datepicker.css';
+import { Link } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 
 import { DetailSkeleton } from '../../components/DetailSkeleton';
@@ -35,6 +42,7 @@ import { CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
 import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 import { Switch } from '../Switch';
+import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
 
 interface FeatureTargetingFormProps {
   featureId: string;
@@ -129,6 +137,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 />
               )}
             />
+            <FlagIsPrerequisite featureId={featureId} />
             <div>
               <label className="input-section-label">
                 {`${f(messages.feature.prerequisites)}`}
@@ -240,6 +249,91 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
   }
 );
 
+export interface FlagIsPrerequisiteProps {
+  featureId: string;
+}
+
+const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
+  const [isShowMore, setShowMore] = useState(false);
+
+  const currentEnvironment = useCurrentEnvironment();
+
+  const features = useSelector<AppState, Feature.AsObject[]>(
+    (state) => selectAllFeatures(state.features),
+    shallowEqual
+  );
+
+  useEffect(() => {
+    listFeatures({
+      environmentNamespace: currentEnvironment.namespace,
+      pageSize: 0,
+      cursor: '',
+      tags: [],
+      searchKeyword: null,
+      maintainerId: null,
+      orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
+      orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+    });
+  }, []);
+
+  const flagList = features.reduce((acc, feature) => {
+    if (
+      feature.prerequisitesList.find(
+        (prerequisite) => prerequisite.featureId === featureId
+      )
+    ) {
+      return [
+        ...acc,
+        {
+          id: feature.id,
+          name: feature.name,
+        },
+      ];
+    }
+    return acc;
+  }, []);
+
+  if (flagList.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex space-x-2 px-4 py-2 bg-indigo-100 border border-indigo-500">
+      <InformationCircleIcon className="w-6 self-start text-blue-700" />
+      <div className="flex flex-col">
+        <p>Flag is prerequisite of {flagList.length} other flag.</p>
+        <div
+          onClick={() => setShowMore(!isShowMore)}
+          className="flex space-x-1 cursor-pointer self-start items-center mt-1"
+        >
+          <span className="text-sm">Show {isShowMore ? 'less' : 'more'}</span>
+          {isShowMore ? (
+            <ChevronDownIcon className="w-5" />
+          ) : (
+            <ChevronRightIcon className="w-5" />
+          )}
+        </div>
+        {isShowMore && (
+          <div className="pl-4 space-y-1 mt-2">
+            <p className="italic border-b text-sm pb-2 mb-1 border-gray-300">
+              Changes to targeting may impact the variations served by these
+              flags
+            </p>
+            {flagList.map((flag) => (
+              <Link
+                key={flag.id}
+                className="link text-left text-sm block"
+                to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
+              >
+                {flag.name}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 export interface PrerequisiteInputProps {
   feature: Feature.AsObject;
 }

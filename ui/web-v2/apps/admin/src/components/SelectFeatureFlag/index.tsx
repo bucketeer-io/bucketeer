@@ -75,10 +75,10 @@ export const SelectFeatureFlag: FC<SelectFeatureFlagProps> = memo(
 
     const formatOptionLabel = ({ label, enabled, ...rest }) => {
       return (
-        <div className="flex justify-between space-x-4">
+        <div className="flex justify-between space-x-4 pr-2">
           <span className="flex-1 truncate">{label}</span>
           <span
-            className={`border rounded-lg text-sm w-11 flex justify-center mr-2 ${
+            className={`border rounded-lg text-sm w-11 flex justify-center ${
               enabled
                 ? 'bg-primary border-primary text-white'
                 : 'bg-gray-100 border-gray-300'
