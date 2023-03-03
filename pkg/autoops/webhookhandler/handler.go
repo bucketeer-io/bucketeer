@@ -279,7 +279,7 @@ func (h *handler) assessAutoOpsRule(
 		if w.WebhookId != tarId {
 			continue
 		}
-		asmt, err := evaluateClause(ctx, w, payload)
+		asmt, err := evaluateClause(ctx, w, payload, h.logger)
 		if err != nil {
 			h.logger.Error("Skipping evaluation because an error has occurred",
 				zap.Error(err),
