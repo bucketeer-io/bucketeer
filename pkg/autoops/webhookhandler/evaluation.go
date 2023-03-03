@@ -22,6 +22,7 @@ import (
 	"strconv"
 
 	"github.com/itchyny/gojq"
+	"go.uber.org/zap"
 
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
@@ -30,13 +31,14 @@ func evaluateClause(
 	ctx context.Context,
 	clause *autoopsproto.WebhookClause,
 	payload interface{},
+	logger *zap.Logger,
 ) (bool, error) {
 	if len(clause.Conditions) == 0 {
 		return false, fmt.Errorf("WebhookClause has no conditions")
 	}
 	// All conditions are combined with implicit AND
 	for _, condition := range clause.Conditions {
-		asmt, err := evaluateCondition(ctx, condition, payload)
+		asmt, err := evaluateCondition(ctx, condition, payload, logger)
 		if err != nil {
 			return false, err
 		}
@@ -52,6 +54,7 @@ func evaluateCondition(
 	ctx context.Context,
 	condition *autoopsproto.WebhookClause_Condition,
 	payload interface{},
+	logger *zap.Logger,
 ) (bool, error) {
 	filtered, err := filterWebhookPayload(
 		ctx,
@@ -59,6 +62,9 @@ func evaluateCondition(
 		payload,
 	)
 	if err != nil {
+		logger.Error("filter webhook payload",
+			zap.Error(err),
+		)
 		return false, err
 	}
 	if filtered == nil {
@@ -66,10 +72,16 @@ func evaluateCondition(
 	}
 	var specified interface{}
 	if err := json.Unmarshal([]byte(condition.Value), &specified); err != nil {
+		logger.Error("json unmarshal",
+			zap.Error(err),
+		)
 		return false, err
 	}
 	cFiltered, err := convertType(reflect.TypeOf(specified), filtered)
 	if err != nil {
+		logger.Error("convert Type",
+			zap.Error(err),
+		)
 		return false, err
 	}
 	switch op := condition.Operator; op {
