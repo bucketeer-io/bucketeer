@@ -285,6 +285,9 @@ func (h *handler) assessAutoOpsRule(
 				zap.Error(err),
 				zap.String("featureId", a.FeatureId),
 				zap.String("autoOpsRuleId", a.Id),
+				zap.String("Filter", w.Conditions[0].Filter),
+				zap.String("Value", w.Conditions[0].Value),
+				zap.String("Operator", w.Conditions[0].Operator.String()),
 			)
 			lastErr = err
 			continue
