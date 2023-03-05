@@ -479,6 +479,14 @@ export const messages = {
     id: 'disabled',
     defaultMessage: 'Disabled',
   }),
+  showLess: defineMessage({
+    id: 'showLess',
+    defaultMessage: 'Show less',
+  }),
+  showMore: defineMessage({
+    id: 'showMore',
+    defaultMessage: 'Show more',
+  }),
   button: {
     archive: defineMessage({
       id: 'button.archive',
@@ -1285,6 +1293,16 @@ export const messages = {
       id: 'feature.targetingDescription',
       defaultMessage:
         'Enable targeting settings. You can configure targeting users, complex rules, default strategy, and off variation.',
+    }),
+    flagIsPrerequisite: defineMessage({
+      id: 'feature.flagIsPrerequisite',
+      defaultMessage:
+        'This flag is a prerequisite of {length} other flag{length, plural, one {} other {s}}.',
+    }),
+    flagIsPrerequisiteDescription: defineMessage({
+      id: 'feature.flagIsPrerequisiteDescription',
+      defaultMessage:
+        'Changes to the targeting rules may affect the variations served by the flag{length, plural, one {} other {s}} below.',
     }),
     prerequisites: defineMessage({
       id: 'feature.prerequisites',

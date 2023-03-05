@@ -6,6 +6,7 @@ import {
   InformationCircleIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  ChevronUpIcon,
 } from '@heroicons/react/solid';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
@@ -255,6 +256,7 @@ export interface FlagIsPrerequisiteProps {
 
 const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
   const [isShowMore, setShowMore] = useState(false);
+  const { formatMessage: f } = useIntl();
 
   const currentEnvironment = useCurrentEnvironment();
 
@@ -293,41 +295,53 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
     return acc;
   }, []);
 
-  if (flagList.length === 0) {
+  const flagListLength = flagList.length;
+
+  if (flagListLength === 0) {
     return null;
   }
 
   return (
-    <div className="flex space-x-2 px-4 py-2 bg-indigo-100 border border-indigo-500">
-      <InformationCircleIcon className="w-6 self-start text-blue-700" />
+    <div className="flex space-x-2 px-4 py-2 text-blue-800 bg-blue-100 border-l-[6px] border-blue-800">
+      <InformationCircleIcon className="w-5 self-start mt-1" />
       <div className="flex flex-col">
-        <p>Flag is prerequisite of {flagList.length} other flag.</p>
+        <p>
+          {f(messages.feature.flagIsPrerequisite, {
+            length: flagListLength,
+          })}
+        </p>
         <div
           onClick={() => setShowMore(!isShowMore)}
           className="flex space-x-1 cursor-pointer self-start items-center mt-1"
         >
-          <span className="text-sm">Show {isShowMore ? 'less' : 'more'}</span>
+          <span className="text-sm font-semibold text-gray-600">
+            {isShowMore ? f(messages.showLess) : f(messages.showMore)}
+          </span>
           {isShowMore ? (
-            <ChevronDownIcon className="w-5" />
+            <ChevronUpIcon className="w-5 text-gray-600" />
           ) : (
-            <ChevronRightIcon className="w-5" />
+            <ChevronDownIcon className="w-5 text-gray-600" />
           )}
         </div>
         {isShowMore && (
-          <div className="pl-4 space-y-1 mt-2">
-            <p className="italic border-b text-sm pb-2 mb-1 border-gray-300">
-              Changes to targeting may impact the variations served by these
-              flags
+          <div className="pl-4 mt-2 space-y-2 text-sm">
+            <p className="text-gray-600">
+              {f(messages.feature.flagIsPrerequisiteDescription, {
+                length: flagListLength,
+              })}
             </p>
-            {flagList.map((flag) => (
-              <Link
-                key={flag.id}
-                className="link text-left text-sm block"
-                to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
-              >
-                {flag.name}
-              </Link>
-            ))}
+            <ul className="list-disc pl-4">
+              {flagList.map((flag) => (
+                <li key={flag.id}>
+                  <Link
+                    className="link text-left"
+                    to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
+                  >
+                    {flag.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
