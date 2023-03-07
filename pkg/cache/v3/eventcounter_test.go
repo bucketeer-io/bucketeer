@@ -47,6 +47,42 @@ func TestGetEventValues(t *testing.T) {
 	}
 }
 
+func TestGetEventValuesV2(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		cmds     [][]*redis.StringCmd
+		expected []float64
+		inValid  bool
+	}{
+		{
+			desc: "success",
+			cmds: [][]*redis.StringCmd{
+				{},
+				{},
+				{},
+				{},
+			},
+			expected: []float64{
+				0, 0, 0, 0,
+			},
+			inValid: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := getEventValuesV2(p.cmds)
+			assert.Equal(t, p.expected, actual)
+			assert.NoError(t, err)
+			if p.inValid {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func TestGetUserValues(t *testing.T) {
 	t.Parallel()
 
@@ -76,6 +112,62 @@ func TestGetUserValues(t *testing.T) {
 			assert.Equal(t, p.expected, actual)
 			if p.inValid {
 				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestGetUserValuesV2(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc     string
+		cmds     [][]*redis.IntCmd
+		expected []float64
+		inValid  bool
+	}{
+		{
+			desc: "success",
+			cmds: [][]*redis.IntCmd{
+				{
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+				},
+				{
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+				},
+				{
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+				},
+				{
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+					redis.NewIntCmd(),
+				},
+			},
+			expected: []float64{
+				0, 0, 0, 0,
+			},
+			inValid: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := getUserValuesV2(p.cmds)
+			assert.Equal(t, p.expected, actual)
+			if p.inValid {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
 		})
 	}

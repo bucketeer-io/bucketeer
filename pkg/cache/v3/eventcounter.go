@@ -26,8 +26,10 @@ import (
 
 type EventCounterCache interface {
 	GetEventCounts(keys []string) ([]float64, error)
+	GetEventCountsV2(keys [][]string) ([]float64, error)
 	GetUserCount(key string) (int64, error)
 	GetUserCounts(keys []string) ([]float64, error)
+	GetUserCountsV2(keys [][]string) ([]float64, error)
 	UpdateUserCount(key, userID string) error
 }
 
@@ -76,6 +78,51 @@ func getEventValues(cmds []*goredis.StringCmd) ([]float64, error) {
 	return eventVals, nil
 }
 
+func (c *eventCounterCache) GetEventCountsV2(keys [][]string) ([]float64, error) {
+	pipe := c.cache.Pipeline()
+	stringCmds := make([][]*goredis.StringCmd, 0, len(keys))
+	for _, day := range keys {
+		hourlyCmds := []*goredis.StringCmd{}
+		for _, hour := range day {
+			c := pipe.Get(hour)
+			hourlyCmds = append(hourlyCmds, c)
+		}
+		stringCmds = append(stringCmds, hourlyCmds)
+	}
+	_, err := pipe.Exec()
+	if err != nil {
+		// Exec returns error of the first failed command.
+		// https://pkg.go.dev/github.com/redis/go-redis/v9#Pipeline.Exec
+		if err != goredis.Nil {
+			return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
+		}
+	}
+	return getEventValuesV2(stringCmds)
+}
+
+func getEventValuesV2(cmds [][]*goredis.StringCmd) ([]float64, error) {
+	eventVals := make([]float64, 0, len(cmds))
+	for _, day := range cmds {
+		var totalVal float64
+		for _, hour := range day {
+			str, err := hour.Result()
+			if err != nil {
+				if err != goredis.Nil {
+					return []float64{}, err
+				}
+				str = "0"
+			}
+			float, err := strconv.ParseFloat(str, 64)
+			if err != nil {
+				return []float64{}, err
+			}
+			totalVal += float
+		}
+		eventVals = append(eventVals, totalVal)
+	}
+	return eventVals, nil
+}
+
 func (c *eventCounterCache) GetUserCount(key string) (int64, error) {
 	return c.cache.PFCount(key)
 }
@@ -102,6 +149,40 @@ func getUserValues(cmds []*goredis.IntCmd) ([]float64, error) {
 			return []float64{}, err
 		}
 		userVals = append(userVals, float64(val))
+	}
+	return userVals, nil
+}
+
+func (c *eventCounterCache) GetUserCountsV2(keys [][]string) ([]float64, error) {
+	pipe := c.cache.Pipeline()
+	intCmds := make([][]*goredis.IntCmd, 0, len(keys))
+	for _, day := range keys {
+		hourlyCmds := []*goredis.IntCmd{}
+		for _, hour := range day {
+			c := pipe.PFCount(hour)
+			hourlyCmds = append(hourlyCmds, c)
+		}
+		intCmds = append(intCmds, hourlyCmds)
+	}
+	_, err := pipe.Exec()
+	if err != nil {
+		return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
+	}
+	return getUserValuesV2(intCmds)
+}
+
+func getUserValuesV2(cmds [][]*goredis.IntCmd) ([]float64, error) {
+	userVals := make([]float64, 0, len(cmds))
+	for _, day := range cmds {
+		var totalVal float64
+		for _, hour := range day {
+			val, err := hour.Result()
+			if err != nil {
+				return []float64{}, err
+			}
+			totalVal += float64(val)
+		}
+		userVals = append(userVals, totalVal)
 	}
 	return userVals, nil
 }
