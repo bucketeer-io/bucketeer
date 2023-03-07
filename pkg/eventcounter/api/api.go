@@ -541,7 +541,7 @@ func getDailyTimeStamps(startAt time.Time) []int64 {
 
 func getHourlyTimeStamps(days []int64) [][]int64 {
 	timeStamps := make([][]int64, 0, len(days))
-	for day := range days {
+	for _, day := range days {
 		t := time.Unix(int64(day), 0)
 		timeStamps = append(timeStamps, getOneDayTimestamps(t))
 	}

@@ -96,6 +96,8 @@ spec:
               value: "{{ .Values.env.redis.poolMaxIdle }}"
             - name: BUCKETEER_EVENT_COUNTER_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.redis.poolMaxActive }}"
+            - name: BUCKETEER_EVENT_COUNTER_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

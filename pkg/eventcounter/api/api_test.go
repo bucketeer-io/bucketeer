@@ -852,6 +852,78 @@ func TestGetDailyTimeStamps(t *testing.T) {
 	}
 }
 
+func TestGetOneDayTimestamps(t *testing.T) {
+	t.Parallel()
+
+	endAt := time.Now()
+	startAt, err := genInterval(jpLocation, endAt, 30)
+	assert.NoError(t, err)
+
+	patterns := []struct {
+		desc             string
+		startAt          time.Time
+		expectedElements []int64
+		expectedLen      int
+	}{
+		{
+			desc:    "success",
+			startAt: startAt,
+			expectedElements: []int64{
+				getDate(startAt),
+				getDate(startAt.Add(1 * time.Hour)),
+				getDate(startAt.Add(23 * time.Hour)),
+			},
+			expectedLen: 24,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := getOneDayTimestamps(p.startAt)
+			for _, e := range p.expectedElements {
+				assert.Contains(t, actual, int64(e))
+			}
+			assert.Len(t, actual, p.expectedLen)
+		})
+	}
+}
+
+func TestGetHourlyTimestamps(t *testing.T) {
+	t.Parallel()
+
+	endAt := time.Now()
+	startAt, err := genInterval(jpLocation, endAt, 30)
+	assert.NoError(t, err)
+
+	patterns := []struct {
+		desc             string
+		startAt          time.Time
+		expectedElements [][]int64
+		expectedLen      int
+	}{
+		{
+			desc:    "success",
+			startAt: startAt,
+			expectedElements: [][]int64{
+				getOneDayTimestamps(startAt),
+				getOneDayTimestamps(startAt.AddDate(0, 0, 2)),
+				getOneDayTimestamps(startAt.AddDate(0, 0, 6)),
+				getOneDayTimestamps(startAt.AddDate(0, 0, 30)),
+			},
+			expectedLen: 31,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			daily := getDailyTimeStamps(p.startAt)
+			actual := getHourlyTimeStamps(daily)
+			for _, e := range p.expectedElements {
+				assert.Contains(t, actual, e)
+			}
+			assert.Len(t, actual, p.expectedLen)
+		})
+	}
+}
+
 func TestGetVariationIDs(t *testing.T) {
 	t.Parallel()
 
