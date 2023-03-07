@@ -64,9 +64,6 @@ spec:
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
-        - name: bucketeer-jp-cert-secret
-          secret:
-            secretName: {{ template "bucketeer-jp-cert-secret" . }}
       {{- if not .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "web-gateway.name" . }}
       {{- end }}
@@ -134,12 +131,9 @@ spec:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
               readOnly: true
-            - name: bucketeer-jp-cert-secret
-              mountPath: /usr/local/certs/bucketeer-jp
-              readOnly: true
           ports:
             - name: http
-              containerPort: {{ .Values.service.port }}
+              containerPort: {{ .Values.service.externalPort }}
               protocol: TCP
             - name: admin
               containerPort: {{ .Values.envoy.adminPort }}
