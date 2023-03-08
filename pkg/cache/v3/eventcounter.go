@@ -22,6 +22,8 @@ import (
 	goredis "github.com/go-redis/redis"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
+	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 )
 
 type EventCounterCache interface {
@@ -154,37 +156,30 @@ func getUserValues(cmds []*goredis.IntCmd) ([]float64, error) {
 }
 
 func (c *eventCounterCache) GetUserCountsV2(keys [][]string) ([]float64, error) {
-	pipe := c.cache.Pipeline()
-	intCmds := make([][]*goredis.IntCmd, 0, len(keys))
-	for _, day := range keys {
-		hourlyCmds := []*goredis.IntCmd{}
-		for _, hour := range day {
-			c := pipe.PFCount(hour)
-			hourlyCmds = append(hourlyCmds, c)
-		}
-		intCmds = append(intCmds, hourlyCmds)
-	}
-	_, err := pipe.Exec()
+	count, err := c.getUserCountsV2(keys)
 	if err != nil {
-		return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
+		return nil, fmt.Errorf("err: %v, keys: %v", err, keys)
 	}
-	return getUserValuesV2(intCmds)
+	return count, nil
 }
 
-func getUserValuesV2(cmds [][]*goredis.IntCmd) ([]float64, error) {
-	userVals := make([]float64, 0, len(cmds))
-	for _, day := range cmds {
-		var totalVal float64
-		for _, hour := range day {
-			val, err := hour.Result()
-			if err != nil {
-				return []float64{}, err
-			}
-			totalVal += float64(val)
-		}
-		userVals = append(userVals, totalVal)
+func (c *eventCounterCache) getUserCountsV2(keys [][]string) ([]float64, error) {
+	pipe := c.cache.Pipeline()
+	uniqueKeys, err := createUniqueKeys(len(keys))
+	if err != nil {
+		return nil, err
 	}
-	return userVals, nil
+	if err := c.mergeHourlyKeys(keys, uniqueKeys, pipe); err != nil {
+		return nil, err
+	}
+	count, err := c.countUsers(uniqueKeys, pipe)
+	if err != nil {
+		return nil, err
+	}
+	if err := c.DeleteKeys(uniqueKeys, pipe); err != nil {
+		return nil, err
+	}
+	return count, nil
 }
 
 func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
@@ -193,4 +188,80 @@ func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
 		return err
 	}
 	return nil
+}
+
+func (*eventCounterCache) mergeHourlyKeys(
+	dailyKeys [][]string,
+	uniqueKeys []string,
+	pipe v3.PipeClient,
+) error {
+	sCmds := make([]*goredis.StatusCmd, 0, len(dailyKeys))
+	for idx, day := range dailyKeys {
+		c := pipe.PFMerge(uniqueKeys[idx], day...)
+		sCmds = append(sCmds, c)
+	}
+	_, err := pipe.Exec()
+	if err != nil {
+		return err
+	}
+	for _, c := range sCmds {
+		_, err := c.Result()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (*eventCounterCache) countUsers(
+	uniqueKeys []string,
+	pipe v3.PipeClient,
+) ([]float64, error) {
+	iCmds := make([]*goredis.IntCmd, 0, len(uniqueKeys))
+	for _, k := range uniqueKeys {
+		c := pipe.PFCount(k)
+		iCmds = append(iCmds, c)
+	}
+	_, err := pipe.Exec()
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range iCmds {
+		_, err = c.Result()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return getUserValues(iCmds)
+}
+
+func (c *eventCounterCache) DeleteKeys(keys []string, pipe v3.PipeClient) error {
+	iCmds := make([]*goredis.IntCmd, 0, len(keys))
+	for _, k := range keys {
+		c := pipe.Del(k)
+		iCmds = append(iCmds, c)
+	}
+	_, err := pipe.Exec()
+	if err != nil {
+		return err
+	}
+	for _, c := range iCmds {
+		_, err = c.Result()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func createUniqueKeys(size int) ([]string, error) {
+	keys := make([]string, 0, size)
+	for i := 0; i < size; i++ {
+		id, err := uuid.NewUUID()
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, id.String())
+	}
+	return keys, nil
 }
