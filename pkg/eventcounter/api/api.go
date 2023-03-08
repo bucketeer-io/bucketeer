@@ -420,8 +420,8 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 	dailyTimeStamps := getDailyTimeStamps(startAt)
 	hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps)
 	vIDs := getVariationIDs(resp.Feature.Variations)
-	variationTSEvents := []*ecproto.VariationTimeseries{}
-	variationTSUsers := []*ecproto.VariationTimeseries{}
+	variationTSEvents := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
+	variationTSUsers := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
 	for _, vID := range vIDs {
 		eventCountKeys := make([][]string, 0, len(hourlyTimeStamps))
 		userCountKeys := make([][]string, 0, len(hourlyTimeStamps))
