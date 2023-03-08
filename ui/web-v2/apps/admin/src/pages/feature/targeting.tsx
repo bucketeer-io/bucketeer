@@ -131,7 +131,11 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     const isLoading = isFeatureLoading || isSegmentLoading;
 
     const defaultValues = {
-      prerequisites: feature.prerequisitesList,
+      prerequisites: [
+        ...new Map(
+          feature.prerequisitesList.map((p) => [p.featureId, p])
+        ).values(),
+      ], // remove duplicate prerequisites
       enabled: feature.enabled,
       targets: feature.targetsList.map((t) => {
         return {

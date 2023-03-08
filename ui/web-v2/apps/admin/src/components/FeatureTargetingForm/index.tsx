@@ -1,3 +1,4 @@
+import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import { createVariationLabel } from '@/utils/variation';
 import {
@@ -43,7 +44,6 @@ import { CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
 import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 import { Switch } from '../Switch';
-import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
 
 interface FeatureTargetingFormProps {
   featureId: string;
