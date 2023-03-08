@@ -1442,9 +1442,9 @@ export const messages = {
         defaultMessage: `You can't archive while other flags use this flag as a
           prerequisite.`,
       }),
-      flagNotRequested: defineMessage({
-        id: 'feature.confirm.flagNotRequested',
-        defaultMessage: 'Flag has not been requested in the last 7 days',
+      flagIsActive: defineMessage({
+        id: 'feature.confirm.flagIsActive',
+        defaultMessage: 'It is receiving one more requests in the last 7 days.',
       }),
     },
     list: {

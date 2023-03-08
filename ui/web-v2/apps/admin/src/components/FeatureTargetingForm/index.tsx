@@ -302,48 +302,55 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
   }
 
   return (
-    <div className="flex space-x-2 px-4 py-2 text-blue-800 bg-blue-100 border-l-[6px] border-blue-800">
-      <InformationCircleIcon className="w-5 self-start mt-1" />
-      <div className="flex flex-col">
-        <p>
-          {f(messages.feature.flagIsPrerequisite, {
-            length: flagListLength,
-          })}
-        </p>
-        <div
-          onClick={() => setSeeMore(!isSeeMore)}
-          className="flex space-x-1 cursor-pointer self-start items-center mt-1"
-        >
-          <span className="text-sm font-semibold text-gray-600">
-            {isSeeMore ? f(messages.close) : f(messages.seeMore)}
-          </span>
-          {isSeeMore ? (
-            <ChevronUpIcon className="w-5 text-gray-600" />
-          ) : (
-            <ChevronDownIcon className="w-5 text-gray-600" />
+    <div className="bg-blue-100 p-4 border-l-4 border-blue-600">
+      <div className="flex">
+        <div className="flex-shrink-0">
+          <InformationCircleIcon
+            className="h-5 w-5 text-blue-500"
+            aria-hidden="true"
+          />
+        </div>
+        <div className="ml-3 flex-1">
+          <p className="text-sm text-blue-700">
+            {f(messages.feature.flagIsPrerequisite, {
+              length: flagListLength,
+            })}
+          </p>
+          <div
+            className="inline-flex space-x-1 cursor-pointer"
+            onClick={() => setSeeMore(!isSeeMore)}
+          >
+            <span className="text-sm font-medium text-gray-700 hover:text-gray-600">
+              {isSeeMore ? f(messages.close) : f(messages.seeMore)}
+            </span>
+            {isSeeMore ? (
+              <ChevronUpIcon className="w-5 text-gray-700" />
+            ) : (
+              <ChevronDownIcon className="w-5 text-gray-700" />
+            )}
+          </div>
+          {isSeeMore && (
+            <div className="pl-4 mt-2 space-y-2 text-sm">
+              <p className="text-gray-600">
+                {f(messages.feature.flagIsPrerequisiteDescription, {
+                  length: flagListLength,
+                })}
+              </p>
+              <ul className="list-disc pl-4">
+                {flagList.map((flag) => (
+                  <li key={flag.id}>
+                    <Link
+                      className="link text-left"
+                      to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
+                    >
+                      <p className="truncate w-96">{flag.name}</p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
-        {isSeeMore && (
-          <div className="pl-4 mt-2 space-y-2 text-sm">
-            <p className="text-gray-600">
-              {f(messages.feature.flagIsPrerequisiteDescription, {
-                length: flagListLength,
-              })}
-            </p>
-            <ul className="list-disc pl-4">
-              {flagList.map((flag) => (
-                <li key={flag.id}>
-                  <Link
-                    className="link text-left"
-                    to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
-                  >
-                    <p className="truncate w-96">{flag.name}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
     </div>
   );

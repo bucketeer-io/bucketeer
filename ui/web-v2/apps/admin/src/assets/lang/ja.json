@@ -217,7 +217,7 @@
   "feature.confirm.archiveDescription": "アーカイブされるとすべてのユーザーに対して、コードで定義されたデフォルト値が返されます。アーカイブする前に、アプリケーションから「{featureId}」を使用した部分のコードを削除することをお勧めします。",
   "feature.confirm.archiveTitle": "フィーチャーフラグのアーカイブ",
   "feature.confirm.description": "フィーチャーフラグを更新するため、バージョンが上がります。",
-  "feature.confirm.flagNotRequested": "Flag has not been requested in the last 7 days",
+  "feature.confirm.flagIsActive": "It is receiving one more requests in the last 7 days.",
   "feature.confirm.flagUsedAsPrerequisite": "You can't archive while other flags use this flag as a prerequisite.",
   "feature.confirm.title": "確認してください",
   "feature.confirm.unarchiveDescription": "「{featureId}」をアーカイブから解除しますか?",

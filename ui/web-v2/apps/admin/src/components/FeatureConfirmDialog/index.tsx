@@ -8,17 +8,14 @@ import { useCurrentEnvironment } from '@/modules/me';
 import { Feature } from '@/proto/feature/feature_pb';
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import { Dialog } from '@headlessui/react';
-import { ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/react/solid';
+import { XCircleIcon, ExclamationIcon } from '@heroicons/react/solid';
 import { FC, useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
-import {
-  FEATURE_LIST_PAGE_SIZE,
-  FEATURE_UPDATE_COMMENT_MAX_LENGTH,
-} from '../../constants/feature';
+import { FEATURE_UPDATE_COMMENT_MAX_LENGTH } from '../../constants/feature';
 import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
 import { CheckBox } from '../CheckBox';
@@ -52,7 +49,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   const methods = useFormContext();
   const currentEnvironment = useCurrentEnvironment();
   const [flagList, setFlagList] = useState([]);
-  const [isNotUsedFor7Days, setIsNotUsedFor7Days] = useState(false);
+  const [isFlagActive, setIsFlagActive] = useState(false);
 
   const {
     register,
@@ -82,8 +79,6 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
 
   useEffect(() => {
     if (isArchive && open && features.length > 0) {
-      console.log('render ======');
-
       setFlagList(
         features.reduce((acc, feature) => {
           if (
@@ -110,10 +105,9 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
       isArchive &&
       open &&
       feature &&
-      getFlagStatus(feature, new Date()) === FlagStatus.INACTIVE
+      getFlagStatus(feature, new Date()) === FlagStatus.RECEIVING_REQUESTS
     ) {
-      console.log('render ======');
-      setIsNotUsedFor7Days(true);
+      setIsFlagActive(true);
     }
   }, [isArchive, open, feature]);
 
@@ -129,32 +123,50 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
         <p className="text-sm text-gray-500">{description}</p>
       </div>
       {flagList.length > 0 && (
-        <div className="mt-4">
-          <div className="px-4 py-2 bg-red-100 border border-red-600 space-x-3 flex text-sm items-center">
-            <ExclamationCircleIcon className="text-red-600 w-8 self-start" />
-            <div>
-              <span>{f(messages.feature.confirm.flagUsedAsPrerequisite)}</span>
-              <ul className="list-disc pl-3 mt-1">
-                {flagList.map((flag) => (
-                  <li key={flag.id}>
-                    <Link
-                      className="link text-left"
-                      to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
-                    >
-                      <p className="truncate w-60">{flag.name}</p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+        <div className="rounded-md bg-red-50 p-4 mt-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <XCircleIcon
+                className="h-5 w-5 text-red-400"
+                aria-hidden="true"
+              />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                {f(messages.feature.confirm.flagUsedAsPrerequisite)}
+              </h3>
+              <div className="mt-2 text-sm text-red-700">
+                <ul className="list-disc space-y-1 pl-5">
+                  {flagList.map((flag) => (
+                    <li key={flag.id}>
+                      <Link
+                        className="link text-left"
+                        to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
+                      >
+                        <p className="truncate w-60">{flag.name}</p>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </div>
       )}
-      {isNotUsedFor7Days && (
-        <div className="mt-4">
-          <div className="px-4 py-2 bg-green-50 border border-green-500 space-x-3 flex text-sm items-center">
-            <CheckCircleIcon className="text-green-500 w-6" />
-            <span>{f(messages.feature.confirm.flagNotRequested)}</span>
+      {isFlagActive && (
+        <div className="bg-yellow-50 p-4 mt-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <ExclamationIcon
+                className="h-5 w-5 text-yellow-400"
+                aria-hidden="true"
+              />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                {f(messages.feature.confirm.flagIsActive)}
+              </p>
+            </div>
           </div>
         </div>
       )}
