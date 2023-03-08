@@ -14,25 +14,25 @@ func TestGetLocation(t *testing.T) {
 		desc     string
 		input    string
 		expected *time.Location
-		invalid bool
+		invalid  bool
 	}{
 		{
-			desc:  "tokyo",
-			input: "Asia/Tokyo",
+			desc:     "tokyo",
+			input:    "Asia/Tokyo",
 			expected: time.FixedZone("Asia/Tokyo", 9*60*60),
-			invalid: false,
+			invalid:  false,
 		},
 		{
-			desc:  "UTC",
-			input: "UTC",
+			desc:     "UTC",
+			input:    "UTC",
 			expected: time.FixedZone("UTC", 0),
-			invalid: false,
+			invalid:  false,
 		},
 		{
-			desc:  "invalid",
-			input: "invalid",
+			desc:     "invalid",
+			input:    "invalid",
 			expected: nil,
-			invalid: true,
+			invalid:  true,
 		},
 	}
 	for _, p := range patterns {
