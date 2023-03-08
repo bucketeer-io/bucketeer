@@ -174,6 +174,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
             id="description"
             rows={3}
             className="input-text w-full"
+            disabled={flagList.length > 0}
           />
           <p className="input-error">
             {errors.comment && (
