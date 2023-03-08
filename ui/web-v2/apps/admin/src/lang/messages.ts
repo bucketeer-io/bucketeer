@@ -483,9 +483,9 @@ export const messages = {
     id: 'close',
     defaultMessage: 'Close',
   }),
-  showMore: defineMessage({
-    id: 'showMore',
-    defaultMessage: 'Show more',
+  seeMore: defineMessage({
+    id: 'seeMore',
+    defaultMessage: 'See more',
   }),
   button: {
     archive: defineMessage({

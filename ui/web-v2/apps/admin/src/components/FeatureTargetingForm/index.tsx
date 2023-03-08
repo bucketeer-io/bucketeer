@@ -255,7 +255,7 @@ export interface FlagIsPrerequisiteProps {
 }
 
 const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
-  const [isShowMore, setShowMore] = useState(false);
+  const [isSeeMore, setSeeMore] = useState(false);
   const { formatMessage: f } = useIntl();
 
   const currentEnvironment = useCurrentEnvironment();
@@ -311,19 +311,19 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
           })}
         </p>
         <div
-          onClick={() => setShowMore(!isShowMore)}
+          onClick={() => setSeeMore(!isSeeMore)}
           className="flex space-x-1 cursor-pointer self-start items-center mt-1"
         >
           <span className="text-sm font-semibold text-gray-600">
-            {isShowMore ? f(messages.close) : f(messages.showMore)}
+            {isSeeMore ? f(messages.close) : f(messages.seeMore)}
           </span>
-          {isShowMore ? (
+          {isSeeMore ? (
             <ChevronUpIcon className="w-5 text-gray-600" />
           ) : (
             <ChevronDownIcon className="w-5 text-gray-600" />
           )}
         </div>
-        {isShowMore && (
+        {isSeeMore && (
           <div className="pl-4 mt-2 space-y-2 text-sm">
             <p className="text-gray-600">
               {f(messages.feature.flagIsPrerequisiteDescription, {
