@@ -423,11 +423,11 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
 	for _, vID := range vIDs {
-		eventCountKeys := [][]string{}
-		userCountKeys := [][]string{}
+		eventCountKeys := make([][]string, 0, len(hourlyTimeStamps))
+		userCountKeys := make([][]string, 0, len(hourlyTimeStamps))
 		for _, day := range hourlyTimeStamps {
-			ecHourlyKeys := []string{}
-			ucHourlyKeys := []string{}
+			ecHourlyKeys := make([]string, 0, len(day))
+			ucHourlyKeys := make([]string, 0, len(day))
 			for _, hour := range day {
 				ec := newEvaluationCountkey(eventCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, hour)
 				ecHourlyKeys = append(ecHourlyKeys, ec)
