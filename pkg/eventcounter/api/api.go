@@ -437,6 +437,13 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			eventCountKeys = append(eventCountKeys, ecHourlyKeys)
 			userCountKeys = append(userCountKeys, ucHourlyKeys)
 		}
+		s.logger.Error(
+			"debug keys",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Strings("event count keys", eventCountKeys[20]),
+				zap.Strings("user count keys", userCountKeys[20]),
+			)...,
+		)
 		eventCounts, err := s.evaluationCountCacher.GetEventCountsV2(eventCountKeys)
 		if err != nil {
 			s.logger.Error(
