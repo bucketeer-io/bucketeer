@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	goredis "github.com/go-redis/redis"
+	multierror "github.com/hashicorp/go-multierror"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
@@ -163,23 +164,22 @@ func (c *eventCounterCache) GetUserCountsV2(keys [][]string) ([]float64, error) 
 	return count, nil
 }
 
-func (c *eventCounterCache) getUserCountsV2(keys [][]string) ([]float64, error) {
+func (c *eventCounterCache) getUserCountsV2(keys [][]string) (count []float64, err error) {
 	pipe := c.cache.Pipeline()
 	uniqueKeys, err := c.createUniqueKeys(len(keys))
 	if err != nil {
-		return nil, err
+		return
 	}
-	if err := c.mergeHourlyKeys(keys, uniqueKeys, pipe); err != nil {
-		return nil, err
+	defer func() {
+		if e := c.deleteKeys(uniqueKeys, pipe); e != nil {
+			err = multierror.Append(err, e)
+		}
+	}()
+	if err = c.mergeHourlyKeys(keys, uniqueKeys, pipe); err != nil {
+		return
 	}
-	count, err := c.countUsers(uniqueKeys, pipe)
-	if err != nil {
-		return nil, err
-	}
-	if err := c.deleteKeys(uniqueKeys, pipe); err != nil {
-		return nil, err
-	}
-	return count, nil
+	count, err = c.countUsers(uniqueKeys, pipe)
+	return
 }
 
 func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
