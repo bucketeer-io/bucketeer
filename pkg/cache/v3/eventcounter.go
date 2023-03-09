@@ -58,10 +58,10 @@ func (c *eventCounterCache) GetEventCounts(keys []string) ([]float64, error) {
 			return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
 		}
 	}
-	return getEventValues(sCmds)
+	return c.getEventValues(sCmds)
 }
 
-func getEventValues(cmds []*goredis.StringCmd) ([]float64, error) {
+func (*eventCounterCache) getEventValues(cmds []*goredis.StringCmd) ([]float64, error) {
 	eventVals := make([]float64, 0, len(cmds))
 	for _, c := range cmds {
 		str, err := c.Result()
@@ -99,10 +99,10 @@ func (c *eventCounterCache) GetEventCountsV2(keys [][]string) ([]float64, error)
 			return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
 		}
 	}
-	return getEventValuesV2(stringCmds)
+	return c.getEventValuesV2(stringCmds)
 }
 
-func getEventValuesV2(cmds [][]*goredis.StringCmd) ([]float64, error) {
+func (*eventCounterCache) getEventValuesV2(cmds [][]*goredis.StringCmd) ([]float64, error) {
 	eventVals := make([]float64, 0, len(cmds))
 	for _, day := range cmds {
 		var totalVal float64
@@ -140,10 +140,10 @@ func (c *eventCounterCache) GetUserCounts(keys []string) ([]float64, error) {
 	if err != nil {
 		return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
 	}
-	return getUserValues(iCmds)
+	return c.getUserValues(iCmds)
 }
 
-func getUserValues(cmds []*goredis.IntCmd) ([]float64, error) {
+func (*eventCounterCache) getUserValues(cmds []*goredis.IntCmd) ([]float64, error) {
 	userVals := make([]float64, 0, len(cmds))
 	for _, c := range cmds {
 		val, err := c.Result()
@@ -165,7 +165,7 @@ func (c *eventCounterCache) GetUserCountsV2(keys [][]string) ([]float64, error) 
 
 func (c *eventCounterCache) getUserCountsV2(keys [][]string) ([]float64, error) {
 	pipe := c.cache.Pipeline()
-	uniqueKeys, err := createUniqueKeys(len(keys))
+	uniqueKeys, err := c.createUniqueKeys(len(keys))
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (*eventCounterCache) mergeHourlyKeys(
 	return nil
 }
 
-func (*eventCounterCache) countUsers(
+func (c *eventCounterCache) countUsers(
 	uniqueKeys []string,
 	pipe v3.PipeClient,
 ) ([]float64, error) {
@@ -226,7 +226,7 @@ func (*eventCounterCache) countUsers(
 	if err != nil {
 		return nil, err
 	}
-	return getUserValues(iCmds)
+	return c.getUserValues(iCmds)
 }
 
 func (*eventCounterCache) deleteKeys(keys []string, pipe v3.PipeClient) error {
@@ -248,7 +248,7 @@ func (*eventCounterCache) deleteKeys(keys []string, pipe v3.PipeClient) error {
 	return nil
 }
 
-func createUniqueKeys(size int) ([]string, error) {
+func (*eventCounterCache) createUniqueKeys(size int) ([]string, error) {
 	keys := make([]string, 0, size)
 	for i := 0; i < size; i++ {
 		id, err := uuid.NewUUID()
