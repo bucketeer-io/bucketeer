@@ -486,8 +486,9 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 		s.logger.Error(
 			"debug keys",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Strings("event count keys", eventCountKeys[20]),
-				zap.Strings("user count keys", userCountKeys[20]),
+				zap.Strings("user count keys 17", userCountKeys[17]),
+				zap.Strings("user count keys 18", userCountKeys[18]),
+				zap.Strings("user count keys 19", userCountKeys[19]),
 				zap.Strings("unique keys", uniqueKeys),
 			)...,
 		)
