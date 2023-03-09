@@ -460,7 +460,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			}
 			return nil, dt.Err()
 		}
-		userCounts, uniqueKeys, err := s.evaluationCountCacher.GetUserCountsV2(userCountKeys)
+		userCounts, err := s.evaluationCountCacher.GetUserCountsV2(userCountKeys)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get user counts",
@@ -483,15 +483,6 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			}
 			return nil, dt.Err()
 		}
-		s.logger.Error(
-			"debug keys",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Strings("user count keys 17", userCountKeys[17]),
-				zap.Strings("user count keys 18", userCountKeys[18]),
-				zap.Strings("user count keys 19", userCountKeys[19]),
-				zap.Strings("unique keys", uniqueKeys),
-			)...,
-		)
 		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
