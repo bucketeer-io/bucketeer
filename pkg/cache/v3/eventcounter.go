@@ -176,7 +176,7 @@ func (c *eventCounterCache) getUserCountsV2(keys [][]string) ([]float64, error) 
 	if err != nil {
 		return nil, err
 	}
-	if err := c.DeleteKeys(uniqueKeys, pipe); err != nil {
+	if err := c.deleteKeys(uniqueKeys, pipe); err != nil {
 		return nil, err
 	}
 	return count, nil
@@ -235,7 +235,7 @@ func (*eventCounterCache) countUsers(
 	return getUserValues(iCmds)
 }
 
-func (c *eventCounterCache) DeleteKeys(keys []string, pipe v3.PipeClient) error {
+func (c *eventCounterCache) deleteKeys(keys []string, pipe v3.PipeClient) error {
 	iCmds := make([]*goredis.IntCmd, 0, len(keys))
 	for _, k := range keys {
 		c := pipe.Del(k)
