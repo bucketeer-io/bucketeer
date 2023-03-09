@@ -232,22 +232,7 @@ func (c *eventCounterCache) countUsers(
 }
 
 func (*eventCounterCache) deleteKeys(keys []string, pipe v3.PipeClient) error {
-	iCmds := make([]*goredis.IntCmd, 0, len(keys))
-	for _, k := range keys {
-		c := pipe.Del(k)
-		iCmds = append(iCmds, c)
-	}
-	_, err := pipe.Exec()
-	if err != nil {
-		return err
-	}
-	for _, c := range iCmds {
-		_, err = c.Result()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return errors.New("hogehoge")
 }
 
 func (*eventCounterCache) createUniqueKeys(size int) ([]string, error) {
