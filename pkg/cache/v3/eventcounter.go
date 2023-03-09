@@ -16,6 +16,7 @@
 package v3
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -217,16 +218,17 @@ func (c *eventCounterCache) countUsers(
 	uniqueKeys []string,
 	pipe v3.PipeClient,
 ) ([]float64, error) {
-	iCmds := make([]*goredis.IntCmd, 0, len(uniqueKeys))
-	for _, k := range uniqueKeys {
-		c := pipe.PFCount(k)
-		iCmds = append(iCmds, c)
-	}
-	_, err := pipe.Exec()
-	if err != nil {
-		return nil, err
-	}
-	return c.getUserValues(iCmds)
+	// iCmds := make([]*goredis.IntCmd, 0, len(uniqueKeys))
+	// for _, k := range uniqueKeys {
+	// 	c := pipe.PFCount(k)
+	// 	iCmds = append(iCmds, c)
+	// }
+	// _, err := pipe.Exec()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return c.getUserValues(iCmds)
+	return nil, errors.New("foobar")
 }
 
 func (*eventCounterCache) deleteKeys(keys []string, pipe v3.PipeClient) error {
