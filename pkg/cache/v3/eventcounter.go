@@ -229,7 +229,7 @@ func (*eventCounterCache) countUsers(
 	return getUserValues(iCmds)
 }
 
-func (c *eventCounterCache) deleteKeys(keys []string, pipe v3.PipeClient) error {
+func (*eventCounterCache) deleteKeys(keys []string, pipe v3.PipeClient) error {
 	iCmds := make([]*goredis.IntCmd, 0, len(keys))
 	for _, k := range keys {
 		c := pipe.Del(k)
