@@ -130,53 +130,55 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     );
     const isLoading = isFeatureLoading || isSegmentLoading;
 
-    const defaultValues = {
-      prerequisites: [
-        ...new Map(
-          feature.prerequisitesList.map((p) => [p.featureId, p])
-        ).values(),
-      ], // remove duplicate prerequisites
-      enabled: feature.enabled,
-      targets: feature.targetsList.map((t) => {
-        return {
-          variationId: t.variation,
-          users: t.usersList,
-        };
-      }),
-      rules: feature.rulesList.map((r) => {
-        return {
-          id: r.id,
-          strategy: createStrategyDefaultValue(
-            r.strategy,
-            feature.variationsList
-          ),
-          clauses: r.clausesList.map((c) => {
-            return {
-              id: c.id,
-              type: createClauseType(c.operator),
-              attribute: c.attribute,
-              operator: c.operator.toString(),
-              values: c.valuesList,
-            };
-          }),
-        };
-      }),
-      defaultStrategy: createStrategyDefaultValue(
-        feature.defaultStrategy,
-        feature.variationsList
-      ),
-      offVariation: feature.offVariation && {
-        value: feature.offVariation,
-        label: createVariationLabel(
-          feature.variationsList.find((v) => v.id === feature.offVariation)
+    const getDefaultValues = (feature) => {
+      return {
+        prerequisites: [
+          ...new Map(
+            feature.prerequisitesList.map((p) => [p.featureId, p])
+          ).values(),
+        ], // remove duplicate prerequisites
+        enabled: feature.enabled,
+        targets: feature.targetsList.map((t) => {
+          return {
+            variationId: t.variation,
+            users: t.usersList,
+          };
+        }),
+        rules: feature.rulesList.map((r) => {
+          return {
+            id: r.id,
+            strategy: createStrategyDefaultValue(
+              r.strategy,
+              feature.variationsList
+            ),
+            clauses: r.clausesList.map((c) => {
+              return {
+                id: c.id,
+                type: createClauseType(c.operator),
+                attribute: c.attribute,
+                operator: c.operator.toString(),
+                values: c.valuesList,
+              };
+            }),
+          };
+        }),
+        defaultStrategy: createStrategyDefaultValue(
+          feature.defaultStrategy,
+          feature.variationsList
         ),
-      },
-      comment: '',
+        offVariation: feature.offVariation && {
+          value: feature.offVariation,
+          label: createVariationLabel(
+            feature.variationsList.find((v) => v.id === feature.offVariation)
+          ),
+        },
+        comment: '',
+      };
     };
 
     const methods = useForm({
       resolver: yupResolver(targetingFormSchema),
-      defaultValues,
+      defaultValues: getDefaultValues(feature),
       mode: 'onChange',
     });
     const {
@@ -189,6 +191,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     const handleUpdate = useCallback(
       async (data) => {
         const commands: Array<Command> = [];
+        const defaultValues = getDefaultValues(feature);
 
         dirtyFields.enabled &&
           commands.push(...createEnabledCommands(defaultValues, data));
@@ -249,7 +252,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
           });
         });
       },
-      [dispatch, dirtyFields, defaultValues]
+      [dispatch, dirtyFields, feature]
     );
 
     useEffect(() => {
@@ -263,10 +266,16 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
 
     useEffect(() => {
       if (isResetTargeting) {
-        reset(defaultValues);
+        reset(getDefaultValues(feature));
         setIsResetTargeting(false);
       }
     }, [feature, isResetTargeting]);
+
+    useEffect(() => {
+      if (feature) {
+        reset(getDefaultValues(feature));
+      }
+    }, [feature]);
 
     if (isLoading) {
       return (
