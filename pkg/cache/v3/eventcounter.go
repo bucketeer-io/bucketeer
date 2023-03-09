@@ -176,9 +176,9 @@ func (c *eventCounterCache) getUserCountsV2(keys [][]string) ([]float64, error) 
 	if err != nil {
 		return nil, err
 	}
-	if err := c.DeleteKeys(uniqueKeys, pipe); err != nil {
-		return nil, err
-	}
+	// if err := c.DeleteKeys(uniqueKeys, pipe); err != nil {
+	// 	return nil, err
+	// }
 	return count, nil
 }
 
@@ -225,12 +225,6 @@ func (*eventCounterCache) countUsers(
 	_, err := pipe.Exec()
 	if err != nil {
 		return nil, err
-	}
-	for _, c := range iCmds {
-		_, err = c.Result()
-		if err != nil {
-			return nil, err
-		}
 	}
 	return getUserValues(iCmds)
 }
