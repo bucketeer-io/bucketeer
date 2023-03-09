@@ -31,7 +31,7 @@ type EventCounterCache interface {
 	GetEventCountsV2(keys [][]string) ([]float64, error)
 	GetUserCount(key string) (int64, error)
 	GetUserCounts(keys []string) ([]float64, error)
-	GetUserCountsV2(keys [][]string) ([]float64, error)
+	GetUserCountsV2(keys [][]string) ([]float64, []string, error)
 	UpdateUserCount(key, userID string) error
 }
 
@@ -155,31 +155,31 @@ func getUserValues(cmds []*goredis.IntCmd) ([]float64, error) {
 	return userVals, nil
 }
 
-func (c *eventCounterCache) GetUserCountsV2(keys [][]string) ([]float64, error) {
-	count, err := c.getUserCountsV2(keys)
+func (c *eventCounterCache) GetUserCountsV2(keys [][]string) ([]float64, []string, error) {
+	count, str, err := c.getUserCountsV2(keys)
 	if err != nil {
-		return nil, fmt.Errorf("err: %v, keys: %v", err, keys)
+		return nil, nil, fmt.Errorf("err: %v, keys: %v", err, keys)
 	}
-	return count, nil
+	return count, str, nil
 }
 
-func (c *eventCounterCache) getUserCountsV2(keys [][]string) ([]float64, error) {
+func (c *eventCounterCache) getUserCountsV2(keys [][]string) ([]float64, []string, error) {
 	pipe := c.cache.Pipeline()
 	uniqueKeys, err := createUniqueKeys(len(keys))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if err := c.mergeHourlyKeys(keys, uniqueKeys, pipe); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	count, err := c.countUsers(uniqueKeys, pipe)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// if err := c.DeleteKeys(uniqueKeys, pipe); err != nil {
 	// 	return nil, err
 	// }
-	return count, nil
+	return count, uniqueKeys, nil
 }
 
 func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
