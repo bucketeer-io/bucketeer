@@ -226,12 +226,6 @@ func (*eventCounterCache) countUsers(
 	if err != nil {
 		return nil, err
 	}
-	for _, c := range iCmds {
-		_, err = c.Result()
-		if err != nil {
-			return nil, err
-		}
-	}
 	return getUserValues(iCmds)
 }
 
