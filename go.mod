@@ -21,6 +21,7 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.5.9
 	github.com/googleapis/gax-go/v2 v2.7.0
+	github.com/hashicorp/go-multierror v1.1.0
 	github.com/itchyny/gojq v0.12.5
 	github.com/lib/pq v1.10.7
 	github.com/mna/redisc v1.1.2
@@ -77,7 +78,6 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
 	github.com/gorilla/websocket v1.2.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
