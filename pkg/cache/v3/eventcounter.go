@@ -18,9 +18,9 @@ package v3
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	goredis "github.com/go-redis/redis"
-	multierror "github.com/hashicorp/go-multierror"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
@@ -55,7 +55,7 @@ func (c *eventCounterCache) GetEventCounts(keys []string) ([]float64, error) {
 		// Exec returns error of the first failed command.
 		// https://pkg.go.dev/github.com/redis/go-redis/v9#Pipeline.Exec
 		if err != goredis.Nil {
-			return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
+			return []float64{}, fmt.Errorf("err: %s, keys: %v", err.Error(), keys)
 		}
 	}
 	return c.getEventValues(sCmds)
@@ -96,7 +96,7 @@ func (c *eventCounterCache) GetEventCountsV2(keys [][]string) ([]float64, error)
 		// Exec returns error of the first failed command.
 		// https://pkg.go.dev/github.com/redis/go-redis/v9#Pipeline.Exec
 		if err != goredis.Nil {
-			return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
+			return []float64{}, fmt.Errorf("err: %s, keys: %v", err, keys)
 		}
 	}
 	return c.getEventValuesV2(stringCmds)
@@ -172,17 +172,22 @@ func (c *eventCounterCache) GetUserCountsV2(
 func (c *eventCounterCache) getUserCountsV2(
 	userCountkeys [][]string,
 	pfMergeKeys []string,
-) (count []float64, err error) {
+) (count []float64, err multiError) {
 	pipe := c.cache.Pipeline()
 	defer func() {
 		if e := c.deleteKeys(pfMergeKeys, pipe); e != nil {
-			err = multierror.Append(err, e)
+			err = append(err, e)
 		}
 	}()
-	if err = c.mergeHourlyKeys(userCountkeys, pfMergeKeys, pipe); err != nil {
+	if e := c.mergeHourlyKeys(userCountkeys, pfMergeKeys, pipe); e != nil {
+		err = append(err, e)
 		return
 	}
-	count, err = c.countUsers(pfMergeKeys, pipe)
+	count, e := c.countUsers(pfMergeKeys, pipe)
+	if e != nil {
+		err = append(err, e)
+		return
+	}
 	return
 }
 
@@ -250,4 +255,17 @@ func (*eventCounterCache) deleteKeys(keys []string, pipe v3.PipeClient) error {
 		}
 	}
 	return nil
+}
+
+type multiError []error
+
+func (m multiError) Error() string {
+	str := make([]string, 0, len(m))
+	for _, e := range m {
+		if e != nil {
+			s := e.Error()
+			str = append(str, s)
+		}
+	}
+	return fmt.Sprintf("%d errors: %s", len(str), strings.Join(str, ", "))
 }
