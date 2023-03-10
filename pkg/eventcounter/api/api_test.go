@@ -1248,7 +1248,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 					[]float64{
 						1, 3, 5,
 					}, nil)
-				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(gomock.Any()).Return(
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("error"))
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
@@ -1282,7 +1282,12 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(ec).Return(
 						val, nil)
 					uc := getUserCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
-					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(uc).Return(
+					pfMergeKeys := createUserCountPFMergeKeys(
+						len(uc),
+						fID,
+						environmentNamespace,
+					)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(uc, pfMergeKeys).Return(
 						val, nil)
 				}
 			},

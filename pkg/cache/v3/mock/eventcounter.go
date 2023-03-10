@@ -94,18 +94,18 @@ func (mr *MockEventCounterCacheMockRecorder) GetUserCounts(keys interface{}) *go
 }
 
 // GetUserCountsV2 mocks base method.
-func (m *MockEventCounterCache) GetUserCountsV2(keys [][]string) ([]float64, error) {
+func (m *MockEventCounterCache) GetUserCountsV2(userCountkeys [][]string, pfMergeKeys []string) ([]float64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserCountsV2", keys)
+	ret := m.ctrl.Call(m, "GetUserCountsV2", userCountkeys, pfMergeKeys)
 	ret0, _ := ret[0].([]float64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUserCountsV2 indicates an expected call of GetUserCountsV2.
-func (mr *MockEventCounterCacheMockRecorder) GetUserCountsV2(keys interface{}) *gomock.Call {
+func (mr *MockEventCounterCacheMockRecorder) GetUserCountsV2(userCountkeys, pfMergeKeys interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserCountsV2", reflect.TypeOf((*MockEventCounterCache)(nil).GetUserCountsV2), keys)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserCountsV2", reflect.TypeOf((*MockEventCounterCache)(nil).GetUserCountsV2), userCountkeys, pfMergeKeys)
 }
 
 // UpdateUserCount mocks base method.

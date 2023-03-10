@@ -24,7 +24,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 )
 
 type EventCounterCache interface {
@@ -32,7 +31,7 @@ type EventCounterCache interface {
 	GetEventCountsV2(keys [][]string) ([]float64, error)
 	GetUserCount(key string) (int64, error)
 	GetUserCounts(keys []string) ([]float64, error)
-	GetUserCountsV2(keys [][]string) ([]float64, error)
+	GetUserCountsV2(userCountkeys [][]string, pfMergeKeys []string) ([]float64, error)
 	UpdateUserCount(key, userID string) error
 }
 
@@ -156,29 +155,34 @@ func (*eventCounterCache) getUserValues(cmds []*goredis.IntCmd) ([]float64, erro
 	return userVals, nil
 }
 
-func (c *eventCounterCache) GetUserCountsV2(keys [][]string) ([]float64, error) {
-	count, err := c.getUserCountsV2(keys)
+func (c *eventCounterCache) GetUserCountsV2(
+	userCountkeys [][]string,
+	pfMergeKeys []string,
+) ([]float64, error) {
+	count, err := c.getUserCountsV2(userCountkeys, pfMergeKeys)
 	if err != nil {
-		return nil, fmt.Errorf("err: %v, keys: %v", err, keys)
+		return nil, fmt.Errorf(
+			"err: %v, userCountkeys: %v pfMergeKeys: %v",
+			err, userCountkeys, pfMergeKeys,
+		)
 	}
 	return count, nil
 }
 
-func (c *eventCounterCache) getUserCountsV2(keys [][]string) (count []float64, err error) {
+func (c *eventCounterCache) getUserCountsV2(
+	userCountkeys [][]string,
+	pfMergeKeys []string,
+) (count []float64, err error) {
 	pipe := c.cache.Pipeline()
-	uniqueKeys, err := c.createUniqueKeys(len(keys))
-	if err != nil {
-		return
-	}
 	defer func() {
-		if e := c.deleteKeys(uniqueKeys, pipe); e != nil {
+		if e := c.deleteKeys(pfMergeKeys, pipe); e != nil {
 			err = multierror.Append(err, e)
 		}
 	}()
-	if err = c.mergeHourlyKeys(keys, uniqueKeys, pipe); err != nil {
+	if err = c.mergeHourlyKeys(userCountkeys, pfMergeKeys, pipe); err != nil {
 		return
 	}
-	count, err = c.countUsers(uniqueKeys, pipe)
+	count, err = c.countUsers(pfMergeKeys, pipe)
 	return
 }
 
@@ -192,12 +196,12 @@ func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
 
 func (*eventCounterCache) mergeHourlyKeys(
 	dailyKeys [][]string,
-	uniqueKeys []string,
+	pfMergeKeys []string,
 	pipe v3.PipeClient,
 ) error {
 	sCmds := make([]*goredis.StatusCmd, 0, len(dailyKeys))
 	for idx, day := range dailyKeys {
-		c := pipe.PFMerge(uniqueKeys[idx], day...)
+		c := pipe.PFMerge(pfMergeKeys[idx], day...)
 		sCmds = append(sCmds, c)
 	}
 	_, err := pipe.Exec()
@@ -214,11 +218,11 @@ func (*eventCounterCache) mergeHourlyKeys(
 }
 
 func (c *eventCounterCache) countUsers(
-	uniqueKeys []string,
+	pfMergeKeys []string,
 	pipe v3.PipeClient,
 ) ([]float64, error) {
-	iCmds := make([]*goredis.IntCmd, 0, len(uniqueKeys))
-	for _, k := range uniqueKeys {
+	iCmds := make([]*goredis.IntCmd, 0, len(pfMergeKeys))
+	for _, k := range pfMergeKeys {
 		c := pipe.PFCount(k)
 		iCmds = append(iCmds, c)
 	}
@@ -246,16 +250,4 @@ func (*eventCounterCache) deleteKeys(keys []string, pipe v3.PipeClient) error {
 		}
 	}
 	return nil
-}
-
-func (*eventCounterCache) createUniqueKeys(size int) ([]string, error) {
-	keys := make([]string, 0, size)
-	for i := 0; i < size; i++ {
-		id, err := uuid.NewUUID()
-		if err != nil {
-			return nil, err
-		}
-		keys = append(keys, id.String())
-	}
-	return keys, nil
 }

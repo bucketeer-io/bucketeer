@@ -57,6 +57,8 @@ const (
 	opsGoalUserCountPrefix       = "autoops:goal"
 	defaultVariationID           = "default"
 	twentyFourHours              = 24
+	pfMergeKey                   = "pfmerge-key"
+	indexKey                     = "index"
 )
 
 var (
@@ -460,7 +462,15 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			}
 			return nil, dt.Err()
 		}
-		userCounts, err := s.evaluationCountCacher.GetUserCountsV2(userCountKeys)
+		pfMergeKeys := createUserCountPFMergeKeys(
+			len(userCountKeys),
+			req.FeatureId,
+			req.EnvironmentNamespace,
+		)
+		userCounts, err := s.evaluationCountCacher.GetUserCountsV2(
+			userCountKeys,
+			pfMergeKeys,
+		)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get user counts",
@@ -502,6 +512,33 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 		EventCounts: variationTSEvents,
 		UserCounts:  variationTSUsers,
 	}, nil
+}
+
+func createUserCountPFMergeKeys(
+	size int,
+	featureID, environmentNamespace string,
+) []string {
+	keys := make([]string, 0, size)
+	for i := 0; i < size; i++ {
+		keys = append(keys, newPFMergeKey(
+			userCountPrefix,
+			featureID,
+			environmentNamespace,
+			i,
+		))
+	}
+	return keys
+}
+
+func newPFMergeKey(
+	kind, featureID, environmentNamespace string,
+	index int,
+) string {
+	return cache.MakeKey(
+		kind,
+		fmt.Sprintf("%s:%s:%s-%d", pfMergeKey, featureID, indexKey, index),
+		environmentNamespace,
+	)
 }
 
 func genInterval(loc *time.Location, endAt time.Time, durationDays int) (time.Time, error) {
