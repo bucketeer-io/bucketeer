@@ -536,7 +536,7 @@ func newPFMergeKey(
 ) string {
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%s-%d", pfMergeKey, featureID, indexKey, index),
+		fmt.Sprintf("%s:%s:%s:%d", pfMergeKey, featureID, indexKey, index),
 		environmentNamespace,
 	)
 }
