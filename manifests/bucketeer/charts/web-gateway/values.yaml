@@ -2,13 +2,13 @@ fullnameOverride: "web-gateway"
 namespace: default
 tls:
   bucketeerJP:
-    secret: "s"
-    cert: "s"
-    key: "s"
+    secret: 
+    cert: 
+    key: 
   service: 
-    secret: "s"
-    cert: "s"
-    key: "s"
+    secret: 
+    cert:
+    key:
 envoy:
   image:
     repository: envoyproxy/envoy-alpine
