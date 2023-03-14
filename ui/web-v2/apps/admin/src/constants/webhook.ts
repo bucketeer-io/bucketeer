@@ -1,0 +1,4 @@
+export const WEBHOOK_LIST_PAGE_SIZE = 50;
+export const WEBHOOK_NAME_MAX_LENGTH = 100;
+// export const WEBHOOK_FCM_API_KEY_MAX_LENGTH = 500;
+// export const WEBHOOK_TAG_LIST_MIN_LENGTH = 1;

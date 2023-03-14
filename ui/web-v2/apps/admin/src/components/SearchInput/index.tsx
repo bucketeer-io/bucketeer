@@ -1,8 +1,6 @@
 import { SearchIcon } from '@heroicons/react/solid';
-import React, { FC, Fragment, memo } from 'react';
-import { useIntl } from 'react-intl';
+import React, { FC, memo } from 'react';
 
-import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
 
 export interface SearchInputProps {
@@ -33,7 +31,6 @@ export const SearchInput: FC<SearchInputProps> = memo(
             'text-gray-700'
           )}
           placeholder={placeHolder}
-          // placeholder={f(messages.feature.search.placeholder)}
           onChange={(e) => onChange(e.target.value)}
         />
       </div>

@@ -41,7 +41,9 @@ spec:
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }} 
+      {{- if not .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "feature.name" . }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
