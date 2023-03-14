@@ -1,0 +1,75 @@
+feature-recorder:
+  env:
+    project: bucketeer-dev-srv
+    database: bucketeer-dev
+    mysqlUser: "bucketeer" # TODO
+    mysqlPass: "bucketeer" # TODO
+    mysqlHost: localhost # TODO
+    mysqlDbName: dbname # TODO
+    topic: bucketeer-dev-evaluation-events
+    flushInterval: 30s
+    subscription: bucketeer-dev-evaluation-events-event-feature-recorder
+    logLevel: debug
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - feature-recorder
+            topologyKey: kubernetes.io/hostname
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+                  - services-pool
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-pool
+
+  nodeSelector:
+    app: bucketeer # TODO
+
+  vpa:
+    enabled: false
+    updateMode: Auto
+    resourcePolicy:
+      containerPolicies:
+        minAllowed:
+          cpu: 200m
+
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+  serviceToken:
+    secret: bucketeer-service-token
+
+  serviceAccount:
+    annotations:

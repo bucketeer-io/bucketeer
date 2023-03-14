@@ -1,0 +1,76 @@
+notification-sender:
+  env:
+    project: bucketeer-dev-srv
+    domainTopic: bucketeer-dev-domain-events
+    domainSubscription: bucketeer-dev-domain-events-notification-sender
+    scheduleFeatureStaleWatcher: "0 0 1 * * MON"
+    scheduleExperimentRunningWatcher: "0 0 1 * * *"
+    scheduleMauCountWatcher: "0 0 1 1 * *"
+    webURL: https://dev.bucketeer.jp
+    logLevel: debug
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - notification-sender
+            topologyKey: kubernetes.io/hostname
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+                  - services-pool
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-pool
+
+  nodeSelector:
+
+  serviceToken:
+    secret: bucketeer-service-token
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+  envoy:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  serviceAccount:
+    annotations:

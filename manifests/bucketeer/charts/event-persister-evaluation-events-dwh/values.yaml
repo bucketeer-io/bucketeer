@@ -2,7 +2,7 @@ image:
   repository: ghcr.io/bucketeer-io/bucketeer-event-persister-dwh
   pullPolicy: IfNotPresent
 
-nameOverride: "event-persister-dwh"
+nameOverride: "event-persister-dwh-eval"
 fullnameOverride: "event-persister-evaluation-events-dwh"
 
 namespace: default

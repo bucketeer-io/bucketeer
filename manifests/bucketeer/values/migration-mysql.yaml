@@ -1,0 +1,83 @@
+migration-mysql:
+  env:
+    githubUser: bucketeer-bot
+    githubMigrationSourcePath: ca-dp/bucketeer-ops/cloudsql/migrations#master
+    logLevel: debug
+    mysqlUser: # TODO
+    mysqlPass: # TODO
+    mysqlHost: localhost # TODO
+    mysqlDbName: dbname # TODO
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - migration-mysql
+            topologyKey: kubernetes.io/hostname
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+                  - services-pool
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-pool
+
+  nodeSelector:
+
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+  oauth:
+    key:
+      secret: bucketeer-oauth-key
+    clientId: bucketeer
+    issuer: https://localhost:8000/dex
+
+  envoy:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  serviceAccount:
+    annotations:

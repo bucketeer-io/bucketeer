@@ -1,0 +1,87 @@
+event-persister-evaluation-events-dwh:
+  env:
+    project: bucketeer-dev-srv
+    # pubsub
+    topic: bucketeer-dev-evaluation-events
+    subscription: bucketeer-dev-evaluation-events-event-persister-dwh
+    # bigquery
+    bigQueryDataSet: bucketeer_dev
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - event-persister-dwh
+            topologyKey: kubernetes.io/hostname
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+                  - services-pool
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-pool
+
+  nodeSelector:
+
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 1
+    metrics:
+      cpu:
+        targetAverageUtilization: 75
+
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+
+  serviceToken:
+    secret: bucketeer-service-token
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+  envoy:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 128Mi
+
+  serviceAccount:
+    annotations:

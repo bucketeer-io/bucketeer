@@ -1,0 +1,89 @@
+auto-ops:
+  env:
+    project: bucketeer-dev-srv
+    mysqlUser: # TODO
+    mysqlPass: # TODO
+    mysqlHost: localhost # TODO
+    mysqlDbName: dbname # TODO
+    domainEventTopic: bucketeer-dev-domain-events
+    logLevel: debug
+
+  webhook:
+    baseURL: https://localhost:8000
+    kmsResourceName: # TODO
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - auto-ops
+            topologyKey: kubernetes.io/hostname
+    #nodeAffinity:
+    #  requiredDuringSchedulingIgnoredDuringExecution:
+    #    nodeSelectorTerms:
+    #      - matchExpressions:
+    #          - key: cloud.google.com/gke-nodepool
+    #            operator: In
+    #            values:
+    #              - services-spot-pool
+    #              - services-pool
+    #  preferredDuringSchedulingIgnoredDuringExecution:
+    #    - weight: 100
+    #      preference:
+    #        matchExpressions:
+    #          - key: cloud.google.com/gke-nodepool
+    #            operator: In
+    #            values:
+    #              - services-spot-pool
+    #    - weight: 1
+    #      preference:
+    #        matchExpressions:
+    #          - key: cloud.google.com/gke-nodepool
+    #            operator: In
+    #            values:
+    #              - services-pool
+
+  nodeSelector:
+
+  serviceToken:
+    secret: bucketeer-service-token
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+  oauth:
+    key:
+      secret: bucketeer-oauth-key
+    clientId: bucketeer
+    issuer: https://localhost:8000/dex
+
+  envoy:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 128Mi
+
+  hpa:
+    minReplicas: 1
+    maxReplicas: 1
+
+  serviceAccount:
+    annotations:

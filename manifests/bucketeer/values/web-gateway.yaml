@@ -1,0 +1,66 @@
+web-gateway:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - web-gateway
+            topologyKey: kubernetes.io/hostname
+    #nodeAffinity:
+    #  requiredDuringSchedulingIgnoredDuringExecution:
+    #    nodeSelectorTerms:
+    #      - matchExpressions:
+    #          - key: cloud.google.com/gke-nodepool
+    #            operator: In
+    #            values:
+    #              - services-spot-pool
+    #              - services-pool
+    #  preferredDuringSchedulingIgnoredDuringExecution:
+    #    - weight: 100
+    #      preference:
+    #        matchExpressions:
+    #          - key: cloud.google.com/gke-nodepool
+    #            operator: In
+    #            values:
+    #              - services-spot-pool
+    #    - weight: 1
+    #      preference:
+    #        matchExpressions:
+    #          - key: cloud.google.com/gke-nodepool
+    #            operator: In
+    #            values:
+    #              - services-pool
+
+  nodeSelector:
+
+  ingress:
+    host: localhost # TODO
+    staticIPName: l7-dev-bucketeer-jp
+
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+
+  tls:
+    bucketeerJP:
+      secrets:
+        - secretName: bucketeer-jp-cert-20220411 # TODO
+    service:
+      secret: bucketeer-service-cert
+
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  serviceAccount:
+    annotations:

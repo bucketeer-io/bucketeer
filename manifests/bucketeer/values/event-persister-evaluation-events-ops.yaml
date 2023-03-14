@@ -1,0 +1,90 @@
+event-persister-evaluation-events-ops:
+  env:
+    logLevel: debug
+    # pubsub
+    project: bucketeer-dev-srv
+    topic: bucketeer-dev-evaluation-events
+    subscription: bucketeer-dev-evaluation-events-event-persister-ops
+    # redis
+    redis:
+      serverName: persistent-redis
+      addr: localhost:6379 # TODO REDIS
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - event-persister-ops
+            topologyKey: kubernetes.io/hostname
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+                  - services-pool
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-pool
+
+  nodeSelector: {}
+
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 1
+    metrics:
+      cpu:
+        targetAverageUtilization: 75
+
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+
+  serviceToken:
+    secret: bucketeer-service-token
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+  envoy:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 500m
+      memory: 128Mi
+
+  serviceAccount:
+    annotations:

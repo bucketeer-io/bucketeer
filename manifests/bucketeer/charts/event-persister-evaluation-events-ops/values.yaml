@@ -2,7 +2,7 @@ image:
   repository: ghcr.io/bucketeer-io/bucketeer-event-persister-ops
   pullPolicy: IfNotPresent
 
-nameOverride: "event-persister-ops"
+nameOverride: "event-persister-ops-events"
 fullnameOverride: "event-persister-evaluation-events-ops"
 
 namespace: default

@@ -1,0 +1,62 @@
+dex:
+  replicaCount: 1
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - dex
+            topologyKey: kubernetes.io/hostname
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+                  - services-pool
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-pool
+
+  # TODO
+  # Currenlty, we use Google for the authentication.
+  # For local development, I think we can use staticPasswords from Dex to allow the access to the admin console.
+  # https://github.com/dexidp/dex/blob/master/examples/config-dev.yaml#L136-L148
+  # The issuer "https://localhost:8000/dex" is set in all microservices config in the "oauth" setting.
+  # Make sure the issuer matches. Otherwise, the authentication will fail.
+  config:
+    issuer: https://localhost:8000/dex
+    client:
+      id: bucketeer
+      name: Bucketeer
+      secret:
+      redirectURIs:
+        - http://localhost:8000/auth/callback
+    google:
+      issuer: ""
+      clientID: ""
+      clientSecret: ""
+      redirectURI: https://localhost:8000/dex/callback
+
+  serviceAccount:
+    annotations:

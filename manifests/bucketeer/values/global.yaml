@@ -1,0 +1,8 @@
+global:
+  tls:
+    cert: "values/creds/local/tls.crt"
+    key: "values/creds/local/tls.key"
+  image:
+    tag: "v0.2.0-74-gc6f0263"
+    imagePullSecrets:
+      - name:

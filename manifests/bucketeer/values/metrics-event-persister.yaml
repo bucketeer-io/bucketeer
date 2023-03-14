@@ -1,0 +1,85 @@
+metrics-event-persister:
+  env:
+    project: bucketeer-dev-srv
+    topic: bucketeer-dev-metrics-events
+    subscription: bucketeer-dev-metrics-events-metrics-event-persister
+    logLevel: debug
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - metrics-event-persister
+            topologyKey: kubernetes.io/hostname
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+                  - services-pool
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-spot-pool
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: cloud.google.com/gke-nodepool
+                operator: In
+                values:
+                  - services-pool
+
+  nodeSelector:
+
+  health:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 10
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+  serviceToken:
+    secret: bucketeer-service-token
+
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 2
+    metrics:
+      cpu:
+        targetAverageUtilization: 75
+
+  envoy:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+  resources:
+    limits:
+      cpu: 50m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+  serviceAccount:
+    annotations:
