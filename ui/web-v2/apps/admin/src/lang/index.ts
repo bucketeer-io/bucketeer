@@ -2,11 +2,11 @@ import en from '@/assets/lang/en.json';
 import ja from '@/assets/lang/ja.json';
 import { createIntl, createIntlCache } from 'react-intl';
 
-import { getSelectedLanguage, LanguageTypes } from './getSelectedLanguage';
+import { getSelectedLanguage, isLanguageJapanese } from './getSelectedLanguage';
 
 let messages = en;
 
-if (getSelectedLanguage() === LanguageTypes.JAPANESE) {
+if (isLanguageJapanese) {
   messages = ja;
 }
 

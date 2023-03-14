@@ -11,6 +11,7 @@ import {
   SORT_OPTIONS_CREATED_AT_DESC,
 } from '../../types/list';
 import { classNames } from '../../utils/css';
+import { DateRangePopover } from '../DateRangePopover';
 import { Option } from '../FilterPopover';
 import { SearchInput } from '../SearchInput';
 import { SortItem, SortSelect } from '../SortSelect';
@@ -75,6 +76,17 @@ export const AuditLogSearch: FC<AuditLogSearchProps> = memo(
               onChange={(query: string) =>
                 handleUpdateOption({
                   q: query,
+                })
+              }
+            />
+          </div>
+          <div className="flex-none mx-2 relative">
+            <DateRangePopover
+              options={options}
+              onChange={(from: number, to: number) =>
+                handleUpdateOption({
+                  from,
+                  to,
                 })
               }
             />

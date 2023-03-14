@@ -29,3 +29,6 @@ export const getSelectedLanguage = () => {
 
   return selectedLanguage;
 };
+
+export const isLanguageJapanese =
+  getSelectedLanguage() === LanguageTypes.JAPANESE;
