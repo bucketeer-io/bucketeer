@@ -20,30 +20,30 @@ push-sender:
                   values:
                     - push-sender
             topologyKey: kubernetes.io/hostname
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: cloud.google.com/gke-nodepool
-                operator: In
-                values:
-                  - services-spot-pool
-                  - services-pool
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          preference:
-            matchExpressions:
-              - key: cloud.google.com/gke-nodepool
-                operator: In
-                values:
-                  - services-spot-pool
-        - weight: 1
-          preference:
-            matchExpressions:
-              - key: cloud.google.com/gke-nodepool
-                operator: In
-                values:
-                  - services-pool
+    # nodeAffinity:
+    #   requiredDuringSchedulingIgnoredDuringExecution:
+    #     nodeSelectorTerms:
+    #       - matchExpressions:
+    #           - key: cloud.google.com/gke-nodepool
+    #             operator: In
+    #             values:
+    #               - services-spot-pool
+    #               - services-pool
+    #   preferredDuringSchedulingIgnoredDuringExecution:
+    #     - weight: 100
+    #       preference:
+    #         matchExpressions:
+    #           - key: cloud.google.com/gke-nodepool
+    #             operator: In
+    #             values:
+    #               - services-spot-pool
+    #     - weight: 1
+    #       preference:
+    #         matchExpressions:
+    #           - key: cloud.google.com/gke-nodepool
+    #             operator: In
+    #             values:
+    #               - services-pool
 
   nodeSelector:
 
