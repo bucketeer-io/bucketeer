@@ -60,7 +60,7 @@ auth:
     key:
       secret: bucketeer-oauth-key
     clientId: bucketeer
-    clientSecret: # TODO
+    clientSecret: bucketeer-jp-cert-20220411 # TODO
     redirectUrls: |
       http://localhost:8000/auth/callback
     issuer: https://localhost:8000/dex
