@@ -403,6 +403,20 @@ export const messages = {
       defaultMessage: 'Add filter',
     }),
   },
+  notFound: {
+    title: defineMessage({
+      id: 'notFound.title',
+      defaultMessage: 'Page not found',
+    }),
+    description: defineMessage({
+      id: 'notFound.description',
+      defaultMessage: `Sorry, we couldn't find the page you're looking for.`,
+    }),
+    goBackHome: defineMessage({
+      id: 'notFound.goBackHome',
+      defaultMessage: 'Go back home',
+    }),
+  },
   error: defineMessage({
     id: 'error',
     defaultMessage: 'Error',
