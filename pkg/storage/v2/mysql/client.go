@@ -29,7 +29,7 @@ import (
 const dsnParams = "collation=utf8mb4_bin"
 
 type options struct {
-	connMaxLifetime time.Duration
+	connMaxIdleTime time.Duration
 	maxOpenConns    int
 	maxIdleConns    int
 	logger          *zap.Logger
@@ -38,7 +38,7 @@ type options struct {
 
 func defaultOptions() *options {
 	return &options{
-		connMaxLifetime: 300 * time.Second,
+		connMaxIdleTime: 300 * time.Second,
 		maxOpenConns:    10,
 		maxIdleConns:    5,
 		logger:          zap.NewNop(),
@@ -47,9 +47,9 @@ func defaultOptions() *options {
 
 type Option func(*options)
 
-func WithConnMaxLifetime(cml time.Duration) Option {
+func WithConnMaxIdleTime(it time.Duration) Option {
 	return func(opts *options) {
-		opts.connMaxLifetime = cml
+		opts.connMaxIdleTime = it
 	}
 }
 
@@ -128,7 +128,7 @@ func NewClient(
 		logger.Error("Failed to open db", zap.Error(err))
 		return nil, err
 	}
-	db.SetConnMaxLifetime(dopts.connMaxLifetime)
+	db.SetConnMaxIdleTime(dopts.connMaxIdleTime)
 	db.SetMaxOpenConns(dopts.maxOpenConns)
 	db.SetMaxIdleConns(dopts.maxIdleConns)
 	if err := db.PingContext(ctx); err != nil {
