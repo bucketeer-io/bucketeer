@@ -47,9 +47,9 @@ func defaultOptions() *options {
 
 type Option func(*options)
 
-func WithConnMaxIdleTime(cml time.Duration) Option {
+func WithConnMaxIdleTime(it time.Duration) Option {
 	return func(opts *options) {
-		opts.connMaxIdleTime = cml
+		opts.connMaxIdleTime = it
 	}
 }
 
