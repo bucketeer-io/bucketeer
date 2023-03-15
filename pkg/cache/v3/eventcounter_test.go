@@ -15,8 +15,6 @@
 package v3
 
 import (
-	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/go-redis/redis"
@@ -117,37 +115,6 @@ func TestGetUserValues(t *testing.T) {
 			if p.inValid {
 				assert.Error(t, err)
 			}
-		})
-	}
-}
-
-func TestMultiError(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		desc     string
-		err      multiError
-		expected string
-	}{
-		{
-			desc: "2 errors",
-			err: multiError{
-				errors.New("foobar"),
-				errors.New("hoge"),
-			},
-			expected: "2 errors: foobar, hoge",
-		},
-		{
-			desc: "1 error",
-			err: multiError{
-				errors.New("foobar"),
-			},
-			expected: "1 errors: foobar",
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			actual := fmt.Errorf("%v", p.err).Error()
-			assert.Equal(t, p.expected, actual)
 		})
 	}
 }

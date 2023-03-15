@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -1232,7 +1233,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "error: get user counts failed",
+			desc: "error: MergeMultiKeys failed",
 			setup: func(ctx context.Context, s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
 					EnvironmentNamespace: environmentNamespace,
@@ -1248,8 +1249,61 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 					[]float64{
 						1, 3, 5,
 					}, nil)
-				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(gomock.Any(), gomock.Any()).Return(
-					nil, errors.New("error"))
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(errors.New("error1"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: GetUserCountsV2 failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+					[]float64{
+						1, 3, 5,
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(gomock.Any()).Return(nil, errors.New("error1"))
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteMultiKeys(gomock.Any()).Return(nil)
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: DeleteMultiKeys failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+					[]float64{
+						1, 3, 5,
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(gomock.Any()).Return([]float64{}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteMultiKeys(gomock.Any()).Return(errors.New("error1"))
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
 				EnvironmentNamespace: environmentNamespace,
@@ -1287,7 +1341,9 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 						fID,
 						environmentNamespace,
 					)
-					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(uc, pfMergeKeys).Return(
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKeys, uc).Return(nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteMultiKeys(pfMergeKeys).Return(nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(pfMergeKeys).Return(
 						val, nil)
 				}
 			},
@@ -1744,4 +1800,35 @@ func newUUID(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return id.String()
+}
+
+func TestMultiError(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		err      multiError
+		expected string
+	}{
+		{
+			desc: "2 errors",
+			err: multiError{
+				errors.New("foobar"),
+				errors.New("hoge"),
+			},
+			expected: "2 errors: foobar, hoge",
+		},
+		{
+			desc: "1 error",
+			err: multiError{
+				errors.New("foobar"),
+			},
+			expected: "1 errors: foobar",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := fmt.Errorf("%v", p.err).Error()
+			assert.Equal(t, p.expected, actual)
+		})
+	}
 }

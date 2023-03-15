@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -58,7 +59,6 @@ const (
 	defaultVariationID           = "default"
 	twentyFourHours              = 24
 	pfMergeKey                   = "pfmerge-key"
-	indexKey                     = "index"
 )
 
 var (
@@ -425,33 +425,26 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 	variationTSEvents := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
 	variationTSUsers := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
 	for _, vID := range vIDs {
-		eventCountKeys := make([][]string, 0, len(hourlyTimeStamps))
-		userCountKeys := make([][]string, 0, len(hourlyTimeStamps))
-		for _, day := range hourlyTimeStamps {
-			ecHourlyKeys := make([]string, 0, len(day))
-			ucHourlyKeys := make([]string, 0, len(day))
-			for _, hour := range day {
-				ec := newEvaluationCountkey(eventCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, hour)
-				ecHourlyKeys = append(ecHourlyKeys, ec)
-				uc := newEvaluationCountkey(userCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, hour)
-				ucHourlyKeys = append(ucHourlyKeys, uc)
-			}
-			eventCountKeys = append(eventCountKeys, ecHourlyKeys)
-			userCountKeys = append(userCountKeys, ucHourlyKeys)
-		}
+		eventCountKeys := s.getEventCountKeys(
+			hourlyTimeStamps,
+			req.EnvironmentNamespace,
+			req.FeatureId,
+			vID,
+		)
+		userCountKeys := s.getUserCountKeys(
+			hourlyTimeStamps,
+			req.EnvironmentNamespace,
+			req.FeatureId,
+			vID,
+		)
 		eventCounts, err := s.evaluationCountCacher.GetEventCountsV2(eventCountKeys)
 		if err != nil {
-			s.logger.Error(
-				"Failed to get event counts",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
-					zap.Time("startAt", startAt),
-					zap.Time("endAt", endAt),
-					zap.String("featureId", req.FeatureId),
-					zap.Int32("featureVersion", resp.Feature.Version),
-					zap.String("variationId", vID),
-				)...,
+			s.logCountError(
+				ctx,
+				err,
+				"Failed to get event counts", req.EnvironmentNamespace, req.FeatureId, vID,
+				resp.Feature.Version,
+				startAt, endAt,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -462,27 +455,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			}
 			return nil, dt.Err()
 		}
-		pfMergeKeys := createUserCountPFMergeKeys(
-			len(userCountKeys),
-			req.FeatureId,
-			req.EnvironmentNamespace,
-		)
-		userCounts, err := s.evaluationCountCacher.GetUserCountsV2(
-			userCountKeys,
-			pfMergeKeys,
-		)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get user counts",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
-					zap.Time("startAt", startAt),
-					zap.Time("endAt", endAt),
-					zap.String("featureId", req.FeatureId),
-					zap.Int32("featureVersion", resp.Feature.Version),
-					zap.String("variationId", vID),
-				)...,
+		userCounts, multiErr := s.getUserCounts(userCountKeys, req.FeatureId, req.EnvironmentNamespace)
+		if len(multiErr) > 0 {
+			s.logCountError(
+				ctx,
+				multiErr,
+				"Failed to get user counts", req.EnvironmentNamespace, req.FeatureId, vID,
+				resp.Feature.Version,
+				startAt, endAt,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -514,6 +494,103 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 	}, nil
 }
 
+type multiError []error
+
+func (m multiError) Error() string {
+	str := make([]string, 0, len(m))
+	for _, e := range m {
+		if e != nil {
+			s := e.Error()
+			str = append(str, s)
+		}
+	}
+	return fmt.Sprintf("%d errors: %s", len(str), strings.Join(str, ", "))
+}
+
+func (s *eventCounterService) getUserCounts(
+	userCountKeys [][]string,
+	featureID, environmentNamespace string,
+) (count []float64, err multiError) {
+	pfMergeKeys := createUserCountPFMergeKeys(
+		len(userCountKeys),
+		featureID,
+		environmentNamespace,
+	)
+	// We need to count the number of unique users in 24 hours.
+	if e := s.evaluationCountCacher.MergeMultiKeys(pfMergeKeys, userCountKeys); e != nil {
+		err = append(err, e)
+		return
+	}
+	defer func() {
+		if e := s.evaluationCountCacher.DeleteMultiKeys(pfMergeKeys); e != nil {
+			err = append(err, e)
+		}
+	}()
+	count, e := s.evaluationCountCacher.GetUserCountsV2(pfMergeKeys)
+	if e != nil {
+		err = append(err, e)
+		return
+	}
+	return
+}
+
+func (*eventCounterService) getEventCountKeys(
+	hourlyTimeStamps [][]int64,
+	environmentNamespace string,
+	featureID string,
+	vID string,
+) [][]string {
+	eventCountKeys := make([][]string, 0, len(hourlyTimeStamps))
+	for _, day := range hourlyTimeStamps {
+		ecHourlyKeys := make([]string, 0, len(day))
+		for _, hour := range day {
+			ec := newEvaluationCountkey(eventCountPrefix, featureID, vID, environmentNamespace, hour)
+			ecHourlyKeys = append(ecHourlyKeys, ec)
+		}
+		eventCountKeys = append(eventCountKeys, ecHourlyKeys)
+	}
+	return eventCountKeys
+}
+
+func (*eventCounterService) getUserCountKeys(
+	hourlyTimeStamps [][]int64,
+	environmentNamespace string,
+	featureID string,
+	vID string,
+) [][]string {
+	userCountKeys := make([][]string, 0, len(hourlyTimeStamps))
+	for _, day := range hourlyTimeStamps {
+		ucHourlyKeys := make([]string, 0, len(day))
+		for _, hour := range day {
+			uc := newEvaluationCountkey(userCountPrefix, featureID, vID, environmentNamespace, hour)
+			ucHourlyKeys = append(ucHourlyKeys, uc)
+		}
+		userCountKeys = append(userCountKeys, ucHourlyKeys)
+	}
+	return userCountKeys
+}
+
+func (s *eventCounterService) logCountError(
+	ctx context.Context,
+	err error,
+	msg, environmentNamespace, featureID, vID string,
+	featureVersion int32,
+	startAt, endAt time.Time,
+) {
+	s.logger.Error(
+		msg,
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.Time("startAt", startAt),
+			zap.Time("endAt", endAt),
+			zap.String("featureId", featureID),
+			zap.Int32("featureVersion", featureVersion),
+			zap.String("variationId", vID),
+		)...,
+	)
+}
+
 func createUserCountPFMergeKeys(
 	size int,
 	featureID, environmentNamespace string,
@@ -536,7 +613,7 @@ func newPFMergeKey(
 ) string {
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%s:%d", pfMergeKey, featureID, indexKey, index),
+		fmt.Sprintf("%s:%s:%d", pfMergeKey, featureID, index),
 		environmentNamespace,
 	)
 }
