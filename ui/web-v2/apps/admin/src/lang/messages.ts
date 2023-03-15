@@ -410,7 +410,7 @@ export const messages = {
     }),
     description: defineMessage({
       id: 'notFound.description',
-      defaultMessage: 'Sorry, we couldn’t find the page you’re looking for.',
+      defaultMessage: `Sorry, we couldn't find the page you're looking for.`,
     }),
     goBackHome: defineMessage({
       id: 'notFound.goBackHome',
