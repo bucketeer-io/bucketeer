@@ -1,5 +1,6 @@
 import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
+import './dateRangeStyles.css';
 import { isLanguageJapanese } from '@/lang/getSelectedLanguage';
 import { AuditLogSearchOptions } from '@/types/auditLog';
 import { Popover, Transition } from '@headlessui/react';
@@ -101,7 +102,7 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
                         'ring-1 ring-black ring-opacity-5'
                       )}
                     >
-                      <div className="p-4 bg-gray-100">
+                      <div className="bg-gray-100">
                         <div className="flex">
                           <DateRangePicker
                             onChange={(item: any) =>
@@ -118,7 +119,7 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
                             staticRanges={staticRanges}
                           />
                         </div>
-                        <div className="flex justify-end mt-4 space-x-2">
+                        <div className="flex justify-end py-2 space-x-2 border-t border-gray-300">
                           <button
                             type="button"
                             className="btn-cancel"
