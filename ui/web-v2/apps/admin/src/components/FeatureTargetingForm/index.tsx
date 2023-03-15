@@ -302,11 +302,11 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
   }
 
   return (
-    <div className="bg-blue-100 p-4 border-l-4 border-blue-600">
+    <div className="bg-blue-50 p-4 border-l-4 border-blue-400">
       <div className="flex">
         <div className="flex-shrink-0">
           <InformationCircleIcon
-            className="h-5 w-5 text-blue-500"
+            className="h-5 w-5 text-blue-400"
             aria-hidden="true"
           />
         </div>
