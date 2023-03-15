@@ -7,13 +7,41 @@ import { Popover, Transition } from '@headlessui/react';
 import { SelectorIcon } from '@heroicons/react/solid';
 import en from 'date-fns/locale/en-US';
 import ja from 'date-fns/locale/ja';
+import days from 'dayjs';
 import React, { FC, Fragment, memo, useEffect, useRef, useState } from 'react';
-import { DateRangePicker, defaultStaticRanges } from 'react-date-range';
+import {
+  DateRangePicker,
+  defaultStaticRanges,
+  createStaticRanges,
+} from 'react-date-range';
 import { useIntl } from 'react-intl';
 import { usePopper } from 'react-popper';
 
 import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
+
+const defaultEnRangesLabels = [
+  'Today',
+  'Yesterday',
+  'This week',
+  'Last week',
+  'This month',
+  'Last month',
+];
+
+const defaultJaRangesLabels = ['今日', '昨日', '今週', '先週', '今月', '先月'];
+
+const extraEnRangesLabels = [
+  { label: 'Last 3 months', month: 3 },
+  { label: 'Last 6 months', month: 6 },
+  { label: 'Last 12 months', month: 12 },
+];
+
+const extraJaRangesLabels = [
+  { label: '過去3ヶ月', month: 3 },
+  { label: '過去6ヶ月', month: 6 },
+  { label: '過去12ヶ月', month: 12 },
+];
 
 export interface DateRangePopoverProps {
   options: AuditLogSearchOptions;
@@ -45,13 +73,33 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
       );
     };
 
-    let staticRanges = defaultStaticRanges;
-    if (isLanguageJapanese) {
-      staticRanges = defaultStaticRanges.map((range) => ({
-        ...range,
-        label: 'Japanese text',
-      }));
-    }
+    let staticRanges = [];
+
+    const labels = isLanguageJapanese
+      ? defaultJaRangesLabels
+      : defaultEnRangesLabels;
+
+    const extraLabels = isLanguageJapanese
+      ? extraJaRangesLabels
+      : extraEnRangesLabels;
+
+    staticRanges = defaultStaticRanges.map((range, rangeIdx) => ({
+      ...range,
+      label: labels[rangeIdx],
+    }));
+
+    staticRanges = [
+      ...staticRanges,
+      ...createStaticRanges(
+        extraLabels.map(({ label, month }) => ({
+          label,
+          range: () => ({
+            startDate: days().subtract(month, 'month').toDate(),
+            endDate: new Date(),
+          }),
+        }))
+      ),
+    ];
 
     return (
       <Popover>
