@@ -541,9 +541,9 @@ func (*eventCounterService) getEventCountKeys(
 	vID string,
 ) [][]string {
 	eventCountKeys := make([][]string, 0, len(hourlyTimeStamps))
-	for _, day := range hourlyTimeStamps {
-		ecHourlyKeys := make([]string, 0, len(day))
-		for _, hour := range day {
+	for _, twentyFourHours := range hourlyTimeStamps {
+		ecHourlyKeys := make([]string, 0, len(twentyFourHours))
+		for _, hour := range twentyFourHours {
 			ec := newEvaluationCountkey(eventCountPrefix, featureID, vID, environmentNamespace, hour)
 			ecHourlyKeys = append(ecHourlyKeys, ec)
 		}
@@ -559,9 +559,9 @@ func (*eventCounterService) getUserCountKeys(
 	vID string,
 ) [][]string {
 	userCountKeys := make([][]string, 0, len(hourlyTimeStamps))
-	for _, day := range hourlyTimeStamps {
-		ucHourlyKeys := make([]string, 0, len(day))
-		for _, hour := range day {
+	for _, twentyFourHours := range hourlyTimeStamps {
+		ucHourlyKeys := make([]string, 0, len(twentyFourHours))
+		for _, hour := range twentyFourHours {
 			uc := newEvaluationCountkey(userCountPrefix, featureID, vID, environmentNamespace, hour)
 			ucHourlyKeys = append(ucHourlyKeys, uc)
 		}
