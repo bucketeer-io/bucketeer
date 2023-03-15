@@ -38,7 +38,8 @@ func TestGetEventValues(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual, err := getEventValues(p.cmds)
+			c := &eventCounterCache{}
+			actual, err := c.getEventValues(p.cmds)
 			assert.Equal(t, p.expected, actual)
 			if p.inValid {
 				assert.Error(t, err)
@@ -47,9 +48,45 @@ func TestGetEventValues(t *testing.T) {
 	}
 }
 
+func TestGetEventValuesV2(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		cmds     [][]*redis.StringCmd
+		expected []float64
+		inValid  bool
+	}{
+		{
+			desc: "success",
+			cmds: [][]*redis.StringCmd{
+				{},
+				{},
+				{},
+				{},
+			},
+			expected: []float64{
+				0, 0, 0, 0,
+			},
+			inValid: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			c := &eventCounterCache{}
+			actual, err := c.getEventValuesV2(p.cmds)
+			assert.Equal(t, p.expected, actual)
+			assert.NoError(t, err)
+			if p.inValid {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
 func TestGetUserValues(t *testing.T) {
 	t.Parallel()
-
 	patterns := []struct {
 		desc     string
 		cmds     []*redis.IntCmd
@@ -72,7 +109,8 @@ func TestGetUserValues(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual, err := getUserValues(p.cmds)
+			c := &eventCounterCache{}
+			actual, err := c.getUserValues(p.cmds)
 			assert.Equal(t, p.expected, actual)
 			if p.inValid {
 				assert.Error(t, err)

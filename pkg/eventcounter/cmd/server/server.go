@@ -18,6 +18,7 @@ import (
 	"context"
 	"time"
 
+	timezone "github.com/tkuchiki/go-timezone"
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -63,6 +64,7 @@ type server struct {
 	redisPoolMaxActive   *int
 	bigQueryDataSet      *string
 	bigQueryDataLocation *string
+	timezone             *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -109,6 +111,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("10").Int(),
 		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
 		bigQueryDataLocation: cmd.Flag("bigquery-data-location", "BigQuery DataSet Location").String(),
+		timezone:             cmd.Flag("timezone", "Time zone").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -191,6 +194,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer bigQueryQuerier.Close()
 	bigQueryDataSet := *s.bigQueryDataSet
 
+	location, err := s.getLocation()
+	if err != nil {
+		return err
+	}
+
 	service := api.NewEventCounterService(
 		mysqlClient,
 		experimentClient,
@@ -200,6 +208,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		bigQueryDataSet,
 		registerer,
 		redisV3Cache,
+		location,
 		logger,
 	)
 
@@ -261,4 +270,13 @@ func (s *server) createBigQueryQuerier(
 		bqquerier.WithMetrics(registerer),
 		bqquerier.WithLogger(logger),
 	)
+}
+
+func (s *server) getLocation() (*time.Location, error) {
+	tz := timezone.New()
+	info, err := tz.GetTzInfo(*s.timezone)
+	if err != nil {
+		return nil, err
+	}
+	return time.FixedZone(*s.timezone, info.StandardOffset()), nil
 }

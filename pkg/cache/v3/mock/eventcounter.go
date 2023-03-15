@@ -33,6 +33,20 @@ func (m *MockEventCounterCache) EXPECT() *MockEventCounterCacheMockRecorder {
 	return m.recorder
 }
 
+// DeleteMultiKeys mocks base method.
+func (m *MockEventCounterCache) DeleteMultiKeys(keys []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteMultiKeys", keys)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteMultiKeys indicates an expected call of DeleteMultiKeys.
+func (mr *MockEventCounterCacheMockRecorder) DeleteMultiKeys(keys interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMultiKeys", reflect.TypeOf((*MockEventCounterCache)(nil).DeleteMultiKeys), keys)
+}
+
 // GetEventCounts mocks base method.
 func (m *MockEventCounterCache) GetEventCounts(keys []string) ([]float64, error) {
 	m.ctrl.T.Helper()
@@ -46,6 +60,21 @@ func (m *MockEventCounterCache) GetEventCounts(keys []string) ([]float64, error)
 func (mr *MockEventCounterCacheMockRecorder) GetEventCounts(keys interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventCounts", reflect.TypeOf((*MockEventCounterCache)(nil).GetEventCounts), keys)
+}
+
+// GetEventCountsV2 mocks base method.
+func (m *MockEventCounterCache) GetEventCountsV2(keys [][]string) ([]float64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEventCountsV2", keys)
+	ret0, _ := ret[0].([]float64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEventCountsV2 indicates an expected call of GetEventCountsV2.
+func (mr *MockEventCounterCacheMockRecorder) GetEventCountsV2(keys interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventCountsV2", reflect.TypeOf((*MockEventCounterCache)(nil).GetEventCountsV2), keys)
 }
 
 // GetUserCount mocks base method.
@@ -76,6 +105,35 @@ func (m *MockEventCounterCache) GetUserCounts(keys []string) ([]float64, error) 
 func (mr *MockEventCounterCacheMockRecorder) GetUserCounts(keys interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserCounts", reflect.TypeOf((*MockEventCounterCache)(nil).GetUserCounts), keys)
+}
+
+// GetUserCountsV2 mocks base method.
+func (m *MockEventCounterCache) GetUserCountsV2(keys []string) ([]float64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserCountsV2", keys)
+	ret0, _ := ret[0].([]float64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserCountsV2 indicates an expected call of GetUserCountsV2.
+func (mr *MockEventCounterCacheMockRecorder) GetUserCountsV2(keys interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserCountsV2", reflect.TypeOf((*MockEventCounterCache)(nil).GetUserCountsV2), keys)
+}
+
+// MergeMultiKeys mocks base method.
+func (m *MockEventCounterCache) MergeMultiKeys(dest []string, keys [][]string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MergeMultiKeys", dest, keys)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MergeMultiKeys indicates an expected call of MergeMultiKeys.
+func (mr *MockEventCounterCacheMockRecorder) MergeMultiKeys(dest, keys interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergeMultiKeys", reflect.TypeOf((*MockEventCounterCache)(nil).MergeMultiKeys), dest, keys)
 }
 
 // UpdateUserCount mocks base method.
