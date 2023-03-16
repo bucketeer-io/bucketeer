@@ -4,10 +4,10 @@ import './dateRangeStyles.css';
 import { isLanguageJapanese } from '@/lang/getSelectedLanguage';
 import { AuditLogSearchOptions } from '@/types/auditLog';
 import { Popover, Transition } from '@headlessui/react';
-import { SelectorIcon } from '@heroicons/react/solid';
+import { SelectorIcon, XIcon } from '@heroicons/react/solid';
 import en from 'date-fns/locale/en-US';
 import ja from 'date-fns/locale/ja';
-import days from 'dayjs';
+import dayjs from 'dayjs';
 import React, { FC, Fragment, memo, useEffect, useRef, useState } from 'react';
 import {
   DateRangePicker,
@@ -58,11 +58,60 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
     });
     const [ranges, setRanges] = useState([
       {
-        startDate: options.from ? new Date(options.from * 1000) : new Date(),
-        endDate: options.to ? new Date(options.to * 1000) : new Date(),
+        startDate: new Date(),
+        endDate: new Date(),
         key: 'selection',
       },
     ]);
+    const [isDateSelected, setIsDateSelected] = useState(false);
+
+    useEffect(() => {
+      if (options.from && options.to) {
+        setIsDateSelected(true);
+        setRanges([
+          {
+            ...ranges[0],
+            startDate: new Date(options.from * 1000),
+            endDate: new Date(options.to * 1000),
+          },
+        ]);
+      } else if (isDateSelected === true) {
+        setIsDateSelected(false);
+      }
+    }, [options]);
+
+    const getSelectedDate = () => {
+      const from = dayjs(new Date(options.from * 1000));
+      const to = dayjs(new Date(options.to * 1000));
+
+      const isSameYear = from.isSame(to, 'year');
+      const isSameMonth = from.isSame(to, 'month');
+      const isSameDay = from.isSame(to, 'day');
+
+      if (!isSameYear) {
+        return `${from.format('MMM D, YYYY')} - ${to.format('MMM D, YYYY')}`;
+      }
+
+      if (!isSameMonth) {
+        return `${from.format('MMM D')} - ${to.format('MMM D, YYYY')}`;
+      }
+
+      if (!isSameDay) {
+        return `${from.format('MMM D')} - ${to.format('D, YYYY')}`;
+      }
+      return from.format('MMM D, YYYY');
+    };
+
+    const handleClear = () => {
+      setRanges([
+        {
+          startDate: new Date(),
+          endDate: new Date(),
+          key: 'selection',
+        },
+      ]);
+      onChange(null, null);
+    };
 
     const handleApply = () => {
       const { startDate, endDate } = ranges[0];
@@ -94,7 +143,7 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
         extraLabels.map(({ label, month }) => ({
           label,
           range: () => ({
-            startDate: days().subtract(month, 'month').toDate(),
+            startDate: dayjs().subtract(month, 'month').toDate(),
             endDate: new Date(),
           }),
         }))
@@ -105,23 +154,43 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
       <Popover>
         {({ open }) => (
           <>
-            <Popover.Button
-              ref={referenceElement}
-              className={classNames(
-                'group px-3 py-2',
-                'rounded-md inline-flex items-center',
-                'hover:bg-gray-100',
-                'h-10',
-                'text-gray-700',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75'
-              )}
-            >
-              <span className="text-sm">{f(messages.filter.filter)}</span>
-              <SelectorIcon
-                className="w-5 h-5 text-gray-400"
-                aria-hidden="true"
-              />
+            <Popover.Button ref={referenceElement}>
+              <div
+                className={classNames(
+                  'group px-3 py-2',
+                  'rounded-md inline-flex items-center',
+                  'hover:bg-gray-100',
+                  'h-10',
+                  'text-sm text-gray-700',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75',
+                  `${isDateSelected && 'border'}`
+                )}
+              >
+                {isDateSelected ? (
+                  <div className="flex">
+                    <span>Dates: {getSelectedDate()}</span>
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-sm">{f(messages.filter.filter)}</span>
+                    <SelectorIcon
+                      className="w-5 h-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  </>
+                )}
+              </div>
             </Popover.Button>
+            {isDateSelected && (
+              <button
+                type="button"
+                className="inline-flex items-center ml-2 rounded-md bg-white py-2.5 px-3.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
+                onClick={handleClear}
+              >
+                Clear
+                <XIcon className="ml-1 h-4 w-4" aria-hidden="true" />
+              </button>
+            )}
             <div
               ref={popperElement}
               style={popper.styles.popper}
@@ -167,7 +236,7 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
                             staticRanges={staticRanges}
                           />
                         </div>
-                        <div className="flex justify-end py-2 space-x-2 border-t border-gray-300">
+                        <div className="flex justify-end py-2 pr-2 space-x-2 border-t border-gray-300">
                           <button
                             type="button"
                             className="btn-cancel"
