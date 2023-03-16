@@ -175,6 +175,7 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
           <div className="flex-none w-72">
             <SearchInput
               placeholder={f(messages.experiment.search.placeholder)}
+              value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
                   q: query,

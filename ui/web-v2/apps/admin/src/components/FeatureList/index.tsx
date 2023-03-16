@@ -533,6 +533,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           <div className="flex-none w-72">
             <SearchInput
               placeholder={f(messages.feature.search.placeholder)}
+              value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
                   q: query,

@@ -125,6 +125,7 @@ export const EnvironmentSearch: FC<EnvironmentSearchProps> = memo(
           <div className="flex-none w-72">
             <SearchInput
               placeholder={f(messages.adminEnvironment.search.placeholder)}
+              value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
                   q: query,
