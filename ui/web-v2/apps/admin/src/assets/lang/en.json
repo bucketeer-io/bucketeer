@@ -311,6 +311,8 @@
   "noData.title": "There are no {title} yet.",
   "noResult.changeFilterSelection": "Change your filter selection",
   "noResult.checkTypos": "Check for typos",
+  "noResult.dateRange.description": "There are no entries for these dates. Please choose a different date and try again.",
+  "noResult.dateRange.title": "No entries",
   "noResult.searchByKeyword": "Search by {keyword}",
   "noResult.title": "No {title} match. You can try this:",
   "notification.add.header.description": "A notification lets you know when someone adds or updates something on the admin console and operational tasks status.",

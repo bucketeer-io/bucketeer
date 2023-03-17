@@ -1630,6 +1630,17 @@ export const messages = {
       id: 'noResult.checkTypos',
       defaultMessage: 'Check for typos',
     }),
+    dateRange: {
+      title: defineMessage({
+        id: 'noResult.dateRange.title',
+        defaultMessage: 'No entries',
+      }),
+      description: defineMessage({
+        id: 'noResult.dateRange.description',
+        defaultMessage:
+          'There are no entries for these dates. Please choose a different date and try again.',
+      }),
+    },
   },
   name: defineMessage({
     id: 'name',

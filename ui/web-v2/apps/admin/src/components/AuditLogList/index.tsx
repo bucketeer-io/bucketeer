@@ -96,26 +96,9 @@ const NoData: FC<NoDataProps> = ({ searchOptions }) => {
 
   if (searchOptions.from) {
     return (
-      <div className="my-10 flex justify-center">
-        <div className="text-gray-700">
-          <h1 className="text-lg">
-            Title
-            {/* {f(messages.noResult.title, {
-              title: f(messages.auditLog.list.header.title),
-            })} */}
-          </h1>
-          <div className="flex justify-center mt-4">
-            <ul className="list-disc">
-              <li>
-                description
-                {/* {f(messages.noResult.searchByKeyword, {
-                  keyword: f(messages.auditLog.list.noResult.searchKeyword),
-                })} */}
-              </li>
-              {/* <li>{f(messages.noResult.checkTypos)}</li> */}
-            </ul>
-          </div>
-        </div>
+      <div className="my-10 text-center">
+        <h1 className="text-lg">{f(messages.noResult.dateRange.title)}</h1>
+        <p className="mt-2">{f(messages.noResult.dateRange.description)}</p>
       </div>
     );
   } else if (searchOptions.q || searchOptions.resource) {

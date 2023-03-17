@@ -311,6 +311,8 @@
   "noData.title": "まだ{title}がありません。",
   "noResult.changeFilterSelection": "フィルター選択を変更する",
   "noResult.checkTypos": "誤字脱字をチェックする",
+  "noResult.dateRange.description": "この期間にはログエントリがありません。別の期間を選択してもう一度お試しください。",
+  "noResult.dateRange.title": "ログエントリなし",
   "noResult.searchByKeyword": "{keyword}で検索する",
   "noResult.title": "{title}が一致しません。以下を試してください。",
   "notification.add.header.description": "通知機能を使用することによって、管理コンソールでの追加・更新をした時や、運用タスクの状況を確認することができます。",
