@@ -1,6 +1,9 @@
 .rdrDefinedRangesWrapper {
   width: 140px !important;
 }
+.rdrStaticRanges button:last-child {
+  border-bottom: none;
+}
 
 .rdrDateDisplayWrapper .rdrDateDisplay {
   margin: 0.5rem !important;
