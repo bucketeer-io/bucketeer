@@ -759,6 +759,18 @@ export const messages = {
         id: 'auditLog.filter.type',
         defaultMessage: 'Type',
       }),
+      clear: defineMessage({
+        id: 'auditLog.filter.clear',
+        defaultMessage: 'Clear',
+      }),
+      apply: defineMessage({
+        id: 'auditLog.filter.apply',
+        defaultMessage: 'Apply',
+      }),
+      cancel: defineMessage({
+        id: 'auditLog.filter.cancel',
+        defaultMessage: 'Cancel',
+      }),
     },
     search: {
       placeholder: defineMessage({

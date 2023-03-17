@@ -12,7 +12,6 @@ import {
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { DateRangePopover } from '../DateRangePopover';
-import { Option } from '../FilterPopover';
 import { SearchInput } from '../SearchInput';
 import { SortItem, SortSelect } from '../SortSelect';
 
@@ -24,22 +23,6 @@ const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
     message: intl.formatMessage(messages.auditLog.sort.oldest),
-  },
-];
-
-export enum FilterTypes {
-  DATES = 'dates',
-  TYPE = 'type',
-}
-
-export const filterOptions: Option[] = [
-  {
-    value: FilterTypes.DATES,
-    label: intl.formatMessage(messages.auditLog.filter.dates),
-  },
-  {
-    value: FilterTypes.TYPE,
-    label: intl.formatMessage(messages.auditLog.filter.type),
   },
 ];
 

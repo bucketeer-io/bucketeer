@@ -117,8 +117,8 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
       const { startDate, endDate } = ranges[0];
 
       onChange(
-        Math.round(startDate.getTime() / 1000),
-        Math.round(endDate.getTime() / 1000)
+        Math.trunc(startDate.getTime() / 1000),
+        Math.trunc(endDate.getTime() / 1000)
       );
     };
 
@@ -157,7 +157,7 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
             <Popover.Button ref={referenceElement}>
               <div
                 className={classNames(
-                  'group px-3 py-2',
+                  'group pl-3 pr-2 py-2',
                   'rounded-md inline-flex items-center',
                   'hover:bg-gray-100',
                   'h-10',
@@ -168,7 +168,13 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
               >
                 {isDateSelected ? (
                   <div className="flex">
-                    <span>Dates: {getSelectedDate()}</span>
+                    <span>
+                      {f(messages.auditLog.filter.dates)}: {getSelectedDate()}
+                    </span>
+                    <SelectorIcon
+                      className="w-5 h-5 text-gray-400 ml-2"
+                      aria-hidden="true"
+                    />
                   </div>
                 ) : (
                   <>
@@ -222,9 +228,10 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
                       <div className="bg-gray-100">
                         <div className="flex">
                           <DateRangePicker
-                            onChange={(item: any) =>
-                              setRanges([item.selection])
-                            }
+                            onChange={(item: any) => {
+                              console.log('item', item.selection);
+                              setRanges([item.selection]);
+                            }}
                             showSelectionPreview={true}
                             moveRangeOnFirstSelection={false}
                             months={2}
