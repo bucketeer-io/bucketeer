@@ -394,12 +394,20 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
 
     const handleAddPrerequisite = useCallback(() => {
       if (prerequisites.length === 0) {
-        dispatchListFeatures();
+        dispatchListFeatures().then(() => {
+          setTimeout(() => {
+            appendPrerequisite({
+              featureId: null,
+              variationId: null,
+            });
+          });
+        });
+      } else {
+        appendPrerequisite({
+          featureId: null,
+          variationId: null,
+        });
       }
-      appendPrerequisite({
-        featureId: null,
-        variationId: null,
-      });
     }, [prerequisites]);
 
     const handleRemovePrerequisite = useCallback(
@@ -410,7 +418,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
     );
 
     const dispatchListFeatures = () => {
-      dispatch(
+      return dispatch(
         listFeatures({
           environmentNamespace: currentEnvironment.namespace,
           pageSize: 99999,
