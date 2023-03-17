@@ -3,7 +3,7 @@
 }
 
 .rdrDateDisplayWrapper .rdrDateDisplay {
-  margin: 0.4em !important;
+  margin: 0.5rem !important;
 }
 
 .rdrMonthAndYearWrapper {
@@ -13,7 +13,7 @@
 
 .rdrMonth {
   width: 22em !important;
-  padding: 0 0.4em 0 0.4em !important;
+  padding: 0 0.5rem 0 0.5rem !important;
 }
 
 .rdrMonthAndYearPickers select {
