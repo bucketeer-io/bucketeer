@@ -294,6 +294,19 @@ func getVariationID(reason featureproto.Reason_Type, vID string) string {
 
 func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
+		p.logger.Error(
+			"debug evaluation event",
+			zap.Int64("timestamp", e.Timestamp),
+			zap.String("feature_id", e.FeatureId),
+			zap.Int32("feature_version", e.FeatureVersion),
+			zap.String("user_id", e.UserId),
+			zap.String("VariationId", e.VariationId),
+			zap.Any("user", e.User),
+			zap.Any("reason", e.Reason),
+			zap.String("tag", e.Tag),
+			zap.Int32("source_id", int32(e.SourceId)),
+			zap.String("sdk_version", e.SdkVersion),
+		)
 		vID := getVariationID(e.Reason.Type, e.VariationId)
 		// To avoid duplication when the request fails, we increment the event count in the end
 		// because the user count is an unique count, and there is no problem adding the same event more than once
