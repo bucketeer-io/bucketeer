@@ -133,6 +133,7 @@ func TestGetVariationID(t *testing.T) {
 		variationID string
 		reason      *featureproto.Reason
 		expected    string
+		expectedErr error
 	}{
 		{
 			desc:        "get given variation id if off variation",
@@ -170,7 +171,7 @@ func TestGetVariationID(t *testing.T) {
 			desc:        "get given variation id if reason is nil",
 			variationID: "vID1",
 			reason:      nil,
-			expected:    "vID1",
+			expectedErr: ErrReasonNil,
 		},
 		{
 			desc:        "get default variation id if client",
@@ -183,8 +184,9 @@ func TestGetVariationID(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual := getVariationID(p.reason, p.variationID)
+			actual, err := getVariationID(p.reason, p.variationID)
 			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
