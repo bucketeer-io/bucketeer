@@ -150,6 +150,7 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
           <div className="flex-none w-72">
             <SearchInput
               placeholder={f(messages.account.search.placeholder)}
+              value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
                   q: query,

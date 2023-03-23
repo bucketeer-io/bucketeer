@@ -11,7 +11,7 @@ import {
   SORT_OPTIONS_CREATED_AT_DESC,
 } from '../../types/list';
 import { classNames } from '../../utils/css';
-import { Option } from '../FilterPopover';
+import { DateRangePopover } from '../DateRangePopover';
 import { SearchInput } from '../SearchInput';
 import { SortItem, SortSelect } from '../SortSelect';
 
@@ -23,22 +23,6 @@ const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
     message: intl.formatMessage(messages.auditLog.sort.oldest),
-  },
-];
-
-export enum FilterTypes {
-  DATES = 'dates',
-  TYPE = 'type',
-}
-
-export const filterOptions: Option[] = [
-  {
-    value: FilterTypes.DATES,
-    label: intl.formatMessage(messages.auditLog.filter.dates),
-  },
-  {
-    value: FilterTypes.TYPE,
-    label: intl.formatMessage(messages.auditLog.filter.type),
   },
 ];
 
@@ -72,9 +56,21 @@ export const AuditLogSearch: FC<AuditLogSearchProps> = memo(
           <div className="flex-none w-72">
             <SearchInput
               placeholder={f(messages.account.search.placeholder)}
+              value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
                   q: query,
+                })
+              }
+            />
+          </div>
+          <div className="flex-none mx-2 relative">
+            <DateRangePopover
+              options={options}
+              onChange={(from: number, to: number) =>
+                handleUpdateOption({
+                  from,
+                  to,
                 })
               }
             />

@@ -94,6 +94,7 @@ export const AuditLogIndexPage: FC = memo(() => {
     const resource = searchOptions.resource
       ? Number(searchOptions.resource)
       : null;
+
     dispatch(
       listAuditLogs({
         environmentNamespace: currentEnvironment.namespace,

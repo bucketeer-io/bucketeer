@@ -1,0 +1,24 @@
+.rdrDefinedRangesWrapper {
+  width: 140px !important;
+}
+.rdrStaticRanges button:last-child {
+  border-bottom: none;
+}
+
+.rdrDateDisplayWrapper .rdrDateDisplay {
+  margin: 0.5rem !important;
+}
+
+.rdrMonthAndYearWrapper {
+  height: 35px !important;
+  padding-top: 0px !important;
+}
+
+.rdrMonth {
+  width: 22em !important;
+  padding: 0 0.5rem 0 0.5rem !important;
+}
+
+.rdrMonthAndYearPickers select {
+  font-size: 0.9rem;
+}

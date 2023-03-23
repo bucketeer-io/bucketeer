@@ -773,6 +773,18 @@ export const messages = {
         id: 'auditLog.filter.type',
         defaultMessage: 'Type',
       }),
+      clear: defineMessage({
+        id: 'auditLog.filter.clear',
+        defaultMessage: 'Clear',
+      }),
+      apply: defineMessage({
+        id: 'auditLog.filter.apply',
+        defaultMessage: 'Apply',
+      }),
+      cancel: defineMessage({
+        id: 'auditLog.filter.cancel',
+        defaultMessage: 'Cancel',
+      }),
     },
     search: {
       placeholder: defineMessage({
@@ -1632,6 +1644,17 @@ export const messages = {
       id: 'noResult.checkTypos',
       defaultMessage: 'Check for typos',
     }),
+    dateRange: {
+      title: defineMessage({
+        id: 'noResult.dateRange.title',
+        defaultMessage: 'No entries',
+      }),
+      description: defineMessage({
+        id: 'noResult.dateRange.description',
+        defaultMessage:
+          'There are no entries for these dates. Please choose a different date and try again.',
+      }),
+    },
   },
   name: defineMessage({
     id: 'name',

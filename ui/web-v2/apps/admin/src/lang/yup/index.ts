@@ -1,7 +1,6 @@
-import { getSelectedLanguage, LanguageTypes } from '../getSelectedLanguage';
+import { isLanguageJapanese } from '../getSelectedLanguage';
 
 import { localEn } from './en';
 import { localJp } from './jp';
 
-export const yupLocale =
-  getSelectedLanguage() === LanguageTypes.JAPANESE ? localJp : localEn;
+export const yupLocale = isLanguageJapanese ? localJp : localEn;
