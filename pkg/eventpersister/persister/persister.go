@@ -41,6 +41,7 @@ var (
 	ErrNoAutoOpsRules        = errors.New("eventpersister: no auto ops rules")
 	ErrNoExperiments         = errors.New("eventpersister: no experiments")
 	ErrNothingToLink         = errors.New("eventpersister: nothing to link")
+	ErrReasonNil             = errors.New("eventpersister: reason is nil")
 )
 
 const (
@@ -285,16 +286,22 @@ func (p *Persister) extractEvents(messages map[string]*puller.Message) environme
 	return envEvents
 }
 
-func getVariationID(reason featureproto.Reason_Type, vID string) string {
-	if reason == featureproto.Reason_CLIENT {
-		return defaultVariationID
+func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
+	if reason == nil {
+		return "", ErrReasonNil
 	}
-	return vID
+	if reason.Type == featureproto.Reason_CLIENT {
+		return defaultVariationID, nil
+	}
+	return vID, nil
 }
 
 func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
-		vID := getVariationID(e.Reason.Type, e.VariationId)
+		vID, err := getVariationID(e.Reason, e.VariationId)
+		if err != nil {
+			return err
+		}
 		// To avoid duplication when the request fails, we increment the event count in the end
 		// because the user count is an unique count, and there is no problem adding the same event more than once
 		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)

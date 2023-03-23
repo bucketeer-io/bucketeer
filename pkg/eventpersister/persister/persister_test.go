@@ -131,44 +131,62 @@ func TestGetVariationID(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		variationID string
-		reason      featureproto.Reason_Type
+		reason      *featureproto.Reason
 		expected    string
+		expectedErr error
 	}{
 		{
 			desc:        "get given variation id if off variation",
 			variationID: "vID1",
-			reason:      featureproto.Reason_OFF_VARIATION,
-			expected:    "vID1",
+			reason: &featureproto.Reason{
+				Type: featureproto.Reason_OFF_VARIATION,
+			},
+			expected: "vID1",
 		},
 		{
 			desc:        "get given variation id if target",
 			variationID: "vID1",
-			reason:      featureproto.Reason_TARGET,
-			expected:    "vID1",
+			reason: &featureproto.Reason{
+				Type: featureproto.Reason_TARGET,
+			},
+			expected: "vID1",
 		},
 		{
 			desc:        "get given variation id if rule",
 			variationID: "vID1",
-			reason:      featureproto.Reason_RULE,
-			expected:    "vID1",
+			reason: &featureproto.Reason{
+				Type: featureproto.Reason_RULE,
+			},
+			expected: "vID1",
 		},
 		{
 			desc:        "get given variation id if prerequisite",
 			variationID: "vID1",
-			reason:      featureproto.Reason_PREREQUISITE,
-			expected:    "vID1",
+			reason: &featureproto.Reason{
+				Type: featureproto.Reason_PREREQUISITE,
+			},
+			expected: "vID1",
+		},
+		{
+			desc:        "get given variation id if reason is nil",
+			variationID: "vID1",
+			reason:      nil,
+			expectedErr: ErrReasonNil,
 		},
 		{
 			desc:        "get default variation id if client",
 			variationID: "vID1",
-			reason:      featureproto.Reason_CLIENT,
-			expected:    defaultVariationID,
+			reason: &featureproto.Reason{
+				Type: featureproto.Reason_CLIENT,
+			},
+			expected: defaultVariationID,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual := getVariationID(p.reason, p.variationID)
+			actual, err := getVariationID(p.reason, p.variationID)
 			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
