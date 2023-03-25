@@ -5,6 +5,13 @@ vault:
     enabled: true 
     devRootToken: "root"
 
+nginx:
+  controller:
+    service:
+      loadBalancerIP: "127.0.0.1"
+      externalIPs:
+      - 127.0.0.1
+
 mysql:
   initdbScriptsConfigMap: mysql-initdb
   volumePermissions:
@@ -14,3 +21,5 @@ mysql:
     username: "bucketeer"
     existingSecret: "mysql-secrets"
     
+
+

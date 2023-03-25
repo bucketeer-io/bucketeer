@@ -19,3 +19,6 @@ dependencies:
 - name: vault
   version: "0.23.0"
   repository: "https://helm.releases.hashicorp.com"
+- name: nginx
+  version: "0.16.2"
+  repository: "https://helm.nginx.com/stable"
