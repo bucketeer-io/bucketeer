@@ -8,14 +8,12 @@ import React, {
   FC,
   memo,
   useEffect,
-  useMemo,
 } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { v4 as uuid } from 'uuid';
 
-import { DetailSkeleton } from '../../components/DetailSkeleton';
 import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
 import {
   ClauseType,
@@ -29,7 +27,6 @@ import {
   updateFeatureTargeting,
   getFeature,
   createCommand,
-  selectAll as selectAllFeatures,
 } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import { listSegments } from '../../modules/segments';
@@ -121,14 +118,6 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       shallowEqual
     );
     const [isResetTargeting, setIsResetTargeting] = useState(false);
-
-    const isFeatureLoading = useSelector<AppState, boolean>(
-      (state) => state.features.loading
-    );
-    const isSegmentLoading = useSelector<AppState, boolean>(
-      (state) => state.segments.loading
-    );
-    const isLoading = isFeatureLoading || isSegmentLoading;
 
     const getDefaultValues = (feature) => {
       return {
@@ -277,13 +266,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       }
     }, [feature]);
 
-    if (isLoading) {
-      return (
-        <div className="p-9 bg-gray-100">
-          <DetailSkeleton />
-        </div>
-      );
-    }
+  
 
     return (
       <FormProvider {...methods}>

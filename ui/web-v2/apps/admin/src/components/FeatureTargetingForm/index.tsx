@@ -6,7 +6,6 @@ import {
   XIcon,
   InformationCircleIcon,
   ChevronDownIcon,
-  ChevronRightIcon,
   ChevronUpIcon,
 } from '@heroicons/react/solid';
 import { SerializedError } from '@reduxjs/toolkit';
@@ -24,7 +23,6 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Link } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 
-import { DetailSkeleton } from '../../components/DetailSkeleton';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
