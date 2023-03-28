@@ -376,7 +376,7 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 		eventproto.SourceId_JAVASCRIPT,
 	}
 	events := make([]*eventproto.Event, 0, 0)
-
+	rand.Seed(time.Now().UnixNano())
 	for _, apiID := range apiIDs {
 		for _, sourceID := range sourceIds {
 			// InternalSDKErrorMetricsEvent
@@ -436,9 +436,9 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 			events = append(events, &eventproto.Event{Id: newUUID(t), Event: metricsSize})
 			// LatencyMetricsEvent
 			latency, err := ptypes.MarshalAny(&eventproto.LatencyMetricsEvent{
-				ApiId:    apiID,
-				Labels:   map[string]string{"tag": sourceID.String()},
-				Duration: durationpb.New(time.Duration(rand.Intn(100))),
+				ApiId:         apiID,
+				Labels:        map[string]string{"tag": sourceID.String()},
+				LatencySecond: rand.Float64(),
 			})
 			if err != nil {
 				t.Fatal(err)
