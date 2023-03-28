@@ -3890,6 +3890,11 @@
                 "id": 3,
                 "name": "duration",
                 "type": "google.protobuf.Duration"
+              },
+              {
+                "id": 4,
+                "name": "latencySecond",
+                "type": "double"
               }
             ],
             "maps": [

@@ -191,6 +191,17 @@ func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEv
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
 	}
+	// todo When updated to the SDK that uses ev.LatencySecond, we must remove the implementation that use ev.Duration.
+	if ev.LatencySecond != 0 {
+		sdkLatencyHistogram.WithLabelValues(
+			env,
+			tag,
+			ev.ApiId.String(),
+			event.SdkVersion,
+			event.SourceId.String(),
+		).Observe(ev.LatencySecond)
+		return nil
+	}
 	dur, err := ptypes.Duration(ev.Duration)
 	if err != nil {
 		return MetricsSaveErrInvalidDuration
