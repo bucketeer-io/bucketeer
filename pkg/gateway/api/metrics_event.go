@@ -181,7 +181,8 @@ func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEv
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.Duration == nil {
+	// TODO: When updated to the SDK that uses ev.LatencySecond, we must remove the implementation that use ev.Duration.
+	if ev.Duration == nil && ev.LatencySecond == 0 {
 		return MetricsSaveErrInvalidDuration
 	}
 	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
