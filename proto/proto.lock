@@ -3889,7 +3889,13 @@
               {
                 "id": 3,
                 "name": "duration",
-                "type": "google.protobuf.Duration"
+                "type": "google.protobuf.Duration",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,
