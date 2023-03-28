@@ -181,7 +181,8 @@ func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEv
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.Duration == nil {
+	// TODO: When updated to the SDK that uses ev.LatencySecond, we must remove the implementation that use ev.Duration.
+	if ev.Duration == nil && ev.LatencySecond == 0 {
 		return MetricsSaveErrInvalidDuration
 	}
 	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
@@ -190,6 +191,17 @@ func (s *grpcGatewayService) saveLatencyMetricsEvent(event *eventproto.MetricsEv
 	var tag string
 	if ev.Labels != nil {
 		tag = ev.Labels["tag"]
+	}
+	// TODO: When updated to the SDK that uses ev.LatencySecond, we must remove the implementation that use ev.Duration.
+	if ev.LatencySecond != 0 {
+		sdkLatencyHistogram.WithLabelValues(
+			env,
+			tag,
+			ev.ApiId.String(),
+			event.SdkVersion,
+			event.SourceId.String(),
+		).Observe(ev.LatencySecond)
+		return nil
 	}
 	dur, err := ptypes.Duration(ev.Duration)
 	if err != nil {

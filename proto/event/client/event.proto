@@ -99,7 +99,8 @@ enum ApiId {
 message LatencyMetricsEvent {
   ApiId api_id = 1;
   map<string, string> labels = 2;
-  google.protobuf.Duration duration = 3;
+  google.protobuf.Duration duration = 3 [deprecated = true];
+  double latency_second = 4;
 }
 
 message SizeMetricsEvent {
