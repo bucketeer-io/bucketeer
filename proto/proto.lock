@@ -3893,7 +3893,7 @@
               },
               {
                 "id": 4,
-                "name": "latencySecond",
+                "name": "latency_second",
                 "type": "double"
               }
             ],
