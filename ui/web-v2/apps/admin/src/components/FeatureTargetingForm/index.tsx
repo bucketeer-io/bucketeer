@@ -8,8 +8,9 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
 } from '@heroicons/react/solid';
+import { FileCopyOutlined } from '@material-ui/icons';
 import { SerializedError } from '@reduxjs/toolkit';
-import React, { FC, memo, useCallback, useEffect, useState } from 'react';
+import React, { FC, memo, useCallback, useState, useEffect } from 'react';
 import ReactDatePicker from 'react-datepicker';
 import {
   useFormContext,
@@ -38,6 +39,7 @@ import { Feature } from '../../proto/feature/feature_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
 import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
+import { CopyChip } from '../CopyChip';
 import { CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
 import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
@@ -58,13 +60,11 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       formState: { errors, isDirty },
       watch,
     } = methods;
-    const { fields: targets } = useFieldArray({
-      control,
-      name: 'targets',
-    });
+
+    const prerequisites = watch('prerequisites');
 
     const rules = watch('rules');
-    const prerequisites = watch('prerequisites');
+    const targets = watch('targets');
 
     const [feature, _] = useSelector<
       AppState,
@@ -117,6 +117,17 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       return false;
     }, [rules, isDirty, errors, prerequisites]);
 
+    const handleOnPaste = (e, t, field) => {
+      // Stop data actually being pasted into div
+      e.stopPropagation();
+      e.preventDefault();
+
+      const clipboardData = e.clipboardData;
+      const pastedData: string = clipboardData.getData('Text');
+
+      field.onChange([...t.users, ...pastedData.split(', ')]);
+    };
+
     return (
       <div className="p-10 bg-gray-100">
         <form className="">
@@ -158,26 +169,42 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                           )
                         )}
                       </label>
-                      <Controller
-                        name={`targets.[${idx}].users`}
-                        control={control}
-                        render={({ field }) => {
-                          return (
-                            <CreatableSelect
-                              disabled={!editable}
-                              defaultValues={field.value.map((u) => {
-                                return {
-                                  value: u,
-                                  label: u,
-                                };
-                              })}
-                              onChange={(options: Option[]) => {
-                                field.onChange(options.map((o) => o.value));
-                              }}
+                      <div className="flex space-x-2">
+                        <Controller
+                          name={`targets.[${idx}].users`}
+                          control={control}
+                          render={({ field }) => {
+                            return (
+                              <div
+                                className="flex-1"
+                                onPaste={(e) => handleOnPaste(e, t, field)}
+                              >
+                                <CreatableSelect
+                                  disabled={!editable}
+                                  value={field.value.map((u) => {
+                                    return {
+                                      value: u,
+                                      label: u,
+                                    };
+                                  })}
+                                  onChange={(options: Option[]) => {
+                                    field.onChange(options.map((o) => o.value));
+                                  }}
+                                />
+                              </div>
+                            );
+                          }}
+                        />
+                        <CopyChip text={t.users.join(', ')}>
+                          <div className="flex items-center border border-gray-300 cursor-pointer hover:border-gray-500 px-2 h-full rounded-sm">
+                            <FileCopyOutlined
+                              aria-hidden="true"
+                              fontSize="small"
+                              className="text-gray-400 hover:text-gray-500"
                             />
-                          );
-                        }}
-                      />
+                          </div>
+                        </CopyChip>
+                      </div>
                     </div>
                   );
                 })}

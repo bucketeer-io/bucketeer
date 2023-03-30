@@ -21,29 +21,27 @@ export const CopyChip: FC<CopyChipProps> = memo(({ text, children }) => {
     [setTextClicked]
   );
   return (
-    <div>
-      <HoverPopover
-        onClick={() => handleTextClick(text)}
-        onMouseLeave={() => setTextClicked(false)}
-        render={() => {
-          return (
-            <div
-              className={classNames(
-                'bg-gray-900 text-white p-2 text-xs',
-                'rounded cursor-pointer whitespace-pre'
-              )}
-            >
-              {textClicked ? (
-                <span>{f(messages.copy.copied)}</span>
-              ) : (
-                <span>{f(messages.copy.copyToClipboard)}</span>
-              )}
-            </div>
-          );
-        }}
-      >
-        {children}
-      </HoverPopover>
-    </div>
+    <HoverPopover
+      onClick={() => handleTextClick(text)}
+      onMouseLeave={() => setTextClicked(false)}
+      render={() => {
+        return (
+          <div
+            className={classNames(
+              'bg-gray-900 text-white p-2 text-xs',
+              'rounded cursor-pointer whitespace-pre'
+            )}
+          >
+            {textClicked ? (
+              <span>{f(messages.copy.copied)}</span>
+            ) : (
+              <span>{f(messages.copy.copyToClipboard)}</span>
+            )}
+          </div>
+        );
+      }}
+    >
+      {children}
+    </HoverPopover>
   );
 });
