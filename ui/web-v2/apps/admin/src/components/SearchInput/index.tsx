@@ -6,10 +6,11 @@ import { classNames } from '../../utils/css';
 export interface SearchInputProps {
   placeholder: string;
   onChange: (query: string) => void;
+  value: string;
 }
 
 export const SearchInput: FC<SearchInputProps> = memo(
-  ({ placeholder: placeHolder, onChange }) => {
+  ({ placeholder: placeHolder, value, onChange }) => {
     return (
       <div className="relative h-10">
         <div
@@ -31,6 +32,7 @@ export const SearchInput: FC<SearchInputProps> = memo(
             'text-gray-700'
           )}
           placeholder={placeHolder}
+          value={value ? value : ''}
           onChange={(e) => onChange(e.target.value)}
         />
       </div>

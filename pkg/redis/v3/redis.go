@@ -90,6 +90,8 @@ type PipeClient interface {
 	Exec() ([]goredis.Cmder, error)
 	PFCount(keys ...string) *goredis.IntCmd
 	Get(key string) *goredis.StringCmd
+	PFMerge(dest string, keys ...string) *goredis.StatusCmd
+	Del(keys string) *goredis.IntCmd
 }
 
 type pipeClient struct {
@@ -463,4 +465,14 @@ func (c *pipeClient) PFCount(keys ...string) *goredis.IntCmd {
 func (c *pipeClient) Get(key string) *goredis.StringCmd {
 	c.cmds = append(c.cmds, getCmdName)
 	return c.pipe.Get(key)
+}
+
+func (c *pipeClient) PFMerge(dest string, keys ...string) *goredis.StatusCmd {
+	c.cmds = append(c.cmds, pfCountCmdName)
+	return c.pipe.PFMerge(dest, keys...)
+}
+
+func (c *pipeClient) Del(key string) *goredis.IntCmd {
+	c.cmds = append(c.cmds, pfCountCmdName)
+	return c.pipe.Del(key)
 }

@@ -19,4 +19,6 @@ export interface AuditLogSearchOptions {
   sort?: string;
   page?: string;
   resource?: string;
+  from?: number;
+  to?: number;
 }

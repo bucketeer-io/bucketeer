@@ -38,11 +38,3 @@ Create chart name and version as used by the chart label.
 {{ template "web-gateway.fullname" . }}-service-cert
 {{- end -}}
 {{- end -}}
-
-{{- define "bucketeer-jp-cert-secret" -}}
-{{- if .Values.tls.bucketeerJP.secret }}
-{{- printf "%s" .Values.tls.bucketeerJP.secret -}}
-{{- else -}}
-{{ template "web-gateway.fullname" . }}-bucketeer-jp-cert
-{{- end -}}
-{{- end -}}

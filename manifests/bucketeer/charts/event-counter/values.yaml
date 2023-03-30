@@ -25,6 +25,7 @@ env:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+  timezone: UTC
 
 affinity: {}
 

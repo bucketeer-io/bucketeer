@@ -1,4 +1,4 @@
-import { getSelectedLanguage, LanguageTypes } from '@/lang/getSelectedLanguage';
+import { isLanguageJapanese } from '@/lang/getSelectedLanguage';
 import { FC, memo } from 'react';
 import { FormattedDate } from 'react-intl';
 import { register, format } from 'timeago.js';
@@ -9,8 +9,6 @@ import { HoverPopover } from '../HoverPopover';
 export interface RelativeDateTextProps {
   date: Date;
 }
-
-const isLanguageJapanese = getSelectedLanguage() === LanguageTypes.JAPANESE;
 
 if (isLanguageJapanese) {
   register('ja', ja);

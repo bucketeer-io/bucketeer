@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -58,7 +59,7 @@ func TestNewEventCounterService(t *testing.T) {
 	reg := metrics.DefaultRegisterer()
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	g := NewEventCounterService(nil, nil, nil, nil, nil, "", reg, nil, logger)
+	g := NewEventCounterService(nil, nil, nil, nil, nil, "", reg, nil, jpLocation, logger)
 	assert.IsType(t, &eventCounterService{}, g)
 }
 
@@ -817,7 +818,7 @@ func TestGenInterval(t *testing.T) {
 	}
 }
 
-func TestGetOneMonthTimeStamps(t *testing.T) {
+func TestGetDailyTimeStamps(t *testing.T) {
 	t.Parallel()
 
 	endAt := time.Now()
@@ -843,9 +844,81 @@ func TestGetOneMonthTimeStamps(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual := getOneMonthTimeStamps(p.startAt)
+			actual := getDailyTimeStamps(p.startAt)
 			for _, e := range p.expectedElements {
 				assert.Contains(t, actual, int64(e))
+			}
+			assert.Len(t, actual, p.expectedLen)
+		})
+	}
+}
+
+func TestGetOneDayTimestamps(t *testing.T) {
+	t.Parallel()
+
+	endAt := time.Now()
+	startAt, err := genInterval(jpLocation, endAt, 30)
+	assert.NoError(t, err)
+
+	patterns := []struct {
+		desc             string
+		startAt          time.Time
+		expectedElements []int64
+		expectedLen      int
+	}{
+		{
+			desc:    "success",
+			startAt: startAt,
+			expectedElements: []int64{
+				getDate(startAt),
+				getDate(startAt.Add(1 * time.Hour)),
+				getDate(startAt.Add(23 * time.Hour)),
+			},
+			expectedLen: 24,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := getOneDayTimestamps(p.startAt)
+			for _, e := range p.expectedElements {
+				assert.Contains(t, actual, int64(e))
+			}
+			assert.Len(t, actual, p.expectedLen)
+		})
+	}
+}
+
+func TestGetHourlyTimestamps(t *testing.T) {
+	t.Parallel()
+
+	endAt := time.Now()
+	startAt, err := genInterval(jpLocation, endAt, 30)
+	assert.NoError(t, err)
+
+	patterns := []struct {
+		desc             string
+		startAt          time.Time
+		expectedElements [][]int64
+		expectedLen      int
+	}{
+		{
+			desc:    "success",
+			startAt: startAt,
+			expectedElements: [][]int64{
+				getOneDayTimestamps(startAt),
+				getOneDayTimestamps(startAt.AddDate(0, 0, 2)),
+				getOneDayTimestamps(startAt.AddDate(0, 0, 6)),
+				getOneDayTimestamps(startAt.AddDate(0, 0, 30)),
+			},
+			expectedLen: 31,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			daily := getDailyTimeStamps(p.startAt)
+			actual := getHourlyTimeStamps(daily)
+			for _, e := range p.expectedElements {
+				assert.Contains(t, actual, e)
 			}
 			assert.Len(t, actual, p.expectedLen)
 		})
@@ -1011,7 +1084,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				endAt := time.Now()
 				startAt, err := genInterval(jpLocation, endAt, 30)
 				assert.NoError(t, err)
-				timeStamps := getOneMonthTimeStamps(startAt)
+				timeStamps := getDailyTimeStamps(startAt)
 				for idx, vID := range vIDs {
 					ec := getEventCountKeys(vID, fID, environmentNamespace, timeStamps)
 					val := randomNumberGroup[idx]
@@ -1060,6 +1133,258 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				p.setup(ctx, s)
 			}
 			actual, err := s.GetEvaluationTimeseriesCount(ctx, p.input)
+			if p.expectedErr == nil {
+				for idx := range p.expected.EventCounts {
+					actualTs := actual.EventCounts[idx]
+					assert.Equal(t, p.expected.EventCounts[idx].VariationId, actualTs.VariationId)
+					assert.Equal(t, randomNumberGroup[idx], actualTs.Timeseries.Values)
+					assert.Len(t, actualTs.Timeseries.Timestamps, 31)
+				}
+				for idx := range p.expected.UserCounts {
+					actualTs := actual.EventCounts[idx]
+					assert.Equal(t, p.expected.UserCounts[idx].VariationId, actualTs.VariationId)
+					assert.Equal(t, randomNumberGroup[idx], actualTs.Timeseries.Values)
+					assert.Len(t, actualTs.Timeseries.Timestamps, 31)
+				}
+			}
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
+	t.Parallel()
+
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	environmentNamespace := "ns0"
+	fID := "fid"
+	vID0 := "vid0"
+	vID1 := "vid1"
+	randomNumberGroup := getRandomNumberGroup(3)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(context.Context, *eventCounterService)
+		input       *ecproto.GetEvaluationTimeseriesCountRequest
+		expected    *ecproto.GetEvaluationTimeseriesCountResponse
+		expectedErr error
+	}{
+		{
+			desc: "error: ErrFeatureIDRequired",
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: "ns0",
+			},
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+		},
+		{
+			desc: "error: get feature failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, errors.New("error"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: get event counts failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+					nil, errors.New("error"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: MergeMultiKeys failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+					[]float64{
+						1, 3, 5,
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(errors.New("error1"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: GetUserCountsV2 failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+					[]float64{
+						1, 3, 5,
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(gomock.Any()).Return(nil, errors.New("error1"))
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteMultiKeys(gomock.Any()).Return(nil)
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: DeleteMultiKeys failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+					[]float64{
+						1, 3, 5,
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(gomock.Any()).Return([]float64{}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteMultiKeys(gomock.Any()).Return(errors.New("error1"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: vID0}, {Id: vID1}},
+						},
+					}, nil)
+				vIDs := []string{vID0, vID1, defaultVariationID}
+				endAt := time.Now()
+				startAt, err := genInterval(jpLocation, endAt, 30)
+				assert.NoError(t, err)
+				dailyTimeStamps := getDailyTimeStamps(startAt)
+				hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps)
+				for idx, vID := range vIDs {
+					ec := getEventCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
+					val := randomNumberGroup[idx]
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(ec).Return(
+						val, nil)
+					uc := getUserCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
+					pfMergeKeys := createUserCountPFMergeKeys(
+						len(uc),
+						fID,
+						environmentNamespace,
+					)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKeys, uc).Return(nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteMultiKeys(pfMergeKeys).Return(nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCountsV2(pfMergeKeys).Return(
+						val, nil)
+				}
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+			},
+			expected: &ecproto.GetEvaluationTimeseriesCountResponse{
+				EventCounts: []*ecproto.VariationTimeseries{
+					{
+						VariationId: vID0,
+					},
+					{
+						VariationId: vID1,
+					},
+					{
+						VariationId: defaultVariationID,
+					},
+				},
+				UserCounts: []*ecproto.VariationTimeseries{
+					{
+						VariationId: vID0,
+					},
+					{
+						VariationId: vID1,
+					},
+					{
+						VariationId: defaultVariationID,
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := newEventCounterService(t, mockController)
+			if p.setup != nil {
+				p.setup(ctx, s)
+			}
+			actual, err := s.GetEvaluationTimeseriesCountV2(ctx, p.input)
 			if p.expectedErr == nil {
 				for idx := range p.expected.EventCounts {
 					actualTs := actual.EventCounts[idx]
@@ -1398,6 +1723,32 @@ func getUserCountKeys(vID, fid, environmentNamespace string, timeStamps []int64)
 	return userCountKeys
 }
 
+func getEventCountKeysV2(vID, fID, environmentNamespace string, timeStamps [][]int64) [][]string {
+	eventCountKeys := [][]string{}
+	for _, day := range timeStamps {
+		hourly := []string{}
+		for _, hour := range day {
+			ec := newEvaluationCountkey(eventCountPrefix, fID, vID, environmentNamespace, hour)
+			hourly = append(hourly, ec)
+		}
+		eventCountKeys = append(eventCountKeys, hourly)
+	}
+	return eventCountKeys
+}
+
+func getUserCountKeysV2(vID, fID, environmentNamespace string, timeStamps [][]int64) [][]string {
+	userCountKeys := [][]string{}
+	for _, day := range timeStamps {
+		hourly := []string{}
+		for _, hour := range day {
+			ec := newEvaluationCountkey(userCountPrefix, fID, vID, environmentNamespace, hour)
+			hourly = append(hourly, ec)
+		}
+		userCountKeys = append(userCountKeys, hourly)
+	}
+	return userCountKeys
+}
+
 func getDate(t time.Time) int64 {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, jpLocation).Unix()
 }
@@ -1427,6 +1778,7 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller) *ev
 		evaluationCountCacher:        eccachemock.NewMockEventCounterCache(mockController),
 		eventStorage:                 v2ecsmock.NewMockEventStorage(mockController),
 		metrics:                      reg,
+		location:                     jpLocation,
 		logger:                       logger.Named("api"),
 	}
 }
@@ -1448,4 +1800,35 @@ func newUUID(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return id.String()
+}
+
+func TestMultiError(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		err      multiError
+		expected string
+	}{
+		{
+			desc: "2 errors",
+			err: multiError{
+				errors.New("foobar"),
+				errors.New("hoge"),
+			},
+			expected: "2 errors: foobar, hoge",
+		},
+		{
+			desc: "1 error",
+			err: multiError{
+				errors.New("foobar"),
+			},
+			expected: "1 errors: foobar",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := fmt.Errorf("%v", p.err).Error()
+			assert.Equal(t, p.expected, actual)
+		})
+	}
 }

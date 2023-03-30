@@ -600,7 +600,7 @@ data:
           address:
             socket_address:
               address: 0.0.0.0
-              port_value: 443
+              port_value: 9000
           filter_chains:
             - filters:
               - name: envoy.filters.network.http_connection_manager
@@ -871,6 +871,6 @@ data:
                     alpn_protocols: ["h2"]
                     tls_certificates:
                       - certificate_chain:
-                          filename: /usr/local/certs/bucketeer-jp/tls.crt
+                          filename: /usr/local/certs/service/tls.crt
                         private_key:
-                          filename: /usr/local/certs/bucketeer-jp/tls.key
+                          filename: /usr/local/certs/service/tls.key

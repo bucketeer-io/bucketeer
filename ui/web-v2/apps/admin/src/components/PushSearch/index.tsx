@@ -63,6 +63,7 @@ export const PushSearch: FC<PushSearchProps> = memo(
           <div className="flex-none w-72">
             <SearchInput
               placeholder={f(messages.push.search.placeholder)}
+              value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
                   q: query,

@@ -6,6 +6,7 @@ metadata:
   annotations:
     cloud.google.com/backend-config: '{"default": "{{ template "web-gateway.fullname" . }}"}'
     cloud.google.com/neg: '{"ingress": true}'
+    cloud.google.com/app-protocols: '{"service":"HTTP2"}'
   labels:
     app: {{ template "web-gateway.name" . }}
     chart: {{ template "web-gateway.chart" . }}
@@ -13,21 +14,16 @@ metadata:
     heritage: {{ .Release.Service }}
     envoy: "true"
 spec:
-  type: {{ .Values.service.type }}
-  {{- if eq .Values.service.type "LoadBalancer" }}
-  {{- if .Values.service.loadBalancerIP }}
-  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
-  {{- end }}
-  {{- end }}
+  type: NodePort
   ports:
-    - port: {{ .Values.service.port }}
+    - name: service
+      port: {{ .Values.service.externalPort }}
       targetPort: http
       protocol: TCP
-      name: http
-    - port: {{ .Values.envoy.adminPort }}
+    - name: admin
+      port: {{ .Values.envoy.adminPort }}
       targetPort: admin
       protocol: TCP
-      name: admin
   selector:
     app: {{ template "web-gateway.name" . }}
     release: {{ template "web-gateway.fullname" . }}

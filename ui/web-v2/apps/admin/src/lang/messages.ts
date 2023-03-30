@@ -403,6 +403,20 @@ export const messages = {
       defaultMessage: 'Add filter',
     }),
   },
+  notFound: {
+    title: defineMessage({
+      id: 'notFound.title',
+      defaultMessage: 'Page not found',
+    }),
+    description: defineMessage({
+      id: 'notFound.description',
+      defaultMessage: `Sorry, we couldn't find the page you're looking for.`,
+    }),
+    goBackHome: defineMessage({
+      id: 'notFound.goBackHome',
+      defaultMessage: 'Go back home',
+    }),
+  },
   error: defineMessage({
     id: 'error',
     defaultMessage: 'Error',
@@ -758,6 +772,18 @@ export const messages = {
       type: defineMessage({
         id: 'auditLog.filter.type',
         defaultMessage: 'Type',
+      }),
+      clear: defineMessage({
+        id: 'auditLog.filter.clear',
+        defaultMessage: 'Clear',
+      }),
+      apply: defineMessage({
+        id: 'auditLog.filter.apply',
+        defaultMessage: 'Apply',
+      }),
+      cancel: defineMessage({
+        id: 'auditLog.filter.cancel',
+        defaultMessage: 'Cancel',
       }),
     },
     search: {
@@ -1618,6 +1644,17 @@ export const messages = {
       id: 'noResult.checkTypos',
       defaultMessage: 'Check for typos',
     }),
+    dateRange: {
+      title: defineMessage({
+        id: 'noResult.dateRange.title',
+        defaultMessage: 'No entries',
+      }),
+      description: defineMessage({
+        id: 'noResult.dateRange.description',
+        defaultMessage:
+          'There are no entries for these dates. Please choose a different date and try again.',
+      }),
+    },
   },
   name: defineMessage({
     id: 'name',

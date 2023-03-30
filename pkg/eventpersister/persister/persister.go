@@ -41,6 +41,7 @@ var (
 	ErrNoAutoOpsRules        = errors.New("eventpersister: no auto ops rules")
 	ErrNoExperiments         = errors.New("eventpersister: no experiments")
 	ErrNothingToLink         = errors.New("eventpersister: nothing to link")
+	ErrReasonNil             = errors.New("eventpersister: reason is nil")
 )
 
 const (
@@ -285,16 +286,22 @@ func (p *Persister) extractEvents(messages map[string]*puller.Message) environme
 	return envEvents
 }
 
-func getVariationID(reason featureproto.Reason_Type, vID string) string {
-	if reason == featureproto.Reason_CLIENT {
-		return defaultVariationID
+func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
+	if reason == nil {
+		return "", ErrReasonNil
 	}
-	return vID
+	if reason.Type == featureproto.Reason_CLIENT {
+		return defaultVariationID, nil
+	}
+	return vID, nil
 }
 
 func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
-		vID := getVariationID(e.Reason.Type, e.VariationId)
+		vID, err := getVariationID(e.Reason, e.VariationId)
+		if err != nil {
+			return err
+		}
 		// To avoid duplication when the request fails, we increment the event count in the end
 		// because the user count is an unique count, and there is no problem adding the same event more than once
 		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
@@ -305,16 +312,38 @@ func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamesp
 		if err := p.countEvent(eck); err != nil {
 			return err
 		}
+		uckv2 := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
+		if err := p.countUser(uckv2, e.UserId); err != nil {
+			return err
+		}
+		eckv2 := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
+		if err := p.countEvent(eckv2); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
+// TODO: Remove this method
 func (p *Persister) newEvaluationCountkey(
 	kind, featureID, variationID, environmentNamespace string,
 	timestamp int64,
 ) string {
 	t := time.Unix(timestamp, 0)
 	date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, jpLocation)
+	return cache.MakeKey(
+		kind,
+		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
+		environmentNamespace,
+	)
+}
+
+func (p *Persister) newEvaluationCountkeyV2(
+	kind, featureID, variationID, environmentNamespace string,
+	timestamp int64,
+) string {
+	t := time.Unix(timestamp, 0)
+	date := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, time.UTC)
 	return cache.MakeKey(
 		kind,
 		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),

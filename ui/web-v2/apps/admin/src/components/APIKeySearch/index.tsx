@@ -122,6 +122,7 @@ export const APIKeySearch: FC<APIKeySearchProps> = memo(
           <div className="flex-none w-72">
             <SearchInput
               placeholder={f(messages.apiKey.search.placeholder)}
+              value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
                   q: query,

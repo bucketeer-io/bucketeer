@@ -22,7 +22,6 @@ export interface AuditLogListProps {
 
 export const AuditLogList: FC<AuditLogListProps> = memo(
   ({ searchOptions, onChangePage, onChangeSearchOptions }) => {
-    const { formatMessage: f } = useIntl();
     const auditLogs = useSelector<AppState, AuditLog.AsObject[]>(
       (state) => selectAll(state.auditLog),
       shallowEqual
@@ -35,6 +34,7 @@ export const AuditLogList: FC<AuditLogListProps> = memo(
       (state) => state.auditLog.totalCount,
       shallowEqual
     );
+
     return (
       <div className="min-w-max bg-white border border-gray-300 rounded-md">
         <div>
@@ -45,51 +45,8 @@ export const AuditLogList: FC<AuditLogListProps> = memo(
         </div>
         {isLoading ? (
           <ListSkeleton />
-        ) : auditLogs.length == 0 ? (
-          searchOptions.q || searchOptions.resource ? (
-            <div className="my-10 flex justify-center">
-              <div className="text-gray-700">
-                <h1 className="text-lg">
-                  {f(messages.noResult.title, {
-                    title: f(messages.auditLog.list.header.title),
-                  })}
-                </h1>
-                <div className="flex justify-center mt-4">
-                  <ul className="list-disc">
-                    <li>
-                      {f(messages.noResult.searchByKeyword, {
-                        keyword: f(
-                          messages.auditLog.list.noResult.searchKeyword
-                        ),
-                      })}
-                    </li>
-                    <li>{f(messages.noResult.checkTypos)}</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="my-10 flex justify-center">
-              <div className="w-[600px] text-gray-700 text-center">
-                <h1 className="text-lg">
-                  {f(messages.noData.title, {
-                    title: f(messages.auditLog.list.header.title),
-                  })}
-                </h1>
-                <p className="mt-5">
-                  {f(messages.auditLog.list.noData.description)}
-                </p>
-                <a
-                  href="https://bucketeer.io/docs#/audit-logs?id=environment-audit-logs"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="link"
-                >
-                  {f(messages.readMore)}
-                </a>
-              </div>
-            </div>
-          )
+        ) : auditLogs.length === 0 ? (
+          <NoData searchOptions={searchOptions} />
         ) : (
           <div>
             <table className="min-w-full table-auto leading-normal">
@@ -129,6 +86,66 @@ export const AuditLogList: FC<AuditLogListProps> = memo(
     );
   }
 );
+
+interface NoDataProps {
+  searchOptions: AuditLogSearchOptions;
+}
+
+const NoData: FC<NoDataProps> = ({ searchOptions }) => {
+  const { formatMessage: f } = useIntl();
+
+  if (searchOptions.from) {
+    return (
+      <div className="my-10 text-center">
+        <h1 className="text-lg">{f(messages.noResult.dateRange.title)}</h1>
+        <p className="mt-2">{f(messages.noResult.dateRange.description)}</p>
+      </div>
+    );
+  } else if (searchOptions.q || searchOptions.resource) {
+    return (
+      <div className="my-10 flex justify-center">
+        <div className="text-gray-700">
+          <h1 className="text-lg">
+            {f(messages.noResult.title, {
+              title: f(messages.auditLog.list.header.title),
+            })}
+          </h1>
+          <div className="flex justify-center mt-4">
+            <ul className="list-disc">
+              <li>
+                {f(messages.noResult.searchByKeyword, {
+                  keyword: f(messages.auditLog.list.noResult.searchKeyword),
+                })}
+              </li>
+              <li>{f(messages.noResult.checkTypos)}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  } else {
+    return (
+      <div className="my-10 flex justify-center">
+        <div className="w-[600px] text-gray-700 text-center">
+          <h1 className="text-lg">
+            {f(messages.noData.title, {
+              title: f(messages.auditLog.list.header.title),
+            })}
+          </h1>
+          <p className="mt-5">{f(messages.auditLog.list.noData.description)}</p>
+          <a
+            href="https://bucketeer.io/docs#/audit-logs?id=environment-audit-logs"
+            target="_blank"
+            rel="noreferrer"
+            className="link"
+          >
+            {f(messages.readMore)}
+          </a>
+        </div>
+      </div>
+    );
+  }
+};
 
 const nl2br = (text: string): Array<React.ReactNode> => {
   const regex = /(\n)/g;
