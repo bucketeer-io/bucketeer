@@ -229,7 +229,6 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
                         <div className="flex">
                           <DateRangePicker
                             onChange={(item: any) => {
-                              console.log('item', item.selection);
                               setRanges([item.selection]);
                             }}
                             showSelectionPreview={true}

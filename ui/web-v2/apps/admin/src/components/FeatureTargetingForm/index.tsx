@@ -125,7 +125,9 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       const clipboardData = e.clipboardData;
       const pastedData: string = clipboardData.getData('Text');
 
-      field.onChange([...t.users, ...pastedData.split(', ')]);
+      if (pastedData) {
+        field.onChange([...t.users, ...pastedData.split(', ')]);
+      }
     };
 
     return (
@@ -196,11 +198,11 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                           }}
                         />
                         <CopyChip text={t.users.join(', ')}>
-                          <div className="flex items-center border border-gray-300 cursor-pointer hover:border-gray-500 px-2 h-full rounded-sm">
+                          <div className="flex items-center border border-[#D1D5DB] cursor-pointer hover:bg-gray-50 transition px-2 h-full rounded">
                             <FileCopyOutlined
                               aria-hidden="true"
                               fontSize="small"
-                              className="text-gray-400 hover:text-gray-500"
+                              className="text-gray-400"
                             />
                           </div>
                         </CopyChip>
