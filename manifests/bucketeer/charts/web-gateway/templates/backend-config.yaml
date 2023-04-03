@@ -4,6 +4,6 @@ metadata:
   name: {{ template "web-gateway.fullname" . }}
   namespace: {{ .Values.namespace }}
 spec:
-  timeoutSec: 40
+  timeoutSec: 300
   connectionDraining:
     drainingTimeoutSec: 60
