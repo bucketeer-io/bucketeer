@@ -286,6 +286,7 @@ func (s *sender) pushFCM(ctx context.Context, fcmAPIKey, topic string) error {
 		"data": map[string]interface{}{
 			"bucketeer_feature_flag_updated": true,
 		},
+		"content_available": true,
 	})
 	if err != nil {
 		return err
