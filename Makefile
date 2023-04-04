@@ -131,7 +131,7 @@ $(GO_APP_BUILD_TARGETS): build-%:
 	$(eval VERSION := $(shell git describe --tags --always --abbrev=7))
 	$(eval HASH := $(shell git rev-parse --verify HEAD))
 	$(eval BUILDDATE := $(shell date '+%Y/%m/%dT%H:%M:%S%Z'))
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) \
 		go build -ldflags "-s -w -X $(LDFLAGS_VERSION)=$(VERSION) -X $(LDFLAGS_HASH)=$(HASH) -X $(LDFLAGS_BUILDDATE)=$(BUILDDATE)" \
 		-o bin/$* -mod=vendor cmd/$*/$*.go
 
@@ -222,7 +222,7 @@ e2e-l4:
 
 .PHONY: e2e
 e2e:
-	go test -v ./test/e2e/feature -args \
+	go test -v ./test/e2e/... -args \
 		-web-gateway-addr=${WEB_GATEWAY_URL} \
 		-web-gateway-port=443 \
 		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \

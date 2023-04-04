@@ -34,5 +34,4 @@ message EnvironmentAPIKey {
   string environment_namespace = 1;
   APIKey api_key = 2;
   bool environment_disabled = 3;
-  string project_id = 4;
 }

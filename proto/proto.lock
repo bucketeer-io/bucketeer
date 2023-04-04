@@ -183,11 +183,6 @@
                 "id": 3,
                 "name": "environment_disabled",
                 "type": "bool"
-              },
-              {
-                "id": 4,
-                "name": "project_id",
-                "type": "string"
               }
             ]
           }
