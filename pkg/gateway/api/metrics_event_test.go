@@ -30,6 +30,7 @@ func TestSaveMetrics(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	projectID := "project0"
 	ns := "ns0"
 	patterns := []struct {
 		desc        string
@@ -150,7 +151,7 @@ func TestSaveMetrics(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			gs := newGrpcGatewayServiceWithMock(t, mockController)
-			err := gs.saveMetrics(p.inputEvent(), ns)
+			err := gs.saveMetrics(p.inputEvent(), projectID, ns)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

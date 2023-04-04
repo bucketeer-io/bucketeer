@@ -533,7 +533,8 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 	projectSet := s.makeProjectSet(projects)
 	apiKeyStorage := v2as.NewAPIKeyStorage(s.mysqlClient)
 	for _, e := range environments {
-		if p, ok := projectSet[e.ProjectId]; !ok || p.Disabled {
+		p, ok := projectSet[e.ProjectId]
+		if !ok || p.Disabled {
 			continue
 		}
 		apiKey, err := apiKeyStorage.GetAPIKey(ctx, req.Id, e.Namespace)
@@ -559,7 +560,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 			return nil, dt.Err()
 		}
 		return &proto.GetAPIKeyBySearchingAllEnvironmentsResponse{
-			EnvironmentApiKey: &proto.EnvironmentAPIKey{EnvironmentNamespace: e.Namespace, ApiKey: apiKey.APIKey},
+			EnvironmentApiKey: &proto.EnvironmentAPIKey{EnvironmentNamespace: e.Namespace, ApiKey: apiKey.APIKey, ProjectId: p.Id},
 		}, nil
 	}
 	dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
