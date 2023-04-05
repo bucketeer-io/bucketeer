@@ -1,12 +1,16 @@
 import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
-import { createVariationLabel } from '@/utils/variation';
+import {
+  createVariationLabel,
+  getAlreadyTargetedVariation,
+} from '@/utils/variation';
 import {
   MinusCircleIcon,
   XIcon,
   InformationCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  PlusCircleIcon,
 } from '@heroicons/react/solid';
 import { FileCopyOutlined } from '@material-ui/icons';
 import { SerializedError } from '@reduxjs/toolkit';
@@ -22,6 +26,8 @@ import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Link } from 'react-router-dom';
+import { components } from 'react-select';
+import ReactCreatableSelect from 'react-select/creatable';
 import { v4 as uuid } from 'uuid';
 
 import { intl } from '../../lang';
@@ -40,7 +46,7 @@ import { Strategy } from '../../proto/feature/strategy_pb';
 import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
 import { CopyChip } from '../CopyChip';
-import { CreatableSelect } from '../CreatableSelect';
+import { colourStyles, CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
 import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 import { Switch } from '../Switch';
@@ -123,11 +129,22 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       e.preventDefault();
 
       const clipboardData = e.clipboardData;
-      const pastedData: string = clipboardData.getData('Text');
+      const pastedData: string = clipboardData.getData('Text').split(', ');
 
       if (pastedData) {
-        field.onChange([...t.users, ...pastedData.split(', ')]);
+        const difference = t.users.filter((u) => !pastedData.includes(u));
+        field.onChange([...difference, ...pastedData]);
       }
+    };
+
+    const NoOptionsMessage = ({ props }) => {
+      return (
+        <components.NoOptionsMessage {...props}>
+          <span className="custom-css-class">
+            {props.selectProps.inputValue ? 'Already targeted' : 'Add user ids'}
+          </span>
+        </components.NoOptionsMessage>
+      );
     };
 
     return (
@@ -181,8 +198,57 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                 className="flex-1"
                                 onPaste={(e) => handleOnPaste(e, t, field)}
                               >
-                                <CreatableSelect
-                                  disabled={!editable}
+                                <ReactCreatableSelect
+                                  isMulti
+                                  placeholder="Add user ids"
+                                  classNamePrefix="react-select"
+                                  styles={colourStyles}
+                                  formatCreateLabel={(userInput) => {
+                                    const alreadyTargetedVariaition =
+                                      getAlreadyTargetedVariation(
+                                        targets,
+                                        t.variationId,
+                                        userInput
+                                      );
+                                    if (alreadyTargetedVariaition) {
+                                      return (
+                                        <div className="text-center text-gray-500">
+                                          <span className="">
+                                            {`"${userInput}" already targeted in`}
+                                            &nbsp;
+                                            <strong>
+                                              {createVariationLabel(
+                                                feature.variationsList.find(
+                                                  (v) =>
+                                                    v.id ===
+                                                    alreadyTargetedVariaition.variationId
+                                                )
+                                              )}
+                                            </strong>
+                                          </span>
+                                        </div>
+                                      );
+                                    }
+
+                                    return (
+                                      <div className="flex space-x-1 items-center">
+                                        <PlusCircleIcon
+                                          className="w-4 h-4 text-blue-400"
+                                          aria-hidden="true"
+                                        />
+
+                                        <span className="text-blue-700">
+                                          {`Add user "${userInput}"`}
+                                        </span>
+                                      </div>
+                                    );
+                                  }}
+                                  components={{
+                                    DropdownIndicator: null,
+                                    NoOptionsMessage: (props) => (
+                                      <NoOptionsMessage props={props} />
+                                    ),
+                                  }}
                                   value={field.value.map((u) => {
                                     return {
                                       value: u,
@@ -190,8 +256,24 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                     };
                                   })}
                                   onChange={(options: Option[]) => {
-                                    field.onChange(options.map((o) => o.value));
+                                    const newOption = options.find(
+                                      (o) => o['__isNew__']
+                                    );
+
+                                    const alreadyTargetedVariaition =
+                                      getAlreadyTargetedVariation(
+                                        targets,
+                                        t.variationId,
+                                        newOption?.label
+                                      );
+
+                                    if (!alreadyTargetedVariaition) {
+                                      field.onChange(
+                                        options.map((o) => o.value)
+                                      );
+                                    }
                                   }}
+                                  disabled={!editable}
                                 />
                               </div>
                             );
