@@ -181,13 +181,18 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 {targets.map((t: any, idx) => {
                   return (
                     <div key={idx} className="col-span-1">
-                      <label htmlFor={`${idx}`} className="input-label">
-                        {createVariationLabel(
-                          feature.variationsList.find(
-                            (v) => v.id == t.variationId
-                          )
-                        )}
-                      </label>
+                      <div className="truncate">
+                        <label
+                          htmlFor={`${idx}`}
+                          className="input-label w-full"
+                        >
+                          {createVariationLabel(
+                            feature.variationsList.find(
+                              (v) => v.id == t.variationId
+                            )
+                          )}
+                        </label>
+                      </div>
                       <div className="flex space-x-2">
                         <Controller
                           name={`targets.[${idx}].users`}
@@ -212,7 +217,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                       );
                                     if (alreadyTargetedVariaition) {
                                       return (
-                                        <div className="text-center text-gray-500">
+                                        <div className="text-center text-gray-500 truncate">
                                           <span className="">
                                             {`"${userInput}" already targeted in`}
                                             &nbsp;
@@ -1285,8 +1290,8 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
           <div className="grid grid-cols-1 gap-2 mt-2">
             {rolloutStrategy.map((s: any, idx: number) => {
               return (
-                <div key={s.id} className="flex">
-                  <div className="w-36 flex">
+                <div key={s.id} className="flex space-x-2 items-center">
+                  <div className="w-36 flex flex-shrink-0">
                     <input
                       {...register(`${rolloutStrategyName}.${idx}.percentage`)}
                       type="number"
@@ -1310,7 +1315,7 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
                       {'%'}
                     </span>
                   </div>
-                  <label className="inline-flex items-center ml-3 text-sm text-gray-700">
+                  <label className="truncate text-sm text-gray-700">
                     {createVariationLabel(
                       feature.variationsList.find((v) => v.id == s.id)
                     )}
