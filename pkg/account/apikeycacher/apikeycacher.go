@@ -373,7 +373,11 @@ func (c *EnvAPIKeyCacher) unmarshalMessage(msg *puller.Message) (*domainevent.Ev
 	return event, nil
 }
 
-func (c *EnvAPIKeyCacher) refresh(apiKeyID, environmentNamespace string, environmentDisabled bool, projectID string) error {
+func (c *EnvAPIKeyCacher) refresh(
+	apiKeyID, environmentNamespace string,
+	environmentDisabled bool,
+	projectID string,
+) error {
 	req := &acproto.GetAPIKeyRequest{
 		Id:                   apiKeyID,
 		EnvironmentNamespace: environmentNamespace,
