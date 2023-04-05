@@ -560,7 +560,11 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 			return nil, dt.Err()
 		}
 		return &proto.GetAPIKeyBySearchingAllEnvironmentsResponse{
-			EnvironmentApiKey: &proto.EnvironmentAPIKey{EnvironmentNamespace: e.Namespace, ApiKey: apiKey.APIKey, ProjectId: p.Id},
+			EnvironmentApiKey: &proto.EnvironmentAPIKey{
+				EnvironmentNamespace: e.Namespace,
+				ApiKey:               apiKey.APIKey,
+				ProjectId:            p.Id,
+			},
 		}, nil
 	}
 	dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
