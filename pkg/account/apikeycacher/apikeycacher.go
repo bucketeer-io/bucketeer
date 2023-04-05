@@ -22,6 +22,8 @@ import (
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
+	grpccodes "google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -240,20 +242,20 @@ func (c *EnvAPIKeyCacher) handleAPIKeyEvent(msg *puller.Message, event *domainev
 		Id: event.EnvironmentNamespace,
 	})
 	if err != nil {
+		if code := status.Code(err); code == grpccodes.NotFound {
+			msg.Ack()
+			handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
+			c.logger.Error("The specified environmentNamespace ID does not exist",
+				zap.Error(err),
+				zap.String("apiKeyID", apiKeyID),
+				zap.String("environmentNamespace", event.EnvironmentNamespace),
+				zap.Any("event", event),
+			)
+			return
+		}
 		msg.Nack()
 		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 		c.logger.Error("Failed to get environment",
-			zap.Error(err),
-			zap.String("apiKeyID", apiKeyID),
-			zap.String("environmentNamespace", event.EnvironmentNamespace),
-			zap.Any("event", event),
-		)
-		return
-	}
-	if envResp.Environment == nil {
-		msg.Ack()
-		handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
-		c.logger.Error("The specified environmentNamespace ID does not exist",
 			zap.Error(err),
 			zap.String("apiKeyID", apiKeyID),
 			zap.String("environmentNamespace", event.EnvironmentNamespace),
@@ -331,19 +333,19 @@ func (c *EnvAPIKeyCacher) handleEnvironmentEvent(msg *puller.Message, event *dom
 		Id: event.EnvironmentNamespace,
 	})
 	if err != nil {
+		if code := status.Code(err); code == grpccodes.NotFound {
+			msg.Ack()
+			handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
+			c.logger.Error("The specified environmentNamespace ID does not exist",
+				zap.Error(err),
+				zap.String("environmentNamespace", event.EnvironmentNamespace),
+				zap.Any("event", event),
+			)
+			return
+		}
 		msg.Nack()
 		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 		c.logger.Error("Failed to get environment",
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.Any("event", event),
-		)
-		return
-	}
-	if envResp.Environment == nil {
-		msg.Ack()
-		handledCounter.WithLabelValues(codes.NonRepeatableError.String()).Inc()
-		c.logger.Error("The specified environmentNamespace ID does not exist",
 			zap.Error(err),
 			zap.String("environmentNamespace", environmentNamespace),
 			zap.Any("event", event),
