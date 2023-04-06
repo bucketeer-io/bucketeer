@@ -22,6 +22,8 @@ import (
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
+	grpccodes "google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -236,7 +238,32 @@ func (c *EnvAPIKeyCacher) handleAPIKeyEvent(msg *puller.Message, event *domainev
 		c.logger.Warn("Message contains an empty apiKeyID", zap.Any("event", event))
 		return
 	}
-	if err := c.refresh(apiKeyID, event.EnvironmentNamespace, false); err != nil {
+	envResp, err := c.environmentClient.GetEnvironment(c.ctx, &environmentproto.GetEnvironmentRequest{
+		Id: event.EnvironmentNamespace,
+	})
+	if err != nil {
+		if code := status.Code(err); code == grpccodes.NotFound {
+			msg.Ack()
+			handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
+			c.logger.Error("The specified environmentNamespace ID does not exist",
+				zap.Error(err),
+				zap.String("apiKeyID", apiKeyID),
+				zap.String("environmentNamespace", event.EnvironmentNamespace),
+				zap.Any("event", event),
+			)
+			return
+		}
+		msg.Nack()
+		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
+		c.logger.Error("Failed to get environment",
+			zap.Error(err),
+			zap.String("apiKeyID", apiKeyID),
+			zap.String("environmentNamespace", event.EnvironmentNamespace),
+			zap.Any("event", event),
+		)
+		return
+	}
+	if err := c.refresh(apiKeyID, event.EnvironmentNamespace, false, envResp.Environment.ProjectId); err != nil {
 		msg.Nack()
 		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 		c.logger.Error("Failed to refresh api key",
@@ -273,7 +300,7 @@ func (c *EnvAPIKeyCacher) handleProjectEvent(msg *puller.Message, event *domaine
 		return
 	}
 	for _, environment := range environments {
-		if err := c.refreshAll(environment.Namespace, environmentDisabled); err != nil {
+		if err := c.refreshAll(environment.Namespace, environmentDisabled, projectID); err != nil {
 			msg.Nack()
 			handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 			c.logger.Error("Failed to refresh all api keys in the environment",
@@ -302,7 +329,30 @@ func (c *EnvAPIKeyCacher) handleEnvironmentEvent(msg *puller.Message, event *dom
 		return
 	}
 	environmentNamespace := ede.Namespace
-	if err := c.refreshAll(environmentNamespace, true); err != nil {
+	envResp, err := c.environmentClient.GetEnvironment(c.ctx, &environmentproto.GetEnvironmentRequest{
+		Id: event.EnvironmentNamespace,
+	})
+	if err != nil {
+		if code := status.Code(err); code == grpccodes.NotFound {
+			msg.Ack()
+			handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
+			c.logger.Error("The specified environmentNamespace ID does not exist",
+				zap.Error(err),
+				zap.String("environmentNamespace", event.EnvironmentNamespace),
+				zap.Any("event", event),
+			)
+			return
+		}
+		msg.Nack()
+		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
+		c.logger.Error("Failed to get environment",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.Any("event", event),
+		)
+		return
+	}
+	if err := c.refreshAll(environmentNamespace, true, envResp.Environment.ProjectId); err != nil {
 		msg.Nack()
 		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 		c.logger.Error("Failed to refresh all api keys in the environment",
@@ -325,7 +375,11 @@ func (c *EnvAPIKeyCacher) unmarshalMessage(msg *puller.Message) (*domainevent.Ev
 	return event, nil
 }
 
-func (c *EnvAPIKeyCacher) refresh(apiKeyID, environmentNamespace string, environmentDisabled bool) error {
+func (c *EnvAPIKeyCacher) refresh(
+	apiKeyID, environmentNamespace string,
+	environmentDisabled bool,
+	projectID string,
+) error {
 	req := &acproto.GetAPIKeyRequest{
 		Id:                   apiKeyID,
 		EnvironmentNamespace: environmentNamespace,
@@ -338,11 +392,12 @@ func (c *EnvAPIKeyCacher) refresh(apiKeyID, environmentNamespace string, environ
 		ApiKey:               resp.ApiKey,
 		EnvironmentNamespace: environmentNamespace,
 		EnvironmentDisabled:  environmentDisabled,
+		ProjectId:            projectID,
 	}
 	return c.upsert(envAPIKey)
 }
 
-func (c *EnvAPIKeyCacher) refreshAll(environmentNamespace string, environmentDisabled bool) error {
+func (c *EnvAPIKeyCacher) refreshAll(environmentNamespace string, environmentDisabled bool, projectID string) error {
 	apiKeys, err := c.listAPIKeys(environmentNamespace)
 	if err != nil {
 		return fmt.Errorf("failed to list api keys: %w", err)
@@ -352,6 +407,7 @@ func (c *EnvAPIKeyCacher) refreshAll(environmentNamespace string, environmentDis
 			ApiKey:               key,
 			EnvironmentNamespace: environmentNamespace,
 			EnvironmentDisabled:  environmentDisabled,
+			ProjectId:            projectID,
 		}
 		if err := c.upsert(envAPIKey); err != nil {
 			return err

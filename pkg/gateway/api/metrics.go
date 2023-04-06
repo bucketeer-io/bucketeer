@@ -125,7 +125,7 @@ var (
 			Name:      "sdk_api_handling_seconds",
 			Help:      "Histogram of get evaluations response latency (seconds).",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"environment_namespace", "tag", "api", "sdk_version", "source_id"})
+		}, []string{"project_id", "environment_namespace", "tag", "api", "sdk_version", "source_id"})
 	sdkSizeHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
@@ -133,14 +133,14 @@ var (
 			Name:      "sdk_api_response_size",
 			Help:      "Histogram of get evaluations response size (byte).",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"environment_namespace", "tag", "api", "sdk_version", "source_id"})
+		}, []string{"project_id", "environment_namespace", "tag", "api", "sdk_version", "source_id"})
 	sdkErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "metrics_event",
 			Name:      "sdk_api_error_total",
 			Help:      "Total number of sdk errors",
-		}, []string{"environment_namespace", "tag", "error_type", "api", "sdk_version", "source_id"})
+		}, []string{"project_id", "environment_namespace", "tag", "error_type", "api", "sdk_version", "source_id"})
 )
 
 func registerMetrics(r metrics.Registerer) {
