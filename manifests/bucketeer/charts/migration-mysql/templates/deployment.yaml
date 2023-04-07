@@ -42,7 +42,7 @@ spec:
         - name: github-access-token-secret
           secret:
             secretName: github-token
-      {{- if not .Values.serviceAccount.annotations }}
+      {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "migration-mysql.name" . }}
       {{- end }}
       containers:

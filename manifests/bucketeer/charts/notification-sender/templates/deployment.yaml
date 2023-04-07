@@ -39,7 +39,7 @@ spec:
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }} 
-      {{- if not .Values.serviceAccount.annotations }}
+      {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "notification-sender.name" . }}
       {{- end }}
       containers:

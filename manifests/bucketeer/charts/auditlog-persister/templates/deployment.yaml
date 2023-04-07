@@ -35,7 +35,7 @@ spec:
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
-      {{- if not .Values.serviceAccount.annotations }}
+      {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "auditlog-persister.name" . }}
       {{- end }}
       containers:
