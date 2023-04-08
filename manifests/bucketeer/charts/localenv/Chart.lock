@@ -14,5 +14,8 @@ dependencies:
 - name: vault
   repository: https://helm.releases.hashicorp.com
   version: 0.23.0
-digest: sha256:27f0e4539d34ce915715eaf7641e7b5b39253064bebc4c8172e6bfba190b82dd
-generated: "2023-02-22T22:35:02.422119+01:00"
+- name: nginx-ingress
+  repository: https://helm.nginx.com/stable
+  version: 0.16.2
+digest: sha256:e41756108df73f1e89ae72c3b0edb35d25d4289b5c122ac0ae577df725064368
+generated: "2023-04-08T21:14:15.806105+02:00"
