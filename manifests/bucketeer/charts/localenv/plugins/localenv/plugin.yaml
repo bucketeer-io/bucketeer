@@ -1,0 +1,16 @@
+name: "localenv"
+version: "0.1.0"
+usage: "run minikube ingress"
+description: "run minikube ingress"
+ignoreFlags: false
+command: "sh $HELM_PLUGIN_DIR/localenv.sh"
+platformCommand:
+  - os: linux
+    arch: i386
+    command: "sh $HELM_PLUGIN_DIR/localenv.sh"
+  - os: linux
+    arch: amd64
+    command: "sh $HELM_PLUGIN_DIR/localenv.sh"
+  - os: windows
+    arch: amd64
+    command: "sh $HELM_PLUGIN_DIR/localenv.sh"
