@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: dexidp/dex
-  tag: v2.27.0
+  tag: v2.36.0
   pullPolicy: IfNotPresent
 
 fullnameOverride: "dex"
