@@ -66,7 +66,7 @@ For instance, Web Client sends clause as follows:
 ### Progressive rollout
 
 `Interval` field in `ProgressiveRolloutClause` is filled by client side when UI is Template Setting.
-
+When we call `ExecuteAutoOps`, we'll send `time` field. AutoOps service will change `executed` flag of the time match to `true`.
 
 ```diff
 --- a/proto/autoops/auto_ops_rule.proto
@@ -193,13 +193,20 @@ There is a possibility that multiple `Clause` types are included.
 
 ### Major changes
 
-We need to add progressive_rollout_watcher.go. This watcher updates feature rules at the scheduled time.
-Then, change `executed` flag to `true`.
+* batch/job/progressive_rollout_watcher.go
+    * This watcher updates feature rules at the scheduled time.
+* batch/executor/rollout_updater.go
+	* This is the executor which sends ChangeAutoOpsRuleExecutedCommand to AutoOpsRule service.
 
 ### Minor changes
 
-Also, we need to modify `ExecuteOperation` in pkg/autoops/api/operation.go.
-When OpsType field in AutoOpsRule is PROGRESSIVE_ROLLOUT, we'll call `UpdateFeatureTargeting`.
+* pkg/autoops/api/operation.go
+    * We need to modify `ExecuteOperation`. When OpsType field in AutoOpsRule is PROGRESSIVE_ROLLOUT, we'll call `UpdateFeatureTargeting`.
+* pkg/opsevent/batch/executor/executor.go
+	* Rename executor.go to flag_triggerer.go
+	* Then abstract executor.go such as https://github.com/bucketeer-io/bucketeer/blob/main/pkg/eventpersisterdwh/persister/event.go.
+* pkg/autoops/command/auto_ops_rule.go
+	* Add new commands to `Handle` func.
 
 ## Hack
 
