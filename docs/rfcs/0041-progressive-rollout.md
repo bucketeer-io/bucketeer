@@ -17,6 +17,10 @@ In this case, Template Setting is useful.
 
 ![template-setting-proto-ui](./images/0041-image2.png)
 
+## Progress bar of rollout
+
+![progress-bar-of-rollout](./images/0041-image4.png)
+
 # Important Notice
 
 * Users can use Progressive Rollout when the number of variations is less than or equal to 2
