@@ -41,7 +41,7 @@ spec:
         - name: oauth-key-secret
           secret:
             secretName: {{ template "oauth-key-secret" . }}
-      {{- if not .Values.serviceAccount.annotations }}
+      {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "account.name" . }}
       {{- end }}
       containers:
