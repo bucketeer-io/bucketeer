@@ -65,66 +65,201 @@ For instance, Web Client sends clause as follows:
 
 # Changes
 
+## Table
+
+We'll create `progressive_rollout` table as follows:
+
+```sql
+CREATE TABLE IF NOT EXISTS `progressive_rollout` (
+  `id` VARCHAR(255) NOT NULL,
+  `feature_id` VARCHAR(255) NOT NULL,
+  `clause` JSON NOT NULL,
+  `status` INT(11) NOT NULL,
+  `type` INT(11) NOT NULL,
+  `created_at` BIGINT(20) NOT NULL,
+  `updated_at` BIGINT(20) NOT NULL,
+  `environment_namespace` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`, `environment_namespace`),
+  CONSTRAINT `foreign_progressive_rollout_feature_id_environment_namespace`
+    FOREIGN KEY (`feature_id`, `environment_namespace`)
+    REFERENCES `feature` (`id`, `environment_namespace`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+);
+```
+
 ## Proto
 
 ### Progressive rollout
 
-`Interval` field in `ProgressiveRolloutClause` is filled by client side when UI is Template Setting.
-When we call `ExecuteAutoOps`, we'll send `time` field. AutoOps service will change `executed` flag of the time match to `true`.
+* proto/autoops/progressive_rollout.proto
+
+`Status` represents the state of operations for ProgressiveRollout. If a operation has not started, `Status` is WAITING.
+If a operation is in progress, `Status` is DOING. If a operaiton is finished, `Status` is DONE.
+All fields in `ProgressiveRollout` are stored to DB as columns.
+The reason of using `google.protobuf.Any` is for ease of expansion.
 
 ```proto
-message ProgressiveRolloutClause {
-  string variation_id = 1;
-  ProgressiveRolloutManualSchedule progressive_rollout_manual_schedule = 2;
-  ProgressiveRolloutAutomaticSchedule progressive_rollout_automatic_schedule = 3;
+message ProgressiveRollout {
+  enum Status {
+    WAITING = 0;
+    DOING = 1;
+    DONE = 2;
+  }
+  enum Type {
+    MANUAL_SCHEDULE = 0;
+    AUTOMATIC_SCHEDULE = 1;
+  }
+  string id = 1;
+  string feature_id = 2;
+  google.protobuf.Any clause = 3;
+  Status status = 4;
+  Type type = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
 }
+```
 
-message ProgressiveRolloutManualSchedule {
+* proto/autoops/clause.proto
+
+`ProgressiveRolloutManualScheduleClause` is set when Manual Setting is used by users.
+`ProgressiveRolloutAutomaticScheduleClause` is set when Template Setting is used by users.
+
+**NOTE**
+When `ProgressiveRolloutAutomaticScheduleClause` will be converted into `ProgressiveRollout`,
+We need to calculate `time` based on `started_at` and `interval`.
+
+```proto
+message ProgressiveRolloutScheduleClause {
   message Schedule {
     int64 time = 1;
     int32 weight = 2;
-    bool executed = 3;
+    bool triggered = 3;
   }
-  repeated Schedule schedules = 1;
+  string variation_id = 1;
+  repeated Schedule schedules = 2;
 }
 
-message ProgressiveRolloutAutomaticSchedule {
+message ProgressiveRolloutManualScheduleClause {
+  string variation_id = 1;
+  repeated ProgressiveRolloutScheduleClause.Schedule schedules = 2;
+}
+
+message ProgressiveRolloutAutomaticScheduleClause {
   enum Interval {
     UNKNOWN = 0;
     HOURLY = 1;
     DAILY = 2;
     WEEKLY = 3;
   }
-  int64 started_at = 1;
-  Interval interval = 2;
+  string variation_id = 1;
+  int64 started_at = 2;
+  Interval interval = 3;
+  bool triggered = 4;
 }
 ```
 
-### Other
+* proto/autoops/service.proto
 
-In addition to this feature, we'll introduce `Type` field to `Clause` field. This will be used when filtering rules.
+Progressive Rollout features have unique API for creating, updating and deleting.
 
-```diff
-diff --git a/proto/autoops/clause.proto b/proto/autoops/clause.proto
-index 8c17f23..af9dabf 100644
---- a/proto/autoops/clause.proto
-+++ b/proto/autoops/clause.proto
-@@ -22,6 +22,12 @@ import "google/protobuf/any.proto";
- message Clause {
-   string id = 1;
-   google.protobuf.Any clause = 2;
-+  enum Type {
-+    OPS_EVENT_RATE = 0;
-+    DATE_TIME = 1;
-+    WEBHOOK = 2;
-+    PROGRESSIVE_ROLLOUT = 3;
-+  }
- }
- ```
+```proto
+message CreateProgressiveRolloutRequest {
+  string environment_namespace = 1;
+  CreateProgressiveRolloutCommand command = 2;
+}
 
-**NOTE**
-We can't define `Type` in `AutoOpsRule` instead of `Clause` because `Clause` field in `AutoOpsRule` is an array.
-There is a possibility that multiple `Clause` types are included.
+message CreateProgressiveRolloutResponse {}
+
+message GetProgressiveRolloutRequest {
+  string id = 1;
+  string environment_namespace = 2;
+}
+
+message GetProgressiveRolloutResponse {
+  ProgressiveRollout progressive_rollout = 1;
+}
+
+message UpdateProgressiveRolloutRequest {
+  string id = 1;
+  string environment_namespace = 2;
+  ChangeProgressiveRolloutManualScheduleClauseCommand change_progressive_rollout_manual_schedule_clause_command = 3;
+  ChangeProgressiveRolloutAutomaticScheduleClauseCommand change_progressive_rollout_automatic_schedule_clause_command = 4;
+}
+
+message UpdateProgressiveRolloutResponse {}
+
+message DeleteProgressiveRolloutRequest {
+  string id = 1;
+  string environment_namespace = 2;
+  DeleteProgressiveRolloutCommand command = 3;
+}
+
+message DeleteProgressiveRolloutResponse {}
+
+message ListProgressiveRolloutRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    CREATED_AT = 1;
+    UPDATED_AT = 2;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  string environment_namespace = 1;
+  int64 page_size = 2;
+  string cursor = 3;
+  repeated string feature_ids = 4;
+  OrderBy order_by = 5;
+  OrderDirection order_direction = 6;
+  google.protobuf.BoolValue is_waiting = 7;
+  google.protobuf.BoolValue is_doing = 8;
+  google.protobuf.BoolValue is_done = 9;
+  string search_keyword = 10;
+  google.protobuf.BoolValue is_manual_scheduling = 11;
+  google.protobuf.BoolValue is_automatic_scheduling = 12;
+}
+
+message ListProgressiveRolloutResponse {
+  repeated ProgressiveRollout progressive_rollouts = 1;
+  string cursor = 2;
+}
+```
+
+* proto/autoops/command.proto
+
+```proto
+message CreateProgressiveRolloutCommand {
+  string feature_id = 1;
+  ProgressiveRolloutManualScheduleClause progressive_rollout_manual_schedule_clause = 2;
+  ProgressiveRolloutAutomaticScheduleClause progressive_rollout_automatic_schedule_clause = 3;
+}
+
+message DeleteProgressiveRolloutCommand {}
+
+message AddProgressiveRolloutManualScheduleClauseCommand {
+  ProgressiveRolloutManualScheduleClause clause = 1;
+}
+
+message ChangeProgressiveRolloutManualScheduleClauseCommand {
+  string id = 1;
+  ProgressiveRolloutManualScheduleClause clause = 2;
+}
+
+message DeleteProgressiveRolloutManualScheduleClauseCommand {}
+
+message AddProgressiveRolloutAutomaticScheduleClauseCommand {
+  ProgressiveRolloutAutomaticScheduleClause clause = 1;
+}
+
+message ChangeProgressiveRolloutAutomaticScheduleClauseCommand {
+  string id = 1;
+  ProgressiveRolloutAutomaticScheduleClause clause = 2;
+}
+
+message DeleteProgressiveRolloutAutomaticScheduleClauseCommand {}
+```
 
 ## Backend Changes
 
@@ -134,13 +269,16 @@ There is a possibility that multiple `Clause` types are included.
     * This watcher updates feature rules at the scheduled time.
 * batch/executor/rollout_updater.go
 	* This is the executor which sends ChangeAutoOpsRuleExecutedCommand to AutoOpsRule service.
+* storage/v2/progressive_rollout.go
+	* This is for inserting data into `progressive_rollout` table.
+* pkg/autoops/api/progressive_rollout.go
+* pkg/autoops/command/progressive_rollout.go
+* pkg/autoops/domain/progressive_rollout.go
 
 ### Minor changes
 
-* pkg/autoops/api/operation.go
-    * We need to modify `ExecuteOperation`. When OpsType field in AutoOpsRule is PROGRESSIVE_ROLLOUT, we'll call `UpdateFeatureTargeting`.
 * pkg/opsevent/batch/executor/executor.go
 	* Rename executor.go to flag_triggerer.go
 	* Then abstract executor.go such as https://github.com/bucketeer-io/bucketeer/blob/main/pkg/eventpersisterdwh/persister/event.go.
-* pkg/autoops/command/auto_ops_rule.go
-	* Add new commands to `Handle` func.
+* pkg/feature/api/feature.go
+	* We need to modify `UpdateFeatureVariations`. We need to validate changing variations. Return error if Progressive Rollout is running.
