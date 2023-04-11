@@ -38,7 +38,7 @@ For instance, Web Client sends clause as follows:
 &autoopsproto.ProgressiveRolloutClause{
 	// The another varition id is vid-2
 	VariationId: "vid-1",
-	Schedules: []*autoopsproto.ProgressiveRolloutClause_Schedule{
+	Schedules: []*autoopsproto.ProgressiveRolloutScheduleClause_Schedule{
 		{
 			// '2023-01-01 00:03:00'
 			Time: 1672498980,
@@ -58,10 +58,10 @@ For instance, Web Client sends clause as follows:
 }
 ```
 
-1. Web Client registers the above clauses by calling `CreateAutopOps` rules
-2. Batch service call `ListAutoOpsRules`, and check if the current time is a scheduled time. In this case, it checks whether the current time is 2023-01-01 00:03:00.
-3. If the current time is a scheduled time, Batch service call `ExecuteAutoOps`.
-4. AutoOps service call`UpdateFeatureTargeting` to update feature rules. In this case, update the weight of vid-1 to 20000 and the weight of vid-2 to 80000.
+1. Web Client registers the above clauses by calling `CreateProgressiveRollout` rules
+2. Batch service calls `ListProgressiveRollout`, and check if the current time is a scheduled time. In this case, it checks whether the current time is 2023-01-01 00:03:00.
+3. If the current time is a scheduled time, Batch service call `ExecuteProgressiveRollout`.
+4. AutoOps service calls `UpdateFeatureTargeting` to update feature rules. In this case, update the weight of vid-1 to 20000 and the weight of vid-2 to 80000.
 
 # Changes
 
@@ -161,7 +161,7 @@ message ProgressiveRolloutAutomaticScheduleClause {
 
 * proto/autoops/service.proto
 
-Progressive Rollout features have unique API for creating, updating and deleting.
+Progressive Rollout feature has unique API for creating, updating and deleting.
 
 ```proto
 message CreateProgressiveRolloutRequest {
