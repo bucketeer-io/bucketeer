@@ -68,7 +68,7 @@ For instance, Web Client sends clause as follows:
 
 ## Table
 
-We'll create `progressive_rollout` table as follows. The `clause` always can be converted into `ProgressiveRolloutScheduleClause`.
+We'll create `progressive_rollout` table as follows. The `clause` always can be converted into `ProgressiveRolloutScheduleClause` when `type` is MANUAL_SCHEDULE or AUTOMATIC_SCHEDULE.
 
 ```sql
 CREATE TABLE IF NOT EXISTS `progressive_rollout` (
