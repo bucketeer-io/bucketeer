@@ -214,12 +214,9 @@ message ListProgressiveRolloutRequest {
   repeated string feature_ids = 4;
   OrderBy order_by = 5;
   OrderDirection order_direction = 6;
-  google.protobuf.BoolValue is_waiting = 7;
-  google.protobuf.BoolValue is_doing = 8;
-  google.protobuf.BoolValue is_done = 9;
-  string search_keyword = 10;
-  google.protobuf.BoolValue is_manual_scheduling = 11;
-  google.protobuf.BoolValue is_automatic_scheduling = 12;
+  optional ProgressiveRollout.Status status = 7;
+  string search_keyword = 8;
+  optional ProgressiveRollout.Type type = 9;
 }
 
 message ListProgressiveRolloutResponse {
