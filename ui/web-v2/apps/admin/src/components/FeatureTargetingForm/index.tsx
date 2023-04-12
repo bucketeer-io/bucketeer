@@ -1,4 +1,5 @@
 import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
+import { isLanguageJapanese } from '@/lang/getSelectedLanguage';
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import {
   createVariationLabel,
@@ -141,7 +142,9 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       return (
         <components.NoOptionsMessage {...props}>
           <span className="custom-css-class">
-            {props.selectProps.inputValue ? 'Already targeted' : 'Add user ids'}
+            {props.selectProps.inputValue
+              ? f(messages.feature.alreadyTargeted)
+              : f(messages.feature.addUserIds)}
           </span>
         </components.NoOptionsMessage>
       );
@@ -205,7 +208,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                               >
                                 <ReactCreatableSelect
                                   isMulti
-                                  placeholder="Add user ids"
+                                  placeholder={f(messages.feature.addUserIds)}
                                   classNamePrefix="react-select"
                                   styles={colourStyles}
                                   formatCreateLabel={(userInput) => {
@@ -217,19 +220,27 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                       );
                                     if (alreadyTargetedVariaition) {
                                       return (
-                                        <div className="text-center text-gray-500 truncate">
-                                          <span className="">
-                                            {`"${userInput}" already targeted in`}
-                                            &nbsp;
-                                            <strong>
-                                              {createVariationLabel(
-                                                feature.variationsList.find(
-                                                  (v) =>
-                                                    v.id ===
-                                                    alreadyTargetedVariaition.variationId
-                                                )
-                                              )}
-                                            </strong>
+                                        <div
+                                          className={`text-center text-gray-500 ${
+                                            isLanguageJapanese ? '' : 'truncate'
+                                          }`}
+                                        >
+                                          <span>
+                                            {f(
+                                              messages.feature
+                                                .alreadyTargetedInVariation,
+                                              {
+                                                userId: userInput,
+                                                variationName:
+                                                  createVariationLabel(
+                                                    feature.variationsList.find(
+                                                      (v) =>
+                                                        v.id ===
+                                                        alreadyTargetedVariaition.variationId
+                                                    )
+                                                  ),
+                                              }
+                                            )}
                                           </span>
                                         </div>
                                       );
@@ -243,7 +254,9 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                         />
 
                                         <span className="text-blue-700">
-                                          {`Add user "${userInput}"`}
+                                          {f(messages.feature.addUser, {
+                                            userId: userInput,
+                                          })}
                                         </span>
                                       </div>
                                     );
