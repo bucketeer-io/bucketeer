@@ -25,6 +25,7 @@ In this case, Template Setting is useful.
 
 * Users can use Progressive Rollout when the number of variations is less than or equal to 2
 * Users can't use same scheduled time in single auto ops rules. For example, users can not set true for 50% at 2023-01-01 00:06:00 and 80% at the same time.
+* The interval of time for each scheduled time must be at least 5 minutes.
 
 # Processing flow
 
