@@ -33,19 +33,19 @@ In addition, the following changes are required in both the server and SDK imple
 ### Evaluation on Server
 The following diagram shows the dependency relationship between multiple feature flags:
 
-![](http://g.gravizo.com/g?
-  digraph {
-    rankdir=LR;
-    node [shape = circle];
-    D
-    C -> L -> M
-    L -> N
-    B
-    A -> E -> G -> H -> I -> K
-    H -> J
-    A -> F
-  }
-)
+```mermaid
+graph LR;
+    id1((A)) --> id5((E)) --> id7((G)) --> id8((H)) --> id9((I)) --> id11((K))
+    id1((A)) --> id6((F))
+    id8((H)) --> id10((J))
+    
+    id2((B))
+    
+    id3((C)) --> id12((L)) --> id13((M))
+    id12((L)) --> id14((N))
+    
+    id4((D))
+```
 
 
 #### Pattern1
