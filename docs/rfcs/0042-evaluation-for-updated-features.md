@@ -41,8 +41,9 @@ We need to modify the proto like below.
 
 In addition, the following changes are required in both the server and SDK implementations:
 - Since only the updated feature flags are evaluated and returned, the SDK's implementation for updating local data needs to be changed.
-- The server needs to return information about archived feature flags to the SDK.
-  - So the server must put the archived feature flags to Redis.
+- The server needs to return information about archived feature flags to the SDK because its evaluation result is already stored locally.
+  - The SDK must delete the evaluation result of archived features.
+  - The server must put the archived feature flags to Redis.
 - The validation of the request parameter `Tag` needs to be removed.
 
 
