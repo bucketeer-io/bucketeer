@@ -46,18 +46,18 @@ For instance, Web Client sends clause as follows:
 	VariationId: "vid-1",
 	Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
 		{
-			// '2023-01-01 00:03:00'
-			Time: 1672498980,
+			// '2023-01-01 03:00:00'
+			Time: 1672509600,
 			Weight: 20000,
 		},
 		{
-			// '2023-01-01 00:06:00'
-			Time: 1672499160,
+			// '2023-01-01 06:00:00'
+			Time: 1672520400,
 			Weight: 40000,
 		},
 		{
-			// '2023-01-01 00:09:00'
-			Time: 1672499340,
+			// '2023-01-01 09:00:00'
+			Time: 1672531200,
 			Weight: 60000,
 		},
 	},
