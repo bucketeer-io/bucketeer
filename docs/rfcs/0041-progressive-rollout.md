@@ -182,11 +182,7 @@ message DeleteProgressiveRolloutRequest {
   DeleteProgressiveRolloutCommand command = 3;
 }
 
-message DeleteProgressiveRolloutResponse {
-  string environment_namespace = 1;
-  string id = 2;
-  DeleteProgressiveRolloutCommand command = 3;
-}
+message DeleteProgressiveRolloutResponse {}
 
 message ListProgressiveRolloutRequest {
   enum OrderBy {
