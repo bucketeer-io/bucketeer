@@ -282,7 +282,7 @@ message ChangeProgressiveRolloutTriggeredAtCommand {
 * batch/executor/rollout_updater.go
 	* This is the executor which sends ChangeProgressiveRolloutTriggeredAtCommand to AutoOpsRule service.
 * storage/v2/progressive_rollout.go
-	* This is for inserting data into `progressive_rollout` table.
+	* This is for inserting data into `ops_progressive_rollout` table.
 * pkg/autoops/api/progressive_rollout.go
 * pkg/autoops/command/progressive_rollout.go
 * pkg/autoops/domain/progressive_rollout.go
