@@ -44,7 +44,7 @@ For instance, Web Client sends clause as follows:
 &autoopsproto.ProgressiveRolloutClause{
 	// The another varition id is vid-2
 	VariationId: "vid-1",
-	Schedules: []*autoopsproto.ProgressiveRolloutClause_Schedule{
+	Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
 		{
 			// '2023-01-01 00:03:00'
 			Time: 1672498980,
