@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS `ops_progressive_rollout` (
   `feature_id` VARCHAR(255) NOT NULL,
   `clause` JSON NOT NULL,
   `status` INT(11) NOT NULL,
+  `type` INT(11) NOT NULL,
   `created_at` BIGINT(20) NOT NULL,
   `updated_at` BIGINT(20) NOT NULL,
   `environment_namespace` VARCHAR(255) NOT NULL,
