@@ -477,12 +477,24 @@ func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id st
 	if err != nil {
 		return nil, err
 	}
-	if len(feature.Prerequisites) > 0 {
-		// If we select only the prerequisite feature flags, we have to get them recursively.
-		// Thus, we evaluate all features here to avoid complex logic.
-		return fs, nil
+	if len(feature.Prerequisites) == 0 {
+		return []*featureproto.Feature{feature}, nil
 	}
-	return []*featureproto.Feature{feature}, nil
+	features := make(map[string]*featureproto.Feature, len(fs))
+	for _, f := range fs {
+		features[f.Id] = f
+	}
+	target := make(map[string]*featureproto.Feature)
+	target[feature.Id] = feature
+	dependencies, err := s.getPrerequisiteDownwards(target, features)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*featureproto.Feature, 0, len(dependencies))
+	for _, v := range dependencies {
+		result = append(result, v)
+	}
+	return result, nil
 }
 
 func (*grpcGatewayService) findFeature(fs []*featureproto.Feature, id string) (*featureproto.Feature, error) {

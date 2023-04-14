@@ -2219,10 +2219,14 @@ func TestGetTargetFeatures(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:        "success: configure prerequisite",
-			id:          "fid",
-			fs:          multiplePreFs,
-			expected:    multiplePreFs,
+			desc: "success: configure prerequisite",
+			id:   "fid",
+			fs:   multiplePreFs,
+			expected: []*featureproto.Feature{
+				multiplePreFs[3],
+				multiplePreFs[0],
+				multiplePreFs[2],
+			},
 			expectedErr: nil,
 		},
 	}
