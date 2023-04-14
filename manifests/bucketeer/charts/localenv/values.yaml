@@ -21,6 +21,9 @@ mysql:
     database: "bucketeer"
     username: "bucketeer"
     existingSecret: "mysql-secrets"
+
+bq:
+  project: "default"
     
 
 

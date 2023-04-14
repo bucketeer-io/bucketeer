@@ -4,6 +4,8 @@
 
 replicaCount: 1
 
+project: "default"
+
 image:
   repository: ghcr.io/goccy/bigquery-emulator
   pullPolicy: Always
