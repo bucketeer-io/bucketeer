@@ -221,6 +221,17 @@ message ListProgressiveRolloutResponse {
   repeated ProgressiveRollout progressive_rollouts = 1;
   string cursor = 2;
 }
+
+message ExecuteProgressiveRolloutRequest {
+  string environment_namespace = 1;
+  string id = 2;
+  ChangeProgressiveRolloutTriggeredAtCommand
+      change_progressive_rollout_triggered_at_command = 3;
+}
+
+message ExecuteProgressiveRolloutResponse {
+  bool already_triggered = 1;
+}
 ```
 
 * proto/autoops/command.proto
@@ -256,7 +267,9 @@ message ChangeProgressiveRolloutAutomaticScheduleClauseCommand {
 
 message DeleteProgressiveRolloutAutomaticScheduleClauseCommand {}
 
-message ChangeProgressiveRolloutTriggeredAtCommand {}
+message ChangeProgressiveRolloutTriggeredAtCommand {
+	int64 time = 1;
+}
 ```
 
 ## Backend Changes
