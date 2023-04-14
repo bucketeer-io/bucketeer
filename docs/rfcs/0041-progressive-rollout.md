@@ -280,7 +280,7 @@ message ChangeProgressiveRolloutTriggeredAtCommand {
 * batch/job/progressive_rollout_watcher.go
     * This watcher updates feature rules at the scheduled time.
 * batch/executor/rollout_updater.go
-	* This is the executor which sends ChangeAutoOpsRuleExecutedCommand to AutoOpsRule service.
+	* This is the executor which sends ChangeProgressiveRolloutTriggeredAtCommand to AutoOpsRule service.
 * storage/v2/progressive_rollout.go
 	* This is for inserting data into `progressive_rollout` table.
 * pkg/autoops/api/progressive_rollout.go
