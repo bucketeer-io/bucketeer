@@ -14,8 +14,8 @@
 
 ## Implementation
 
-The SDK stores the timestamp of the evaluation's execution.
-When GetEvaluations is called again, the timestamp is sent to the server as a request parameter.
+The SDK stores the`EvaluatedAt` value indicating the timestamp of the evaluation's execution.
+When GetEvaluations is called again, that timestamp is sent to the server as a request parameter.
 
 The server checks it against the updatedAt value of the feature flags, and only evaluates those that have been updated since the previous evaluation.
 
@@ -25,6 +25,19 @@ As an exception, the following feature flags must be evaluated regardless of the
 
 If user attributes have been updated, the result of the evaluation may also change.
 Since the server has to know that update, the SDK sends the `IsUserAttributesChanged` flag to the server as a request parameter like the timestamp.
+
+We need to modify the proto like below.
+```diff
+  message GetEvaluationsRequest {  
+    string tag = 1;  
+    user.User user = 2;  
+    string user_evaluations_id = 3;  
+    string feature_id = 4 [deprecated = true]; // instead, use GetEvaluation API  
+    bucketeer.event.client.SourceId source_id = 5;  
++   int64 evaluated_at = 6;  
++   bool is_user_attributes_changed = 7;  
+  }
+```
 
 In addition, the following changes are required in both the server and SDK implementations:
 - Since only the updated feature flags are evaluated and returned, the SDK's implementation for updating local data needs to be changed.
