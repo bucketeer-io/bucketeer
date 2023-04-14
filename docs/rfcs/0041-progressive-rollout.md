@@ -26,9 +26,11 @@ In this case, Template Setting is useful.
 * Users can use Progressive Rollout when the number of variations is equal to 2.
 * Users can't use same scheduled time in single auto ops rules. For example, users can not set true for 50% at 2023-01-01 00:06:00 and 80% at the same time.
 * The interval of time for each scheduled time must be at least 5 minutes.
-* Users can stop Progressive Rollout temporary.
+* We do not support the feature to stop Progressive Rollout temporary. We might support it in the feature.
 * Users can use both Progressive Rollout and Feature Flag Trigger at the same time.
 * The operation of Progressive Rollout is done regardless of whether the feature flag is enabled or disabled.
+* If the operation of Progressive Rollout is deleted, the operation is stopped.
+* The operation of Progressive Rollout can not be modified after creating it.
 
 # Processing flow
 
@@ -113,8 +115,6 @@ message ProgressiveRollout {
     WAITING = 0;
     RUNNING = 1;
     FINISHED = 2;
-	 // When the operation of Progressive Rollout is stopped temporary, `Status` is `DISABLED`.
-    DISABLED = 3;
   }
   string id = 1;
   string feature_id = 2;
@@ -176,22 +176,17 @@ message GetProgressiveRolloutResponse {
   ProgressiveRollout progressive_rollout = 1;
 }
 
-message UpdateProgressiveRolloutRequest {
-  string id = 1;
-  string environment_namespace = 2;
-  optional ChangeProgressiveRolloutManualScheduleClauseCommand change_progressive_rollout_manual_schedule_clause_command = 3;
-  optional ChangeProgressiveRolloutAutomaticScheduleClauseCommand change_progressive_rollout_automatic_schedule_clause_command = 4;
-}
-
-message UpdateProgressiveRolloutResponse {}
-
 message DeleteProgressiveRolloutRequest {
   string id = 1;
   string environment_namespace = 2;
   DeleteProgressiveRolloutCommand command = 3;
 }
 
-message DeleteProgressiveRolloutResponse {}
+message DeleteProgressiveRolloutResponse {
+  string environment_namespace = 1;
+  string id = 2;
+  DeleteProgressiveRolloutCommand command = 3;
+}
 
 message ListProgressiveRolloutRequest {
   enum OrderBy {
@@ -246,26 +241,12 @@ message AddProgressiveRolloutManualScheduleClauseCommand {
   ProgressiveRolloutManualScheduleClause clause = 1;
 }
 
-message ChangeProgressiveRolloutManualScheduleClauseCommand {
-  string id = 1;
-  ProgressiveRolloutManualScheduleClause clause = 2;
-}
-
-message DeleteProgressiveRolloutManualScheduleClauseCommand {}
-
 message AddProgressiveRolloutAutomaticScheduleClauseCommand {
   ProgressiveRolloutAutomaticScheduleClause clause = 1;
 }
 
-message ChangeProgressiveRolloutAutomaticScheduleClauseCommand {
-  string id = 1;
-  ProgressiveRolloutAutomaticScheduleClause clause = 2;
-}
-
-message DeleteProgressiveRolloutAutomaticScheduleClauseCommand {}
-
 message ChangeProgressiveRolloutTriggeredAtCommand {
-	int64 time = 1;
+  int64 time = 1;
 }
 ```
 
