@@ -23,9 +23,12 @@ In this case, Template Setting is useful.
 
 # Important Notice
 
-* Users can use Progressive Rollout when the number of variations is less than or equal to 2
+* Users can use Progressive Rollout when the number of variations is equal to 2.
 * Users can't use same scheduled time in single auto ops rules. For example, users can not set true for 50% at 2023-01-01 00:06:00 and 80% at the same time.
 * The interval of time for each scheduled time must be at least 5 minutes.
+* Users can stop Progressive Rollout temporary.
+* Users can use both Progressive Rollout and Feature Flag Trigger at the same time.
+* The operation of Progressive Rollout is done regardless of whether the feature flag is enabled or disabled.
 
 # Processing flow
 
@@ -39,7 +42,7 @@ For instance, Web Client sends clause as follows:
 &autoopsproto.ProgressiveRolloutClause{
 	// The another varition id is vid-2
 	VariationId: "vid-1",
-	Schedules: []*autoopsproto.ProgressiveRolloutScheduleClause_Schedule{
+	Schedules: []*autoopsproto.ProgressiveRolloutClause_Schedule{
 		{
 			// '2023-01-01 00:03:00'
 			Time: 1672498980,
@@ -61,24 +64,24 @@ For instance, Web Client sends clause as follows:
 
 1. Web Client registers the above clauses by calling `CreateProgressiveRollout` rules
 2. Batch service calls `ListProgressiveRollout`, and check if the current time is a scheduled time. In this case, it checks whether the current time is 2023-01-01 00:03:00.
-3. If the current time is a scheduled time, Batch service call `ExecuteProgressiveRollout`.
+3. If the current time is a scheduled time and the rule is enabled, Batch service call `ExecuteProgressiveRollout`.
 4. AutoOps service calls `UpdateFeatureTargeting` to update feature rules. In this case, update the weight of vid-1 to 20000 and the weight of vid-2 to 80000.
 
 # Changes
 
 ## Table
 
-We'll create `progressive_rollout` table as follows. The `clause` always can be converted into `ProgressiveRolloutScheduleClause` when `type` is MANUAL_SCHEDULE or AUTOMATIC_SCHEDULE.
+We'll create `ops_progressive_rollout` table as follows. `ProgressiveRolloutManualScheduleClause` and `ProgressiveRolloutAutomaticScheduleClause` are converted into Any type and stored into `clause` column.
 
 ```sql
-CREATE TABLE IF NOT EXISTS `progressive_rollout` (
+CREATE TABLE IF NOT EXISTS `ops_progressive_rollout` (
   `id` VARCHAR(255) NOT NULL,
   `feature_id` VARCHAR(255) NOT NULL,
   `clause` JSON NOT NULL,
   `status` INT(11) NOT NULL,
-  `type` INT(11) NOT NULL,
   `created_at` BIGINT(20) NOT NULL,
   `updated_at` BIGINT(20) NOT NULL,
+  `disabled` TINYINT(1) NOT NULL DEFAULT '0',
   `environment_namespace` VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`, `environment_namespace`),
   CONSTRAINT `foreign_progressive_rollout_feature_id_environment_namespace`
@@ -107,17 +110,13 @@ message ProgressiveRollout {
     DOING = 1;
     DONE = 2;
   }
-  enum Type {
-    MANUAL_SCHEDULE = 0;
-    AUTOMATIC_SCHEDULE = 1;
-  }
   string id = 1;
   string feature_id = 2;
   google.protobuf.Any clause = 3;
   Status status = 4;
-  Type type = 5;
-  int64 created_at = 6;
-  int64 updated_at = 7;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+  bool disabled = 7;
 }
 ```
 
@@ -131,19 +130,14 @@ When `ProgressiveRolloutAutomaticScheduleClause` will be converted into `Progres
 We need to calculate `time` based on `started_at` and `interval`.
 
 ```proto
-message ProgressiveRolloutScheduleClause {
-  message Schedule {
-    int64 time = 1;
-    int32 weight = 2;
-    bool triggered = 3;
-  }
-  string variation_id = 1;
-  repeated Schedule schedules = 2;
+message ProgressiveRolloutSchedule {
+  int64 time = 1;
+  int32 weight = 2;
+  int64 triggered_at = 3;
 }
 
 message ProgressiveRolloutManualScheduleClause {
-  string variation_id = 1;
-  repeated ProgressiveRolloutScheduleClause.Schedule schedules = 2;
+  repeated ProgressiveRolloutSchedule schedules = 1;
 }
 
 message ProgressiveRolloutAutomaticScheduleClause {
@@ -153,10 +147,10 @@ message ProgressiveRolloutAutomaticScheduleClause {
     DAILY = 2;
     WEEKLY = 3;
   }
-  string variation_id = 1;
-  int64 started_at = 2;
-  Interval interval = 3;
-  bool triggered = 4;
+  // The reason of setting `schedules` is to save `triggered_at` in each schedule.
+  repeated ProgressiveRolloutSchedule schedules = 1;
+  Interval interval = 2;
+  int64 increments = 3;
 }
 ```
 
@@ -184,8 +178,8 @@ message GetProgressiveRolloutResponse {
 message UpdateProgressiveRolloutRequest {
   string id = 1;
   string environment_namespace = 2;
-  ChangeProgressiveRolloutManualScheduleClauseCommand change_progressive_rollout_manual_schedule_clause_command = 3;
-  ChangeProgressiveRolloutAutomaticScheduleClauseCommand change_progressive_rollout_automatic_schedule_clause_command = 4;
+  optional ChangeProgressiveRolloutManualScheduleClauseCommand change_progressive_rollout_manual_schedule_clause_command = 3;
+  optional ChangeProgressiveRolloutAutomaticScheduleClauseCommand change_progressive_rollout_automatic_schedule_clause_command = 4;
 }
 
 message UpdateProgressiveRolloutResponse {}
@@ -208,6 +202,10 @@ message ListProgressiveRolloutRequest {
     ASC = 0;
     DESC = 1;
   }
+  enum Type {
+    MANUAL_SCHEDULE = 0;
+    AUTOMATIC_SCHEDULE = 1;
+  }
   string environment_namespace = 1;
   int64 page_size = 2;
   string cursor = 3;
@@ -216,7 +214,7 @@ message ListProgressiveRolloutRequest {
   OrderDirection order_direction = 6;
   optional ProgressiveRollout.Status status = 7;
   string search_keyword = 8;
-  optional ProgressiveRollout.Type type = 9;
+  optional Type type = 9;
 }
 
 message ListProgressiveRolloutResponse {
@@ -230,8 +228,8 @@ message ListProgressiveRolloutResponse {
 ```proto
 message CreateProgressiveRolloutCommand {
   string feature_id = 1;
-  ProgressiveRolloutManualScheduleClause progressive_rollout_manual_schedule_clause = 2;
-  ProgressiveRolloutAutomaticScheduleClause progressive_rollout_automatic_schedule_clause = 3;
+  optional ProgressiveRolloutManualScheduleClause progressive_rollout_manual_schedule_clause = 2;
+  optional ProgressiveRolloutAutomaticScheduleClause progressive_rollout_automatic_schedule_clause = 3;
 }
 
 message DeleteProgressiveRolloutCommand {}
@@ -257,6 +255,8 @@ message ChangeProgressiveRolloutAutomaticScheduleClauseCommand {
 }
 
 message DeleteProgressiveRolloutAutomaticScheduleClauseCommand {}
+
+message ChangeProgressiveRolloutTriggeredAtCommand {}
 ```
 
 ## Backend Changes
