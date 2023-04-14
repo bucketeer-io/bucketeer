@@ -349,6 +349,81 @@ func (s *grpcGatewayService) validateGetEvaluationsRequest(req *gwproto.GetEvalu
 	return nil
 }
 
+/*
+getPrerequisiteUpwards recursively gets the features specified by the targetFeatures as prerequisite.
+*/
+func (s *grpcGatewayService) getPrerequisiteDownwards(targetFeatures, allFeatures map[string]*featureproto.Feature) (map[string]*featureproto.Feature, error) {
+	prerequisites := make(map[string]*featureproto.Feature, 0)
+	for _, f := range targetFeatures {
+		for _, pre := range f.Prerequisites {
+			if _, ok := targetFeatures[pre.FeatureId]; ok {
+				continue
+			}
+			preFeature, ok := allFeatures[pre.FeatureId]
+			if !ok {
+				return nil, ErrFeatureNotFound
+			}
+			prerequisites[preFeature.Id] = preFeature
+		}
+	}
+	if len(prerequisites) == 0 {
+		return targetFeatures, nil
+	}
+	newTargets, err := s.getPrerequisiteDownwards(prerequisites, allFeatures)
+	if err != nil {
+		return nil, err
+	}
+	return s.mapMerge(targetFeatures, newTargets), nil
+}
+
+/*
+getPrerequisiteUpwards recursively gets the features that have the specified targetFeatures as the prerequisite.
+*/
+func (s *grpcGatewayService) getPrerequisiteUpwards(targetFeatures, featuresHavePrerequisite map[string]*featureproto.Feature) (map[string]*featureproto.Feature, error) {
+	upwardsFeatures := make(map[string]*featureproto.Feature, 0)
+	for _, target := range targetFeatures {
+		for _, newTarget := range featuresHavePrerequisite {
+			for _, p := range newTarget.Prerequisites {
+				if p.FeatureId == target.Id {
+					if _, ok := upwardsFeatures[newTarget.Id]; ok {
+						continue
+					}
+					upwardsFeatures[newTarget.Id] = newTarget
+				}
+			}
+		}
+	}
+	if len(upwardsFeatures) == 0 {
+		return targetFeatures, nil
+	}
+	newTargets, err := s.getPrerequisiteUpwards(upwardsFeatures, featuresHavePrerequisite)
+	if err != nil {
+		return nil, err
+	}
+	return s.mapMerge(targetFeatures, newTargets), nil
+}
+
+func (s *grpcGatewayService) getFeaturesHavePrerequisite(fs map[string]*featureproto.Feature) (map[string]*featureproto.Feature, error) {
+	featuresHavePrerequisite := make(map[string]*featureproto.Feature, 0)
+	for _, f := range fs {
+		if len(f.Prerequisites) == 0 {
+			continue
+		}
+		if _, ok := featuresHavePrerequisite[f.Id]; ok {
+			continue
+		}
+		featuresHavePrerequisite[f.Id] = f
+	}
+	return featuresHavePrerequisite, nil
+}
+
+func (*grpcGatewayService) mapMerge(m1, m2 map[string]*featureproto.Feature) map[string]*featureproto.Feature {
+	for k, v := range m2 {
+		m1[k] = v
+	}
+	return m1
+}
+
 func (s *grpcGatewayService) GetEvaluation(
 	ctx context.Context,
 	req *gwproto.GetEvaluationRequest,

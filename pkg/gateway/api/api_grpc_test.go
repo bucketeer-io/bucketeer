@@ -2236,6 +2236,272 @@ func TestGetTargetFeatures(t *testing.T) {
 	}
 }
 
+var allFeaturesForPrerequisiteTest = map[string]*featureproto.Feature{
+	"featureA": {
+		Id:   "featureA",
+		Name: "featureA",
+		Prerequisites: []*featureproto.Prerequisite{
+			{
+				FeatureId: "featureE",
+			},
+			{
+				FeatureId: "featureF",
+			},
+		},
+	},
+	"featureB": {
+		Id:   "featureB",
+		Name: "featureB",
+	},
+	"featureC": {
+		Id:   "featureC",
+		Name: "featureC",
+		Prerequisites: []*featureproto.Prerequisite{
+			{
+				FeatureId: "featureL",
+			},
+		},
+	},
+	"featureD": {
+		Id:   "featureD",
+		Name: "featureD",
+	},
+	"featureE": {
+		Id:   "featureE",
+		Name: "featureE",
+		Prerequisites: []*featureproto.Prerequisite{
+			{
+				FeatureId: "featureG",
+			},
+		},
+	},
+	"featureF": {
+		Id:   "featureF",
+		Name: "featureF",
+	},
+	"featureG": {
+		Id:   "featureG",
+		Name: "featureG",
+		Prerequisites: []*featureproto.Prerequisite{
+			{
+				FeatureId: "featureH",
+			},
+		},
+	},
+	"featureH": {
+		Id:   "featureH",
+		Name: "featureH",
+		Prerequisites: []*featureproto.Prerequisite{
+			{
+				FeatureId: "featureI",
+			},
+			{
+				FeatureId: "featureJ",
+			},
+		},
+	},
+	"featureI": {
+		Id:   "featureI",
+		Name: "featureI",
+		Prerequisites: []*featureproto.Prerequisite{
+			{
+				FeatureId: "featureK",
+			},
+		},
+	},
+	"featureJ": {
+		Id:   "featureJ",
+		Name: "featureJ",
+	},
+	"featureK": {
+		Id:   "featureK",
+		Name: "featureK",
+	},
+	"featureL": {
+		Id:   "featureL",
+		Name: "featureL",
+		Prerequisites: []*featureproto.Prerequisite{
+			{
+				FeatureId: "featureM",
+			},
+			{
+				FeatureId: "featureN",
+			},
+		},
+	},
+	"featureM": {
+		Id:   "featureM",
+		Name: "featureM",
+	},
+	"featureN": {
+		Id:   "featureN",
+		Name: "featureN",
+	},
+}
+
+func TestGetPrerequisiteDownwards(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		target      map[string]*featureproto.Feature
+		expected    map[string]*featureproto.Feature
+		expectedErr error
+	}{
+		{
+			desc: "success: No prerequisites",
+			target: map[string]*featureproto.Feature{
+				"featureB": allFeaturesForPrerequisiteTest["featureB"],
+				"featureD": allFeaturesForPrerequisiteTest["featureD"],
+			},
+			expected: map[string]*featureproto.Feature{
+				"featureB": allFeaturesForPrerequisiteTest["featureB"],
+				"featureD": allFeaturesForPrerequisiteTest["featureD"],
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: Get prerequisites pattern1",
+			target: map[string]*featureproto.Feature{
+				"featureA": allFeaturesForPrerequisiteTest["featureA"],
+			},
+			expected: map[string]*featureproto.Feature{
+				"featureA": allFeaturesForPrerequisiteTest["featureA"],
+				"featureE": allFeaturesForPrerequisiteTest["featureE"],
+				"featureF": allFeaturesForPrerequisiteTest["featureF"],
+				"featureG": allFeaturesForPrerequisiteTest["featureG"],
+				"featureH": allFeaturesForPrerequisiteTest["featureH"],
+				"featureI": allFeaturesForPrerequisiteTest["featureI"],
+				"featureJ": allFeaturesForPrerequisiteTest["featureJ"],
+				"featureK": allFeaturesForPrerequisiteTest["featureK"],
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: Get prerequisites pattern2",
+			target: map[string]*featureproto.Feature{
+				"featureC": allFeaturesForPrerequisiteTest["featureC"],
+				"featureD": allFeaturesForPrerequisiteTest["featureD"],
+			},
+			expected: map[string]*featureproto.Feature{
+				"featureC": allFeaturesForPrerequisiteTest["featureC"],
+				"featureD": allFeaturesForPrerequisiteTest["featureD"],
+				"featureL": allFeaturesForPrerequisiteTest["featureL"],
+				"featureM": allFeaturesForPrerequisiteTest["featureM"],
+				"featureN": allFeaturesForPrerequisiteTest["featureN"],
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: Get prerequisites pattern3",
+			target: map[string]*featureproto.Feature{
+				"featureD": allFeaturesForPrerequisiteTest["featureD"],
+				"featureH": allFeaturesForPrerequisiteTest["featureH"],
+			},
+			expected: map[string]*featureproto.Feature{
+				"featureD": allFeaturesForPrerequisiteTest["featureD"],
+				"featureH": allFeaturesForPrerequisiteTest["featureH"],
+				"featureI": allFeaturesForPrerequisiteTest["featureI"],
+				"featureJ": allFeaturesForPrerequisiteTest["featureJ"],
+				"featureK": allFeaturesForPrerequisiteTest["featureK"],
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			actual, err := gs.getPrerequisiteDownwards(p.target, allFeaturesForPrerequisiteTest)
+			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestGetPrerequisiteUpwards(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		target      map[string]*featureproto.Feature
+		expected    map[string]*featureproto.Feature
+		expectedErr error
+	}{
+		{
+			desc: "success: No prerequisites",
+			target: map[string]*featureproto.Feature{
+				"featureA": allFeaturesForPrerequisiteTest["featureA"],
+				"featureB": allFeaturesForPrerequisiteTest["featureB"],
+				"featureC": allFeaturesForPrerequisiteTest["featureC"],
+				"featureD": allFeaturesForPrerequisiteTest["featureD"],
+			},
+			expected: map[string]*featureproto.Feature{
+				"featureA": allFeaturesForPrerequisiteTest["featureA"],
+				"featureB": allFeaturesForPrerequisiteTest["featureB"],
+				"featureC": allFeaturesForPrerequisiteTest["featureC"],
+				"featureD": allFeaturesForPrerequisiteTest["featureD"],
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: Get prerequisites pattern1",
+			target: map[string]*featureproto.Feature{
+				"featureF": allFeaturesForPrerequisiteTest["featureF"],
+			},
+			expected: map[string]*featureproto.Feature{
+				"featureA": allFeaturesForPrerequisiteTest["featureA"],
+				"featureF": allFeaturesForPrerequisiteTest["featureF"],
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: Get prerequisites pattern2",
+			target: map[string]*featureproto.Feature{
+				"featureK": allFeaturesForPrerequisiteTest["featureK"],
+				"featureE": allFeaturesForPrerequisiteTest["featureE"],
+			},
+			expected: map[string]*featureproto.Feature{
+				"featureA": allFeaturesForPrerequisiteTest["featureA"],
+				"featureE": allFeaturesForPrerequisiteTest["featureE"],
+				"featureG": allFeaturesForPrerequisiteTest["featureG"],
+				"featureH": allFeaturesForPrerequisiteTest["featureH"],
+				"featureI": allFeaturesForPrerequisiteTest["featureI"],
+				"featureK": allFeaturesForPrerequisiteTest["featureK"],
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: Get prerequisites pattern3",
+			target: map[string]*featureproto.Feature{
+				"featureM": allFeaturesForPrerequisiteTest["featureM"],
+				"featureN": allFeaturesForPrerequisiteTest["featureN"],
+			},
+			expected: map[string]*featureproto.Feature{
+				"featureC": allFeaturesForPrerequisiteTest["featureC"],
+				"featureL": allFeaturesForPrerequisiteTest["featureL"],
+				"featureM": allFeaturesForPrerequisiteTest["featureM"],
+				"featureN": allFeaturesForPrerequisiteTest["featureN"],
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			featuresHavePrerequisite, err := gs.getFeaturesHavePrerequisite(allFeaturesForPrerequisiteTest)
+			assert.NoError(t, err)
+			actual, err := gs.getPrerequisiteUpwards(p.target, featuresHavePrerequisite)
+			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func newUUID(t *testing.T) string {
 	t.Helper()
 	id, err := uuid.NewUUID()
