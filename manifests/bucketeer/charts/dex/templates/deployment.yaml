@@ -94,6 +94,9 @@ spec:
               readOnly: true
             - name: db
               mountPath: /etc/dex/db
+            - name: dex-web-ui
+              mountPath: /etc/dex/web
+              readOnly: true
           ports:
             - name: https
               containerPort: {{ .Values.service.internalPort }}
@@ -126,3 +129,6 @@ spec:
             name: {{ template "dex.fullname" . }}-envoy-config
         - name: db
           emptyDir: {}
+        - name: dex-web-ui
+          hostPath:
+            path: ./web

@@ -36,3 +36,17 @@ data:
           {{- range .Values.config.client.redirectURIs }}
           - {{ . }}
           {{- end }}
+    enablePasswordDB: true
+    oauth2:
+      skipApprovalScreen: true
+    staticPasswords:
+      - email: "admin@gmail.com"
+        # bcrypt hash of the string "password": $(echo password | htpasswd -BinC 10 admin | cut -d: -f2)
+        hash: "$2y$10$1uGIoifceMnZFBAvi5Gz.e2Qhxtv7jn8eTw3kRSM6sOIUsTdhzKuq"
+        username: "admin"
+        userID: "admin@gmail.com"
+    frontend:
+      issuer: dex
+      logoURL: theme/logo.png
+      dir: /etc/dex/web
+      theme: light
