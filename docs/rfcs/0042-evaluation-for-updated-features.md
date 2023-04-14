@@ -21,7 +21,10 @@ The server checks it against the updatedAt value of the feature flags, and only 
 
 As an exception, the following feature flags must be evaluated regardless of the timestamp value.
 - Feature flags that depend on the feature flags that need to be evaluated
+- (if user attributes have been updated) Feature flags with targeting rules
 
+If user attributes have been updated, the result of the evaluation may also change.
+Since the server has to know that update, the SDK sends the `IsUserAttributesChanged` flag to the server as a request parameter like the timestamp.
 
 In addition, the following changes are required in both the server and SDK implementations:
 - Since only the updated feature flags are evaluated and returned, the SDK's implementation for updating local data needs to be changed.
@@ -70,15 +73,15 @@ Therefore, featureA also needs to be re-evaluated.
 | featureF | featureA, featureF |
 
 #### Pattern3
-Assuming only featureE and featureK were updated after the last evaluation.
+Assuming only featureE and featureK have targeting rules and user attributes are updated.
 
 featureK is a part of the chain of dependencies, where the featureA depends on featureE, and featureE depends on featureG...
 
 In this case, we must evaluate all feature flags involved in dependencies.
 
-| updated            | evaluated                                                  |
-|--------------------|------------------------------------------------------------|
-| featureE, featureK | featureA, featureE, featureG, featureH, featureI, featureK |
+| with targeting rules | evaluated                                                  |
+|----------------------|------------------------------------------------------------|
+| featureE, featureK   | featureA, featureE, featureG, featureH, featureI, featureK |
 
 
 ### SDK
@@ -104,7 +107,14 @@ During implementation changes, we ensure that any version of the SDK will work p
 
 1. Add a function to get the feature flag dependencies.
 2. Change the server behavior to put archived feature flags to Redis.(The server does not return archived flags to the SDK at this time.)
-3. Add a `EvaluatedAt` field to GetEvaluationsRequest object.
+3. Add a `EvaluatedAt` and `IsUserAttributesChanged` fields to GetEvaluationsRequest object.
 4. Add implementation to check the timestamp `EvaluatedAt` against feature flag's `UpdatedAt` field.(`UserEvaluationsID` is also continue to be accepted.)
-5. Modify each SDK to support `EvaluatedAt` and differential update the local data.
-6. Make GetEvaluationsRequest's `UserEvaluationsID` field deprecated and `Tag` field optional.
+5. Add implementation to evaluate the features that have targeting rules when `IsUserAttributesChanged` is true.
+6. Modify each SDK to support `EvaluatedAt` and differential update the local data.
+7. Make GetEvaluationsRequest's `UserEvaluationsID` field deprecated and `Tag` field optional.
+
+## What not to do
+
+When user attributes are updated, we do not detect which attributes have changed.
+We can do it strictly, but it also makes the code more complex.
+Given the number of feature flags with targeting rules, the impact is considered to be limited.
