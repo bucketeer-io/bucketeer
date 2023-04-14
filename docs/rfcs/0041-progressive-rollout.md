@@ -81,7 +81,6 @@ CREATE TABLE IF NOT EXISTS `ops_progressive_rollout` (
   `status` INT(11) NOT NULL,
   `created_at` BIGINT(20) NOT NULL,
   `updated_at` BIGINT(20) NOT NULL,
-  `disabled` TINYINT(1) NOT NULL DEFAULT '0',
   `environment_namespace` VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`, `environment_namespace`),
   CONSTRAINT `foreign_progressive_rollout_feature_id_environment_namespace`
@@ -105,10 +104,16 @@ The reason of using `google.protobuf.Any` is for ease of expansion.
 
 ```proto
 message ProgressiveRollout {
+  enum Type {
+    MANUAL_SCHEDULE = 0;
+    AUTOMATIC_SCHEDULE = 1;
+  }
   enum Status {
     WAITING = 0;
-    DOING = 1;
-    DONE = 2;
+    RUNNING = 1;
+    FINISHED = 2;
+	 // When the operation of Progressive Rollout is stopped temporary, `Status` is `DISABLED`.
+    DISABLED = 3;
   }
   string id = 1;
   string feature_id = 2;
@@ -116,8 +121,6 @@ message ProgressiveRollout {
   Status status = 4;
   int64 created_at = 5;
   int64 updated_at = 6;
-  // When the operation of Progressive Rollout is stopped temporary, `disabled` is true.
-  bool disabled = 7;
 }
 ```
 
@@ -125,10 +128,6 @@ message ProgressiveRollout {
 
 `ProgressiveRolloutManualScheduleClause` is set when Manual Setting is used by users.
 `ProgressiveRolloutAutomaticScheduleClause` is set when Template Setting is used by users.
-
-**NOTE**
-When `ProgressiveRolloutAutomaticScheduleClause` will be converted into `ProgressiveRollout`,
-We need to calculate `time` based on `started_at` and `interval`.
 
 ```proto
 message ProgressiveRolloutSchedule {
@@ -203,10 +202,6 @@ message ListProgressiveRolloutRequest {
     ASC = 0;
     DESC = 1;
   }
-  enum Type {
-    MANUAL_SCHEDULE = 0;
-    AUTOMATIC_SCHEDULE = 1;
-  }
   string environment_namespace = 1;
   int64 page_size = 2;
   string cursor = 3;
@@ -215,7 +210,7 @@ message ListProgressiveRolloutRequest {
   OrderDirection order_direction = 6;
   optional ProgressiveRollout.Status status = 7;
   string search_keyword = 8;
-  optional Type type = 9;
+  optional ProgressiveRollout.Type type = 9;
 }
 
 message ListProgressiveRolloutResponse {
