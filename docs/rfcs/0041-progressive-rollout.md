@@ -116,6 +116,7 @@ message ProgressiveRollout {
   Status status = 4;
   int64 created_at = 5;
   int64 updated_at = 6;
+  // When the operation of Progressive Rollout is stopped temporary, `disabled` is true.
   bool disabled = 7;
 }
 ```
