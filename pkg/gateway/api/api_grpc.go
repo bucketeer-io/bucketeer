@@ -350,7 +350,7 @@ func (s *grpcGatewayService) validateGetEvaluationsRequest(req *gwproto.GetEvalu
 }
 
 /*
-getPrerequisiteUpwards recursively gets the features specified by the targetFeatures as prerequisite.
+getPrerequisiteDownwards recursively gets the features specified as prerequisite by the targetFeatures.
 */
 func (s *grpcGatewayService) getPrerequisiteDownwards(
 	targetFeatures, allFeatures map[string]*featureproto.Feature,
@@ -381,7 +381,7 @@ func (s *grpcGatewayService) getPrerequisiteDownwards(
 /*
 getPrerequisiteUpwards recursively gets the features that have the specified targetFeatures as the prerequisite.
 */
-func (s *grpcGatewayService) getPrerequisiteUpwards(
+func (s *grpcGatewayService) getPrerequisiteUpwards( // nolint:unused
 	targetFeatures, featuresHavePrerequisite map[string]*featureproto.Feature,
 ) (map[string]*featureproto.Feature, error) {
 	upwardsFeatures := make(map[string]*featureproto.Feature, 0)
@@ -407,7 +407,7 @@ func (s *grpcGatewayService) getPrerequisiteUpwards(
 	return s.mapMerge(targetFeatures, newTargets), nil
 }
 
-func (s *grpcGatewayService) getFeaturesHavePrerequisite(
+func (s *grpcGatewayService) getFeaturesHavePrerequisite( // nolint:unused
 	fs map[string]*featureproto.Feature,
 ) (map[string]*featureproto.Feature, error) {
 	featuresHavePrerequisite := make(map[string]*featureproto.Feature, 0)
