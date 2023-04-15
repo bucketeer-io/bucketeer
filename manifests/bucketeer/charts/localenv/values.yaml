@@ -14,13 +14,15 @@ nginx:
       - 192.168.49.2
 
 mysql:
-  initdbScriptsConfigMap: mysql-initdb
+  #initdbScriptsConfigMap: mysql-initdb
+  diagnosticMode:
+    enabled: true
   volumePermissions:
     enabled: true
   auth:
     database: "bucketeer"
     username: "bucketeer"
-    existingSecret: "mysql-secrets"
+    # existingSecret: "mysql-secrets"
 
 bq:
   project: "default"
