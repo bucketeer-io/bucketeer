@@ -5,6 +5,9 @@ vault:
     enabled: true 
     devRootToken: "root"
 
+redis:
+  architecture: "standalone"
+
 nginx:
   controller:
     service:
