@@ -283,6 +283,79 @@ func TestAddVariation(t *testing.T) {
 	}
 }
 
+func TestAssignArchive(t *testing.T) {
+	t.Parallel()
+	f := makeFeature("test-feature")
+	patterns := []struct {
+		desc              string
+		archived          bool
+		enabled           bool
+		offVariation      string
+		userID            string
+		flagVariations    map[string]string
+		expectedReason    *proto.Reason
+		expectedVariation *proto.Variation
+		expectedError     error
+	}{
+		{
+			desc:              "success: reason off variation because archive is false enable is false offVariation is not empty",
+			archived:          false,
+			enabled:           false,
+			offVariation:      "variation-C",
+			userID:            "user5",
+			flagVariations:    map[string]string{},
+			expectedReason:    &proto.Reason{Type: proto.Reason_OFF_VARIATION},
+			expectedVariation: f.Variations[2],
+			expectedError:     nil,
+		},
+		{
+			desc:              "success: reason default because archive is false enable is false offVariation is empty",
+			archived:          false,
+			enabled:           false,
+			offVariation:      "",
+			userID:            "user5",
+			flagVariations:    map[string]string{},
+			expectedReason:    &proto.Reason{Type: proto.Reason_DEFAULT},
+			expectedVariation: f.Variations[1],
+			expectedError:     nil,
+		},
+		{
+			desc:              "success: reason archive because archive is true enable is false",
+			archived:          true,
+			enabled:           false,
+			offVariation:      "",
+			userID:            "user5",
+			flagVariations:    map[string]string{},
+			expectedReason:    &proto.Reason{Type: proto.Reason_ARCHIVE},
+			expectedVariation: &feature.Variation{},
+			expectedError:     nil,
+		},
+		{
+			desc:              "success: reason archive because archive is true enable is true",
+			archived:          true,
+			enabled:           true,
+			offVariation:      "",
+			userID:            "user4",
+			flagVariations:    map[string]string{},
+			expectedReason:    &proto.Reason{Type: proto.Reason_ARCHIVE},
+			expectedVariation: &feature.Variation{},
+			expectedError:     nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			user := &userproto.User{Id: p.userID}
+			f.Archived = p.archived
+			f.Enabled = p.enabled
+			f.OffVariation = p.offVariation
+			reason, variation, err := f.assignUser(user, nil, p.flagVariations)
+			assert.Equal(t, p.expectedReason, reason)
+			assert.Equal(t, p.expectedVariation, variation)
+			assert.Equal(t, p.expectedError, err)
+		})
+	}
+}
+
 func TestAssignUserOffVariation(t *testing.T) {
 	t.Parallel()
 	f := makeFeature("test-feature")

@@ -309,6 +309,17 @@ func (s *grpcGatewayService) GetEvaluations(
 			Evaluations: nil,
 		}, nil
 	}
+	return s.getEvaluationsUsingUIED(ctx, req, envAPIKey, features)
+}
+
+// TODO Rename
+func (s *grpcGatewayService) getEvaluationsUsingUIED(
+	ctx context.Context,
+	req *gwproto.GetEvaluationsRequest,
+	envAPIKey *accountproto.EnvironmentAPIKey,
+	features []*featureproto.Feature,
+) (*gwproto.GetEvaluationsResponse, error) {
+	// TODO Omit archived features
 	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, features)
 	if req.UserEvaluationsId == ueid {
 		return &gwproto.GetEvaluationsResponse{
@@ -334,6 +345,43 @@ func (s *grpcGatewayService) GetEvaluations(
 		Evaluations:       evaluations,
 		UserEvaluationsId: ueid,
 	}, nil
+}
+
+func (s *grpcGatewayService) getEvaluationsUsingTimestamp(
+	ctx context.Context,
+	req *gwproto.GetEvaluationsRequest,
+	envAPIKey *accountproto.EnvironmentAPIKey,
+	features []*featureproto.Feature,
+) (*gwproto.GetEvaluationsResponse, error) {
+	updatedFeatures := s.getUpdatedFeatures(features, req.EvaluatedAt)
+	// TODO call getPrerequisiteUpward()
+	evaluations, err := s.evaluateFeatures(ctx, req.User, updatedFeatures, envAPIKey.EnvironmentNamespace, req.Tag)
+	if err != nil {
+		s.logger.Error(
+			"Failed to evaluate features",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("userId", req.User.Id),
+			)...,
+		)
+		return nil, ErrInternal
+	}
+	return &gwproto.GetEvaluationsResponse{
+		State:       featureproto.UserEvaluations_FULL,
+		Evaluations: evaluations,
+	}, nil
+}
+
+func (s *grpcGatewayService) getUpdatedFeatures(fs []*featureproto.Feature, sdkUpdatedAt int64) []*featureproto.Feature {
+	features := make([]*featureproto.Feature, 0)
+	for _, f := range fs {
+		if sdkUpdatedAt > f.UpdatedAt {
+			continue
+		}
+		features = append(features, f)
+	}
+	return features
 }
 
 func (s *grpcGatewayService) validateGetEvaluationsRequest(req *gwproto.GetEvaluationsRequest) error {
@@ -591,6 +639,9 @@ func (s *grpcGatewayService) evaluateFeatures(
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
 		feature := &featuredomain.Feature{Feature: f}
+		if feature.Archived {
+			continue
+		}
 		for _, id := range feature.ListSegmentIDs() {
 			mapIDs[id] = struct{}{}
 		}

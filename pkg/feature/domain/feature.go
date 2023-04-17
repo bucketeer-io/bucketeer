@@ -110,6 +110,9 @@ func (f *Feature) assignUser(
 	segmentUsers []*feature.SegmentUser,
 	flagVariations map[string]string,
 ) (*feature.Reason, *feature.Variation, error) {
+	if f.Archived {
+		return &feature.Reason{Type: feature.Reason_ARCHIVE}, &feature.Variation{}, nil
+	}
 	for _, pf := range f.Prerequisites {
 		variation, ok := flagVariations[pf.FeatureId]
 		if !ok {

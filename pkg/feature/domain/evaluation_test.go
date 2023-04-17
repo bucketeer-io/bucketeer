@@ -36,25 +36,31 @@ func TestEvaluateFeature(t *testing.T) {
 	f2 := makeFeature("fID-2")
 	f2.Tags = append(f2.Tags, "tag-1")
 	patterns := []struct {
+		desc          string
 		enabled       bool
 		offVariation  string
 		userID        string
+		archived      bool
 		prerequisite  []*featureproto.Prerequisite
 		expected      *featureproto.Evaluation
 		expectedError error
 	}{
 		{
+			desc:          "error: variation not found",
 			enabled:       false,
 			offVariation:  "not-found",
 			userID:        "uID-0",
+			archived:      false,
 			prerequisite:  []*featureproto.Prerequisite{},
 			expected:      nil,
 			expectedError: errVariationNotFound,
 		},
 		{
+			desc:         "success: reason off variation",
 			enabled:      false,
 			offVariation: "variation-A",
 			userID:       "uID-0",
+			archived:     false,
 			prerequisite: []*featureproto.Prerequisite{},
 			expected: &featureproto.Evaluation{
 				Id:             EvaluationID(f.Id, f.Version, "uID-0"),
@@ -72,9 +78,11 @@ func TestEvaluateFeature(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			desc:         "success: reason default because enabled is false and offVariation is empty",
 			enabled:      false,
 			offVariation: "",
 			userID:       "uID-0",
+			archived:     false,
 			prerequisite: []*featureproto.Prerequisite{},
 			expected: &featureproto.Evaluation{
 				Id:             EvaluationID(f.Id, f.Version, "uID-0"),
@@ -92,9 +100,11 @@ func TestEvaluateFeature(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			desc:         "success: reason default",
 			enabled:      true,
 			offVariation: "",
 			userID:       "uID-2",
+			archived:     false,
 			prerequisite: []*featureproto.Prerequisite{},
 			expected: &featureproto.Evaluation{
 				Id:             EvaluationID(f.Id, f.Version, "uID-2"),
@@ -112,9 +122,11 @@ func TestEvaluateFeature(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			desc:         "success: reason default with offVariation",
 			enabled:      true,
 			offVariation: "v1",
 			userID:       "uID-2",
+			archived:     false,
 			prerequisite: []*featureproto.Prerequisite{},
 			expected: &featureproto.Evaluation{
 				Id:             EvaluationID(f.Id, f.Version, "uID-2"),
@@ -132,9 +144,11 @@ func TestEvaluateFeature(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			desc:         "success: reason prerequisite",
 			enabled:      true,
 			offVariation: "variation-A",
 			userID:       "uID-2",
+			archived:     false,
 			prerequisite: []*featureproto.Prerequisite{
 				{
 					FeatureId:   f1.Id,
@@ -157,9 +171,11 @@ func TestEvaluateFeature(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			desc:         "success: reason default with prerequisite",
 			enabled:      true,
 			offVariation: "",
 			userID:       "uID-2",
+			archived:     false,
 			prerequisite: []*featureproto.Prerequisite{
 				{
 					FeatureId:   f2.Id,
@@ -181,21 +197,43 @@ func TestEvaluateFeature(t *testing.T) {
 			},
 			expectedError: nil,
 		},
+		{
+			desc:         "success: reason archived",
+			enabled:      true,
+			offVariation: "variation-A",
+			userID:       "uID-0",
+			archived:     true,
+			prerequisite: []*featureproto.Prerequisite{},
+			expected: &featureproto.Evaluation{
+				Id:             EvaluationID(f.Id, f.Version, "uID-0"),
+				FeatureId:      "fID-0",
+				FeatureVersion: 1,
+				UserId:         "uID-0",
+				VariationId:    "",
+				VariationValue: "",
+				Variation:      &featureproto.Variation{},
+				Reason:         &featureproto.Reason{Type: featureproto.Reason_ARCHIVE},
+			},
+			expectedError: nil,
+		},
 	}
 
 	for _, p := range patterns {
-		user := &userproto.User{Id: p.userID}
-		f.Enabled = p.enabled
-		f.OffVariation = p.offVariation
-		f.Prerequisites = p.prerequisite
-		segmentUser := map[string][]*featureproto.SegmentUser{}
-		evaluation, err := EvaluateFeatures([]*featureproto.Feature{f.Feature, f1.Feature, f2.Feature}, user, segmentUser, "tag-1")
-		assert.Equal(t, p.expectedError, err)
-		if evaluation != nil {
-			actual, err := findEvaluation(evaluation.Evaluations, f.Id)
-			assert.NoError(t, err)
-			assert.True(t, proto.Equal(p.expected, actual))
-		}
+		t.Run(p.desc, func(t *testing.T) {
+			user := &userproto.User{Id: p.userID}
+			f.Enabled = p.enabled
+			f.OffVariation = p.offVariation
+			f.Prerequisites = p.prerequisite
+			f.Archived = p.archived
+			segmentUser := map[string][]*featureproto.SegmentUser{}
+			evaluation, err := EvaluateFeatures([]*featureproto.Feature{f.Feature, f1.Feature, f2.Feature}, user, segmentUser, "tag-1")
+			assert.Equal(t, p.expectedError, err)
+			if evaluation != nil {
+				actual, err := findEvaluation(evaluation.Evaluations, f.Id)
+				assert.NoError(t, err)
+				assert.True(t, proto.Equal(p.expected, actual))
+			}
+		})
 	}
 }
 

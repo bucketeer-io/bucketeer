@@ -58,7 +58,6 @@ func EvaluateFeatures(
 		}
 		// VariationId is used to check if prerequisite flag's result is what user expects it to be.
 		flagVariations[f.Id] = variation.Id
-
 		// We need to filter evaluations because we fetch all features in the environment namespace.
 		if exist := tagExist(f.Tags, targetTag); !exist {
 			continue
