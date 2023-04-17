@@ -1,3 +1,4 @@
+import { COLORS } from '@/constants/colorPattern';
 import { SerializedError } from '@reduxjs/toolkit';
 import { FC, memo, useState } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
@@ -79,9 +80,22 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
     if (!timeseries) {
       return <p>No data</p>;
     }
+
+    const dataLabels = variationTSs.map((vt, i) => {
+      const { name, value } = variationMap.get(vt.variationId);
+      const variation = name ? `${name} - ${value}` : value;
+      return {
+        variation:
+          variation.length > 50
+            ? `${variation.substring(0, 50)}...`
+            : variation,
+        backgroundColor: COLORS[i % COLORS.length],
+      };
+    });
+
     return (
       <div className="p-10 bg-gray-100">
-        <div className="bg-white rounded-md p-3 border ">
+        <div className="bg-white rounded-md p-3 border">
           <Select
             options={typeOptions}
             className={classNames('flex-none w-[200px]')}
@@ -94,6 +108,55 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
             timeseries={timeseries}
             data={data}
           />
+          <div className="mt-8 flow-root">
+            <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+              <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-300">
+                    <thead className="">
+                      <tr>
+                        <td className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-800 sm:pl-6">
+                          Variation
+                        </td>
+                        <td className="px-3 py-3.5 text-left text-sm font-semibold text-gray-800">
+                          Total evaluations
+                        </td>
+                        <td className="w-[112px]">
+                          <Select
+                            options={typeOptions}
+                            className={classNames('mt-1 w-[300px]')}
+                            value={typeOptions.find((o) => o.value === type)}
+                            onChange={handleChange}
+                          />
+                        </td>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {dataLabels.map(
+                        ({ variation, backgroundColor }, index) => (
+                          <tr key={index}>
+                            <td className="p-4 text-sm text-gray-900 flex space-x-2">
+                              <div
+                                className="w-4 h-4"
+                                style={{
+                                  backgroundColor,
+                                }}
+                              />
+                              <span className="">{variation}</span>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 w-1/4">
+                              100
+                            </td>
+                            <td className="w-1/4" />
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

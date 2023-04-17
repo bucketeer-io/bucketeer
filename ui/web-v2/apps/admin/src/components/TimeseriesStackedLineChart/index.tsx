@@ -18,12 +18,13 @@ export const TimeseriesStackedLineChart: FC<TimeseriesStackedLineChartProps> =
       labels: timeseries.map((t) => new Date(t * 1000)),
       datasets: dataLabels.map((e, i) => {
         return {
-          label: e,
+          label: e.length > 40 ? `${e.substring(0, 40)}...` : e,
           data: data[i],
           backgroundColor: COLORS[i % COLORS.length],
         };
       }),
     };
+    console.log('chartData', chartData);
     const options: ChartOptions = {
       title: {
         display: true,
