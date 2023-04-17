@@ -356,6 +356,31 @@ func (s *grpcGatewayService) getPrerequisiteDownwards(
 	targetFeatures, allFeatures map[string]*featureproto.Feature,
 ) (map[string]*featureproto.Feature, error) {
 	prerequisites := make(map[string]*featureproto.Feature, 0)
+	// depth first search
+	queue := []*featureproto.Feature{}
+	for _, f := range targetFeatures {
+		queue = append(queue, f)
+	}
+	for len(queue) > 0 {
+		f := queue[0]
+		for _, p := range f.Prerequisites {
+			preFeature, ok := allFeatures[p.FeatureId]
+			if !ok {
+				return nil, ErrFeatureNotFound
+			}
+			prerequisites[preFeature.Id] = preFeature
+			queue = append(queue, preFeature)
+		}
+		queue = queue[1:]
+	}
+	if len(prerequisites) == 0 {
+		return targetFeatures, nil
+	}
+	return s.mapMerge(targetFeatures, prerequisites), nil
+}
+	targetFeatures, allFeatures map[string]*featureproto.Feature,
+) (map[string]*featureproto.Feature, error) {
+	prerequisites := make(map[string]*featureproto.Feature, 0)
 	for _, f := range targetFeatures {
 		for _, pre := range f.Prerequisites {
 			if _, ok := targetFeatures[pre.FeatureId]; ok {
