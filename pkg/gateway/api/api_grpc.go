@@ -380,32 +380,36 @@ func (s *grpcGatewayService) getPrerequisiteDownwards(
 }
 
 /*
-getPrerequisiteUpwards recursively gets the features that have the specified targetFeatures as the prerequisite.
+getPrerequisiteUpwards gets the features that have the specified targetFeatures as the prerequisite.
 */
 func (s *grpcGatewayService) getPrerequisiteUpwards( // nolint:unused
 	targetFeatures, featuresHavePrerequisite map[string]*featureproto.Feature,
 ) (map[string]*featureproto.Feature, error) {
 	upwardsFeatures := make(map[string]*featureproto.Feature, 0)
-	for _, target := range targetFeatures {
+	// depth first search
+	queue := make([]*featureproto.Feature, 0)
+	for _, f := range targetFeatures {
+		queue = append(queue, f)
+	}
+	for len(queue) > 0 {
+		f := queue[0]
 		for _, newTarget := range featuresHavePrerequisite {
 			for _, p := range newTarget.Prerequisites {
-				if p.FeatureId == target.Id {
+				if p.FeatureId == f.Id {
 					if _, ok := upwardsFeatures[newTarget.Id]; ok {
 						continue
 					}
 					upwardsFeatures[newTarget.Id] = newTarget
+					queue = append(queue, newTarget)
 				}
 			}
 		}
+		queue = queue[1:]
 	}
 	if len(upwardsFeatures) == 0 {
 		return targetFeatures, nil
 	}
-	newTargets, err := s.getPrerequisiteUpwards(upwardsFeatures, featuresHavePrerequisite)
-	if err != nil {
-		return nil, err
-	}
-	return s.mapMerge(targetFeatures, newTargets), nil
+	return s.mapMerge(targetFeatures, upwardsFeatures), nil
 }
 
 func (s *grpcGatewayService) getFeaturesHavePrerequisite( // nolint:unused
