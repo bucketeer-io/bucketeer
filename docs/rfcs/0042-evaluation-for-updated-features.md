@@ -35,7 +35,7 @@ We need to modify the proto like below.
     string feature_id = 4 [deprecated = true]; // instead, use GetEvaluation API  
     bucketeer.event.client.SourceId source_id = 5;  
 +   int64 evaluated_at = 6;  
-+   bool is_user_attributes_changed = 7;  
++   bool is_user_attributes_updated = 7;  
   }
 ```
 
