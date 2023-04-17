@@ -27,7 +27,6 @@ export const TimeseriesStackedLineChart: FC<TimeseriesStackedLineChartProps> =
         };
       }),
     };
-
     const options: ChartOptions = {
       title: {
         display: true,
