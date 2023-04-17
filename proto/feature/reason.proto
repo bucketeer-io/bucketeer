@@ -25,6 +25,7 @@ message Reason {
     CLIENT = 4;
     OFF_VARIATION = 5;
     PREREQUISITE = 6;
+    ARCHIVE = 7;
   }
   Type type = 1;
   string rule_id = 2;

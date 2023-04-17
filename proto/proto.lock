@@ -10806,6 +10806,10 @@
               {
                 "name": "PREREQUISITE",
                 "integer": 6
+              },
+              {
+                "name": "ARCHIVE",
+                "integer": 7
               }
             ]
           }
