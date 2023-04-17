@@ -84,8 +84,10 @@ message ChangeWebhookClauseCommand {
 
 message CreateProgressiveRolloutCommand {
   string feature_id = 1;
-  optional ProgressiveRolloutManualScheduleClause progressive_rollout_manual_schedule_clause = 2;
-  optional ProgressiveRolloutAutomaticScheduleClause progressive_rollout_automatic_schedule_clause = 3;
+  optional ProgressiveRolloutManualScheduleClause
+      progressive_rollout_manual_schedule_clause = 2;
+  optional ProgressiveRolloutAutomaticScheduleClause
+      progressive_rollout_automatic_schedule_clause = 3;
 }
 
 message DeleteProgressiveRolloutCommand {}

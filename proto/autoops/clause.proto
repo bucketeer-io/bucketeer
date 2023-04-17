@@ -76,7 +76,8 @@ message ProgressiveRolloutAutomaticScheduleClause {
     DAILY = 2;
     WEEKLY = 3;
   }
-  // The reason of setting `schedules` is to save `triggered_at` in each schedule.
+  // The reason of setting `schedules` is to save `triggered_at` in each
+  // schedule.
   repeated ProgressiveRolloutSchedule schedules = 1;
   Interval interval = 2;
   int64 increments = 3;
