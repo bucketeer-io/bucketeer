@@ -12497,6 +12497,16 @@
                 "id": 5,
                 "name": "source_id",
                 "type": "bucketeer.event.client.SourceId"
+              },
+              {
+                "id": 6,
+                "name": "evaluated_at",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "is_user_attributes_updated",
+                "type": "bool"
               }
             ]
           },
