@@ -239,14 +239,15 @@ service AutoOpsService {
   rpc UpdateWebhook(UpdateWebhookRequest) returns (UpdateWebhookResponse) {}
   rpc DeleteWebhook(DeleteWebhookRequest) returns (DeleteWebhookResponse) {}
   rpc ListWebhooks(ListWebhooksRequest) returns (ListWebhooksResponse) {}
-  rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
-      returns (CreateProgressiveRolloutResponse) {}
-  rpc GetProgressiveRollout(GetProgressiveRolloutRequest)
-      returns (GetProgressiveRolloutResponse) {}
-  rpc DeleteProgressiveRollout(DeleteProgressiveRolloutRequest)
-      returns (DeleteProgressiveRolloutResponse) {}
-  rpc ListProgressiveRollout(ListProgressiveRolloutRequest)
-      returns (ListProgressiveRolloutResponse) {}
-  rpc ExecuteProgressiveRollout(ExecuteProgressiveRolloutRequest)
-      returns (ExecuteProgressiveRolloutResponse) {}
+  // TODO: Implement the following methods
+  // rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
+  //     returns (CreateProgressiveRolloutResponse) {}
+  // rpc GetProgressiveRollout(GetProgressiveRolloutRequest)
+  //     returns (GetProgressiveRolloutResponse) {}
+  // rpc DeleteProgressiveRollout(DeleteProgressiveRolloutRequest)
+  //     returns (DeleteProgressiveRolloutResponse) {}
+  // rpc ListProgressiveRollout(ListProgressiveRolloutRequest)
+  //     returns (ListProgressiveRolloutResponse) {}
+  // rpc ExecuteProgressiveRollout(ExecuteProgressiveRolloutRequest)
+  //     returns (ExecuteProgressiveRolloutResponse) {}
 }
