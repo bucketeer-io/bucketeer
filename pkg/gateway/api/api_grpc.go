@@ -363,12 +363,9 @@ func (s *grpcGatewayService) getPrerequisiteDownwards(
 	for _, f := range allFeatures {
 		allFeaturesMap[f.Id] = f
 	}
-	prerequisites := make(map[string]*featureproto.Feature, 0)
+	prerequisites := make(map[string]*featureproto.Feature)
 	// depth first search
-	queue := make([]*featureproto.Feature, 0)
-	for _, f := range targetFeatures {
-		queue = append(queue, f)
-	}
+	queue := append([]*featureproto.Feature{}, targetFeatures...)
 	for len(queue) > 0 {
 		f := queue[0]
 		for _, p := range f.Prerequisites {
@@ -402,12 +399,9 @@ func (s *grpcGatewayService) getPrerequisiteUpwards( // nolint:unused
 	for _, f := range targetFeatures {
 		targetFeaturesMap[f.Id] = f
 	}
-	upwardsFeatures := make(map[string]*featureproto.Feature, 0)
+	upwardsFeatures := make(map[string]*featureproto.Feature)
 	// depth first search
-	queue := make([]*featureproto.Feature, 0)
-	for _, f := range targetFeatures {
-		queue = append(queue, f)
-	}
+	queue := append([]*featureproto.Feature{}, targetFeatures...)
 	for len(queue) > 0 {
 		f := queue[0]
 		for _, newTarget := range featuresHavePrerequisite {
@@ -437,7 +431,7 @@ func (s *grpcGatewayService) getPrerequisiteUpwards( // nolint:unused
 func (s *grpcGatewayService) getFeaturesHavePrerequisite( // nolint:unused
 	fs []*featureproto.Feature,
 ) []*featureproto.Feature {
-	featuresHavePrerequisite := make(map[string]*featureproto.Feature, 0)
+	featuresHavePrerequisite := make(map[string]*featureproto.Feature)
 	for _, f := range fs {
 		if len(f.Prerequisites) == 0 {
 			continue
@@ -955,7 +949,7 @@ func (s *grpcGatewayService) containsInvalidTimestampError(errs map[string]*gwpr
 func (*grpcGatewayService) mergeMaps(
 	maps ...map[string]*gwproto.RegisterEventsResponse_Error,
 ) map[string]*gwproto.RegisterEventsResponse_Error {
-	result := make(map[string]*gwproto.RegisterEventsResponse_Error, 0)
+	result := make(map[string]*gwproto.RegisterEventsResponse_Error)
 	for _, m := range maps {
 		for k, v := range m {
 			result[k] = v
