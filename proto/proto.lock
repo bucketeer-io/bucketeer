@@ -3153,31 +3153,6 @@
                 "name": "ListWebhooks",
                 "in_type": "ListWebhooksRequest",
                 "out_type": "ListWebhooksResponse"
-              },
-              {
-                "name": "CreateProgressiveRollout",
-                "in_type": "CreateProgressiveRolloutRequest",
-                "out_type": "CreateProgressiveRolloutResponse"
-              },
-              {
-                "name": "GetProgressiveRollout",
-                "in_type": "GetProgressiveRolloutRequest",
-                "out_type": "GetProgressiveRolloutResponse"
-              },
-              {
-                "name": "DeleteProgressiveRollout",
-                "in_type": "DeleteProgressiveRolloutRequest",
-                "out_type": "DeleteProgressiveRolloutResponse"
-              },
-              {
-                "name": "ListProgressiveRollout",
-                "in_type": "ListProgressiveRolloutRequest",
-                "out_type": "ListProgressiveRolloutResponse"
-              },
-              {
-                "name": "ExecuteProgressiveRollout",
-                "in_type": "ExecuteProgressiveRolloutRequest",
-                "out_type": "ExecuteProgressiveRolloutResponse"
               }
             ]
           }
