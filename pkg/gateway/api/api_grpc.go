@@ -350,14 +350,14 @@ func (s *grpcGatewayService) validateGetEvaluationsRequest(req *gwproto.GetEvalu
 }
 
 /*
-getPrerequisiteDownwards recursively gets the features specified as prerequisite by the targetFeatures.
+getPrerequisiteDownwards gets the features specified as prerequisite by the targetFeatures.
 */
 func (s *grpcGatewayService) getPrerequisiteDownwards(
 	targetFeatures, allFeatures map[string]*featureproto.Feature,
 ) (map[string]*featureproto.Feature, error) {
 	prerequisites := make(map[string]*featureproto.Feature, 0)
 	// depth first search
-	queue := []*featureproto.Feature{}
+	queue := make([]*featureproto.Feature, 0)
 	for _, f := range targetFeatures {
 		queue = append(queue, f)
 	}
@@ -377,30 +377,6 @@ func (s *grpcGatewayService) getPrerequisiteDownwards(
 		return targetFeatures, nil
 	}
 	return s.mapMerge(targetFeatures, prerequisites), nil
-}
-	targetFeatures, allFeatures map[string]*featureproto.Feature,
-) (map[string]*featureproto.Feature, error) {
-	prerequisites := make(map[string]*featureproto.Feature, 0)
-	for _, f := range targetFeatures {
-		for _, pre := range f.Prerequisites {
-			if _, ok := targetFeatures[pre.FeatureId]; ok {
-				continue
-			}
-			preFeature, ok := allFeatures[pre.FeatureId]
-			if !ok {
-				return nil, ErrFeatureNotFound
-			}
-			prerequisites[preFeature.Id] = preFeature
-		}
-	}
-	if len(prerequisites) == 0 {
-		return targetFeatures, nil
-	}
-	newTargets, err := s.getPrerequisiteDownwards(prerequisites, allFeatures)
-	if err != nil {
-		return nil, err
-	}
-	return s.mapMerge(targetFeatures, newTargets), nil
 }
 
 /*
