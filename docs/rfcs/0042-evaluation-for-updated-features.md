@@ -24,7 +24,7 @@ As an exception, the following feature flags must be evaluated regardless of the
 - (if user attributes have been updated) Feature flags with targeting rules
 
 If user attributes have been updated, the result of the evaluation may also change.
-Since the server has to know that update, the SDK sends the `IsUserAttributesChanged` flag to the server as a request parameter like the timestamp.
+Since the server has to know that update, the SDK sends the `IsUserAttributesUpdated` flag to the server as a request parameter like the timestamp.
 
 We need to modify the proto like below.
 ```diff
@@ -121,9 +121,9 @@ During implementation changes, we ensure that any version of the SDK will work p
 
 1. Add a function to get the feature flag dependencies.
 2. Change the server behavior to put archived feature flags to Redis.(The server does not return archived flags to the SDK at this time.)
-3. Add a `EvaluatedAt` and `IsUserAttributesChanged` fields to GetEvaluationsRequest object.
+3. Add a `EvaluatedAt` and `IsUserAttributesUpdated` fields to GetEvaluationsRequest object.
 4. Add implementation to check the timestamp `EvaluatedAt` against feature flag's `UpdatedAt` field.(`UserEvaluationsID` is also continue to be accepted.)
-5. Add implementation to evaluate the features that have targeting rules when `IsUserAttributesChanged` is true.
+5. Add implementation to evaluate the features that have targeting rules when `IsUserAttributesUpdated` is true.
 6. Modify each SDK to support `EvaluatedAt` and differential update the local data.
 7. Make GetEvaluationsRequest's `UserEvaluationsID` field deprecated and `Tag` field optional.
 
