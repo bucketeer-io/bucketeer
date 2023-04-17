@@ -353,8 +353,16 @@ func (s *grpcGatewayService) validateGetEvaluationsRequest(req *gwproto.GetEvalu
 getPrerequisiteDownwards gets the features specified as prerequisite by the targetFeatures.
 */
 func (s *grpcGatewayService) getPrerequisiteDownwards(
-	targetFeatures, allFeatures map[string]*featureproto.Feature,
-) (map[string]*featureproto.Feature, error) {
+	targetFeatures, allFeatures []*featureproto.Feature,
+) ([]*featureproto.Feature, error) {
+	targetFeaturesMap := make(map[string]*featureproto.Feature, len(targetFeatures))
+	for _, f := range targetFeatures {
+		targetFeaturesMap[f.Id] = f
+	}
+	allFeaturesMap := make(map[string]*featureproto.Feature, len(allFeatures))
+	for _, f := range allFeatures {
+		allFeaturesMap[f.Id] = f
+	}
 	prerequisites := make(map[string]*featureproto.Feature, 0)
 	// depth first search
 	queue := make([]*featureproto.Feature, 0)
@@ -364,7 +372,7 @@ func (s *grpcGatewayService) getPrerequisiteDownwards(
 	for len(queue) > 0 {
 		f := queue[0]
 		for _, p := range f.Prerequisites {
-			preFeature, ok := allFeatures[p.FeatureId]
+			preFeature, ok := allFeaturesMap[p.FeatureId]
 			if !ok {
 				return nil, ErrFeatureNotFound
 			}
@@ -376,15 +384,24 @@ func (s *grpcGatewayService) getPrerequisiteDownwards(
 	if len(prerequisites) == 0 {
 		return targetFeatures, nil
 	}
-	return s.mapMerge(targetFeatures, prerequisites), nil
+	merged := s.mapMerge(targetFeaturesMap, prerequisites)
+	result := make([]*featureproto.Feature, 0, len(merged))
+	for _, v := range merged {
+		result = append(result, v)
+	}
+	return result, nil
 }
 
 /*
 getPrerequisiteUpwards gets the features that have the specified targetFeatures as the prerequisite.
 */
 func (s *grpcGatewayService) getPrerequisiteUpwards( // nolint:unused
-	targetFeatures, featuresHavePrerequisite map[string]*featureproto.Feature,
-) (map[string]*featureproto.Feature, error) {
+	targetFeatures, featuresHavePrerequisite []*featureproto.Feature,
+) ([]*featureproto.Feature, error) {
+	targetFeaturesMap := make(map[string]*featureproto.Feature, len(targetFeatures))
+	for _, f := range targetFeatures {
+		targetFeaturesMap[f.Id] = f
+	}
 	upwardsFeatures := make(map[string]*featureproto.Feature, 0)
 	// depth first search
 	queue := make([]*featureproto.Feature, 0)
@@ -409,12 +426,17 @@ func (s *grpcGatewayService) getPrerequisiteUpwards( // nolint:unused
 	if len(upwardsFeatures) == 0 {
 		return targetFeatures, nil
 	}
-	return s.mapMerge(targetFeatures, upwardsFeatures), nil
+	merged := s.mapMerge(targetFeaturesMap, upwardsFeatures)
+	result := make([]*featureproto.Feature, 0, len(merged))
+	for _, v := range merged {
+		result = append(result, v)
+	}
+	return result, nil
 }
 
 func (s *grpcGatewayService) getFeaturesHavePrerequisite( // nolint:unused
-	fs map[string]*featureproto.Feature,
-) (map[string]*featureproto.Feature, error) {
+	fs []*featureproto.Feature,
+) []*featureproto.Feature {
 	featuresHavePrerequisite := make(map[string]*featureproto.Feature, 0)
 	for _, f := range fs {
 		if len(f.Prerequisites) == 0 {
@@ -425,7 +447,11 @@ func (s *grpcGatewayService) getFeaturesHavePrerequisite( // nolint:unused
 		}
 		featuresHavePrerequisite[f.Id] = f
 	}
-	return featuresHavePrerequisite, nil
+	result := make([]*featureproto.Feature, 0, len(featuresHavePrerequisite))
+	for _, v := range featuresHavePrerequisite {
+		result = append(result, v)
+	}
+	return result
 }
 
 func (*grpcGatewayService) mapMerge(m1, m2 map[string]*featureproto.Feature) map[string]*featureproto.Feature {
@@ -491,21 +517,7 @@ func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id st
 	if len(feature.Prerequisites) == 0 {
 		return []*featureproto.Feature{feature}, nil
 	}
-	features := make(map[string]*featureproto.Feature, len(fs))
-	for _, f := range fs {
-		features[f.Id] = f
-	}
-	target := make(map[string]*featureproto.Feature)
-	target[feature.Id] = feature
-	dependencies, err := s.getPrerequisiteDownwards(target, features)
-	if err != nil {
-		return nil, err
-	}
-	result := make([]*featureproto.Feature, 0, len(dependencies))
-	for _, v := range dependencies {
-		result = append(result, v)
-	}
-	return result, nil
+	return s.getPrerequisiteDownwards([]*featureproto.Feature{feature}, fs)
 }
 
 func (*grpcGatewayService) findFeature(fs []*featureproto.Feature, id string) (*featureproto.Feature, error) {
