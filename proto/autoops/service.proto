@@ -169,8 +169,8 @@ message CreateProgressiveRolloutRequest {
 message CreateProgressiveRolloutResponse {}
 
 message GetProgressiveRolloutRequest {
-  string id = 1;
-  string environment_namespace = 2;
+  string environment_namespace = 1;
+  string id = 2;
 }
 
 message GetProgressiveRolloutResponse {
@@ -178,8 +178,8 @@ message GetProgressiveRolloutResponse {
 }
 
 message DeleteProgressiveRolloutRequest {
-  string id = 1;
-  string environment_namespace = 2;
+  string environment_namespace = 1;
+  string id = 2;
   DeleteProgressiveRolloutCommand command = 3;
 }
 
@@ -204,6 +204,7 @@ message ListProgressiveRolloutRequest {
   optional ProgressiveRollout.Status status = 7;
   string search_keyword = 8;
   optional ProgressiveRollout.Type type = 9;
+  int64 total_count = 10;
 }
 
 message ListProgressiveRolloutResponse {
@@ -218,9 +219,7 @@ message ExecuteProgressiveRolloutRequest {
       change_progressive_rollout_triggered_at_command = 3;
 }
 
-message ExecuteProgressiveRolloutResponse {
-  bool already_triggered = 1;
-}
+message ExecuteProgressiveRolloutResponse {}
 
 service AutoOpsService {
   rpc GetAutoOpsRule(GetAutoOpsRuleRequest) returns (GetAutoOpsRuleResponse) {}

@@ -101,5 +101,7 @@ message AddProgressiveRolloutAutomaticScheduleClauseCommand {
 }
 
 message ChangeProgressiveRolloutTriggeredAtCommand {
+  // `time` field is used by the server to know which schedule has been executed.
+  // The usage is such as ID.
   int64 time = 1;
 }
