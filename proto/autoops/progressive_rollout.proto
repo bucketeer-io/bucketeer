@@ -22,7 +22,7 @@ import "google/protobuf/any.proto";
 message ProgressiveRollout {
   enum Type {
     MANUAL_SCHEDULE = 0;
-    AUTOMATIC_SCHEDULE = 1;
+    TEMPLATE_SCHEDULE = 1;
   }
   enum Status {
     WAITING = 0;

@@ -86,8 +86,8 @@ message CreateProgressiveRolloutCommand {
   string feature_id = 1;
   optional ProgressiveRolloutManualScheduleClause
       progressive_rollout_manual_schedule_clause = 2;
-  optional ProgressiveRolloutAutomaticScheduleClause
-      progressive_rollout_automatic_schedule_clause = 3;
+  optional ProgressiveRolloutTemplateScheduleClause
+      progressive_rollout_template_schedule_clause = 3;
 }
 
 message DeleteProgressiveRolloutCommand {}
@@ -96,8 +96,8 @@ message AddProgressiveRolloutManualScheduleClauseCommand {
   ProgressiveRolloutManualScheduleClause clause = 1;
 }
 
-message AddProgressiveRolloutAutomaticScheduleClauseCommand {
-  ProgressiveRolloutAutomaticScheduleClause clause = 1;
+message AddProgressiveRolloutTemplateScheduleClauseCommand {
+  ProgressiveRolloutTemplateScheduleClause clause = 1;
 }
 
 message ChangeProgressiveRolloutTriggeredAtCommand {

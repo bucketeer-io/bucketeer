@@ -1860,7 +1860,7 @@
             ]
           },
           {
-            "name": "ProgressiveRolloutAutomaticScheduleClause.Interval",
+            "name": "ProgressiveRolloutTemplateScheduleClause.Interval",
             "enum_fields": [
               {
                 "name": "UNKNOWN"
@@ -2009,7 +2009,7 @@
             ]
           },
           {
-            "name": "ProgressiveRolloutAutomaticScheduleClause",
+            "name": "ProgressiveRolloutTemplateScheduleClause",
             "fields": [
               {
                 "id": 1,
@@ -2237,8 +2237,8 @@
               },
               {
                 "id": 3,
-                "name": "progressive_rollout_automatic_schedule_clause",
-                "type": "ProgressiveRolloutAutomaticScheduleClause"
+                "name": "progressive_rollout_template_schedule_clause",
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ]
           },
@@ -2256,12 +2256,12 @@
             ]
           },
           {
-            "name": "AddProgressiveRolloutAutomaticScheduleClauseCommand",
+            "name": "AddProgressiveRolloutTemplateScheduleClauseCommand",
             "fields": [
               {
                 "id": 1,
                 "name": "clause",
-                "type": "ProgressiveRolloutAutomaticScheduleClause"
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ]
           },
@@ -2362,7 +2362,7 @@
                 "name": "MANUAL_SCHEDULE"
               },
               {
-                "name": "AUTOMATIC_SCHEDULE",
+                "name": "TEMPLATE_SCHEDULE",
                 "integer": 1
               }
             ]

@@ -69,7 +69,7 @@ message ProgressiveRolloutManualScheduleClause {
   repeated ProgressiveRolloutSchedule schedules = 1;
 }
 
-message ProgressiveRolloutAutomaticScheduleClause {
+message ProgressiveRolloutTemplateScheduleClause {
   enum Interval {
     UNKNOWN = 0;
     HOURLY = 1;
