@@ -24,7 +24,7 @@ export const TimeseriesStackedLineChart: FC<TimeseriesStackedLineChartProps> =
         };
       }),
     };
-    console.log('chartData', chartData);
+    // console.log('chartData', chartData);
     const options: ChartOptions = {
       title: {
         display: true,
@@ -36,7 +36,7 @@ export const TimeseriesStackedLineChart: FC<TimeseriesStackedLineChartProps> =
           {
             type: 'time',
             time: {
-              unit: 'day',
+              unit: 'hour',
             },
           },
         ],
