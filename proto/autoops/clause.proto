@@ -60,9 +60,10 @@ message WebhookClause {
 }
 
 message ProgressiveRolloutSchedule {
-  int64 time = 1;
-  int32 weight = 2;
-  int64 triggered_at = 3;
+  string schedule_id = 1;
+  int64 execute_at = 2;
+  int32 weight = 3;
+  int64 triggered_at = 4;
 }
 
 message ProgressiveRolloutManualScheduleClause {
