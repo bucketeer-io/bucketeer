@@ -39,7 +39,7 @@ export const TimeseriesStackedLineChart: FC<TimeseriesStackedLineChartProps> =
             return (
               data.datasets[tooltipItem.datasetIndex].label +
               ': ' +
-              parseInt(tooltipItem.value).toLocaleString()
+              Number(tooltipItem.value).toLocaleString()
             );
           },
         },
@@ -50,7 +50,7 @@ export const TimeseriesStackedLineChart: FC<TimeseriesStackedLineChartProps> =
             type: 'time',
             time: {
               unit,
-              // displayFormats: { hour: 'HH:mm' },
+              displayFormats: { hour: 'HH:mm' },
             },
           },
         ],
@@ -61,11 +61,7 @@ export const TimeseriesStackedLineChart: FC<TimeseriesStackedLineChartProps> =
             ticks: {
               // beginAtZero: true,
               userCallback: function (value) {
-                const formatter = Intl.NumberFormat('en', {
-                  //@ts-ignore
-                  notation: 'compact',
-                });
-                return formatter.format(value);
+                return Number(value).toLocaleString();
               },
             },
           },

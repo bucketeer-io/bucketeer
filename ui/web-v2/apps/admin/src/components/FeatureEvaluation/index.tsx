@@ -60,12 +60,6 @@ const timeRangeOptions = [
     data: 'hour',
   },
 ];
-const filterOptions: Array<FilterOption> = [
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'last14Days', label: 'Last 14 days' },
-  { value: 'last7Days', label: 'Last 7 days' },
-  { value: 'last24Hours', label: 'Last 24 hours' },
-];
 
 export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
   ({ featureId }) => {
@@ -132,10 +126,6 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
           timeRange: o.value,
         })
       );
-    };
-
-    const handleFilterChange = (o: FilterOption) => {
-      setFilterType(o.value);
     };
 
     if (!timeseries) {
