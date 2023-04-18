@@ -13,6 +13,7 @@ import { classNames } from '../../utils/css';
 import { TimeseriesStackedLineChart } from '../TimeseriesStackedLineChart';
 
 type Type = 'userCount' | 'eventCount';
+type FilterType = 'monthly' | 'last14Days' | 'last7Days' | 'last24Hours';
 
 interface FeatureEvaluationProps {
   featureId: string;
@@ -23,9 +24,20 @@ interface Option {
   readonly label: string;
 }
 
+interface FilterOption {
+  readonly value: FilterType;
+  readonly label: string;
+}
+
 const typeOptions: Array<Option> = [
   { value: 'userCount', label: 'User Count' },
   { value: 'eventCount', label: 'Event Count' },
+];
+const filterOptions: Array<FilterOption> = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'last14Days', label: 'Last 14 days' },
+  { value: 'last7Days', label: 'Last 7 days' },
+  { value: 'last24Hours', label: 'Last 24 hours' },
 ];
 
 export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
@@ -51,6 +63,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
       shallowEqual
     );
     const [type, setType] = useState<Type>('userCount');
+    const [filterType, setFilterType] = useState<FilterType>('monthly');
     const variationMap = new Map<string, Variation.AsObject>();
     feature.variationsList.forEach((v) => {
       variationMap.set(v.id, v);
@@ -73,8 +86,14 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
       return vt.timeseries?.valuesList?.map((v: number) => Math.round(v));
     });
 
+    console.log('variationTSs', variationTSs);
+
     const handleChange = (o: Option) => {
       setType(o.value);
+    };
+
+    const handleFilterChange = (o: FilterOption) => {
+      setFilterType(o.value);
     };
 
     if (!timeseries) {
@@ -96,12 +115,14 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
     return (
       <div className="p-10 bg-gray-100">
         <div className="bg-white rounded-md p-3 border">
-          <Select
-            options={typeOptions}
-            className={classNames('flex-none w-[200px]')}
-            value={typeOptions.find((o) => o.value === type)}
-            onChange={handleChange}
-          />
+          <div className="flex justify-end">
+            <Select
+              options={filterOptions}
+              className={classNames('flex-none w-[200px]')}
+              value={filterOptions.find((o) => o.value === filterType)}
+              onChange={handleFilterChange}
+            />
+          </div>
           <TimeseriesStackedLineChart
             label={''}
             dataLabels={variationValues}
@@ -121,10 +142,10 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
                         <td className="px-3 py-3.5 text-left text-sm font-semibold text-gray-800">
                           Total evaluations
                         </td>
-                        <td className="w-[112px]">
+                        <td className="]">
                           <Select
                             options={typeOptions}
-                            className={classNames('mt-1 w-[300px]')}
+                            className={classNames('mt-1 w-[260px]')}
                             value={typeOptions.find((o) => o.value === type)}
                             onChange={handleChange}
                           />
@@ -145,7 +166,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
                               <span className="">{variation}</span>
                             </td>
                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 w-1/4">
-                              100
+                              -
                             </td>
                             <td className="w-1/4" />
                           </tr>
