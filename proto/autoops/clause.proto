@@ -68,6 +68,7 @@ message ProgressiveRolloutSchedule {
 
 message ProgressiveRolloutManualScheduleClause {
   repeated ProgressiveRolloutSchedule schedules = 1;
+  string variation_id = 2;
 }
 
 message ProgressiveRolloutTemplateScheduleClause {
@@ -82,4 +83,5 @@ message ProgressiveRolloutTemplateScheduleClause {
   repeated ProgressiveRolloutSchedule schedules = 1;
   Interval interval = 2;
   int64 increments = 3;
+  string variation_id = 4;
 }

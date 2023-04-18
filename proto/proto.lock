@@ -2010,6 +2010,11 @@
                 "name": "schedules",
                 "type": "ProgressiveRolloutSchedule",
                 "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "variation_id",
+                "type": "string"
               }
             ]
           },
@@ -2031,6 +2036,11 @@
                 "id": 3,
                 "name": "increments",
                 "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "variation_id",
+                "type": "string"
               }
             ]
           }
