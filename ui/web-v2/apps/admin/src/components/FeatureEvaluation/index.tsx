@@ -82,11 +82,12 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
       return variationMap.get(vt.variationId)?.value;
     });
     const timeseries = variationTSs[0]?.timeseries?.timestampsList;
-    const data = variationTSs.map((vt) => {
-      return vt.timeseries?.valuesList?.map((v: number) => Math.round(v));
+    const data = variationTSs.map((vt, i) => {
+      return vt.timeseries?.valuesList?.map((v: number, i2) =>
+        Math.round(i2 * 5)
+      );
+      // return vt.timeseries?.valuesList?.map((v: number) => Math.round(v));
     });
-
-    console.log('variationTSs', variationTSs);
 
     const handleChange = (o: Option) => {
       setType(o.value);
