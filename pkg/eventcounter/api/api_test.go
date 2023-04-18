@@ -1084,7 +1084,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				endAt := time.Now()
 				startAt, err := genInterval(jpLocation, endAt, 30)
 				assert.NoError(t, err)
-				timeStamps := getDailyTimeStamps(startAt)
+				timeStamps := getOneDayTimestamps(startAt)
 				for idx, vID := range vIDs {
 					ec := getEventCountKeys(vID, fID, environmentNamespace, timeStamps)
 					val := randomNumberGroup[idx]
@@ -1138,13 +1138,13 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 					actualTs := actual.EventCounts[idx]
 					assert.Equal(t, p.expected.EventCounts[idx].VariationId, actualTs.VariationId)
 					assert.Equal(t, randomNumberGroup[idx], actualTs.Timeseries.Values)
-					assert.Len(t, actualTs.Timeseries.Timestamps, 31)
+					assert.Len(t, actualTs.Timeseries.Timestamps, 24)
 				}
 				for idx := range p.expected.UserCounts {
 					actualTs := actual.EventCounts[idx]
 					assert.Equal(t, p.expected.UserCounts[idx].VariationId, actualTs.VariationId)
 					assert.Equal(t, randomNumberGroup[idx], actualTs.Timeseries.Values)
-					assert.Len(t, actualTs.Timeseries.Timestamps, 31)
+					assert.Len(t, actualTs.Timeseries.Timestamps, 24)
 				}
 			}
 			assert.Equal(t, p.expectedErr, err)

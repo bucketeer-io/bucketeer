@@ -286,7 +286,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		}
 		return nil, dt.Err()
 	}
-	timeStamps := getDailyTimeStamps(startAt)
+	timeStamps := getOneDayTimestamps(startAt)
 	vIDs := getVariationIDs(resp.Feature.Variations)
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
