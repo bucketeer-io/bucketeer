@@ -3055,11 +3055,6 @@
                 "id": 9,
                 "name": "type",
                 "type": "ProgressiveRollout.Type"
-              },
-              {
-                "id": 10,
-                "name": "total_count",
-                "type": "int64"
               }
             ]
           },
@@ -3076,6 +3071,11 @@
                 "id": 2,
                 "name": "cursor",
                 "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
               }
             ]
           },

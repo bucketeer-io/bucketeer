@@ -204,12 +204,12 @@ message ListProgressiveRolloutRequest {
   optional ProgressiveRollout.Status status = 7;
   string search_keyword = 8;
   optional ProgressiveRollout.Type type = 9;
-  int64 total_count = 10;
 }
 
 message ListProgressiveRolloutResponse {
   repeated ProgressiveRollout progressive_rollouts = 1;
   string cursor = 2;
+  int64 total_count = 3;
 }
 
 message ExecuteProgressiveRolloutRequest {
