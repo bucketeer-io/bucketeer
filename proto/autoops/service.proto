@@ -215,7 +215,7 @@ message ListProgressiveRolloutResponse {
 message ExecuteProgressiveRolloutRequest {
   string environment_namespace = 1;
   string id = 2;
-  ChangeProgressiveRolloutTriggeredAtCommand
+  ChangeProgressiveRolloutScheduleTriggeredAtCommand
       change_progressive_rollout_triggered_at_command = 3;
 }
 

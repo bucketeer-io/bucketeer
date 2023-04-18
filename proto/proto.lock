@@ -1982,16 +1982,21 @@
             "fields": [
               {
                 "id": 1,
-                "name": "time",
-                "type": "int64"
+                "name": "schedule_id",
+                "type": "string"
               },
               {
                 "id": 2,
+                "name": "execute_at",
+                "type": "int64"
+              },
+              {
+                "id": 3,
                 "name": "weight",
                 "type": "int32"
               },
               {
-                "id": 3,
+                "id": 4,
                 "name": "triggered_at",
                 "type": "int64"
               }
@@ -2266,12 +2271,12 @@
             ]
           },
           {
-            "name": "ChangeProgressiveRolloutTriggeredAtCommand",
+            "name": "ChangeProgressiveRolloutScheduleTriggeredAtCommand",
             "fields": [
               {
                 "id": 1,
-                "name": "time",
-                "type": "int64"
+                "name": "schedule_id",
+                "type": "string"
               }
             ]
           }
@@ -3080,7 +3085,7 @@
               {
                 "id": 3,
                 "name": "change_progressive_rollout_triggered_at_command",
-                "type": "ChangeProgressiveRolloutTriggeredAtCommand"
+                "type": "ChangeProgressiveRolloutScheduleTriggeredAtCommand"
               }
             ]
           },
