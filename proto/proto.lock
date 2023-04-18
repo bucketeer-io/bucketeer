@@ -2949,12 +2949,12 @@
             "fields": [
               {
                 "id": 1,
-                "name": "id",
+                "name": "environment_namespace",
                 "type": "string"
               },
               {
                 "id": 2,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               }
             ]
@@ -2974,12 +2974,12 @@
             "fields": [
               {
                 "id": 1,
-                "name": "id",
+                "name": "environment_namespace",
                 "type": "string"
               },
               {
                 "id": 2,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
@@ -3040,6 +3040,11 @@
                 "id": 9,
                 "name": "type",
                 "type": "ProgressiveRollout.Type"
+              },
+              {
+                "id": 10,
+                "name": "total_count",
+                "type": "int64"
               }
             ]
           },
@@ -3080,14 +3085,7 @@
             ]
           },
           {
-            "name": "ExecuteProgressiveRolloutResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "already_triggered",
-                "type": "bool"
-              }
-            ]
+            "name": "ExecuteProgressiveRolloutResponse"
           }
         ],
         "services": [
