@@ -21,6 +21,7 @@ import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/command.proto";
 import "proto/autoops/ops_count.proto";
 import "proto/autoops/webhook.proto";
+import "proto/autoops/progressive_rollout.proto";
 
 message GetAutoOpsRuleRequest {
   string environment_namespace = 1;
@@ -160,6 +161,66 @@ message ListWebhooksResponse {
   int64 total_count = 3;
 }
 
+message CreateProgressiveRolloutRequest {
+  string environment_namespace = 1;
+  CreateProgressiveRolloutCommand command = 2;
+}
+
+message CreateProgressiveRolloutResponse {}
+
+message GetProgressiveRolloutRequest {
+  string environment_namespace = 1;
+  string id = 2;
+}
+
+message GetProgressiveRolloutResponse {
+  ProgressiveRollout progressive_rollout = 1;
+}
+
+message DeleteProgressiveRolloutRequest {
+  string environment_namespace = 1;
+  string id = 2;
+  DeleteProgressiveRolloutCommand command = 3;
+}
+
+message DeleteProgressiveRolloutResponse {}
+
+message ListProgressiveRolloutRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    CREATED_AT = 1;
+    UPDATED_AT = 2;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  string environment_namespace = 1;
+  int64 page_size = 2;
+  string cursor = 3;
+  repeated string feature_ids = 4;
+  OrderBy order_by = 5;
+  OrderDirection order_direction = 6;
+  optional ProgressiveRollout.Status status = 7;
+  string search_keyword = 8;
+  optional ProgressiveRollout.Type type = 9;
+}
+
+message ListProgressiveRolloutResponse {
+  repeated ProgressiveRollout progressive_rollouts = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message ExecuteProgressiveRolloutRequest {
+  string environment_namespace = 1;
+  string id = 2;
+  ChangeProgressiveRolloutScheduleTriggeredAtCommand
+      change_progressive_rollout_triggered_at_command = 3;
+}
+
+message ExecuteProgressiveRolloutResponse {}
+
 service AutoOpsService {
   rpc GetAutoOpsRule(GetAutoOpsRuleRequest) returns (GetAutoOpsRuleResponse) {}
   rpc ListAutoOpsRules(ListAutoOpsRulesRequest)
@@ -177,4 +238,15 @@ service AutoOpsService {
   rpc UpdateWebhook(UpdateWebhookRequest) returns (UpdateWebhookResponse) {}
   rpc DeleteWebhook(DeleteWebhookRequest) returns (DeleteWebhookResponse) {}
   rpc ListWebhooks(ListWebhooksRequest) returns (ListWebhooksResponse) {}
+  // TODO: Implement the following methods
+  // rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
+  //     returns (CreateProgressiveRolloutResponse) {}
+  // rpc GetProgressiveRollout(GetProgressiveRolloutRequest)
+  //     returns (GetProgressiveRolloutResponse) {}
+  // rpc DeleteProgressiveRollout(DeleteProgressiveRolloutRequest)
+  //     returns (DeleteProgressiveRolloutResponse) {}
+  // rpc ListProgressiveRollout(ListProgressiveRolloutRequest)
+  //     returns (ListProgressiveRolloutResponse) {}
+  // rpc ExecuteProgressiveRollout(ExecuteProgressiveRolloutRequest)
+  //     returns (ExecuteProgressiveRolloutResponse) {}
 }

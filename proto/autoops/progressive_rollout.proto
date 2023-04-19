@@ -1,0 +1,39 @@
+// Copyright 2022 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.autoops;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
+
+import "google/protobuf/any.proto";
+
+message ProgressiveRollout {
+  enum Type {
+    MANUAL_SCHEDULE = 0;
+    TEMPLATE_SCHEDULE = 1;
+  }
+  enum Status {
+    WAITING = 0;
+    RUNNING = 1;
+    FINISHED = 2;
+  }
+  string id = 1;
+  string feature_id = 2;
+  google.protobuf.Any clause = 3;
+  Status status = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+  Type type = 7;
+}

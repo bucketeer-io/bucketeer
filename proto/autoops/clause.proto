@@ -58,3 +58,30 @@ message WebhookClause {
   string webhook_id = 1;
   repeated Condition conditions = 2;
 }
+
+message ProgressiveRolloutSchedule {
+  string schedule_id = 1;
+  int64 execute_at = 2;
+  int32 weight = 3;
+  int64 triggered_at = 4;
+}
+
+message ProgressiveRolloutManualScheduleClause {
+  repeated ProgressiveRolloutSchedule schedules = 1;
+  string variation_id = 2;
+}
+
+message ProgressiveRolloutTemplateScheduleClause {
+  enum Interval {
+    UNKNOWN = 0;
+    HOURLY = 1;
+    DAILY = 2;
+    WEEKLY = 3;
+  }
+  // The reason of setting `schedules` is to save `triggered_at` in each
+  // schedule.
+  repeated ProgressiveRolloutSchedule schedules = 1;
+  Interval interval = 2;
+  int64 increments = 3;
+  string variation_id = 4;
+}
