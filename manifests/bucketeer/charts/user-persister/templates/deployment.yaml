@@ -77,16 +77,12 @@ spec:
               value: "{{ .Values.env.pullerMaxOutstandingMessages }}"
             - name: BUCKETEER_USER_PULLER_MAX_OUTSTANDING_BYTES
               value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
-            - name: BUCKETEER_USER_FEATURE_SERVICE
-              value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_USER_PORT
               value: "{{ .Values.env.port }}"
             - name: BUCKETEER_USER_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_USER_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
-            - name: BUCKETEER_USER_SERVICE_TOKEN
-              value: /usr/local/service-token/token
             - name: BUCKETEER_USER_CERT
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_USER_KEY

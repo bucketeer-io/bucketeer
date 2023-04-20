@@ -23,7 +23,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -99,22 +98,20 @@ type Persister interface {
 }
 
 type persister struct {
-	mysqlClient   mysql.Client
-	featureClient featureclient.Client
-	timeNow       func() time.Time
-	newUUID       func() (*uuid.UUID, error)
-	puller        puller.RateLimitedPuller
-	group         errgroup.Group
-	opts          *options
-	logger        *zap.Logger
-	ctx           context.Context
-	cancel        func()
-	doneCh        chan struct{}
+	mysqlClient mysql.Client
+	timeNow     func() time.Time
+	newUUID     func() (*uuid.UUID, error)
+	puller      puller.RateLimitedPuller
+	group       errgroup.Group
+	opts        *options
+	logger      *zap.Logger
+	ctx         context.Context
+	cancel      func()
+	doneCh      chan struct{}
 }
 
 func NewPersister(
 	mysqlClient mysql.Client,
-	featureClient featureclient.Client,
 	p puller.Puller,
 	opts ...Option) Persister {
 
@@ -127,16 +124,15 @@ func NewPersister(
 		registerMetrics(dopts.metrics)
 	}
 	return &persister{
-		mysqlClient:   mysqlClient,
-		featureClient: featureClient,
-		timeNow:       time.Now,
-		newUUID:       uuid.NewUUID,
-		puller:        puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		opts:          dopts,
-		logger:        dopts.logger.Named("persister"),
-		ctx:           ctx,
-		cancel:        cancel,
-		doneCh:        make(chan struct{}),
+		mysqlClient: mysqlClient,
+		timeNow:     time.Now,
+		newUUID:     uuid.NewUUID,
+		puller:      puller.NewRateLimitedPuller(p, dopts.maxMPS),
+		opts:        dopts,
+		logger:      dopts.logger.Named("persister"),
+		ctx:         ctx,
+		cancel:      cancel,
+		doneCh:      make(chan struct{}),
 	}
 }
 

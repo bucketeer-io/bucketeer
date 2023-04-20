@@ -25,7 +25,6 @@ env:
   logLevel: info
   port: 9090
   metricsPort: 9002
-  featureService: localhost:9001
 
 affinity: {}
 

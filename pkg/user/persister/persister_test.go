@@ -23,7 +23,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
@@ -148,11 +147,10 @@ func newPersisterWithMock(
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	return &persister{
-		mysqlClient:   mysqlmock.NewMockClient(mockController),
-		featureClient: featureclientmock.NewMockClient(mockController),
-		timeNow:       func() time.Time { return now },
-		newUUID:       func() (*uuid.UUID, error) { return id, nil },
-		opts:          defaultOptions,
-		logger:        logger,
+		mysqlClient: mysqlmock.NewMockClient(mockController),
+		timeNow:     func() time.Time { return now },
+		newUUID:     func() (*uuid.UUID, error) { return id, nil },
+		opts:        defaultOptions,
+		logger:      logger,
 	}
 }
