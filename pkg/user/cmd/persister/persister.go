@@ -22,13 +22,11 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	pst "github.com/bucketeer-io/bucketeer/pkg/user/persister"
 )
@@ -56,10 +54,8 @@ type persister struct {
 	flushInterval                *time.Duration
 	publishNumGoroutines         *int
 	publishTimeout               *time.Duration
-	featureService               *string
 	certPath                     *string
 	keyPath                      *string
-	serviceTokenPath             *string
 	pullerNumGoroutines          *int
 	pullerMaxExtension           *time.Duration
 	pullerMaxOutstandingMessages *int
@@ -91,10 +87,8 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"publish-timeout",
 			"The maximum time to publish a bundle of messages.",
 		).Default("1m").Duration(),
-		featureService:   cmd.Flag("feature-service", "bucketeer-feature-service address.").Default("feature:9090").String(),
-		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
-		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
-		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
+		certPath: cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
+		keyPath:  cmd.Flag("key", "Path to TLS key.").Required().String(),
 		pullerNumGoroutines: cmd.Flag(
 			"puller-num-goroutines",
 			"Number of goroutines will be spawned to pull messages.",
@@ -127,26 +121,8 @@ func (p *persister) Run(ctx context.Context, metrics metrics.Metrics, logger *za
 		return err
 	}
 
-	creds, err := client.NewPerRPCCredentials(*p.serviceTokenPath)
-	if err != nil {
-		return err
-	}
-
-	featureClient, err := featureclient.NewClient(*p.featureService, *p.certPath,
-		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
-		client.WithBlock(),
-		client.WithMetrics(registerer),
-		client.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer featureClient.Close()
-
 	persister := pst.NewPersister(
 		mysqlClient,
-		featureClient,
 		puller,
 		pst.WithMaxMPS(*p.maxMPS),
 		pst.WithNumWorkers(*p.numWorkers),

@@ -23,18 +23,15 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	userdomain "github.com/bucketeer-io/bucketeer/pkg/user/domain"
 	ustorage "github.com/bucketeer-io/bucketeer/pkg/user/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/service"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
 type options struct {
@@ -101,22 +98,20 @@ type Persister interface {
 }
 
 type persister struct {
-	mysqlClient   mysql.Client
-	featureClient featureclient.Client
-	timeNow       func() time.Time
-	newUUID       func() (*uuid.UUID, error)
-	puller        puller.RateLimitedPuller
-	group         errgroup.Group
-	opts          *options
-	logger        *zap.Logger
-	ctx           context.Context
-	cancel        func()
-	doneCh        chan struct{}
+	mysqlClient mysql.Client
+	timeNow     func() time.Time
+	newUUID     func() (*uuid.UUID, error)
+	puller      puller.RateLimitedPuller
+	group       errgroup.Group
+	opts        *options
+	logger      *zap.Logger
+	ctx         context.Context
+	cancel      func()
+	doneCh      chan struct{}
 }
 
 func NewPersister(
 	mysqlClient mysql.Client,
-	featureClient featureclient.Client,
 	p puller.Puller,
 	opts ...Option) Persister {
 
@@ -129,16 +124,15 @@ func NewPersister(
 		registerMetrics(dopts.metrics)
 	}
 	return &persister{
-		mysqlClient:   mysqlClient,
-		featureClient: featureClient,
-		timeNow:       time.Now,
-		newUUID:       uuid.NewUUID,
-		puller:        puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		opts:          dopts,
-		logger:        dopts.logger.Named("persister"),
-		ctx:           ctx,
-		cancel:        cancel,
-		doneCh:        make(chan struct{}),
+		mysqlClient: mysqlClient,
+		timeNow:     time.Now,
+		newUUID:     uuid.NewUUID,
+		puller:      puller.NewRateLimitedPuller(p, dopts.maxMPS),
+		opts:        dopts,
+		logger:      dopts.logger.Named("persister"),
+		ctx:         ctx,
+		cancel:      cancel,
+		doneCh:      make(chan struct{}),
 	}
 }
 
@@ -282,78 +276,10 @@ func (p *persister) upsert(event *eventproto.UserEvent) (ok, repeatable bool) {
 		)
 		return false, true
 	}
-	exist, err := p.getUser(event.UserId, event.EnvironmentNamespace)
-	if err != nil && err != ustorage.ErrUserNotFound {
-		p.logger.Error("Failed to get User",
-			zap.Error(err),
-			zap.String("environmentNamespace", event.EnvironmentNamespace),
-			zap.String("userId", event.UserId),
-			zap.String("tag", event.Tag),
-		)
-		return false, true
-	}
-	updatedUser, err := p.updateUser(exist, event)
-	if err != nil {
-		p.logger.Debug("Failed to update user",
-			zap.Error(err),
-			zap.String("environmentNamespace", event.EnvironmentNamespace),
-			zap.String("userId", event.UserId),
-			zap.String("tag", event.Tag),
-		)
-		return true, false
-	}
-	storage := ustorage.NewUserStorage(p.mysqlClient)
-	if err := storage.UpsertUser(p.ctx, updatedUser, event.EnvironmentNamespace); err != nil {
-		p.logger.Error("Failed to upsert User into MySQL",
-			zap.Error(err),
-			zap.String("environmentNamespace", event.EnvironmentNamespace),
-			zap.String("userId", event.UserId),
-			zap.String("tag", event.Tag),
-		)
-		return false, true
-	}
-	if exist == nil {
-		handledCounter.WithLabelValues(codes.NewID.String()).Inc()
-	}
 	return true, false
 }
 
 func (p *persister) upsertMAU(event *eventproto.UserEvent) error {
 	s := ustorage.NewMysqlMAUStorage(p.mysqlClient)
 	return s.UpsertMAU(p.ctx, event, event.EnvironmentNamespace)
-}
-
-func (p *persister) getUser(userID, environmentNamespace string) (*userproto.User, error) {
-	storage := ustorage.NewUserStorage(p.mysqlClient)
-	user, err := storage.GetUser(p.ctx, userID, environmentNamespace)
-	if err != nil {
-		return nil, err
-	}
-	return user.User, nil
-}
-
-func (p *persister) updateUser(
-	existUser *userproto.User,
-	event *eventproto.UserEvent,
-) (*userdomain.User, error) {
-	taggedData := map[string]*userproto.User_Data{event.Tag: {Value: event.Data}}
-	if existUser == nil {
-		return &userdomain.User{User: &userproto.User{
-			Id:         event.UserId,
-			LastSeen:   event.LastSeen,
-			TaggedData: taggedData,
-			CreatedAt:  time.Now().Unix(),
-		}}, nil
-	}
-	newer := &userdomain.User{User: &userproto.User{
-		Id:         event.UserId,
-		LastSeen:   event.LastSeen,
-		TaggedData: taggedData,
-	}}
-	exist := &userdomain.User{User: existUser}
-	err := exist.UpdateMe(newer)
-	if err != nil {
-		return nil, err
-	}
-	return exist, nil
 }
