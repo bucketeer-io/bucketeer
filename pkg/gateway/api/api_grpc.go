@@ -374,7 +374,7 @@ func (s *grpcGatewayService) getPrerequisiteDownwards(
 		}
 		queue = queue[1:]
 	}
-	return s.getaPrerequisiteResult(targetFeatures, prerequisites), nil
+	return s.getPrerequisiteResult(targetFeatures, prerequisites), nil
 }
 
 /*
@@ -401,10 +401,10 @@ func (s *grpcGatewayService) getPrerequisiteUpwards( // nolint:unused
 		}
 		queue = queue[1:]
 	}
-	return s.getaPrerequisiteResult(targetFeatures, upwardsFeatures), nil
+	return s.getPrerequisiteResult(targetFeatures, upwardsFeatures), nil
 }
 
-func (s *grpcGatewayService) getaPrerequisiteResult(
+func (s *grpcGatewayService) getPrerequisiteResult(
 	targetFeatures []*featureproto.Feature,
 	featuresDepenencies map[string]*featureproto.Feature,
 ) []*featureproto.Feature {
@@ -422,7 +422,6 @@ func (s *grpcGatewayService) getaPrerequisiteResult(
 	}
 	return result
 }
-
 
 func (s *grpcGatewayService) getFeaturesHavePrerequisite( // nolint:unused
 	fs []*featureproto.Feature,
