@@ -1,5 +1,5 @@
 PROTO_FOLDERS := $(filter-out ./external%, $(shell find . -name '*.proto' -print0 | xargs -0 -n1 dirname | sort --unique))
-PROTO_WITH_DESCRIPTOR_FOLDERS := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./migration ./notification ./push ./user
+PROTO_WITH_DESCRIPTOR_FOLDERS := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./migration ./notification ./push
 PROTO_WITHOUT_DESCRIPTOR_FOLDERS := $(filter-out $(PROTO_WITH_DESCRIPTOR_FOLDERS), $(PROTO_FOLDERS))
 
 GIT_TOP_DIR := $(shell cd .. ; pwd)
