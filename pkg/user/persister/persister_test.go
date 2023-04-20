@@ -16,7 +16,6 @@ package persister
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 	"time"
 
@@ -26,7 +25,6 @@ import (
 
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/service"
@@ -109,67 +107,8 @@ func TestUpsert(t *testing.T) {
 			},
 		},
 		{
-			desc: "get user error",
-			setup: func(p *persister) {
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("internal"))
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-			},
-			input: &eventproto.UserEvent{
-				EnvironmentNamespace: "ns0",
-				UserId:               "id-1",
-				LastSeen:             3,
-			},
-			expectedOK:         false,
-			expectedRepeatable: true,
-			expected: &userproto.User{
-				Id:       "id-1",
-				LastSeen: 3,
-			},
-		},
-		{
-			desc: "upsert error",
-			setup: func(p *persister) {
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("internal"))
-			},
-			input: &eventproto.UserEvent{
-				EnvironmentNamespace: "ns0",
-				UserId:               "id-1",
-				LastSeen:             3,
-			},
-			expectedOK:         false,
-			expectedRepeatable: true,
-			expected: &userproto.User{
-				Id:       "id-1",
-				LastSeen: 3,
-			},
-		},
-		{
 			desc: "upsert success",
 			setup: func(p *persister) {
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
@@ -196,89 +135,6 @@ func TestUpsert(t *testing.T) {
 			ok, repeatable := pst.upsert(p.input)
 			assert.Equal(t, p.expectedOK, ok)
 			assert.Equal(t, p.expectedRepeatable, repeatable)
-		})
-	}
-}
-
-func TestUpdateUser(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		desc         string
-		inputExist   *userproto.User
-		inputEvent   *eventproto.UserEvent
-		expectedUser *userproto.User
-	}{
-		{
-			desc:       "not exist",
-			inputExist: nil,
-			inputEvent: &eventproto.UserEvent{
-				UserId:   "uid-0",
-				Tag:      "t-0",
-				Data:     map[string]string{"d-0": "v-0"},
-				LastSeen: int64(1),
-			},
-			expectedUser: &userproto.User{
-				Id:         "uid-0",
-				Data:       map[string]string{"d-0": "v-0"},
-				TaggedData: map[string]*userproto.User_Data{"t-0": {Value: map[string]string{"d-0": "v-0"}}},
-				LastSeen:   int64(1),
-			},
-		},
-		{
-			desc: "exists overriding data",
-			inputExist: &userproto.User{
-				Id:         "uid-0",
-				TaggedData: map[string]*userproto.User_Data{"t-0": {Value: map[string]string{"d-0": "v-0"}}},
-				LastSeen:   int64(0),
-			},
-			inputEvent: &eventproto.UserEvent{
-				UserId:   "uid-0",
-				Tag:      "t-0",
-				Data:     map[string]string{"d-0": "v-0", "d-1": "v-1"},
-				LastSeen: int64(1),
-			},
-			expectedUser: &userproto.User{
-				Id:         "uid-0",
-				TaggedData: map[string]*userproto.User_Data{"t-0": {Value: map[string]string{"d-0": "v-0", "d-1": "v-1"}}},
-				LastSeen:   int64(1),
-			},
-		},
-		{
-			desc: "exists appending data",
-			inputExist: &userproto.User{
-				Id:         "uid-0",
-				TaggedData: map[string]*userproto.User_Data{"t-0": {Value: map[string]string{"d-0": "v-0"}}},
-				LastSeen:   int64(0),
-			},
-			inputEvent: &eventproto.UserEvent{
-				UserId:   "uid-0",
-				Tag:      "t-1",
-				Data:     map[string]string{"d-1": "v-1"},
-				LastSeen: int64(1),
-			},
-			expectedUser: &userproto.User{
-				Id: "uid-0",
-				TaggedData: map[string]*userproto.User_Data{
-					"t-0": {Value: map[string]string{"d-0": "v-0"}},
-					"t-1": {Value: map[string]string{"d-1": "v-1"}},
-				},
-				LastSeen: int64(1),
-			},
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			pst := &persister{opts: defaultOptions, logger: defaultOptions.logger.Named("persister")}
-			actualUser, _ := pst.updateUser(p.inputExist, p.inputEvent)
-			if p.desc == "not exist" {
-				assert.Equal(t, actualUser.User.Id, p.expectedUser.Id)
-				assert.True(t, len(actualUser.User.Data) == 0)
-				assert.Equal(t, actualUser.User.TaggedData, p.expectedUser.TaggedData)
-				assert.Equal(t, actualUser.LastSeen, p.expectedUser.LastSeen)
-				assert.True(t, actualUser.CreatedAt > 0)
-			} else {
-				assert.True(t, reflect.DeepEqual(actualUser.User, p.expectedUser))
-			}
 		})
 	}
 }
