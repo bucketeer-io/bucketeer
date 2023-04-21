@@ -8189,6 +8189,32 @@
     {
       "protopath": "eventcounter:/:service.proto",
       "def": {
+        "enums": [
+          {
+            "name": "GetEvaluationTimeseriesCountRequest.TimeRange",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "TWENTY_FOUR_HOURS",
+                "integer": 1
+              },
+              {
+                "name": "SEVEN_DAYS",
+                "integer": 2
+              },
+              {
+                "name": "FOURTEEN_DAYS",
+                "integer": 3
+              },
+              {
+                "name": "THIRTY_DAYS",
+                "integer": 4
+              }
+            ]
+          }
+        ],
         "messages": [
           {
             "name": "GetExperimentEvaluationCountRequest",
@@ -8259,6 +8285,11 @@
                 "id": 2,
                 "name": "feature_id",
                 "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "time_range",
+                "type": "TimeRange"
               }
             ]
           },
@@ -8610,6 +8641,20 @@
     {
       "protopath": "eventcounter:/:timeseries.proto",
       "def": {
+        "enums": [
+          {
+            "name": "Timeseries.Unit",
+            "enum_fields": [
+              {
+                "name": "HOUR"
+              },
+              {
+                "name": "DAY",
+                "integer": 1
+              }
+            ]
+          }
+        ],
         "messages": [
           {
             "name": "VariationTimeseries",
@@ -8640,6 +8685,11 @@
                 "name": "values",
                 "type": "double",
                 "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "unit",
+                "type": "Unit"
               }
             ]
           }

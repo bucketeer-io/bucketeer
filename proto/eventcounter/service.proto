@@ -39,8 +39,16 @@ message GetExperimentEvaluationCountResponse {
 }
 
 message GetEvaluationTimeseriesCountRequest {
+  enum TimeRange {
+    UNKNOWN = 0;
+    TWENTY_FOUR_HOURS = 1;
+    SEVEN_DAYS = 2;
+    FOURTEEN_DAYS = 3;
+    THIRTY_DAYS = 4;
+  }
   string environment_namespace = 1;
   string feature_id = 2;
+  TimeRange time_range = 3;
 }
 
 message GetEvaluationTimeseriesCountResponse {
