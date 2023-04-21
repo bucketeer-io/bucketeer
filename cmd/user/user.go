@@ -20,7 +20,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/ldflags"
 	"github.com/bucketeer-io/bucketeer/pkg/user/cmd/persister"
-	"github.com/bucketeer-io/bucketeer/pkg/user/cmd/server"
 )
 
 var (
@@ -40,5 +39,4 @@ func main() {
 
 func registerCommands(app *cli.App) {
 	persister.RegisterCommand(app, app)
-	server.RegisterCommand(app, app)
 }
