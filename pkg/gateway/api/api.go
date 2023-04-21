@@ -509,7 +509,7 @@ func (s *gatewayService) publishUserEvent(
 		Tag:                  tag,
 		UserId:               user.Id,
 		LastSeen:             time.Now().Unix(),
-		Data:                 user.Data,
+		Data:                 nil, // We set nil until we decide again what to do with the user metadata.
 		EnvironmentNamespace: environmentNamespace,
 	}
 	ue, err := ptypes.MarshalAny(userEvent)
