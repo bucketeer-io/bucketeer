@@ -2106,3 +2106,27 @@ func (s *FeatureService) CloneFeature(
 	}
 	return &featureproto.CloneFeatureResponse{}, nil
 }
+
+func (s *FeatureService) refreshFeaturesCache(ctx context.Context, environmentNamespace string) error {
+	fs, _, _, err := s.listFeatures(
+		ctx,
+		mysql.QueryNoLimit,
+		"",
+		nil,
+		"",
+		nil,
+		nil,
+		nil,
+		"",
+		featureproto.ListFeaturesRequest_DEFAULT,
+		featureproto.ListFeaturesRequest_ASC,
+		environmentNamespace,
+	)
+	if err != nil {
+		return err
+	}
+	features := &featureproto.Features{
+		Features: fs,
+	}
+	return s.featuresCache.Put(features, environmentNamespace)
+}
