@@ -1,32 +1,38 @@
-# Evaluation for updated FeatureFlag
+# Evaluation for updated Feature flags
 
 
 ## Proposal
 
-- This feature evaluates only those feature flags that have been updated since the last evaluation.
-  - Computational efficiency will be improved because the number of the feature flags to be evaluated will be reduced.
-- We can make the tag optional.
+- The primary purpose of this feature is to keep the GetEvaluations response size small.
+- The existing implementation checks `UserEvaluationsID` and doesn't return evaluation results if it has not been updated.
+  - `UserEvaluationsID` is a hash derived from the feature ID, feature version, and user attributes.
+- The existing implementation evaluates all feature flags when the UserEvaluationsID is updated, but here we propose a method to target only those feature flags that need to be evaluated.
+- Also, we can make the tag optional.
   - Previously, specifying a tag was required when executing GetEvaluations to reduce the response size.
   - But, with this proposal, the response size can be kept small, so specifying a tag can be made optional.
 
-
-
-
 ## Implementation
 
-The SDK stores the`EvaluatedAt` value indicating the timestamp of the evaluation's execution.
+The SDK stores the `EvaluatedAt` value indicating the timestamp of the evaluation's execution.
 When GetEvaluations is called again, that timestamp is sent to the server as a request parameter.
 
-The server checks it against the updatedAt value of the feature flags, and only evaluates those that have been updated since the previous evaluation.
+The server checks it against the updatedAt value of the feature flags and only evaluates those that have been updated since the previous evaluation.
 
 As an exception, the following feature flags must be evaluated regardless of the timestamp value.
 - Feature flags that depend on the feature flags that need to be evaluated
 - (if user attributes have been updated) Feature flags with targeting rules
 
-If user attributes have been updated, the result of the evaluation may also change.
+If user attributes have been updated, the evaluation result may also change.
 Since the server has to know that update, the SDK sends the `IsUserAttributesUpdated` flag to the server as a request parameter like the timestamp.
 
-We need to modify the proto like below.
+In addition, the following changes are required in both the server and SDK implementations:
+- Since only some feature flags may be evaluated and returned, the SDK implementation needs to be modified to allow differential updates of local data.
+- The server must return information about archived feature flags to the SDK because its evaluation result is already stored locally.
+  - The SDK must delete the evaluation result of archived features.
+  - The server must put the archived feature flags to Redis.
+- The validation of the request parameter `Tag` must be removed.
+
+We need to modify the proto like the following.
 ```diff
   message GetEvaluationsRequest {  
     string tag = 1;  
@@ -37,21 +43,146 @@ We need to modify the proto like below.
 +   int64 evaluated_at = 6;  
 +   bool is_user_attributes_updated = 7;  
   }
+  
+  message GetEvaluationsResponse {
+    feature.UserEvaluations.State state = 1;
+    feature.UserEvaluations evaluations = 2;
+    string user_evaluations_id = 3;
+  } 
+
+  message UserEvaluations {
+    enum State {
+      QUEUED = 0;
+      PARTIAL = 1;
+      FULL = 2;
+    }
+    string id = 1;
+    repeated Evaluation evaluations = 2;
+    int64 created_at = 3;
++   repeated string archived_feature_ids = 4;
++   bool force_update = 5;    
+  }
 ```
 
-In addition, the following changes are required in both the server and SDK implementations:
-- Since only the updated feature flags are evaluated and returned, the SDK's implementation for updating local data needs to be changed.
-- The server needs to return information about archived feature flags to the SDK because its evaluation result is already stored locally.
-  - The SDK must delete the evaluation result of archived features.
-  - The server must put the archived feature flags to Redis.
-- The validation of the request parameter `Tag` needs to be removed.
+### Evaluation flow
+The following diagram shows the flow to evaluate the feature flags:
+
+```mermaid
+flowchart LR
+A[Start] --> B{Same\nUserEvaluationsID?}
+B -- Yes --> C[Pattern A:\nNo Evaluation]
+B -- No --> D{Evaluation\nover a month?}
+D -- Yes --> E[Pattern B:\nEvaluation all and force update]
+D -- No --> F{Any updated features\nfrom previous evaluation?}
+F -- No --> J{Is user attributes updated?}
+J -- NO --> E
+J -- Yes --> I[Pattern C:\nDifferential evaluation and differential update]
+F -- Yes --> I
+```
+
+#### Pattern A: No Evaluation
+As in the existing implementation, the server checks `UserEvaluationID` and doesn't return evaluation results if it has not been updated.
+In this case, the `Evaluations` field in the response is set to null because no evaluation has been performed.
+An example response is shown below:
+
+```json
+{
+  "Evaluations": null, 
+  "UserEvaluationsID": "yyy"
+}
+```
+
+#### Pattern B: Evaluation all and force update
+
+If your last evaluation was done more than a month ago, it will be determined that the results are considered too old and should be overwritten.
+Also, it is considered unusual that the `UserEvaluationsID` has changed even though the feature flags and user attributes have not been updated.
+In this pattern, the server sets the `Evaluations` field evaluation results of all feature flags and sets the `ForceUpdate` field to true.
+
+An example response is shown below:
+
+```json
+{
+  "Evaluations": {
+    "Id": "xxx",
+    "CreatedAt": 1680274800,
+    "Evaluations": [{"featureId": "featureA", ...}, {"featureId":  "featureB", ...}, ...],
+    "ArchivedFeatures": [],
+    "ForceUpdate": true,
+  },
+  "UserEvaluationsID": "yyy"
+}
+```
+
+#### Pattern C: Differential evaluation and differential update
+
+In this pattern, the server must identify which feature flags to be evaluated.
+For more information about which feature flags should be evaluated, see [Which feature flags to evaluate](#which-feature-flags-to-evaluate).
+Also, if any feature flags have been archived since the last evaluation, their IDs must be included in the `ArchivedFeatures` field in the response.
+Thus, this pattern can be further classified into four sub-patterns as below:
+
+|             | Evaluations  | ArchivedFeatures |
+|-------------|--------------|------------------|
+| Pattern C-1 | has elements | has elements     |
+| Pattern C-2 | has elements | empty            |
+| Pattern C-3 | empty        | has elements     |
+| Pattern C-4 | empty        | empty            |
 
 
-### Evaluation on Server
+```json
+// Pattern C-1
+{
+  "Evaluations": {
+    "Id": "xxx",
+    "CreatedAt": 1680274800,
+    "Evaluations": [{"featureId": "featureA", ...}, {"featureId":  "featureB", ...}, ...],
+    "ArchivedFeatures": ["featureX", "featureY"],
+    "ForceUpdate": false,
+  },
+  "UserEvaluationsID": "yyy"
+}
+
+// Pattern C-2
+{
+  "Evaluations": {
+    "Id": "xxx",
+    "CreatedAt": 1680274800,
+    "Evaluations": [{"featureId": "featureA", ...}, {"featureId":  "featureB", ...}, ...],
+    "ArchivedFeatures": [],
+    "ForceUpdate": false,
+  },
+  "UserEvaluationsID": "yyy"
+}
+
+// Pattern C-3
+{
+  "Evaluations": {
+    "Id": "xxx",
+    "CreatedAt": 1680274800,
+    "Evaluations": [],
+    "ArchivedFeatures": ["featureX", "featureY"],
+    "ForceUpdate": false,
+  },
+  "UserEvaluationsID": "yyy"
+}
+
+// Pattern C-4
+{
+  "Evaluations": {
+    "Id": "xxx",
+    "CreatedAt": 1680274800,
+    "Evaluations": [],
+    "ArchivedFeatures": [],
+    "ForceUpdate": false,
+  },
+  "UserEvaluationsID": "yyy"
+}
+```
+
+### Which feature flags to evaluate
 The following diagram shows the dependency relationship between multiple feature flags:
 
 ```mermaid
-graph LR;
+graph TD;
     id1((A)) --> id5((E)) --> id7((G)) --> id8((H)) --> id9((I)) --> id11((K))
     id1((A)) --> id6((F))
     id8((H)) --> id10((J))
@@ -68,7 +199,7 @@ graph LR;
 #### Pattern1
 Assuming only featureA, featureB, featureC, and featureD were updated after the last evaluation.
 
-Only featuresA, featureB, featureC, and featureD are evaluated, since no features depend on these features.
+Only featureA, featureB, featureC, and featureD are evaluated since no features depend on these features.
 
 | updated                                | evaluated                               |
 |----------------------------------------|-----------------------------------------|
@@ -78,9 +209,9 @@ Only featuresA, featureB, featureC, and featureD are evaluated, since no feature
 #### Pattern2
 Assuming only featureF was updated after the last evaluation.
 
-Since featureA specifies featureF as Prerequisite, the evaluation of featureA may also change.
+Since featureA specifies featureF as a Prerequisite, the evaluation of featureA may also change.
 
-Therefore, featureA also needs to be re-evaluated.
+Therefore, the featureA also needs to be re-evaluated.
 
 | updated  | evaluated          |
 |----------|--------------------|
@@ -101,34 +232,36 @@ In this case, we must evaluate all feature flags involved in dependencies.
 ### SDK
 
 #### Timestamp of the evaluation's execution
-SDK stores the timestamp which is contained in the response of GetEvaluations in local storage.
-The saved timestamp will be included in the next GetEvaluations request.
+When receiving the response, the SDK stores the `GetEvaluationsResponse.UserEvaluations.CreatedAt` locally as `EvaluatedAt`.
+The saved timestamp will be included in the subsequent GetEvaluations request.
 
 #### Storing the evaluation results in local storage
-In the current implementation, the server returns all feature flags evaluation results, and the SDK inserts those in local storage after deleting the local data.
-However, this proposal would change that behavior so that only some feature flags evaluation results are returned, not all.
+
+First, the SDK must check the `ForceUpdate` field in the response.
+Then, if its value is true, the SDK inserts all evaluations in response to local storage after deleting the local data.
+If the `ForceUpdate` is false, the SDK updates the evaluations in local data differently.
 It will also return the evaluation results of archived feature flags.
 We must modify the implementation of SDK to address these changes.
-
-#### UserEvaluationsID
-
-In the current implementation, we use the `UserEvaluationsID` to detect the feature flags updates.
-But we will be able to detect it via the timestamp, so the `UserEvaluationsID` is no longer necessary.
 
 ## Release Steps
 
 During implementation changes, we ensure that any version of the SDK will work properly.
 
 1. Add a function to get the feature flag dependencies.
-2. Change the server behavior to put archived feature flags to Redis.(The server does not return archived flags to the SDK at this time.)
-3. Add a `EvaluatedAt` and `IsUserAttributesUpdated` fields to GetEvaluationsRequest object.
-4. Add implementation to check the timestamp `EvaluatedAt` against feature flag's `UpdatedAt` field.(`UserEvaluationsID` is also continue to be accepted.)
-5. Add implementation to evaluate the features that have targeting rules when `IsUserAttributesUpdated` is true.
-6. Modify each SDK to support `EvaluatedAt` and differential update the local data.
-7. Make GetEvaluationsRequest's `UserEvaluationsID` field deprecated and `Tag` field optional.
+2. Change the feature module and feature-tag-cacher module.
+   * Change the feature module's behavior to put feature flags to Redis in addition to MySQL in order to reduce time lag.
+   * Change the feature module's behavior to put archived feature flags to Redis.(The server does not return archived flags to the SDK at this time.)
+   * Remove the feature-tag-cacher module because it will have finished its role. 
+3. Change the api-gateway module. 
+   * Add the `EvaluatedAt` and `IsUserAttributesUpdated` fields to the GetEvaluationsRequest object.
+   * Add implementation to check the timestamp `EvaluatedAt` against the feature flag's `UpdatedAt` field.
+   * Add implementation to evaluate the features that have targeting rules when `IsUserAttributesUpdated` is true.
+   * Add the `ArchivedFeatures` and `ForceUpdate` fields to the GetEvaluationsResponse object.
+4. Modify each SDK to support `EvaluatedAt` and differential update the local data.
+5. Make GetEvaluationsRequest's `UserEvaluationsID` field deprecated and the `Tag` field optional.
 
 ## What not to do
 
-When user attributes are updated, we do not detect which attributes have changed.
+We do not detect which attributes have changed when user attributes are updated.
 We can do it strictly, but it also makes the code more complex.
 Given the number of feature flags with targeting rules, the impact is considered to be limited.
