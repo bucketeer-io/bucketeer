@@ -42,7 +42,7 @@ func (c *inMemoryCache) Get(key interface{}) (interface{}, error) {
 	return nil, cache.ErrNotFound
 }
 
-func (c *inMemoryCache) Put(key interface{}, value interface{}) error {
+func (c *inMemoryCache) Put(key interface{}, value interface{}, expiration time.Duration) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	c.data[key] = value

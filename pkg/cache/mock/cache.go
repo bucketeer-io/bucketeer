@@ -52,17 +52,17 @@ func (mr *MockCacheMockRecorder) Get(key interface{}) *gomock.Call {
 }
 
 // Put mocks base method.
-func (m *MockCache) Put(key, value interface{}) error {
+func (m *MockCache) Put(key, value interface{}, expiration time.Duration) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", key, value)
+	ret := m.ctrl.Call(m, "Put", key, value, expiration)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockCacheMockRecorder) Put(key, value interface{}) *gomock.Call {
+func (mr *MockCacheMockRecorder) Put(key, value, expiration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockCache)(nil).Put), key, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockCache)(nil).Put), key, value, expiration)
 }
 
 // MockMultiGetCache is a mock of MultiGetCache interface.
@@ -119,17 +119,17 @@ func (mr *MockMultiGetCacheMockRecorder) GetMulti(keys interface{}) *gomock.Call
 }
 
 // Put mocks base method.
-func (m *MockMultiGetCache) Put(key, value interface{}) error {
+func (m *MockMultiGetCache) Put(key, value interface{}, expiration time.Duration) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", key, value)
+	ret := m.ctrl.Call(m, "Put", key, value, expiration)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockMultiGetCacheMockRecorder) Put(key, value interface{}) *gomock.Call {
+func (mr *MockMultiGetCacheMockRecorder) Put(key, value, expiration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetCache)(nil).Put), key, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetCache)(nil).Put), key, value, expiration)
 }
 
 // Scan mocks base method.
@@ -299,17 +299,17 @@ func (mr *MockMultiGetDeleteCountCacheMockRecorder) Pipeline() *gomock.Call {
 }
 
 // Put mocks base method.
-func (m *MockMultiGetDeleteCountCache) Put(key, value interface{}) error {
+func (m *MockMultiGetDeleteCountCache) Put(key, value interface{}, expiration time.Duration) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", key, value)
+	ret := m.ctrl.Call(m, "Put", key, value, expiration)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockMultiGetDeleteCountCacheMockRecorder) Put(key, value interface{}) *gomock.Call {
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) Put(key, value, expiration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Put), key, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).Put), key, value, expiration)
 }
 
 // Scan mocks base method.
@@ -486,17 +486,17 @@ func (m *MockPutter) EXPECT() *MockPutterMockRecorder {
 }
 
 // Put mocks base method.
-func (m *MockPutter) Put(key, value interface{}) error {
+func (m *MockPutter) Put(key, value interface{}, expiration time.Duration) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", key, value)
+	ret := m.ctrl.Call(m, "Put", key, value, expiration)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockPutterMockRecorder) Put(key, value interface{}) *gomock.Call {
+func (mr *MockPutterMockRecorder) Put(key, value, expiration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockPutter)(nil).Put), key, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockPutter)(nil).Put), key, value, expiration)
 }
 
 // MockDeleter is a mock of Deleter interface.

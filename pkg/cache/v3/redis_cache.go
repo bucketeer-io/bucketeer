@@ -42,8 +42,8 @@ func (r *redisCache) Get(key interface{}) (interface{}, error) {
 	return value, nil
 }
 
-func (r *redisCache) Put(key interface{}, value interface{}) error {
-	return r.client.Set(key.(string), value, 0)
+func (r *redisCache) Put(key interface{}, value interface{}, expiration time.Duration) error {
+	return r.client.Set(key.(string), value, expiration)
 }
 
 func (r *redisCache) GetMulti(keys interface{}) ([]interface{}, error) {

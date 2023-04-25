@@ -107,7 +107,7 @@ func TestPutFeatures(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(tf *featuresCache) {
-				tf.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataFeatures).Return(nil)
+				tf.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataFeatures, featuresTTL).Return(nil)
 			},
 			input:       features,
 			expectedErr: nil,

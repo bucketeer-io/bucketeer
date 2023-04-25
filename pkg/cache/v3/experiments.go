@@ -24,6 +24,10 @@ import (
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
+const (
+	experimentsTTL = 0
+)
+
 type ExperimentsCache interface {
 	Get(featureID string, featureVersion int32, environmentNamespace string) (*experimentproto.Experiments, error)
 	Put(
@@ -75,7 +79,7 @@ func (c *experimentsCache) Put(
 		return err
 	}
 	key := c.key(featureID, featureVersion, environmentNamespace)
-	return c.cache.Put(key, buffer)
+	return c.cache.Put(key, buffer, experimentsTTL)
 }
 
 func (c *experimentsCache) key(featureID string, featureVersion int32, environmentNamespace string) string {
