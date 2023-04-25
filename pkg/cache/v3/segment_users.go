@@ -16,6 +16,8 @@
 package v3
 
 import (
+	"time"
+
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -25,6 +27,7 @@ import (
 const (
 	segmentUsersKind    = "segment_users"
 	segmentUsersMaxSize = int64(100)
+	segmentUsersTTL     = 10 * time.Minute
 )
 
 type SegmentUsersCache interface {
@@ -90,7 +93,7 @@ func (c *segmentUsersCache) Put(segmentUsers *featureproto.SegmentUsers, environ
 		return err
 	}
 	key := c.key(segmentUsers.SegmentId, environmentNamespace)
-	return c.cache.Put(key, buffer)
+	return c.cache.Put(key, buffer, segmentUsersTTL)
 }
 
 func (c *segmentUsersCache) scan(environmentNamespace string) ([]string, error) {

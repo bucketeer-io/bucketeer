@@ -23,6 +23,11 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
+const (
+	environmentAPIKeyKind = "environment_apikey"
+	environmentAPIKeyTTL  = 0
+)
+
 type EnvironmentAPIKeyCache interface {
 	Get(string) (*accountproto.EnvironmentAPIKey, error)
 	Put(*accountproto.EnvironmentAPIKey) error
@@ -59,10 +64,10 @@ func (c *environmentAPIKeyCache) Put(environmentAPIKey *accountproto.Environment
 		return err
 	}
 	key := c.key(environmentAPIKey.ApiKey.Id)
-	return c.cache.Put(key, buffer)
+	return c.cache.Put(key, buffer, environmentAPIKeyTTL)
 }
 
 func (c *environmentAPIKeyCache) key(id string) string {
 	// always use AdminEnvironmentNamespace because we'd like to get APIKey and environment_namespace only by id
-	return cache.MakeKey("environment_apikey", id, storage.AdminEnvironmentNamespace)
+	return cache.MakeKey(environmentAPIKeyKind, id, storage.AdminEnvironmentNamespace)
 }

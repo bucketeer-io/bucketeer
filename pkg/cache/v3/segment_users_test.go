@@ -187,7 +187,7 @@ func TestPutSegmentUser(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(sc *segmentUsersCache) {
-				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataSegmentUsers).Return(nil)
+				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Put(key, dataSegmentUsers, segmentUsersTTL).Return(nil)
 			},
 			input:       segmentUsers,
 			expectedErr: nil,

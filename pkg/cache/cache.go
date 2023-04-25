@@ -62,7 +62,7 @@ type MultiGetter interface {
 }
 
 type Putter interface {
-	Put(key interface{}, value interface{}) error
+	Put(key interface{}, value interface{}, expiration time.Duration) error
 }
 
 type Deleter interface {

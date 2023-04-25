@@ -17,6 +17,7 @@ package v3
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 
@@ -26,6 +27,7 @@ import (
 
 const (
 	featuresKind = "features"
+	featuresTTL  = 10 * time.Minute
 )
 
 type FeaturesCache interface {
@@ -65,7 +67,7 @@ func (c *featuresCache) Put(features *featureproto.Features, environmentNamespac
 		return err
 	}
 	key := c.key(environmentNamespace)
-	return c.cache.Put(key, buffer)
+	return c.cache.Put(key, buffer, featuresTTL)
 }
 
 func (c *featuresCache) key(environmentNamespace string) string {
