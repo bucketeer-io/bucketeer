@@ -17,7 +17,6 @@ package v3
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 
@@ -27,7 +26,7 @@ import (
 
 const (
 	featuresKind = "features"
-	featuresTTL  = 10 * time.Minute
+	featuresTTL  = 0
 )
 
 type FeaturesCache interface {
