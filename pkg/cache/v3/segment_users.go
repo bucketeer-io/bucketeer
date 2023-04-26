@@ -16,6 +16,8 @@
 package v3
 
 import (
+	"time"
+
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -25,7 +27,7 @@ import (
 const (
 	segmentUsersKind    = "segment_users"
 	segmentUsersMaxSize = int64(100)
-	segmentUsersTTL     = 0
+	segmentUsersTTL     = time.Duration(0)
 )
 
 type SegmentUsersCache interface {
