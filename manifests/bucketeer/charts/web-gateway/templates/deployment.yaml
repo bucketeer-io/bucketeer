@@ -74,8 +74,7 @@ spec:
                 command:
                   - "/bin/sh"
                   - "-c"
-                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
-                  - "sleep 10;"
+                  - "sleep 15;"
           command: ["envoy"]
           args:
             - "-c"
