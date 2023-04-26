@@ -188,45 +188,34 @@ func (s *FeatureService) checkSegmentInUse(
 	segmentID, environmentNamespace string,
 	localizer locale.Localizer,
 ) error {
-	features := []*featureproto.Feature{}
-	var cursor string
-	for {
-		f, cursor, _, err := s.listFeatures(
-			ctx,
-			mysql.QueryNoLimit,
-			cursor,
-			nil,
-			"",
-			nil,
-			nil,
-			nil,
-			"",
-			featureproto.ListFeaturesRequest_DEFAULT,
-			featureproto.ListFeaturesRequest_ASC,
-			environmentNamespace,
+	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
+	whereParts := []mysql.WherePart{
+		mysql.NewFilter("deleted", "=", false),
+		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+	}
+	features, _, _, err := featureStorage.ListFeatures(
+		ctx,
+		whereParts,
+		nil,
+		mysql.QueryNoLimit,
+		mysql.QueryNoOffset,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list features",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+			)...,
 		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
 		if err != nil {
-			s.logger.Error(
-				"Failed to list features",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusInternal.Err()
 		}
-		features = append(features, f...)
-		size := len(f)
-		if cursor == "" || size == 0 || size < listRequestSize {
-			break
-		}
+		return dt.Err()
 	}
 	if s.containsInRules(segmentID, features) {
 		s.logger.Warn(
