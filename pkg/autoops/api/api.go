@@ -1097,7 +1097,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			}
 			return err
 		}
-		return ExecuteOperation(ctx, req.EnvironmentNamespace, autoOpsRule, s.featureClient, s.logger, localizer)
+		return ExecuteAutoOpsRuleOperation(ctx, req.EnvironmentNamespace, autoOpsRule, s.featureClient, s.logger, localizer)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound {

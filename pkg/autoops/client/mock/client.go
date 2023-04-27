@@ -69,6 +69,26 @@ func (mr *MockClientMockRecorder) CreateAutoOpsRule(ctx, in interface{}, opts ..
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAutoOpsRule", reflect.TypeOf((*MockClient)(nil).CreateAutoOpsRule), varargs...)
 }
 
+// CreateProgressiveRollout mocks base method.
+func (m *MockClient) CreateProgressiveRollout(ctx context.Context, in *autoops.CreateProgressiveRolloutRequest, opts ...grpc.CallOption) (*autoops.CreateProgressiveRolloutResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateProgressiveRollout", varargs...)
+	ret0, _ := ret[0].(*autoops.CreateProgressiveRolloutResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateProgressiveRollout indicates an expected call of CreateProgressiveRollout.
+func (mr *MockClientMockRecorder) CreateProgressiveRollout(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProgressiveRollout", reflect.TypeOf((*MockClient)(nil).CreateProgressiveRollout), varargs...)
+}
+
 // CreateWebhook mocks base method.
 func (m *MockClient) CreateWebhook(ctx context.Context, in *autoops.CreateWebhookRequest, opts ...grpc.CallOption) (*autoops.CreateWebhookResponse, error) {
 	m.ctrl.T.Helper()
@@ -107,6 +127,26 @@ func (mr *MockClientMockRecorder) DeleteAutoOpsRule(ctx, in interface{}, opts ..
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAutoOpsRule", reflect.TypeOf((*MockClient)(nil).DeleteAutoOpsRule), varargs...)
+}
+
+// DeleteProgressiveRollout mocks base method.
+func (m *MockClient) DeleteProgressiveRollout(ctx context.Context, in *autoops.DeleteProgressiveRolloutRequest, opts ...grpc.CallOption) (*autoops.DeleteProgressiveRolloutResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteProgressiveRollout", varargs...)
+	ret0, _ := ret[0].(*autoops.DeleteProgressiveRolloutResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteProgressiveRollout indicates an expected call of DeleteProgressiveRollout.
+func (mr *MockClientMockRecorder) DeleteProgressiveRollout(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProgressiveRollout", reflect.TypeOf((*MockClient)(nil).DeleteProgressiveRollout), varargs...)
 }
 
 // DeleteWebhook mocks base method.
@@ -149,6 +189,26 @@ func (mr *MockClientMockRecorder) ExecuteAutoOps(ctx, in interface{}, opts ...in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteAutoOps", reflect.TypeOf((*MockClient)(nil).ExecuteAutoOps), varargs...)
 }
 
+// ExecuteProgressiveRollout mocks base method.
+func (m *MockClient) ExecuteProgressiveRollout(ctx context.Context, in *autoops.ExecuteProgressiveRolloutRequest, opts ...grpc.CallOption) (*autoops.ExecuteProgressiveRolloutResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ExecuteProgressiveRollout", varargs...)
+	ret0, _ := ret[0].(*autoops.ExecuteProgressiveRolloutResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExecuteProgressiveRollout indicates an expected call of ExecuteProgressiveRollout.
+func (mr *MockClientMockRecorder) ExecuteProgressiveRollout(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteProgressiveRollout", reflect.TypeOf((*MockClient)(nil).ExecuteProgressiveRollout), varargs...)
+}
+
 // GetAutoOpsRule mocks base method.
 func (m *MockClient) GetAutoOpsRule(ctx context.Context, in *autoops.GetAutoOpsRuleRequest, opts ...grpc.CallOption) (*autoops.GetAutoOpsRuleResponse, error) {
 	m.ctrl.T.Helper()
@@ -167,6 +227,26 @@ func (mr *MockClientMockRecorder) GetAutoOpsRule(ctx, in interface{}, opts ...in
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAutoOpsRule", reflect.TypeOf((*MockClient)(nil).GetAutoOpsRule), varargs...)
+}
+
+// GetProgressiveRollout mocks base method.
+func (m *MockClient) GetProgressiveRollout(ctx context.Context, in *autoops.GetProgressiveRolloutRequest, opts ...grpc.CallOption) (*autoops.GetProgressiveRolloutResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetProgressiveRollout", varargs...)
+	ret0, _ := ret[0].(*autoops.GetProgressiveRolloutResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProgressiveRollout indicates an expected call of GetProgressiveRollout.
+func (mr *MockClientMockRecorder) GetProgressiveRollout(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProgressiveRollout", reflect.TypeOf((*MockClient)(nil).GetProgressiveRollout), varargs...)
 }
 
 // GetWebhook mocks base method.
@@ -227,6 +307,26 @@ func (mr *MockClientMockRecorder) ListOpsCounts(ctx, in interface{}, opts ...int
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOpsCounts", reflect.TypeOf((*MockClient)(nil).ListOpsCounts), varargs...)
+}
+
+// ListProgressiveRollouts mocks base method.
+func (m *MockClient) ListProgressiveRollouts(ctx context.Context, in *autoops.ListProgressiveRolloutsRequest, opts ...grpc.CallOption) (*autoops.ListProgressiveRolloutsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListProgressiveRollouts", varargs...)
+	ret0, _ := ret[0].(*autoops.ListProgressiveRolloutsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListProgressiveRollouts indicates an expected call of ListProgressiveRollouts.
+func (mr *MockClientMockRecorder) ListProgressiveRollouts(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProgressiveRollouts", reflect.TypeOf((*MockClient)(nil).ListProgressiveRollouts), varargs...)
 }
 
 // ListWebhooks mocks base method.

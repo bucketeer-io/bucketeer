@@ -318,5 +318,5 @@ func (h *handler) executeAutoOps(
 	if err := storage.UpdateAutoOpsRule(ctx, rule, environmentNamespace); err != nil {
 		return err
 	}
-	return autoopsapi.ExecuteOperation(ctx, environmentNamespace, rule, h.featureClient, h.logger, localizer)
+	return autoopsapi.ExecuteAutoOpsRuleOperation(ctx, environmentNamespace, rule, h.featureClient, h.logger, localizer)
 }
