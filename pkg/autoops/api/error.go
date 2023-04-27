@@ -95,8 +95,80 @@ var (
 		codes.InvalidArgument,
 		"autoops: webhook clause condition oerator is invalid",
 	)
-	statusAlreadyExists    = gstatus.New(codes.AlreadyExists, "autoops: already exists")
-	statusUnauthenticated  = gstatus.New(codes.Unauthenticated, "autoops: unauthenticated")
-	statusPermissionDenied = gstatus.New(codes.PermissionDenied, "autoops: permission denied")
-	statusInvalidRequest   = gstatus.New(codes.InvalidArgument, "autoops: invalid request")
+	statusAlreadyExists               = gstatus.New(codes.AlreadyExists, "autoops: already exists")
+	statusUnauthenticated             = gstatus.New(codes.Unauthenticated, "autoops: unauthenticated")
+	statusPermissionDenied            = gstatus.New(codes.PermissionDenied, "autoops: permission denied")
+	statusInvalidRequest              = gstatus.New(codes.InvalidArgument, "autoops: invalid request")
+	statusProgressiveRolloutNoCommand = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: no command",
+	)
+	statusProgressiveRolloutFeatureIDRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: featureId must be specified",
+	)
+	statusProgressiveRolloutClauseRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: at least one clause must be specified",
+	)
+	statusProgressiveRolloutInternal = gstatus.New(
+		codes.Internal,
+		"autoops progressive rollout: internal",
+	)
+	statusProgressiveRolloutClauseVariationIDRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: clause variation id must be specified",
+	)
+	statusProgressiveRolloutClauseSchedulesRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: at least one clause schedule must be specified",
+	)
+	statusProgressiveRolloutClauseInvalidIncrements = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: clause increments is invalid.",
+	)
+	statusProgressiveRolloutClauseUnknownInterval = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: clause interval is unknown.",
+	)
+	statusProgressiveRolloutInvalidVariationSize = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops progressive rollout: the number of variations must be equal to 2",
+	)
+	statusProgressiveRolloutInvalidScheduleSpans = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops progressive rollout: The span of time for each scheduled time must be at least 5 minutes.",
+	)
+	statusProgressiveRolloutScheduleExecutedAtRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: schedule executed_at must be specified",
+	)
+	statusProgressiveRolloutScheduleInvalidWeight = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: schedule weight is invalid",
+	)
+	statusProgressiveRolloutAlreadyExists = gstatus.New(
+		codes.AlreadyExists,
+		"autoops progressive rollout: already exists",
+	)
+	statusProgressiveRolloutIDRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: id must be specified",
+	)
+	statusProgressiveRolloutNotFound = gstatus.New(
+		codes.NotFound,
+		"autoops progressive rollout: not found",
+	)
+	statusProgressiveRolloutInvalidCursor = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: cursor is invalid",
+	)
+	statusProgressiveRolloutInvalidOrderBy = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: order_by is invalid",
+	)
+	statusProgressiveRolloutScheduleIDRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: schedule id must be specified",
+	)
 )

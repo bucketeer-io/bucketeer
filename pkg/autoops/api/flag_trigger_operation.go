@@ -32,7 +32,7 @@ import (
 
 type Command interface{}
 
-func ExecuteOperation(
+func ExecuteAutoOpsRuleOperation(
 	ctx context.Context,
 	environmentNamespace string,
 	autoOpsRule *domain.AutoOpsRule,
