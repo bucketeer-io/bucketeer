@@ -25,6 +25,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	experimentdomain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
@@ -2223,7 +2224,7 @@ func (s *FeatureService) refreshFeaturesCache(ctx context.Context, environmentNa
 		nil,
 		"",
 		nil,
-		nil,
+		wrapperspb.Bool(false),
 		nil,
 		"",
 		featureproto.ListFeaturesRequest_DEFAULT,
