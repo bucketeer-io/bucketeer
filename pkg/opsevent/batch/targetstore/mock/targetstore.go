@@ -88,6 +88,43 @@ func (mr *MockAutoOpsRuleListerMockRecorder) GetAutoOpsRules(ctx, environmentNam
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAutoOpsRules", reflect.TypeOf((*MockAutoOpsRuleLister)(nil).GetAutoOpsRules), ctx, environmentNamespace)
 }
 
+// MockProgressiveRolloutLister is a mock of ProgressiveRolloutLister interface.
+type MockProgressiveRolloutLister struct {
+	ctrl     *gomock.Controller
+	recorder *MockProgressiveRolloutListerMockRecorder
+}
+
+// MockProgressiveRolloutListerMockRecorder is the mock recorder for MockProgressiveRolloutLister.
+type MockProgressiveRolloutListerMockRecorder struct {
+	mock *MockProgressiveRolloutLister
+}
+
+// NewMockProgressiveRolloutLister creates a new mock instance.
+func NewMockProgressiveRolloutLister(ctrl *gomock.Controller) *MockProgressiveRolloutLister {
+	mock := &MockProgressiveRolloutLister{ctrl: ctrl}
+	mock.recorder = &MockProgressiveRolloutListerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockProgressiveRolloutLister) EXPECT() *MockProgressiveRolloutListerMockRecorder {
+	return m.recorder
+}
+
+// GetProgressiveRollouts mocks base method.
+func (m *MockProgressiveRolloutLister) GetProgressiveRollouts(ctx context.Context, environmentNamespace string) []*domain.ProgressiveRollout {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProgressiveRollouts", ctx, environmentNamespace)
+	ret0, _ := ret[0].([]*domain.ProgressiveRollout)
+	return ret0
+}
+
+// GetProgressiveRollouts indicates an expected call of GetProgressiveRollouts.
+func (mr *MockProgressiveRolloutListerMockRecorder) GetProgressiveRollouts(ctx, environmentNamespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProgressiveRollouts", reflect.TypeOf((*MockProgressiveRolloutLister)(nil).GetProgressiveRollouts), ctx, environmentNamespace)
+}
+
 // MockTargetStore is a mock of TargetStore interface.
 type MockTargetStore struct {
 	ctrl     *gomock.Controller
@@ -137,6 +174,20 @@ func (m *MockTargetStore) GetEnvironments(ctx context.Context) []*domain0.Enviro
 func (mr *MockTargetStoreMockRecorder) GetEnvironments(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironments", reflect.TypeOf((*MockTargetStore)(nil).GetEnvironments), ctx)
+}
+
+// GetProgressiveRollouts mocks base method.
+func (m *MockTargetStore) GetProgressiveRollouts(ctx context.Context, environmentNamespace string) []*domain.ProgressiveRollout {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProgressiveRollouts", ctx, environmentNamespace)
+	ret0, _ := ret[0].([]*domain.ProgressiveRollout)
+	return ret0
+}
+
+// GetProgressiveRollouts indicates an expected call of GetProgressiveRollouts.
+func (mr *MockTargetStoreMockRecorder) GetProgressiveRollouts(ctx, environmentNamespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProgressiveRollouts", reflect.TypeOf((*MockTargetStore)(nil).GetProgressiveRollouts), ctx, environmentNamespace)
 }
 
 // Run mocks base method.

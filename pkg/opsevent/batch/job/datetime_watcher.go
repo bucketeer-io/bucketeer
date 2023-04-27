@@ -71,7 +71,7 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 			if !asmt {
 				continue
 			}
-			if err = w.autoOpsExecutor.Execute(ctx, env.Namespace, a.Id); err != nil {
+			if err = w.autoOpsExecutor.ExecuteAutoOps(ctx, env.Namespace, a.Id); err != nil {
 				lastErr = err
 			}
 		}
