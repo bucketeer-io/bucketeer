@@ -312,7 +312,7 @@ func TestRefreshProgressiveRollouts(t *testing.T) {
 					&autoopsproto.ListProgressiveRolloutsResponse{
 						ProgressiveRollouts: []*autoopsproto.ProgressiveRollout{
 							{Id: "id-0", FeatureId: "fid-0", Clause: c1},
-							{Id: "id-1", FeatureId: "fid-1", Clause: c2},
+							{Id: "id-1", FeatureId: "fid-1", Clause: c2, Status: autoopsproto.ProgressiveRollout_FINISHED},
 						},
 					}, nil)
 			},
@@ -320,11 +320,6 @@ func TestRefreshProgressiveRollouts(t *testing.T) {
 				{
 					ProgressiveRollout: &autoopsproto.ProgressiveRollout{
 						Id: "id-0", FeatureId: "fid-0", Clause: c1,
-					},
-				},
-				{
-					ProgressiveRollout: &autoopsproto.ProgressiveRollout{
-						Id: "id-1", FeatureId: "fid-1", Clause: c2,
 					},
 				},
 			},
