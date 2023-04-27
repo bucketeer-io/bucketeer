@@ -26,6 +26,7 @@ SegmentInUse: "segmentがfeature flagで使用されているため、削除で�
 HasWaitingOrRunningExperiment: "開始予定、もしくは実行中のExperimentが存在します。更新する場合はExperimentを停止してください。"
 InvalidArchive: "前提条件のフラグとして登録されているフラグをアーカイブすることはできません"
 InvalidChangingVariation: "前提条件のフラグとして登録されているフラグのバリエーションを変更または削除することはできません"
+WaitingOrRunningProgressiveRolloutExists: "開始予定、もしくは実行中のProgressive Rolloutが存在します。更新する場合はProgressive Rolloutを停止してください。"
 
 # autoops error
 IncompatibleOpsType: "対象のオペレーションタイプに対応していない自動オペレーションルールがあります"

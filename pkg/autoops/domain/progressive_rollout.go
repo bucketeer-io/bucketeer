@@ -108,6 +108,10 @@ func (p *ProgressiveRollout) setClause(c protoiface.MessageV1) error {
 	return nil
 }
 
+func (p *ProgressiveRollout) IsFinished() bool {
+	return p.Status == autoopsproto.ProgressiveRollout_FINISHED
+}
+
 func (p *ProgressiveRollout) AlreadyTriggered(scheduleID string) (bool, error) {
 	switch p.Type {
 	case autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE:
@@ -185,6 +189,10 @@ func (p *ProgressiveRollout) SetTriggeredAt(scheduleID string) error {
 			return err
 		}
 		s.TriggeredAt = now
+		p.Status = autoopsproto.ProgressiveRollout_RUNNING
+		if c.Schedules[len(c.Schedules) - 1].ScheduleId == scheduleID {
+			p.Status = autoopsproto.ProgressiveRollout_FINISHED
+		}
 		if err := p.setClause(c); err != nil {
 			return err
 		}
@@ -198,6 +206,10 @@ func (p *ProgressiveRollout) SetTriggeredAt(scheduleID string) error {
 			return err
 		}
 		s.TriggeredAt = now
+		p.Status = autoopsproto.ProgressiveRollout_RUNNING
+		if c.Schedules[len(c.Schedules) - 1].ScheduleId == scheduleID {
+			p.Status = autoopsproto.ProgressiveRollout_FINISHED
+		}
 		if err := p.setClause(c); err != nil {
 			return err
 		}
