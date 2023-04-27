@@ -185,7 +185,7 @@ message DeleteProgressiveRolloutRequest {
 
 message DeleteProgressiveRolloutResponse {}
 
-message ListProgressiveRolloutRequest {
+message ListProgressiveRolloutsRequest {
   enum OrderBy {
     DEFAULT = 0;
     CREATED_AT = 1;
@@ -202,11 +202,10 @@ message ListProgressiveRolloutRequest {
   OrderBy order_by = 5;
   OrderDirection order_direction = 6;
   optional ProgressiveRollout.Status status = 7;
-  string search_keyword = 8;
-  optional ProgressiveRollout.Type type = 9;
+  optional ProgressiveRollout.Type type = 8;
 }
 
-message ListProgressiveRolloutResponse {
+message ListProgressiveRolloutsResponse {
   repeated ProgressiveRollout progressive_rollouts = 1;
   string cursor = 2;
   int64 total_count = 3;
@@ -238,15 +237,14 @@ service AutoOpsService {
   rpc UpdateWebhook(UpdateWebhookRequest) returns (UpdateWebhookResponse) {}
   rpc DeleteWebhook(DeleteWebhookRequest) returns (DeleteWebhookResponse) {}
   rpc ListWebhooks(ListWebhooksRequest) returns (ListWebhooksResponse) {}
-  // TODO: Implement the following methods
-  // rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
-  //     returns (CreateProgressiveRolloutResponse) {}
-  // rpc GetProgressiveRollout(GetProgressiveRolloutRequest)
-  //     returns (GetProgressiveRolloutResponse) {}
-  // rpc DeleteProgressiveRollout(DeleteProgressiveRolloutRequest)
-  //     returns (DeleteProgressiveRolloutResponse) {}
-  // rpc ListProgressiveRollout(ListProgressiveRolloutRequest)
-  //     returns (ListProgressiveRolloutResponse) {}
-  // rpc ExecuteProgressiveRollout(ExecuteProgressiveRolloutRequest)
-  //     returns (ExecuteProgressiveRolloutResponse) {}
+  rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
+      returns (CreateProgressiveRolloutResponse) {}
+  rpc GetProgressiveRollout(GetProgressiveRolloutRequest)
+      returns (GetProgressiveRolloutResponse) {}
+  rpc DeleteProgressiveRollout(DeleteProgressiveRolloutRequest)
+      returns (DeleteProgressiveRolloutResponse) {}
+  rpc ListProgressiveRollouts(ListProgressiveRolloutsRequest)
+      returns (ListProgressiveRolloutsResponse) {}
+  rpc ExecuteProgressiveRollout(ExecuteProgressiveRolloutRequest)
+      returns (ExecuteProgressiveRolloutResponse) {}
 }
