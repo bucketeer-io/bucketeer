@@ -210,6 +210,7 @@ func TestProgressiveRolloutSetTriggeredAt(t *testing.T) {
 		clause                 protoiface.MessageV1
 		targetScheduleID       string
 		expectedErr            error
+		expectedStatus         autoopsproto.ProgressiveRollout_Status
 	}{
 		{
 			desc:                   "err: template ErrProgressiveRolloutScheduleNotFound",
@@ -285,6 +286,26 @@ func TestProgressiveRolloutSetTriggeredAt(t *testing.T) {
 				},
 			},
 			targetScheduleID: "sid-2",
+			expectedStatus:   autoopsproto.ProgressiveRollout_RUNNING,
+		},
+		{
+			desc:                   "success last schedule is executed",
+			progressiveRolloutType: autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE,
+			clause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+					{
+						ScheduleId: "sid-2",
+					},
+					{
+						ScheduleId: "sid-3",
+					},
+					{
+						ScheduleId: "sid-4",
+					},
+				},
+			},
+			targetScheduleID: "sid-4",
+			expectedStatus:   autoopsproto.ProgressiveRollout_FINISHED,
 		},
 	}
 	for _, p := range patterns {
@@ -303,6 +324,7 @@ func TestProgressiveRolloutSetTriggeredAt(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotZero(t, s.TriggeredAt)
 			}
+			assert.Equal(t, p.expectedStatus, s.Status)
 		})
 	}
 }
