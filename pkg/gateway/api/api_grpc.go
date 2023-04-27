@@ -867,6 +867,11 @@ func (s *grpcGatewayService) RegisterEvents(
 				Message:   "Invalid message type",
 			}
 			eventCounter.WithLabelValues(callerGatewayService, typeUnknown, codeInvalidType).Inc()
+			s.logger.Warn("Received invalid type event",
+				zap.String("eventID", event.Id),
+				zap.String("environmentNamespace", event.EnvironmentNamespace),
+				zap.Any("event", event.Event),
+			)
 			continue
 		}
 		if ptypes.Is(event.Event, grpcGoalEvent) {
