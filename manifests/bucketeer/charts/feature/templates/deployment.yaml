@@ -68,6 +68,8 @@ spec:
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_FEATURE_EXPERIMENT_SERVICE
               value: "{{ .Values.env.experimentService }}"
+			- name: BUCKETEER_FEATURE_AUTO_OPS_SERVICE
+              value: "{{ .Values.env.autoOpsService }}"
             - name: BUCKETEER_FEATURE_BULK_SEGMENT_USERS_RECEIVED_EVENT_TOPIC
               value: "{{ .Values.env.bulkSegmentUsersReceivedEventTopic }}"
             - name: BUCKETEER_FEATURE_DOMAIN_EVENT_TOPIC

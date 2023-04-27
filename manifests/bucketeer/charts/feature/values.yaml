@@ -16,6 +16,7 @@ env:
   mysqlDbName:
   accountService: localhost:9001
   experimentService: localhost:9001
+  autoOpsService: localhost:9001
   redis:
     serverName:
     poolMaxIdle: 25
