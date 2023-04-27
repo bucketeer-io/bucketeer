@@ -165,6 +165,55 @@ func TestListAutoOpsRules(t *testing.T) {
 	}
 }
 
+func TestProgressiveRollouts(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc                 string
+		setup                func(*targetStore)
+		environmentNamespace string
+		expected             []*autoopsproto.ProgressiveRollout
+		expectedErr          error
+	}{
+		{
+			desc: "success",
+			setup: func(ts *targetStore) {
+				ts.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListProgressiveRollouts(gomock.Any(), gomock.Any()).Return(
+					&autoopsproto.ListProgressiveRolloutsResponse{ProgressiveRollouts: []*autoopsproto.ProgressiveRollout{
+						{
+							Id:        "id-0",
+							FeatureId: "fid-0",
+							Clause:    &any.Any{},
+						},
+					}}, nil)
+			},
+			expected: []*autoopsproto.ProgressiveRollout{
+				{Id: "id-0", FeatureId: "fid-0", Clause: &any.Any{}}},
+		},
+		{
+			desc: "failure",
+			setup: func(ts *targetStore) {
+				ts.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListProgressiveRollouts(gomock.Any(), gomock.Any()).Return(
+					nil, status.Errorf(codes.Unknown, "test"))
+			},
+			expectedErr: status.Errorf(codes.Unknown, "test"),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := newTargetStoreWithMock(t, mockController)
+			p.setup(s)
+			actual, err := s.listProgressiveRollouts(context.Background(), p.environmentNamespace)
+			assert.Equal(t, p.expected, actual)
+			if err != nil {
+				assert.Equal(t, p.expectedErr, err)
+			}
+		})
+	}
+}
+
 func TestRefreshEnvironments(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -242,6 +291,117 @@ func TestRefreshAutoOpsRules(t *testing.T) {
 			assert.Equal(t, p.expected, actual)
 		})
 	}
+}
+
+func TestRefreshProgressiveRollouts(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	c1, c2 := newProgressiveRolloutClauses(t)
+	patterns := []struct {
+		desc     string
+		setup    func(*targetStore)
+		expected []*autoopsdomain.ProgressiveRollout
+	}{
+		{
+			desc: "enable",
+			setup: func(ts *targetStore) {
+				ts.environments.Store([]*environmentdomain.Environment{{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}}})
+				ts.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListProgressiveRollouts(gomock.Any(), gomock.Any()).Return(
+					&autoopsproto.ListProgressiveRolloutsResponse{
+						ProgressiveRollouts: []*autoopsproto.ProgressiveRollout{
+							{Id: "id-0", FeatureId: "fid-0", Clause: c1},
+							{Id: "id-1", FeatureId: "fid-1", Clause: c2},
+						},
+					}, nil)
+			},
+			expected: []*autoopsdomain.ProgressiveRollout{
+				{
+					ProgressiveRollout: &autoopsproto.ProgressiveRollout{
+						Id: "id-0", FeatureId: "fid-0", Clause: c1,
+					},
+				},
+				{
+					ProgressiveRollout: &autoopsproto.ProgressiveRollout{
+						Id: "id-1", FeatureId: "fid-1", Clause: c2,
+					},
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := newTargetStoreWithMock(t, mockController)
+			p.setup(s)
+			_ = s.refreshProgressiveRollout(context.Background())
+			actual := s.GetProgressiveRollouts(context.Background(), "ns0")
+			assert.Equal(t, p.expected, actual)
+		})
+	}
+}
+
+func newProgressiveRolloutClauses(t *testing.T) (*any.Any, *any.Any) {
+	ac1, err := ptypes.MarshalAny(&autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+		Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+			{
+				ScheduleId: "schedule-id-0",
+				ExecuteAt:  time.Now().Unix(),
+				Weight:     0,
+			},
+			{
+				ScheduleId: "schedule-id-1",
+				ExecuteAt:  time.Now().AddDate(1, 0, 0).Unix(),
+				Weight:     20000,
+			},
+			{
+				ScheduleId: "schedule-id-2",
+				ExecuteAt:  time.Now().AddDate(2, 0, 0).Unix(),
+				Weight:     40000,
+			},
+			{
+				ScheduleId: "schedule-id-3",
+				ExecuteAt:  time.Now().AddDate(3, 0, 0).Unix(),
+				Weight:     60000,
+			},
+			{
+				ScheduleId: "schedule-id-4",
+				ExecuteAt:  time.Now().AddDate(4, 0, 0).Unix(),
+				Weight:     80000,
+			},
+			{
+				ScheduleId: "schedule-id-5",
+				ExecuteAt:  time.Now().AddDate(5, 0, 0).Unix(),
+				Weight:     100000,
+			},
+		},
+		Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+		Increments:  20,
+		VariationId: "vid-1",
+	})
+	require.NoError(t, err)
+	ac2, err := ptypes.MarshalAny(&autoopsproto.ProgressiveRolloutManualScheduleClause{
+		Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+			{
+				ScheduleId: "schedule-id-0",
+				ExecuteAt:  time.Now().Unix(),
+				Weight:     0,
+			},
+			{
+				ScheduleId: "schedule-id-1",
+				ExecuteAt:  time.Now().AddDate(1, 0, 0).Unix(),
+				Weight:     50000,
+			},
+			{
+				ScheduleId: "schedule-id-2",
+				ExecuteAt:  time.Now().AddDate(2, 0, 0).Unix(),
+				Weight:     100000,
+			},
+		},
+		VariationId: "vid-1",
+	})
+	require.NoError(t, err)
+	return ac1, ac2
 }
 
 func newTargetStoreWithMock(t *testing.T, mockController *gomock.Controller) *targetStore {

@@ -44,11 +44,16 @@ type AutoOpsRuleLister interface {
 	GetAutoOpsRules(ctx context.Context, environmentNamespace string) []*autoopsdomain.AutoOpsRule
 }
 
+type ProgressiveRolloutLister interface {
+	GetProgressiveRollouts(ctx context.Context, environmentNamespace string) []*autoopsdomain.ProgressiveRollout
+}
+
 type TargetStore interface {
 	Run()
 	Stop()
 	EnvironmentLister
 	AutoOpsRuleLister
+	ProgressiveRolloutLister
 }
 
 type options struct {
@@ -78,17 +83,19 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type targetStore struct {
-	timeNow           func() time.Time
-	environmentClient environmentservice.Client
-	autoOpsClient     autoopsservice.Client
-	autoOpsRules      map[string][]*autoopsdomain.AutoOpsRule
-	autoOpsRulesMtx   sync.Mutex
-	environments      atomic.Value
-	opts              *options
-	logger            *zap.Logger
-	ctx               context.Context
-	cancel            func()
-	doneCh            chan struct{}
+	timeNow                func() time.Time
+	environmentClient      environmentservice.Client
+	autoOpsClient          autoopsservice.Client
+	autoOpsRules           map[string][]*autoopsdomain.AutoOpsRule
+	progressiveRollouts    map[string][]*autoopsdomain.ProgressiveRollout
+	autoOpsRulesMtx        sync.Mutex
+	progressiveRolloutsMtx sync.Mutex
+	environments           atomic.Value
+	opts                   *options
+	logger                 *zap.Logger
+	ctx                    context.Context
+	cancel                 func()
+	doneCh                 chan struct{}
 }
 
 func NewTargetStore(
@@ -158,6 +165,10 @@ func (s *targetStore) refresh() {
 	err = s.refreshAutoOpsRules(ctx)
 	if err != nil {
 		s.logger.Error("Failed to refresh auto ops rules", zap.Error(err))
+	}
+	err = s.refreshProgressiveRollout(ctx)
+	if err != nil {
+		s.logger.Error("Failed to refresh progressive rollout", zap.Error(err))
 	}
 }
 
@@ -258,6 +269,73 @@ func (s *targetStore) listAutoOpsRules(
 	}
 }
 
+func (s *targetStore) refreshProgressiveRollout(
+	ctx context.Context,
+) error {
+	progressiveRolloutMap := make(map[string][]*autoopsdomain.ProgressiveRollout)
+	environments := s.GetEnvironments(ctx)
+	for _, e := range environments {
+		progressiveRollouts, err := s.listTargetProgressiveRollouts(ctx, e.Namespace)
+		if err != nil {
+			s.logger.Error(
+				"Failed to list progressive rollouts",
+				zap.Error(err),
+				zap.String("environmentNamespace", e.Namespace),
+			)
+			continue
+		}
+		s.logger.Debug("Succeeded to list progressive rollouts", zap.String("environmentNamespace", e.Namespace))
+		progressiveRolloutMap[e.Namespace] = progressiveRollouts
+	}
+	s.progressiveRolloutsMtx.Lock()
+	s.progressiveRollouts = progressiveRolloutMap
+	s.progressiveRolloutsMtx.Unlock()
+	return nil
+}
+
+func (s *targetStore) listTargetProgressiveRollouts(
+	ctx context.Context,
+	environmentNamespace string,
+) ([]*autoopsdomain.ProgressiveRollout, error) {
+	pbProgressiveRollouts, err := s.listProgressiveRollouts(ctx, environmentNamespace)
+	if err != nil {
+		return nil, err
+	}
+	targetProgressiveRollouts := make([]*autoopsdomain.ProgressiveRollout, 0, len(pbProgressiveRollouts))
+	for _, p := range pbProgressiveRollouts {
+		dp := &autoopsdomain.ProgressiveRollout{ProgressiveRollout: p}
+		targetProgressiveRollouts = append(targetProgressiveRollouts, dp)
+	}
+	return targetProgressiveRollouts, nil
+}
+
+func (s *targetStore) listProgressiveRollouts(
+	ctx context.Context,
+	environmentNamespace string,
+) ([]*autoopsproto.ProgressiveRollout, error) {
+	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0)
+	cursor := ""
+	for {
+		resp, err := s.autoOpsClient.ListProgressiveRollouts(
+			ctx,
+			&autoopsproto.ListProgressiveRolloutsRequest{
+				EnvironmentNamespace: environmentNamespace,
+				PageSize:             listRequestSize,
+				Cursor:               cursor,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		progressiveRollouts = append(progressiveRollouts, resp.ProgressiveRollouts...)
+		size := len(progressiveRollouts)
+		if size == 0 || size < listRequestSize {
+			return progressiveRollouts, nil
+		}
+		cursor = resp.Cursor
+	}
+}
+
 func (s *targetStore) GetEnvironments(ctx context.Context) []*environmentdomain.Environment {
 	return s.environments.Load().([]*environmentdomain.Environment)
 }
@@ -270,4 +348,17 @@ func (s *targetStore) GetAutoOpsRules(ctx context.Context, environmentNamespace 
 		return nil
 	}
 	return autoOpsRules
+}
+
+func (s *targetStore) GetProgressiveRollouts(
+	ctx context.Context,
+	environmentNamespace string,
+) []*autoopsdomain.ProgressiveRollout {
+	s.progressiveRolloutsMtx.Lock()
+	progressiveRollouts, ok := s.progressiveRollouts[environmentNamespace]
+	s.progressiveRolloutsMtx.Unlock()
+	if !ok {
+		return nil
+	}
+	return progressiveRollouts
 }

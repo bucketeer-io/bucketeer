@@ -42,23 +42,24 @@ const command = "batch"
 
 type batch struct {
 	*kingpin.CmdClause
-	port                    *int
-	project                 *string
-	mysqlUser               *string
-	mysqlPass               *string
-	mysqlHost               *string
-	mysqlPort               *int
-	mysqlDBName             *string
-	environmentService      *string
-	autoOpsService          *string
-	eventCounterService     *string
-	featureService          *string
-	certPath                *string
-	keyPath                 *string
-	serviceTokenPath        *string
-	refreshInterval         *time.Duration
-	scheduleCountWatcher    *string
-	scheduleDatetimeWatcher *string
+	port                              *int
+	project                           *string
+	mysqlUser                         *string
+	mysqlPass                         *string
+	mysqlHost                         *string
+	mysqlPort                         *int
+	mysqlDBName                       *string
+	environmentService                *string
+	autoOpsService                    *string
+	eventCounterService               *string
+	featureService                    *string
+	certPath                          *string
+	keyPath                           *string
+	serviceTokenPath                  *string
+	refreshInterval                   *time.Duration
+	scheduleCountWatcher              *string
+	scheduleDatetimeWatcher           *string
+	scheduleProgressiveRolloutWatcher *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -101,6 +102,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("0,10,20,30,40,50 * * * * *").String(),
 		scheduleDatetimeWatcher: cmd.Flag(
 			"schedule-datetime-watcher",
+			"Cron style schedule for datetime watcher.",
+		).Default("0,10,20,30,40,50 * * * * *").String(),
+		scheduleProgressiveRolloutWatcher: cmd.Flag(
+			"schedule-progressive-rollout-watcher",
 			"Cron style schedule for datetime watcher.",
 		).Default("0,10,20,30,40,50 * * * * *").String(),
 	}
@@ -179,6 +184,11 @@ func (b *batch) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Lo
 		executor.WithLogger(logger),
 	)
 
+	progressiveRolloutExecutor := executor.NewProgressiveRolloutExecutor(
+		autoOpsClient,
+		executor.WithLogger(logger),
+	)
+
 	manager := job.NewManager(registerer, "ops_event_batch", logger)
 	defer manager.Stop()
 	err = b.registerJobs(manager,
@@ -187,6 +197,7 @@ func (b *batch) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Lo
 		eventCounterClient,
 		featureClient,
 		autoOpsExecutor,
+		progressiveRolloutExecutor,
 		logger,
 	)
 	if err != nil {
@@ -221,6 +232,7 @@ func (b *batch) registerJobs(
 	eventCounterClient ecclient.Client,
 	featureClient ftclient.Client,
 	autoOpsExecutor executor.AutoOpsExecutor,
+	progressiveRolloutExecutor executor.ProgressiveRolloutExecutor,
 	logger *zap.Logger) error {
 
 	jobs := []struct {
@@ -246,6 +258,15 @@ func (b *batch) registerJobs(
 			job: opseventjob.NewDatetimeWatcher(
 				targetStore,
 				autoOpsExecutor,
+				opseventjob.WithTimeout(5*time.Minute),
+				opseventjob.WithLogger(logger)),
+		},
+		{
+			cron: *b.scheduleProgressiveRolloutWatcher,
+			name: "progressive_rollout_watcher",
+			job: opseventjob.NewProgressiveRolloutWacher(
+				targetStore,
+				progressiveRolloutExecutor,
 				opseventjob.WithTimeout(5*time.Minute),
 				opseventjob.WithLogger(logger)),
 		},

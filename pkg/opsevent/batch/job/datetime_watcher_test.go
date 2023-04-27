@@ -105,7 +105,7 @@ func TestRunDatetimeWatcher(t *testing.T) {
 						}},
 					},
 				)
-				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).EXPECT().ExecuteAutoOps(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			expectedErr: nil,
 		},

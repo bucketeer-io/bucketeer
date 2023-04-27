@@ -35,7 +35,7 @@ func TestNewAutoOpsExecutor(t *testing.T) {
 	assert.IsType(t, &autoOpsExecutor{}, e)
 }
 
-func TestExecute(t *testing.T) {
+func TestExecuteAutoOps(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -80,7 +80,7 @@ func TestExecute(t *testing.T) {
 			if p.setup != nil {
 				p.setup(e)
 			}
-			err := e.Execute(context.Background(), "ns0", "rid1")
+			err := e.ExecuteAutoOps(context.Background(), "ns0", "rid1")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
