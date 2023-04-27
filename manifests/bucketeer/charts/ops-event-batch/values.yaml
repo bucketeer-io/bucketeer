@@ -23,6 +23,7 @@ env:
   metricsPort: 9002
   scheduleCountWatcher: "0,10,20,30,40,50 * * * * *"
   scheduleDatetimeWatcher: "0,10,20,30,40,50 * * * * *"
+  scheduleProgressiveRolloutWathcer: "0,10,20,30,40,50 * * * * *"
 
 affinity: {}
 
