@@ -304,6 +304,9 @@ func (s *targetStore) listTargetProgressiveRollouts(
 	targetProgressiveRollouts := make([]*autoopsdomain.ProgressiveRollout, 0, len(pbProgressiveRollouts))
 	for _, p := range pbProgressiveRollouts {
 		dp := &autoopsdomain.ProgressiveRollout{ProgressiveRollout: p}
+		if dp.IsFinished() {
+			continue
+		}
 		targetProgressiveRollouts = append(targetProgressiveRollouts, dp)
 	}
 	return targetProgressiveRollouts, nil
