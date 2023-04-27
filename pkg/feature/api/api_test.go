@@ -24,6 +24,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
@@ -32,6 +33,7 @@ import (
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -98,11 +100,14 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 	a.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	e := experimentclientmock.NewMockClient(c)
 	e.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(&experimentproto.ListExperimentsResponse{}, nil).AnyTimes()
+	at := autoopsclientmock.NewMockClient(c)
+	at.EXPECT().ListProgressiveRollouts(gomock.Any(), gomock.Any()).Return(&autoopsproto.ListProgressiveRolloutsResponse{}, nil).AnyTimes()
 	return &FeatureService{
 		mysqlmock.NewMockClient(c),
 		a,
 		e,
 		cachev3mock.NewMockFeaturesCache(c),
+		at,
 		cachev3mock.NewMockSegmentUsersCache(c),
 		p,
 		p,

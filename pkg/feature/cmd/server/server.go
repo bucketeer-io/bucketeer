@@ -22,6 +22,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
@@ -49,6 +50,7 @@ type server struct {
 	mysqlDBName                        *string
 	accountService                     *string
 	experimentService                  *string
+	autoOpsService                     *string
 	redisServerName                    *string
 	redisAddr                          *string
 	redisPoolMaxIdle                   *int
@@ -83,6 +85,7 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"experiment-service",
 			"bucketeer-experiment-service address.",
 		).Default("experiment:9090").String(),
+		autoOpsService:  cmd.Flag("auto-ops-service", "bucketeer-auto-ops-service address.").Required().String(),
 		redisServerName: cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
 		redisAddr:       cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		redisPoolMaxIdle: cmd.Flag(
@@ -176,10 +179,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer domainPublisher.Stop()
 
+	autoOpsClient, err := autoopsclient.NewClient(*s.autoOpsService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer autoOpsClient.Close()
+
 	service := api.NewFeatureService(
 		mysqlClient,
 		accountClient,
 		experimentClient,
+		autoOpsClient,
 		redisV3Cache,
 		segmentUsersPublisher,
 		domainPublisher,
