@@ -234,6 +234,9 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.Rules[0].Strategy.RolloutStrategy)
 	}
 	actual := listProgressiveRollouts(t, autoOpsClient, featureID)
+	if actual[0].Status != autoopsproto.ProgressiveRollout_RUNNING {
+		t.Fatalf("different status, expected: %v, actual: %v", actual[0].Status, autoopsproto.ProgressiveRollout_RUNNING)
+	}
 	actualClause := unmarshalProgressiveRolloutManualClause(t, actual[0].Clause)
 	if actualClause.VariationId != feature.Variations[0].Id {
 		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
@@ -300,6 +303,9 @@ func TestProgressiveRolloutBatch(t *testing.T) {
 		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.Rules[0].Strategy.RolloutStrategy)
 	}
 	actual := listProgressiveRollouts(t, autoOpsClient, featureID)
+	if actual[0].Status != autoopsproto.ProgressiveRollout_FINISHED {
+		t.Fatalf("different status, expected: %v, actual: %v", actual[0].Status, autoopsproto.ProgressiveRollout_FINISHED)
+	}
 	actualClause := unmarshalProgressiveRolloutManualClause(t, actual[0].Clause)
 	if actualClause.VariationId != feature.Variations[0].Id {
 		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
