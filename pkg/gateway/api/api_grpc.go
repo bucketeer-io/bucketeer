@@ -868,6 +868,8 @@ func (s *grpcGatewayService) RegisterEvents(
 			}
 			eventCounter.WithLabelValues(callerGatewayService, typeUnknown, codeInvalidType).Inc()
 			s.logger.Warn("Received invalid type event",
+				zap.String("apiKey", envAPIKey.ApiKey.Id),
+				zap.String("projectID", envAPIKey.ProjectId),
 				zap.String("eventID", event.Id),
 				zap.String("environmentNamespace", event.EnvironmentNamespace),
 				zap.Any("event", event.Event),
