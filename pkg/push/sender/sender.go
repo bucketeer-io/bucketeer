@@ -283,9 +283,12 @@ func (s *sender) send(featureID, environmentNamespace string) error {
 func (s *sender) pushFCM(ctx context.Context, fcmAPIKey, topic string) error {
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"to": "/topics/" + topic,
-		"data": map[string]interface{}{
-			"bucketeer_feature_flag_updated": true,
+		// The values in the data payload should be converted to string type.
+		// https://firebase.google.com/docs/cloud-messaging/http-server-ref
+		"data": map[string]string{
+			"bucketeer_feature_flag_updated": "true",
 		},
+		"content_available": true,
 	})
 	if err != nil {
 		return err
