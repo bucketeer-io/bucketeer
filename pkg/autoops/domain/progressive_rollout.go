@@ -190,7 +190,7 @@ func (p *ProgressiveRollout) SetTriggeredAt(scheduleID string) error {
 		}
 		s.TriggeredAt = now
 		p.Status = autoopsproto.ProgressiveRollout_RUNNING
-		if c.Schedules[len(c.Schedules) - 1].ScheduleId == scheduleID {
+		if c.Schedules[len(c.Schedules)-1].ScheduleId == scheduleID {
 			p.Status = autoopsproto.ProgressiveRollout_FINISHED
 		}
 		if err := p.setClause(c); err != nil {
@@ -207,7 +207,7 @@ func (p *ProgressiveRollout) SetTriggeredAt(scheduleID string) error {
 		}
 		s.TriggeredAt = now
 		p.Status = autoopsproto.ProgressiveRollout_RUNNING
-		if c.Schedules[len(c.Schedules) - 1].ScheduleId == scheduleID {
+		if c.Schedules[len(c.Schedules)-1].ScheduleId == scheduleID {
 			p.Status = autoopsproto.ProgressiveRollout_FINISHED
 		}
 		if err := p.setClause(c); err != nil {
