@@ -2237,5 +2237,12 @@ func (s *FeatureService) refreshFeaturesCache(ctx context.Context, environmentNa
 	features := &featureproto.Features{
 		Features: fs,
 	}
-	return s.featuresCache.Put(features, environmentNamespace)
+	if err := s.featuresCache.Put(features, environmentNamespace); err != nil {
+		return err
+	}
+	s.logger.Info("Success to refresh features cache",
+		zap.String("environmentNamespace", environmentNamespace),
+		zap.Int("numberOfFeatures", len(fs)),
+	)
+	return nil
 }
