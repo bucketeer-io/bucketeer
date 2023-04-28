@@ -18,7 +18,6 @@ import (
 	"log"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	cacher "github.com/bucketeer-io/bucketeer/pkg/feature/cmd/cacher"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/cmd/recorder"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/cmd/segmentpersister"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/cmd/server"
@@ -41,7 +40,6 @@ func main() {
 
 func registerCommands(app *cli.App) {
 	server.RegisterServerCommand(app, app)
-	cacher.RegisterCommand(app, app)
 	recorder.RegisterCommand(app, app)
 	segmentpersister.RegisterCommand(app, app)
 }
