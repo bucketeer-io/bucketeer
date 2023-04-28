@@ -29,14 +29,14 @@ export const TimeseriesStackedLineChart: FC<TimeseriesStackedLineChartProps> =
       datasets: [
         {
           label: 'Dataset 1',
-          data: [20000, 4, 3, 8, 6, 10, 3],
+          data: [20001, 4, 3, 8, 6, 10, 3],
           borderColor: 'rgb(255, 99, 132)',
           backgroundColor: 'rgba(255, 99, 132, 0.5)',
           fill: false,
         },
         {
           label: 'Dataset 2',
-          data: [1, 4, 13000, 2, 7, 1000, 5],
+          data: [1, 4, 13030, 2, 7, 1000000, 5],
           borderColor: 'rgb(53, 162, 235)',
           backgroundColor: 'rgba(53, 162, 235, 0.5)',
           fill: false,
@@ -88,7 +88,10 @@ export const TimeseriesStackedLineChart: FC<TimeseriesStackedLineChartProps> =
             ticks: {
               // beginAtZero: true,
               userCallback: function (value) {
-                return value.toLocaleString();
+                const formatter = Intl.NumberFormat('en', {
+                  notation: 'compact',
+                });
+                return formatter.format(value);
               },
             },
           },
