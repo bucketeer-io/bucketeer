@@ -26,6 +26,7 @@ export const FeatureEvaluationPage: FC<FeatureEvaluationPageProps> = memo(
         getEvaluationTimeseriesCount({
           featureId: featureId,
           environmentNamespace: currentEnvironment.namespace,
+          timeRange: 1,
         })
       );
     }, [dispatch, featureId, currentEnvironment]);
