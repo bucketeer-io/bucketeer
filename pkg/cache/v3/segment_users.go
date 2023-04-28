@@ -27,7 +27,7 @@ import (
 const (
 	segmentUsersKind    = "segment_users"
 	segmentUsersMaxSize = int64(100)
-	segmentUsersTTL     = time.Duration(0)
+	segmentUsersTTL     = 1 * time.Hour
 )
 
 type SegmentUsersCache interface {
