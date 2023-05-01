@@ -1312,7 +1312,7 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 	}
 }
 
-func TestGrpcGetEvaluationsEvaluteFeatures(t *testing.T) {
+func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -1623,25 +1623,105 @@ func TestGrpcGetEvaluationsEvaluteFeatures(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: the cache includes archived features but the evaluation doesn't target them",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						EnvironmentNamespace: "ns0",
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id: "feature-1",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-a",
+										Value: "true",
+									},
+									{
+										Id:    "variation-b",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-b",
+									},
+								},
+								Tags: []string{"test"},
+							},
+							{
+								Id: "feature-2",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-c",
+										Value: "true",
+									},
+									{
+										Id:    "variation-d",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-d",
+									},
+								},
+								Archived: true,
+								Tags:     []string{"test"},
+							},
+						},
+					}, nil)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+					nil).MaxTimes(1)
+			},
+			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
+			expected: &gwproto.GetEvaluationsResponse{
+				State: featureproto.UserEvaluations_FULL,
+				Evaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{
+						{
+							Id:          "feature-1",
+							VariationId: "variation-b",
+							Reason: &featureproto.Reason{
+								Type: featureproto.Reason_DEFAULT,
+							},
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
-		gs := newGrpcGatewayServiceWithMock(t, mockController)
-		p.setup(gs)
-		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
-			"authorization": []string{"test-key"},
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"authorization": []string{"test-key"},
+			})
+			actual, err := gs.GetEvaluations(ctx, p.input)
+			if err != nil {
+				assert.Equal(t, p.expected, actual, "%s", p.desc)
+				assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+			} else {
+				assert.Equal(t, len(actual.Evaluations.Evaluations), 1, "%s", p.desc)
+				assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationId, "variation-b", "%s", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Reason, actual.Evaluations.Evaluations[0].Reason, p.desc)
+				assert.NotEmpty(t, actual.UserEvaluationsId, "%s", p.desc)
+				require.NoError(t, err)
+			}
 		})
-		actual, err := gs.GetEvaluations(ctx, p.input)
-		if err != nil {
-			assert.Equal(t, p.expected, actual, "%s", p.desc)
-			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
-		} else {
-			assert.Equal(t, len(p.expected.Evaluations.Evaluations), 1, "%s", p.desc)
-			assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
-			assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationId, "variation-b", "%s", p.desc)
-			assert.Equal(t, p.expected.Evaluations.Evaluations[0].Reason, actual.Evaluations.Evaluations[0].Reason, p.desc)
-			assert.NotEmpty(t, actual.UserEvaluationsId, "%s", p.desc)
-			require.NoError(t, err)
-		}
 	}
 }
 

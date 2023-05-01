@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc"
@@ -302,7 +301,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	if err != nil {
 		return nil, err
 	}
-	features := f.([]*featureproto.Feature)
+	features := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	if len(features) == 0 {
 		return &gwproto.GetEvaluationsResponse{
 			State:       featureproto.UserEvaluations_FULL,
@@ -471,7 +470,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		return nil, err
 	}
-	fs := f.([]*featureproto.Feature)
+	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	features, err := s.getTargetFeatures(fs, req.FeatureId)
 	if err != nil {
 		return nil, err
@@ -649,7 +648,6 @@ func (s *grpcGatewayService) listFeatures(
 			PageSize:             listRequestSize,
 			Cursor:               cursor,
 			EnvironmentNamespace: environmentNamespace,
-			Archived:             &wrappers.BoolValue{Value: false},
 		})
 		if err != nil {
 			return nil, err
@@ -1112,4 +1110,15 @@ func checkEnvironmentAPIKey(environmentAPIKey *accountproto.EnvironmentAPIKey, r
 
 func isContextCanceled(ctx context.Context) bool {
 	return ctx.Err() == context.Canceled
+}
+
+func (s *grpcGatewayService) filterOutArchivedFeatures(fs []*featureproto.Feature) []*featureproto.Feature {
+	result := make([]*featureproto.Feature, 0)
+	for _, f := range fs {
+		if f.Archived {
+			continue
+		}
+		result = append(result, f)
+	}
+	return result
 }

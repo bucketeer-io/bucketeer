@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -416,7 +415,6 @@ func (s *sender) listFeatures(ctx context.Context, environmentNamespace string) 
 			PageSize:             listRequestSize,
 			Cursor:               cursor,
 			EnvironmentNamespace: environmentNamespace,
-			Archived:             &wrappers.BoolValue{Value: false},
 		})
 		if err != nil {
 			return nil, err
