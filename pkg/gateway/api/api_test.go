@@ -373,6 +373,10 @@ func TestGetFeatures(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	now := time.Now()
+	twentyNineDaysAgo := now.Add(-29 * 24 * time.Hour)
+	thirtyOneDaysAgo := now.Add(-31 * 24 * time.Hour)
+
 	patterns := []struct {
 		desc                 string
 		setup                func(*gatewayService)
@@ -427,14 +431,106 @@ func TestGetFeatures(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		// TODO: add test for off-variation features
+		{
+			desc: "success: including off-variation features",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
+					&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{
+						{
+							Id:      "id-0",
+							Enabled: true,
+						},
+						{
+							Id:           "id-1",
+							Enabled:      true,
+							OffVariation: "",
+						},
+						{
+							Id:           "id-2",
+							Enabled:      false,
+							OffVariation: "var-2",
+						},
+						{
+							Id:           "id-3",
+							Enabled:      false,
+							OffVariation: "",
+						},
+					}}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			environmentNamespace: "ns0",
+			expected: []*featureproto.Feature{
+				{
+					Id:      "id-0",
+					Enabled: true,
+				},
+				{
+					Id:           "id-1",
+					Enabled:      true,
+					OffVariation: "",
+				},
+				{
+					Id:           "id-2",
+					Enabled:      false,
+					OffVariation: "var-2",
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: including archived features",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
+					&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{
+						{
+							Id:       "id-0",
+							Enabled:  true,
+							Archived: false,
+						},
+						{
+							Id:        "id-1",
+							Enabled:   true,
+							Archived:  true,
+							UpdatedAt: twentyNineDaysAgo.Unix(),
+						},
+						{
+							Id:        "id-2",
+							Enabled:   true,
+							Archived:  true,
+							UpdatedAt: thirtyOneDaysAgo.Unix(),
+						},
+					}}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			environmentNamespace: "ns0",
+			expected: []*featureproto.Feature{
+				{
+					Id:       "id-0",
+					Enabled:  true,
+					Archived: false,
+				},
+				{
+					Id:        "id-1",
+					Enabled:   true,
+					Archived:  true,
+					UpdatedAt: twentyNineDaysAgo.Unix(),
+				},
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
-		gs := newGatewayServiceWithMock(t, mockController)
-		p.setup(gs)
-		actual, err := gs.getFeatures(context.Background(), p.environmentNamespace)
-		assert.Equal(t, p.expected, actual, "%s", p.desc)
-		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			actual, err := gs.getFeatures(context.Background(), p.environmentNamespace)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
 	}
 }
 

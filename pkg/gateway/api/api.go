@@ -817,7 +817,12 @@ func (s *gatewayService) listFeatures(
 			return nil, err
 		}
 		for _, f := range resp.Features {
-			if !f.Enabled && f.OffVariation == "" {
+			ff := featuredomain.Feature{Feature: f}
+			if ff.IsDisabledAndOffVariationEmpty() {
+				continue
+			}
+			// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
+			if ff.IsArchivedLongAgo() {
 				continue
 			}
 			features = append(features, f)

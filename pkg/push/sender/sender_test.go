@@ -15,10 +15,15 @@
 package sender
 
 import (
+	"context"
+	"errors"
 	"testing"
+	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
+	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	domaineventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -114,6 +119,161 @@ func TestExtractFeatureID(t *testing.T) {
 			actualID, actualIsTarget := s.extractFeatureID(p.input)
 			assert.Equal(t, p.expectedID, actualID)
 			assert.Equal(t, p.expectedIsTarget, actualIsTarget)
+		})
+	}
+}
+
+func TestListFeatures(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	now := time.Now()
+	twentyNineDaysAgo := now.Add(-29 * 24 * time.Hour)
+	thirtyOneDaysAgo := now.Add(-31 * 24 * time.Hour)
+	ctx := context.TODO()
+	envNS := "ns0"
+
+	patterns := []struct {
+		desc                 string
+		setup                func(*sender)
+		environmentNamespace string
+		expected             []*featureproto.Feature
+		expectedErr          error
+	}{
+		{
+			desc: "listFeatures fails",
+			setup: func(s *sender) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(
+					ctx,
+					&featureproto.ListFeaturesRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: envNS,
+					},
+				).Return(
+					nil, errors.New("test"),
+				)
+			},
+			environmentNamespace: envNS,
+			expectedErr:          errors.New("test"),
+			expected:             nil,
+		},
+		{
+			desc: "success: including off-variation features",
+			setup: func(s *sender) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(
+					ctx,
+					&featureproto.ListFeaturesRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: envNS,
+					},
+				).Return(
+					&featureproto.ListFeaturesResponse{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "id-0",
+								Enabled: true,
+							},
+							{
+								Id:           "id-1",
+								Enabled:      true,
+								OffVariation: "",
+							},
+							{
+								Id:           "id-2",
+								Enabled:      false,
+								OffVariation: "var-2",
+							},
+							{
+								Id:           "id-3",
+								Enabled:      false,
+								OffVariation: "",
+							},
+						},
+					}, nil,
+				)
+			},
+			environmentNamespace: envNS,
+			expectedErr:          nil,
+			expected: []*featureproto.Feature{
+				{
+					Id:      "id-0",
+					Enabled: true,
+				},
+				{
+					Id:           "id-1",
+					Enabled:      true,
+					OffVariation: "",
+				},
+				{
+					Id:           "id-2",
+					Enabled:      false,
+					OffVariation: "var-2",
+				},
+			},
+		},
+		{
+			desc: "success: including archived features",
+			setup: func(s *sender) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(
+					ctx,
+					&featureproto.ListFeaturesRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: envNS,
+					},
+				).Return(
+					&featureproto.ListFeaturesResponse{
+						Features: []*featureproto.Feature{
+							{
+								Id:       "id-0",
+								Enabled:  true,
+								Archived: false,
+							},
+							{
+								Id:        "id-1",
+								Enabled:   true,
+								Archived:  true,
+								UpdatedAt: twentyNineDaysAgo.Unix(),
+							},
+							{
+								Id:        "id-2",
+								Enabled:   true,
+								Archived:  true,
+								UpdatedAt: thirtyOneDaysAgo.Unix(),
+							},
+						},
+					}, nil,
+				)
+			},
+			environmentNamespace: envNS,
+			expectedErr:          nil,
+			expected: []*featureproto.Feature{
+				{
+					Id:       "id-0",
+					Enabled:  true,
+					Archived: false,
+				},
+				{
+					Id:        "id-1",
+					Enabled:   true,
+					Archived:  true,
+					UpdatedAt: twentyNineDaysAgo.Unix(),
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := &sender{
+				featureClient: featureclientmock.NewMockClient(mockController),
+			}
+			p.setup(s)
+			actual, err := s.listFeatures(ctx, p.environmentNamespace)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
 	}
 }
