@@ -137,3 +137,104 @@ func TopologicalSort(features []*featureproto.Feature) ([]*featureproto.Feature,
 	}
 	return sortedFeatures, nil
 }
+
+/*
+GetPrerequisiteDownwards gets the features specified as prerequisite by the targetFeatures.
+*/
+func GetPrerequisiteDownwards(
+	targetFeatures, allFeatures []*featureproto.Feature,
+) ([]*featureproto.Feature, error) {
+	allFeaturesMap := make(map[string]*featureproto.Feature, len(allFeatures))
+	for _, f := range allFeatures {
+		allFeaturesMap[f.Id] = f
+	}
+	prerequisites := make(map[string]*featureproto.Feature)
+	// depth first search
+	queue := append([]*featureproto.Feature{}, targetFeatures...)
+	for len(queue) > 0 {
+		f := queue[0]
+		for _, p := range f.Prerequisites {
+			preFeature, ok := allFeaturesMap[p.FeatureId]
+			if !ok {
+				return nil, errFeatureNotFound
+			}
+			prerequisites[preFeature.Id] = preFeature
+			queue = append(queue, preFeature)
+		}
+		queue = queue[1:]
+	}
+	return getPrerequisiteResult(targetFeatures, prerequisites), nil
+}
+
+/*
+GetPrerequisiteUpwards gets the features that have the specified targetFeatures as the prerequisite.
+*/
+func GetPrerequisiteUpwards( // nolint:unused
+	targetFeatures, featuresHavePrerequisite []*featureproto.Feature,
+) ([]*featureproto.Feature, error) {
+	upwardsFeatures := make(map[string]*featureproto.Feature)
+	// depth first search
+	queue := append([]*featureproto.Feature{}, targetFeatures...)
+	for len(queue) > 0 {
+		f := queue[0]
+		for _, newTarget := range featuresHavePrerequisite {
+			for _, p := range newTarget.Prerequisites {
+				if p.FeatureId == f.Id {
+					if _, ok := upwardsFeatures[newTarget.Id]; ok {
+						continue
+					}
+					upwardsFeatures[newTarget.Id] = newTarget
+					queue = append(queue, newTarget)
+				}
+			}
+		}
+		queue = queue[1:]
+	}
+	return getPrerequisiteResult(targetFeatures, upwardsFeatures), nil
+}
+
+func getPrerequisiteResult(
+	targetFeatures []*featureproto.Feature,
+	featuresDepenencies map[string]*featureproto.Feature,
+) []*featureproto.Feature {
+	if len(featuresDepenencies) == 0 {
+		return targetFeatures
+	}
+	targetFeaturesMap := make(map[string]*featureproto.Feature, len(targetFeatures))
+	for _, f := range targetFeatures {
+		targetFeaturesMap[f.Id] = f
+	}
+	merged := mapMerge(targetFeaturesMap, featuresDepenencies)
+	result := make([]*featureproto.Feature, 0, len(merged))
+	for _, v := range merged {
+		result = append(result, v)
+	}
+	return result
+}
+
+func mapMerge(m1, m2 map[string]*featureproto.Feature) map[string]*featureproto.Feature {
+	for k, v := range m2 {
+		m1[k] = v
+	}
+	return m1
+}
+
+func getFeaturesHavePrerequisite( // nolint:unused,deadcode
+	fs []*featureproto.Feature,
+) []*featureproto.Feature {
+	featuresHavePrerequisite := make(map[string]*featureproto.Feature)
+	for _, f := range fs {
+		if len(f.Prerequisites) == 0 {
+			continue
+		}
+		if _, ok := featuresHavePrerequisite[f.Id]; ok {
+			continue
+		}
+		featuresHavePrerequisite[f.Id] = f
+	}
+	result := make([]*featureproto.Feature, 0, len(featuresHavePrerequisite))
+	for _, v := range featuresHavePrerequisite {
+		result = append(result, v)
+	}
+	return result
+}
