@@ -33,18 +33,18 @@ func (m *MockEventCounterCache) EXPECT() *MockEventCounterCacheMockRecorder {
 	return m.recorder
 }
 
-// DeleteMultiKeys mocks base method.
-func (m *MockEventCounterCache) DeleteMultiKeys(keys []string) error {
+// DeleteKey mocks base method.
+func (m *MockEventCounterCache) DeleteKey(key string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteMultiKeys", keys)
+	ret := m.ctrl.Call(m, "DeleteKey", key)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteMultiKeys indicates an expected call of DeleteMultiKeys.
-func (mr *MockEventCounterCacheMockRecorder) DeleteMultiKeys(keys interface{}) *gomock.Call {
+// DeleteKey indicates an expected call of DeleteKey.
+func (mr *MockEventCounterCacheMockRecorder) DeleteKey(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMultiKeys", reflect.TypeOf((*MockEventCounterCache)(nil).DeleteMultiKeys), keys)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteKey", reflect.TypeOf((*MockEventCounterCache)(nil).DeleteKey), key)
 }
 
 // GetEventCounts mocks base method.
@@ -123,7 +123,7 @@ func (mr *MockEventCounterCacheMockRecorder) GetUserCountsV2(keys interface{}) *
 }
 
 // MergeMultiKeys mocks base method.
-func (m *MockEventCounterCache) MergeMultiKeys(dest []string, keys [][]string) error {
+func (m *MockEventCounterCache) MergeMultiKeys(dest string, keys []string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MergeMultiKeys", dest, keys)
 	ret0, _ := ret[0].(error)
