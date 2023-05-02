@@ -219,7 +219,7 @@ func mapMerge(m1, m2 map[string]*featureproto.Feature) map[string]*featureproto.
 	return m1
 }
 
-func getFeaturesHavePrerequisite( // nolint:unused
+func getFeaturesHavePrerequisite( // nolint:unused,deadcode
 	fs []*featureproto.Feature,
 ) []*featureproto.Feature {
 	featuresHavePrerequisite := make(map[string]*featureproto.Feature)
