@@ -117,7 +117,7 @@ func TopologicalSort(features []*featureproto.Feature) ([]*featureproto.Feature,
 		for _, p := range f.Prerequisites {
 			pf, ok := mapFeatures[p.FeatureId]
 			if !ok {
-				return ErrFeatureNotFound
+				return errFeatureNotFound
 			}
 			if err := sort(pf); err != nil {
 				return err
@@ -156,7 +156,7 @@ func GetPrerequisiteDownwards(
 		for _, p := range f.Prerequisites {
 			preFeature, ok := allFeaturesMap[p.FeatureId]
 			if !ok {
-				return nil, ErrFeatureNotFound
+				return nil, errFeatureNotFound
 			}
 			prerequisites[preFeature.Id] = preFeature
 			queue = append(queue, preFeature)

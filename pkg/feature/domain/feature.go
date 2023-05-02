@@ -44,7 +44,7 @@ var (
 	errVariationTypeUnmatched        = errors.New("feature: variation value and type are unmatched")
 	errTagsMustHaveAtLeastOneTag     = errors.New("feature: tags must have at least one tag set")
 	errUnsupportedStrategy           = errors.New("feature: unsupported strategy")
-	ErrFeatureNotFound               = errors.New("feature: feature not found")
+	errFeatureNotFound               = errors.New("feature: feature not found")
 	errPrerequisiteVariationNotFound = errors.New("feature: prerequisite variation not found")
 	ErrCycleExists                   = errors.New("feature: cycle exists in features")
 	errPrerequisiteNotFound          = errors.New("feature: prerequisite not found")
