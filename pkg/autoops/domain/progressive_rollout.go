@@ -188,13 +188,13 @@ func (p *ProgressiveRollout) SetTriggeredAt(scheduleID string) error {
 		if err != nil {
 			return err
 		}
+		if err := p.setClause(c); err != nil {
+			return err
+		}
 		s.TriggeredAt = now
 		p.Status = autoopsproto.ProgressiveRollout_RUNNING
 		if c.Schedules[len(c.Schedules)-1].ScheduleId == scheduleID {
 			p.Status = autoopsproto.ProgressiveRollout_FINISHED
-		}
-		if err := p.setClause(c); err != nil {
-			return err
 		}
 	case autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE:
 		c, err := unmarshalProgressiveRolloutTemplateClause(p.Clause)
