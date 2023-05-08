@@ -661,7 +661,7 @@ func (s *AutoOpsService) validateProgressiveRolloutManualScheduleClause(
 	); err != nil {
 		return err
 	}
-	if err := s.validateProgressiveRolloutClauseScedules(
+	if err := s.validateProgressiveRolloutClauseSchedules(
 		clause.Schedules,
 		localizer,
 	); err != nil {
@@ -680,7 +680,7 @@ func (s *AutoOpsService) validateProgressiveRolloutTemplateScheduleClause(
 	); err != nil {
 		return err
 	}
-	if err := s.validateProgressiveRolloutClauseScedules(
+	if err := s.validateProgressiveRolloutClauseSchedules(
 		clause.Schedules,
 		localizer,
 	); err != nil {
@@ -718,7 +718,7 @@ func (s *AutoOpsService) validateProgressiveRolloutClauseVariationID(
 	return nil
 }
 
-func (s *AutoOpsService) validateProgressiveRolloutClauseScedules(
+func (s *AutoOpsService) validateProgressiveRolloutClauseSchedules(
 	schedules []*autoopsproto.ProgressiveRolloutSchedule,
 	localizer locale.Localizer,
 ) error {
