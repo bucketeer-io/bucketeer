@@ -759,10 +759,10 @@ func (f *Feature) IsDisabledAndOffVariationEmpty() bool {
 }
 
 /*
-IsArchivedLongAgo returns a bool value
-indicating whether the feature flag was archived more than a certain period of time ago.
+IsArchivedBeforeLastThirtyDays returns a bool value
+indicating whether the feature flag was archived within the last thirty days.
 */
-func (f *Feature) IsArchivedLongAgo() bool {
+func (f *Feature) IsArchivedBeforeLastThirtyDays() bool {
 	if !f.Archived {
 		return false
 	}

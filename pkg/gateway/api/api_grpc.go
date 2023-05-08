@@ -658,7 +658,7 @@ func (s *grpcGatewayService) listFeatures(
 				continue
 			}
 			// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
-			if ff.IsArchivedLongAgo() {
+			if ff.IsArchivedBeforeLastThirtyDays() {
 				continue
 			}
 			features = append(features, f)

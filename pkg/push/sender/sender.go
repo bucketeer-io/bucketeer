@@ -426,7 +426,7 @@ func (s *sender) listFeatures(ctx context.Context, environmentNamespace string) 
 				continue
 			}
 			// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
-			if ff.IsArchivedLongAgo() {
+			if ff.IsArchivedBeforeLastThirtyDays() {
 				continue
 			}
 			features = append(features, f)

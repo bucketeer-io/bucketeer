@@ -2240,7 +2240,7 @@ func (s *FeatureService) refreshFeaturesCache(ctx context.Context, environmentNa
 			continue
 		}
 		// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
-		if ff.IsArchivedLongAgo() {
+		if ff.IsArchivedBeforeLastThirtyDays() {
 			continue
 		}
 		filtered = append(filtered, f)
