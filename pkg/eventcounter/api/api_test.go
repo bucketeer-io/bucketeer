@@ -1218,8 +1218,8 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
 	environmentNamespace := "ns0"
 	fID := "fid"
-	// vID0 := "vid0"
-	// vID1 := "vid1"
+	vID0 := "vid0"
+	vID1 := "vid1"
 	randomNumberGroup := getRandomNumberGroup(3)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
@@ -1300,155 +1300,158 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
-		// {
-		// 	desc: "error: GetUserCountsV2 failed",
-		// 	setup: func(ctx context.Context, s *eventCounterService) {
-		// 		s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
-		// 			EnvironmentNamespace: environmentNamespace,
-		// 			Id:                   fID,
-		// 		}).Return(
-		// 			&featureproto.GetFeatureResponse{
-		// 				Feature: &featureproto.Feature{
-		// 					Id:         "fid",
-		// 					Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
-		// 				},
-		// 			}, nil)
-		// 		s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
-		// 			[]float64{
-		// 				1, 3, 5,
-		// 			}, nil)
-		// 		s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(gomock.Any()).Return(nil, errors.New("error1"))
-		// 	},
-		// 	input: &ecproto.GetEvaluationTimeseriesCountRequest{
-		// 		EnvironmentNamespace: environmentNamespace,
-		// 		FeatureId:            fID,
-		// 		TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
-		// 	},
-		// 	expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
-		// },
-		// {
-		// 	desc: "error: MergeMultiKeys failed",
-		// 	setup: func(ctx context.Context, s *eventCounterService) {
-		// 		s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
-		// 			EnvironmentNamespace: environmentNamespace,
-		// 			Id:                   fID,
-		// 		}).Return(
-		// 			&featureproto.GetFeatureResponse{
-		// 				Feature: &featureproto.Feature{
-		// 					Id:         "fid",
-		// 					Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
-		// 				},
-		// 			}, nil)
-		// 		s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(gomock.Any()).Return(
-		// 			[]float64{
-		// 				1, 3, 5,
-		// 			}, nil)
-		// 		s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(errors.New("error1"))
-		// 		s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(gomock.Any()).Return(nil, nil)
-		// 	},
-		// 	input: &ecproto.GetEvaluationTimeseriesCountRequest{
-		// 		EnvironmentNamespace: environmentNamespace,
-		// 		FeatureId:            fID,
-		// 		TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
-		// 	},
-		// 	expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
-		// },
-		// {
-		// 	desc: "error: DeleteKey failed",
-		// 	setup: func(ctx context.Context, s *eventCounterService) {
-		// 		s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
-		// 			EnvironmentNamespace: environmentNamespace,
-		// 			Id:                   fID,
-		// 		}).Return(
-		// 			&featureproto.GetFeatureResponse{
-		// 				Feature: &featureproto.Feature{
-		// 					Id:         "fid",
-		// 					Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
-		// 				},
-		// 			}, nil)
-		// 		s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(gomock.Any()).Return(
-		// 			[]float64{
-		// 				1, 3, 5,
-		// 			}, nil)
-		// 		s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(nil)
-		// 		s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(gomock.Any()).Return([]float64{}, nil)
-		// 		s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(gomock.Any()).Return(int64(0), nil)
-		// 		s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(gomock.Any()).Return(errors.New("error1"))
-		// 	},
-		// 	input: &ecproto.GetEvaluationTimeseriesCountRequest{
-		// 		EnvironmentNamespace: environmentNamespace,
-		// 		FeatureId:            fID,
-		// 		TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
-		// 	},
-		// 	expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
-		// },
-		// {
-		// 	desc: "success",
-		// 	setup: func(ctx context.Context, s *eventCounterService) {
-		// 		s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
-		// 			EnvironmentNamespace: environmentNamespace,
-		// 			Id:                   fID,
-		// 		}).Return(
-		// 			&featureproto.GetFeatureResponse{
-		// 				Feature: &featureproto.Feature{
-		// 					Id:         "fid",
-		// 					Variations: []*featureproto.Variation{{Id: vID0}, {Id: vID1}},
-		// 				},
-		// 			}, nil)
-		// 		vIDs := []string{vID0, vID1, defaultVariationID}
-		// 		endAt := time.Now()
-		// 		startAt := getStartTime(jpLocation, endAt, 13)
-		// 		dailyTimeStamps := getDailyTimeStamps(startAt, 13)
-		// 		hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps)
-		// 		for idx, vID := range vIDs {
-		// 			ec := getEventCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
-		// 			val := randomNumberGroup[idx]
-		// 			s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCounts(ec).Return(
-		// 				val, nil)
-		// 			uc := getUserCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
-		// 			pfMergeKey := newPFMergeKey(
-		// 				userCountPrefix,
-		// 				fID,
-		// 				environmentNamespace,
-		// 			)
-		// 			s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, uc).Return(nil)
-		// 			s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(pfMergeKey).Return(nil)
-		// 			s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCounts(gomock.Any()).Return(
-		// 				val, nil)
-		// 			s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(pfMergeKey).Return(int64(0), nil)
-		// 		}
-		// 	},
-		// 	input: &ecproto.GetEvaluationTimeseriesCountRequest{
-		// 		EnvironmentNamespace: environmentNamespace,
-		// 		FeatureId:            fID,
-		// 		TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
-		// 	},
-		// 	expected: &ecproto.GetEvaluationTimeseriesCountResponse{
-		// 		EventCounts: []*ecproto.VariationTimeseries{
-		// 			{
-		// 				VariationId: vID0,
-		// 			},
-		// 			{
-		// 				VariationId: vID1,
-		// 			},
-		// 			{
-		// 				VariationId: defaultVariationID,
-		// 			},
-		// 		},
-		// 		UserCounts: []*ecproto.VariationTimeseries{
-		// 			{
-		// 				VariationId: vID0,
-		// 			},
-		// 			{
-		// 				VariationId: vID1,
-		// 			},
-		// 			{
-		// 				VariationId: defaultVariationID,
-		// 			},
-		// 		},
-		// 	},
-		// 	expectedErr: nil,
-		// },
+		{
+			desc: "error: MergeMultiKeys failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+					[]float64{
+						1, 3, 5,
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(errors.New("error1"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: GetUserCountsV2 failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+					[]float64{
+						1, 3, 5,
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(gomock.Any()).Return(int64(0), errors.New("error"))
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(gomock.Any()).Return(nil)
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "error: DeleteKey failed",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: "vid0"}, {Id: "vid1"}},
+						},
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+					[]float64{
+						1, 3, 5,
+					}, nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(gomock.Any()).Return(int64(0), nil)
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(gomock.Any()).Return(errors.New("error1"))
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, s *eventCounterService) {
+				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: environmentNamespace,
+					Id:                   fID,
+				}).Return(
+					&featureproto.GetFeatureResponse{
+						Feature: &featureproto.Feature{
+							Id:         "fid",
+							Variations: []*featureproto.Variation{{Id: vID0}, {Id: vID1}},
+						},
+					}, nil)
+				vIDs := []string{vID0, vID1, defaultVariationID}
+				endAt := time.Now()
+				startAt := getStartTime(jpLocation, endAt, 13)
+				dailyTimeStamps := getDailyTimeStamps(startAt, 13)
+				// hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps)
+				for idx := range vIDs {
+					// ec := getEventCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
+					val := randomNumberGroup[idx]
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+						val, nil)
+					// uc := getUserCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
+					pfMergeKey := newPFMergeKey(
+						userCountPrefix,
+						fID,
+						environmentNamespace,
+					)
+					for range dailyTimeStamps {
+						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, gomock.Any()).Return(nil)
+						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(pfMergeKey).Return(nil)
+						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(pfMergeKey).Return(int64(0), nil)
+					}
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, gomock.Any()).Return(nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(pfMergeKey).Return(nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(pfMergeKey).Return(int64(0), nil)
+				}
+			},
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+			},
+			expected: &ecproto.GetEvaluationTimeseriesCountResponse{
+				EventCounts: []*ecproto.VariationTimeseries{
+					{
+						VariationId: vID0,
+					},
+					{
+						VariationId: vID1,
+					},
+					{
+						VariationId: defaultVariationID,
+					},
+				},
+				UserCounts: []*ecproto.VariationTimeseries{
+					{
+						VariationId: vID0,
+					},
+					{
+						VariationId: vID1,
+					},
+					{
+						VariationId: defaultVariationID,
+					},
+				},
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
