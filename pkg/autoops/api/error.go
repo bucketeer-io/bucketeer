@@ -129,7 +129,7 @@ var (
 	)
 	statusProgressiveRolloutClauseUnknownInterval = gstatus.New(
 		codes.InvalidArgument,
-		"autoops progressive rollout: clause interval is unknown.",
+		"autoops progressive rollout: clause interval is unknown",
 	)
 	statusProgressiveRolloutInvalidVariationSize = gstatus.New(
 		codes.FailedPrecondition,
