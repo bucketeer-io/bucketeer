@@ -125,7 +125,7 @@ var (
 	)
 	statusProgressiveRolloutClauseInvalidIncrements = gstatus.New(
 		codes.InvalidArgument,
-		"autoops progressive rollout: clause increments is invalid.",
+		"autoops progressive rollout: clause increments is invalid",
 	)
 	statusProgressiveRolloutClauseUnknownInterval = gstatus.New(
 		codes.InvalidArgument,
