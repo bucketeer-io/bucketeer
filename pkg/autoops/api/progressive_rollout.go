@@ -736,7 +736,7 @@ func (s *AutoOpsService) validateProgressiveRolloutClauseScedules(
 		if s.ExecuteAt == 0 {
 			dt, err := statusProgressiveRolloutScheduleExecutedAtRequired.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "executed_at"),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "execute_at"),
 			})
 			if err != nil {
 				return statusProgressiveRolloutInternal.Err()
