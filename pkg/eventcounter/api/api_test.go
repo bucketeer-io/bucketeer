@@ -1399,24 +1399,24 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 				endAt := time.Now()
 				startAt := getStartTime(jpLocation, endAt, 13)
 				dailyTimeStamps := getDailyTimeStamps(startAt, 13)
-				// hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps)
-				for idx := range vIDs {
-					// ec := getEventCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
+				hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps)
+				for idx, vID := range vIDs {
+					ec := getEventCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
 					val := randomNumberGroup[idx]
-					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(gomock.Any()).Return(
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(ec).Return(
 						val, nil)
-					// uc := getUserCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
+					uc := getUserCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
 					pfMergeKey := newPFMergeKey(
 						userCountPrefix,
 						fID,
 						environmentNamespace,
 					)
-					for range dailyTimeStamps {
-						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, gomock.Any()).Return(nil)
+					for idx := range hourlyTimeStamps {
+						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, uc[idx]).Return(nil)
 						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(pfMergeKey).Return(nil)
 						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(pfMergeKey).Return(int64(0), nil)
 					}
-					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, gomock.Any()).Return(nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, s.flattenAry(uc)).Return(nil)
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(pfMergeKey).Return(nil)
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(pfMergeKey).Return(int64(0), nil)
 				}
