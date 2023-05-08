@@ -7633,7 +7633,14 @@
             ]
           },
           {
-            "name": "ProgressiveRolloutScheduleTriggeredAtChangedEvent"
+            "name": "ProgressiveRolloutScheduleTriggeredAtChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "schedule_id",
+                "type": "string"
+              }
+            ]
           }
         ],
         "imports": [

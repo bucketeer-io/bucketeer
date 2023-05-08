@@ -896,4 +896,6 @@ message ProgressiveRolloutDeletedEvent {
   string id = 1;
 }
 
-message ProgressiveRolloutScheduleTriggeredAtChangedEvent {}
+message ProgressiveRolloutScheduleTriggeredAtChangedEvent {
+  string schedule_id = 1;
+}
