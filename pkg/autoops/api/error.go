@@ -137,7 +137,7 @@ var (
 	)
 	statusProgressiveRolloutInvalidScheduleSpans = gstatus.New(
 		codes.FailedPrecondition,
-		"autoops progressive rollout: The span of time for each scheduled time must be at least 5 minutes.",
+		"autoops progressive rollout: the span of time for each scheduled time must be at least 5 minutes",
 	)
 	statusProgressiveRolloutScheduleExecutedAtRequired = gstatus.New(
 		codes.InvalidArgument,
