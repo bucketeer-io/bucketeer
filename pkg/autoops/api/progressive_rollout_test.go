@@ -374,7 +374,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleExecutedAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "executed_at")),
+			expectedErr: createError(statusProgressiveRolloutScheduleExecutedAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "execute_at")),
 		},
 		{
 			desc: "err: manual ErrExecutedAtRequired",
@@ -401,7 +401,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutScheduleExecutedAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "executed_at")),
+			expectedErr: createError(statusProgressiveRolloutScheduleExecutedAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "execute_at")),
 		},
 		{
 			desc: "err: manual ErrExecutedAtRequired",
