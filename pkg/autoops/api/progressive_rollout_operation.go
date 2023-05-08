@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	errVariationNotFound = errors.New("progressiveRollout: variation not found")
+	errVariationNotFound = errors.New("progressiveRollout: autoops: variation not found")
 )
 
 const totalVariationWeight = int32(100000)
