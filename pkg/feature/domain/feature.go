@@ -759,7 +759,8 @@ func (f *Feature) IsDisabledAndOffVariationEmpty() bool {
 }
 
 /*
-IsArchivedLongAgo returns a bool value indicating whether the feature flag was archived more than a certain period of time ago.
+IsArchivedLongAgo returns a bool value
+indicating whether the feature flag was archived more than a certain period of time ago.
 */
 func (f *Feature) IsArchivedLongAgo() bool {
 	if !f.Archived {
