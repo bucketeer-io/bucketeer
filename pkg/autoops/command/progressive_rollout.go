@@ -103,7 +103,9 @@ func (h *progressiveRolloutCommandHandler) changeTriggeredAt(
 	return h.send(
 		ctx,
 		eventproto.Event_PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED,
-		&eventproto.ProgressiveRolloutScheduleTriggeredAtChangedEvent{},
+		&eventproto.ProgressiveRolloutScheduleTriggeredAtChangedEvent{
+			ScheduleId: c.ScheduleId,
+		},
 	)
 }
 
