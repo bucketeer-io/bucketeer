@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
@@ -251,7 +250,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		rest.ReturnFailureResponse(w, err)
 		return
 	}
-	features := f.([]*featureproto.Feature)
+	features := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	if len(features) == 0 {
 		rest.ReturnSuccessResponse(
 			w,
@@ -317,7 +316,7 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		rest.ReturnFailureResponse(w, err)
 		return
 	}
-	fs := f.([]*featureproto.Feature)
+	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	features, err := s.getTargetFeatures(fs, reqBody.FeatureID)
 	if err != nil {
 		rest.ReturnFailureResponse(w, err)
@@ -813,13 +812,17 @@ func (s *gatewayService) listFeatures(
 			PageSize:             listRequestSize,
 			Cursor:               cursor,
 			EnvironmentNamespace: environmentNamespace,
-			Archived:             &wrappers.BoolValue{Value: false},
 		})
 		if err != nil {
 			return nil, err
 		}
 		for _, f := range resp.Features {
-			if !f.Enabled && f.OffVariation == "" {
+			ff := featuredomain.Feature{Feature: f}
+			if ff.IsDisabledAndOffVariationEmpty() {
+				continue
+			}
+			// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
+			if ff.IsArchivedBeforeLastThirtyDays() {
 				continue
 			}
 			features = append(features, f)
@@ -1238,4 +1241,15 @@ func (s *gatewayService) containsInvalidTimestampError(errs map[string]*register
 		}
 	}
 	return false
+}
+
+func (s *gatewayService) filterOutArchivedFeatures(fs []*featureproto.Feature) []*featureproto.Feature {
+	result := make([]*featureproto.Feature, 0)
+	for _, f := range fs {
+		if f.Archived {
+			continue
+		}
+		result = append(result, f)
+	}
+	return result
 }

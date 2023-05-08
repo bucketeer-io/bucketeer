@@ -161,7 +161,8 @@ func (w *featureWatcher) listFeatures(
 			return nil, err
 		}
 		for _, f := range resp.Features {
-			if !f.Enabled && f.OffVariation == "" {
+			ff := featuredomain.Feature{Feature: f}
+			if ff.IsDisabledAndOffVariationEmpty() {
 				continue
 			}
 			features = append(features, f)

@@ -25,7 +25,6 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	experimentdomain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
@@ -2224,7 +2223,7 @@ func (s *FeatureService) refreshFeaturesCache(ctx context.Context, environmentNa
 		nil,
 		"",
 		nil,
-		wrapperspb.Bool(false),
+		nil,
 		nil,
 		"",
 		featureproto.ListFeaturesRequest_DEFAULT,
@@ -2234,8 +2233,20 @@ func (s *FeatureService) refreshFeaturesCache(ctx context.Context, environmentNa
 	if err != nil {
 		return err
 	}
+	filtered := make([]*featureproto.Feature, 0)
+	for _, f := range fs {
+		ff := domain.Feature{Feature: f}
+		if ff.IsDisabledAndOffVariationEmpty() {
+			continue
+		}
+		// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
+		if ff.IsArchivedBeforeLastThirtyDays() {
+			continue
+		}
+		filtered = append(filtered, f)
+	}
 	features := &featureproto.Features{
-		Features: fs,
+		Features: filtered,
 	}
 	if err := s.featuresCache.Put(features, environmentNamespace); err != nil {
 		return err

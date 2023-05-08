@@ -23,13 +23,13 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -416,13 +416,17 @@ func (s *sender) listFeatures(ctx context.Context, environmentNamespace string) 
 			PageSize:             listRequestSize,
 			Cursor:               cursor,
 			EnvironmentNamespace: environmentNamespace,
-			Archived:             &wrappers.BoolValue{Value: false},
 		})
 		if err != nil {
 			return nil, err
 		}
 		for _, f := range resp.Features {
-			if !f.Enabled && f.OffVariation == "" {
+			ff := featuredomain.Feature{Feature: f}
+			if ff.IsDisabledAndOffVariationEmpty() {
+				continue
+			}
+			// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
+			if ff.IsArchivedBeforeLastThirtyDays() {
 				continue
 			}
 			features = append(features, f)

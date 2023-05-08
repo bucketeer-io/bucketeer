@@ -373,6 +373,10 @@ func TestGetFeatures(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	now := time.Now()
+	twentyNineDaysAgo := now.Add(-29 * 24 * time.Hour)
+	thirtyOneDaysAgo := now.Add(-31 * 24 * time.Hour)
+
 	patterns := []struct {
 		desc                 string
 		setup                func(*gatewayService)
@@ -427,14 +431,106 @@ func TestGetFeatures(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		// TODO: add test for off-variation features
+		{
+			desc: "success: including off-variation features",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
+					&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{
+						{
+							Id:      "id-0",
+							Enabled: true,
+						},
+						{
+							Id:           "id-1",
+							Enabled:      true,
+							OffVariation: "",
+						},
+						{
+							Id:           "id-2",
+							Enabled:      false,
+							OffVariation: "var-2",
+						},
+						{
+							Id:           "id-3",
+							Enabled:      false,
+							OffVariation: "",
+						},
+					}}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			environmentNamespace: "ns0",
+			expected: []*featureproto.Feature{
+				{
+					Id:      "id-0",
+					Enabled: true,
+				},
+				{
+					Id:           "id-1",
+					Enabled:      true,
+					OffVariation: "",
+				},
+				{
+					Id:           "id-2",
+					Enabled:      false,
+					OffVariation: "var-2",
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: including archived features",
+			setup: func(gs *gatewayService) {
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
+					&featureproto.ListFeaturesResponse{Features: []*featureproto.Feature{
+						{
+							Id:       "id-0",
+							Enabled:  true,
+							Archived: false,
+						},
+						{
+							Id:        "id-1",
+							Enabled:   true,
+							Archived:  true,
+							UpdatedAt: twentyNineDaysAgo.Unix(),
+						},
+						{
+							Id:        "id-2",
+							Enabled:   true,
+							Archived:  true,
+							UpdatedAt: thirtyOneDaysAgo.Unix(),
+						},
+					}}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			environmentNamespace: "ns0",
+			expected: []*featureproto.Feature{
+				{
+					Id:       "id-0",
+					Enabled:  true,
+					Archived: false,
+				},
+				{
+					Id:        "id-1",
+					Enabled:   true,
+					Archived:  true,
+					UpdatedAt: twentyNineDaysAgo.Unix(),
+				},
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
-		gs := newGatewayServiceWithMock(t, mockController)
-		p.setup(gs)
-		actual, err := gs.getFeatures(context.Background(), p.environmentNamespace)
-		assert.Equal(t, p.expected, actual, "%s", p.desc)
-		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			actual, err := gs.getFeatures(context.Background(), p.environmentNamespace)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
 	}
 }
 
@@ -1194,7 +1290,7 @@ func testGetEvaluationsNoSegmentList(t *testing.T) {
 	}
 }
 
-func TestGetEvaluationsEvaluteFeatures(t *testing.T) {
+func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -1542,27 +1638,115 @@ func TestGetEvaluationsEvaluteFeatures(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: the cache includes archived features but the evaluation doesn't target them",
+			setup: func(gs *gatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						EnvironmentNamespace: "ns0",
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id: "feature-1",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-a",
+										Value: "true",
+									},
+									{
+										Id:    "variation-b",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-b",
+									},
+								},
+								Tags: []string{"test"},
+							},
+							{
+								Id:       "feature-2",
+								Archived: true,
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-c",
+										Value: "true",
+									},
+									{
+										Id:    "variation-d",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-d",
+									},
+								},
+								Tags: []string{"test"},
+							},
+						},
+					}, nil)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+					nil).MaxTimes(1)
+			},
+			input: httptest.NewRequest(
+				"POST",
+				dummyURL,
+				renderBody(
+					t,
+					getEvaluationsRequest{
+						Tag:  "test",
+						User: &userproto.User{Id: "id-0"},
+					},
+				),
+			),
+			expected: &getEvaluationsResponse{
+				Evaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{
+						{
+							VariationId: "variation-b",
+							Reason: &featureproto.Reason{
+								Type: featureproto.Reason_DEFAULT,
+							},
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
-		gs := newGatewayServiceWithMock(t, mockController)
-		if p.setup != nil {
-			p.setup(gs)
-		}
-		actual := httptest.NewRecorder()
-		p.input.Header.Add(authorizationKey, "test-key")
-		gs.getEvaluations(actual, p.input)
-		if actual.Code != http.StatusOK {
-			assert.Equal(t, newErrResponse(t, p.expectedErr), actual.Body.String(), "%s", p.desc)
-			continue
-		}
-		var respBody getEvaluationsResponse
-		decoded := decodeSuccessResponse(t, actual.Body)
-		err := json.Unmarshal(decoded, &respBody)
-		assert.NoError(t, err)
-		assert.Equal(t, len(p.expected.Evaluations.Evaluations), 1, "%s", p.desc)
-		assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationId, "variation-b", "%s", p.desc)
-		assert.Equal(t, p.expected.Evaluations.Evaluations[0].Reason, respBody.Evaluations.Evaluations[0].Reason, p.desc)
-		assert.NotEmpty(t, respBody.UserEvaluationsID, "%s", p.desc)
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGatewayServiceWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(gs)
+			}
+			actual := httptest.NewRecorder()
+			p.input.Header.Add(authorizationKey, "test-key")
+			gs.getEvaluations(actual, p.input)
+			if actual.Code != http.StatusOK {
+				assert.Equal(t, newErrResponse(t, p.expectedErr), actual.Body.String(), "%s", p.desc)
+			} else {
+				var respBody getEvaluationsResponse
+				decoded := decodeSuccessResponse(t, actual.Body)
+				err := json.Unmarshal(decoded, &respBody)
+				assert.NoError(t, err)
+				assert.Equal(t, len(respBody.Evaluations.Evaluations), 1, "%s", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationId, "variation-b", "%s", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Reason, respBody.Evaluations.Evaluations[0].Reason, p.desc)
+				assert.NotEmpty(t, respBody.UserEvaluationsID, "%s", p.desc)
+			}
+		})
 	}
 }
 

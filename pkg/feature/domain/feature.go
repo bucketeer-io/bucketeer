@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	SecondsToStale = 90 * 24 * 60 * 60 // 90 days
+	SecondsToStale         = 90 * 24 * 60 * 60 // 90 days
+	SecondsToReEvaluateAll = 30 * 24 * time.Hour
 )
 
 var (
@@ -748,6 +749,25 @@ func (f *Feature) IsStale(t time.Time) bool {
 		return false
 	}
 	return true
+}
+
+func (f *Feature) IsDisabledAndOffVariationEmpty() bool {
+	if f.Enabled {
+		return false
+	}
+	return f.OffVariation == ""
+}
+
+/*
+IsArchivedBeforeLastThirtyDays returns a bool value
+indicating whether the feature flag was archived within the last thirty days.
+*/
+func (f *Feature) IsArchivedBeforeLastThirtyDays() bool {
+	if !f.Archived {
+		return false
+	}
+	now := time.Now()
+	return f.UpdatedAt < now.Add(-1*SecondsToReEvaluateAll).Unix()
 }
 
 func (f *Feature) findTarget(id string) (int, error) {
