@@ -105,7 +105,7 @@ var (
 	)
 	statusProgressiveRolloutFeatureIDRequired = gstatus.New(
 		codes.InvalidArgument,
-		"autoops progressive rollout: featureId must be specified",
+		"autoops progressive rollout: feature id must be specified",
 	)
 	statusProgressiveRolloutClauseRequired = gstatus.New(
 		codes.InvalidArgument,
