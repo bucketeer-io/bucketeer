@@ -183,6 +183,35 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: createError(statusProgressiveRolloutFeatureDisabled, localizer.MustLocalize(locale.FeatureDisabled)),
 		},
 		{
+			desc: "err: ErrFeaturePrerequisiteExists",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+					Prerequisites: []*featureproto.Prerequisite{
+						{
+							FeatureId: "fid-1",
+						},
+					},
+				}}, nil)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				Command: &autoopsproto.CreateProgressiveRolloutCommand{
+					FeatureId: "fid",
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutFeaturePrerequisiteExistss, localizer.MustLocalize(locale.FeaturePrerequisiteExists)),
+		},
+		{
 			desc: "err: ErrClauseRequired",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(

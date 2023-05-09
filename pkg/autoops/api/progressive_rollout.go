@@ -683,6 +683,16 @@ func (s *AutoOpsService) validateTargetFeature(
 		}
 		return dt.Err()
 	}
+	if len(f.Prerequisites) > 0 {
+		dt, err := statusProgressiveRolloutFeaturePrerequisiteExistss.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.FeaturePrerequisiteExists),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
 	return nil
 }
 
