@@ -22,7 +22,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -193,22 +192,15 @@ func getNewRuleCmd(
 	schedule *autoopsproto.ProgressiveRolloutSchedule,
 	targetVariationID string,
 ) (*featureproto.Command, error) {
-	id, err := uuid.NewUUID()
-	if err != nil {
-		return nil, err
-	}
 	variations, err := getRolloutStrategyVariations(feature, schedule, targetVariationID)
 	if err != nil {
 		return nil, err
 	}
-	c := &featureproto.AddRuleCommand{
-		Rule: &featureproto.Rule{
-			Id: id.String(),
-			Strategy: &featureproto.Strategy{
-				Type: featureproto.Strategy_ROLLOUT,
-				RolloutStrategy: &featureproto.RolloutStrategy{
-					Variations: variations,
-				},
+	c := &featureproto.ChangeDefaultStrategyCommand{
+		Strategy: &featureproto.Strategy{
+			Type: featureproto.Strategy_ROLLOUT,
+			RolloutStrategy: &featureproto.RolloutStrategy{
+				Variations: variations,
 			},
 		},
 	}
