@@ -29,7 +29,6 @@ import (
 var (
 	ErrProgressiveRolloutScheduleNotFound = errors.New("progressiveRollout: schedule not found")
 	ErrProgressiveRolloutInvalidType      = errors.New("progressiveRollout: invalid type")
-	errProgressiveRolloutClauseEmpty      = errors.New("progressiveRollout: clause cannot be empty")
 )
 
 type ProgressiveRollout struct {
@@ -63,9 +62,6 @@ func NewProgressiveRollout(
 		if err := p.addTemplatelScheduleClause(template); err != nil {
 			return nil, err
 		}
-	}
-	if p.Clause == nil {
-		return nil, errProgressiveRolloutClauseEmpty
 	}
 	return p, nil
 }
