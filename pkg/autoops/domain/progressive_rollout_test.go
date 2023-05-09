@@ -329,6 +329,62 @@ func TestProgressiveRolloutSetTriggeredAt(t *testing.T) {
 	}
 }
 
+func TestAddManualScheduleClause(t *testing.T) {
+	patterns := []struct {
+		desc   string
+		clause *autoopsproto.ProgressiveRolloutManualScheduleClause
+	}{
+		{
+			desc: "success",
+			clause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+				Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+					{
+						ScheduleId: "sid-1",
+						Weight:     10,
+					},
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			pro := createProgressiveRollout(t)
+			pro.Clause = nil
+			assert.Nil(t, pro.Clause)
+			pro.addManualScheduleClause(p.clause)
+			assert.NotNil(t, pro.Clause)
+		})
+	}
+}
+
+func TestAddTemplateScheduleClause(t *testing.T) {
+	patterns := []struct {
+		desc   string
+		clause *autoopsproto.ProgressiveRolloutTemplateScheduleClause
+	}{
+		{
+			desc: "success",
+			clause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+				Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+					{
+						ScheduleId: "sid-1",
+						Weight:     10,
+					},
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			pro := createProgressiveRollout(t)
+			pro.Clause = nil
+			assert.Nil(t, pro.Clause)
+			pro.addTemplatelScheduleClause(p.clause)
+			assert.NotNil(t, pro.Clause)
+		})
+	}
+}
+
 func TestExtractSchedules(t *testing.T) {
 	p := createProgressiveRollout(t)
 	actual, err := p.ExtractSchedules()
