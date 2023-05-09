@@ -759,6 +759,108 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
+			desc: "err: ErrProgressiveRolloutAlreadyExists",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrProgressiveRolloutAlreadyExists)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				Command: &autoopsproto.CreateProgressiveRolloutCommand{
+					FeatureId: "fid",
+					ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+						VariationId: "vid-1",
+						Schedules:   validSchedules,
+						Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+						Increments:  2,
+					},
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			desc: "err: AutoOpsDatetimeClauseExists",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errProgressiveRolloutAutoOpsDatetimeClauseExists)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				Command: &autoopsproto.CreateProgressiveRolloutCommand{
+					FeatureId: "fid",
+					ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+						VariationId: "vid-1",
+						Schedules:   validSchedules,
+						Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+						Increments:  2,
+					},
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutAutoOpsDatetimeClauseExists, localizer.MustLocalize(locale.AutoOpsDatetimeClauseExists)),
+		},
+		{
+			desc: "err: AutoOpsWebhookClauseExists",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errProgressiveRolloutAutoOpsWebhookClauseExists)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				Command: &autoopsproto.CreateProgressiveRolloutCommand{
+					FeatureId: "fid",
+					ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+						VariationId: "vid-1",
+						Schedules:   validSchedules,
+						Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+						Increments:  2,
+					},
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutAutoOpsWebhookClauseExists, localizer.MustLocalize(locale.AutoOpsWebhookClauseExists)),
+		},
+		{
 			desc: "success",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
