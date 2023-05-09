@@ -519,7 +519,18 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(
 		return dt.Err()
 	}
 	// This operation is not the atomic. We may have the problem.
-	if err := s.validateFeatureVariations(ctx, req, localizer); err != nil {
+	f, err := s.getFeature(ctx, req, localizer)
+	if err != nil {
+		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+	if err := s.validateTargetFeature(ctx, f, localizer); err != nil {
 		return err
 	}
 	if req.Command.ProgressiveRolloutManualScheduleClause == nil &&
@@ -547,6 +558,7 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(
 	if req.Command.ProgressiveRolloutManualScheduleClause != nil {
 		if err := s.validateProgressiveRolloutManualScheduleClause(
 			req.Command.ProgressiveRolloutManualScheduleClause,
+			f,
 			localizer,
 		); err != nil {
 			return err
@@ -555,6 +567,7 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(
 	if req.Command.ProgressiveRolloutTemplateScheduleClause != nil {
 		if err := s.validateProgressiveRolloutTemplateScheduleClause(
 			req.Command.ProgressiveRolloutTemplateScheduleClause,
+			f,
 			localizer,
 		); err != nil {
 			return err
@@ -630,26 +643,27 @@ func (s *AutoOpsService) validateID(
 	return nil
 }
 
-func (s *AutoOpsService) validateFeatureVariations(
+func (s *AutoOpsService) getFeature(
 	ctx context.Context,
 	req *autoopsproto.CreateProgressiveRolloutRequest,
 	localizer locale.Localizer,
-) error {
+) (*featureproto.Feature, error) {
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
 		EnvironmentNamespace: req.EnvironmentNamespace,
 		Id:                   req.Command.FeatureId,
 	})
 	if err != nil {
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
+		return nil, err
 	}
-	if len(resp.Feature.Variations) != 2 {
+	return resp.Feature, nil
+}
+
+func (s *AutoOpsService) validateTargetFeature(
+	ctx context.Context,
+	f *featureproto.Feature,
+	localizer locale.Localizer,
+) error {
+	if len(f.Variations) != 2 {
 		dt, err := statusProgressiveRolloutInvalidVariationSize.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InvalidVariationSize),
@@ -664,10 +678,12 @@ func (s *AutoOpsService) validateFeatureVariations(
 
 func (s *AutoOpsService) validateProgressiveRolloutManualScheduleClause(
 	clause *autoopsproto.ProgressiveRolloutManualScheduleClause,
+	f *featureproto.Feature,
 	localizer locale.Localizer,
 ) error {
 	if err := s.validateProgressiveRolloutClauseVariationID(
 		clause.VariationId,
+		f,
 		localizer,
 	); err != nil {
 		return err
@@ -683,10 +699,12 @@ func (s *AutoOpsService) validateProgressiveRolloutManualScheduleClause(
 
 func (s *AutoOpsService) validateProgressiveRolloutTemplateScheduleClause(
 	clause *autoopsproto.ProgressiveRolloutTemplateScheduleClause,
+	f *featureproto.Feature,
 	localizer locale.Localizer,
 ) error {
 	if err := s.validateProgressiveRolloutClauseVariationID(
 		clause.VariationId,
+		f,
 		localizer,
 	); err != nil {
 		return err
@@ -714,6 +732,7 @@ func (s *AutoOpsService) validateProgressiveRolloutTemplateScheduleClause(
 
 func (s *AutoOpsService) validateProgressiveRolloutClauseVariationID(
 	variationID string,
+	f *featureproto.Feature,
 	localizer locale.Localizer,
 ) error {
 	if variationID == "" {
@@ -726,7 +745,29 @@ func (s *AutoOpsService) validateProgressiveRolloutClauseVariationID(
 		}
 		return dt.Err()
 	}
+	if exist := s.existVariationID(f, variationID); !exist {
+		dt, err := statusProgressiveRolloutClauseInvalidVariationID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_id"),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
 	return nil
+}
+
+func (s *AutoOpsService) existVariationID(
+	f *featureproto.Feature,
+	targetVID string,
+) bool {
+	for _, v := range f.Variations {
+		if v.Id == targetVID {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *AutoOpsService) validateProgressiveRolloutClauseSchedules(
