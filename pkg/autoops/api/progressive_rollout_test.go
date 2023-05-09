@@ -230,6 +230,32 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: createError(statusProgressiveRolloutClauseVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
+			desc: "err: manual ErrInvalidVariationId",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+				}}, nil)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				Command: &autoopsproto.CreateProgressiveRolloutCommand{
+					FeatureId: "fid",
+					ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+						VariationId: "invalid",
+					},
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutClauseInvalidVariationID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_id")),
+		},
+		{
 			desc: "err: template ErrVariationIdRequired",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(

@@ -123,6 +123,10 @@ var (
 		codes.InvalidArgument,
 		"autoops progressive rollout: clause variation id must be specified",
 	)
+	statusProgressiveRolloutClauseInvalidVariationID = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: clause variation id is invalid",
+	)
 	statusProgressiveRolloutClauseSchedulesRequired = gstatus.New(
 		codes.InvalidArgument,
 		"autoops progressive rollout: at least one clause schedule must be specified",
