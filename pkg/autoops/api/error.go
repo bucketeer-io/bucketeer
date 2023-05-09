@@ -155,6 +155,14 @@ var (
 		codes.FailedPrecondition,
 		"autoops progressive rollout: can not use progressive rollout when feature has rules",
 	)
+	statusProgressiveRolloutAutoOpsDatetimeClauseExists = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops progressive rollout: can not use progressive rollout when auto ops date time clause exists",
+	)
+	statusProgressiveRolloutAutoOpsWebhookClauseExists = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops progressive rollout: can not use progressive rollout when auto ops webhook clause exists",
+	)
 	statusProgressiveRolloutInvalidVariationSize = gstatus.New(
 		codes.FailedPrecondition,
 		"autoops progressive rollout: the number of variations must be equal to 2",

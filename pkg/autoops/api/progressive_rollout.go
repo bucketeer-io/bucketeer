@@ -16,11 +16,14 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+
+	"github.com/golang/protobuf/ptypes"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
@@ -33,7 +36,15 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
-const fiveMinutes = 5 * time.Minute
+const (
+	fiveMinutes     = 5 * time.Minute
+	listRequestSize = 500
+)
+
+var (
+	errProgressiveRolloutAutoOpsWebhookClauseExists  = errors.New("progressive rollout: ")
+	errProgressiveRolloutAutoOpsDatetimeClauseExists = errors.New("")
+)
 
 func (s *AutoOpsService) CreateProgressiveRollout(
 	ctx context.Context,
@@ -65,6 +76,13 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		// There are two reasons of validating auto ops rules:
+		// 1. We have to remove some test cases in `TestCreateProgressiveRollout`.
+		// 2. To run queries in the same transaction.
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
+		if err := s.validateTargetAutoOpsRules(ctx, req, localizer, autoOpsRuleStorage); err != nil {
+			return err
+		}
 		progressiveRollout, err := domain.NewProgressiveRollout(
 			req.Command.FeatureId,
 			req.Command.ProgressiveRolloutManualScheduleClause,
@@ -86,10 +104,29 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		return storage.CreateProgressiveRollout(ctx, progressiveRollout, req.EnvironmentNamespace)
 	})
 	if err != nil {
-		if err == v2as.ErrProgressiveRolloutAlreadyExists {
+		switch err {
+		case v2as.ErrProgressiveRolloutAlreadyExists:
 			dt, err := statusProgressiveRolloutAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusProgressiveRolloutInternal.Err()
+			}
+			return nil, dt.Err()
+		case errProgressiveRolloutAutoOpsWebhookClauseExists:
+			dt, err := statusProgressiveRolloutAutoOpsWebhookClauseExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AutoOpsWebhookClauseExists),
+			})
+			if err != nil {
+				return nil, statusProgressiveRolloutInternal.Err()
+			}
+			return nil, dt.Err()
+		case errProgressiveRolloutAutoOpsDatetimeClauseExists:
+			dt, err := statusProgressiveRolloutAutoOpsDatetimeClauseExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AutoOpsDatetimeClauseExists),
 			})
 			if err != nil {
 				return nil, statusProgressiveRolloutInternal.Err()
@@ -643,6 +680,36 @@ func (s *AutoOpsService) validateID(
 	return nil
 }
 
+func (s *AutoOpsService) listAutoOpsRulesByFeatureID(
+	ctx context.Context,
+	req *autoopsproto.CreateProgressiveRolloutRequest,
+	localizer locale.Localizer,
+	storage v2as.AutoOpsRuleStorage,
+) ([]*autoopsproto.AutoOpsRule, error) {
+	allRules := []*autoopsproto.AutoOpsRule{}
+	cursor := ""
+	for {
+		rules, c, err := s.listAutoOpsRules(
+			ctx,
+			listRequestSize,
+			cursor,
+			[]string{req.Command.FeatureId},
+			req.EnvironmentNamespace,
+			localizer,
+			storage,
+		)
+		if err != nil {
+			return nil, err
+		}
+		allRules = append(allRules, rules...)
+		size := len(rules)
+		if size == 0 || size < listRequestSize {
+			return allRules, nil
+		}
+		cursor = c
+	}
+}
+
 func (s *AutoOpsService) getFeature(
 	ctx context.Context,
 	req *autoopsproto.CreateProgressiveRolloutRequest,
@@ -656,6 +723,35 @@ func (s *AutoOpsService) getFeature(
 		return nil, err
 	}
 	return resp.Feature, nil
+}
+
+func (s *AutoOpsService) validateTargetAutoOpsRules(
+	ctx context.Context,
+	req *autoopsproto.CreateProgressiveRolloutRequest,
+	localizer locale.Localizer,
+	storage v2as.AutoOpsRuleStorage,
+) error {
+	rules, err := s.listAutoOpsRulesByFeatureID(
+		ctx,
+		req,
+		localizer,
+		storage,
+	)
+	if err != nil {
+		return err
+	}
+	for _, r := range rules {
+		for _, c := range r.Clauses {
+			// We don't need to return errors if Clause is OpsEventRateClause.
+			if ptypes.Is(c.Clause, domain.DatetimeClause) {
+				return errProgressiveRolloutAutoOpsDatetimeClauseExists
+			}
+			if ptypes.Is(c.Clause, domain.WebhookClause) {
+				return errProgressiveRolloutAutoOpsWebhookClauseExists
+			}
+		}
+	}
+	return nil
 }
 
 func (s *AutoOpsService) validateTargetFeature(

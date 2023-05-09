@@ -957,6 +957,7 @@ func (s *AutoOpsService) ListAutoOpsRules(
 	if err != nil {
 		return nil, err
 	}
+	autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
 	autoOpsRules, cursor, err := s.listAutoOpsRules(
 		ctx,
 		req.PageSize,
@@ -964,6 +965,7 @@ func (s *AutoOpsService) ListAutoOpsRules(
 		req.FeatureIds,
 		req.EnvironmentNamespace,
 		localizer,
+		autoOpsRuleStorage,
 	)
 	if err != nil {
 		return nil, err
@@ -981,6 +983,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 	featureIds []string,
 	environmentNamespace string,
 	localizer locale.Localizer,
+	storage v2as.AutoOpsRuleStorage,
 ) ([]*autoopsproto.AutoOpsRule, string, error) {
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
@@ -1009,8 +1012,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 		return nil, "", dt.Err()
 
 	}
-	autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
-	autoOpsRules, nextCursor, err := autoOpsRuleStorage.ListAutoOpsRules(
+	autoOpsRules, nextCursor, err := storage.ListAutoOpsRules(
 		ctx,
 		whereParts,
 		nil,
