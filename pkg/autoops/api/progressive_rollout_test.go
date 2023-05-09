@@ -212,7 +212,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: createError(statusProgressiveRolloutFeaturePrerequisiteExistss, localizer.MustLocalize(locale.FeaturePrerequisiteExists)),
 		},
 		{
-			desc: "err: ErrFeaturePrerequisiteExists",
+			desc: "err: ErrFeatureTargetExists",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
@@ -239,6 +239,35 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				},
 			},
 			expectedErr: createError(statusProgressiveRolloutFeatureTargetExists, localizer.MustLocalize(locale.FeatureTargetExists)),
+		},
+		{
+			desc: "err: ErrFeatureRuleExists",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+					Rules: []*featureproto.Rule{
+						{
+							Id: "ruleId",
+						},
+					},
+				}}, nil)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				Command: &autoopsproto.CreateProgressiveRolloutCommand{
+					FeatureId: "fid",
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutFeatureRuleExists, localizer.MustLocalize(locale.FeatureRuleExists)),
 		},
 		{
 			desc: "err: ErrClauseRequired",

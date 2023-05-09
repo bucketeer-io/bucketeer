@@ -151,6 +151,10 @@ var (
 		codes.FailedPrecondition,
 		"autoops progressive rollout: can not use progressive rollout when feature has targets",
 	)
+	statusProgressiveRolloutFeatureRuleExists = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops progressive rollout: can not use progressive rollout when feature has rules",
+	)
 	statusProgressiveRolloutInvalidVariationSize = gstatus.New(
 		codes.FailedPrecondition,
 		"autoops progressive rollout: the number of variations must be equal to 2",

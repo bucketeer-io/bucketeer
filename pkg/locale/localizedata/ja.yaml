@@ -35,6 +35,7 @@ InvalidScheduleSpans: "スケジュールされた時間の間隔は少なくと
 FeatureDisabled: "featureが有効でありません"
 FeaturePrerequisiteExists: "featureにprerequisiteがあります"
 FeatureTargetExists: "featureにtargetがあります"
+FeatureRuleExists: "featureにruleがあります"
 
 # eventcounter error
 StartAtIsAfterEndAt: "start at はend at以前を指定してください。"
