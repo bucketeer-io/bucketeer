@@ -226,7 +226,7 @@ func getRolloutStrategyVariations(
 	schedule *autoopsproto.ProgressiveRolloutSchedule,
 	targetVariationID string,
 ) ([]*featureproto.RolloutStrategy_Variation, error) {
-	anotherVID, err := findAnotherVariationID(feature, targetVariationID)
+	nonTargetVariationID, err := findNonTargetVariationID(feature, targetVariationID)
 	if err != nil {
 		return nil, err
 	}
@@ -236,13 +236,13 @@ func getRolloutStrategyVariations(
 			Weight:    schedule.Weight,
 		},
 		{
-			Variation: anotherVID,
+			Variation: nonTargetVariationID,
 			Weight:    totalVariationWeight - schedule.Weight,
 		},
 	}, nil
 }
 
-func findAnotherVariationID(
+func findNonTargetVariationID(
 	feature *featureproto.Feature,
 	variationID string,
 ) (string, error) {
