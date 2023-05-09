@@ -148,6 +148,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-3",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -156,6 +157,30 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				},
 			},
 			expectedErr: createError(statusProgressiveRolloutInvalidVariationSize, localizer.MustLocalizeWithTemplate(locale.InvalidVariationSize)),
+		},
+		{
+			desc: "err: ErrFeatureDisabled",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: false,
+				}}, nil)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				Command: &autoopsproto.CreateProgressiveRolloutCommand{
+					FeatureId: "fid",
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutFeatureDisabled, localizer.MustLocalize(locale.FeatureDisabled)),
 		},
 		{
 			desc: "err: ErrClauseRequired",
@@ -171,6 +196,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -194,6 +220,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -219,6 +246,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -243,6 +271,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -269,6 +298,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -293,6 +323,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -319,6 +350,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -345,6 +377,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -378,6 +411,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -412,6 +446,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -441,6 +476,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -468,6 +504,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -497,6 +534,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -524,6 +562,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -553,6 +592,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -580,6 +620,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, errors.New("error"))
 			},
@@ -610,6 +651,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -643,6 +685,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 							Id: "vid-2",
 						},
 					},
+					Enabled: true,
 				}}, nil)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(

@@ -32,6 +32,7 @@ WaitingOrRunningProgressiveRolloutExists: "開始予定、もしくは実行中�
 IncompatibleOpsType: "対象のオペレーションタイプに対応していない自動オペレーションルールがあります"
 InvalidVariationSize: "featureのvariationsの数が不正です"
 InvalidScheduleSpans: "スケジュールされた時間の間隔は少なくとも5分以上必要です"
+FeatureDisabled: "featureが有効でありません"
 
 # eventcounter error
 StartAtIsAfterEndAt: "start at はend at以前を指定してください。"
