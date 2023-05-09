@@ -111,6 +111,10 @@ var (
 		codes.InvalidArgument,
 		"autoops progressive rollout: at least one clause must be specified",
 	)
+	statusIncorrecctProgressiveRolloutClause = gstatus.New(
+		codes.InvalidArgument,
+		"autoops progressive rollout: only one clause must be specified",
+	)
 	statusProgressiveRolloutInternal = gstatus.New(
 		codes.Internal,
 		"autoops progressive rollout: internal",
