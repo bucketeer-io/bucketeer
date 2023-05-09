@@ -139,6 +139,10 @@ var (
 		codes.InvalidArgument,
 		"autoops progressive rollout: clause interval is unknown",
 	)
+	statusProgressiveRolloutFeatureDisabled = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops progressive rollout: can not use progressive rollout when feature is disabled",
+	)
 	statusProgressiveRolloutInvalidVariationSize = gstatus.New(
 		codes.FailedPrecondition,
 		"autoops progressive rollout: the number of variations must be equal to 2",
