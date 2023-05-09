@@ -535,14 +535,14 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(
 	}
 	if req.Command.ProgressiveRolloutManualScheduleClause != nil &&
 		req.Command.ProgressiveRolloutTemplateScheduleClause != nil {
-			dt, err := statusIncorrecctProgressiveRolloutClause.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause"),
-			})
-			if err != nil {
-				return statusProgressiveRolloutInternal.Err()
-			}
-			return dt.Err()
+		dt, err := statusIncorrecctProgressiveRolloutClause.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause"),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
 	}
 	if req.Command.ProgressiveRolloutManualScheduleClause != nil {
 		if err := s.validateProgressiveRolloutManualScheduleClause(
