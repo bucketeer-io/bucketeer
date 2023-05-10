@@ -317,7 +317,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{},
 				},
 			},
-			expectedErr: createError(statusIncorrecctProgressiveRolloutClause, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+			expectedErr: createError(statusIncorrectProgressiveRolloutClause, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
 		},
 		{
 			desc: "err: manual ErrVariationIdRequired",

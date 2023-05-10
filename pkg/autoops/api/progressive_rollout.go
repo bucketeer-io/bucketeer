@@ -583,7 +583,7 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(
 	}
 	if req.Command.ProgressiveRolloutManualScheduleClause != nil &&
 		req.Command.ProgressiveRolloutTemplateScheduleClause != nil {
-		dt, err := statusIncorrecctProgressiveRolloutClause.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusIncorrectProgressiveRolloutClause.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause"),
 		})
