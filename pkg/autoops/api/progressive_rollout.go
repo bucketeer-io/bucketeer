@@ -42,8 +42,12 @@ const (
 )
 
 var (
-	errProgressiveRolloutAutoOpsWebhookClauseExists  = errors.New("progressive rollout: can not use progressive rollout when auto ops date time clause exists")
-	errProgressiveRolloutAutoOpsDatetimeClauseExists = errors.New("progressive rollout: can not use progressive rollout when auto ops webhook clause exists")
+	errProgressiveRolloutAutoOpsWebhookClauseExists = errors.New(
+		"progressive rollout: can not use progressive rollout when auto ops date time clause exists",
+	)
+	errProgressiveRolloutAutoOpsDatetimeClauseExists = errors.New(
+		"progressive rollout: can not use progressive rollout when auto ops webhook clause exists",
+	)
 )
 
 func (s *AutoOpsService) CreateProgressiveRollout(
@@ -76,9 +80,12 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		// There are two reasons of validating auto ops rules:
-		// 1 To aboid removing some test cases in `TestCreateProgressiveRollout`. It's not possible to mock since `ListAutoOpsRules is called` without client.
-		// 2. To run queries in the same transaction.
+		/*
+			There are two reasons of validating auto ops rules:
+			1. To aboid removing some test cases in `TestCreateProgressiveRollout`.
+			   It's not possible to mock since `ListAutoOpsRules is called` without client.
+			2. To run queries in the same transaction.
+		*/
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
 		if err := s.validateTargetAutoOpsRules(ctx, req, localizer, autoOpsRuleStorage); err != nil {
 			return err
