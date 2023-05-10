@@ -82,6 +82,7 @@ func EvaluateFeatures(
 		}
 		evaluations = append(evaluations, evaluation)
 	}
+	// FIXME: Remove id once all SDKs will be updated.
 	id := UserEvaluationsID(user.Id, user.Data, fs)
 	userEvaluations := NewUserEvaluations(id, evaluations, []string{}, false)
 	return userEvaluations.UserEvaluations, nil
@@ -179,9 +180,8 @@ func evaluate(
 		}
 		evaluations = append(evaluations, evaluation)
 	}
-	// TODO
-	//id := UserEvaluationsID(user.Id, user.Data, fs)
-	id := ""
+	// FIXME: Remove id once all SDKs will be updated.
+	id := UserEvaluationsID(user.Id, user.Data, fs)
 	userEvaluations := NewUserEvaluations(id, evaluations, archivedIDs, forceUpdate)
 	return userEvaluations.UserEvaluations, nil
 }
