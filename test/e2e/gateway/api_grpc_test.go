@@ -206,7 +206,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	createFeatureWithTag(t, tag, featureID2)
 	time.Sleep(3 * time.Second)
 	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
-	response := grpcGetEvaluationsByEvaluatedAt(t, userID, prevEvalAt, false)
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
@@ -218,6 +218,9 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	}
 	if !contains(response.Evaluations.Evaluations, featureID2) {
 		t.Fatalf("Evaluation should contain the evaluation of feature: %s", featureID2)
+	}
+	if response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be false")
 	}
 }
 
@@ -249,7 +252,7 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
-	response := grpcGetEvaluationsByEvaluatedAt(t, userID, prevEvalAt, false)
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
@@ -272,6 +275,9 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	if !containsFeatureID2 {
 		t.Fatalf("ArchivedFeaturesIds should contain %s", featureID2)
 	}
+	if response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be false")
+	}
 }
 
 func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
@@ -287,7 +293,7 @@ func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 	createFeatureWithRule(t, tag, featureID2)
 	time.Sleep(20 * time.Second)
 	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
-	response := grpcGetEvaluationsByEvaluatedAt(t, userID, prevEvalAt, true)
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, true)
 	if response.State != featureproto.UserEvaluations_FULL {
 		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)
 	}
@@ -303,6 +309,9 @@ func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 	if !contains(response.Evaluations.Evaluations, featureID2) {
 		t.Fatalf("Evaluation should contain the evaluation of feature that has rules: %s", featureID2)
 	}
+	if response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be false")
+	}
 }
 
 func TestGrpcGetEvaluationsWithPreviousEvaluation31daysAgo(t *testing.T) {
@@ -312,12 +321,29 @@ func TestGrpcGetEvaluationsWithPreviousEvaluation31daysAgo(t *testing.T) {
 	uuid := newUUID(t)
 	userID := newUserID(t, uuid)
 	prevEvalAt := time.Now().Add(-31 * 24 * time.Hour).Unix()
-	response := grpcGetEvaluationsByEvaluatedAt(t, userID, prevEvalAt, false)
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
 	if !response.Evaluations.ForceUpdate {
 		t.Fatal("ForceUpdate should be true because the previous evaluation is performed 31days ago")
+	}
+}
+
+func TestGrpcGetEvaluationsWithEmptyUserEvaluationsID(t *testing.T) {
+	t.Parallel()
+	c := newGatewayClient(t)
+	defer c.Close()
+	uuid := newUUID(t)
+	userID := newUserID(t, uuid)
+	prevEvalAt := time.Now().Add(-31 * 24 * time.Hour).Unix()
+	userEvaluationsID := ""
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, userEvaluationsID, prevEvalAt, false)
+	if response.Evaluations == nil {
+		t.Fatal("Evaluations field is nil")
+	}
+	if !response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be true because the UserEvaluationsID is empty")
 	}
 }
 
@@ -791,6 +817,7 @@ func grpcGetEvaluations(t *testing.T, tag, userID string) *gatewayproto.GetEvalu
 func grpcGetEvaluationsByEvaluatedAt(
 	t *testing.T,
 	userID string,
+	userEvaluationsID string,
 	evaluatedAt int64,
 	isUserAttributesUpdated bool,
 ) *gatewayproto.GetEvaluationsResponse {
@@ -800,6 +827,7 @@ func grpcGetEvaluationsByEvaluatedAt(
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req := &gatewayproto.GetEvaluationsRequest{
+		UserEvaluationsId:       userEvaluationsID,
 		User:                    &userproto.User{Id: userID},
 		EvaluatedAt:             evaluatedAt,
 		IsUserAttributesUpdated: isUserAttributesUpdated,
