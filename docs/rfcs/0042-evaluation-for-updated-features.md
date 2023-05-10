@@ -71,6 +71,7 @@ The following diagram shows the flow to evaluate the feature flags:
 flowchart LR
 A[Start] --> B{Same\nUserEvaluationsID?}
 B -- Yes --> C[Pattern A:\nNo Evaluation]
+B -- UEID is empty --> E
 B -- No --> D{Evaluation\nover a month?}
 D -- Yes --> E[Pattern B:\nEvaluation all and force update]
 D -- No --> F{Any updated features\nfrom previous evaluation?}
@@ -94,8 +95,12 @@ An example response is shown below:
 
 #### Pattern B: Evaluation all and force update
 
-If your last evaluation was done more than a month ago, it will be determined that the results are considered too old and should be overwritten.
-Also, it is considered unusual that the `UserEvaluationsID` has changed even though the feature flags and user attributes have not been updated.
+All feature flags should be evaluated, and the data in the SDK should be updated in the following the case:
+
+- Your last evaluation was done more than a month ago. It will be determined that the results are considered too old and must be overwritten.
+- `UserEvaluationsID` in the GetEvaluationsRequest is empty. The SDK can set it to empty to re-evaluate and update all features when needed.
+- `UserEvaluationsID` has changed even though the feature flags and user attributes have not been updated. It is considered unusual.
+ 
 In this pattern, the server sets the `Evaluations` field evaluation results of all feature flags and sets the `ForceUpdate` field to true.
 
 An example response is shown below:
@@ -236,12 +241,21 @@ When receiving the response, the SDK stores the `GetEvaluationsResponse.UserEval
 The saved timestamp will be included in the subsequent GetEvaluations request.
 
 #### Storing the evaluation results in local storage
-
 First, the SDK must check the `ForceUpdate` field in the response.
 Then, if its value is true, the SDK inserts all evaluations in response to local storage after deleting the local data.
 If the `ForceUpdate` is false, the SDK updates the evaluations in local data differently.
 It will also return the evaluation results of archived feature flags.
-We must modify the implementation of SDK to address these changes.
+The SDK must delete the local evaluation data of archived flags.
+
+#### When the user attributes are updated
+If the SDK updates the user attributes, you must set `IsUserAttributesUpdated` to true in GetEvaluationsRequest to notify the server.
+You can get evaluation results of feature flags that have the target rule.
+
+#### When the tag(namespace) is changed
+The existing implementation returns evaluation results of feature flags with the same tag as specified in the `tag` field in the GetEvaluationsRequest.(We will move the `tag` functionality into a new field called `namespace`.)
+If the `tag`(`namespace`) field is changed, you will get a completely different response from the last evaluation.
+In this case, the SDK should set `UserEvaluationsID` to empty in order to delete old local data and get evaluation results of all features.
+For more information, see [Pattern B: Evaluation all and force update](#pattern-b-evaluation-all-and-force-update).
 
 ## Release Steps
 
