@@ -357,6 +357,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			features,
 			req.User,
 			segmentUsersMap,
+			req.UserEvaluationsId,
 			req.EvaluatedAt,
 			req.IsUserAttributesUpdated,
 		)

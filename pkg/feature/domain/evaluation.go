@@ -91,10 +91,15 @@ func EvaluateFeaturesByEvaluatedAt(
 	fs []*featureproto.Feature,
 	user *userproto.User,
 	mapSegmentUsers map[string][]*featureproto.SegmentUser,
+	prevUEID string,
 	evaluatedAt int64,
 	isUserAttributesUpdated bool,
 ) (*featureproto.UserEvaluations, error) {
 	forceUpdate := false
+	if prevUEID == "" {
+		forceUpdate = true
+		return evaluate(fs, user, mapSegmentUsers, forceUpdate)
+	}
 	now := time.Now()
 	if evaluatedAt < now.Unix()-secondsToReEvaluateAll {
 		forceUpdate = true

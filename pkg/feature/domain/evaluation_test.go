@@ -224,6 +224,7 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 
 	patterns := []struct {
 		desc                    string
+		prevUEID                string
 		evaluatedAt             int64
 		isUserAttributesUpdated bool
 		createFeatures          func() []*featureproto.Feature
@@ -232,7 +233,49 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 		expectedError           error
 	}{
 		{
+			desc:                    "success: evaluate all features since the previous UserEvaluationsID is empty",
+			prevUEID:                "",
+			evaluatedAt:             thirtyOneDaysAgo.Unix(),
+			isUserAttributesUpdated: false,
+			createFeatures: func() []*featureproto.Feature {
+				f1 := makeFeature("feature-1")
+				f1.UpdatedAt = fiveMinutesAgo.Unix()
+
+				f2 := makeFeature("feature-2")
+				f2.UpdatedAt = fiveMinutesAgo.Unix()
+
+				f3 := makeFeature("feature-3")
+				f3.UpdatedAt = fiveMinutesAgo.Unix()
+				f3.Archived = true
+				return []*featureproto.Feature{f1.Feature, f2.Feature, f3.Feature}
+			},
+			expectedEvals: NewUserEvaluations(
+				"dummy",
+				[]*featureproto.Evaluation{
+					{
+						Id:             "feature-1:1:user-1",
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+						VariationValue: "B",
+					},
+					{
+						Id:             "feature-2:1:user-1",
+						FeatureId:      "feature-2",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+						VariationValue: "B",
+					},
+				},
+				[]string{"feature-3"},
+				true,
+			),
+			expectedEvalFeatureIDs: []string{"feature-1", "feature-2"},
+			expectedError:          nil,
+		},
+		{
 			desc:                    "success: evaluate all features since the previous evaluation was over a month ago",
+			prevUEID:                "prevUEID",
 			evaluatedAt:             thirtyOneDaysAgo.Unix(),
 			isUserAttributesUpdated: false,
 			createFeatures: func() []*featureproto.Feature {
@@ -273,6 +316,7 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 		},
 		{
 			desc:                    "success: evaluate all features since both feature flags and user attributes have not been updated (although the UEID has been updated)",
+			prevUEID:                "prevUEID",
 			evaluatedAt:             tenMinutesAgo.Unix(),
 			isUserAttributesUpdated: false,
 			createFeatures: func() []*featureproto.Feature {
@@ -313,6 +357,7 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 		},
 		{
 			desc:                    "success: evaluate only features updated since the previous evaluations",
+			prevUEID:                "prevUEID",
 			evaluatedAt:             tenMinutesAgo.Unix(),
 			isUserAttributesUpdated: false,
 			createFeatures: func() []*featureproto.Feature {
@@ -350,6 +395,7 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 		},
 		{
 			desc:                    "success: check the adjustment seconds",
+			prevUEID:                "prevUEID",
 			evaluatedAt:             tenMinutesAgo.Unix(),
 			isUserAttributesUpdated: false,
 			createFeatures: func() []*featureproto.Feature {
@@ -379,6 +425,7 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 		},
 		{
 			desc:                    "success: evaluate only features has rules when user attributes updated",
+			prevUEID:                "prevUEID",
 			evaluatedAt:             tenMinutesAgo.Unix(),
 			isUserAttributesUpdated: true,
 			createFeatures: func() []*featureproto.Feature {
@@ -413,6 +460,7 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 		},
 		{
 			desc:                    "success: evaluate only the features that have been updated since the previous evaluation, or the features that have rules when user attributes are updated",
+			prevUEID:                "prevUEID",
 			evaluatedAt:             tenMinutesAgo.Unix(),
 			isUserAttributesUpdated: true,
 			createFeatures: func() []*featureproto.Feature {
@@ -459,6 +507,7 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 		},
 		{
 			desc:                    "success: prerequisite",
+			prevUEID:                "prevUEID",
 			evaluatedAt:             tenMinutesAgo.Unix(),
 			isUserAttributesUpdated: false,
 			createFeatures: func() []*featureproto.Feature {
@@ -510,6 +559,7 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 				p.createFeatures(),
 				user,
 				segmentUser,
+				p.prevUEID,
 				p.evaluatedAt,
 				p.isUserAttributesUpdated,
 			)
