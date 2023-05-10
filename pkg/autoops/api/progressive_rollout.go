@@ -77,7 +77,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		// There are two reasons of validating auto ops rules:
-		// 1. We have to remove some test cases in `TestCreateProgressiveRollout`.
+		// 1 To aboid removing some test cases in `TestCreateProgressiveRollout`. It's not possible to mock since `ListAutoOpsRules is called` without client.
 		// 2. To run queries in the same transaction.
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
 		if err := s.validateTargetAutoOpsRules(ctx, req, localizer, autoOpsRuleStorage); err != nil {
