@@ -42,8 +42,8 @@ const (
 )
 
 var (
-	errProgressiveRolloutAutoOpsWebhookClauseExists  = errors.New("progressive rollout: ")
-	errProgressiveRolloutAutoOpsDatetimeClauseExists = errors.New("")
+	errProgressiveRolloutAutoOpsWebhookClauseExists  = errors.New("progressive rollout: can not use progressive rollout when auto ops date time clause exists")
+	errProgressiveRolloutAutoOpsDatetimeClauseExists = errors.New("progressive rollout: can not use progressive rollout when auto ops webhook clause exists")
 )
 
 func (s *AutoOpsService) CreateProgressiveRollout(
