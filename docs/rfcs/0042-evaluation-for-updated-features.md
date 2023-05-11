@@ -251,9 +251,9 @@ The SDK must delete the local evaluation data of archived flags.
 If the SDK updates the user attributes, you must set `IsUserAttributesUpdated` to true in GetEvaluationsRequest to notify the server.
 You can get evaluation results of feature flags that have the target rule.
 
-#### When the tag(namespace) is changed
-The existing implementation returns evaluation results of feature flags with the same tag as specified in the `tag` field in the GetEvaluationsRequest.(We will move the `tag` functionality into a new field called `namespace`.)
-If the `tag`(`namespace`) field is changed, you will get a completely different response from the last evaluation.
+#### When the tag is changed
+The existing implementation returns evaluation results of feature flags with the same tag as specified in the `tag` field in the GetEvaluationsRequest.
+If the `tag` field is changed, you will get a completely different response from the last evaluation.
 In this case, the SDK should set `UserEvaluationsID` to empty in order to delete old local data and get evaluation results of all features.
 For more information, see [Pattern B: Evaluation all and force update](#pattern-b-evaluation-all-and-force-update).
 
