@@ -819,7 +819,7 @@ func grpcGetEvaluationsByEvaluatedAt(
 	userID string,
 	userEvaluationsID string,
 	evaluatedAt int64,
-	isUserAttributesUpdated bool,
+	userAttributesUpdated bool,
 ) *gatewayproto.GetEvaluationsResponse {
 	t.Helper()
 	c := newGatewayClient(t)
@@ -827,10 +827,10 @@ func grpcGetEvaluationsByEvaluatedAt(
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req := &gatewayproto.GetEvaluationsRequest{
-		UserEvaluationsId:       userEvaluationsID,
-		User:                    &userproto.User{Id: userID},
-		EvaluatedAt:             evaluatedAt,
-		IsUserAttributesUpdated: isUserAttributesUpdated,
+		UserEvaluationsId:     userEvaluationsID,
+		User:                  &userproto.User{Id: userID},
+		EvaluatedAt:           evaluatedAt,
+		UserAttributesUpdated: userAttributesUpdated,
 	}
 	response, err := c.GetEvaluations(ctx, req)
 	if err != nil {

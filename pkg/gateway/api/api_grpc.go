@@ -331,7 +331,7 @@ func (s *grpcGatewayService) GetEvaluations(
 
 	var evaluations *featureproto.UserEvaluations
 	// FIXME Remove s.getEvaluations once all SDKs use evaluatedAt.
-	if req.EvaluatedAt == 0 && !req.IsUserAttributesUpdated {
+	if req.EvaluatedAt == 0 && !req.UserAttributesUpdated {
 		if req.Tag == "" {
 			return nil, ErrTagRequired
 		}
@@ -359,7 +359,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			segmentUsersMap,
 			req.UserEvaluationsId,
 			req.EvaluatedAt,
-			req.IsUserAttributesUpdated,
+			req.UserAttributesUpdated,
 		)
 		if err != nil {
 			s.logger.Error(

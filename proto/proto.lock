@@ -12995,7 +12995,7 @@
               },
               {
                 "id": 7,
-                "name": "is_user_attributes_updated",
+                "name": "user_attributes_updated",
                 "type": "bool"
               }
             ]
