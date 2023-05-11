@@ -411,11 +411,6 @@ func TestGrpcValidateGetEvaluationsRequest(t *testing.T) {
 		expected error
 	}{
 		{
-			desc:     "tag is empty",
-			input:    &gwproto.GetEvaluationsRequest{},
-			expected: ErrTagRequired,
-		},
-		{
 			desc:     "user is empty",
 			input:    &gwproto.GetEvaluationsRequest{Tag: "test"},
 			expected: ErrUserRequired,
@@ -816,6 +811,16 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id: "feature-1",
+							},
+						},
+					}, nil)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+					nil).MaxTimes(1)
 			},
 			input:       &gwproto.GetEvaluationsRequest{User: &userproto.User{Id: "id-0"}},
 			expected:    nil,
@@ -866,14 +871,16 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		gs := newGrpcGatewayServiceWithMock(t, mockController)
-		p.setup(gs)
-		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
-			"authorization": []string{"test-key"},
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"authorization": []string{"test-key"},
+			})
+			actual, err := gs.GetEvaluations(ctx, p.input)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
-		actual, err := gs.GetEvaluations(ctx, p.input)
-		assert.Equal(t, p.expected, actual, "%s", p.desc)
-		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
@@ -1404,6 +1411,8 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 		assert.Equal(t, ev[0].VariationId, av[0].VariationId, "%s", p.desc)
 		assert.Equal(t, ev[1].VariationId, av[1].VariationId, "%s", p.desc)
 		assert.NotEmpty(t, actual.UserEvaluationsId, "%s", p.desc)
+		assert.ElementsMatch(t, p.expected.Evaluations.ArchivedFeatureIds, actual.Evaluations.ArchivedFeatureIds, p.desc)
+		assert.Equal(t, p.expected.Evaluations.ForceUpdate, actual.Evaluations.ForceUpdate, p.desc)
 		require.NoError(t, err)
 	}
 }
@@ -1814,6 +1823,8 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
 				assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationId, "variation-b", "%s", p.desc)
 				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Reason, actual.Evaluations.Evaluations[0].Reason, p.desc)
+				assert.ElementsMatch(t, p.expected.Evaluations.ArchivedFeatureIds, actual.Evaluations.ArchivedFeatureIds, p.desc)
+				assert.Equal(t, p.expected.Evaluations.ForceUpdate, actual.Evaluations.ForceUpdate, p.desc)
 				assert.NotEmpty(t, actual.UserEvaluationsId, "%s", p.desc)
 				require.NoError(t, err)
 			}

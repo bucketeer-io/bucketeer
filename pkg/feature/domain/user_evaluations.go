@@ -28,12 +28,19 @@ type UserEvaluations struct {
 	*feature.UserEvaluations
 }
 
-func NewUserEvaluations(id string, evaluations []*feature.Evaluation) *UserEvaluations {
+func NewUserEvaluations(
+	id string,
+	evaluations []*feature.Evaluation,
+	archivedFeaturesIds []string,
+	forceUpdate bool,
+) *UserEvaluations {
 	now := time.Now().Unix()
 	return &UserEvaluations{&feature.UserEvaluations{
-		Id:          id,
-		Evaluations: evaluations,
-		CreatedAt:   now,
+		Id:                 id,
+		Evaluations:        evaluations,
+		CreatedAt:          now,
+		ArchivedFeatureIds: archivedFeaturesIds,
+		ForceUpdate:        forceUpdate,
 	}}
 }
 

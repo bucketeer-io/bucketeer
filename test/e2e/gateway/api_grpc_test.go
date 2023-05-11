@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
@@ -37,6 +38,7 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	"github.com/bucketeer-io/bucketeer/test/util"
 )
 
 const (
@@ -187,6 +189,161 @@ func TestGrpcGetEvaluationsFullState(t *testing.T) {
 	evaluationSize := len(response.Evaluations.Evaluations)
 	if evaluationSize != 2 {
 		t.Fatalf("Wrong evaluation size. Expected 2, actual: %d", evaluationSize)
+	}
+}
+
+func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
+	t.Parallel()
+	c := newGatewayClient(t)
+	defer c.Close()
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	userID := newUserID(t, uuid)
+	featureID := newFeatureID(t, uuid)
+	createFeatureWithTag(t, tag, featureID)
+	time.Sleep(20 * time.Second)
+	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
+	createFeatureWithTag(t, tag, featureID2)
+	time.Sleep(3 * time.Second)
+	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, false)
+	if response.Evaluations == nil {
+		t.Fatal("Evaluations field is nil")
+	}
+	if len(response.Evaluations.Evaluations) == 0 {
+		t.Fatal("Evaluation is empty")
+	}
+	if contains(response.Evaluations.Evaluations, featureID) {
+		t.Fatalf("Evaluation should not contain the evaluation of feature: %s", featureID)
+	}
+	if !contains(response.Evaluations.Evaluations, featureID2) {
+		t.Fatalf("Evaluation should contain the evaluation of feature: %s", featureID2)
+	}
+	if response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be false")
+	}
+}
+
+func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
+	t.Parallel()
+	c := newGatewayClient(t)
+	defer c.Close()
+	fc := newFeatureClient(t)
+	defer fc.Close()
+
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	userID := newUserID(t, uuid)
+	featureID := newFeatureID(t, uuid)
+	cmd := newCreateFeatureCommand(featureID)
+	createFeature(t, fc, cmd)
+	addTag(t, tag, featureID, fc)
+	enableFeature(t, featureID, fc)
+	archiveFeature(t, featureID, fc)
+	time.Sleep(20 * time.Second)
+
+	uuid2 := newUUID(t)
+	featureID2 := newFeatureID(t, uuid2)
+	cmd2 := newCreateFeatureCommand(featureID2)
+	createFeature(t, fc, cmd2)
+	addTag(t, tag, featureID2, fc)
+	enableFeature(t, featureID2, fc)
+	archiveFeature(t, featureID2, fc)
+	time.Sleep(3 * time.Second)
+
+	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, false)
+	if response.Evaluations == nil {
+		t.Fatal("Evaluations field is nil")
+	}
+	if len(response.Evaluations.ArchivedFeatureIds) == 0 {
+		t.Fatal("Evaluation is empty")
+	}
+	containsFeatureID := false
+	containsFeatureID2 := false
+	for _, archivedID := range response.Evaluations.ArchivedFeatureIds {
+		if archivedID == featureID {
+			containsFeatureID = true
+		}
+		if archivedID == featureID2 {
+			containsFeatureID2 = true
+		}
+	}
+	if containsFeatureID {
+		t.Fatalf("ArchivedFeaturesIds should not contain %s", featureID)
+	}
+	if !containsFeatureID2 {
+		t.Fatalf("ArchivedFeaturesIds should contain %s", featureID2)
+	}
+	if response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be false")
+	}
+}
+
+func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
+	t.Parallel()
+	c := newGatewayClient(t)
+	defer c.Close()
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	userID := newUserID(t, uuid)
+	featureID := newFeatureID(t, uuid)
+	createFeatureWithTag(t, tag, featureID)
+	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
+	createFeatureWithRule(t, tag, featureID2)
+	time.Sleep(20 * time.Second)
+	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, true)
+	if response.State != featureproto.UserEvaluations_FULL {
+		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)
+	}
+	if response.Evaluations == nil {
+		t.Fatal("Evaluations field is nil")
+	}
+	if len(response.Evaluations.Evaluations) == 0 {
+		t.Fatal("Evaluation is empty")
+	}
+	if contains(response.Evaluations.Evaluations, featureID) {
+		t.Fatalf("Evaluation should not contain the evaluation of feature that doesn't have rules: %s", featureID)
+	}
+	if !contains(response.Evaluations.Evaluations, featureID2) {
+		t.Fatalf("Evaluation should contain the evaluation of feature that has rules: %s", featureID2)
+	}
+	if response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be false")
+	}
+}
+
+func TestGrpcGetEvaluationsWithPreviousEvaluation31daysAgo(t *testing.T) {
+	t.Parallel()
+	c := newGatewayClient(t)
+	defer c.Close()
+	uuid := newUUID(t)
+	userID := newUserID(t, uuid)
+	prevEvalAt := time.Now().Add(-31 * 24 * time.Hour).Unix()
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, false)
+	if response.Evaluations == nil {
+		t.Fatal("Evaluations field is nil")
+	}
+	if !response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be true because the previous evaluation is performed 31days ago")
+	}
+}
+
+func TestGrpcGetEvaluationsWithEmptyUserEvaluationsID(t *testing.T) {
+	t.Parallel()
+	c := newGatewayClient(t)
+	defer c.Close()
+	uuid := newUUID(t)
+	userID := newUserID(t, uuid)
+	prevEvalAt := time.Now().Add(-31 * 24 * time.Hour).Unix()
+	userEvaluationsID := ""
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, userEvaluationsID, prevEvalAt, false)
+	if response.Evaluations == nil {
+		t.Fatal("Evaluations field is nil")
+	}
+	if !response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be true because the UserEvaluationsID is empty")
 	}
 }
 
@@ -505,6 +662,16 @@ func createFeatureWithTag(t *testing.T, tag, featureID string) {
 	enableFeature(t, featureID, client)
 }
 
+func createFeatureWithRule(t *testing.T, tag, featureID string) {
+	client := newFeatureClient(t)
+	defer client.Close()
+	cmd := newCreateFeatureCommand(featureID)
+	createFeature(t, client, cmd)
+	addTag(t, tag, cmd.Id, client)
+	addRule(t, cmd.Id, getFeature(t, featureID, client).Variations[1].Id, client)
+	enableFeature(t, featureID, client)
+}
+
 func newFeatureClient(t *testing.T) featureclient.Client {
 	t.Helper()
 	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
@@ -564,6 +731,21 @@ func createFeature(t *testing.T, client featureclient.Client, cmd *featureproto.
 	}
 }
 
+func getFeature(t *testing.T, featureID string, client featureclient.Client) *featureproto.Feature {
+	t.Helper()
+	getReq := &featureproto.GetFeatureRequest{
+		Id:                   featureID,
+		EnvironmentNamespace: *environmentNamespace,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	response, err := client.GetFeature(ctx, getReq)
+	if err != nil {
+		t.Fatal("Failed to get feature:", err)
+	}
+	return response.Feature
+}
+
 func addTag(t *testing.T, tag string, featureID string, client featureclient.Client) {
 	t.Helper()
 	addReq := &featureproto.UpdateFeatureDetailsRequest{
@@ -580,6 +762,13 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 	}
 }
 
+func addRule(t *testing.T, featureID, variationID string, client featureclient.Client) {
+	t.Helper()
+	rule := newFixedStrategyRule(variationID)
+	addCmd, _ := util.MarshalCommand(&featureproto.AddRuleCommand{Rule: rule})
+	updateFeatureTargeting(t, client, addCmd, featureID)
+}
+
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
 	enableReq := &featureproto.EnableFeatureRequest{
@@ -594,6 +783,20 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 	}
 }
 
+func archiveFeature(t *testing.T, featureID string, client featureclient.Client) {
+	t.Helper()
+	req := &featureproto.ArchiveFeatureRequest{
+		Id:                   featureID,
+		Command:              &featureproto.ArchiveFeatureCommand{},
+		EnvironmentNamespace: *environmentNamespace,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.ArchiveFeature(ctx, req); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func grpcGetEvaluations(t *testing.T, tag, userID string) *gatewayproto.GetEvaluationsResponse {
 	t.Helper()
 	c := newGatewayClient(t)
@@ -603,6 +806,31 @@ func grpcGetEvaluations(t *testing.T, tag, userID string) *gatewayproto.GetEvalu
 	req := &gatewayproto.GetEvaluationsRequest{
 		Tag:  tag,
 		User: &userproto.User{Id: userID},
+	}
+	response, err := c.GetEvaluations(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return response
+}
+
+func grpcGetEvaluationsByEvaluatedAt(
+	t *testing.T,
+	userID string,
+	userEvaluationsID string,
+	evaluatedAt int64,
+	userAttributesUpdated bool,
+) *gatewayproto.GetEvaluationsResponse {
+	t.Helper()
+	c := newGatewayClient(t)
+	defer c.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req := &gatewayproto.GetEvaluationsRequest{
+		UserEvaluationsId:     userEvaluationsID,
+		User:                  &userproto.User{Id: userID},
+		EvaluatedAt:           evaluatedAt,
+		UserAttributesUpdated: userAttributesUpdated,
 	}
 	response, err := c.GetEvaluations(ctx, req)
 	if err != nil {
@@ -641,4 +869,54 @@ func newFeatureID(t *testing.T, uuid string) string {
 		return fmt.Sprintf("%s-%s-feature-id-%s", prefixTestName, *testID, uuid)
 	}
 	return fmt.Sprintf("%s-feature-id-%s", prefixTestName, uuid)
+}
+
+func newFixedStrategyRule(variationID string) *featureproto.Rule {
+	uuid, _ := uuid.NewUUID()
+	return &featureproto.Rule{
+		Id: uuid.String(),
+		Strategy: &featureproto.Strategy{
+			Type: featureproto.Strategy_FIXED,
+			FixedStrategy: &featureproto.FixedStrategy{
+				Variation: variationID,
+			},
+		},
+		Clauses: []*featureproto.Clause{
+			{
+				Attribute: "attribute-1",
+				Operator:  featureproto.Clause_EQUALS,
+				Values:    []string{"value-1", "value-2"},
+			},
+			{
+				Attribute: "attribute-2",
+				Operator:  featureproto.Clause_IN,
+				Values:    []string{"value-1", "value-2"},
+			},
+		},
+	}
+}
+
+func updateFeatureTargeting(t *testing.T, client featureclient.Client, cmd *any.Any, featureID string) {
+	t.Helper()
+	updateReq := &featureproto.UpdateFeatureTargetingRequest{
+		Id: featureID,
+		Commands: []*featureproto.Command{
+			{Command: cmd},
+		},
+		EnvironmentNamespace: *environmentNamespace,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.UpdateFeatureTargeting(ctx, updateReq); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func contains(evaluations []*featureproto.Evaluation, id string) bool {
+	for _, e := range evaluations {
+		if e.FeatureId == id {
+			return true
+		}
+	}
+	return false
 }

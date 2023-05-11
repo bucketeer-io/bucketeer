@@ -35,6 +35,8 @@ message GetEvaluationsRequest {
   string user_evaluations_id = 3;
   string feature_id = 4 [deprecated = true];  // instead, use GetEvaluation API
   bucketeer.event.client.SourceId source_id = 5;
+  int64 evaluated_at = 6;
+  bool user_attributes_updated = 7;
 }
 
 message GetEvaluationsResponse {

@@ -26,22 +26,42 @@ func TestNewUserEvaluations(t *testing.T) {
 	patterns := []struct {
 		id          string
 		evaluations []*proto.Evaluation
+		archivedIDs []string
+		forceUpdate bool
 		expected    *proto.UserEvaluations
 	}{
 		{
 			id:          "1234",
-			evaluations: []*proto.Evaluation{{Id: "test-id"}},
+			evaluations: []*proto.Evaluation{{Id: "test-id1"}},
+			archivedIDs: []string{"test-id2"},
+			forceUpdate: false,
 			expected: &proto.UserEvaluations{
-				Id:          "1234",
-				Evaluations: []*proto.Evaluation{{Id: "test-id"}},
+				Id:                 "1234",
+				Evaluations:        []*proto.Evaluation{{Id: "test-id1"}},
+				ArchivedFeatureIds: []string{"test-id2"},
+				ForceUpdate:        false,
+			},
+		},
+		{
+			id:          "5678",
+			evaluations: []*proto.Evaluation{{Id: "test-id3"}},
+			archivedIDs: []string{},
+			forceUpdate: true,
+			expected: &proto.UserEvaluations{
+				Id:                 "5678",
+				Evaluations:        []*proto.Evaluation{{Id: "test-id3"}},
+				ArchivedFeatureIds: []string{},
+				ForceUpdate:        true,
 			},
 		},
 	}
 
 	for _, p := range patterns {
-		actual := NewUserEvaluations(p.id, p.evaluations)
+		actual := NewUserEvaluations(p.id, p.evaluations, p.archivedIDs, p.forceUpdate)
 		assert.Equal(t, p.expected.Id, actual.Id)
 		assert.Equal(t, p.expected.Evaluations, actual.Evaluations)
+		assert.Equal(t, p.expected.ArchivedFeatureIds, actual.ArchivedFeatureIds)
+		assert.Equal(t, p.expected.ForceUpdate, actual.ForceUpdate)
 		assert.NotZero(t, actual.CreatedAt)
 	}
 }

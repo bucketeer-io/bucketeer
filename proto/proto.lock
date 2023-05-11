@@ -10918,7 +10918,13 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 2,
@@ -10930,6 +10936,17 @@
                 "id": 3,
                 "name": "created_at",
                 "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "archived_feature_ids",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "force_update",
+                "type": "bool"
               }
             ]
           }
@@ -12970,6 +12987,16 @@
                 "id": 5,
                 "name": "source_id",
                 "type": "bucketeer.event.client.SourceId"
+              },
+              {
+                "id": 6,
+                "name": "evaluated_at",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "user_attributes_updated",
+                "type": "bool"
               }
             ]
           },

@@ -301,14 +301,15 @@ func (s *grpcGatewayService) GetEvaluations(
 	if err != nil {
 		return nil, err
 	}
-	features := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
+	features := f.([]*featureproto.Feature)
+	activeFeatures := s.filterOutArchivedFeatures(features)
 	if len(features) == 0 {
 		return &gwproto.GetEvaluationsResponse{
 			State:       featureproto.UserEvaluations_FULL,
 			Evaluations: nil,
 		}, nil
 	}
-	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, features)
+	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, activeFeatures)
 	if req.UserEvaluationsId == ueid {
 		return &gwproto.GetEvaluationsResponse{
 			State:             featureproto.UserEvaluations_FULL,
@@ -316,17 +317,61 @@ func (s *grpcGatewayService) GetEvaluations(
 			UserEvaluationsId: ueid,
 		}, nil
 	}
-	evaluations, err := s.evaluateFeatures(ctx, req.User, features, envAPIKey.EnvironmentNamespace, req.Tag)
+	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, envAPIKey.EnvironmentNamespace)
 	if err != nil {
 		s.logger.Error(
-			"Failed to evaluate features",
+			"Failed to get segment users map",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
-				zap.String("userId", req.User.Id),
 			)...,
 		)
-		return nil, ErrInternal
+		return nil, err
+	}
+
+	var evaluations *featureproto.UserEvaluations
+	// FIXME Remove s.getEvaluations once all SDKs use evaluatedAt.
+	if req.EvaluatedAt == 0 && !req.UserAttributesUpdated {
+		if req.Tag == "" {
+			return nil, ErrTagRequired
+		}
+		evaluations, err = featuredomain.EvaluateFeatures(
+			activeFeatures,
+			req.User,
+			segmentUsersMap,
+			req.Tag,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to evaluate",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("userId", req.User.Id),
+					zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				)...,
+			)
+			return nil, ErrInternal
+		}
+	} else {
+		evaluations, err = featuredomain.EvaluateFeaturesByEvaluatedAt(
+			features,
+			req.User,
+			segmentUsersMap,
+			req.UserEvaluationsId,
+			req.EvaluatedAt,
+			req.UserAttributesUpdated,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to evaluate",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("userId", req.User.Id),
+					zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				)...,
+			)
+			return nil, ErrInternal
+		}
 	}
 	return &gwproto.GetEvaluationsResponse{
 		State:             featureproto.UserEvaluations_FULL,
@@ -336,9 +381,6 @@ func (s *grpcGatewayService) GetEvaluations(
 }
 
 func (s *grpcGatewayService) validateGetEvaluationsRequest(req *gwproto.GetEvaluationsRequest) error {
-	if req.Tag == "" {
-		return ErrTagRequired
-	}
 	if req.User == nil {
 		return ErrUserRequired
 	}
@@ -374,7 +416,28 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		return nil, err
 	}
-	evaluations, err := s.evaluateFeatures(ctx, req.User, features, envAPIKey.EnvironmentNamespace, req.Tag)
+	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, envAPIKey.EnvironmentNamespace)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get segment users map",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+			)...,
+		)
+		return nil, err
+	}
+	evaluations, err := featuredomain.EvaluateFeatures(features, req.User, segmentUsersMap, req.Tag)
+	if err != nil {
+		s.logger.Error(
+			"Failed to evaluate",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+			)...,
+		)
+		return nil, err
+	}
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
@@ -583,12 +646,12 @@ func (s *grpcGatewayService) getFeaturesFromCache(
 	return nil, err
 }
 
-func (s *grpcGatewayService) evaluateFeatures(
+func (s *grpcGatewayService) getSegmentUsersMap(
 	ctx context.Context,
 	user *userproto.User,
 	features []*featureproto.Feature,
-	environmentNamespace, tag string,
-) (*featureproto.UserEvaluations, error) {
+	environmentNamespace string,
+) (map[string][]*featureproto.SegmentUser, error) {
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
 		feature := &featuredomain.Feature{Feature: f}
@@ -596,7 +659,7 @@ func (s *grpcGatewayService) evaluateFeatures(
 			mapIDs[id] = struct{}{}
 		}
 	}
-	mapSegmentUsers, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentNamespace)
+	segmentUsersMap, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentNamespace)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
@@ -607,17 +670,7 @@ func (s *grpcGatewayService) evaluateFeatures(
 		)
 		return nil, err
 	}
-	userEvaluations, err := featuredomain.EvaluateFeatures(features, user, mapSegmentUsers, tag)
-	if err != nil {
-		s.logger.Error(
-			"Failed to evaluate",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-			)...,
-		)
-	}
-	return userEvaluations, nil
+	return segmentUsersMap, nil
 }
 
 func (s *grpcGatewayService) listSegmentUsers(

@@ -17,6 +17,7 @@ package domain
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -207,6 +208,371 @@ func findEvaluation(es []*featureproto.Evaluation, fId string) (*featureproto.Ev
 		}
 	}
 	return nil, fmt.Errorf("%s was not found", fId)
+}
+
+func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
+	t.Parallel()
+	now := time.Now()
+	thirtyOneDaysAgo := now.Add(-31 * 24 * time.Hour)
+	fiveMinutesAgo := now.Add(-5 * time.Minute)
+	tenMinutesAgo := now.Add(-10 * time.Minute)
+	tenMinutesAndNineSecondsAgo := now.Add(-609 * time.Second)
+	tenMinutesAndElevenSecondsAgo := now.Add(-611 * time.Second)
+	oneHourAgo := now.Add(-1 * time.Hour)
+	user := &userproto.User{Id: "user-1"}
+	segmentUser := map[string][]*featureproto.SegmentUser{}
+
+	patterns := []struct {
+		desc                    string
+		prevUEID                string
+		evaluatedAt             int64
+		isUserAttributesUpdated bool
+		createFeatures          func() []*featureproto.Feature
+		expectedEvals           *UserEvaluations
+		expectedEvalFeatureIDs  []string
+		expectedError           error
+	}{
+		{
+			desc:                    "success: evaluate all features since the previous UserEvaluationsID is empty",
+			prevUEID:                "",
+			evaluatedAt:             thirtyOneDaysAgo.Unix(),
+			isUserAttributesUpdated: false,
+			createFeatures: func() []*featureproto.Feature {
+				f1 := makeFeature("feature-1")
+				f1.UpdatedAt = fiveMinutesAgo.Unix()
+
+				f2 := makeFeature("feature-2")
+				f2.UpdatedAt = fiveMinutesAgo.Unix()
+
+				f3 := makeFeature("feature-3")
+				f3.UpdatedAt = fiveMinutesAgo.Unix()
+				f3.Archived = true
+				return []*featureproto.Feature{f1.Feature, f2.Feature, f3.Feature}
+			},
+			expectedEvals: NewUserEvaluations(
+				"dummy",
+				[]*featureproto.Evaluation{
+					{
+						Id:             "feature-1:1:user-1",
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+						VariationValue: "B",
+					},
+					{
+						Id:             "feature-2:1:user-1",
+						FeatureId:      "feature-2",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+						VariationValue: "B",
+					},
+				},
+				[]string{"feature-3"},
+				true,
+			),
+			expectedEvalFeatureIDs: []string{"feature-1", "feature-2"},
+			expectedError:          nil,
+		},
+		{
+			desc:                    "success: evaluate all features since the previous evaluation was over a month ago",
+			prevUEID:                "prevUEID",
+			evaluatedAt:             thirtyOneDaysAgo.Unix(),
+			isUserAttributesUpdated: false,
+			createFeatures: func() []*featureproto.Feature {
+				f1 := makeFeature("feature-1")
+				f1.UpdatedAt = fiveMinutesAgo.Unix()
+
+				f2 := makeFeature("feature-2")
+				f2.UpdatedAt = fiveMinutesAgo.Unix()
+
+				f3 := makeFeature("feature-3")
+				f3.UpdatedAt = fiveMinutesAgo.Unix()
+				f3.Archived = true
+				return []*featureproto.Feature{f1.Feature, f2.Feature, f3.Feature}
+			},
+			expectedEvals: NewUserEvaluations(
+				"dummy",
+				[]*featureproto.Evaluation{
+					{
+						Id:             "feature-1:1:user-1",
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+						VariationValue: "B",
+					},
+					{
+						Id:             "feature-2:1:user-1",
+						FeatureId:      "feature-2",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+						VariationValue: "B",
+					},
+				},
+				[]string{"feature-3"},
+				true,
+			),
+			expectedEvalFeatureIDs: []string{"feature-1", "feature-2"},
+			expectedError:          nil,
+		},
+		{
+			desc:                    "success: evaluate all features since both feature flags and user attributes have not been updated (although the UEID has been updated)",
+			prevUEID:                "prevUEID",
+			evaluatedAt:             tenMinutesAgo.Unix(),
+			isUserAttributesUpdated: false,
+			createFeatures: func() []*featureproto.Feature {
+				f1 := makeFeature("feature-1")
+				f1.UpdatedAt = oneHourAgo.Unix()
+
+				f2 := makeFeature("feature-2")
+				f2.UpdatedAt = oneHourAgo.Unix()
+
+				f3 := makeFeature("feature-3")
+				f3.UpdatedAt = oneHourAgo.Unix()
+				f3.Archived = true
+				return []*featureproto.Feature{f1.Feature, f2.Feature, f3.Feature}
+			},
+			expectedEvals: NewUserEvaluations(
+				"dummy",
+				[]*featureproto.Evaluation{
+					{
+						Id:             "feature-1:1:user-1",
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+						VariationValue: "B",
+					},
+					{
+						Id:             "feature-2:1:user-1",
+						FeatureId:      "feature-2",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+						VariationValue: "B",
+					},
+				},
+				[]string{"feature-3"},
+				true,
+			),
+			expectedEvalFeatureIDs: []string{"feature-1", "feature-2"},
+			expectedError:          nil,
+		},
+		{
+			desc:                    "success: evaluate only features updated since the previous evaluations",
+			prevUEID:                "prevUEID",
+			evaluatedAt:             tenMinutesAgo.Unix(),
+			isUserAttributesUpdated: false,
+			createFeatures: func() []*featureproto.Feature {
+				f1 := makeFeature("feature-1")
+				f1.UpdatedAt = fiveMinutesAgo.Unix()
+
+				f2 := makeFeature("feature-2")
+				f2.UpdatedAt = oneHourAgo.Unix()
+
+				f3 := makeFeature("feature-3")
+				f3.UpdatedAt = fiveMinutesAgo.Unix()
+				f3.Archived = true
+
+				f4 := makeFeature("feature-4")
+				f4.UpdatedAt = oneHourAgo.Unix()
+				f4.Archived = true
+				return []*featureproto.Feature{f1.Feature, f2.Feature, f3.Feature, f4.Feature}
+			},
+			expectedEvals: NewUserEvaluations(
+				"dummy",
+				[]*featureproto.Evaluation{
+					{
+						Id:             "feature-1:1:user-1",
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+						VariationValue: "B",
+					},
+				},
+				[]string{"feature-3"},
+				false,
+			),
+			expectedEvalFeatureIDs: []string{"feature-1"},
+			expectedError:          nil,
+		},
+		{
+			desc:                    "success: check the adjustment seconds",
+			prevUEID:                "prevUEID",
+			evaluatedAt:             tenMinutesAgo.Unix(),
+			isUserAttributesUpdated: false,
+			createFeatures: func() []*featureproto.Feature {
+				f1 := makeFeature("feature-1")
+				f1.UpdatedAt = tenMinutesAndNineSecondsAgo.Unix()
+
+				f2 := makeFeature("feature-2")
+				f2.UpdatedAt = tenMinutesAndElevenSecondsAgo.Unix()
+				return []*featureproto.Feature{f1.Feature, f2.Feature}
+			},
+			expectedEvals: NewUserEvaluations(
+				"dummy",
+				[]*featureproto.Evaluation{
+					{
+						Id:             "feature-1:1:user-1",
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_DEFAULT},
+						VariationValue: "B",
+					},
+				},
+				[]string{},
+				false,
+			),
+			expectedEvalFeatureIDs: []string{"feature-1"},
+			expectedError:          nil,
+		},
+		{
+			desc:                    "success: evaluate only features has rules when user attributes updated",
+			prevUEID:                "prevUEID",
+			evaluatedAt:             tenMinutesAgo.Unix(),
+			isUserAttributesUpdated: true,
+			createFeatures: func() []*featureproto.Feature {
+				f1 := makeFeature("feature-1")
+				f1.UpdatedAt = thirtyOneDaysAgo.Unix()
+
+				f2 := makeFeature("feature-2")
+				f2.UpdatedAt = thirtyOneDaysAgo.Unix()
+				f2.Rules = []*featureproto.Rule{}
+
+				f3 := makeFeature("feature-3")
+				f3.UpdatedAt = thirtyOneDaysAgo.Unix()
+				f3.Archived = true
+				return []*featureproto.Feature{f1.Feature, f2.Feature, f3.Feature}
+			},
+			expectedEvals: NewUserEvaluations(
+				"dummy",
+				[]*featureproto.Evaluation{
+					{
+						Id:             "feature-1:1:user-1",
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_RULE},
+						VariationValue: "B",
+					},
+				},
+				[]string{},
+				false,
+			),
+			expectedEvalFeatureIDs: []string{"feature-1"},
+			expectedError:          nil,
+		},
+		{
+			desc:                    "success: evaluate only the features that have been updated since the previous evaluation, or the features that have rules when user attributes are updated",
+			prevUEID:                "prevUEID",
+			evaluatedAt:             tenMinutesAgo.Unix(),
+			isUserAttributesUpdated: true,
+			createFeatures: func() []*featureproto.Feature {
+				f1 := makeFeature("feature-1")
+				f1.UpdatedAt = fiveMinutesAgo.Unix()
+				f1.Rules = []*featureproto.Rule{}
+
+				f2 := makeFeature("feature-2")
+				f2.UpdatedAt = thirtyOneDaysAgo.Unix()
+				f2.Rules = []*featureproto.Rule{}
+
+				f3 := makeFeature("feature-3")
+				f3.UpdatedAt = fiveMinutesAgo.Unix()
+				f3.Archived = true
+
+				f4 := makeFeature("feature-4")
+				f4.UpdatedAt = fiveMinutesAgo.Unix()
+				f4.Rules = []*featureproto.Rule{}
+				return []*featureproto.Feature{f1.Feature, f2.Feature, f3.Feature, f4.Feature}
+			},
+			expectedEvals: NewUserEvaluations(
+				"dummy",
+				[]*featureproto.Evaluation{
+					{
+						Id:             "feature-1:1:user-1",
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_RULE},
+						VariationValue: "B",
+					},
+					{
+						Id:             "feature-4:1:user-1",
+						FeatureId:      "feature-4",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_RULE},
+						VariationValue: "B",
+					},
+				},
+				[]string{"feature-3"},
+				false,
+			),
+			expectedEvalFeatureIDs: []string{"feature-1", "feature-4"},
+			expectedError:          nil,
+		},
+		{
+			desc:                    "success: prerequisite",
+			prevUEID:                "prevUEID",
+			evaluatedAt:             tenMinutesAgo.Unix(),
+			isUserAttributesUpdated: false,
+			createFeatures: func() []*featureproto.Feature {
+				f1 := makeFeature("feature-1")
+				f1.UpdatedAt = thirtyOneDaysAgo.Unix()
+				f1.Prerequisites = append(f1.Prerequisites, &featureproto.Prerequisite{
+					FeatureId:   "feature-4",
+					VariationId: "B",
+				})
+
+				f2 := makeFeature("feature-2")
+				f2.UpdatedAt = thirtyOneDaysAgo.Unix()
+
+				f3 := makeFeature("feature-3")
+				f3.UpdatedAt = thirtyOneDaysAgo.Unix()
+
+				f4 := makeFeature("feature-4")
+				f4.UpdatedAt = fiveMinutesAgo.Unix()
+				return []*featureproto.Feature{f1.Feature, f2.Feature, f3.Feature, f4.Feature}
+			},
+			expectedEvals: NewUserEvaluations(
+				"dummy",
+				[]*featureproto.Evaluation{
+					{
+						Id:             "feature-1:1:user-1",
+						FeatureId:      "feature-1",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_RULE},
+						VariationValue: "B",
+					},
+					{
+						Id:             "feature-4:1:user-1",
+						FeatureId:      "feature-4",
+						VariationId:    "variation-B",
+						Reason:         &featureproto.Reason{Type: featureproto.Reason_RULE},
+						VariationValue: "B",
+					},
+				},
+				[]string{},
+				false,
+			),
+			expectedEvalFeatureIDs: []string{"feature-1", "feature-4"},
+			expectedError:          nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := EvaluateFeaturesByEvaluatedAt(
+				p.createFeatures(),
+				user,
+				segmentUser,
+				p.prevUEID,
+				p.evaluatedAt,
+				p.isUserAttributesUpdated,
+			)
+			assert.Equal(t, p.expectedError, err)
+			assert.Equal(t, p.expectedEvals.UserEvaluations.ForceUpdate, actual.ForceUpdate)
+			assert.Equal(t, p.expectedEvals.UserEvaluations.ArchivedFeatureIds, actual.ArchivedFeatureIds)
+			assert.Equal(t, len(p.expectedEvals.UserEvaluations.Evaluations), len(actual.Evaluations))
+			for _, e := range actual.Evaluations {
+				assert.Contains(t, p.expectedEvalFeatureIDs, e.FeatureId)
+			}
+		})
+	}
+
 }
 
 func TestTopologicalSort(t *testing.T) {
@@ -560,10 +926,9 @@ func TestGetPrerequisiteUpwards(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc        string
-		target      []*featureproto.Feature
-		expected    []*featureproto.Feature
-		expectedErr error
+		desc     string
+		target   []*featureproto.Feature
+		expected []*featureproto.Feature
 	}{
 		{
 			desc: "success: No prerequisites",
@@ -579,7 +944,6 @@ func TestGetPrerequisiteUpwards(t *testing.T) {
 				allFeaturesForPrerequisiteTest["featureC"],
 				allFeaturesForPrerequisiteTest["featureD"],
 			},
-			expectedErr: nil,
 		},
 		{
 			desc: "success: Get prerequisites pattern1",
@@ -590,7 +954,6 @@ func TestGetPrerequisiteUpwards(t *testing.T) {
 				allFeaturesForPrerequisiteTest["featureA"],
 				allFeaturesForPrerequisiteTest["featureF"],
 			},
-			expectedErr: nil,
 		},
 		{
 			desc: "success: Get prerequisites pattern2",
@@ -606,7 +969,6 @@ func TestGetPrerequisiteUpwards(t *testing.T) {
 				allFeaturesForPrerequisiteTest["featureI"],
 				allFeaturesForPrerequisiteTest["featureK"],
 			},
-			expectedErr: nil,
 		},
 		{
 			desc: "success: Get prerequisites pattern3",
@@ -620,7 +982,6 @@ func TestGetPrerequisiteUpwards(t *testing.T) {
 				allFeaturesForPrerequisiteTest["featureM"],
 				allFeaturesForPrerequisiteTest["featureN"],
 			},
-			expectedErr: nil,
 		},
 	}
 	allFeatures := make([]*featureproto.Feature, 0, len(allFeaturesForPrerequisiteTest))
@@ -630,9 +991,8 @@ func TestGetPrerequisiteUpwards(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			featuresHavePrerequisite := getFeaturesHavePrerequisite(allFeatures)
-			actual, err := GetPrerequisiteUpwards(p.target, featuresHavePrerequisite)
+			actual := GetPrerequisiteUpwards(p.target, featuresHavePrerequisite)
 			assert.ElementsMatch(t, p.expected, actual)
-			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }

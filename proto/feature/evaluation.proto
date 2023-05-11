@@ -37,7 +37,9 @@ message UserEvaluations {
     PARTIAL = 1;
     FULL = 2;
   }
-  string id = 1;
+  string id = 1 [deprecated = true];
   repeated Evaluation evaluations = 2;
   int64 created_at = 3;
+  repeated string archived_feature_ids = 4;
+  bool force_update = 5;
 }

@@ -27,7 +27,8 @@ import (
 
 const (
 	SecondsToStale         = 90 * 24 * 60 * 60 // 90 days
-	SecondsToReEvaluateAll = 30 * 24 * time.Hour
+	secondsToReEvaluateAll = 30 * 24 * 60 * 60 // 30 days
+	secondsForAdjustment   = 10                // 10 seconds
 )
 
 var (
@@ -767,7 +768,7 @@ func (f *Feature) IsArchivedBeforeLastThirtyDays() bool {
 		return false
 	}
 	now := time.Now()
-	return f.UpdatedAt < now.Add(-1*SecondsToReEvaluateAll).Unix()
+	return f.UpdatedAt < now.Unix()-secondsToReEvaluateAll
 }
 
 func (f *Feature) findTarget(id string) (int, error) {
