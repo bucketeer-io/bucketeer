@@ -96,15 +96,12 @@ func EvaluateFeaturesByEvaluatedAt(
 	evaluatedAt int64,
 	isUserAttributesUpdated bool,
 ) (*featureproto.UserEvaluations, error) {
-	forceUpdate := false
 	if prevUEID == "" {
-		forceUpdate = true
-		return evaluate(fs, user, mapSegmentUsers, forceUpdate)
+		return evaluate(fs, user, mapSegmentUsers, true)
 	}
 	now := time.Now()
 	if evaluatedAt < now.Unix()-secondsToReEvaluateAll {
-		forceUpdate = true
-		return evaluate(fs, user, mapSegmentUsers, forceUpdate)
+		return evaluate(fs, user, mapSegmentUsers, true)
 	}
 	adjustedEvalAt := evaluatedAt - secondsForAdjustment
 	updatedFeatures := make([]*featureproto.Feature, 0, len(fs))
@@ -121,12 +118,11 @@ func EvaluateFeaturesByEvaluatedAt(
 	// If the UserEvaluationsID has changed, but both User Attributes and Feature Flags have not been updated,
 	// it is considered unusual and a force update should be performed.
 	if len(updatedFeatures) == 0 {
-		forceUpdate = true
-		return evaluate(fs, user, mapSegmentUsers, forceUpdate)
+		return evaluate(fs, user, mapSegmentUsers, true)
 	}
 	featuresHavePrerequisite := getFeaturesHavePrerequisite(fs)
 	evalTargets := GetPrerequisiteUpwards(updatedFeatures, featuresHavePrerequisite)
-	return evaluate(evalTargets, user, mapSegmentUsers, forceUpdate)
+	return evaluate(evalTargets, user, mapSegmentUsers, false)
 }
 
 func evaluate(
