@@ -160,6 +160,8 @@ func evaluate(
 		}
 		// VariationId is used to check if prerequisite flag's result is what user expects it to be.
 		flagVariations[f.Id] = variation.Id
+		// When the tag is set in the request, it will return only the evaluations of flags that match the tag configured when the flag was created on the dashboard.
+		// When empty, it will return all the evaluations of the flags in the environment.
 		if targetTag != "" && !tagExist(f.Tags, targetTag) {
 			continue
 		}
