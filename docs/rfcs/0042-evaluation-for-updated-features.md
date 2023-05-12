@@ -23,7 +23,7 @@ As an exception, the following feature flags must be evaluated regardless of the
 - (if user attributes have been updated) Feature flags with targeting rules
 
 If user attributes have been updated, the evaluation result may also change.
-Since the server has to know that update, the SDK sends the `IsUserAttributesUpdated` flag to the server as a request parameter like the timestamp.
+Since the server has to know that update, the SDK sends the `UserAttributesUpdated` flag to the server as a request parameter like the timestamp.
 
 In addition, the following changes are required in both the server and SDK implementations:
 - Since only some feature flags may be evaluated and returned, the SDK implementation needs to be modified to allow differential updates of local data.
@@ -248,7 +248,7 @@ It will also return the evaluation results of archived feature flags.
 The SDK must delete the local evaluation data of archived flags.
 
 #### When the user attributes are updated
-If the SDK updates the user attributes, you must set `IsUserAttributesUpdated` to true in GetEvaluationsRequest to notify the server.
+If the SDK updates the user attributes, you must set `UserAttributesUpdated` to true in GetEvaluationsRequest to notify the server.
 You can get evaluation results of feature flags that have the target rule.
 
 #### When the tag is changed
@@ -267,9 +267,9 @@ During implementation changes, we ensure that any version of the SDK will work p
    * Change the feature module's behavior to put archived feature flags to Redis.(The server does not return archived flags to the SDK at this time.)
    * Remove the feature-tag-cacher module because it will have finished its role. 
 3. Change the api-gateway module. 
-   * Add the `EvaluatedAt` and `IsUserAttributesUpdated` fields to the GetEvaluationsRequest object.
+   * Add the `EvaluatedAt` and `UserAttributesUpdated` fields to the GetEvaluationsRequest object.
    * Add implementation to check the timestamp `EvaluatedAt` against the feature flag's `UpdatedAt` field.
-   * Add implementation to evaluate the features that have targeting rules when `IsUserAttributesUpdated` is true.
+   * Add implementation to evaluate the features that have targeting rules when `UserAttributesUpdated` is true.
    * Add the `ArchivedFeatures` and `ForceUpdate` fields to the GetEvaluationsResponse object.
 4. Modify each SDK to support `EvaluatedAt` and differential update the local data.
 5. Make GetEvaluationsRequest's `UserEvaluationsID` field deprecated and the `Tag` field optional.
