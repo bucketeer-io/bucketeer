@@ -223,22 +223,22 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 	segmentUser := map[string][]*featureproto.SegmentUser{}
 
 	patterns := []struct {
-		desc                    string
-		prevUEID                string
-		evaluatedAt             int64
-		isUserAttributesUpdated bool
-		tag                     string
-		createFeatures          func() []*featureproto.Feature
-		expectedEvals           *UserEvaluations
-		expectedEvalFeatureIDs  []string
-		expectedError           error
+		desc                   string
+		prevUEID               string
+		evaluatedAt            int64
+		userAttributesUpdated  bool
+		tag                    string
+		createFeatures         func() []*featureproto.Feature
+		expectedEvals          *UserEvaluations
+		expectedEvalFeatureIDs []string
+		expectedError          error
 	}{
 		{
-			desc:                    "success: evaluate all features since the previous UserEvaluationsID is empty",
-			prevUEID:                "",
-			evaluatedAt:             thirtyOneDaysAgo.Unix(),
-			isUserAttributesUpdated: false,
-			tag:                     "",
+			desc:                  "success: evaluate all features since the previous UserEvaluationsID is empty",
+			prevUEID:              "",
+			evaluatedAt:           thirtyOneDaysAgo.Unix(),
+			userAttributesUpdated: false,
+			tag:                   "",
 			createFeatures: func() []*featureproto.Feature {
 				f1 := makeFeature("feature-1")
 				f1.UpdatedAt = fiveMinutesAgo.Unix()
@@ -276,11 +276,11 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 			expectedError:          nil,
 		},
 		{
-			desc:                    "success: evaluate all features since the previous evaluation was over a month ago",
-			prevUEID:                "prevUEID",
-			evaluatedAt:             thirtyOneDaysAgo.Unix(),
-			isUserAttributesUpdated: false,
-			tag:                     "",
+			desc:                  "success: evaluate all features since the previous evaluation was over a month ago",
+			prevUEID:              "prevUEID",
+			evaluatedAt:           thirtyOneDaysAgo.Unix(),
+			userAttributesUpdated: false,
+			tag:                   "",
 			createFeatures: func() []*featureproto.Feature {
 				f1 := makeFeature("feature-1")
 				f1.UpdatedAt = fiveMinutesAgo.Unix()
@@ -318,11 +318,11 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 			expectedError:          nil,
 		},
 		{
-			desc:                    "success: evaluate all features since both feature flags and user attributes have not been updated (although the UEID has been updated)",
-			prevUEID:                "prevUEID",
-			evaluatedAt:             tenMinutesAgo.Unix(),
-			isUserAttributesUpdated: false,
-			tag:                     "",
+			desc:                  "success: evaluate all features since both feature flags and user attributes have not been updated (although the UEID has been updated)",
+			prevUEID:              "prevUEID",
+			evaluatedAt:           tenMinutesAgo.Unix(),
+			userAttributesUpdated: false,
+			tag:                   "",
 			createFeatures: func() []*featureproto.Feature {
 				f1 := makeFeature("feature-1")
 				f1.UpdatedAt = oneHourAgo.Unix()
@@ -360,11 +360,11 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 			expectedError:          nil,
 		},
 		{
-			desc:                    "success: evaluate only features updated since the previous evaluations",
-			prevUEID:                "prevUEID",
-			evaluatedAt:             tenMinutesAgo.Unix(),
-			isUserAttributesUpdated: false,
-			tag:                     "",
+			desc:                  "success: evaluate only features updated since the previous evaluations",
+			prevUEID:              "prevUEID",
+			evaluatedAt:           tenMinutesAgo.Unix(),
+			userAttributesUpdated: false,
+			tag:                   "",
 			createFeatures: func() []*featureproto.Feature {
 				f1 := makeFeature("feature-1")
 				f1.UpdatedAt = fiveMinutesAgo.Unix()
@@ -399,11 +399,11 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 			expectedError:          nil,
 		},
 		{
-			desc:                    "success: check the adjustment seconds",
-			prevUEID:                "prevUEID",
-			evaluatedAt:             tenMinutesAgo.Unix(),
-			isUserAttributesUpdated: false,
-			tag:                     "",
+			desc:                  "success: check the adjustment seconds",
+			prevUEID:              "prevUEID",
+			evaluatedAt:           tenMinutesAgo.Unix(),
+			userAttributesUpdated: false,
+			tag:                   "",
 			createFeatures: func() []*featureproto.Feature {
 				f1 := makeFeature("feature-1")
 				f1.UpdatedAt = tenMinutesAndNineSecondsAgo.Unix()
@@ -430,11 +430,11 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 			expectedError:          nil,
 		},
 		{
-			desc:                    "success: evaluate only features has rules when user attributes updated",
-			prevUEID:                "prevUEID",
-			evaluatedAt:             tenMinutesAgo.Unix(),
-			isUserAttributesUpdated: true,
-			tag:                     "",
+			desc:                  "success: evaluate only features has rules when user attributes updated",
+			prevUEID:              "prevUEID",
+			evaluatedAt:           tenMinutesAgo.Unix(),
+			userAttributesUpdated: true,
+			tag:                   "",
 			createFeatures: func() []*featureproto.Feature {
 				f1 := makeFeature("feature-1")
 				f1.UpdatedAt = thirtyOneDaysAgo.Unix()
@@ -466,11 +466,11 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 			expectedError:          nil,
 		},
 		{
-			desc:                    "success: evaluate only the features that have been updated since the previous evaluation, or the features that have rules when user attributes are updated",
-			prevUEID:                "prevUEID",
-			evaluatedAt:             tenMinutesAgo.Unix(),
-			isUserAttributesUpdated: true,
-			tag:                     "",
+			desc:                  "success: evaluate only the features that have been updated since the previous evaluation, or the features that have rules when user attributes are updated",
+			prevUEID:              "prevUEID",
+			evaluatedAt:           tenMinutesAgo.Unix(),
+			userAttributesUpdated: true,
+			tag:                   "",
 			createFeatures: func() []*featureproto.Feature {
 				f1 := makeFeature("feature-1")
 				f1.UpdatedAt = fiveMinutesAgo.Unix()
@@ -514,11 +514,11 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 			expectedError:          nil,
 		},
 		{
-			desc:                    "success: prerequisite",
-			prevUEID:                "prevUEID",
-			evaluatedAt:             tenMinutesAgo.Unix(),
-			isUserAttributesUpdated: false,
-			tag:                     "",
+			desc:                  "success: prerequisite",
+			prevUEID:              "prevUEID",
+			evaluatedAt:           tenMinutesAgo.Unix(),
+			userAttributesUpdated: false,
+			tag:                   "",
 			createFeatures: func() []*featureproto.Feature {
 				f1 := makeFeature("feature-1")
 				f1.UpdatedAt = thirtyOneDaysAgo.Unix()
@@ -562,11 +562,11 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 			expectedError:          nil,
 		},
 		{
-			desc:                    "success: When a tag is specified, it excludes the evaluations that don't have that tag. But archived features are not excluded",
-			prevUEID:                "prevUEID",
-			evaluatedAt:             tenMinutesAgo.Unix(),
-			isUserAttributesUpdated: false,
-			tag:                     "tag-1",
+			desc:                  "success: When a tag is specified, it excludes the evaluations that don't have that tag. But archived features are not excluded",
+			prevUEID:              "prevUEID",
+			evaluatedAt:           tenMinutesAgo.Unix(),
+			userAttributesUpdated: false,
+			tag:                   "tag-1",
 			createFeatures: func() []*featureproto.Feature {
 				f1 := makeFeature("feature-1")
 				f1.Tags = append(f1.Tags, "tag-1")
@@ -605,11 +605,11 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 			expectedError:          nil,
 		},
 		{
-			desc:                    "success: When a tag is not specified, it does not exclude evaluations that have tags.",
-			prevUEID:                "prevUEID",
-			evaluatedAt:             tenMinutesAgo.Unix(),
-			isUserAttributesUpdated: false,
-			tag:                     "",
+			desc:                  "success: When a tag is not specified, it does not exclude evaluations that have tags.",
+			prevUEID:              "prevUEID",
+			evaluatedAt:           tenMinutesAgo.Unix(),
+			userAttributesUpdated: false,
+			tag:                   "",
 			createFeatures: func() []*featureproto.Feature {
 				f1 := makeFeature("feature-1")
 				f1.Tags = append(f1.Tags, "tag-1")
@@ -675,7 +675,7 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 				segmentUser,
 				p.prevUEID,
 				p.evaluatedAt,
-				p.isUserAttributesUpdated,
+				p.userAttributesUpdated,
 				p.tag,
 			)
 			assert.Equal(t, p.expectedError, err)

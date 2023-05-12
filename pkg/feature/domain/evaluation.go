@@ -94,7 +94,7 @@ func EvaluateFeaturesByEvaluatedAt(
 	mapSegmentUsers map[string][]*featureproto.SegmentUser,
 	prevUEID string,
 	evaluatedAt int64,
-	isUserAttributesUpdated bool,
+	userAttributesUpdated bool,
 	targetTag string,
 ) (*featureproto.UserEvaluations, error) {
 	if prevUEID == "" {
@@ -112,7 +112,7 @@ func EvaluateFeaturesByEvaluatedAt(
 			updatedFeatures = append(updatedFeatures, f)
 			continue
 		}
-		if isUserAttributesUpdated && len(feature.Rules) != 0 {
+		if userAttributesUpdated && len(feature.Rules) != 0 {
 			updatedFeatures = append(updatedFeatures, f)
 		}
 	}
