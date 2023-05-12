@@ -360,6 +360,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.UserEvaluationsId,
 			req.EvaluatedAt,
 			req.UserAttributesUpdated,
+			req.Tag,
 		)
 		if err != nil {
 			s.logger.Error(

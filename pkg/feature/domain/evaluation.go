@@ -95,13 +95,14 @@ func EvaluateFeaturesByEvaluatedAt(
 	prevUEID string,
 	evaluatedAt int64,
 	isUserAttributesUpdated bool,
+	targetTag string,
 ) (*featureproto.UserEvaluations, error) {
 	if prevUEID == "" {
-		return evaluate(fs, user, mapSegmentUsers, true)
+		return evaluate(fs, user, mapSegmentUsers, true, targetTag)
 	}
 	now := time.Now()
 	if evaluatedAt < now.Unix()-secondsToReEvaluateAll {
-		return evaluate(fs, user, mapSegmentUsers, true)
+		return evaluate(fs, user, mapSegmentUsers, true, targetTag)
 	}
 	adjustedEvalAt := evaluatedAt - secondsForAdjustment
 	updatedFeatures := make([]*featureproto.Feature, 0, len(fs))
@@ -118,11 +119,11 @@ func EvaluateFeaturesByEvaluatedAt(
 	// If the UserEvaluationsID has changed, but both User Attributes and Feature Flags have not been updated,
 	// it is considered unusual and a force update should be performed.
 	if len(updatedFeatures) == 0 {
-		return evaluate(fs, user, mapSegmentUsers, true)
+		return evaluate(fs, user, mapSegmentUsers, true, targetTag)
 	}
 	featuresHavePrerequisite := getFeaturesHavePrerequisite(fs)
 	evalTargets := GetPrerequisiteUpwards(updatedFeatures, featuresHavePrerequisite)
-	return evaluate(evalTargets, user, mapSegmentUsers, false)
+	return evaluate(evalTargets, user, mapSegmentUsers, false, targetTag)
 }
 
 func evaluate(
@@ -130,6 +131,7 @@ func evaluate(
 	user *userproto.User,
 	mapSegmentUsers map[string][]*featureproto.SegmentUser,
 	forceUpdate bool,
+	targetTag string,
 ) (*featureproto.UserEvaluations, error) {
 	flagVariations := map[string]string{}
 	// fs need to be sorted in order from upstream to downstream.
@@ -158,6 +160,9 @@ func evaluate(
 		}
 		// VariationId is used to check if prerequisite flag's result is what user expects it to be.
 		flagVariations[f.Id] = variation.Id
+		if targetTag != "" && !tagExist(f.Tags, targetTag) {
+			continue
+		}
 		// FIXME: Remove the next two lines when the Variation
 		// no longer is being used
 		// For security reasons, it removes the variation name and description
