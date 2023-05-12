@@ -370,6 +370,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.UserEvaluationsId,
 			req.EvaluatedAt,
 			req.UserAttributesUpdated,
+			req.Tag,
 		)
 		if err != nil {
 			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationInternalError).Inc()
