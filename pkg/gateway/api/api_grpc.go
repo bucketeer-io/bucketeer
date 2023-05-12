@@ -288,22 +288,27 @@ func (s *grpcGatewayService) GetEvaluations(
 	if err != nil {
 		return nil, err
 	}
+	projectID := envAPIKey.ProjectId
+	environmentNamespace := envAPIKey.EnvironmentNamespace
 	if err := s.validateGetEvaluationsRequest(req); err != nil {
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationBadRequest).Inc()
 		return nil, err
 	}
-	s.publishUser(ctx, envAPIKey.EnvironmentNamespace, req.Tag, req.User, req.SourceId)
+	s.publishUser(ctx, environmentNamespace, req.Tag, req.User, req.SourceId)
 	f, err, _ := s.flightgroup.Do(
-		envAPIKey.EnvironmentNamespace,
+		environmentNamespace,
 		func() (interface{}, error) {
-			return s.getFeatures(ctx, envAPIKey.EnvironmentNamespace)
+			return s.getFeatures(ctx, environmentNamespace)
 		},
 	)
 	if err != nil {
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationInternalError).Inc()
 		return nil, err
 	}
 	features := f.([]*featureproto.Feature)
 	activeFeatures := s.filterOutArchivedFeatures(features)
 	if len(features) == 0 {
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationNone).Inc()
 		return &gwproto.GetEvaluationsResponse{
 			State:       featureproto.UserEvaluations_FULL,
 			Evaluations: nil,
@@ -311,19 +316,21 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, activeFeatures)
 	if req.UserEvaluationsId == ueid {
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationNone).Inc()
 		return &gwproto.GetEvaluationsResponse{
 			State:             featureproto.UserEvaluations_FULL,
 			Evaluations:       nil,
 			UserEvaluationsId: ueid,
 		}, nil
 	}
-	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, envAPIKey.EnvironmentNamespace)
+	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, environmentNamespace)
 	if err != nil {
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationInternalError).Inc()
 		s.logger.Error(
 			"Failed to get segment users map",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
 		return nil, err
@@ -333,6 +340,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	// FIXME Remove s.getEvaluations once all SDKs use evaluatedAt.
 	if req.EvaluatedAt == 0 && !req.UserAttributesUpdated {
 		if req.Tag == "" {
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationBadRequest).Inc()
 			return nil, ErrTagRequired
 		}
 		evaluations, err = featuredomain.EvaluateFeatures(
@@ -342,16 +350,18 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("userId", req.User.Id),
-					zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
 			return nil, ErrInternal
 		}
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationOld).Inc()
 	} else {
 		evaluations, err = featuredomain.EvaluateFeaturesByEvaluatedAt(
 			features,
@@ -362,15 +372,21 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.UserAttributesUpdated,
 		)
 		if err != nil {
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("userId", req.User.Id),
-					zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+					zap.String("environmentNamespace", environmentNamespace),
 				)...,
 			)
 			return nil, ErrInternal
+		}
+		if evaluations.ForceUpdate {
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationAll).Inc()
+		} else {
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationDiff).Inc()
 		}
 	}
 	return &gwproto.GetEvaluationsResponse{

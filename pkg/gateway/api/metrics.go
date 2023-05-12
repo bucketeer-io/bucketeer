@@ -50,6 +50,13 @@ const (
 	codeNonRepeatableError      = "NonRepeatableError"
 	codeRepeatableError         = "RepeatableError"
 	codeInvalidURLParams        = "InvalidURLParams"
+
+	evaluationAll           = "All"
+	evaluationDiff          = "Diff"
+	evaluationNone          = "None"
+	evaluationOld           = "Old"
+	evaluationInternalError = "InternalError"
+	evaluationBadRequest    = "BadRequest"
 )
 
 var (
@@ -68,6 +75,13 @@ var (
 			Name:      "api_register_events_total",
 			Help:      "Total number of registered events",
 		}, []string{"caller", "type", "code"})
+	evaluationsCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_evaluations_total",
+			Help:      "Total number of evaluations",
+		}, []string{"project_id", "environment_namespace", "evaluation_type"})
 	// TODO: Remove after deleting api-gateway REST server
 	restCacheCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -148,6 +162,7 @@ func registerMetrics(r metrics.Registerer) {
 		r.MustRegister(
 			cacheCounter,
 			eventCounter,
+			evaluationsCounter,
 			sdkGetEvaluationsLatencyHistogram,
 			sdkGetEvaluationsSizeHistogram,
 			sdkTimeoutErrorCounter,
