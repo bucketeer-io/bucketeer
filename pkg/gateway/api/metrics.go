@@ -51,7 +51,7 @@ const (
 	codeRepeatableError         = "RepeatableError"
 	codeInvalidURLParams        = "InvalidURLParams"
 
-	evaluationALL           = "All"
+	evaluationAll           = "All"
 	evaluationDiff          = "Diff"
 	evaluationNone          = "None"
 	evaluationOld           = "Old"

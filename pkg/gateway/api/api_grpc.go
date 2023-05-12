@@ -384,7 +384,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			return nil, ErrInternal
 		}
 		if evaluations.ForceUpdate {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationALL).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationAll).Inc()
 		} else {
 			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationDiff).Inc()
 		}
