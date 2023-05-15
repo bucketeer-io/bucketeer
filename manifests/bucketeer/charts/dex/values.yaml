@@ -1,8 +1,8 @@
 replicaCount: 2
 
 image:
-  repository: dexidp/dex
-  tag: v2.36.0
+  repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-dex
+  tag: v0.2.0-131-gb0aaca2
   pullPolicy: IfNotPresent
 
 fullnameOverride: "dex"
