@@ -45,8 +45,3 @@ data:
         hash: "$2y$10$1uGIoifceMnZFBAvi5Gz.e2Qhxtv7jn8eTw3kRSM6sOIUsTdhzKuq"
         username: "admin"
         userID: "admin@gmail.com"
-    frontend:
-      issuer: dex
-      logoURL: theme/logo.png
-      dir: /etc/dex/web
-      theme: light
