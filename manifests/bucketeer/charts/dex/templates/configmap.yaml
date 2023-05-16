@@ -20,11 +20,10 @@ data:
       tlsCert: /etc/dex/tls/tls.crt
       tlsKey: /etc/dex/tls/tls.key
     connectors:
-      - type: oidc
+      - type: google
         id: google
         name: Google
         config:
-          issuer: {{ .Values.config.google.issuer }}
           clientID: $GOOGLE_CLIENT_ID
           clientSecret: $GOOGLE_CLIENT_SECRET
           redirectURI: {{ .Values.config.google.redirectURI }}
@@ -36,3 +35,9 @@ data:
           {{- range .Values.config.client.redirectURIs }}
           - {{ . }}
           {{- end }}
+    oauth2:
+      skipApprovalScreen: {{ .Values.config.oauth2.skipApprovalScreen }}
+    {{- if .Values.config.enablePasswordDB }}
+    enablePasswordDB: {{ .Values.config.enablePasswordDB }}
+    staticPasswords: {{ toYaml .Values.config.staticPasswords | nindent 6 }}
+    {{- end }}

@@ -1,8 +1,8 @@
 replicaCount: 2
 
 image:
-  repository: dexidp/dex
-  tag: v2.36.0
+  repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-dex
+  tag: v0.2.0-134-g797e90c
   pullPolicy: IfNotPresent
 
 fullnameOverride: "dex"
@@ -63,10 +63,13 @@ config:
     secret:
     redirectURIs:
   google:
-    issuer:
     clientID:
     clientSecret:
     redirectURIs:
+  oauth2:
+    skipApprovalScreen: true
+  enablePasswordDB: false
+  staticPasswords:
 
 serviceAccount:
   annotations: {}
