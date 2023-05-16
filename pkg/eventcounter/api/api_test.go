@@ -817,7 +817,7 @@ func TestGetStartTime(t *testing.T) {
 	}
 }
 
-func TestGetDailyTimeStamps(t *testing.T) {
+func TestGetDailyTimestamps(t *testing.T) {
 	t.Parallel()
 
 	endAt := time.Date(2020, 12, 25, 8, 0, 0, 0, jpLocation)
@@ -843,7 +843,7 @@ func TestGetDailyTimeStamps(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual := getDailyTimeStamps(p.startAt, 3)
+			actual := getDailyTimestamps(p.startAt, 3)
 			assert.Equal(t, p.expectedElements, actual)
 			assert.Len(t, actual, p.expectedLen)
 		})
@@ -894,7 +894,7 @@ func TestGetHourlyTimestamps(t *testing.T) {
 	expected = append(expected, getOneDayTimestamps(startAt.AddDate(0, 0, 1)))
 	expected = append(expected, getOneDayTimestamps(startAt.AddDate(0, 0, 2)))
 	expected = append(expected, getOneDayTimestamps(startAt.AddDate(0, 0, 3)))
-	daily := getDailyTimeStamps(startAt, 3)
+	daily := getDailyTimestamps(startAt, 3)
 	actual := getHourlyTimeStamps(daily)
 	assert.Equal(t, expected, actual)
 }
@@ -934,7 +934,7 @@ func TestGetTotalEventCounts(t *testing.T) {
 	}
 }
 
-func TestGetTimeStamps(t *testing.T) {
+func TestGetTimestamps(t *testing.T) {
 	mockController := gomock.NewController(t)
 	patterns := []struct {
 		desc         string
@@ -976,7 +976,7 @@ func TestGetTimeStamps(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			gs := newEventCounterService(t, mockController)
-			timestamps, timestampUnit, err := gs.getTimeStamps(p.input)
+			timestamps, timestampUnit, err := gs.getTimestamps(p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Len(t, timestamps, p.expectedLen)
 			assert.Equal(t, timestampUnit, p.expectedUnit)
@@ -1142,7 +1142,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				vIDs := []string{vID0, vID1, defaultVariationID}
 				endAt := time.Now()
 				startAt := getStartTime(jpLocation, endAt, 30)
-				timeStamps := getDailyTimeStamps(startAt, 30)
+				timeStamps := getDailyTimestamps(startAt, 30)
 				for idx, vID := range vIDs {
 					ec := getEventCountKeys(vID, fID, environmentNamespace, timeStamps)
 					val := randomNumberGroup[idx]
@@ -1398,7 +1398,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 				vIDs := []string{vID0, vID1, defaultVariationID}
 				endAt := time.Now()
 				startAt := getStartTime(jpLocation, endAt, 13)
-				dailyTimeStamps := getDailyTimeStamps(startAt, 13)
+				dailyTimeStamps := getDailyTimestamps(startAt, 13)
 				hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps)
 				for idx, vID := range vIDs {
 					ec := getEventCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)

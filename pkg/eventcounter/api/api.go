@@ -288,7 +288,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		}
 		return nil, dt.Err()
 	}
-	timeStamps := getDailyTimeStamps(startAt, 30)
+	timeStamps := getDailyTimestamps(startAt, 30)
 	vIDs := getVariationIDs(resp.Feature.Variations)
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
@@ -403,7 +403,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 		return nil, dt.Err()
 	}
 	// This timestamp will be used as `Timestamps` field in ecproto.Timeseries.
-	timestamps, timestampUnit, err := s.getTimeStamps(req.TimeRange)
+	timestamps, timestampUnit, err := s.getTimestamps(req.TimeRange)
 	if err != nil {
 		dt, err := statusUnknownTimeRange.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -747,7 +747,7 @@ func getOneDayTimestamps(timestamp time.Time) []int64 {
 	return timeStamps
 }
 
-func (s *eventCounterService) getTimeStamps(
+func (s *eventCounterService) getTimestamps(
 	timeRange ecproto.GetEvaluationTimeseriesCountRequest_TimeRange,
 ) ([]int64, ecproto.Timeseries_Unit, error) {
 	endAt := time.Now()
@@ -757,19 +757,19 @@ func (s *eventCounterService) getTimeStamps(
 		return []int64{startAt.Unix()}, ecproto.Timeseries_HOUR, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_SEVEN_DAYS:
 		startAt := getStartTime(s.location, endAt, 6)
-		return getDailyTimeStamps(startAt, 6), ecproto.Timeseries_DAY, nil
+		return getDailyTimestamps(startAt, 6), ecproto.Timeseries_DAY, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS:
 		startAt := getStartTime(s.location, endAt, 13)
-		return getDailyTimeStamps(startAt, 13), ecproto.Timeseries_DAY, nil
+		return getDailyTimestamps(startAt, 13), ecproto.Timeseries_DAY, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_THIRTY_DAYS:
 		startAt := getStartTime(s.location, endAt, 29)
-		return getDailyTimeStamps(startAt, 29), ecproto.Timeseries_DAY, nil
+		return getDailyTimestamps(startAt, 29), ecproto.Timeseries_DAY, nil
 	default:
 		return nil, 0, errUnknownTimeRange
 	}
 }
 
-func getDailyTimeStamps(startAt time.Time, limit int) []int64 {
+func getDailyTimestamps(startAt time.Time, limit int) []int64 {
 	timeStamps := make([]int64, 0, limit)
 	for i := 0; i <= limit; i++ {
 		ts := startAt.AddDate(0, 0, i).Unix()
