@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: asia-docker.pkg.dev/bucketeer-io/bucketeer/bucketeer-dex
-  tag: v0.2.0-131-gb0aaca2
+  tag: v0.2.0-134-g797e90c
   pullPolicy: IfNotPresent
 
 fullnameOverride: "dex"
