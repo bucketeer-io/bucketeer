@@ -35,12 +35,9 @@ data:
           {{- range .Values.config.client.redirectURIs }}
           - {{ . }}
           {{- end }}
-    enablePasswordDB: true
     oauth2:
-      skipApprovalScreen: true
-    staticPasswords:
-      - email: "admin@gmail.com"
-        # bcrypt hash of the string "password": $(echo password | htpasswd -BinC 10 admin | cut -d: -f2)
-        hash: "$2y$10$1uGIoifceMnZFBAvi5Gz.e2Qhxtv7jn8eTw3kRSM6sOIUsTdhzKuq"
-        username: "admin"
-        userID: "admin@gmail.com"
+      skipApprovalScreen: {{ .Values.config.oauth2.skipApprovalScreen }}
+    {{- if .Values.config.enablePasswordDB }}
+    enablePasswordDB: {{ .Values.config.enablePasswordDB }}
+    staticPasswords: {{ .Values.config.staticPasswords }}
+    {{- end }}

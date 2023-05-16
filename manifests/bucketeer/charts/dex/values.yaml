@@ -66,6 +66,10 @@ config:
     clientID:
     clientSecret:
     redirectURIs:
+  oauth2:
+    skipApprovalScreen: true
+  enablePasswordDB: false
+  staticPasswords:
 
 serviceAccount:
   annotations: {}
