@@ -39,5 +39,5 @@ data:
       skipApprovalScreen: {{ .Values.config.oauth2.skipApprovalScreen }}
     {{- if .Values.config.enablePasswordDB }}
     enablePasswordDB: {{ .Values.config.enablePasswordDB }}
-    staticPasswords: {{ .Values.config.staticPasswords }}
+    staticPasswords: {{ toYaml .Values.config.staticPasswords | nindent 6 }}
     {{- end }}
