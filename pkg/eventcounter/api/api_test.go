@@ -811,7 +811,7 @@ func TestGetStartTime(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual := getStartTime(p.inputLocation, p.inputEndAt, p.inputDurationDays)
+			actual := truncateDate(p.inputLocation, getStartTime(p.inputLocation, p.inputEndAt, p.inputDurationDays))
 			assert.Equal(t, p.expected.Unix(), actual.Unix())
 		})
 	}
@@ -821,7 +821,7 @@ func TestGetDailyTimestamps(t *testing.T) {
 	t.Parallel()
 
 	endAt := time.Date(2020, 12, 25, 8, 0, 0, 0, jpLocation)
-	startAt := getStartTime(jpLocation, endAt, 3)
+	startAt := truncateDate(jpLocation, getStartTime(jpLocation, endAt, 3))
 
 	patterns := []struct {
 		desc             string
@@ -854,7 +854,7 @@ func TestGetOneDayTimestamps(t *testing.T) {
 	t.Parallel()
 
 	endAt := time.Now()
-	startAt := getStartTime(jpLocation, endAt, 30)
+	startAt := truncateDate(jpLocation, getStartTime(jpLocation, endAt, 30))
 
 	patterns := []struct {
 		desc             string
@@ -1397,7 +1397,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 					}, nil)
 				vIDs := []string{vID0, vID1, defaultVariationID}
 				endAt := time.Now()
-				startAt := getStartTime(jpLocation, endAt, 13)
+				startAt := truncateDate(jpLocation, getStartTime(jpLocation, endAt, 13))
 				dailyTimeStamps := getDailyTimestamps(startAt, 13)
 				hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps, ecproto.Timeseries_DAY)
 				for idx, vID := range vIDs {

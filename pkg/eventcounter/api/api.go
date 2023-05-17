@@ -718,13 +718,12 @@ func newPFMergeKey(
 	)
 }
 
-func getTwentyFourHoursAgo(loc *time.Location, endAt time.Time) time.Time {
-	return endAt.In(loc).AddDate(0, 0, -1)
+func truncateDate(loc *time.Location, t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
 }
 
 func getStartTime(loc *time.Location, endAt time.Time, durationDays int) time.Time {
-	year, month, day := endAt.In(loc).AddDate(0, 0, -durationDays).Date()
-	return time.Date(year, month, day, 0, 0, 0, 0, loc)
+	return endAt.In(loc).AddDate(0, 0, -durationDays)
 }
 
 func newEvaluationCountkey(
@@ -753,17 +752,20 @@ func (s *eventCounterService) getTimestamps(
 	endAt := time.Now()
 	switch timeRange {
 	case ecproto.GetEvaluationTimeseriesCountRequest_TWENTY_FOUR_HOURS:
-		startAt := getTwentyFourHoursAgo(s.location, endAt)
+		startAt := getStartTime(s.location, endAt, 1)
 		return getOneDayTimestamps(startAt), ecproto.Timeseries_HOUR, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_SEVEN_DAYS:
 		startAt := getStartTime(s.location, endAt, 6)
-		return getDailyTimestamps(startAt, 6), ecproto.Timeseries_DAY, nil
+		truncated := truncateDate(s.location, startAt)
+		return getDailyTimestamps(truncated, 6), ecproto.Timeseries_DAY, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS:
 		startAt := getStartTime(s.location, endAt, 13)
-		return getDailyTimestamps(startAt, 13), ecproto.Timeseries_DAY, nil
+		truncated := truncateDate(s.location, startAt)
+		return getDailyTimestamps(truncated, 13), ecproto.Timeseries_DAY, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_THIRTY_DAYS:
 		startAt := getStartTime(s.location, endAt, 29)
-		return getDailyTimestamps(startAt, 29), ecproto.Timeseries_DAY, nil
+		truncated := truncateDate(s.location, startAt)
+		return getDailyTimestamps(truncated, 29), ecproto.Timeseries_DAY, nil
 	default:
 		return nil, 0, errUnknownTimeRange
 	}
