@@ -47,7 +47,7 @@ event-persister-evaluation-events-dwh:
   nodeSelector:
 
   hpa:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 1
     metrics:

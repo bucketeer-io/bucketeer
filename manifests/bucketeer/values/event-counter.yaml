@@ -53,7 +53,7 @@ event-counter:
     iam.gke.io/gke-metadata-server-enabled: "true"
 
   hpa:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 1
     metrics:
