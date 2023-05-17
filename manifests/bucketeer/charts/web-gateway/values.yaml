@@ -51,6 +51,8 @@ hpa:
   metrics:
     cpu:
       targetAverageUtilization:
+backendConfig:
+  enabled: true
 tolerations: []
 serviceAccount:
   annotations: {}

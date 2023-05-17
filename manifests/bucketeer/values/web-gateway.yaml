@@ -47,6 +47,9 @@ web-gateway:
     periodSeconds: 10
     failureThreshold: 10
 
+  backendConfig:
+    enabled: false
+
   tls:
     bucketeerJP:
       secrets:
