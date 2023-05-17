@@ -571,12 +571,12 @@ func (s *eventCounterService) getEventCounts(
 
 func (s *eventCounterService) getTotalEventCounts(
 	eventCounts []float64,
-) float64 {
+) int64 {
 	total := float64(0)
 	for _, count := range eventCounts {
 		total += count
 	}
-	return total
+	return int64(total)
 }
 
 func (s *eventCounterService) getUserCounts(
@@ -610,7 +610,7 @@ func (s *eventCounterService) flattenAry(
 func (s *eventCounterService) getTotalUserCounts(
 	userCountKeys [][]string,
 	featureID, environmentNamespace string,
-) (float64, error) {
+) (int64, error) {
 	flat := s.flattenAry(userCountKeys)
 	count, err := s.countUniqueUser(
 		flat,
@@ -619,7 +619,7 @@ func (s *eventCounterService) getTotalUserCounts(
 	if err != nil {
 		return 0, err
 	}
-	return count, nil
+	return int64(count), nil
 }
 
 func (s *eventCounterService) countUniqueUser(

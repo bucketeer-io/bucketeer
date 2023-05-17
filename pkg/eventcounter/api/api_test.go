@@ -904,7 +904,7 @@ func TestGetTotalEventCounts(t *testing.T) {
 	patterns := []struct {
 		desc     string
 		input    []float64
-		expected float64
+		expected int64
 	}{
 		{
 			desc: "success: integer",
@@ -922,7 +922,7 @@ func TestGetTotalEventCounts(t *testing.T) {
 				3.9,
 				2.0,
 			},
-			expected: 7.2,
+			expected: 7,
 		},
 	}
 	for _, p := range patterns {
