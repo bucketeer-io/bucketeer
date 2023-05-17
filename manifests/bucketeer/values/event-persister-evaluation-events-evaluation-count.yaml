@@ -7,6 +7,8 @@ event-persister-evaluation-events-evaluation-count:
     topic: bucketeer-dev-evaluation-events
     subscription: bucketeer-dev-evaluation-events-event-persister-evaluation-count
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
     redis:
       serverName: persistent-redis
       addr: localhost:6379 # TODO REDIS

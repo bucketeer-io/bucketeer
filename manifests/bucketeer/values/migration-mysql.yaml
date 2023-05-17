@@ -3,6 +3,8 @@ migration-mysql:
     githubUser: bucketeer-bot
     githubMigrationSourcePath: ca-dp/bucketeer-ops/cloudsql/migrations#master
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
     mysqlUser: # TODO
     mysqlPass: # TODO
     mysqlHost: localhost # TODO

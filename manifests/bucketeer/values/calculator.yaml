@@ -6,6 +6,8 @@ calculator:
     mysqlHost: localhost # TODO
     mysqlDbName: dbname # TODO
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
     jobCronHour: "*"
     jobCronMinute: "*"
     jobCronSecond: "0"

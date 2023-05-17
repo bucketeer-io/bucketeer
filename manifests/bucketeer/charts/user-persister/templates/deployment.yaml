@@ -85,6 +85,10 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_USER_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_USER_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_USER_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_USER_SERVICE_TOKEN
               value: /usr/local/service-token/token
             - name: BUCKETEER_USER_CERT

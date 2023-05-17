@@ -2,6 +2,8 @@ auth:
   env:
     emailFilter: "^.+@(gmail.com)$"
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

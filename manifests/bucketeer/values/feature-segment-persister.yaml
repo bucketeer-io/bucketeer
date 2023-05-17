@@ -12,6 +12,8 @@ feature-segment-persister:
       serverName: non-persistent-redis
       addr: localhost:6379 # TODO REDIS
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

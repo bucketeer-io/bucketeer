@@ -19,6 +19,8 @@ env:
   experimentService: localhost:9001
   eventCounterService: localhost:9001
   logLevel: info
+  profile: true
+  gcpTraceEnabled: true
   port: 9090
   metricsPort: 9002
   jobCronHour: "*"

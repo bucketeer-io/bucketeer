@@ -1,6 +1,8 @@
 event-persister-goal-events-ops:
   env:
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
     # pubsub
     project: bucketeer-dev-srv
     topic: bucketeer-dev-goal-events

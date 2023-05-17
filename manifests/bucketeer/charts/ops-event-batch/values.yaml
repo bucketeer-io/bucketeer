@@ -19,6 +19,8 @@ env:
   featureService: localhost:9001
   refreshInterval: 10m
   logLevel: info
+  profile: true
+  gcpTraceEnabled: true
   port: 9090
   metricsPort: 9002
   scheduleCountWatcher: "0,10,20,30,40,50 * * * * *"

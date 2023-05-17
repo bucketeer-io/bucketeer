@@ -8,6 +8,8 @@ user-persister:
     topic: bucketeer-dev-user-events
     subscription: bucketeer-dev-user-events-user-persister
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

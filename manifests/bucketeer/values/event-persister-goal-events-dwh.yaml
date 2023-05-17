@@ -1,6 +1,8 @@
 event-persister-goal-events-dwh:
   env:
     project: bucketeer-dev-srv
+    profile: false
+    gcpTraceEnabled: false
     # pubsub
     topic: bucketeer-dev-goal-events
     subscription: bucketeer-dev-goal-events-event-persister-dwh

@@ -7,6 +7,8 @@ auto-ops:
     mysqlDbName: dbname # TODO
     domainEventTopic: bucketeer-dev-domain-events
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   webhook:
     baseURL: https://localhost:8000

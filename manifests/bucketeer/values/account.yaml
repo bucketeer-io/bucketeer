@@ -9,6 +9,8 @@ account:
     mysqlDbName: dbname # TODO
     topic: bucketeer-dev-domain-events
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:

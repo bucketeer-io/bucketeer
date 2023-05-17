@@ -8,6 +8,8 @@ auditlog-persister:
     topic: bucketeer-dev-domain-events
     subscription: bucketeer-dev-domain-events-auditlog-persister
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

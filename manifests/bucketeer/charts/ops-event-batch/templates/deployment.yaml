@@ -76,6 +76,10 @@ spec:
               value: "{{ .Values.env.refreshInterval }}"
             - name: BUCKETEER_OPS_EVENT_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_OPS_EVENT_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_OPS_EVENT_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_OPS_EVENT_PORT
               value: "{{ .Values.env.port }}"
             - name: BUCKETEER_OPS_EVENT_METRICS_PORT

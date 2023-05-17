@@ -10,6 +10,8 @@ namespace: default
 
 env:
   logLevel: info
+  profile: true
+  gcpTraceEnabled: true
   port: 9090
   metricsPort: 9002
   githubUser:

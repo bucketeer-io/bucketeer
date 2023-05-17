@@ -9,6 +9,8 @@ environment:
     location: asia-northeast1
     domainEventTopic: bucketeer-dev-domain-events
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

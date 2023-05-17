@@ -7,6 +7,8 @@ ops-event-batch:
     mysqlDbName: dbname # TODO
     refreshInterval: 30s
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

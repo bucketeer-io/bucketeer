@@ -4,6 +4,8 @@ metrics-event-persister:
     topic: bucketeer-dev-metrics-events
     subscription: bucketeer-dev-metrics-events-metrics-event-persister
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

@@ -6,6 +6,8 @@ event-counter:
     mysqlHost: localhost # TODO
     mysqlDbName: dbname # TODO
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
     redis:
       serverName: persistent-redis
       addr: localhost:6379 # TODO REDIS

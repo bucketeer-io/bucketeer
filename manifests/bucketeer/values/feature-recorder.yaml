@@ -10,6 +10,8 @@ feature-recorder:
     flushInterval: 30s
     subscription: bucketeer-dev-evaluation-events-event-feature-recorder
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

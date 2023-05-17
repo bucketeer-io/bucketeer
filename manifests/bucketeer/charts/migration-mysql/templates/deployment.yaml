@@ -57,6 +57,10 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_MIGRATION_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_MIGRATION_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_MIGRATION_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_MIGRATION_GITHUB_USER
               value: "{{ .Values.env.githubUser }}"
             - name: BUCKETEER_MIGRATION_GITHUB_ACCESS_TOKEN_PATH

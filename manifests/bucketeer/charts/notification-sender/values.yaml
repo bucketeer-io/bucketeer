@@ -25,6 +25,8 @@ env:
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
   logLevel: info
+  profile: true
+  gcpTraceEnabled: true
   port: 9090
   metricsPort: 9002
 

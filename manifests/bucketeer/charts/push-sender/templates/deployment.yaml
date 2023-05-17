@@ -78,6 +78,10 @@ spec:
               value: "{{ .Values.env.redis.poolMaxActive }}"
             - name: BUCKETEER_PUSH_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_PUSH_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_PUSH_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_PUSH_PORT
               value: "{{ .Values.env.port }}"
             - name: BUCKETEER_PUSH_METRICS_PORT

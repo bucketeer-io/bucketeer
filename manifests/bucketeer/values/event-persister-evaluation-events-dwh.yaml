@@ -6,6 +6,8 @@ event-persister-evaluation-events-dwh:
     subscription: bucketeer-dev-evaluation-events-event-persister-dwh
     # bigquery
     bigQueryDataSet: bucketeer_dev
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

@@ -1,6 +1,8 @@
 event-persister-evaluation-events-ops:
   env:
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
     # pubsub
     project: bucketeer-dev-srv
     topic: bucketeer-dev-evaluation-events

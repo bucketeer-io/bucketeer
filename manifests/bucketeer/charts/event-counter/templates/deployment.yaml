@@ -82,6 +82,12 @@ spec:
               value: "{{ .Values.oauth.clientId }}"
             - name: BUCKETEER_EVENT_COUNTER_OAUTH_ISSUER
               value: "{{ .Values.oauth.issuer }}"
+            - name: BUCKETEER_EVENT_COUNTER_LOG_LEVEL
+              value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_EVENT_COUNTER_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_EVENT_COUNTER_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_EVENT_COUNTER_OAUTH_KEY
               value: /usr/local/oauth-key/public.pem
             - name: BUCKETEER_EVENT_COUNTER_CERT

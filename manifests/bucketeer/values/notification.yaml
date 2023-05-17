@@ -7,6 +7,8 @@ notification:
     mysqlDbName: dbname # TODO
     domainEventTopic: bucketeer-dev-domain-events
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

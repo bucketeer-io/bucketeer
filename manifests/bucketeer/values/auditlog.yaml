@@ -6,6 +6,8 @@ auditlog:
     mysqlHost: localhost # TODO
     mysqlDbName: dbname # TODO
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

@@ -8,6 +8,8 @@ notification-sender:
     scheduleMauCountWatcher: "0 0 1 1 * *"
     webURL: https://dev.bucketeer.jp
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

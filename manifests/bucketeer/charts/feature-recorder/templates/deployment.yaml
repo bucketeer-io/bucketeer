@@ -82,6 +82,10 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_FEATURE_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_FEATURE_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_FEATURE_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_FEATURE_CERT
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_FEATURE_KEY

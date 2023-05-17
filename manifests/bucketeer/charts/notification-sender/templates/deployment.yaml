@@ -84,6 +84,10 @@ spec:
               value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
             - name: BUCKETEER_NOTIFICATION_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_NOTIFICATION_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_NOTIFICATION_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_NOTIFICATION_PORT
               value: "{{ .Values.env.port }}"
             - name: BUCKETEER_NOTIFICATION_METRICS_PORT

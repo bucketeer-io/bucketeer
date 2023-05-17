@@ -9,6 +9,8 @@ namespace: default
 
 env:
   logLevel: info
+  profile: true
+  gcpTraceEnabled: true
   # egress services
   featureService: localhost:9001
   autoOpsService: localhost:9001

@@ -11,6 +11,8 @@ api-gateway:
     # 7 days.
     oldestEventTimestamp: "168h"
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
 
   affinity:
     podAntiAffinity:

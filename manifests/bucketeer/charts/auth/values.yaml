@@ -10,6 +10,8 @@ env:
   accountService: localhost:9001
   emailFilter:
   logLevel: info
+  profile: true
+  gcpTraceEnabled: true
   port: 9090
   metricsPort: 9002
 

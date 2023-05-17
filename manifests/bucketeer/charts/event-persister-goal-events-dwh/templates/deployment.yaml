@@ -63,6 +63,10 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_MAX_MPS
               value: "{{ .Values.env.maxMps }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_NUM_WORKERS

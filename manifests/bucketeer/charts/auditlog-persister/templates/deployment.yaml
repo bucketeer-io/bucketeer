@@ -80,6 +80,10 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_AUDIT_LOG_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_AUDIT_LOG_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_AUDIT_LOG_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_AUDIT_LOG_CERT
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_AUDIT_LOG_KEY

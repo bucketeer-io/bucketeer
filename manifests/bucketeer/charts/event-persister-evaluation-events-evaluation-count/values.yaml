@@ -12,6 +12,8 @@ env:
   topic:
   subscription:
   logLevel: info
+  profile: true
+  gcpTraceEnabled: true
   port: 9090
   metricsPort: 9002
   maxMps: "1000"

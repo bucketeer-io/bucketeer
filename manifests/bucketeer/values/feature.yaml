@@ -9,6 +9,8 @@ feature:
     bulkSegmentUsersReceivedEventTopic: bucketeer-dev-bulk-segment-users-received-events
     domainEventTopic: bucketeer-dev-domain-events
     logLevel: debug
+    profile: false
+    gcpTraceEnabled: false
     redis:
       serverName: non-persistent-redis
       addr: localhost:6379 # TODO REDIS

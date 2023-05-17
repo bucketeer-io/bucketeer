@@ -22,6 +22,8 @@ env:
     poolMaxActive: 25
     addr:
   logLevel: info
+  profile: true
+  gcpTraceEnabled: true
   port: 9090
   metricsPort: 9002
   bulkSegmentUsersReceivedEventTopic:

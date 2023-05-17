@@ -16,6 +16,8 @@ env:
   topic:
   environmentService: localhost:9001
   logLevel: info
+  profile: true
+  gcpTraceEnabled: true
   port: 9090
   metricsPort: 9002
 

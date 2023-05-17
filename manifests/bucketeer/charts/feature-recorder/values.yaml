@@ -22,6 +22,8 @@ env:
   pullerMaxOutstandingBytes: "1000000000"
   flushInterval: 1m
   logLevel: info
+  profile: true
+  gcpTraceEnabled: true
   port: 9090
   metricsPort: 9002
   topic:

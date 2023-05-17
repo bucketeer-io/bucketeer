@@ -76,6 +76,10 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_ENVIRONMENT_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_ENVIRONMENT_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_ENVIRONMENT_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_ENVIRONMENT_OAUTH_CLIENT_ID
               value: "{{ .Values.oauth.clientId }}"
             - name: BUCKETEER_ENVIRONMENT_OAUTH_ISSUER
