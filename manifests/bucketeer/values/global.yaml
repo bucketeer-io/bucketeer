@@ -5,4 +5,4 @@ global:
   image:
     tag: "v0.2.0-74-gc6f0263"
     imagePullSecrets:
-      - name:
+      - name: regcred

@@ -29,6 +29,3 @@ mysql:
 
 bq:
   project: "default"
-    
-
-
