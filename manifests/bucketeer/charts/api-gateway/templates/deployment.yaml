@@ -86,6 +86,10 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_GATEWAY_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_GATEWAY_PROFILE
+              value: "{{ .Values.env.profile }}"
+            - name: BUCKETEER_GATEWAY_GCP_TRACE_ENABLED
+              value: "{{ .Values.env.gcpTraceEnabled }}"
             - name: BUCKETEER_GATEWAY_TRACE_SAMPLING_PROBABILITY
               value: "{{ .Values.env.traceSamplingProbability }}"
             - name: BUCKETEER_GATEWAY_SERVICE_TOKEN
