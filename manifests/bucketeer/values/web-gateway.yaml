@@ -51,6 +51,7 @@ web-gateway:
     bucketeerJP:
       secrets:
         - secretName: bucketeer-jp-cert-20220411 # TODO
+      cert:
     service:
       secret: bucketeer-service-cert
 

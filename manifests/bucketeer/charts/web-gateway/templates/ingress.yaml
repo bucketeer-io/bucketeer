@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "web-gateway.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "web-gateway.name" . }}
+    chart: {{ template "web-gateway.chart" . }}
+    release: {{ template "web-gateway.fullname" . }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/ingress.global-static-ip-name: {{ .Values.ingress.staticIPName }}
+spec:
+  tls: {{- toYaml .Values.tls.bucketeerJP.secrets | nindent 4 }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ template "web-gateway.fullname" . }}
+                port:
+                  number: {{ .Values.service.externalPort }}
