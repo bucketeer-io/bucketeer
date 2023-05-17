@@ -414,7 +414,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 		}
 		return nil, dt.Err()
 	}
-	hourlyTimeStamps := getHourlyTimeStamps(timestamps)
+	hourlyTimeStamps := getHourlyTimeStamps(timestamps, timestampUnit)
 	vIDs := getVariationIDs(resp.Feature.Variations)
 	variationTSEvents := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
 	variationTSUsers := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
@@ -754,7 +754,7 @@ func (s *eventCounterService) getTimestamps(
 	switch timeRange {
 	case ecproto.GetEvaluationTimeseriesCountRequest_TWENTY_FOUR_HOURS:
 		startAt := getTwentyFourHoursAgo(s.location, endAt)
-		return []int64{startAt.Unix()}, ecproto.Timeseries_HOUR, nil
+		return getOneDayTimestamps(startAt), ecproto.Timeseries_HOUR, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_SEVEN_DAYS:
 		startAt := getStartTime(s.location, endAt, 6)
 		return getDailyTimestamps(startAt, 6), ecproto.Timeseries_DAY, nil
@@ -778,7 +778,20 @@ func getDailyTimestamps(startAt time.Time, limit int) []int64 {
 	return timeStamps
 }
 
-func getHourlyTimeStamps(days []int64) [][]int64 {
+/*
+getHourlyTimeStamps returns a two-dimensional array. For example,
+
+[
+	["2014-11-01 00:00:00", "2014-11-01 01:00:00", "2014-11-01 02:00:00", "2014-11-01 03:00:00", ...],
+	["2014-11-02 00:00:00", "2014-11-02 01:00:00", "2014-11-02 02:00:00", "2014-11-02 03:00:00", ...],
+	["2014-11-03 00:00:00", "2014-11-03 01:00:00", "2014-11-03 02:00:00", "2014-11-03 03:00:00", ...],
+	...
+]
+*/
+func getHourlyTimeStamps(days []int64, unit ecproto.Timeseries_Unit) [][]int64 {
+	if unit == ecproto.Timeseries_HOUR {
+		return [][]int64{days}
+	}
 	timeStamps := make([][]int64, 0, len(days))
 	for _, day := range days {
 		t := time.Unix(int64(day), 0)

@@ -895,7 +895,7 @@ func TestGetHourlyTimestamps(t *testing.T) {
 	expected = append(expected, getOneDayTimestamps(startAt.AddDate(0, 0, 2)))
 	expected = append(expected, getOneDayTimestamps(startAt.AddDate(0, 0, 3)))
 	daily := getDailyTimestamps(startAt, 3)
-	actual := getHourlyTimeStamps(daily)
+	actual := getHourlyTimeStamps(daily, ecproto.Timeseries_DAY)
 	assert.Equal(t, expected, actual)
 }
 
@@ -951,7 +951,7 @@ func TestGetTimestamps(t *testing.T) {
 		{
 			desc:         "success: TWENTY_FOUR_HOURS",
 			input:        ecproto.GetEvaluationTimeseriesCountRequest_TWENTY_FOUR_HOURS,
-			expectedLen:  1,
+			expectedLen:  24,
 			expectedUnit: ecproto.Timeseries_HOUR,
 		},
 		{
@@ -1399,7 +1399,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 				endAt := time.Now()
 				startAt := getStartTime(jpLocation, endAt, 13)
 				dailyTimeStamps := getDailyTimestamps(startAt, 13)
-				hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps)
+				hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps, ecproto.Timeseries_DAY)
 				for idx, vID := range vIDs {
 					ec := getEventCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
 					val := randomNumberGroup[idx]
