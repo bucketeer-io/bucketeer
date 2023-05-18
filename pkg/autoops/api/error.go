@@ -151,7 +151,7 @@ var (
 		codes.FailedPrecondition,
 		"autoops progressive rollout: can not use progressive rollout when feature has targets",
 	)
-	statusProgressiveRolloutFeatureRuleExists = gstatus.New(
+	statusProgressiveRolloutFeatureHasRules = gstatus.New(
 		codes.FailedPrecondition,
 		"autoops progressive rollout: can not use progressive rollout when feature has rules",
 	)

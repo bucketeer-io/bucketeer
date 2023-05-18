@@ -35,7 +35,7 @@ InvalidScheduleSpans: "スケジュールされた時間の間隔は少なくと
 FeatureDisabled: "featureが有効でありません"
 FeaturePrerequisiteExists: "featureにprerequisiteがあります"
 FeatureTargetExists: "featureにtargetがあります"
-FeatureRuleExists: "featureにruleがあります"
+FeatureHasRules: "featureにruleがあります"
 AutoOpsHasDatetime: "autoopsのdatetime clauseがあります"
 AutoOpsHasWebhook: "autoopsのwebhook clauseがあります"
 
