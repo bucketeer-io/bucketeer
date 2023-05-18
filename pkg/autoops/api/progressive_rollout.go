@@ -744,7 +744,7 @@ func (s *AutoOpsService) validateTargetAutoOpsRules(
 	}
 	for _, r := range rules {
 		for _, c := range r.Clauses {
-			// We don't need to return errors if Clause is OpsEventRateClause.
+			// Return an error when Clause is DatetimeClause or WebhookClause.
 			if ptypes.Is(c.Clause, domain.DatetimeClause) {
 				return errProgressiveRolloutAutoOpsHasDatetime
 			}
