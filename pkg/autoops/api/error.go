@@ -155,7 +155,7 @@ var (
 		codes.FailedPrecondition,
 		"autoops progressive rollout: can not use progressive rollout when feature has rules",
 	)
-	statusProgressiveRolloutAutoOpsDatetimeClauseExists = gstatus.New(
+	statusProgressiveRolloutAutoOpsHasDatetime = gstatus.New(
 		codes.FailedPrecondition,
 		"autoops: can not create a progressive rollout when a schedule is set in the auto ops",
 	)

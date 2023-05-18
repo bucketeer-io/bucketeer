@@ -45,7 +45,7 @@ var (
 	errProgressiveRolloutAutoOpsWebhookClauseExists = errors.New(
 		"autoops: can not create a progressive rollout when the webhook is set in the auto ops",
 	)
-	errProgressiveRolloutAutoOpsDatetimeClauseExists = errors.New(
+	errProgressiveRolloutAutoOpsHasDatetime = errors.New(
 		"autoops: can not create a progressive rollout when the schedule is set in the auto ops",
 	)
 )
@@ -130,10 +130,10 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 				return nil, statusProgressiveRolloutInternal.Err()
 			}
 			return nil, dt.Err()
-		case errProgressiveRolloutAutoOpsDatetimeClauseExists:
-			dt, err := statusProgressiveRolloutAutoOpsDatetimeClauseExists.WithDetails(&errdetails.LocalizedMessage{
+		case errProgressiveRolloutAutoOpsHasDatetime:
+			dt, err := statusProgressiveRolloutAutoOpsHasDatetime.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AutoOpsDatetimeClauseExists),
+				Message: localizer.MustLocalize(locale.AutoOpsHasDatetime),
 			})
 			if err != nil {
 				return nil, statusProgressiveRolloutInternal.Err()
@@ -751,7 +751,7 @@ func (s *AutoOpsService) validateTargetAutoOpsRules(
 		for _, c := range r.Clauses {
 			// We don't need to return errors if Clause is OpsEventRateClause.
 			if ptypes.Is(c.Clause, domain.DatetimeClause) {
-				return errProgressiveRolloutAutoOpsDatetimeClauseExists
+				return errProgressiveRolloutAutoOpsHasDatetime
 			}
 			if ptypes.Is(c.Clause, domain.WebhookClause) {
 				return errProgressiveRolloutAutoOpsWebhookClauseExists
