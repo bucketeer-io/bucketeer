@@ -43,10 +43,10 @@ const (
 
 var (
 	errProgressiveRolloutAutoOpsWebhookClauseExists = errors.New(
-		"progressive rollout: can not use progressive rollout when auto ops date time clause exists",
+		"autoops: can not create a progressive rollout when the webhook is set in the auto ops",
 	)
 	errProgressiveRolloutAutoOpsDatetimeClauseExists = errors.New(
-		"progressive rollout: can not use progressive rollout when auto ops webhook clause exists",
+		"autoops: can not create a progressive rollout when the schedule is set in the auto ops",
 	)
 )
 
