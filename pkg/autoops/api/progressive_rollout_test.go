@@ -793,7 +793,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: createError(statusProgressiveRolloutAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
-			desc: "err: AutoOpsDatetimeClauseExists",
+			desc: "err: AutoOpsHasDatetime",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
@@ -811,7 +811,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(errProgressiveRolloutAutoOpsDatetimeClauseExists)
+				).Return(errProgressiveRolloutAutoOpsHasDatetime)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -824,7 +824,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutAutoOpsDatetimeClauseExists, localizer.MustLocalize(locale.AutoOpsDatetimeClauseExists)),
+			expectedErr: createError(statusProgressiveRolloutAutoOpsHasDatetime, localizer.MustLocalize(locale.AutoOpsHasDatetime)),
 		},
 		{
 			desc: "err: AutoOpsWebhookClauseExists",

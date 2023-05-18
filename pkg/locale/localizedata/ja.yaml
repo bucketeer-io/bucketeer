@@ -36,7 +36,7 @@ FeatureDisabled: "featureが有効でありません"
 FeaturePrerequisiteExists: "featureにprerequisiteがあります"
 FeatureTargetExists: "featureにtargetがあります"
 FeatureRuleExists: "featureにruleがあります"
-AutoOpsDatetimeClauseExists: "autoopsのdatetime clauseがあります"
+AutoOpsHasDatetime: "autoopsのdatetime clauseがあります"
 AutoOpsWebhookClauseExists: "autoopsのwebhook clauseがあります"
 
 # eventcounter error
