@@ -787,9 +787,9 @@ func (s *AutoOpsService) validateTargetFeature(
 		return dt.Err()
 	}
 	if len(f.Prerequisites) > 0 {
-		dt, err := statusProgressiveRolloutFeaturePrerequisiteExistss.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusProgressiveRolloutFeatureHasPrerequisitess.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.FeaturePrerequisiteExists),
+			Message: localizer.MustLocalize(locale.FeatureHasPrerequisites),
 		})
 		if err != nil {
 			return statusProgressiveRolloutInternal.Err()

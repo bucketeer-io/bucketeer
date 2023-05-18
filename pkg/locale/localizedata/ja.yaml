@@ -33,7 +33,7 @@ IncompatibleOpsType: "対象のオペレーションタイプに対応してい�
 InvalidVariationSize: "featureのvariationsの数が不正です"
 InvalidScheduleSpans: "スケジュールされた時間の間隔は少なくとも5分以上必要です"
 FeatureDisabled: "featureが有効でありません"
-FeaturePrerequisiteExists: "featureにprerequisiteがあります"
+FeatureHasPrerequisites: "featureにprerequisiteがあります"
 FeatureHasIndividualTargeting: "featureにtargetがあります"
 FeatureHasRules: "featureにruleがあります"
 AutoOpsHasDatetime: "autoopsのdatetime clauseがあります"
