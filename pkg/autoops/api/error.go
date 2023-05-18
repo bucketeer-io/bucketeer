@@ -141,7 +141,7 @@ var (
 	)
 	statusProgressiveRolloutFeatureDisabled = gstatus.New(
 		codes.FailedPrecondition,
-		"autoops: can not create a progressive rollout when feature is disabled",
+		"autoops: can not create a progressive rollout when the feature is disabled",
 	)
 	statusProgressiveRolloutFeatureHasPrerequisitess = gstatus.New(
 		codes.FailedPrecondition,
@@ -149,7 +149,7 @@ var (
 	)
 	statusProgressiveRolloutFeatureHasIndividualTargeting = gstatus.New(
 		codes.FailedPrecondition,
-		"autoops: can not create a progressive rollout when feature has targets",
+		"autoops: can not create a progressive rollout when the feature has targets",
 	)
 	statusProgressiveRolloutFeatureHasRules = gstatus.New(
 		codes.FailedPrecondition,
