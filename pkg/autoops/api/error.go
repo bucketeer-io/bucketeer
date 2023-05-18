@@ -157,11 +157,11 @@ var (
 	)
 	statusProgressiveRolloutAutoOpsDatetimeClauseExists = gstatus.New(
 		codes.FailedPrecondition,
-		"autoops progressive rollout: can not use progressive rollout when auto ops date time clause exists",
+		"autoops: can not create a progressive rollout when a schedule is set in the auto ops",
 	)
 	statusProgressiveRolloutAutoOpsWebhookClauseExists = gstatus.New(
 		codes.FailedPrecondition,
-		"autoops progressive rollout: can not use progressive rollout when auto ops webhook clause exists",
+		"autoops: can not create a progressive rollout when a webhook is set",
 	)
 	statusProgressiveRolloutInvalidVariationSize = gstatus.New(
 		codes.FailedPrecondition,
