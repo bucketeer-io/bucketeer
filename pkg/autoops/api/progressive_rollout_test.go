@@ -241,7 +241,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: createError(statusProgressiveRolloutFeatureTargetExists, localizer.MustLocalize(locale.FeatureTargetExists)),
 		},
 		{
-			desc: "err: ErrFeatureRuleExists",
+			desc: "err: ErrFeatureHasRules",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
@@ -267,7 +267,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutFeatureRuleExists, localizer.MustLocalize(locale.FeatureRuleExists)),
+			expectedErr: createError(statusProgressiveRolloutFeatureHasRules, localizer.MustLocalize(locale.FeatureHasRules)),
 		},
 		{
 			desc: "err: ErrClauseRequired",
