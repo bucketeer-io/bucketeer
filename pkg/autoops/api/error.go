@@ -153,7 +153,7 @@ var (
 	)
 	statusProgressiveRolloutFeatureHasRules = gstatus.New(
 		codes.FailedPrecondition,
-		"autoops progressive rollout: can not use progressive rollout when feature has rules",
+		"autoops: can not create a progressive rollout when the feature flag has targeting rules set",
 	)
 	statusProgressiveRolloutAutoOpsHasDatetime = gstatus.New(
 		codes.FailedPrecondition,
