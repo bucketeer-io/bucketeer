@@ -159,7 +159,7 @@ var (
 		codes.FailedPrecondition,
 		"autoops: can not create a progressive rollout when a schedule is set in the auto ops",
 	)
-	statusProgressiveRolloutAutoOpsWebhookClauseExists = gstatus.New(
+	statusProgressiveRolloutAutoOpsHasWebhook = gstatus.New(
 		codes.FailedPrecondition,
 		"autoops: can not create a progressive rollout when a webhook is set",
 	)

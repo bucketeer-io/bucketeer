@@ -42,7 +42,7 @@ const (
 )
 
 var (
-	errProgressiveRolloutAutoOpsWebhookClauseExists = errors.New(
+	errProgressiveRolloutAutoOpsHasWebhook = errors.New(
 		"autoops: can not create a progressive rollout when the webhook is set in the auto ops",
 	)
 	errProgressiveRolloutAutoOpsHasDatetime = errors.New(
@@ -121,10 +121,10 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 				return nil, statusProgressiveRolloutInternal.Err()
 			}
 			return nil, dt.Err()
-		case errProgressiveRolloutAutoOpsWebhookClauseExists:
-			dt, err := statusProgressiveRolloutAutoOpsWebhookClauseExists.WithDetails(&errdetails.LocalizedMessage{
+		case errProgressiveRolloutAutoOpsHasWebhook:
+			dt, err := statusProgressiveRolloutAutoOpsHasWebhook.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AutoOpsWebhookClauseExists),
+				Message: localizer.MustLocalize(locale.AutoOpsHasWebhook),
 			})
 			if err != nil {
 				return nil, statusProgressiveRolloutInternal.Err()
@@ -754,7 +754,7 @@ func (s *AutoOpsService) validateTargetAutoOpsRules(
 				return errProgressiveRolloutAutoOpsHasDatetime
 			}
 			if ptypes.Is(c.Clause, domain.WebhookClause) {
-				return errProgressiveRolloutAutoOpsWebhookClauseExists
+				return errProgressiveRolloutAutoOpsHasWebhook
 			}
 		}
 	}

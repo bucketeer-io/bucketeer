@@ -37,7 +37,7 @@ FeaturePrerequisiteExists: "featureにprerequisiteがあります"
 FeatureTargetExists: "featureにtargetがあります"
 FeatureRuleExists: "featureにruleがあります"
 AutoOpsHasDatetime: "autoopsのdatetime clauseがあります"
-AutoOpsWebhookClauseExists: "autoopsのwebhook clauseがあります"
+AutoOpsHasWebhook: "autoopsのwebhook clauseがあります"
 
 # eventcounter error
 StartAtIsAfterEndAt: "start at はend at以前を指定してください。"

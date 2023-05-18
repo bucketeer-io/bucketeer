@@ -827,7 +827,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: createError(statusProgressiveRolloutAutoOpsHasDatetime, localizer.MustLocalize(locale.AutoOpsHasDatetime)),
 		},
 		{
-			desc: "err: AutoOpsWebhookClauseExists",
+			desc: "err: AutoOpsHasWebhook",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
@@ -845,7 +845,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(errProgressiveRolloutAutoOpsWebhookClauseExists)
+				).Return(errProgressiveRolloutAutoOpsHasWebhook)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -858,7 +858,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutAutoOpsWebhookClauseExists, localizer.MustLocalize(locale.AutoOpsWebhookClauseExists)),
+			expectedErr: createError(statusProgressiveRolloutAutoOpsHasWebhook, localizer.MustLocalize(locale.AutoOpsHasWebhook)),
 		},
 		{
 			desc: "success",
