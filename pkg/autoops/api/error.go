@@ -143,7 +143,7 @@ var (
 		codes.FailedPrecondition,
 		"autoops progressive rollout: can not use progressive rollout when feature is disabled",
 	)
-	statusProgressiveRolloutFeaturePrerequisiteExistss = gstatus.New(
+	statusProgressiveRolloutFeatureHasPrerequisitess = gstatus.New(
 		codes.FailedPrecondition,
 		"autoops progressive rollout: can not use progressive rollout when feature has prerequisites",
 	)
