@@ -32,12 +32,12 @@ WaitingOrRunningProgressiveRolloutExists: "開始予定、もしくは実行中�
 IncompatibleOpsType: "対象のオペレーションタイプに対応していない自動オペレーションルールがあります"
 InvalidVariationSize: "featureのvariationsの数が不正です"
 InvalidScheduleSpans: "スケジュールされた時間の間隔は少なくとも5分以上必要です"
-FeatureDisabled: "featureが有効でありません"
-FeatureHasPrerequisites: "featureにprerequisiteがあります"
-FeatureHasIndividualTargeting: "featureにtargetがあります"
-FeatureHasRules: "featureにruleがあります"
-AutoOpsHasDatetime: "Auto Ops RulesにScheduleが設定されています"
-AutoOpsHasWebhook: "Auto Ops RulesにWebhookが設定されています"
+FeatureDisabled: "featureが有効でありません。更新する場合はfeatureを有効にしてください。"
+FeatureHasPrerequisites: "featureにprerequisiteがあります。更新する場合はprerequisiteを削除してください。"
+FeatureHasIndividualTargeting: "featureにtargetがあります。更新する場合はtargetを削除してください。"
+FeatureHasRules: "featureにruleがあります。更新する場合はruleを削除してください。"
+AutoOpsHasDatetime: "Auto Ops RulesにScheduleが設定されています。更新する場合はScheduleを削除してください。"
+AutoOpsHasWebhook: "Auto Ops RulesにWebhookが設定されています。更新する場合はWebhookを削除してください。"
 
 # eventcounter error
 StartAtIsAfterEndAt: "start at はend at以前を指定してください。"
