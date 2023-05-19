@@ -87,6 +87,8 @@ spec:
               value: /usr/local/service-token/token
             - name: BUCKETEER_EVENT_PERSISTER_DWH_BIGQUERY_DATA_SET
               value: "{{ .Values.env.bigQueryDataSet }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

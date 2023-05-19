@@ -14,6 +14,7 @@ env:
   logLevel: info
   port: 9090
   metricsPort: 9002
+  timezone: UTC
   maxMps: "1000"
   numWorkers: 5
   numWriters: 2
