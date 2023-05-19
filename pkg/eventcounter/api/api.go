@@ -277,7 +277,10 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		return nil, dt.Err()
 	}
 	endAt := time.Now()
-	startAt := getStartTime(jpLocation, endAt, 30)
+	startAt := truncateDate(
+		jpLocation,
+		getStartTime(jpLocation, endAt, 30),
+	)
 	if err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
