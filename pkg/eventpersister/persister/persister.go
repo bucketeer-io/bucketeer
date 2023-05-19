@@ -113,11 +113,13 @@ type Persister struct {
 	cancel                func()
 	doneCh                chan struct{}
 	evaluationCountCacher cache.MultiGetDeleteCountCache
+	location              *time.Location
 }
 
 func NewPersister(
 	p puller.Puller,
 	v3Cache cache.MultiGetDeleteCountCache,
+	location *time.Location,
 	opts ...Option,
 ) *Persister {
 	dopts := &options{
@@ -142,6 +144,7 @@ func NewPersister(
 		cancel:                cancel,
 		doneCh:                make(chan struct{}),
 		evaluationCountCacher: v3Cache,
+		location:              location,
 	}
 }
 

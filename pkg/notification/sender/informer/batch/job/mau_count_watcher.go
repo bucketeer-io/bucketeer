@@ -32,14 +32,11 @@ import (
 	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
 )
 
-var (
-	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
-)
-
 type mauCountWatcher struct {
 	environmentClient  environmentclient.Client
 	eventCounterClient ecclient.Client
 	sender             sender.Sender
+	location           *time.Location
 	opts               *options
 	logger             *zap.Logger
 }
@@ -48,6 +45,7 @@ func NewMAUCountWatcher(
 	environmentClient environmentclient.Client,
 	eventCounterClient ecclient.Client,
 	sender sender.Sender,
+	location *time.Location,
 	opts ...Option) job.Job {
 	dopts := &options{
 		timeout: 5 * time.Minute,
@@ -60,6 +58,7 @@ func NewMAUCountWatcher(
 		environmentClient:  environmentClient,
 		eventCounterClient: eventCounterClient,
 		sender:             sender,
+		location:           location,
 		opts:               dopts,
 		logger:             dopts.logger.Named("mau-count-watcher"),
 	}
@@ -72,7 +71,7 @@ func (w *mauCountWatcher) Run(ctx context.Context) (lastErr error) {
 	if err != nil {
 		return err
 	}
-	year, lastMonth := w.getLastYearMonth(time.Now().In(jpLocation))
+	year, lastMonth := w.getLastYearMonth(time.Now().In(w.location))
 	for _, pj := range projects {
 		environments, err := w.listEnvironments(ctx, pj.Id)
 		if err != nil {

@@ -18,7 +18,6 @@ import (
 	"context"
 	"time"
 
-	timezone "github.com/tkuchiki/go-timezone"
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -29,6 +28,7 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -194,7 +194,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer bigQueryQuerier.Close()
 	bigQueryDataSet := *s.bigQueryDataSet
 
-	location, err := s.getLocation()
+	location, err := locale.GetLocation(*s.timezone)
 	if err != nil {
 		return err
 	}
@@ -270,13 +270,4 @@ func (s *server) createBigQueryQuerier(
 		bqquerier.WithMetrics(registerer),
 		bqquerier.WithLogger(logger),
 	)
-}
-
-func (s *server) getLocation() (*time.Location, error) {
-	tz := timezone.New()
-	info, err := tz.GetTzInfo(*s.timezone)
-	if err != nil {
-		return nil, err
-	}
-	return time.FixedZone(*s.timezone, info.StandardOffset()), nil
 }

@@ -31,6 +31,10 @@ import (
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 )
 
+var (
+	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
+)
+
 func TestCreateMAUNotification(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -222,6 +226,7 @@ func newMAUCountWatcherWithMock(t *testing.T, c *gomock.Controller) *mauCountWat
 		environmentClient:  environmentclientmock.NewMockClient(c),
 		eventCounterClient: ecclientmock.NewMockClient(c),
 		sender:             sendermock.NewMockSender(c),
+		location:           jpLocation,
 		logger:             zap.NewNop(),
 		opts: &options{
 			timeout: 5 * time.Minute,
