@@ -288,14 +288,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		}
 		return nil, dt.Err()
 	}
-	timeStamps := getDailyTimestamps(startAt, 30)
+	timestamps := getDailyTimestamps(startAt, 30)
 	vIDs := getVariationIDs(resp.Feature.Variations)
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
 	for _, vID := range vIDs {
 		eventCountKeys := []string{}
 		userCountKeys := []string{}
-		for _, ts := range timeStamps {
+		for _, ts := range timestamps {
 			ec := newEvaluationCountkey(eventCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
 			eventCountKeys = append(eventCountKeys, ec)
 			uc := newEvaluationCountkey(userCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
@@ -350,14 +350,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
-				Timestamps: timeStamps,
+				Timestamps: timestamps,
 				Values:     userCounts,
 			},
 		})
 		variationTSEvents = append(variationTSEvents, &ecproto.VariationTimeseries{
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
-				Timestamps: timeStamps,
+				Timestamps: timestamps,
 				Values:     eventCounts,
 			},
 		})
@@ -738,12 +738,12 @@ func newEvaluationCountkey(
 }
 
 func getOneDayTimestamps(timestamp time.Time) []int64 {
-	timeStamps := make([]int64, 0, twentyFourHours)
+	timestamps := make([]int64, 0, twentyFourHours)
 	for i := 0; i < twentyFourHours; i++ {
 		ts := timestamp.Add(time.Duration(i) * time.Hour).Unix()
-		timeStamps = append(timeStamps, ts)
+		timestamps = append(timestamps, ts)
 	}
-	return timeStamps
+	return timestamps
 }
 
 func (s *eventCounterService) getTimestamps(
@@ -772,12 +772,12 @@ func (s *eventCounterService) getTimestamps(
 }
 
 func getDailyTimestamps(startAt time.Time, limit int) []int64 {
-	timeStamps := make([]int64, 0, limit)
+	timestamps := make([]int64, 0, limit)
 	for i := 0; i <= limit; i++ {
 		ts := startAt.AddDate(0, 0, i).Unix()
-		timeStamps = append(timeStamps, ts)
+		timestamps = append(timestamps, ts)
 	}
-	return timeStamps
+	return timestamps
 }
 
 /*
@@ -794,12 +794,12 @@ func getHourlyTimeStamps(days []int64, unit ecproto.Timeseries_Unit) [][]int64 {
 	if unit == ecproto.Timeseries_HOUR {
 		return [][]int64{days}
 	}
-	timeStamps := make([][]int64, 0, len(days))
+	timestamps := make([][]int64, 0, len(days))
 	for _, day := range days {
 		t := time.Unix(int64(day), 0)
-		timeStamps = append(timeStamps, getOneDayTimestamps(t))
+		timestamps = append(timestamps, getOneDayTimestamps(t))
 	}
-	return timeStamps
+	return timestamps
 }
 
 func getVariationIDs(vs []*featureproto.Variation) []string {
