@@ -37,6 +37,7 @@ const (
 	setCmdName          = "SET"
 	pfAddCmdName        = "PFADD"
 	pfCountCmdName      = "PFCOUNT"
+	pfMergeCmdName      = "PFMERGE"
 	incrByFloatCmdName  = "INCR_BY_FLOAT"
 	delCmdName          = "DEL"
 	incrCmdName         = "INCR"
@@ -70,6 +71,7 @@ type Client interface {
 	Set(key string, val interface{}, expiration time.Duration) error
 	PFAdd(key string, els ...string) (int64, error)
 	PFCount(keys ...string) (int64, error)
+	PFMerge(dest string, keys ...string) error
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
 	Incr(key string) (int64, error)
@@ -90,7 +92,6 @@ type PipeClient interface {
 	Exec() ([]goredis.Cmder, error)
 	PFCount(keys ...string) *goredis.IntCmd
 	Get(key string) *goredis.StringCmd
-	PFMerge(dest string, keys ...string) *goredis.StatusCmd
 	Del(keys string) *goredis.IntCmd
 }
 
@@ -333,6 +334,21 @@ func (c *client) PFAdd(key string, els ...string) (int64, error) {
 	return result, err
 }
 
+func (c *client) PFMerge(dest string, keys ...string) error {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName).Inc()
+	_, err := c.rc.PFMerge(dest, keys...).Result()
+	code := redis.CodeFail
+	switch err {
+	case nil:
+		code = redis.CodeSuccess
+	}
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+	return err
+}
+
 func (c *client) PFCount(keys ...string) (int64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfCountCmdName).Inc()
@@ -465,11 +481,6 @@ func (c *pipeClient) PFCount(keys ...string) *goredis.IntCmd {
 func (c *pipeClient) Get(key string) *goredis.StringCmd {
 	c.cmds = append(c.cmds, getCmdName)
 	return c.pipe.Get(key)
-}
-
-func (c *pipeClient) PFMerge(dest string, keys ...string) *goredis.StatusCmd {
-	c.cmds = append(c.cmds, pfCountCmdName)
-	return c.pipe.PFMerge(dest, keys...)
 }
 
 func (c *pipeClient) Del(key string) *goredis.IntCmd {

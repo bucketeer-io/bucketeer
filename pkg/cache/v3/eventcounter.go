@@ -30,8 +30,8 @@ type EventCounterCache interface {
 	GetUserCount(key string) (int64, error)
 	GetUserCounts(keys []string) ([]float64, error)
 	GetUserCountsV2(keys []string) ([]float64, error)
-	MergeMultiKeys(dest []string, keys [][]string) error
-	DeleteMultiKeys(keys []string) error
+	MergeMultiKeys(dest string, keys []string) error
+	DeleteKey(key string) error
 	UpdateUserCount(key, userID string) error
 }
 
@@ -192,56 +192,16 @@ func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
 	return nil
 }
 
-func (c *eventCounterCache) MergeMultiKeys(dest []string, keys [][]string) error {
-	if err := c.mergeMultiKeys(dest, keys); err != nil {
+func (c *eventCounterCache) MergeMultiKeys(dest string, keys []string) error {
+	if err := c.cache.PFMerge(dest, keys...); err != nil {
 		return fmt.Errorf("err: %s, dest: %v, keys: %v", err, dest, keys)
 	}
 	return nil
 }
 
-func (c *eventCounterCache) mergeMultiKeys(dest []string, keys [][]string) error {
-	pipe := c.cache.Pipeline()
-	sCmds := make([]*goredis.StatusCmd, 0, len(keys))
-	for idx := range keys {
-		cmd := pipe.PFMerge(dest[idx], keys[idx]...)
-		sCmds = append(sCmds, cmd)
-	}
-	_, err := pipe.Exec()
-	if err != nil {
+func (c *eventCounterCache) DeleteKey(key string) error {
+	if err := c.cache.Delete(key); err != nil {
 		return err
-	}
-	for _, cmd := range sCmds {
-		_, err := cmd.Result()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *eventCounterCache) DeleteMultiKeys(keys []string) error {
-	if err := c.deleteMultiKeys(keys); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *eventCounterCache) deleteMultiKeys(keys []string) error {
-	pipe := c.cache.Pipeline()
-	iCmds := make([]*goredis.IntCmd, 0, len(keys))
-	for _, k := range keys {
-		cmd := pipe.Del(k)
-		iCmds = append(iCmds, cmd)
-	}
-	_, err := pipe.Exec()
-	if err != nil {
-		return err
-	}
-	for _, cmd := range iCmds {
-		_, err = cmd.Result()
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }

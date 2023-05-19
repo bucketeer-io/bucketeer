@@ -8690,6 +8690,11 @@
                 "id": 3,
                 "name": "unit",
                 "type": "Unit"
+              },
+              {
+                "id": 4,
+                "name": "total_counts",
+                "type": "int64"
               }
             ]
           }

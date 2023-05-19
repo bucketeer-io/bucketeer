@@ -46,6 +46,7 @@ type MultiGetDeleteCountCache interface {
 	PipeLiner
 	Expirer
 	PFGetter
+	PFMerger
 }
 
 type Getter interface {
@@ -80,6 +81,10 @@ type PipeLiner interface {
 
 type Expirer interface {
 	Expire(key string, expiration time.Duration) (bool, error)
+}
+
+type PFMerger interface {
+	PFMerge(dest string, keys ...string) error
 }
 
 // FIXME: remove after persistent-redis migration

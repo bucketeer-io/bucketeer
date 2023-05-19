@@ -35,4 +35,5 @@ var (
 	statusNotFound               = gstatus.New(codes.NotFound, "eventcounter: not found")
 	statusUnauthenticated        = gstatus.New(codes.Unauthenticated, "feature: unauthenticated")
 	statusPermissionDenied       = gstatus.New(codes.PermissionDenied, "feature: permission denied")
+	statusUnknownTimeRange       = gstatus.New(codes.Internal, "eventcounter: unknown time range")
 )

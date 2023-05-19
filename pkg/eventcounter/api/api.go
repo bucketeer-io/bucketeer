@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -62,7 +63,8 @@ const (
 )
 
 var (
-	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
+	jpLocation          = time.FixedZone("Asia/Tokyo", 9*60*60)
+	errUnknownTimeRange = errors.New("eventcounter: a time range is unknown")
 )
 
 type eventCounterService struct {
@@ -275,7 +277,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		return nil, dt.Err()
 	}
 	endAt := time.Now()
-	startAt, err := genInterval(jpLocation, endAt, 30)
+	startAt := getStartTime(jpLocation, endAt, 30)
 	if err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -286,14 +288,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		}
 		return nil, dt.Err()
 	}
-	timeStamps := getDailyTimeStamps(startAt)
+	timestamps := getDailyTimestamps(startAt, 30)
 	vIDs := getVariationIDs(resp.Feature.Variations)
 	variationTSEvents := []*ecproto.VariationTimeseries{}
 	variationTSUsers := []*ecproto.VariationTimeseries{}
 	for _, vID := range vIDs {
 		eventCountKeys := []string{}
 		userCountKeys := []string{}
-		for _, ts := range timeStamps {
+		for _, ts := range timestamps {
 			ec := newEvaluationCountkey(eventCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
 			eventCountKeys = append(eventCountKeys, ec)
 			uc := newEvaluationCountkey(userCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
@@ -348,14 +350,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
-				Timestamps: timeStamps,
+				Timestamps: timestamps,
 				Values:     userCounts,
 			},
 		})
 		variationTSEvents = append(variationTSEvents, &ecproto.VariationTimeseries{
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
-				Timestamps: timeStamps,
+				Timestamps: timestamps,
 				Values:     eventCounts,
 			},
 		})
@@ -375,15 +377,8 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 	if err != nil {
 		return nil, err
 	}
-	if req.FeatureId == "" {
-		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+	if err := s.validateGetEvaluationTimeseriesCountV2(req, localizer); err != nil {
+		return nil, err
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
 		EnvironmentNamespace: req.EnvironmentNamespace,
@@ -407,20 +402,19 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 		}
 		return nil, dt.Err()
 	}
-	endAt := time.Now()
-	startAt, err := genInterval(s.location, endAt, 30)
+	// This timestamp will be used as `Timestamps` field in ecproto.Timeseries.
+	timestamps, timestampUnit, err := s.getTimestamps(req.TimeRange)
 	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusUnknownTimeRange.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time_range"),
 		})
 		if err != nil {
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
 	}
-	dailyTimeStamps := getDailyTimeStamps(startAt)
-	hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps)
+	hourlyTimeStamps := getHourlyTimeStamps(timestamps, timestampUnit)
 	vIDs := getVariationIDs(resp.Feature.Variations)
 	variationTSEvents := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
 	variationTSUsers := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
@@ -437,14 +431,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			req.FeatureId,
 			vID,
 		)
-		eventCounts, err := s.evaluationCountCacher.GetEventCountsV2(eventCountKeys)
+		eventCounts, err := s.getEventCounts(eventCountKeys, timestampUnit)
 		if err != nil {
 			s.logCountError(
 				ctx,
 				err,
 				"Failed to get event counts", req.EnvironmentNamespace, req.FeatureId, vID,
 				resp.Feature.Version,
-				startAt, endAt,
+				timestampUnit, req.TimeRange,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -455,14 +449,41 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			}
 			return nil, dt.Err()
 		}
-		userCounts, multiErr := s.getUserCounts(userCountKeys, req.FeatureId, req.EnvironmentNamespace)
-		if len(multiErr) > 0 {
+		totalEventCounts := s.getTotalEventCounts(eventCounts)
+		userCounts, err := s.getUserCounts(
+			userCountKeys,
+			req.FeatureId,
+			req.EnvironmentNamespace,
+		)
+		if err != nil {
 			s.logCountError(
 				ctx,
-				multiErr,
+				err,
 				"Failed to get user counts", req.EnvironmentNamespace, req.FeatureId, vID,
 				resp.Feature.Version,
-				startAt, endAt,
+				timestampUnit, req.TimeRange,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		totalUserCounts, err := s.getTotalUserCounts(
+			userCountKeys,
+			req.FeatureId,
+			req.EnvironmentNamespace,
+		)
+		if err != nil {
+			s.logCountError(
+				ctx,
+				err,
+				"Failed to get user counts", req.EnvironmentNamespace, req.FeatureId, vID,
+				resp.Feature.Version,
+				timestampUnit, req.TimeRange,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -476,15 +497,19 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
-				Timestamps: dailyTimeStamps,
-				Values:     userCounts,
+				Timestamps:  timestamps,
+				Values:      userCounts,
+				Unit:        timestampUnit,
+				TotalCounts: totalUserCounts,
 			},
 		})
 		variationTSEvents = append(variationTSEvents, &ecproto.VariationTimeseries{
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
-				Timestamps: dailyTimeStamps,
-				Values:     eventCounts,
+				Timestamps:  timestamps,
+				Values:      eventCounts,
+				Unit:        timestampUnit,
+				TotalCounts: totalEventCounts,
 			},
 		})
 	}
@@ -492,6 +517,33 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 		EventCounts: variationTSEvents,
 		UserCounts:  variationTSUsers,
 	}, nil
+}
+
+func (s *eventCounterService) validateGetEvaluationTimeseriesCountV2(
+	req *ecproto.GetEvaluationTimeseriesCountRequest,
+	localizer locale.Localizer,
+) error {
+	if req.FeatureId == "" {
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.TimeRange == ecproto.GetEvaluationTimeseriesCountRequest_UNKNOWN {
+		dt, err := statusUnknownTimeRange.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time_range"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }
 
 type multiError []error
@@ -507,26 +559,90 @@ func (m multiError) Error() string {
 	return fmt.Sprintf("%d errors: %s", len(str), strings.Join(str, ", "))
 }
 
+func (s *eventCounterService) getEventCounts(
+	keys [][]string,
+	unit ecproto.Timeseries_Unit,
+) ([]float64, error) {
+	if unit == ecproto.Timeseries_HOUR {
+		return s.evaluationCountCacher.GetEventCounts(keys[0])
+	}
+	return s.evaluationCountCacher.GetEventCountsV2(keys)
+}
+
+func (s *eventCounterService) getTotalEventCounts(
+	eventCounts []float64,
+) int64 {
+	total := float64(0)
+	for _, count := range eventCounts {
+		total += count
+	}
+	return int64(total)
+}
+
 func (s *eventCounterService) getUserCounts(
+	keys [][]string,
+	featureID, environmentNamespace string,
+) ([]float64, error) {
+	counts := make([]float64, 0, len(keys))
+	for _, day := range keys {
+		c, err := s.countUniqueUser(
+			day,
+			featureID, environmentNamespace,
+		)
+		if err != nil {
+			return nil, err
+		}
+		counts = append(counts, c)
+	}
+	return counts, nil
+}
+
+func (s *eventCounterService) flattenAry(
+	keys [][]string,
+) []string {
+	flat := []string{}
+	for _, k := range keys {
+		flat = append(flat, k...)
+	}
+	return flat
+}
+
+func (s *eventCounterService) getTotalUserCounts(
 	userCountKeys [][]string,
 	featureID, environmentNamespace string,
-) (count []float64, err multiError) {
-	pfMergeKeys := createUserCountPFMergeKeys(
-		len(userCountKeys),
+) (int64, error) {
+	flat := s.flattenAry(userCountKeys)
+	count, err := s.countUniqueUser(
+		flat,
+		featureID, environmentNamespace,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return int64(count), nil
+}
+
+func (s *eventCounterService) countUniqueUser(
+	userCountKeys []string,
+	featureID, environmentNamespace string,
+) (count float64, err multiError) {
+	key := newPFMergeKey(
+		userCountPrefix,
 		featureID,
 		environmentNamespace,
 	)
-	// We need to count the number of unique users in 24 hours.
-	if e := s.evaluationCountCacher.MergeMultiKeys(pfMergeKeys, userCountKeys); e != nil {
+	// We need to count the number of unique users in the target term.
+	if e := s.evaluationCountCacher.MergeMultiKeys(key, userCountKeys); e != nil {
 		err = append(err, e)
 		return
 	}
 	defer func() {
-		if e := s.evaluationCountCacher.DeleteMultiKeys(pfMergeKeys); e != nil {
+		if e := s.evaluationCountCacher.DeleteKey(key); e != nil {
 			err = append(err, e)
 		}
 	}()
-	count, e := s.evaluationCountCacher.GetUserCountsV2(pfMergeKeys)
+	c, e := s.evaluationCountCacher.GetUserCount(key)
+	count = float64(c)
 	if e != nil {
 		err = append(err, e)
 		return
@@ -575,15 +691,16 @@ func (s *eventCounterService) logCountError(
 	err error,
 	msg, environmentNamespace, featureID, vID string,
 	featureVersion int32,
-	startAt, endAt time.Time,
+	unit ecproto.Timeseries_Unit,
+	timeRange ecproto.GetEvaluationTimeseriesCountRequest_TimeRange,
 ) {
 	s.logger.Error(
 		msg,
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
 			zap.String("environmentNamespace", environmentNamespace),
-			zap.Time("startAt", startAt),
-			zap.Time("endAt", endAt),
+			zap.String("unit", unit.String()),
+			zap.String("timeRange", timeRange.String()),
 			zap.String("featureId", featureID),
 			zap.Int32("featureVersion", featureVersion),
 			zap.String("variationId", vID),
@@ -591,36 +708,22 @@ func (s *eventCounterService) logCountError(
 	)
 }
 
-func createUserCountPFMergeKeys(
-	size int,
-	featureID, environmentNamespace string,
-) []string {
-	keys := make([]string, 0, size)
-	for i := 0; i < size; i++ {
-		keys = append(keys, newPFMergeKey(
-			userCountPrefix,
-			featureID,
-			environmentNamespace,
-			i,
-		))
-	}
-	return keys
-}
-
 func newPFMergeKey(
 	kind, featureID, environmentNamespace string,
-	index int,
 ) string {
 	return cache.MakeKey(
 		kind,
-		fmt.Sprintf("%s:%s:%d", pfMergeKey, featureID, index),
+		fmt.Sprintf("%s:%s", pfMergeKey, featureID),
 		environmentNamespace,
 	)
 }
 
-func genInterval(loc *time.Location, endAt time.Time, durationDays int) (time.Time, error) {
-	year, month, day := endAt.In(loc).AddDate(0, 0, -durationDays).Date()
-	return time.Date(year, month, day, 0, 0, 0, 0, loc), nil
+func truncateDate(loc *time.Location, t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
+}
+
+func getStartTime(loc *time.Location, endAt time.Time, durationDays int) time.Time {
+	return endAt.In(loc).AddDate(0, 0, -durationDays)
 }
 
 func newEvaluationCountkey(
@@ -635,31 +738,68 @@ func newEvaluationCountkey(
 }
 
 func getOneDayTimestamps(timestamp time.Time) []int64 {
-	timeStamps := make([]int64, 0, twentyFourHours)
+	timestamps := make([]int64, 0, twentyFourHours)
 	for i := 0; i < twentyFourHours; i++ {
 		ts := timestamp.Add(time.Duration(i) * time.Hour).Unix()
-		timeStamps = append(timeStamps, ts)
+		timestamps = append(timestamps, ts)
 	}
-	return timeStamps
+	return timestamps
 }
 
-func getDailyTimeStamps(startAt time.Time) []int64 {
-	limit := 31
-	timeStamps := make([]int64, 0, limit)
-	for i := 0; i < limit; i++ {
+func (s *eventCounterService) getTimestamps(
+	timeRange ecproto.GetEvaluationTimeseriesCountRequest_TimeRange,
+) ([]int64, ecproto.Timeseries_Unit, error) {
+	endAt := time.Now()
+	switch timeRange {
+	case ecproto.GetEvaluationTimeseriesCountRequest_TWENTY_FOUR_HOURS:
+		startAt := getStartTime(s.location, endAt, 1)
+		return getOneDayTimestamps(startAt), ecproto.Timeseries_HOUR, nil
+	case ecproto.GetEvaluationTimeseriesCountRequest_SEVEN_DAYS:
+		startAt := getStartTime(s.location, endAt, 6)
+		truncated := truncateDate(s.location, startAt)
+		return getDailyTimestamps(truncated, 6), ecproto.Timeseries_DAY, nil
+	case ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS:
+		startAt := getStartTime(s.location, endAt, 13)
+		truncated := truncateDate(s.location, startAt)
+		return getDailyTimestamps(truncated, 13), ecproto.Timeseries_DAY, nil
+	case ecproto.GetEvaluationTimeseriesCountRequest_THIRTY_DAYS:
+		startAt := getStartTime(s.location, endAt, 29)
+		truncated := truncateDate(s.location, startAt)
+		return getDailyTimestamps(truncated, 29), ecproto.Timeseries_DAY, nil
+	default:
+		return nil, 0, errUnknownTimeRange
+	}
+}
+
+func getDailyTimestamps(startAt time.Time, limit int) []int64 {
+	timestamps := make([]int64, 0, limit)
+	for i := 0; i <= limit; i++ {
 		ts := startAt.AddDate(0, 0, i).Unix()
-		timeStamps = append(timeStamps, ts)
+		timestamps = append(timestamps, ts)
 	}
-	return timeStamps
+	return timestamps
 }
 
-func getHourlyTimeStamps(days []int64) [][]int64 {
-	timeStamps := make([][]int64, 0, len(days))
+/*
+getHourlyTimeStamps returns a two-dimensional array. For example,
+
+[
+	["2014-11-01 00:00:00", "2014-11-01 01:00:00", "2014-11-01 02:00:00", "2014-11-01 03:00:00", ...],
+	["2014-11-02 00:00:00", "2014-11-02 01:00:00", "2014-11-02 02:00:00", "2014-11-02 03:00:00", ...],
+	["2014-11-03 00:00:00", "2014-11-03 01:00:00", "2014-11-03 02:00:00", "2014-11-03 03:00:00", ...],
+	...
+]
+*/
+func getHourlyTimeStamps(days []int64, unit ecproto.Timeseries_Unit) [][]int64 {
+	if unit == ecproto.Timeseries_HOUR {
+		return [][]int64{days}
+	}
+	timestamps := make([][]int64, 0, len(days))
 	for _, day := range days {
 		t := time.Unix(int64(day), 0)
-		timeStamps = append(timeStamps, getOneDayTimestamps(t))
+		timestamps = append(timestamps, getOneDayTimestamps(t))
 	}
-	return timeStamps
+	return timestamps
 }
 
 func getVariationIDs(vs []*featureproto.Variation) []string {

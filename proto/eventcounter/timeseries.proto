@@ -30,4 +30,5 @@ message Timeseries {
   repeated int64 timestamps = 1;
   repeated double values = 2;
   Unit unit = 3;
+  int64 total_counts = 4;
 }

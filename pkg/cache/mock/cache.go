@@ -284,6 +284,25 @@ func (mr *MockMultiGetDeleteCountCacheMockRecorder) PFCount(keys ...interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFCount", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).PFCount), keys...)
 }
 
+// PFMerge mocks base method.
+func (m *MockMultiGetDeleteCountCache) PFMerge(dest string, keys ...string) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{dest}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PFMerge", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PFMerge indicates an expected call of PFMerge.
+func (mr *MockMultiGetDeleteCountCacheMockRecorder) PFMerge(dest interface{}, keys ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{dest}, keys...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFMerge", reflect.TypeOf((*MockMultiGetDeleteCountCache)(nil).PFMerge), varargs...)
+}
+
 // Pipeline mocks base method.
 func (m *MockMultiGetDeleteCountCache) Pipeline() v3.PipeClient {
 	m.ctrl.T.Helper()
@@ -667,6 +686,48 @@ func (m *MockExpirer) Expire(key string, expiration time.Duration) (bool, error)
 func (mr *MockExpirerMockRecorder) Expire(key, expiration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Expire", reflect.TypeOf((*MockExpirer)(nil).Expire), key, expiration)
+}
+
+// MockPFMerger is a mock of PFMerger interface.
+type MockPFMerger struct {
+	ctrl     *gomock.Controller
+	recorder *MockPFMergerMockRecorder
+}
+
+// MockPFMergerMockRecorder is the mock recorder for MockPFMerger.
+type MockPFMergerMockRecorder struct {
+	mock *MockPFMerger
+}
+
+// NewMockPFMerger creates a new mock instance.
+func NewMockPFMerger(ctrl *gomock.Controller) *MockPFMerger {
+	mock := &MockPFMerger{ctrl: ctrl}
+	mock.recorder = &MockPFMergerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPFMerger) EXPECT() *MockPFMergerMockRecorder {
+	return m.recorder
+}
+
+// PFMerge mocks base method.
+func (m *MockPFMerger) PFMerge(dest string, keys ...string) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{dest}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PFMerge", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PFMerge indicates an expected call of PFMerge.
+func (mr *MockPFMergerMockRecorder) PFMerge(dest interface{}, keys ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{dest}, keys...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFMerge", reflect.TypeOf((*MockPFMerger)(nil).PFMerge), varargs...)
 }
 
 // MockLister is a mock of Lister interface.
