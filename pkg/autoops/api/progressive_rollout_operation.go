@@ -26,9 +26,7 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
-var (
-	errVariationNotFound = errors.New("progressiveRollout: autoops: variation not found")
-)
+var errVariationNotFound = errors.New("autoops: a variation for a progressive rollout is not found")
 
 const totalVariationWeight = int32(100000)
 
