@@ -1141,7 +1141,10 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 					}, nil)
 				vIDs := []string{vID0, vID1, defaultVariationID}
 				endAt := time.Now()
-				startAt := getStartTime(jpLocation, endAt, 30)
+				startAt := truncateDate(
+					jpLocation,
+					getStartTime(jpLocation, endAt, 30),
+				)
 				timeStamps := getDailyTimestamps(startAt, 30)
 				for idx, vID := range vIDs {
 					ec := getEventCountKeys(vID, fID, environmentNamespace, timeStamps)
