@@ -4,7 +4,7 @@ on: pull_request
 permissions:
   contents: write
   pull-requests: write
-  repository-projects: write # This is needed to get GITHUB_TOKEN.
+  repository-projects: write
 
 jobs:
   dependabot:
