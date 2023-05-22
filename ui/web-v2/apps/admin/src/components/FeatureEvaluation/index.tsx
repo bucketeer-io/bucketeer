@@ -1,10 +1,13 @@
 import { COLORS } from '@/constants/colorPattern';
+import { useCurrentEnvironment } from '@/modules/me';
+import { AppDispatch } from '@/store';
 import { SerializedError } from '@reduxjs/toolkit';
 import { FC, memo, useState } from 'react';
-import { shallowEqual, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { Select } from '../../components/Select';
 import { AppState } from '../../modules';
+import { getEvaluationTimeseriesCount } from '../../modules/evaluationTimeseriesCount';
 import { selectById as selectFeatureById } from '../../modules/features';
 import { VariationTimeseries } from '../../proto/eventcounter/timeseries_pb';
 import { Feature } from '../../proto/feature/feature_pb';
@@ -12,36 +15,51 @@ import { Variation } from '../../proto/feature/variation_pb';
 import { classNames } from '../../utils/css';
 import { TimeseriesStackedLineChart } from '../TimeseriesStackedLineChart';
 
-type Type = 'userCount' | 'eventCount';
-type FilterType = 'monthly' | 'last14Days' | 'last7Days' | 'last24Hours';
+export enum TimeRange {
+  TWENTY_FOUR_HOURS = 1,
+  SEVEN_DAYS = 2,
+  FOURTEEN_DAYS = 3,
+  THIRTY_DAYS = 4,
+}
+
+enum CountsListType {
+  USER_COUNT = 'userCount',
+  Event_COUNT = 'eventCount',
+}
 
 interface FeatureEvaluationProps {
   featureId: string;
 }
 
-interface Option {
-  readonly value: Type;
+interface TimeRangeOption {
+  readonly value: TimeRange;
   readonly label: string;
 }
 
-interface FilterOption {
-  readonly value: FilterType;
-  readonly label: string;
-}
-
-const typeOptions: Array<Option> = [
-  { value: 'userCount', label: 'User Count' },
-  { value: 'eventCount', label: 'Event Count' },
+const countsListOptions = [
+  { value: CountsListType.USER_COUNT, label: 'User Count' },
+  { value: CountsListType.Event_COUNT, label: 'Event Count' },
 ];
-const filterOptions: Array<FilterOption> = [
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'last14Days', label: 'Last 14 days' },
-  { value: 'last7Days', label: 'Last 7 days' },
-  { value: 'last24Hours', label: 'Last 24 hours' },
+
+const timeRangeOptions = [
+  { value: TimeRange.THIRTY_DAYS.toString(), label: 'Monthly', data: 'day' },
+  {
+    value: TimeRange.FOURTEEN_DAYS.toString(),
+    label: 'Last 14 days',
+    data: 'day',
+  },
+  { value: TimeRange.SEVEN_DAYS.toString(), label: 'Last 7 days', data: 'day' },
+  {
+    value: TimeRange.TWENTY_FOUR_HOURS.toString(),
+    label: 'Last 24 hours',
+    data: 'hour',
+  },
 ];
 
 export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
   ({ featureId }) => {
+    const dispatch = useDispatch<AppDispatch>();
+    const currentEnvironment = useCurrentEnvironment();
     const [userCounts, eventCounts] = useSelector<
       AppState,
       [Array<VariationTimeseries.AsObject>, Array<VariationTimeseries.AsObject>]
@@ -62,8 +80,12 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
       ],
       shallowEqual
     );
-    const [type, setType] = useState<Type>('userCount');
-    const [filterType, setFilterType] = useState<FilterType>('monthly');
+    const [selectedCountsListType, setSelectedCountsListType] = useState(
+      countsListOptions[0]
+    );
+    const [selectedTimeRange, setSelectedTimeRange] = useState(
+      timeRangeOptions[0]
+    );
     const variationMap = new Map<string, Variation.AsObject>();
     feature.variationsList.forEach((v) => {
       variationMap.set(v.id, v);
@@ -77,25 +99,32 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
     defaultVariation.setValue('default value');
     variationMap.set(defaultVariation.getId(), defaultVariation.toObject());
 
-    const variationTSs = type == 'userCount' ? userCounts : eventCounts;
-    console.log('variationTSs', variationTSs);
+    const variationTSs =
+      selectedCountsListType.value == CountsListType.USER_COUNT
+        ? userCounts
+        : eventCounts;
+
     const variationValues = variationTSs.map((vt) => {
       return variationMap.get(vt.variationId)?.value;
     });
     const timeseries = variationTSs[0]?.timeseries?.timestampsList;
     const data = variationTSs.map((vt, i) => {
-      // return vt.timeseries?.valuesList?.map((v: number, i2) =>
-      //   Math.round(i2 * 5)
-      // );
       return vt.timeseries?.valuesList?.map((v: number) => Math.round(v));
     });
 
-    const handleChange = (o: Option) => {
-      setType(o.value);
+    const handleChange = (o) => {
+      setSelectedCountsListType(o);
     };
 
-    const handleFilterChange = (o: FilterOption) => {
-      setFilterType(o.value);
+    const handleTimeRange = (o) => {
+      setSelectedTimeRange(o);
+      dispatch(
+        getEvaluationTimeseriesCount({
+          featureId: featureId,
+          environmentNamespace: currentEnvironment.namespace,
+          timeRange: o.value,
+        })
+      );
     };
 
     if (!timeseries) {
@@ -111,6 +140,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
             ? `${variation.substring(0, 50)}...`
             : variation,
         backgroundColor: COLORS[i % COLORS.length],
+        totalCounts: vt.timeseries.totalCounts,
       };
     });
 
@@ -119,10 +149,10 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
         <div className="bg-white rounded-md p-3 border">
           <div className="flex justify-end">
             <Select
-              options={filterOptions}
+              options={timeRangeOptions}
               className={classNames('flex-none w-[200px]')}
-              value={filterOptions.find((o) => o.value === filterType)}
-              onChange={handleFilterChange}
+              value={selectedTimeRange}
+              onChange={handleTimeRange}
             />
           </div>
           <TimeseriesStackedLineChart
@@ -130,6 +160,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
             dataLabels={variationValues}
             timeseries={timeseries}
             data={data}
+            unit={selectedTimeRange.data}
           />
           <div className="mt-8 flow-root">
             <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -146,9 +177,9 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
                         </td>
                         <td className="]">
                           <Select
-                            options={typeOptions}
+                            options={countsListOptions}
                             className={classNames('mt-1 w-[260px]')}
-                            value={typeOptions.find((o) => o.value === type)}
+                            value={selectedCountsListType}
                             onChange={handleChange}
                           />
                         </td>
@@ -156,7 +187,10 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
                       {dataLabels.map(
-                        ({ variation, backgroundColor }, index) => (
+                        (
+                          { variation, backgroundColor, totalCounts },
+                          index
+                        ) => (
                           <tr key={index}>
                             <td className="p-4 text-sm text-gray-900 flex space-x-2">
                               <div
@@ -168,7 +202,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
                               <span className="">{variation}</span>
                             </td>
                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 w-1/4">
-                              -
+                              {totalCounts}
                             </td>
                             <td className="w-1/4" />
                           </tr>
