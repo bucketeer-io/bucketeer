@@ -1,7 +1,7 @@
 [tool.poetry]
 authors = ["Bucketeer team <bucketeer@users.noreply.github.com>"]
 description = ""
-name = "python"
+name = "bucketeer-python"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
