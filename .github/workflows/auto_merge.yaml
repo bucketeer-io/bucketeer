@@ -20,7 +20,7 @@ jobs:
           allowed-conclusions: success
       - name: Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v1
+        uses: dependabot/fetch-metadata@28a846a1194a2665a2eea75dd4556c91e43af857 # v1.5.0
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: Enable auto-merge for Dependabot PRs
