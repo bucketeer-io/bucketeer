@@ -4,15 +4,27 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    commit-message:
+      prefix: "build"
+      include: "scope"
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: "monthly"
+    commit-message:
+      prefix: "build"
+      include: "scope"
   - package-ecosystem: "npm"
     directory: "/ui"
     schedule:
       interval: "monthly"
+    commit-message:
+      prefix: "build"
+      include: "scope"
   - package-ecosystem: "pip"
     directory: "/python"
     schedule:
       interval: "monthly"
+    commit-message:
+      prefix: "build"
+      include: "scope"
