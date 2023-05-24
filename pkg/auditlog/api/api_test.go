@@ -282,7 +282,12 @@ func newAuditLogService(t *testing.T, mockController *gomock.Controller) *auditl
 
 func createAuditLogs(t *testing.T) []*proto.AuditLog {
 	t.Helper()
-	msgUnknown := domainevent.LocalizedMessage(domaineventproto.Event_UNKNOWN, locale.Ja)
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	msgUnknown := domainevent.LocalizedMessage(domaineventproto.Event_UNKNOWN, localizer)
 	return []*proto.AuditLog{
 		{Id: "id-0", LocalizedMessage: msgUnknown},
 		{Id: "id-1", LocalizedMessage: msgUnknown},

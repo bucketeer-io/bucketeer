@@ -163,7 +163,7 @@ func (s *auditlogService) ListAuditLogs(
 		return nil, dt.Err()
 	}
 	for _, auditlog := range auditlogs {
-		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, locale.Ja)
+		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
 	}
 	return &proto.ListAuditLogsResponse{
 		AuditLogs:  auditlogs,
@@ -267,7 +267,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 		return nil, dt.Err()
 	}
 	for _, auditlog := range auditlogs {
-		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, locale.Ja)
+		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
 	}
 	return &proto.ListAdminAuditLogsResponse{
 		AuditLogs:  auditlogs,
@@ -376,7 +376,7 @@ func (s *auditlogService) ListFeatureHistory(
 		return nil, dt.Err()
 	}
 	for _, auditlog := range auditlogs {
-		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, locale.Ja)
+		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
 	}
 	return &proto.ListFeatureHistoryResponse{
 		AuditLogs:  auditlogs,

@@ -1,3 +1,7 @@
+#############################
+# Status Error Messages
+#############################
+
 # Nouns
 FeatureFlagID: "フィーチャーフラグID"
 
@@ -32,3 +36,28 @@ PeroidOutOfRange: "期間は過去30日以内を選択してください。"
 
 # environment error
 ProjectDisabled: "projectのデータが無効化されています"
+
+#############################
+# Domain Events
+#############################
+
+UnknownOperation: "不明な操作を実行しました"
+Created: "{{ .Field_1 }}が作成されました"
+Enabled: "{{ .Field_1 }}が有効化されました"
+Disabled: "{{ .Field_1 }}が無効化されました"
+Archived: "{{ .Field_1 }}がアーカイブされました"
+Unarchived: "{{ .Field_1 }}がアーカイブから解除されました"
+Deleted: "{{ .Field_1 }}が削除されました"
+Added: "{{ .Field_1 }}が追加されました"
+Changed: "{{ .Field_1 }}が変更されました"
+Updated: "{{ .Field_1 }}が更新されました"
+Started: "{{ .Field_1 }}が開始されました"
+Stopped: "{{ .Field_1 }}が停止されました"
+Finished: "{{ .Field_1 }}が終了されました"
+Uploaded: "{{ .Field_1 }}がアップロードされました"
+Cloned: "{{ .Field_1 }}がクローンされました"
+Reset: "{{ .Field_1 }}がリセットされました"
+TrialConverted: "Trialを正式なProjectに変換しました"
+DelayableSet: "feature flagを初回リクエスト時にキューに入れるように変更されました"
+UndelayableSet: "feature flagを初回リクエスト時にキューに入れないように変更されました"
+

@@ -32,6 +32,7 @@ var (
 	localizedata embed.FS
 )
 
+// status error messages
 const (
 	FeatureFlagID                    = "FeatureFlagID"
 	RequiredFieldTemplate            = "RequiredField"
@@ -50,6 +51,29 @@ const (
 	WaitingOrRunningExperimentExists = "WaitingOrRunningExperimentExists"
 	NothingChange                    = "NothingChange"
 	DifferentVariationsSize          = "DifferentVariationsSize"
+)
+
+// domain events
+const (
+	UnknownOperation   = "UnknownOperation"
+	CreatedTemplate    = "Created"
+	EnabledTemplate    = "Enabled"
+	DisabledTemplate   = "Disabled"
+	ArchivedTemplate   = "Archived"
+	UnarchivedTemplate = "Unarchived"
+	DeletedTemplate    = "Deleted"
+	AddedTemplate      = "Added"
+	ChangedTemplate    = "Changed"
+	UpdatedTemplate    = "Updated"
+	StartedTemplate    = "Started"
+	StoppedTemplate    = "Stopped"
+	FinishedTemplate   = "Finished"
+	UploadedTemplate   = "Uploaded"
+	ResetTemplate      = "Reset"
+	ClonedTemplate     = "Cloned"
+	TrialConverted     = "TrialConverted"
+	DelayableSet       = "DelayableSet"
+	UndelayableSet     = "UndelayableSet"
 )
 
 func init() {
