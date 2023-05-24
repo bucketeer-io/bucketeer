@@ -41,7 +41,7 @@ ProjectDisabled: "projectのデータが無効化されています"
 # Domain Events
 #############################
 
-UnknownOperation: "不明な操作を実行しました"
+UnknownOperation: "不明な操作が実行されました"
 Created: "{{ .Field_1 }}が作成されました"
 Enabled: "{{ .Field_1 }}が有効化されました"
 Disabled: "{{ .Field_1 }}が無効化されました"

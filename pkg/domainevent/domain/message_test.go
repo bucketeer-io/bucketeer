@@ -42,7 +42,7 @@ func TestLocalizedMessage(t *testing.T) {
 			inputEventType: proto.Event_UNKNOWN,
 			expected: &proto.LocalizedMessage{
 				Locale:  locale.Ja,
-				Message: "不明な操作を実行しました",
+				Message: "不明な操作が実行されました",
 			},
 		},
 		{
@@ -50,7 +50,7 @@ func TestLocalizedMessage(t *testing.T) {
 			inputEventType: proto.Event_Type(-1),
 			expected: &proto.LocalizedMessage{
 				Locale:  locale.Ja,
-				Message: "不明な操作を実行しました",
+				Message: "不明な操作が実行されました",
 			},
 		},
 	}
@@ -72,7 +72,7 @@ func TestImplementedLocalizedMessage(t *testing.T) {
 	localizer := locale.NewLocalizer(ctx)
 	unknown := &proto.LocalizedMessage{
 		Locale:  locale.Ja,
-		Message: "不明な操作を実行しました",
+		Message: "不明な操作が実行されました",
 	}
 	for k, v := range proto.Event_Type_name {
 		if v == "UNKNOWN" {
