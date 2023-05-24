@@ -8581,6 +8581,11 @@
                 "out_type": "GetEvaluationTimeseriesCountResponse"
               },
               {
+                "name": "GetEvaluationTimeseriesCountV2",
+                "in_type": "GetEvaluationTimeseriesCountRequest",
+                "out_type": "GetEvaluationTimeseriesCountResponse"
+              },
+              {
                 "name": "GetExperimentResult",
                 "in_type": "GetExperimentResultRequest",
                 "out_type": "GetExperimentResultResponse"
