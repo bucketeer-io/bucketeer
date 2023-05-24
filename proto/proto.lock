@@ -13479,6 +13479,18 @@
                 "name": "SlackChannel"
               }
             ]
+          },
+          {
+            "name": "Recipient.Language",
+            "enum_fields": [
+              {
+                "name": "Japanese"
+              },
+              {
+                "name": "English",
+                "integer": 1
+              }
+            ]
           }
         ],
         "messages": [
@@ -13494,6 +13506,11 @@
                 "id": 2,
                 "name": "slack_channel_recipient",
                 "type": "SlackChannelRecipient"
+              },
+              {
+                "id": 3,
+                "name": "language",
+                "type": "Language"
               }
             ]
           },
