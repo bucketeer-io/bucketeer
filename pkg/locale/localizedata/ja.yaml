@@ -60,4 +60,3 @@ Reset: "{{ .Field_1 }}がリセットされました"
 TrialConverted: "Trialを正式なProjectに変換しました"
 DelayableSet: "feature flagを初回リクエスト時にキューに入れるように変更されました"
 UndelayableSet: "feature flagを初回リクエスト時にキューに入れないように変更されました"
-
