@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
     commit-message:
       prefix: "build"
       include: "scope"
@@ -11,6 +13,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
     commit-message:
       prefix: "build"
       include: "scope"
@@ -18,6 +22,8 @@ updates:
     directory: "/ui"
     schedule:
       interval: "monthly"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
     commit-message:
       prefix: "build"
       include: "scope"
@@ -25,6 +31,8 @@ updates:
     directory: "/python"
     schedule:
       interval: "monthly"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
     commit-message:
       prefix: "build"
       include: "scope"
