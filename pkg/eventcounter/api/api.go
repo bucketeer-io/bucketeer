@@ -464,6 +464,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			userCountKeys,
 			req.FeatureId,
 			req.EnvironmentNamespace,
+			timestampUnit,
 		)
 		s.logger.Error(
 			"Debug user count",
@@ -598,9 +599,36 @@ func (s *eventCounterService) getTotalEventCounts(
 func (s *eventCounterService) getUserCounts(
 	keys [][]string,
 	featureID, environmentNamespace string,
+	unit ecproto.Timeseries_Unit,
 ) ([]float64, error) {
-	counts := make([]float64, 0, len(keys))
-	for _, day := range keys {
+	if unit == ecproto.Timeseries_HOUR {
+		return s.getHourlyUserCounts(keys, featureID, environmentNamespace)
+	}
+	return s.getDailyUserCounts(keys, featureID, environmentNamespace)
+}
+
+func (s *eventCounterService) getHourlyUserCounts(
+	days [][]string,
+	featureID, environmentNamespace string,
+) ([]float64, error) {
+	hours := days[0]
+	counts := make([]float64, 0, len(hours))
+	for _, hour := range hours {
+		c, err := s.evaluationCountCacher.GetUserCount(hour)
+		if err != nil {
+			return nil, err
+		}
+		counts = append(counts, float64(c))
+	}
+	return counts, nil
+}
+
+func (s *eventCounterService) getDailyUserCounts(
+	days [][]string,
+	featureID, environmentNamespace string,
+) ([]float64, error) {
+	counts := make([]float64, 0, len(days))
+	for _, day := range days {
 		c, err := s.countUniqueUser(
 			day,
 			featureID, environmentNamespace,
