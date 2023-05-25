@@ -437,8 +437,8 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 		s.logger.Error(
 			"Debug",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Any("EventCountkeys", eventCountKeys),
 				zap.Any("UserCountkeys", userCountKeys),
+				zap.String("timeRange", req.TimeRange.String()),
 			)...,
 		)
 		eventCounts, err := s.getEventCounts(eventCountKeys, timestampUnit)
@@ -464,6 +464,12 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			userCountKeys,
 			req.FeatureId,
 			req.EnvironmentNamespace,
+		)
+		s.logger.Error(
+			"Debug user count",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Any("UserCounts", userCounts),
+			)...,
 		)
 		if err != nil {
 			s.logCountError(
