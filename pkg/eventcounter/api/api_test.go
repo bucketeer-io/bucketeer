@@ -1399,10 +1399,7 @@ func TestGetEvaluationTimeseriesCountV2(t *testing.T) {
 						},
 					}, nil)
 				vIDs := []string{vID0, vID1, defaultVariationID}
-				endAt := time.Now()
-				startAt := truncateDate(jpLocation, getStartTime(jpLocation, endAt, 13))
-				dailyTimeStamps := getDailyTimestamps(startAt, 13)
-				hourlyTimeStamps := getHourlyTimeStamps(dailyTimeStamps, ecproto.Timeseries_DAY)
+				hourlyTimeStamps := getFourteenDaysTimestamps()
 				for idx, vID := range vIDs {
 					ec := getEventCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
 					val := randomNumberGroup[idx]
@@ -1907,6 +1904,74 @@ func TestMultiError(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual := fmt.Errorf("%v", p.err).Error()
 			assert.Equal(t, p.expected, actual)
+		})
+	}
+}
+
+func getFourteenDaysTimestamps() [][]int64 {
+	endAt := time.Now()
+	startAt := truncateDate(jpLocation, getStartTime(jpLocation, endAt, 13))
+	dailyTimeStamps := getDailyTimestamps(startAt, 13)
+	return getHourlyTimeStamps(dailyTimeStamps, ecproto.Timeseries_DAY)
+}
+
+func getTwentyFourHoursTimestamps() []int64 {
+	endAt := time.Now()
+	startAt := truncateHour(jpLocation, getStartTime(jpLocation, endAt, 1))
+	return getOneDayTimestamps(startAt)
+}
+
+func TestGetUserCounts(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	featureID := "fID"
+	environmentNamespace := "en"
+	vID := "vID"
+	fourteenDaysKeys := getUserCountKeysV2(vID, featureID, environmentNamespace, getFourteenDaysTimestamps())
+	twentyFourHoursKeys := getUserCountKeysV2(vID, featureID, environmentNamespace, [][]int64{getTwentyFourHoursTimestamps()})
+	patterns := []struct {
+		desc        string
+		unit        ecproto.Timeseries_Unit
+		keys        [][]string
+		setup       func(*eventCounterService)
+		expectedLen int
+	}{
+		{
+			desc: "success: 14 days timestamp",
+			unit: ecproto.Timeseries_DAY,
+			keys: fourteenDaysKeys,
+			setup: func(s *eventCounterService) {
+				for _, day := range fourteenDaysKeys {
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
+						GetUserCount(gomock.Any()).Return(int64(1234), nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(gomock.Any()).Return(nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), day).Return(nil)
+				}
+			},
+			expectedLen: 14,
+		},
+		{
+			desc: "success: 24 hours timestamp",
+			unit: ecproto.Timeseries_HOUR,
+			keys: twentyFourHoursKeys,
+			setup: func(s *eventCounterService) {
+				for _, hour := range twentyFourHoursKeys[0] {
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
+						GetUserCount(hour).Return(int64(1234), nil)
+				}
+			},
+			expectedLen: 24,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newEventCounterService(t, mockController)
+			if p.setup != nil {
+				p.setup(gs)
+			}
+			actual, _ := gs.getUserCounts(p.keys, featureID, environmentNamespace, p.unit)
+			assert.Len(t, actual, p.expectedLen)
 		})
 	}
 }
