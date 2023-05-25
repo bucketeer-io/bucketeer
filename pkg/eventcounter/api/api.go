@@ -457,6 +457,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			userCountKeys,
 			req.FeatureId,
 			req.EnvironmentNamespace,
+			timestampUnit,
 		)
 		if err != nil {
 			s.logCountError(
@@ -585,9 +586,36 @@ func (s *eventCounterService) getTotalEventCounts(
 func (s *eventCounterService) getUserCounts(
 	keys [][]string,
 	featureID, environmentNamespace string,
+	unit ecproto.Timeseries_Unit,
 ) ([]float64, error) {
-	counts := make([]float64, 0, len(keys))
-	for _, day := range keys {
+	if unit == ecproto.Timeseries_HOUR {
+		return s.getHourlyUserCounts(keys, featureID, environmentNamespace)
+	}
+	return s.getDailyUserCounts(keys, featureID, environmentNamespace)
+}
+
+func (s *eventCounterService) getHourlyUserCounts(
+	days [][]string,
+	featureID, environmentNamespace string,
+) ([]float64, error) {
+	hours := days[0]
+	counts := make([]float64, 0, len(hours))
+	for _, hour := range hours {
+		c, err := s.evaluationCountCacher.GetUserCount(hour)
+		if err != nil {
+			return nil, err
+		}
+		counts = append(counts, float64(c))
+	}
+	return counts, nil
+}
+
+func (s *eventCounterService) getDailyUserCounts(
+	days [][]string,
+	featureID, environmentNamespace string,
+) ([]float64, error) {
+	counts := make([]float64, 0, len(days))
+	for _, day := range days {
 		c, err := s.countUniqueUser(
 			day,
 			featureID, environmentNamespace,
@@ -725,6 +753,10 @@ func truncateDate(loc *time.Location, t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
 }
 
+func truncateHour(loc *time.Location, t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, loc)
+}
+
 func getStartTime(loc *time.Location, endAt time.Time, durationDays int) time.Time {
 	return endAt.In(loc).AddDate(0, 0, -durationDays)
 }
@@ -756,7 +788,8 @@ func (s *eventCounterService) getTimestamps(
 	switch timeRange {
 	case ecproto.GetEvaluationTimeseriesCountRequest_TWENTY_FOUR_HOURS:
 		startAt := getStartTime(s.location, endAt, 1)
-		return getOneDayTimestamps(startAt), ecproto.Timeseries_HOUR, nil
+		truncated := truncateHour(s.location, startAt)
+		return getOneDayTimestamps(truncated), ecproto.Timeseries_HOUR, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_SEVEN_DAYS:
 		startAt := getStartTime(s.location, endAt, 6)
 		truncated := truncateDate(s.location, startAt)
