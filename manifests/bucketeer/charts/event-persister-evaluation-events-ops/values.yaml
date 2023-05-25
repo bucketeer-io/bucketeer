@@ -9,7 +9,6 @@ namespace: default
 
 env:
   logLevel: info
-  timezone: UTC
   # egress services
   featureService: localhost:9001
   autoOpsService: localhost:9001
