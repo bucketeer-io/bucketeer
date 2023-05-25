@@ -25,7 +25,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersister/persister"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -145,15 +144,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
-	location, err := locale.GetLocation(*s.timezone)
-	if err != nil {
-		return err
-	}
-
 	p := persister.NewPersister(
 		puller,
 		redisV3Cache,
-		location,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
