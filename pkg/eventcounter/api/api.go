@@ -732,6 +732,10 @@ func truncateDate(loc *time.Location, t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
 }
 
+func truncateHour(loc *time.Location, t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, loc)
+}
+
 func getStartTime(loc *time.Location, endAt time.Time, durationDays int) time.Time {
 	return endAt.In(loc).AddDate(0, 0, -durationDays)
 }
@@ -763,7 +767,8 @@ func (s *eventCounterService) getTimestamps(
 	switch timeRange {
 	case ecproto.GetEvaluationTimeseriesCountRequest_TWENTY_FOUR_HOURS:
 		startAt := getStartTime(s.location, endAt, 1)
-		return getOneDayTimestamps(startAt), ecproto.Timeseries_HOUR, nil
+		truncated := truncateHour(s.location, startAt)
+		return getOneDayTimestamps(truncated), ecproto.Timeseries_HOUR, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_SEVEN_DAYS:
 		startAt := getStartTime(s.location, endAt, 6)
 		truncated := truncateDate(s.location, startAt)
