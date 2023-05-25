@@ -418,12 +418,6 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 		return nil, dt.Err()
 	}
 	hourlyTimeStamps := getHourlyTimeStamps(timestamps, timestampUnit)
-	s.logger.Error(
-		"Debug",
-		log.FieldsFromImcomingContext(ctx).AddFields(
-			zap.Any("timestamp", hourlyTimeStamps),
-		)...,
-	)
 	vIDs := getVariationIDs(resp.Feature.Variations)
 	variationTSEvents := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
 	variationTSUsers := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
@@ -439,6 +433,13 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 			req.EnvironmentNamespace,
 			req.FeatureId,
 			vID,
+		)
+		s.logger.Error(
+			"Debug",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Any("EventCountkeys", eventCountKeys),
+				zap.Any("UserCountkeys", userCountKeys),
+			)...,
 		)
 		eventCounts, err := s.getEventCounts(eventCountKeys, timestampUnit)
 		if err != nil {
