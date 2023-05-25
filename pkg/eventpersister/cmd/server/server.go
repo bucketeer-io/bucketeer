@@ -62,7 +62,6 @@ type server struct {
 	redisAddr                    *string
 	redisPoolMaxIdle             *int
 	redisPoolMaxActive           *int
-	timezone                     *string
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -111,7 +110,6 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"redis-pool-max-active",
 			"Maximum number of connections allocated by the pool at a given time.",
 		).Default("10").Int(),
-		timezone: cmd.Flag("timezone", "Time zone").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
