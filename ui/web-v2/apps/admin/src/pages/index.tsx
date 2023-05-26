@@ -1,4 +1,6 @@
+import { urls } from '@/config';
 import React, { FC, useEffect, memo, useState, useCallback } from 'react';
+import ReactGA from 'react-ga';
 import { useDispatch } from 'react-redux';
 import {
   Route,
@@ -6,6 +8,7 @@ import {
   Redirect,
   useRouteMatch,
   useParams,
+  useLocation,
 } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 
@@ -50,7 +53,15 @@ import { GoalIndexPage } from './goal';
 import { SegmentIndexPage } from './segment';
 import { SettingsIndexPage } from './settings';
 
+ReactGA.initialize(urls.GOOGLE_ANALYTICS_ID);
+
 export const App: FC = memo(() => {
+  const location = useLocation();
+
+  useEffect(() => {
+    ReactGA.pageview(location.pathname + location.search);
+  }, [location]);
+
   return (
     <Switch>
       <Route
