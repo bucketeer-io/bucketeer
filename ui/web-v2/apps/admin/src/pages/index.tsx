@@ -1,4 +1,4 @@
-import { urls } from '@/config';
+import { GOOGLE_ANALYTICS_ID } from '@/config';
 import React, { FC, useEffect, memo, useState, useCallback } from 'react';
 import ReactGA from 'react-ga';
 import { useDispatch } from 'react-redux';
@@ -53,14 +53,25 @@ import { GoalIndexPage } from './goal';
 import { SegmentIndexPage } from './segment';
 import { SettingsIndexPage } from './settings';
 
-ReactGA.initialize(urls.GOOGLE_ANALYTICS_ID);
-
 export const App: FC = memo(() => {
   const location = useLocation();
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    ReactGA.pageview(location.pathname + location.search);
-  }, [location]);
+    if (
+      !window.location.href.includes('localhost') &&
+      GOOGLE_ANALYTICS_ID.trim().length > 0
+    ) {
+      ReactGA.initialize(GOOGLE_ANALYTICS_ID);
+      setInitialized(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (initialized) {
+      ReactGA.pageview(location.pathname + location.search);
+    }
+  }, [initialized, location]);
 
   return (
     <Switch>
