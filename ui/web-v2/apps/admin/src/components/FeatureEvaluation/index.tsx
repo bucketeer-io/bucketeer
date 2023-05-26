@@ -19,7 +19,7 @@ export enum TimeRange {
   TWENTY_FOUR_HOURS = 1,
   SEVEN_DAYS = 2,
   FOURTEEN_DAYS = 3,
-  THIRTY_DAYS = 4,
+  LAST_THIRTY_DAYS = 4,
 }
 
 enum CountsListType {
@@ -31,18 +31,17 @@ interface FeatureEvaluationProps {
   featureId: string;
 }
 
-interface TimeRangeOption {
-  readonly value: TimeRange;
-  readonly label: string;
-}
-
 const countsListOptions = [
   { value: CountsListType.Event_COUNT, label: 'Event Count' },
   { value: CountsListType.USER_COUNT, label: 'User Count' },
 ];
 
 const timeRangeOptions = [
-  { value: TimeRange.THIRTY_DAYS.toString(), label: 'Monthly', data: 'day' },
+  {
+    value: TimeRange.LAST_THIRTY_DAYS.toString(),
+    label: 'Last 30 days',
+    data: 'day',
+  },
   {
     value: TimeRange.FOURTEEN_DAYS.toString(),
     label: 'Last 14 days',
@@ -111,10 +110,6 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
     const data = variationTSs.map((vt, i) => {
       return vt.timeseries?.valuesList?.map((v: number) => Math.round(v));
     });
-
-    const handleChange = (o) => {
-      setSelectedCountsListType(o);
-    };
 
     const handleTimeRange = (o) => {
       setSelectedTimeRange(o);
@@ -194,8 +189,13 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
                         <td className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-800 sm:pl-6">
                           Variation
                         </td>
-                        <td className="px-3 py-3.5 text-left text-sm font-semibold text-gray-800">
-                          Total evaluations
+                        <td className="px-3 py-3.5 text-left text-sm">
+                          <span className="font-semibold text-gray-800">
+                            Total evaluations
+                          </span>
+                          <span className="text-gray-600 ml-1">
+                            ({selectedTimeRange.label})
+                          </span>
                         </td>
                       </tr>
                     </thead>
