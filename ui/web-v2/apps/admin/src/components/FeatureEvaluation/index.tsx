@@ -37,8 +37,8 @@ interface TimeRangeOption {
 }
 
 const countsListOptions = [
-  { value: CountsListType.USER_COUNT, label: 'User Count' },
   { value: CountsListType.Event_COUNT, label: 'Event Count' },
+  { value: CountsListType.USER_COUNT, label: 'User Count' },
 ];
 
 const timeRangeOptions = [
@@ -147,7 +147,29 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
     return (
       <div className="p-10 bg-gray-100">
         <div className="bg-white rounded-md p-3 border">
-          <div className="flex justify-end">
+          <div className="flex justify-end space-x-4">
+            <div className="flex">
+              <div
+                onClick={() => setSelectedCountsListType(countsListOptions[0])}
+                className={`px-4 h-[42px] text-sm flex justify-center items-center rounded-l-lg cursor-pointer border ${
+                  selectedCountsListType.value === countsListOptions[0].value
+                    ? 'text-pink-400 border-pink-400 bg-pink-50 bg-opacity-50'
+                    : 'text-gray-500'
+                }`}
+              >
+                Event Count
+              </div>
+              <div
+                onClick={() => setSelectedCountsListType(countsListOptions[1])}
+                className={`px-4 h-[42px] text-sm flex justify-center items-center rounded-r-lg cursor-pointer text-gray-500 border ${
+                  selectedCountsListType.value === countsListOptions[1].value
+                    ? 'text-pink-400 border-pink-400 bg-pink-50 bg-opacity-50'
+                    : 'text-gray-500'
+                }`}
+              >
+                User Count
+              </div>
+            </div>
             <Select
               options={timeRangeOptions}
               className={classNames('flex-none w-[200px]')}
@@ -175,14 +197,6 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
                         <td className="px-3 py-3.5 text-left text-sm font-semibold text-gray-800">
                           Total evaluations
                         </td>
-                        <td className="]">
-                          <Select
-                            options={countsListOptions}
-                            className={classNames('mt-1 w-[260px]')}
-                            value={selectedCountsListType}
-                            onChange={handleChange}
-                          />
-                        </td>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -201,10 +215,9 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
                               />
                               <span className="">{variation}</span>
                             </td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 w-1/4">
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                               {totalCounts}
                             </td>
-                            <td className="w-1/4" />
                           </tr>
                         )
                       )}
