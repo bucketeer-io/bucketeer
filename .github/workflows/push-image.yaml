@@ -78,7 +78,7 @@ jobs:
           check-name: "Release Please"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Install Protoc
