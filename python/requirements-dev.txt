@@ -48,7 +48,7 @@ pyasn1==0.4.8; python_version >= "3.6" and python_full_version < "3.0.0" and pyt
 pycodestyle==2.7.0; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
 pyflakes==2.3.1; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 pymysql==1.0.2; python_version >= "3.6"
-pyparsing==3.0.8; python_full_version >= "3.6.8" and python_version >= "3.7"
+pyparsing==3.0.9; python_full_version >= "3.6.8" and python_version >= "3.7"
 pystan==2.19.1.1
 pytest-mock==3.7.0; python_version >= "3.7"
 pytest==6.2.5; python_version >= "3.6"
