@@ -48,7 +48,7 @@ jobs:
           # the release workflow, it will create a chart with an old version.
       - name: Wait for release note to succeed
         if: ${{ ! github.event.inputs || github.event.inputs.skip_release_note == 'false' }}
-        uses: lewagon/wait-on-check-action@0179dfc359f90a703c41240506f998ee1603f9ea # v1.0.0
+        uses: lewagon/wait-on-check-action@e106e5c43e8ca1edea6383a39a01c5ca495fd812 # v1.3.1
         with:
           ref: ${{ github.ref }}
           # DO NOT CHANGE the check-name. This name is based on the workflow name defined in the release.yaml
