@@ -11,7 +11,7 @@ jobs:
     name: Release Please
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@v3.5.0
+      - uses: google-github-actions/release-please-action@v3.7.9
         with:
           changelog-types: |
             [
