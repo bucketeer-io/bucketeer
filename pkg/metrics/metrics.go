@@ -73,14 +73,6 @@ type registry struct {
 	*prometheus.Registry
 }
 
-func (r *registry) MustRegister(cs ...prometheus.Collector) {
-	r.Registry.MustRegister(cs...)
-}
-
-func (r *registry) Unregister(c prometheus.Collector) bool {
-	return r.Registry.Unregister(c)
-}
-
 func NewMetrics(port int, path string, opts ...Option) Metrics {
 	dopts := &options{
 		healthCheckURL: fmt.Sprintf("http://localhost:%d/health", port),

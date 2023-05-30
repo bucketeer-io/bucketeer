@@ -66,10 +66,9 @@ func NewGoalUserCountUpdater(
 
 func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentEventMap) map[string]bool {
 	fails := map[string]bool{}
-	for environmentNamespace := range evt {
-		events := evt[environmentNamespace]
-		for id := range events {
-			switch evt := events[id].(type) {
+	for environmentNamespace, events := range evt {
+		for id, event := range events {
+			switch evt := event.(type) {
 			case *eventproto.GoalEvent:
 				retriable, err := u.updateUserCount(ctx, environmentNamespace, evt)
 				if err != nil {

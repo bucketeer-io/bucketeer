@@ -86,11 +86,3 @@ func (cf *clientFactory) New() (Client, error) {
 	}
 	return &client{m}, nil
 }
-
-func (c *client) Steps(n int) error {
-	return c.Migrate.Steps(n)
-}
-
-func (c *client) Up() error {
-	return c.Migrate.Up()
-}

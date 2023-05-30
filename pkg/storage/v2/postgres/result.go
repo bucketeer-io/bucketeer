@@ -25,11 +25,3 @@ type Result interface {
 type result struct {
 	sql.Result
 }
-
-func (r *result) LastInsertId() (int64, error) {
-	return r.Result.LastInsertId()
-}
-
-func (r *result) RowsAffected() (int64, error) {
-	return r.Result.RowsAffected()
-}
