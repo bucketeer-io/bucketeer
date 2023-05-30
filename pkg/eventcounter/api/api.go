@@ -820,10 +820,12 @@ func getDailyTimestamps(startAt time.Time, limit int) []int64 {
 getHourlyTimeStamps returns a two-dimensional array. For example,
 
 [
+
 	["2014-11-01 00:00:00", "2014-11-01 01:00:00", "2014-11-01 02:00:00", "2014-11-01 03:00:00", ...],
 	["2014-11-02 00:00:00", "2014-11-02 01:00:00", "2014-11-02 02:00:00", "2014-11-02 03:00:00", ...],
 	["2014-11-03 00:00:00", "2014-11-03 01:00:00", "2014-11-03 02:00:00", "2014-11-03 03:00:00", ...],
 	...
+
 ]
 */
 func getHourlyTimeStamps(days []int64, unit ecproto.Timeseries_Unit) [][]int64 {

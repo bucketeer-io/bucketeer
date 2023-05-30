@@ -83,16 +83,18 @@ func makeMarshallable(msg interface{}) *marshallable {
 	return nil
 }
 
-/* zap json encoder calls json.Marshal when doing zap.Reflected()
-func (enc *jsonEncoder) AppendReflected(val interface{}) error {
-	marshaled, err := json.Marshal(val)
-	if err != nil {
+/*
+zap json encoder calls json.Marshal when doing zap.Reflected()
+
+	func (enc *jsonEncoder) AppendReflected(val interface{}) error {
+		marshaled, err := json.Marshal(val)
+		if err != nil {
+			return err
+		}
+		enc.addElementSeparator()
+		_, err = enc.buf.Write(marshaled)
 		return err
 	}
-	enc.addElementSeparator()
-	_, err = enc.buf.Write(marshaled)
-	return err
-}
 */
 func (m *marshallable) MarshalJSON() ([]byte, error) {
 	b := &bytes.Buffer{}
