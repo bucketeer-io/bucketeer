@@ -26,6 +26,14 @@ type result struct {
 	sql.Result
 }
 
+func (r *result) LastInsertId() (int64, error) {
+	return r.Result.LastInsertId()
+}
+
+func (r *result) RowsAffected() (int64, error) {
+	return r.Result.RowsAffected()
+}
+
 type Row interface {
 	Err() error
 	Scan(dest ...interface{}) error
@@ -60,4 +68,20 @@ type Rows interface {
 
 type rows struct {
 	*sql.Rows
+}
+
+func (r *rows) Close() error {
+	return r.Rows.Close()
+}
+
+func (r *rows) Err() error {
+	return r.Rows.Err()
+}
+
+func (r *rows) Next() bool {
+	return r.Rows.Next()
+}
+
+func (r *rows) Scan(dest ...interface{}) error {
+	return r.Rows.Scan()
 }

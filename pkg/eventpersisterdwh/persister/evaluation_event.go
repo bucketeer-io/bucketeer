@@ -75,9 +75,10 @@ func (w *evalEvtWriter) Write(
 ) map[string]bool {
 	evalEvents := []*epproto.EvaluationEvent{}
 	fails := make(map[string]bool, len(envEvents))
-	for environmentNamespace, events := range envEvents {
-		for id, event := range events {
-			switch evt := event.(type) {
+	for environmentNamespace := range envEvents {
+		events := envEvents[environmentNamespace]
+		for id := range events {
+			switch evt := events[id].(type) {
 			case *eventproto.EvaluationEvent:
 				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentNamespace)
 				if err != nil {

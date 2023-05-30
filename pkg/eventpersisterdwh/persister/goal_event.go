@@ -81,9 +81,10 @@ func (w *goalEvtWriter) Write(
 ) map[string]bool {
 	goalEvents := []*epproto.GoalEvent{}
 	fails := make(map[string]bool, len(envEvents))
-	for environmentNamespace, events := range envEvents {
-		for id, event := range events {
-			switch evt := event.(type) {
+	for environmentNamespace := range envEvents {
+		events := envEvents[environmentNamespace]
+		for id := range events {
+			switch evt := events[id].(type) {
 			case *eventproto.GoalEvent:
 				e, retriable, err := w.convToGoalEvents(ctx, evt, id, environmentNamespace)
 				if err != nil {
