@@ -37,7 +37,7 @@ require (
 	golang.org/x/text v0.8.0
 	golang.org/x/time v0.1.0
 	google.golang.org/api v0.110.0
-	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4
+	google.golang.org/genproto e85fd2cbaebc
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
