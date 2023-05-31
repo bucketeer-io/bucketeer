@@ -16,7 +16,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           running-workflow-name: 'dependabot'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
+          wait-interval: 120
           allowed-conclusions: success
       - name: Dependabot metadata
         id: metadata
