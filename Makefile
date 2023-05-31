@@ -124,7 +124,7 @@ diff-check:
 
 .PHONY: tidy-deps
 tidy-deps:
-	go mod tidy -compat=1.17
+	go mod tidy
 
 .PHONY: $(GO_APP_BUILD_TARGETS)
 $(GO_APP_BUILD_TARGETS): build-%:
