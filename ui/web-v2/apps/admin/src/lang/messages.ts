@@ -1357,6 +1357,24 @@ export const messages = {
           'This variation cannot be deleted because it is used in the default and the off-variation settings.',
       }),
     },
+    evaluation: {
+      last30Days: defineMessage({
+        id: 'feature.last30Days',
+        defaultMessage: 'Last 30 days',
+      }),
+      last14Days: defineMessage({
+        id: 'feature.last14Days',
+        defaultMessage: 'Last 14 days',
+      }),
+      last7Days: defineMessage({
+        id: 'feature.last7Days',
+        defaultMessage: 'Last 7 days',
+      }),
+      last24Hours: defineMessage({
+        id: 'feature.last24Hours',
+        defaultMessage: 'Last 24 hours',
+      }),
+    },
     confirm: {
       title: defineMessage({
         id: 'feature.confirm.title',

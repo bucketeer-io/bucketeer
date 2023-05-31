@@ -6,6 +6,8 @@ import { FC, memo, useState } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { Select } from '../../components/Select';
+import { intl } from '../../lang';
+import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { getEvaluationTimeseriesCount } from '../../modules/evaluationTimeseriesCount';
 import { selectById as selectFeatureById } from '../../modules/features';
@@ -39,18 +41,22 @@ const countsListOptions = [
 const timeRangeOptions = [
   {
     value: TimeRange.LAST_THIRTY_DAYS.toString(),
-    label: 'Last 30 days',
+    label: intl.formatMessage(messages.feature.evaluation.last30Days),
     data: 'day',
   },
   {
     value: TimeRange.FOURTEEN_DAYS.toString(),
-    label: 'Last 14 days',
+    label: intl.formatMessage(messages.feature.evaluation.last14Days),
     data: 'day',
   },
-  { value: TimeRange.SEVEN_DAYS.toString(), label: 'Last 7 days', data: 'day' },
+  {
+    value: TimeRange.SEVEN_DAYS.toString(),
+    label: intl.formatMessage(messages.feature.evaluation.last7Days),
+    data: 'day',
+  },
   {
     value: TimeRange.TWENTY_FOUR_HOURS.toString(),
-    label: 'Last 24 hours',
+    label: intl.formatMessage(messages.feature.evaluation.last24Hours),
     data: 'hour',
   },
 ];
