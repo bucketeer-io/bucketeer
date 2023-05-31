@@ -109,7 +109,7 @@ The reason of using `google.protobuf.Any` is for ease of expansion.
 message ProgressiveRollout {
   enum Type {
     MANUAL_SCHEDULE = 0;
-    AUTOMATIC_SCHEDULE = 1;
+    TEMPLATE_SCHEDULE = 1;
   }
   enum Status {
     WAITING = 0;
@@ -133,26 +133,30 @@ message ProgressiveRollout {
 
 ```proto
 message ProgressiveRolloutSchedule {
-  int64 time = 1;
-  int32 weight = 2;
-  int64 triggered_at = 3;
+  string schedule_id = 1;
+  int64 execute_at = 2;
+  int32 weight = 3;
+  int64 triggered_at = 4;
 }
 
 message ProgressiveRolloutManualScheduleClause {
   repeated ProgressiveRolloutSchedule schedules = 1;
+  string variation_id = 2;
 }
 
-message ProgressiveRolloutAutomaticScheduleClause {
+message ProgressiveRolloutTemplateScheduleClause {
   enum Interval {
     UNKNOWN = 0;
     HOURLY = 1;
     DAILY = 2;
     WEEKLY = 3;
   }
-  // The reason of setting `schedules` is to save `triggered_at` in each schedule.
+  // The reason of setting `schedules` is to save `triggered_at` in each
+  // schedule.
   repeated ProgressiveRolloutSchedule schedules = 1;
   Interval interval = 2;
   int64 increments = 3;
+  string variation_id = 4;
 }
 ```
 
@@ -169,8 +173,8 @@ message CreateProgressiveRolloutRequest {
 message CreateProgressiveRolloutResponse {}
 
 message GetProgressiveRolloutRequest {
-  string id = 1;
-  string environment_namespace = 2;
+  string environment_namespace = 1;
+  string id = 2;
 }
 
 message GetProgressiveRolloutResponse {
@@ -178,14 +182,14 @@ message GetProgressiveRolloutResponse {
 }
 
 message DeleteProgressiveRolloutRequest {
-  string id = 1;
-  string environment_namespace = 2;
+  string environment_namespace = 1;
+  string id = 2;
   DeleteProgressiveRolloutCommand command = 3;
 }
 
 message DeleteProgressiveRolloutResponse {}
 
-message ListProgressiveRolloutRequest {
+message ListProgressiveRolloutsRequest {
   enum OrderBy {
     DEFAULT = 0;
     CREATED_AT = 1;
@@ -202,25 +206,23 @@ message ListProgressiveRolloutRequest {
   OrderBy order_by = 5;
   OrderDirection order_direction = 6;
   optional ProgressiveRollout.Status status = 7;
-  string search_keyword = 8;
-  optional ProgressiveRollout.Type type = 9;
+  optional ProgressiveRollout.Type type = 8;
 }
 
-message ListProgressiveRolloutResponse {
+message ListProgressiveRolloutsResponse {
   repeated ProgressiveRollout progressive_rollouts = 1;
   string cursor = 2;
+  int64 total_count = 3;
 }
 
 message ExecuteProgressiveRolloutRequest {
   string environment_namespace = 1;
   string id = 2;
-  ChangeProgressiveRolloutTriggeredAtCommand
+  ChangeProgressiveRolloutScheduleTriggeredAtCommand
       change_progressive_rollout_triggered_at_command = 3;
 }
 
-message ExecuteProgressiveRolloutResponse {
-  bool already_triggered = 1;
-}
+message ExecuteProgressiveRolloutResponse {}
 ```
 
 * proto/autoops/command.proto
@@ -228,8 +230,10 @@ message ExecuteProgressiveRolloutResponse {
 ```proto
 message CreateProgressiveRolloutCommand {
   string feature_id = 1;
-  optional ProgressiveRolloutManualScheduleClause progressive_rollout_manual_schedule_clause = 2;
-  optional ProgressiveRolloutAutomaticScheduleClause progressive_rollout_automatic_schedule_clause = 3;
+  optional ProgressiveRolloutManualScheduleClause
+      progressive_rollout_manual_schedule_clause = 2;
+  optional ProgressiveRolloutTemplateScheduleClause
+      progressive_rollout_template_schedule_clause = 3;
 }
 
 message DeleteProgressiveRolloutCommand {}
@@ -238,12 +242,12 @@ message AddProgressiveRolloutManualScheduleClauseCommand {
   ProgressiveRolloutManualScheduleClause clause = 1;
 }
 
-message AddProgressiveRolloutAutomaticScheduleClauseCommand {
-  ProgressiveRolloutAutomaticScheduleClause clause = 1;
+message AddProgressiveRolloutTemplateScheduleClauseCommand {
+  ProgressiveRolloutTemplateScheduleClause clause = 1;
 }
 
-message ChangeProgressiveRolloutTriggeredAtCommand {
-  int64 time = 1;
+message ChangeProgressiveRolloutScheduleTriggeredAtCommand {
+  string schedule_id = 1;
 }
 ```
 
