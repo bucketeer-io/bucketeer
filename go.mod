@@ -28,7 +28,7 @@ require (
 	github.com/prometheus/client_golang v1.2.1
 	github.com/robfig/cron v0.0.0-20171101201047-2315d5715e36
 	github.com/slack-go/slack v0.6.4
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 	github.com/tkuchiki/go-timezone v0.2.2
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.13.0
