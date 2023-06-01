@@ -110,7 +110,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
         : eventCounts;
 
     const variationValues = variationTSs.map((vt) => {
-      return variationMap.get(vt.variationId)?.value;
+      return variationMap.get(vt.variationId)?.value || '';
     });
     const timeseries = variationTSs[0]?.timeseries?.timestampsList;
     const data = variationTSs.map((vt, i) => {
@@ -133,8 +133,12 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
     }
 
     const dataLabels = variationTSs.map((vt, i) => {
-      const { name, value } = variationMap.get(vt.variationId);
-      const variation = name ? `${name} - ${value}` : value;
+      let variation = '';
+      if (variationMap.get(vt.variationId)) {
+        const { name, value } = variationMap.get(vt.variationId);
+        variation = name ? `${name} - ${value}` : value;
+      }
+
       return {
         variation:
           variation.length > 50
@@ -222,7 +226,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
                               <span className="">{variation}</span>
                             </td>
                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                              {totalCounts}
+                              {Number(totalCounts).toLocaleString()}
                             </td>
                           </tr>
                         )
