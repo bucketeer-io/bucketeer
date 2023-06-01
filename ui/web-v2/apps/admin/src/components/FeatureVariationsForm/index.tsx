@@ -1,7 +1,7 @@
 import 'react-datepicker/dist/react-datepicker.css';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
@@ -31,7 +31,8 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
     const methods = useFormContext();
     const {
       control,
-      formState: { errors, isSubmitting, isDirty },
+      formState: { errors, isSubmitting, isDirty, dirtyFields },
+      watch,
     } = methods;
     const [feature, _] = useSelector<
       AppState,
@@ -40,7 +41,11 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
       selectFeatureById(state.features, featureId),
       state.features.getFeatureError,
     ]);
+
+    const variations = watch('variations');
+
     const isValid = Object.keys(errors).length == 0;
+    const isEmpty = variations.some((v) => !v.value);
 
     const onVariationIds = [];
     if (feature.defaultStrategy.type === Strategy.Type.FIXED) {
@@ -70,7 +75,7 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
               <button
                 type="button"
                 className="btn-submit"
-                disabled={!isDirty || !isValid}
+                disabled={!isDirty || !isValid || isEmpty}
                 onClick={onOpenConfirmDialog}
               >
                 {f(messages.button.saveWithComment)}
