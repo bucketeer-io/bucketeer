@@ -27,7 +27,7 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.2.0
 	github.com/prometheus/client_golang v1.15.1
 	github.com/robfig/cron v0.0.0-20171101201047-2315d5715e36
-	github.com/slack-go/slack v0.6.4
+	github.com/slack-go/slack v0.12.2
 	github.com/stretchr/testify v1.8.4
 	github.com/tkuchiki/go-timezone v0.2.2
 	go.opencensus.io v0.24.0
@@ -81,7 +81,7 @@ require (
 	github.com/google/pprof v0.0.0-20221103000818-d260c55eee4c // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
-	github.com/gorilla/websocket v1.2.0 // indirect
+	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
@@ -96,7 +96,6 @@ require (
 	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
