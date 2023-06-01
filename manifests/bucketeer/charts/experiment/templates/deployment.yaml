@@ -164,5 +164,26 @@ spec:
               scheme: HTTPS
           resources:
 {{ toYaml .Values.envoy.resources | indent 12 }}
+        - name: httpstan
+          image: "{{ .Values.httpstan.image.repository }}:{{ .Values.httpstan.image.tag }}"
+          imagePullPolicy: {{ .Values.httpstan.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.httpstan.port }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: {{ .Values.httpstan.healthPath }}
+              port: {{ .Values.httpstan.port }}
+              scheme: HTTP
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: {{ .Values.httpstan.healthPath }}
+              port: {{ .Values.httpstan.port }}
+              scheme: HTTP
+          resources:
+{{ toYaml .Values.envoy.resources | indent 12 }}
   strategy:
     type: RollingUpdate

@@ -63,6 +63,16 @@ envoy:
   adminPort: 8001
   resources: {}
 
+httpstan:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-httpstan
+    tag: 4.10.1
+    pullPolicy: IfNotPresent
+  config:
+  port: 8080
+  healthPath: /v1/health
+  resources: {}
+
 service:
   type: ClusterIP
   clusterIP: None
