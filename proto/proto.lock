@@ -3245,6 +3245,40 @@
       }
     },
     {
+      "protopath": "calculator:/:service.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "BatchCalcRequest"
+          },
+          {
+            "name": "BatchCalcResponse"
+          }
+        ],
+        "services": [
+          {
+            "name": "CalculatorService",
+            "rpcs": [
+              {
+                "name": "CalcExperiment",
+                "in_type": "BatchCalcRequest",
+                "out_type": "BatchCalcResponse"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.calculator"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/calculator"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "environment:/:command.proto",
       "def": {
         "messages": [
