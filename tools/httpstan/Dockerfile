@@ -1,6 +1,8 @@
-FROM python:3.9-slim
+FROM python:3.9
 
 WORKDIR /httpstan
+
+ARG TAG
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -9,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/stan-dev/httpstan.git .
+RUN git clone --branch $TAG --depth=1 https://github.com/stan-dev/httpstan.git .
 
 # Build shared libraries (Stan C++)
 RUN make
