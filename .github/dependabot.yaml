@@ -19,7 +19,7 @@ updates:
       prefix: "build"
       include: "scope"
   - package-ecosystem: "npm"
-    directory: "/ui"
+    directory: "/ui/web-v2"
     schedule:
       interval: "monthly"
       time: "10:00"
