@@ -304,14 +304,6 @@ func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamesp
 		}
 		// To avoid duplication when the request fails, we increment the event count in the end
 		// because the user count is an unique count, and there is no problem adding the same event more than once
-		uck := p.newEvaluationCountkey(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
-		if err := p.countUser(uck, e.UserId); err != nil {
-			return err
-		}
-		eck := p.newEvaluationCountkey(eventCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
-		if err := p.countEvent(eck); err != nil {
-			return err
-		}
 		uckv2 := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
 		if err := p.countUser(uckv2, e.UserId); err != nil {
 			return err
@@ -322,20 +314,6 @@ func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamesp
 		}
 	}
 	return nil
-}
-
-// TODO: Remove this method
-func (p *Persister) newEvaluationCountkey(
-	kind, featureID, variationID, environmentNamespace string,
-	timestamp int64,
-) string {
-	t := time.Unix(timestamp, 0)
-	date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, jpLocation)
-	return cache.MakeKey(
-		kind,
-		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
-		environmentNamespace,
-	)
 }
 
 func (p *Persister) newEvaluationCountkeyV2(
