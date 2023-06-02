@@ -9,10 +9,10 @@ dependencies:
   repository: https://charts.bitnami.com/bitnami
   version: 17.7.5
 - name: mysql
-  repository: https://charts.bitnami.com/bitnami
-  version: 9.4.9
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 9.10.1
 - name: vault
   repository: https://helm.releases.hashicorp.com
   version: 0.23.0
-digest: sha256:27f0e4539d34ce915715eaf7641e7b5b39253064bebc4c8172e6bfba190b82dd
-generated: "2023-04-09T18:55:18.456273+02:00"
+digest: sha256:1c4f2a2ce892b0ff9738e666e8d2ec972ae9555974c741852e19efe0a98b513d
+generated: "2023-06-02T23:21:41.710545+02:00"

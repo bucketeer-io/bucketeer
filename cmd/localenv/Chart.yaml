@@ -14,11 +14,14 @@ dependencies:
   version: "17.7.5"
   repository: "https://charts.bitnami.com/bitnami"
 - name: mysql
-  version: "9.4.9"
-  repository: "https://charts.bitnami.com/bitnami"
+  version: "9.10.1"
+  repository: "oci://registry-1.docker.io/bitnamicharts"
 - name: vault
   version: "0.23.0"
   repository: "https://helm.releases.hashicorp.com"
+# - name: mysql
+#   version: "9.4.9"
+#   repository: "https://charts.bitnami.com/bitnami"
 # - name: nginx-ingress
 #   version: "0.16.2"
 #   repository: "https://helm.nginx.com/stable"

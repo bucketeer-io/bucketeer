@@ -18,8 +18,8 @@ nginx:
 
 mysql:
   #initdbScriptsConfigMap: mysql-initdb
-  diagnosticMode:
-    enabled: true
+  #diagnosticMode:
+  #  enabled: true
   volumePermissions:
     enabled: true
   auth:
