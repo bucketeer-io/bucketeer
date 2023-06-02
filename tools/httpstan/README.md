@@ -31,3 +31,22 @@ Just run the following command to test the HttpStan API locally:
 ```bash
 python httpstan_api_test.py
 ```
+
+Here are the example results:
+
+* `compile_model`:
+
+```
+compiler_output: /root/.cache/httpstan/4.10.1/models/h7wjpoel/model_h7wjpoel.cpp: ... 
+
+stanc_warnings: Warning in '/tmp/httpstan_zdtggaqa/model_h7wjpoel.stan', line 4, column 12: Declaration
+    of arrays by placing brackets after a variable name is deprecated and
+    will be removed in Stan 2.33.0. Instead use the array keyword before the
+    type. This can be changed automatically using the auto-format flag to
+    stanc...
+    
+model_name: models/h7wjpoel
+```
+
+As you can see, the `compiler_output` contains the compiler output, the `stanc_warnings` contains the warnings,
+and the `model_name` contains the compiled model name.
