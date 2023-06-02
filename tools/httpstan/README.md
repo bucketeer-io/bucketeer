@@ -15,9 +15,13 @@ make docker-build
 
 ## How to run httpstan image
 
+Use the following command to run the `HttpStan` Docker image on local machine:
+
 ```bash
-docker run -p 8080:8080 -it --rm --name httpstan bucketeer-httpstan:latest
+make run-httpstan-container
 ```
+
+Then you will see a container called `httpstan` running in the background and listening on port: `8080`.
 
 ## Test HttpStan API
 
@@ -25,6 +29,14 @@ There is a Python script that can be used to test the HttpStan API.\
 The script is `httpstan_api_test.py`, the script contains the following functions:
 
 - `compile_model` - test the `POST /v1/models` endpoint, used to compile the model
+
+Install dependencies:
+
+* `requests` - used to send HTTP requests
+
+```bash
+pip install requests
+```
 
 Just run the following command to test the HttpStan API locally:
 
