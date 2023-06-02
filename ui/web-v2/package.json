@@ -59,7 +59,7 @@
     "document-register-element": "1.13.1",
     "formik": "2.2.9",
     "google-protobuf": "3.14.0",
-    "history": "4.10.1",
+    "history": "5.3.0",
     "js-cookie": "2.2.1",
     "jstat": "1.9.4",
     "option-t": "23.0.2",
