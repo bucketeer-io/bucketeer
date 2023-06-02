@@ -51,6 +51,10 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
+var (
+	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
+)
+
 func TestNewEventCounterService(t *testing.T) {
 	metrics := metrics.NewMetrics(
 		9999,
