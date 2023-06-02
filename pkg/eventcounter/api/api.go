@@ -63,7 +63,6 @@ const (
 )
 
 var (
-	jpLocation          = time.FixedZone("Asia/Tokyo", 9*60*60)
 	errUnknownTimeRange = errors.New("eventcounter: a time range is unknown")
 )
 
