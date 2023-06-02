@@ -137,9 +137,6 @@ service EventCounterService {
   rpc GetEvaluationTimeseriesCount(GetEvaluationTimeseriesCountRequest)
       returns (GetEvaluationTimeseriesCountResponse) {}
 
-  rpc GetEvaluationTimeseriesCountV2(GetEvaluationTimeseriesCountRequest)
-      returns (GetEvaluationTimeseriesCountResponse) {}
-
   rpc GetExperimentResult(GetExperimentResultRequest)
       returns (GetExperimentResultResponse) {}
 

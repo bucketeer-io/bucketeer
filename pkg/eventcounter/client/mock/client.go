@@ -69,26 +69,6 @@ func (mr *MockClientMockRecorder) GetEvaluationTimeseriesCount(ctx, in interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluationTimeseriesCount", reflect.TypeOf((*MockClient)(nil).GetEvaluationTimeseriesCount), varargs...)
 }
 
-// GetEvaluationTimeseriesCountV2 mocks base method.
-func (m *MockClient) GetEvaluationTimeseriesCountV2(ctx context.Context, in *eventcounter.GetEvaluationTimeseriesCountRequest, opts ...grpc.CallOption) (*eventcounter.GetEvaluationTimeseriesCountResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetEvaluationTimeseriesCountV2", varargs...)
-	ret0, _ := ret[0].(*eventcounter.GetEvaluationTimeseriesCountResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEvaluationTimeseriesCountV2 indicates an expected call of GetEvaluationTimeseriesCountV2.
-func (mr *MockClientMockRecorder) GetEvaluationTimeseriesCountV2(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluationTimeseriesCountV2", reflect.TypeOf((*MockClient)(nil).GetEvaluationTimeseriesCountV2), varargs...)
-}
-
 // GetExperimentEvaluationCount mocks base method.
 func (m *MockClient) GetExperimentEvaluationCount(ctx context.Context, in *eventcounter.GetExperimentEvaluationCountRequest, opts ...grpc.CallOption) (*eventcounter.GetExperimentEvaluationCountResponse, error) {
 	m.ctrl.T.Helper()
