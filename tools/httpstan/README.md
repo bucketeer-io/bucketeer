@@ -7,6 +7,8 @@ This directory is used to build the `HttpStan` Docker image.
 
 ## How to build httpstan image
 
+If you have compiling errors during the image build process, you might need to increase the docker VM memory.
+
 ```bash
 make docker-build
 ```
