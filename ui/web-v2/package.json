@@ -55,7 +55,7 @@
     "date-fns": "2.16.1",
     "date-fns-tz": "1.2.2",
     "dayjs": "1.8.34",
-    "deep-equal": "2.0.5",
+    "deep-equal": "2.2.1",
     "document-register-element": "1.13.1",
     "formik": "2.2.9",
     "google-protobuf": "3.14.0",
