@@ -13484,10 +13484,10 @@
             "name": "Recipient.Language",
             "enum_fields": [
               {
-                "name": "Japanese"
+                "name": "ENGLISH"
               },
               {
-                "name": "English",
+                "name": "JAPANESE",
                 "integer": 1
               }
             ]
