@@ -50,10 +50,6 @@ const (
 	defaultVariationID = "default"
 )
 
-var (
-	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
-)
-
 type eventMap map[string]proto.Message
 type environmentEventMap map[string]eventMap
 
