@@ -29,8 +29,16 @@ enum CountsListType {
   Event_COUNT = 'eventCount',
 }
 
+export interface TimeRangeOption {
+  value: string;
+  label: string;
+  data: string;
+}
+
 interface FeatureEvaluationProps {
   featureId: string;
+  selectedTimeRange: TimeRangeOption;
+  setSelectedTimeRange: React.Dispatch<React.SetStateAction<TimeRangeOption>>;
 }
 
 const countsListOptions = [
@@ -38,7 +46,7 @@ const countsListOptions = [
   { value: CountsListType.USER_COUNT, label: 'User Count' },
 ];
 
-const timeRangeOptions = [
+export const timeRangeOptions: TimeRangeOption[] = [
   {
     value: TimeRange.LAST_THIRTY_DAYS.toString(),
     label: intl.formatMessage(messages.feature.evaluation.last30Days),
@@ -62,7 +70,7 @@ const timeRangeOptions = [
 ];
 
 export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
-  ({ featureId }) => {
+  ({ featureId, selectedTimeRange, setSelectedTimeRange }) => {
     const dispatch = useDispatch<AppDispatch>();
     const currentEnvironment = useCurrentEnvironment();
     const [userCounts, eventCounts] = useSelector<
@@ -88,9 +96,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
     const [selectedCountsListType, setSelectedCountsListType] = useState(
       countsListOptions[0]
     );
-    const [selectedTimeRange, setSelectedTimeRange] = useState(
-      timeRangeOptions[0]
-    );
+
     const variationMap = new Map<string, Variation.AsObject>();
     feature.variationsList.forEach((v) => {
       variationMap.set(v.id, v);
