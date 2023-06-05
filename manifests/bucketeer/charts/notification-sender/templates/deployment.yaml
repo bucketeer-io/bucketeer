@@ -94,6 +94,8 @@ spec:
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_NOTIFICATION_KEY
               value: /usr/local/certs/service/tls.key
+            - name: BUCKETEER_NOTIFICATION_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
