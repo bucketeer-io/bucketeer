@@ -317,6 +317,15 @@ func (s *grpcGatewayService) GetEvaluations(
 	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, activeFeatures)
 	if req.UserEvaluationsId == ueid {
 		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationNone).Inc()
+		s.logger.Debug(
+			"Features length when UEID is the same",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("tag", req.Tag),
+				zap.Int("featuresLength", len(features)),
+				zap.Int("activeFeaturesLength", len(activeFeatures)),
+			)...,
+		)
 		return &gwproto.GetEvaluationsResponse{
 			State:             featureproto.UserEvaluations_FULL,
 			Evaluations:       nil,
@@ -390,6 +399,16 @@ func (s *grpcGatewayService) GetEvaluations(
 			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationDiff).Inc()
 		}
 	}
+	s.logger.Debug(
+		"Features length when UEID is different",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("tag", req.Tag),
+			zap.Int("featuresLength", len(features)),
+			zap.Int("activeFeaturesLength", len(activeFeatures)),
+			zap.Int("evaluationsLength", len(evaluations.Evaluations)),
+		)...,
+	)
 	return &gwproto.GetEvaluationsResponse{
 		State:             featureproto.UserEvaluations_FULL,
 		Evaluations:       evaluations,
