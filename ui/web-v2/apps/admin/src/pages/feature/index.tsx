@@ -211,7 +211,13 @@ export const FeatureIndexPage: FC = memo(() => {
         options && options.hasExperiment
           ? options.hasExperiment === 'true'
           : null;
-      const tags = options && options.tagIds ? options.tagIds : [];
+
+      const tags =
+        options && Array.isArray(options.tagIds)
+          ? options.tagIds
+          : typeof options?.tagIds === 'string' && options?.tagIds.length > 0
+          ? [options.tagIds]
+          : [];
 
       dispatch(
         listFeatures({
