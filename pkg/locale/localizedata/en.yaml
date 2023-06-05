@@ -20,12 +20,12 @@ AlreadyDeletedError: "データがすでに削除済みです"
 
 # feature error
 DifferentVariationsSize: "featureのvariationsとrolloutのvariationsの数が異なります"
-IncorrectVariationWeight: "weightは0から{{ .Field_1 }}の間である必要があります"
-NothingChange: "変更点がありません"
+InvalidVariationWeight: "weightは0から{{ .Field_1 }}の間である必要があります"
+NothingToChange: "変更点がありません"
 SegmentUsersAlreadyUploading: "segment userのリストはすでにアップロード中です"
-SegmentStatusNotSuceeded: "segmentのstatusがsuceededではありません"
+SegmentStatusNotSucceeded: "segmentのstatusがsuceededではありません"
 SegmentInUse: "segmentがfeature flagで使用されているため、削除できません"
-WaitingOrRunningExperimentExists: "開始予定、もしくは実行中のExperimentが存在します。更新する場合はExperimentを停止してください。"
+HasWaitingOrRunningExperiment: "開始予定、もしくは実行中のExperimentが存在します。更新する場合はExperimentを停止してください。"
 InvalidArchive: "前提条件のフラグとして登録されているフラグをアーカイブすることはできません"
 InvalidChangingVariation: "前提条件のフラグとして登録されているフラグのバリエーションを変更または削除することはできません"
 
@@ -33,8 +33,8 @@ InvalidChangingVariation: "前提条件のフラグとして登録されてい�
 IncompatibleOpsType: "対象のオペレーションタイプに対応していない自動オペレーションルールがあります"
 
 # eventcounter error
-StartAtIsAfterEnd: "start at はend at以前を指定してください。"
-PeroidOutOfRange: "期間は過去30日以内を選択してください。"
+StartAtIsAfterEndAt: "start at はend at以前を指定してください。"
+PeriodOutOfRange: "期間は過去30日以内を選択してください。"
 
 # environment error
 ProjectDisabled: "projectのデータが無効化されています"
@@ -60,5 +60,3 @@ Uploaded: "{{ .Field_1 }}がアップロードされました"
 Cloned: "{{ .Field_1 }}がクローンされました"
 Reset: "{{ .Field_1 }}がリセットされました"
 TrialConverted: "Trialを正式なProjectに変換しました"
-DelayableSet: "feature flagを初回リクエスト時にキューに入れるように変更されました"
-UndelayableSet: "feature flagを初回リクエスト時にキューに入れないように変更されました"
