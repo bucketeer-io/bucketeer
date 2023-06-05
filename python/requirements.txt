@@ -6,7 +6,7 @@ cachetools==4.2.4; python_version >= "3.5" and python_version < "4.0" and (pytho
 certifi==2021.10.8; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.6"
 chardet==4.0.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
 charset-normalizer==2.0.12; python_full_version >= "3.6.0" and python_version >= "3.6"
-cython==0.29.28; python_version >= "2.6" and python_full_version < "3.0.0" or python_full_version >= "3.3.0"
+cython==0.29.35; python_version >= "2.6" and python_full_version < "3.0.0" or python_full_version >= "3.3.0"
 environs==9.5.0; python_version >= "3.6"
 google-api-core==1.31.5; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.6"
 google-api-python-client==2.46.0; python_version >= "3.6"
