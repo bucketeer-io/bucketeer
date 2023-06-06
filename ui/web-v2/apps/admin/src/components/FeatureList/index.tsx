@@ -519,8 +519,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       }
     };
 
-    useEffect(() => {}, []);
-
     return (
       <div
         className={classNames(
