@@ -123,7 +123,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				StartAt:              now.Unix(),
 				EndAt:                now.Add(-31 * 24 * time.Hour).Unix(),
 			},
-			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd)),
+			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEndAt)),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
@@ -572,7 +572,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				StartAt:              now.Unix(),
 				EndAt:                now.Add(-30 * 24 * time.Hour).Unix(),
 			},
-			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd)),
+			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEndAt)),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
