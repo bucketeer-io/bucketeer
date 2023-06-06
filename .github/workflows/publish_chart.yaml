@@ -63,7 +63,7 @@ jobs:
             echo "BUCKETEER_VERSION=$(git describe --tags --always --abbrev=7)" >> $GITHUB_ENV
           fi
       - name: Install helm
-        uses: Azure/setup-helm@18bc76811624f360dbd7f18c2d4ecb32c7b87bab # v1
+        uses: Azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Build helm chart
