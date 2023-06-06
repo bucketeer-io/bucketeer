@@ -16,7 +16,9 @@ package locale
 
 import (
 	"context"
+	"time"
 
+	gotimezone "github.com/tkuchiki/go-timezone"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -41,6 +43,15 @@ func NewLocale(l string) Locale {
 
 func (l *locale) GetLocale() string {
 	return l.locale
+}
+
+func GetLocation(timezone string) (*time.Location, error) {
+	tz := gotimezone.New()
+	info, err := tz.GetTzInfo(timezone)
+	if err != nil {
+		return nil, err
+	}
+	return time.FixedZone(timezone, info.StandardOffset()), nil
 }
 
 func getAcceptLang(ctx context.Context) string {

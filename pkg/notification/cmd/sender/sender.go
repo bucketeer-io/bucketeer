@@ -28,6 +28,7 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
 	notificationsender "github.com/bucketeer-io/bucketeer/pkg/notification/sender"
@@ -66,6 +67,7 @@ type sender struct {
 	pullerMaxOutstandingMessages     *int
 	pullerMaxOutstandingBytes        *int
 	webURL                           *string
+	timezone                         *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -126,6 +128,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Int(),
 		pullerMaxOutstandingBytes: cmd.Flag("puller-max-outstanding-bytes", "Maximum size of unprocessed messages.").Int(),
 		webURL:                    cmd.Flag("web-url", "Web console URL.").Required().String(),
+		timezone:                  cmd.Flag("timezone", "Time zone").Required().String(),
 	}
 	r.RegisterCommand(sender)
 	return sender
@@ -226,12 +229,18 @@ func (s *sender) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer domainEventInformer.Stop()
 	go domainEventInformer.Run() // nolint:errcheck
 
+	location, err := locale.GetLocation(*s.timezone)
+	if err != nil {
+		return err
+	}
+
 	jobs := s.createJobs(
 		environmentClient,
 		featureClient,
 		experimentClient,
 		eventCounterClient,
 		notificationSender,
+		location,
 		logger,
 	)
 	batchInformer, err := batchinformer.NewJobInformer(
@@ -299,6 +308,7 @@ func (s *sender) createJobs(
 	experimentClient experimentclient.Client,
 	eventCounterClient ecclient.Client,
 	notificationSender notificationsender.Sender,
+	location *time.Location,
 	logger *zap.Logger) []*batchinformer.Job {
 	return []*batchinformer.Job{
 		{
@@ -328,6 +338,7 @@ func (s *sender) createJobs(
 				environmentClient,
 				eventCounterClient,
 				notificationSender,
+				location,
 				job.WithTimeout(60*time.Minute),
 				job.WithLogger(logger)),
 		},
