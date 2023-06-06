@@ -138,9 +138,9 @@ func (n *slackNotifier) newLocalizer(
 ) (locale.Localizer, error) {
 	var l string
 	switch language {
-	case notificationproto.Recipient_Japanese:
+	case notificationproto.Recipient_JAPANESE:
 		l = locale.Ja
-	case notificationproto.Recipient_English:
+	case notificationproto.Recipient_ENGLISH:
 		l = locale.En
 	default:
 		return nil, ErrInvalidLanguage
