@@ -104,7 +104,7 @@ func TestHandle(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
-						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_English}},
+						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}},
 					}}, nil)
 				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("test"))
 			},
@@ -125,7 +125,7 @@ func TestHandle(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
-						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_English}},
+						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}},
 					}}, nil)
 				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
@@ -146,7 +146,7 @@ func TestHandle(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
-						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_English}}, {Id: "sid1", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_English}},
+						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}}, {Id: "sid1", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}},
 					}}, nil)
 				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(2)
 			},
@@ -167,7 +167,7 @@ func TestHandle(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledAdminSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
-						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_English}},
+						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}},
 					}}, nil)
 				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
@@ -188,7 +188,7 @@ func TestHandle(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledAdminSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
-						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_English}}, {Id: "sid1", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_English}},
+						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}}, {Id: "sid1", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}},
 					}}, nil)
 				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(2)
 			},
