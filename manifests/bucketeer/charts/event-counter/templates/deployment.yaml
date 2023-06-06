@@ -42,7 +42,7 @@ spec:
           secret:
             secretName: {{ template "service-token-secret" . }}
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "event-counter.name" . }}
+      serviceAccountName: {{ template "event-counter.fullname" . }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}

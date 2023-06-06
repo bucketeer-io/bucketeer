@@ -37,7 +37,7 @@ spec:
           secret:
             secretName: {{ template "service-cert-secret" . }}
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "feature-recorder.name" . }}
+      serviceAccountName: {{ template "feature-recorder.fullname" . }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}

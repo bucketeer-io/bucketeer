@@ -39,7 +39,7 @@ spec:
           secret:
             secretName: {{ template "service-token-secret" . }}
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "user-persister.name" . }}
+      serviceAccountName: {{ template "user-persister.fullname" . }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
