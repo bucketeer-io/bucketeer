@@ -34,23 +34,28 @@ var (
 
 // status error messages
 const (
-	FeatureFlagID                    = "FeatureFlagID"
-	RequiredFieldTemplate            = "RequiredField"
-	InternalServerError              = "InternalServerError"
-	NotFoundError                    = "NotFoundError"
-	InvalidArgumentError             = "InvalidArgumentError"
-	UnauthenticatedError             = "UnauthenticatedError"
-	PermissionDenied                 = "PermissionDenied"
-	AlreadyExistsError               = "AlreadyExistsError"
-	AlreadyDeletedError              = "AlreadyDeletedError"
-	StartAtIsAfterEnd                = "StartAtIsAfterEnd"
-	ProjectDisabled                  = "ProjectDisabled"
-	SegmentInUse                     = "SegmentInUse"
-	SegmentUsersAlreadyUploading     = "SegmentUsersAlreadyUploading"
-	SegmentStatusNotSuceeded         = "SegmentStatusNotSuceeded"
-	WaitingOrRunningExperimentExists = "WaitingOrRunningExperimentExists"
-	NothingChange                    = "NothingChange"
-	DifferentVariationsSize          = "DifferentVariationsSize"
+	// nouns
+	FeatureFlagID = "FeatureFlagID"
+	// error sentence
+	RequiredFieldTemplate = "RequiredField"
+	InternalServerError   = "InternalServerError"
+	NotFoundError         = "NotFoundError"
+	InvalidArgumentError  = "InvalidArgumentError"
+	UnauthenticatedError  = "UnauthenticatedError"
+	PermissionDenied      = "PermissionDenied"
+	AlreadyExistsError    = "AlreadyExistsError"
+	AlreadyDeletedError   = "AlreadyDeletedError"
+	// event counter
+	StartAtIsAfterEndAt = "StartAtIsAfterEndAt"
+	// environment
+	ProjectDisabled = "ProjectDisabled"
+	// feature
+	SegmentInUse                  = "SegmentInUse"
+	SegmentUsersAlreadyUploading  = "SegmentUsersAlreadyUploading"
+	SegmentStatusNotSucceeded     = "SegmentStatusNotSucceeded"
+	HasWaitingOrRunningExperiment = "HasWaitingOrRunningExperiment"
+	NothingToChange               = "NothingToChange"
+	DifferentVariationsSize       = "DifferentVariationsSize"
 )
 
 // domain events
@@ -72,8 +77,6 @@ const (
 	ResetTemplate      = "Reset"
 	ClonedTemplate     = "Cloned"
 	TrialConverted     = "TrialConverted"
-	DelayableSet       = "DelayableSet"
-	UndelayableSet     = "UndelayableSet"
 )
 
 func init() {

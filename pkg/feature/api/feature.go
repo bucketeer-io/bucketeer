@@ -691,7 +691,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 	if runningExperimentExists {
 		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+			Message: localizer.MustLocalize(locale.HasWaitingOrRunningExperiment),
 		})
 		if err != nil {
 			return nil, statusInternal.Err()
@@ -1073,7 +1073,7 @@ func (s *FeatureService) updateFeature(
 	if runningExperimentExists {
 		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+			Message: localizer.MustLocalize(locale.HasWaitingOrRunningExperiment),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -1202,7 +1202,7 @@ func (s *FeatureService) convUpdateFeatureError(err error, localizer locale.Loca
 	case domain.ErrAlreadyDisabled:
 		dt, err := statusNothingChange.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NothingChange),
+			Message: localizer.MustLocalize(locale.NothingToChange),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -1211,7 +1211,7 @@ func (s *FeatureService) convUpdateFeatureError(err error, localizer locale.Loca
 	case domain.ErrAlreadyEnabled:
 		dt, err := statusNothingChange.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NothingChange),
+			Message: localizer.MustLocalize(locale.NothingToChange),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -1262,7 +1262,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 	if runningExperimentExists {
 		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+			Message: localizer.MustLocalize(locale.HasWaitingOrRunningExperiment),
 		})
 		if err != nil {
 			return nil, statusInternal.Err()
@@ -1485,7 +1485,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	if runningExperimentExists {
 		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+			Message: localizer.MustLocalize(locale.HasWaitingOrRunningExperiment),
 		})
 		if err != nil {
 			return nil, statusInternal.Err()

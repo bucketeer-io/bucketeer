@@ -62,16 +62,6 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.DeletedTemplate, "feature flag"),
 		}
-	case proto.Event_FEATURE_EVALUATION_DELAYABLE_SET:
-		return &proto.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.DelayableSet),
-		}
-	case proto.Event_FEATURE_EVALUATION_UNDELAYABLE_SET:
-		return &proto.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UndelayableSet),
-		}
 	case proto.Event_FEATURE_DESCRIPTION_CHANGED:
 		return &proto.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

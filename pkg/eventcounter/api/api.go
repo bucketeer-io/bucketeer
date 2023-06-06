@@ -190,7 +190,7 @@ func validateGetExperimentEvaluationCountRequest(
 	if req.StartAt > req.EndAt {
 		dt, err := statusStartAtIsAfterEndAt.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd),
+			Message: localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEndAt),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -1086,7 +1086,7 @@ func validateGetExperimentGoalCountRequest(
 	if req.StartAt > req.EndAt {
 		dt, err := statusStartAtIsAfterEndAt.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEnd),
+			Message: localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEndAt),
 		})
 		if err != nil {
 			return statusInternal.Err()
