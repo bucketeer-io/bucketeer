@@ -40,7 +40,7 @@ spec:
           secret:
             secretName: {{ template "service-token-secret" . }} 
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "ops-event-batch.name" . }}
+      serviceAccountName: {{ template "ops-event-batch.fullname" . }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}

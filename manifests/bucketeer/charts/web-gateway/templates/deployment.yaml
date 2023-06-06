@@ -62,7 +62,7 @@ spec:
           secret:
             secretName: {{ template "service-cert-secret" . }}
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "web-gateway.name" . }}
+      serviceAccountName: {{ template "web-gateway.fullname" . }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}

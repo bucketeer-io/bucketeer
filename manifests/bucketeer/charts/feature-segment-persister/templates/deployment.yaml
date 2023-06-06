@@ -36,7 +36,7 @@ spec:
           secret:
             secretName: {{ template "service-cert-secret" . }}
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "feature-segment-persister.name" . }}
+      serviceAccountName: {{ template "feature-segment-persister.fullname" . }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}

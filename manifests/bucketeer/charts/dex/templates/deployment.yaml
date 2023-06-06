@@ -23,7 +23,7 @@ spec:
       affinity: {{ toYaml .Values.affinity | nindent 8 }}
       nodeSelector: {{ toYaml .Values.nodeSelector | indent 8 }}
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "dex.name" . }}
+      serviceAccountName: {{ template "dex.fullname" . }}
       {{- end }}
       containers:
         - name: envoy

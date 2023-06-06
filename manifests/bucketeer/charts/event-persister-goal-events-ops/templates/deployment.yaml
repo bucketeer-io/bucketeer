@@ -37,7 +37,7 @@ spec:
           secret:
             secretName: {{ template "service-token-secret" . }}
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "event-persister-goal-events-ops.name" . }}
+      serviceAccountName: {{ template "event-persister-goal-events-ops.fullname" . }}
       {{- end }}
       containers:
         - name: "event-persister-ops"
