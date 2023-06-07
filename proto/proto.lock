@@ -4814,14 +4814,6 @@
                 "integer": 5
               },
               {
-                "name": "FEATURE_EVALUATION_DELAYABLE_SET",
-                "integer": 6
-              },
-              {
-                "name": "FEATURE_EVALUATION_UNDELAYABLE_SET",
-                "integer": 7
-              },
-              {
                 "name": "FEATURE_DESCRIPTION_CHANGED",
                 "integer": 8
               },
