@@ -291,7 +291,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	projectID := envAPIKey.ProjectId
 	environmentNamespace := envAPIKey.EnvironmentNamespace
 	if err := s.validateGetEvaluationsRequest(req); err != nil {
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationBadRequest).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationBadRequest).Inc()
 		return nil, err
 	}
 	s.publishUser(ctx, environmentNamespace, req.Tag, req.User, req.SourceId)
@@ -302,21 +302,22 @@ func (s *grpcGatewayService) GetEvaluations(
 		},
 	)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationInternalError).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
 		return nil, err
 	}
 	features := f.([]*featureproto.Feature)
 	activeFeatures := s.filterOutArchivedFeatures(features)
+	filteredByTag := s.filterByTag(activeFeatures, req.Tag)
 	if len(features) == 0 {
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationNone).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationNoFeatures).Inc()
 		return &gwproto.GetEvaluationsResponse{
 			State:       featureproto.UserEvaluations_FULL,
 			Evaluations: nil,
 		}, nil
 	}
-	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, activeFeatures)
+	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
 	if req.UserEvaluationsId == ueid {
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationNone).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationNone).Inc()
 		s.logger.Debug(
 			"Features length when UEID is the same",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -324,6 +325,7 @@ func (s *grpcGatewayService) GetEvaluations(
 				zap.String("tag", req.Tag),
 				zap.Int("featuresLength", len(features)),
 				zap.Int("activeFeaturesLength", len(activeFeatures)),
+				zap.Int("filteredByTagLength", len(filteredByTag)),
 			)...,
 		)
 		return &gwproto.GetEvaluationsResponse{
@@ -334,7 +336,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, environmentNamespace)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationInternalError).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
 		s.logger.Error(
 			"Failed to get segment users map",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -349,7 +351,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	// FIXME Remove s.getEvaluations once all SDKs use evaluatedAt.
 	if req.EvaluatedAt == 0 && !req.UserAttributesUpdated {
 		if req.Tag == "" {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationBadRequest).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationBadRequest).Inc()
 			return nil, ErrTagRequired
 		}
 		evaluations, err = featuredomain.EvaluateFeatures(
@@ -359,7 +361,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationInternalError).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -370,7 +372,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			)
 			return nil, ErrInternal
 		}
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationOld).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationOld).Inc()
 	} else {
 		evaluations, err = featuredomain.EvaluateFeaturesByEvaluatedAt(
 			features,
@@ -382,7 +384,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationInternalError).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -394,9 +396,9 @@ func (s *grpcGatewayService) GetEvaluations(
 			return nil, ErrInternal
 		}
 		if evaluations.ForceUpdate {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationAll).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationAll).Inc()
 		} else {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, evaluationDiff).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationDiff).Inc()
 		}
 	}
 	s.logger.Debug(
@@ -406,6 +408,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			zap.String("tag", req.Tag),
 			zap.Int("featuresLength", len(features)),
 			zap.Int("activeFeaturesLength", len(activeFeatures)),
+			zap.Int("filteredByTagLength", len(filteredByTag)),
 			zap.Int("evaluationsLength", len(evaluations.Evaluations)),
 		)...,
 	)
@@ -1112,6 +1115,19 @@ func (s *grpcGatewayService) filterOutArchivedFeatures(fs []*featureproto.Featur
 			continue
 		}
 		result = append(result, f)
+	}
+	return result
+}
+
+func (s *grpcGatewayService) filterByTag(fs []*featureproto.Feature, tag string) []*featureproto.Feature {
+	result := make([]*featureproto.Feature, 0)
+	for _, f := range fs {
+		for _, t := range f.Tags {
+			if t == tag {
+				result = append(result, f)
+				break
+			}
+		}
 	}
 	return result
 }
