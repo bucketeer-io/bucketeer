@@ -1,0 +1,310 @@
+// package: bucketeer.environment
+// file: proto/environment/service.proto
+
+import * as proto_environment_service_pb from "../../proto/environment/service_pb";
+import {grpc} from "@improbable-eng/grpc-web";
+
+type EnvironmentServiceGetEnvironment = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.GetEnvironmentRequest;
+  readonly responseType: typeof proto_environment_service_pb.GetEnvironmentResponse;
+};
+
+type EnvironmentServiceGetEnvironmentByNamespace = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.GetEnvironmentByNamespaceRequest;
+  readonly responseType: typeof proto_environment_service_pb.GetEnvironmentByNamespaceResponse;
+};
+
+type EnvironmentServiceListEnvironments = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.ListEnvironmentsRequest;
+  readonly responseType: typeof proto_environment_service_pb.ListEnvironmentsResponse;
+};
+
+type EnvironmentServiceCreateEnvironment = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.CreateEnvironmentRequest;
+  readonly responseType: typeof proto_environment_service_pb.CreateEnvironmentResponse;
+};
+
+type EnvironmentServiceUpdateEnvironment = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.UpdateEnvironmentRequest;
+  readonly responseType: typeof proto_environment_service_pb.UpdateEnvironmentResponse;
+};
+
+type EnvironmentServiceDeleteEnvironment = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.DeleteEnvironmentRequest;
+  readonly responseType: typeof proto_environment_service_pb.DeleteEnvironmentResponse;
+};
+
+type EnvironmentServiceGetProject = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.GetProjectRequest;
+  readonly responseType: typeof proto_environment_service_pb.GetProjectResponse;
+};
+
+type EnvironmentServiceListProjects = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.ListProjectsRequest;
+  readonly responseType: typeof proto_environment_service_pb.ListProjectsResponse;
+};
+
+type EnvironmentServiceCreateProject = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.CreateProjectRequest;
+  readonly responseType: typeof proto_environment_service_pb.CreateProjectResponse;
+};
+
+type EnvironmentServiceCreateTrialProject = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.CreateTrialProjectRequest;
+  readonly responseType: typeof proto_environment_service_pb.CreateTrialProjectResponse;
+};
+
+type EnvironmentServiceUpdateProject = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.UpdateProjectRequest;
+  readonly responseType: typeof proto_environment_service_pb.UpdateProjectResponse;
+};
+
+type EnvironmentServiceEnableProject = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.EnableProjectRequest;
+  readonly responseType: typeof proto_environment_service_pb.EnableProjectResponse;
+};
+
+type EnvironmentServiceDisableProject = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.DisableProjectRequest;
+  readonly responseType: typeof proto_environment_service_pb.DisableProjectResponse;
+};
+
+type EnvironmentServiceConvertTrialProject = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.ConvertTrialProjectRequest;
+  readonly responseType: typeof proto_environment_service_pb.ConvertTrialProjectResponse;
+};
+
+export class EnvironmentService {
+  static readonly serviceName: string;
+  static readonly GetEnvironment: EnvironmentServiceGetEnvironment;
+  static readonly GetEnvironmentByNamespace: EnvironmentServiceGetEnvironmentByNamespace;
+  static readonly ListEnvironments: EnvironmentServiceListEnvironments;
+  static readonly CreateEnvironment: EnvironmentServiceCreateEnvironment;
+  static readonly UpdateEnvironment: EnvironmentServiceUpdateEnvironment;
+  static readonly DeleteEnvironment: EnvironmentServiceDeleteEnvironment;
+  static readonly GetProject: EnvironmentServiceGetProject;
+  static readonly ListProjects: EnvironmentServiceListProjects;
+  static readonly CreateProject: EnvironmentServiceCreateProject;
+  static readonly CreateTrialProject: EnvironmentServiceCreateTrialProject;
+  static readonly UpdateProject: EnvironmentServiceUpdateProject;
+  static readonly EnableProject: EnvironmentServiceEnableProject;
+  static readonly DisableProject: EnvironmentServiceDisableProject;
+  static readonly ConvertTrialProject: EnvironmentServiceConvertTrialProject;
+}
+
+export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
+export type Status = { details: string, code: number; metadata: grpc.Metadata }
+
+interface UnaryResponse {
+  cancel(): void;
+}
+interface ResponseStream<T> {
+  cancel(): void;
+  on(type: 'data', handler: (message: T) => void): ResponseStream<T>;
+  on(type: 'end', handler: (status?: Status) => void): ResponseStream<T>;
+  on(type: 'status', handler: (status: Status) => void): ResponseStream<T>;
+}
+interface RequestStream<T> {
+  write(message: T): RequestStream<T>;
+  end(): void;
+  cancel(): void;
+  on(type: 'end', handler: (status?: Status) => void): RequestStream<T>;
+  on(type: 'status', handler: (status: Status) => void): RequestStream<T>;
+}
+interface BidirectionalStream<ReqT, ResT> {
+  write(message: ReqT): BidirectionalStream<ReqT, ResT>;
+  end(): void;
+  cancel(): void;
+  on(type: 'data', handler: (message: ResT) => void): BidirectionalStream<ReqT, ResT>;
+  on(type: 'end', handler: (status?: Status) => void): BidirectionalStream<ReqT, ResT>;
+  on(type: 'status', handler: (status: Status) => void): BidirectionalStream<ReqT, ResT>;
+}
+
+export class EnvironmentServiceClient {
+  readonly serviceHost: string;
+
+  constructor(serviceHost: string, options?: grpc.RpcOptions);
+  getEnvironment(
+    requestMessage: proto_environment_service_pb.GetEnvironmentRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetEnvironmentResponse|null) => void
+  ): UnaryResponse;
+  getEnvironment(
+    requestMessage: proto_environment_service_pb.GetEnvironmentRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetEnvironmentResponse|null) => void
+  ): UnaryResponse;
+  getEnvironmentByNamespace(
+    requestMessage: proto_environment_service_pb.GetEnvironmentByNamespaceRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetEnvironmentByNamespaceResponse|null) => void
+  ): UnaryResponse;
+  getEnvironmentByNamespace(
+    requestMessage: proto_environment_service_pb.GetEnvironmentByNamespaceRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetEnvironmentByNamespaceResponse|null) => void
+  ): UnaryResponse;
+  listEnvironments(
+    requestMessage: proto_environment_service_pb.ListEnvironmentsRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ListEnvironmentsResponse|null) => void
+  ): UnaryResponse;
+  listEnvironments(
+    requestMessage: proto_environment_service_pb.ListEnvironmentsRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ListEnvironmentsResponse|null) => void
+  ): UnaryResponse;
+  createEnvironment(
+    requestMessage: proto_environment_service_pb.CreateEnvironmentRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateEnvironmentResponse|null) => void
+  ): UnaryResponse;
+  createEnvironment(
+    requestMessage: proto_environment_service_pb.CreateEnvironmentRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateEnvironmentResponse|null) => void
+  ): UnaryResponse;
+  updateEnvironment(
+    requestMessage: proto_environment_service_pb.UpdateEnvironmentRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UpdateEnvironmentResponse|null) => void
+  ): UnaryResponse;
+  updateEnvironment(
+    requestMessage: proto_environment_service_pb.UpdateEnvironmentRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UpdateEnvironmentResponse|null) => void
+  ): UnaryResponse;
+  deleteEnvironment(
+    requestMessage: proto_environment_service_pb.DeleteEnvironmentRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.DeleteEnvironmentResponse|null) => void
+  ): UnaryResponse;
+  deleteEnvironment(
+    requestMessage: proto_environment_service_pb.DeleteEnvironmentRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.DeleteEnvironmentResponse|null) => void
+  ): UnaryResponse;
+  getProject(
+    requestMessage: proto_environment_service_pb.GetProjectRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetProjectResponse|null) => void
+  ): UnaryResponse;
+  getProject(
+    requestMessage: proto_environment_service_pb.GetProjectRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetProjectResponse|null) => void
+  ): UnaryResponse;
+  listProjects(
+    requestMessage: proto_environment_service_pb.ListProjectsRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ListProjectsResponse|null) => void
+  ): UnaryResponse;
+  listProjects(
+    requestMessage: proto_environment_service_pb.ListProjectsRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ListProjectsResponse|null) => void
+  ): UnaryResponse;
+  createProject(
+    requestMessage: proto_environment_service_pb.CreateProjectRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateProjectResponse|null) => void
+  ): UnaryResponse;
+  createProject(
+    requestMessage: proto_environment_service_pb.CreateProjectRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateProjectResponse|null) => void
+  ): UnaryResponse;
+  createTrialProject(
+    requestMessage: proto_environment_service_pb.CreateTrialProjectRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateTrialProjectResponse|null) => void
+  ): UnaryResponse;
+  createTrialProject(
+    requestMessage: proto_environment_service_pb.CreateTrialProjectRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateTrialProjectResponse|null) => void
+  ): UnaryResponse;
+  updateProject(
+    requestMessage: proto_environment_service_pb.UpdateProjectRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UpdateProjectResponse|null) => void
+  ): UnaryResponse;
+  updateProject(
+    requestMessage: proto_environment_service_pb.UpdateProjectRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UpdateProjectResponse|null) => void
+  ): UnaryResponse;
+  enableProject(
+    requestMessage: proto_environment_service_pb.EnableProjectRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.EnableProjectResponse|null) => void
+  ): UnaryResponse;
+  enableProject(
+    requestMessage: proto_environment_service_pb.EnableProjectRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.EnableProjectResponse|null) => void
+  ): UnaryResponse;
+  disableProject(
+    requestMessage: proto_environment_service_pb.DisableProjectRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.DisableProjectResponse|null) => void
+  ): UnaryResponse;
+  disableProject(
+    requestMessage: proto_environment_service_pb.DisableProjectRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.DisableProjectResponse|null) => void
+  ): UnaryResponse;
+  convertTrialProject(
+    requestMessage: proto_environment_service_pb.ConvertTrialProjectRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ConvertTrialProjectResponse|null) => void
+  ): UnaryResponse;
+  convertTrialProject(
+    requestMessage: proto_environment_service_pb.ConvertTrialProjectRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ConvertTrialProjectResponse|null) => void
+  ): UnaryResponse;
+}
+

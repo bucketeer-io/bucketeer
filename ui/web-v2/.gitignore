@@ -39,10 +39,5 @@ extracted-messages.json
 .DS_Store
 Thumbs.db
 
-**/proto/**/*.js
-**/proto/**/*.ts
 **/certs/tls.crt
 **/certs/tls.key
-
-**/proto/**/*.js
-**/proto/**/*.ts
