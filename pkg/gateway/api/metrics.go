@@ -54,6 +54,7 @@ const (
 	evaluationAll           = "All"
 	evaluationDiff          = "Diff"
 	evaluationNone          = "None"
+	evaluationNoFeatures    = "NoFeatures"
 	evaluationOld           = "Old"
 	evaluationInternalError = "InternalError"
 	evaluationBadRequest    = "BadRequest"
@@ -81,7 +82,7 @@ var (
 			Subsystem: "gateway",
 			Name:      "api_evaluations_total",
 			Help:      "Total number of evaluations",
-		}, []string{"project_id", "environment_namespace", "evaluation_type"})
+		}, []string{"project_id", "environment_namespace", "tag", "evaluation_type"})
 	// TODO: Remove after deleting api-gateway REST server
 	restCacheCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{

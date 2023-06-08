@@ -1079,10 +1079,11 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 	}
 	multiFeatures := append(features, features2...)
 	multiFeatures = append(multiFeatures, features3...)
+	androidFeatures := features
 	userID := "user-id-0"
 	userMetadata := map[string]string{"b": "value-b", "c": "value-c", "a": "value-a", "d": "value-d"}
-	ueid := featuredomain.UserEvaluationsID(userID, nil, features)
-	ueidWithData := featuredomain.UserEvaluationsID(userID, userMetadata, features)
+	ueidFromAndroidFeatures := featuredomain.UserEvaluationsID(userID, nil, androidFeatures)
+	ueidWithDataFromAndroidFeatures := featuredomain.UserEvaluationsID(userID, userMetadata, androidFeatures)
 
 	patterns := []struct {
 		desc                      string
@@ -1106,12 +1107,12 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 					}, nil)
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
-						Features: features,
+						Features: multiFeatures,
 					}, nil)
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
-				Tag: "test",
+				Tag: "android",
 				User: &userproto.User{
 					Id:   userID,
 					Data: userMetadata,
@@ -1119,7 +1120,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			},
 			expected: &gwproto.GetEvaluationsResponse{
 				State:             featureproto.UserEvaluations_FULL,
-				UserEvaluationsId: ueidWithData,
+				UserEvaluationsId: ueidWithDataFromAndroidFeatures,
 			},
 			expectedErr:               nil,
 			expectedEvaluationsAssert: assert.NotNil,
@@ -1143,16 +1144,16 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
-				Tag: "test",
+				Tag: "android",
 				User: &userproto.User{
 					Id:   userID,
 					Data: userMetadata,
 				},
-				UserEvaluationsId: featuredomain.UserEvaluationsID(userID, userMetadata, multiFeatures),
+				UserEvaluationsId: ueidWithDataFromAndroidFeatures,
 			},
 			expected: &gwproto.GetEvaluationsResponse{
 				State:             featureproto.UserEvaluations_FULL,
-				UserEvaluationsId: featuredomain.UserEvaluationsID(userID, userMetadata, multiFeatures),
+				UserEvaluationsId: ueidWithDataFromAndroidFeatures,
 			},
 			expectedErr:               nil,
 			expectedEvaluationsAssert: assert.Nil,
@@ -1171,12 +1172,12 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 					}, nil)
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
-						Features: features,
+						Features: multiFeatures,
 					}, nil)
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
-				Tag: "test",
+				Tag: "android",
 				User: &userproto.User{
 					Id:   userID,
 					Data: userMetadata,
@@ -1185,7 +1186,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			},
 			expected: &gwproto.GetEvaluationsResponse{
 				State:             featureproto.UserEvaluations_FULL,
-				UserEvaluationsId: ueidWithData,
+				UserEvaluationsId: ueidWithDataFromAndroidFeatures,
 			},
 			expectedErr:               nil,
 			expectedEvaluationsAssert: assert.NotNil,
@@ -1204,18 +1205,18 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 					}, nil)
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
-						Features: features,
+						Features: multiFeatures,
 					}, nil)
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
-				Tag:               "test",
+				Tag:               "android",
 				User:              &userproto.User{Id: userID},
-				UserEvaluationsId: ueid,
+				UserEvaluationsId: ueidFromAndroidFeatures,
 			},
 			expected: &gwproto.GetEvaluationsResponse{
 				State:             featureproto.UserEvaluations_FULL,
-				UserEvaluationsId: ueid,
+				UserEvaluationsId: ueidFromAndroidFeatures,
 			},
 			expectedErr:               nil,
 			expectedEvaluationsAssert: assert.Nil,
@@ -1234,34 +1235,36 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 					}, nil)
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
-						Features: features,
+						Features: multiFeatures,
 					}, nil)
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: &gwproto.GetEvaluationsRequest{
-				Tag:               "test",
+				Tag:               "android",
 				User:              &userproto.User{Id: userID},
 				UserEvaluationsId: "evaluation-id",
 			},
 			expected: &gwproto.GetEvaluationsResponse{
 				State:             featureproto.UserEvaluations_FULL,
-				UserEvaluationsId: ueid,
+				UserEvaluationsId: ueidFromAndroidFeatures,
 			},
 			expectedErr:               nil,
 			expectedEvaluationsAssert: assert.NotNil,
 		},
 	}
 	for _, p := range patterns {
-		gs := newGrpcGatewayServiceWithMock(t, mockController)
-		p.setup(gs)
-		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
-			"authorization": []string{"test-key"},
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"authorization": []string{"test-key"},
+			})
+			actual, err := gs.GetEvaluations(ctx, p.input)
+			assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
+			assert.Equal(t, p.expected.UserEvaluationsId, actual.UserEvaluationsId, "%s", p.desc)
+			p.expectedEvaluationsAssert(t, actual.Evaluations, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
-		actual, err := gs.GetEvaluations(ctx, p.input)
-		assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
-		assert.Equal(t, p.expected.UserEvaluationsId, actual.UserEvaluationsId, "%s", p.desc)
-		p.expectedEvaluationsAssert(t, actual.Evaluations, "%s", p.desc)
-		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
