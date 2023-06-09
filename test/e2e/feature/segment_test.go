@@ -81,6 +81,7 @@ func TestGetUsedSegment(t *testing.T) {
 	addCmd, err := util.MarshalCommand(&featureproto.AddRuleCommand{Rule: rule})
 	require.NoError(t, err)
 	updateFeatureTargeting(t, client, addCmd, featureID)
+	feature = getFeature(t, featureID, client)
 	actual := getSegment(ctx, t, client, segment.Id)
 	if !proto.Equal(feature, actual.Features[0]) {
 		t.Fatalf("Different feature. Expected: %v actual: %v", feature, actual.Features[0])
