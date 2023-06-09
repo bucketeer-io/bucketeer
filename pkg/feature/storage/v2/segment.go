@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -267,7 +268,16 @@ func (s *segmentStorage) ListSegments(
 						rules LIKE concat("%%", segment.id, "%%")
 				) > 0 THEN TRUE 
 				ELSE FALSE
-			END AS is_in_use_status
+			END AS is_in_use_status,
+			(
+				SELECT 
+					GROUP_CONCAT(id)
+				FROM 
+					feature
+				WHERE
+					environment_namespace = ? AND
+					rules LIKE concat("%%", segment.id, "%%")
+			) AS feature_ids
 		FROM
 			segment
 		%s %s %s %s
@@ -282,6 +292,7 @@ func (s *segmentStorage) ListSegments(
 	for rows.Next() {
 		segment := proto.Segment{}
 		var status int32
+		var featureIDs string
 		err := rows.Scan(
 			&segment.Id,
 			&segment.Name,
@@ -295,10 +306,12 @@ func (s *segmentStorage) ListSegments(
 			&segment.ExcludedUserCount,
 			&status,
 			&segment.IsInUseStatus,
+			&featureIDs,
 		)
 		if err != nil {
 			return nil, 0, 0, err
 		}
+		segment.FeatureIds = strings.Split(featureIDs, ",")
 		segment.Status = proto.Segment_Status(status)
 		segments = append(segments, &segment)
 	}

@@ -38,6 +38,7 @@ message Segment {
   int64 excluded_user_count = 10 [deprecated = true];
   Status status = 11;
   bool is_in_use_status = 12;  // This field is set only when APIs return.
+  repeated string feature_ids = 13;
 }
 
 message SegmentUser {
