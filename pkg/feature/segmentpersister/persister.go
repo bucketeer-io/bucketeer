@@ -329,7 +329,7 @@ func validateSegmentUserState(state featureproto.SegmentUser_State) bool {
 
 func (p *Persister) handleEvent(ctx context.Context, event *serviceevent.BulkSegmentUsersReceivedEvent) error {
 	segmentStorage := v2fs.NewSegmentStorage(p.mysqlClient)
-	segment, err := segmentStorage.GetSegment(ctx, event.SegmentId, event.EnvironmentNamespace)
+	segment, _, err := segmentStorage.GetSegment(ctx, event.SegmentId, event.EnvironmentNamespace)
 	if err != nil {
 		return err
 	}
@@ -417,7 +417,7 @@ func (p *Persister) updateSegmentStatus(
 	}
 	return p.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, err := segmentStorage.GetSegment(ctx, segmentID, environmentNamespace)
+		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentNamespace)
 		if err != nil {
 			return err
 		}

@@ -164,7 +164,7 @@ func (s *FeatureService) updateSegmentUser(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, err := segmentStorage.GetSegment(ctx, segmentID, environmentNamespace)
+		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentNamespace)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
@@ -416,7 +416,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentNamespace)
+		segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentNamespace)
 		if err != nil {
 			return err
 		}
@@ -544,7 +544,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 		return nil, err
 	}
 	segmentStorage := v2fs.NewSegmentStorage(s.mysqlClient)
-	segment, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentNamespace)
+	segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound {
 			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
