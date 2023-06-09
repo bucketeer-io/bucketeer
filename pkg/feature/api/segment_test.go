@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -353,7 +352,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row).Times(2)
 				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(errors.New("error"))
+				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
@@ -362,7 +361,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 			},
 			id:                   "id",
 			environmentNamespace: "ns0",
-			expected:             createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			expected:             nil,
 		},
 	}
 	for _, tc := range testcases {

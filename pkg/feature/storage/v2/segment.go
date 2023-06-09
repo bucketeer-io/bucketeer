@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -189,7 +190,7 @@ func (s *segmentStorage) GetSegment(
 			id = ? AND
 			environment_namespace = ?
 	`
-	var featureIDs string
+	featureIDs := new(sql.NullString)
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
@@ -208,7 +209,7 @@ func (s *segmentStorage) GetSegment(
 		&segment.IncludedUserCount,
 		&segment.ExcludedUserCount,
 		&status,
-		&featureIDs,
+		featureIDs,
 	)
 	if err != nil {
 		if err == mysql.ErrNoRows {
@@ -216,8 +217,11 @@ func (s *segmentStorage) GetSegment(
 		}
 		return nil, nil, err
 	}
-	array := strings.Split(featureIDs, ",")
-	segment.IsInUseStatus = len(array) > 0
+	array := []string{}
+	if featureIDs.Valid {
+		segment.IsInUseStatus = true
+		array = strings.Split(featureIDs.String, ",")
+	}
 	segment.Status = proto.Segment_Status(status)
 	return &domain.Segment{Segment: &segment}, array, nil
 }
@@ -281,7 +285,7 @@ func (s *segmentStorage) ListSegments(
 	for rows.Next() {
 		segment := proto.Segment{}
 		var status int32
-		var featureIDs string
+		featureIDs := new(sql.NullString)
 		err := rows.Scan(
 			&segment.Id,
 			&segment.Name,
@@ -294,13 +298,16 @@ func (s *segmentStorage) ListSegments(
 			&segment.IncludedUserCount,
 			&segment.ExcludedUserCount,
 			&status,
-			&featureIDs,
+			featureIDs,
 		)
 		if err != nil {
 			return nil, 0, 0, nil, err
 		}
-		array := strings.Split(featureIDs, ",")
-		segment.IsInUseStatus = len(array) > 0
+		array := []string{}
+		if featureIDs.Valid {
+			segment.IsInUseStatus = true
+			array = strings.Split(featureIDs.String, ",")
+		}
 		featureIDsMap[segment.Id] = array
 		segment.Status = proto.Segment_Status(status)
 		segments = append(segments, &segment)
