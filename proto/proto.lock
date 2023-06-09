@@ -11489,6 +11489,12 @@
                 "id": 12,
                 "name": "is_in_use_status",
                 "type": "bool"
+              },
+              {
+                "id": 13,
+                "name": "features",
+                "type": "Feature",
+                "is_repeated": true
               }
             ]
           },
@@ -11542,6 +11548,9 @@
         "imports": [
           {
             "path": "proto/feature/rule.proto"
+          },
+          {
+            "path": "proto/feature/feature.proto"
           }
         ],
         "package": {
