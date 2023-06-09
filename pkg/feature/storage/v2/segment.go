@@ -294,7 +294,6 @@ func (s *segmentStorage) ListSegments(
 			&segment.IncludedUserCount,
 			&segment.ExcludedUserCount,
 			&status,
-			&segment.IsInUseStatus,
 			&featureIDs,
 		)
 		if err != nil {
