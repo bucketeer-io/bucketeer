@@ -35,7 +35,7 @@ var (
 type SegmentStorage interface {
 	CreateSegment(ctx context.Context, segment *domain.Segment, environmentNamespace string) error
 	UpdateSegment(ctx context.Context, segment *domain.Segment, environmentNamespace string) error
-	GetSegment(ctx context.Context, id, environmentNamespace string) (*domain.Segment, error)
+	GetSegment(ctx context.Context, id, environmentNamespace string) (*domain.Segment, []string, error)
 	ListSegments(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -158,7 +158,7 @@ func (s *segmentStorage) UpdateSegment(
 func (s *segmentStorage) GetSegment(
 	ctx context.Context,
 	id, environmentNamespace string,
-) (*domain.Segment, error) {
+) (*domain.Segment, []string, error) {
 	segment := proto.Segment{}
 	var status int32
 	query := `
@@ -174,24 +174,22 @@ func (s *segmentStorage) GetSegment(
 			included_user_count,
 			excluded_user_count,
 			status,
-			CASE 
-				WHEN (
-					SELECT 
-						COUNT(1)
-					FROM 
-						feature
-					WHERE
-						environment_namespace = ? AND
-						rules LIKE concat("%", segment.id, "%")
-				) > 0 THEN TRUE 
-				ELSE FALSE 
-			END AS is_in_use_status
+			(
+				SELECT 
+					GROUP_CONCAT(id)
+				FROM 
+					feature
+				WHERE
+					environment_namespace = ? AND
+					rules LIKE concat("%%", segment.id, "%%")
+			) AS feature_ids
 		FROM
 			segment
 		WHERE
 			id = ? AND
 			environment_namespace = ?
 	`
+	var featureIDs string
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
@@ -210,16 +208,18 @@ func (s *segmentStorage) GetSegment(
 		&segment.IncludedUserCount,
 		&segment.ExcludedUserCount,
 		&status,
-		&segment.IsInUseStatus,
+		&featureIDs,
 	)
 	if err != nil {
 		if err == mysql.ErrNoRows {
-			return nil, ErrSegmentNotFound
+			return nil, nil, ErrSegmentNotFound
 		}
-		return nil, err
+		return nil, nil, err
 	}
+	array := strings.Split(featureIDs, ",")
+	segment.IsInUseStatus = len(array) > 0
 	segment.Status = proto.Segment_Status(status)
-	return &domain.Segment{Segment: &segment}, nil
+	return &domain.Segment{Segment: &segment}, array, nil
 }
 
 func (s *segmentStorage) ListSegments(
