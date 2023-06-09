@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -42,7 +43,7 @@ type SegmentStorage interface {
 		limit, offset int,
 		isInUseStatus *bool,
 		environmentNamespace string,
-	) ([]*proto.Segment, int, int64, error)
+	) ([]*proto.Segment, int, int64, map[string][]string, error)
 }
 
 type segmentStorage struct {
@@ -228,7 +229,7 @@ func (s *segmentStorage) ListSegments(
 	limit, offset int,
 	isInUseStatus *bool,
 	environmentNamespace string,
-) ([]*proto.Segment, int, int64, error) {
+) ([]*proto.Segment, int, int64, map[string][]string, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	prepareArgs := make([]interface{}, 0, len(whereArgs)+1)
 	prepareArgs = append(prepareArgs, environmentNamespace)
@@ -256,18 +257,15 @@ func (s *segmentStorage) ListSegments(
 			included_user_count,
 			excluded_user_count,
 			status,
-			CASE 
-				WHEN (
-					SELECT 
-						COUNT(1)
-					FROM 
-						feature
-					WHERE
-						environment_namespace = ? AND
-						rules LIKE concat("%%", segment.id, "%%")
-				) > 0 THEN TRUE 
-				ELSE FALSE
-			END AS is_in_use_status
+			(
+				SELECT 
+					GROUP_CONCAT(id)
+				FROM 
+					feature
+				WHERE
+					environment_namespace = ? AND
+					rules LIKE concat("%%", segment.id, "%%")
+			) AS feature_ids
 		FROM
 			segment
 		%s %s %s %s
@@ -275,13 +273,15 @@ func (s *segmentStorage) ListSegments(
 	)
 	rows, err := s.qe.QueryContext(ctx, query, prepareArgs...)
 	if err != nil {
-		return nil, 0, 0, err
+		return nil, 0, 0, nil, err
 	}
 	defer rows.Close()
 	segments := make([]*proto.Segment, 0, limit)
+	featureIDsMap := map[string][]string{}
 	for rows.Next() {
 		segment := proto.Segment{}
 		var status int32
+		var featureIDs string
 		err := rows.Scan(
 			&segment.Id,
 			&segment.Name,
@@ -295,15 +295,19 @@ func (s *segmentStorage) ListSegments(
 			&segment.ExcludedUserCount,
 			&status,
 			&segment.IsInUseStatus,
+			&featureIDs,
 		)
 		if err != nil {
-			return nil, 0, 0, err
+			return nil, 0, 0, nil, err
 		}
+		array := strings.Split(featureIDs, ",")
+		segment.IsInUseStatus = len(array) > 0
+		featureIDsMap[segment.Id] = array
 		segment.Status = proto.Segment_Status(status)
 		segments = append(segments, &segment)
 	}
 	if rows.Err() != nil {
-		return nil, 0, 0, err
+		return nil, 0, 0, nil, err
 	}
 	nextOffset := offset + len(segments)
 	var totalCount int64
@@ -337,7 +341,7 @@ func (s *segmentStorage) ListSegments(
 	)
 	err = s.qe.QueryRowContext(ctx, countQuery, prepareArgs...).Scan(&totalCount)
 	if err != nil {
-		return nil, 0, 0, err
+		return nil, 0, 0, nil, err
 	}
-	return segments, nextOffset, totalCount, nil
+	return segments, nextOffset, totalCount, featureIDsMap, nil
 }
