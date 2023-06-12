@@ -864,8 +864,10 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
 			expected: &gwproto.GetEvaluationsResponse{
-				State:       featureproto.UserEvaluations_FULL,
-				Evaluations: nil,
+				State: featureproto.UserEvaluations_FULL,
+				Evaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{},
+				},
 			},
 			expectedErr: nil,
 		},
@@ -917,8 +919,10 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
 			expected: &gwproto.GetEvaluationsResponse{
-				State:       featureproto.UserEvaluations_FULL,
-				Evaluations: nil,
+				State: featureproto.UserEvaluations_FULL,
+				Evaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{},
+				},
 			},
 			expectedErr: nil,
 		},
@@ -1154,9 +1158,10 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			expected: &gwproto.GetEvaluationsResponse{
 				State:             featureproto.UserEvaluations_FULL,
 				UserEvaluationsId: ueidWithDataFromAndroidFeatures,
+				Evaluations:       &featureproto.UserEvaluations{},
 			},
 			expectedErr:               nil,
-			expectedEvaluationsAssert: assert.Nil,
+			expectedEvaluationsAssert: assert.NotNil,
 		},
 		{
 			desc: "user evaluations id is different",
@@ -1217,9 +1222,10 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			expected: &gwproto.GetEvaluationsResponse{
 				State:             featureproto.UserEvaluations_FULL,
 				UserEvaluationsId: ueidFromAndroidFeatures,
+				Evaluations:       &featureproto.UserEvaluations{},
 			},
 			expectedErr:               nil,
-			expectedEvaluationsAssert: assert.Nil,
+			expectedEvaluationsAssert: assert.NotNil,
 		},
 		{
 			desc: "user_with_no_metadata_and_the_id_is_different",

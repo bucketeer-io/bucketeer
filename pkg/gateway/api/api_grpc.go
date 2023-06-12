@@ -311,8 +311,10 @@ func (s *grpcGatewayService) GetEvaluations(
 	if len(features) == 0 {
 		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationNoFeatures).Inc()
 		return &gwproto.GetEvaluationsResponse{
-			State:       featureproto.UserEvaluations_FULL,
-			Evaluations: nil,
+			State: featureproto.UserEvaluations_FULL,
+			Evaluations: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{},
+			},
 		}, nil
 	}
 	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
@@ -329,8 +331,10 @@ func (s *grpcGatewayService) GetEvaluations(
 			)...,
 		)
 		return &gwproto.GetEvaluationsResponse{
-			State:             featureproto.UserEvaluations_FULL,
-			Evaluations:       nil,
+			State: featureproto.UserEvaluations_FULL,
+			Evaluations: &featureproto.UserEvaluations{
+				Evaluations: []*featureproto.Evaluation{},
+			},
 			UserEvaluationsId: ueid,
 		}, nil
 	}
