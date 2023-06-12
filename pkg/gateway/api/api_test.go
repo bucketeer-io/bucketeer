@@ -671,7 +671,7 @@ func TestGetEvaluationsValidation(t *testing.T) {
 				),
 			),
 			expected: &getEvaluationsResponse{
-				Evaluations: &featureproto.UserEvaluations{},
+				Evaluations: emptyUserEvaluationsForREST(t),
 			},
 			expectedErr: nil,
 		},
@@ -738,7 +738,7 @@ func TestGetEvaluationsZeroFeature(t *testing.T) {
 				),
 			),
 			expected: &getEvaluationsResponse{
-				Evaluations: &featureproto.UserEvaluations{},
+				Evaluations: emptyUserEvaluationsForREST(t),
 			},
 			expectedErr: nil,
 		},
@@ -2493,5 +2493,14 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 		environmentAPIKeyCache: cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
 		opts:                   &defaultOptions,
 		logger:                 logger,
+	}
+}
+
+func emptyUserEvaluationsForREST(t *testing.T) *featureproto.UserEvaluations {
+	t.Helper()
+	return &featureproto.UserEvaluations{
+		Id:          "",
+		CreatedAt:   time.Now().Unix(),
+		ForceUpdate: false,
 	}
 }

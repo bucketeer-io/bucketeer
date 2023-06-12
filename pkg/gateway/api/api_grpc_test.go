@@ -864,10 +864,8 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
 			expected: &gwproto.GetEvaluationsResponse{
-				State: featureproto.UserEvaluations_FULL,
-				Evaluations: &featureproto.UserEvaluations{
-					Evaluations: []*featureproto.Evaluation{},
-				},
+				State:       featureproto.UserEvaluations_FULL,
+				Evaluations: emptyUserEvaluations(t),
 			},
 			expectedErr: nil,
 		},
@@ -919,10 +917,8 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
 			expected: &gwproto.GetEvaluationsResponse{
-				State: featureproto.UserEvaluations_FULL,
-				Evaluations: &featureproto.UserEvaluations{
-					Evaluations: []*featureproto.Evaluation{},
-				},
+				State:       featureproto.UserEvaluations_FULL,
+				Evaluations: emptyUserEvaluations(t),
 			},
 			expectedErr: nil,
 		},
@@ -2443,4 +2439,15 @@ func newUUID(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return id.String()
+}
+
+func emptyUserEvaluations(t *testing.T) *featureproto.UserEvaluations {
+	t.Helper()
+	return &featureproto.UserEvaluations{
+		Id:                 "",
+		Evaluations:        []*featureproto.Evaluation{},
+		CreatedAt:          time.Now().Unix(),
+		ArchivedFeatureIds: []string{},
+		ForceUpdate:        false,
+	}
 }
