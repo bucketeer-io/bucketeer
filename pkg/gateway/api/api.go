@@ -255,7 +255,9 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		rest.ReturnSuccessResponse(
 			w,
 			&getEvaluationsResponse{
-				Evaluations: nil,
+				Evaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{},
+				},
 			},
 		)
 		return
@@ -265,7 +267,9 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		rest.ReturnSuccessResponse(
 			w,
 			&getEvaluationsResponse{
-				Evaluations:       nil,
+				Evaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{},
+				},
 				UserEvaluationsID: ueid,
 			},
 		)

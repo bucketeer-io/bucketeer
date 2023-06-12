@@ -671,7 +671,7 @@ func TestGetEvaluationsValidation(t *testing.T) {
 				),
 			),
 			expected: &getEvaluationsResponse{
-				Evaluations: nil,
+				Evaluations: &featureproto.UserEvaluations{},
 			},
 			expectedErr: nil,
 		},
@@ -738,7 +738,7 @@ func TestGetEvaluationsZeroFeature(t *testing.T) {
 				),
 			),
 			expected: &getEvaluationsResponse{
-				Evaluations: nil,
+				Evaluations: &featureproto.UserEvaluations{},
 			},
 			expectedErr: nil,
 		},
@@ -986,9 +986,10 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 			),
 			expected: &getEvaluationsResponse{
 				UserEvaluationsID: featuredomain.UserEvaluationsID(userID, userMetadata, multiFeatures),
+				Evaluations:       &featureproto.UserEvaluations{},
 			},
 			expectedErr:               nil,
-			expectedEvaluationsAssert: assert.Nil,
+			expectedEvaluationsAssert: assert.NotNil,
 		},
 		{
 			desc: "user evaluations id is different",
@@ -1062,9 +1063,10 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 
 			expected: &getEvaluationsResponse{
 				UserEvaluationsID: ueid,
+				Evaluations:       &featureproto.UserEvaluations{},
 			},
 			expectedErr:               nil,
-			expectedEvaluationsAssert: assert.Nil,
+			expectedEvaluationsAssert: assert.NotNil,
 		},
 		{
 			desc: "user_with_no_metadata_and_the_id_is_different",
