@@ -1,0 +1,90 @@
+image:
+  repository: ghcr.io/bucketeer-io/bucketeer-backend
+  pullPolicy: IfNotPresent
+
+fullnameOverride: "backend"
+
+namespace: default
+
+env:
+  project:
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
+  domainTopic:
+  accountService: localhost:9001
+  environmentService: localhost:9001
+  healthCheckServicePort: 8000
+  accountServicePort: 9091
+  authServicePort: 9092
+  metricsPort: 9002
+  emailFilter:
+  logLevel: info
+
+affinity: {}
+
+nodeSelector: {}
+
+pdb:
+  enabled:
+  maxUnavailable: 50%
+
+hpa:
+  enabled:
+  minReplicas:
+  maxReplicas:
+  metrics:
+    cpu:
+      targetAverageUtilization:
+
+tls:
+  service:
+    secret:
+    cert:
+    key:
+  issuer:
+    secret:
+    cert:
+
+serviceToken:
+  secret:
+  token:
+
+oauth:
+  key:
+    secret:
+    public:
+  clientId:
+  clientSecret:
+  redirectUrls:
+  issuer:
+
+webhook:
+  kmsResourceName:
+
+envoy:
+  image:
+    repository: envoyproxy/envoy-alpine
+    tag: v1.21.1
+    pullPolicy: IfNotPresent
+  config:
+  port: 9000
+  adminPort: 8001
+  resources: {}
+
+service:
+  type: ClusterIP
+  clusterIP: None
+  externalPort: 9000
+
+health:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 10
+
+resources: {}
+
+serviceAccount:
+  annotations: {}
