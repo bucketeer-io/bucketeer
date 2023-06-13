@@ -28,15 +28,6 @@ EventCounterService.GetEvaluationTimeseriesCount = {
   responseType: proto_eventcounter_service_pb.GetEvaluationTimeseriesCountResponse
 };
 
-EventCounterService.GetEvaluationTimeseriesCountV2 = {
-  methodName: "GetEvaluationTimeseriesCountV2",
-  service: EventCounterService,
-  requestStream: false,
-  responseStream: false,
-  requestType: proto_eventcounter_service_pb.GetEvaluationTimeseriesCountRequest,
-  responseType: proto_eventcounter_service_pb.GetEvaluationTimeseriesCountResponse
-};
-
 EventCounterService.GetExperimentResult = {
   methodName: "GetExperimentResult",
   service: EventCounterService,
@@ -134,37 +125,6 @@ EventCounterServiceClient.prototype.getEvaluationTimeseriesCount = function getE
     callback = arguments[1];
   }
   var client = grpc.unary(EventCounterService.GetEvaluationTimeseriesCount, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
-        }
-      }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
-  };
-};
-
-EventCounterServiceClient.prototype.getEvaluationTimeseriesCountV2 = function getEvaluationTimeseriesCountV2(requestMessage, metadata, callback) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(EventCounterService.GetEvaluationTimeseriesCountV2, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,
