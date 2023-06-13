@@ -256,7 +256,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 			w,
 			&getEvaluationsResponse{
 				Evaluations:       s.emptyUserEvaluations(),
-				UserEvaluationsID: "",
+				UserEvaluationsID: "no_evaluations",
 			},
 		)
 		return
@@ -1257,7 +1257,7 @@ func (s *gatewayService) filterOutArchivedFeatures(fs []*featureproto.Feature) [
 
 func (s *gatewayService) emptyUserEvaluations() *featureproto.UserEvaluations {
 	return &featureproto.UserEvaluations{
-		Id:                 "no_evaluation",
+		Id:                 "no_evaluations",
 		Evaluations:        []*featureproto.Evaluation{},
 		CreatedAt:          time.Now().Unix(),
 		ArchivedFeatureIds: []string{},

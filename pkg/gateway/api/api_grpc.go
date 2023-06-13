@@ -313,7 +313,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		return &gwproto.GetEvaluationsResponse{
 			State:             featureproto.UserEvaluations_FULL,
 			Evaluations:       s.emptyUserEvaluations(),
-			UserEvaluationsId: "",
+			UserEvaluationsId: "no_evaluations",
 		}, nil
 	}
 	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
@@ -1135,7 +1135,7 @@ func (s *grpcGatewayService) filterByTag(fs []*featureproto.Feature, tag string)
 
 func (s *grpcGatewayService) emptyUserEvaluations() *featureproto.UserEvaluations {
 	return &featureproto.UserEvaluations{
-		Id:                 "no_evaluation",
+		Id:                 "no_evaluations",
 		Evaluations:        []*featureproto.Evaluation{},
 		CreatedAt:          time.Now().Unix(),
 		ArchivedFeatureIds: []string{},

@@ -864,8 +864,9 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
 			expected: &gwproto.GetEvaluationsResponse{
-				State:       featureproto.UserEvaluations_FULL,
-				Evaluations: emptyUserEvaluations(t),
+				State:             featureproto.UserEvaluations_FULL,
+				Evaluations:       emptyUserEvaluations(t),
+				UserEvaluationsId: "no_evaluations",
 			},
 			expectedErr: nil,
 		},
@@ -917,8 +918,9 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
 			expected: &gwproto.GetEvaluationsResponse{
-				State:       featureproto.UserEvaluations_FULL,
-				Evaluations: emptyUserEvaluations(t),
+				State:             featureproto.UserEvaluations_FULL,
+				Evaluations:       emptyUserEvaluations(t),
+				UserEvaluationsId: "no_evaluations",
 			},
 			expectedErr: nil,
 		},
@@ -933,7 +935,6 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
-		assert.Empty(t, actual.UserEvaluationsId, "%s", p.desc)
 	}
 }
 
@@ -2444,7 +2445,7 @@ func newUUID(t *testing.T) string {
 func emptyUserEvaluations(t *testing.T) *featureproto.UserEvaluations {
 	t.Helper()
 	return &featureproto.UserEvaluations{
-		Id:                 "no_evaluation",
+		Id:                 "no_evaluations",
 		Evaluations:        []*featureproto.Evaluation{},
 		CreatedAt:          time.Now().Unix(),
 		ArchivedFeatureIds: []string{},

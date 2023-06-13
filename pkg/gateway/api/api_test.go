@@ -671,7 +671,8 @@ func TestGetEvaluationsValidation(t *testing.T) {
 				),
 			),
 			expected: &getEvaluationsResponse{
-				Evaluations: emptyUserEvaluationsForREST(t),
+				Evaluations:       emptyUserEvaluationsForREST(t),
+				UserEvaluationsID: "no_evaluations",
 			},
 			expectedErr: nil,
 		},
@@ -738,7 +739,8 @@ func TestGetEvaluationsZeroFeature(t *testing.T) {
 				),
 			),
 			expected: &getEvaluationsResponse{
-				Evaluations: emptyUserEvaluationsForREST(t),
+				Evaluations:       emptyUserEvaluationsForREST(t),
+				UserEvaluationsID: "no_evaluations",
 			},
 			expectedErr: nil,
 		},
@@ -754,7 +756,6 @@ func TestGetEvaluationsZeroFeature(t *testing.T) {
 		err := json.Unmarshal(decoded, &respBody)
 		assert.NoError(t, err)
 		assert.Equal(t, p.expected, &respBody, "%s", p.desc)
-		assert.Empty(t, respBody.UserEvaluationsID, "%s", p.desc)
 	}
 }
 
@@ -2499,7 +2500,7 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 func emptyUserEvaluationsForREST(t *testing.T) *featureproto.UserEvaluations {
 	t.Helper()
 	return &featureproto.UserEvaluations{
-		Id:          "no_evaluation",
+		Id:          "no_evaluations",
 		CreatedAt:   time.Now().Unix(),
 		ForceUpdate: false,
 	}
