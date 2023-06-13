@@ -62,4 +62,6 @@ jobs:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Check proto go files
-        run: make gen-check
+        run: |
+          cd ${{ env.PYTHON_PATH }}
+          make gen-check
