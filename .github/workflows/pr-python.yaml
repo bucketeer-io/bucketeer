@@ -83,5 +83,6 @@ jobs:
       - name: Check proto python files
         run: |
           cd ${{ env.PYTHON_PATH }}
+          source .venv/bin/activate
           make gen
           git diff
