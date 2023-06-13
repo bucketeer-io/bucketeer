@@ -94,8 +94,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-private-key",
 			"Path to private key for signing oauth token.",
 		).Required().String(),
-		oauthPublicKeyPath: cmd.Flag("oauth-public-key", "Path to public key used to verify oauth token.").Required().String(),
-		oauthClientID:      cmd.Flag("oauth-client-id", "The oauth clientID registered at dex.").Required().String(),
+		oauthPublicKeyPath: cmd.Flag(
+			"oauth-public-key",
+			"Path to public key used to verify oauth token.",
+		).Required().String(),
+		oauthClientID: cmd.Flag(
+			"oauth-client-id",
+			"The oauth clientID registered at dex.",
+		).Required().String(),
 		oauthClientSecret: cmd.Flag(
 			"oauth-client-secret",
 			"The oauth client secret registered at Dex.",
@@ -194,7 +200,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer authServer.Stop(10 * time.Second)
 	go authServer.Run()
 	// accountService
-	accountService := accountapi.NewAccountService(environmentClient, mysqlClient, domainTopicPublisher, accountapi.WithLogger(logger))
+	accountService := accountapi.NewAccountService(
+		environmentClient,
+		mysqlClient,
+		domainTopicPublisher,
+		accountapi.WithLogger(logger),
+	)
 	accountServer := rpc.NewServer(accountService, *s.certPath, *s.keyPath,
 		rpc.WithPort(*s.accountServicePort),
 		rpc.WithVerifier(verifier),
