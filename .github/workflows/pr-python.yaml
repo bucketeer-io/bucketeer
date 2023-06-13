@@ -74,6 +74,11 @@ jobs:
         with:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: |
+          cd ${{ env.PYTHON_PATH }}
+          make init
       - name: Check proto python files
         run: |
           cd ${{ env.PYTHON_PATH }}
