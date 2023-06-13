@@ -2,13 +2,18 @@ import { createVariationLabel } from '@/utils/variation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
 import deepEqual from 'deep-equal';
-import React, { useCallback, useState, FC, memo, useEffect } from 'react';
+import React, {
+  useCallback,
+  useState,
+  FC,
+  memo,
+  useEffect,
+} from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { v4 as uuid } from 'uuid';
 
-import { DetailSkeleton } from '../../components/DetailSkeleton';
 import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
 import {
   ClauseType,
@@ -29,6 +34,7 @@ import { Clause } from '../../proto/feature/clause_pb';
 import {
   AddClauseCommand,
   AddClauseValueCommand,
+  AddPrerequisiteCommand,
   AddRuleCommand,
   AddUserToVariationCommand,
   ChangeClauseAttributeCommand,
@@ -46,8 +52,11 @@ import {
   RemoveClauseValueCommand,
   RemoveUserFromVariationCommand,
   ResetSamplingSeedCommand,
+  RemovePrerequisiteCommand,
+  ChangePrerequisiteVariationCommand,
 } from '../../proto/feature/command_pb';
 import { Feature } from '../../proto/feature/feature_pb';
+import { Prerequisite } from '../../proto/feature/prerequisite_pb';
 import { Rule } from '../../proto/feature/rule_pb';
 import {
   FixedStrategy,
@@ -96,13 +105,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
   ({ featureId }) => {
     const { formatMessage: f } = useIntl();
     const dispatch = useDispatch<AppDispatch>();
-    const isFeatureLoading = useSelector<AppState, boolean>(
-      (state) => state.features.loading
-    );
-    const isSegmentLoading = useSelector<AppState, boolean>(
-      (state) => state.features.loading
-    );
-    const isLoading = isFeatureLoading || isSegmentLoading;
+
     const currentEnvironment = useCurrentEnvironment();
     const [feature, getFeatureError] = useSelector<
       AppState,
@@ -114,59 +117,71 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       ],
       shallowEqual
     );
-    const defaultValues = {
-      enabled: feature.enabled,
-      targets: feature.targetsList.map((t) => {
-        return {
-          variationId: t.variation,
-          users: t.usersList,
-        };
-      }),
-      rules: feature.rulesList.map((r) => {
-        return {
-          id: r.id,
-          strategy: createStrategyDefaultValue(
-            r.strategy,
-            feature.variationsList
-          ),
-          clauses: r.clausesList.map((c) => {
-            return {
-              id: c.id,
-              type: createClauseType(c.operator),
-              attribute: c.attribute,
-              operator: c.operator.toString(),
-              values: c.valuesList,
-            };
-          }),
-        };
-      }),
-      defaultStrategy: createStrategyDefaultValue(
-        feature.defaultStrategy,
-        feature.variationsList
-      ),
-      offVariation: feature.offVariation && {
-        value: feature.offVariation,
-        label: createVariationLabel(
-          feature.variationsList.find((v) => v.id === feature.offVariation)
+    const [isResetTargeting, setIsResetTargeting] = useState(false);
+
+    const getDefaultValues = (feature) => {
+      return {
+        prerequisites: [
+          ...new Map(
+            feature.prerequisitesList.map((p) => [p.featureId, p])
+          ).values(),
+        ], // remove duplicate prerequisites
+        enabled: feature.enabled,
+        targets: feature.targetsList.map((t) => {
+          return {
+            variationId: t.variation,
+            users: t.usersList,
+          };
+        }),
+        rules: feature.rulesList.map((r) => {
+          return {
+            id: r.id,
+            strategy: createStrategyDefaultValue(
+              r.strategy,
+              feature.variationsList
+            ),
+            clauses: r.clausesList.map((c) => {
+              return {
+                id: c.id,
+                type: createClauseType(c.operator),
+                attribute: c.attribute,
+                operator: c.operator.toString(),
+                values: c.valuesList,
+              };
+            }),
+          };
+        }),
+        defaultStrategy: createStrategyDefaultValue(
+          feature.defaultStrategy,
+          feature.variationsList
         ),
-      },
-      comment: '',
+        offVariation: feature.offVariation && {
+          value: feature.offVariation,
+          label: createVariationLabel(
+            feature.variationsList.find((v) => v.id === feature.offVariation)
+          ),
+        },
+        comment: '',
+      };
     };
 
     const methods = useForm({
       resolver: yupResolver(targetingFormSchema),
-      defaultValues: defaultValues,
+      defaultValues: getDefaultValues(feature),
       mode: 'onChange',
     });
     const {
       handleSubmit,
       formState: { dirtyFields },
+      reset,
     } = methods;
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
     const handleUpdate = useCallback(
       async (data) => {
         const commands: Array<Command> = [];
+        const defaultValues = getDefaultValues(feature);
+
         dirtyFields.enabled &&
           commands.push(...createEnabledCommands(defaultValues, data));
         dirtyFields.targets &&
@@ -198,6 +213,15 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
             )
           );
         data.resetSampling && commands.push(createResetSampleSeedCommand());
+
+        dirtyFields.prerequisites &&
+          commands.push(
+            ...createPrerequisitesCommands(
+              defaultValues.prerequisites,
+              data.prerequisites
+            )
+          );
+
         dispatch(
           updateFeatureTargeting({
             environmentNamespace: currentEnvironment.namespace,
@@ -212,10 +236,12 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
               environmentNamespace: currentEnvironment.namespace,
               id: featureId,
             })
-          );
+          ).then(() => {
+            setIsResetTargeting(true);
+          });
         });
       },
-      [dispatch, dirtyFields]
+      [dispatch, dirtyFields, feature]
     );
 
     useEffect(() => {
@@ -227,13 +253,21 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       );
     }, [dispatch, currentEnvironment]);
 
-    if (isLoading) {
-      return (
-        <div className="p-9 bg-gray-100">
-          <DetailSkeleton />
-        </div>
-      );
-    }
+    useEffect(() => {
+      if (isResetTargeting) {
+        reset(getDefaultValues(feature));
+        setIsResetTargeting(false);
+      }
+    }, [feature, isResetTargeting]);
+
+    useEffect(() => {
+      if (feature) {
+        reset(getDefaultValues(feature));
+      }
+    }, [feature]);
+
+  
+
     return (
       <FormProvider {...methods}>
         <FeatureTargetingForm
@@ -630,6 +664,59 @@ export function createOffVariationCommands(org: any, val: any): Command[] {
   }
   return commands;
 }
+
+export function createPrerequisitesCommands(org: any, val: any): Command[] {
+  const commands: Array<Command> = [];
+
+  // handle remove feature
+  org.filter((o) => {
+    if (!val.some((v) => v.featureId === o.featureId)) {
+      const command = new RemovePrerequisiteCommand();
+      command.setFeatureId(o.featureId);
+      commands.push(
+        createCommand({ message: command, name: 'RemovePrerequisiteCommand' })
+      );
+    }
+  });
+
+  // handle add feature
+  val.filter((v) => {
+    if (!org.some((o) => o.featureId === v.featureId)) {
+      const command = new AddPrerequisiteCommand();
+      command.setPrerequisite(createPrerequisite(v));
+      commands.push(
+        createCommand({ message: command, name: 'AddPrerequisiteCommand' })
+      );
+    }
+  });
+
+  // handle update variation
+  val.forEach((v) => {
+    if (
+      org.some(
+        (o) => o.featureId === v.featureId && o.variationId !== v.variationId
+      )
+    ) {
+      const command = new ChangePrerequisiteVariationCommand();
+      command.setPrerequisite(createPrerequisite(v));
+      commands.push(
+        createCommand({
+          message: command,
+          name: 'ChangePrerequisiteVariationCommand',
+        })
+      );
+    }
+  });
+
+  return commands;
+}
+
+const createPrerequisite = (prerequisite): Prerequisite => {
+  const p = new Prerequisite();
+  p.setFeatureId(prerequisite.featureId);
+  p.setVariationId(prerequisite.variationId);
+  return p;
+};
 
 export function createResetSampleSeedCommand(): Command {
   const command = new ResetSamplingSeedCommand();

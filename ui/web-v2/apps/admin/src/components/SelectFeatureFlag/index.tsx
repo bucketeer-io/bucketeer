@@ -1,37 +1,24 @@
 import React, { FC, memo } from 'react';
 import ReactSelect from 'react-select';
 
-export interface Option {
+export interface OptionFeatureFlag {
   value: string;
   label: string;
+  enabled: boolean;
 }
 
-export interface SelectProps {
-  options: Option[];
-  disabled?: boolean;
-  clearable?: boolean;
-  isLoading?: boolean;
-  isMulti?: boolean;
-  isSearchable?: boolean;
-  value?: Option;
+export interface SelectFeatureFlagProps {
+  options: OptionFeatureFlag[];
+  value?: OptionFeatureFlag;
   className?: string;
-  onChange: ((option: Option) => void) | ((option: Option[]) => void);
+  onChange:
+    | ((option: OptionFeatureFlag) => void)
+    | ((option: OptionFeatureFlag[]) => void);
   placeholder?: string;
 }
 
-export const Select: FC<SelectProps> = memo(
-  ({
-    disabled,
-    className,
-    clearable,
-    isLoading,
-    isMulti,
-    isSearchable,
-    onChange,
-    options,
-    value,
-    placeholder,
-  }) => {
+export const SelectFeatureFlag: FC<SelectFeatureFlagProps> = memo(
+  ({ className, onChange, options, value, placeholder }) => {
     const textColor = '#3F3F46';
     const textColorDisabled = '#6B7280';
     const backgroundColor = 'white';
@@ -82,25 +69,34 @@ export const Select: FC<SelectProps> = memo(
       singleValue: (base, { isDisabled }) => ({
         ...base,
         color: isDisabled ? textColorDisabled : textColor,
+        width: '100%',
       }),
     };
+
+    const formatOptionLabel = ({ label, enabled, ...rest }) => {
+      return (
+        <div className="flex justify-between space-x-4 pr-2">
+          <span className="flex-1 truncate">{label}</span>
+          <span
+            className={`border rounded-lg text-sm w-11 flex justify-center ${
+              enabled
+                ? 'bg-primary border-primary text-white'
+                : 'bg-gray-100 border-gray-300'
+            }`}
+          >
+            {enabled ? 'On' : 'Off'}
+          </span>
+        </div>
+      );
+    };
+
     return (
       <ReactSelect
         options={options}
         className={className}
         classNamePrefix="react-select"
         styles={colourStyles}
-        components={
-          disabled && {
-            DropdownIndicator: () => null,
-            IndicatorSeparator: () => null,
-          }
-        }
-        isDisabled={isLoading || disabled}
-        isClearable={clearable}
-        isMulti={isMulti}
-        isSearchable={isSearchable}
-        isLoading={isLoading}
+        formatOptionLabel={formatOptionLabel}
         placeholder={placeholder ? placeholder : ''}
         value={value}
         onChange={onChange}

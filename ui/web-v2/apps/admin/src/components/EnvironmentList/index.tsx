@@ -93,7 +93,7 @@ export const EnvironmentList: FC<EnvironmentListProps> = memo(
           )
         ) : (
           <div>
-            <table className="table-auto leading-normal">
+            <table className="table-auto leading-normal w-full">
               <tbody className="text-sm">
                 {environments.map((environment) => {
                   return (

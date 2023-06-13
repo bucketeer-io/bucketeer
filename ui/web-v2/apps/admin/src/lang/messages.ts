@@ -479,6 +479,14 @@ export const messages = {
     id: 'disabled',
     defaultMessage: 'Disabled',
   }),
+  close: defineMessage({
+    id: 'close',
+    defaultMessage: 'Close',
+  }),
+  seeMore: defineMessage({
+    id: 'seeMore',
+    defaultMessage: 'See more',
+  }),
   button: {
     archive: defineMessage({
       id: 'button.archive',
@@ -1286,6 +1294,32 @@ export const messages = {
       defaultMessage:
         'Enable targeting settings. You can configure targeting users, complex rules, default strategy, and off variation.',
     }),
+    flagIsPrerequisite: defineMessage({
+      id: 'feature.flagIsPrerequisite',
+      defaultMessage:
+        'This flag is a prerequisite of {length} other flag{length, plural, one {} other {s}}.',
+    }),
+    flagIsPrerequisiteDescription: defineMessage({
+      id: 'feature.flagIsPrerequisiteDescription',
+      defaultMessage:
+        'Changes to the targeting rules may affect the variations served by the flag{length, plural, one {} other {s}} below.',
+    }),
+    prerequisites: defineMessage({
+      id: 'feature.prerequisites',
+      defaultMessage: 'Prerequisites',
+    }),
+    addPrerequisites: defineMessage({
+      id: 'feature.addPrerequisites',
+      defaultMessage: 'Add Prerequisites',
+    }),
+    selectFlag: defineMessage({
+      id: 'feature.selectFlag',
+      defaultMessage: 'Select a feature flag',
+    }),
+    selectVariation: defineMessage({
+      id: 'feature.selectVariation',
+      defaultMessage: 'Select a variation',
+    }),
     targetingUsers: defineMessage({
       id: 'feature.targetings',
       defaultMessage: 'Targetings',
@@ -1403,6 +1437,15 @@ export const messages = {
         defaultMessage:
           'Are you sure you want to unarchive the feature flag "{featureId}"?',
       }),
+      flagUsedAsPrerequisite: defineMessage({
+        id: 'feature.confirm.flagUsedAsPrerequisite',
+        defaultMessage: `You can't archive while other flags use this flag as a
+          prerequisite.`,
+      }),
+      flagIsActive: defineMessage({
+        id: 'feature.confirm.flagIsActive',
+        defaultMessage: 'It is receiving one more requests in the last 7 days.',
+      }),
     },
     list: {
       header: {
@@ -1462,6 +1505,10 @@ export const messages = {
       tagsPlaceholder: defineMessage({
         id: 'feature.filter.tags.placeholder',
         defaultMessage: 'Select one or more tags',
+      }),
+      hasPrerequisites: defineMessage({
+        id: 'feature.filter.hasPrerequisites',
+        defaultMessage: 'Has prerequisites',
       }),
     },
     sort: {

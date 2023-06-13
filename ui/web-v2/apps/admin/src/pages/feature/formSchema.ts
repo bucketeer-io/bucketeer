@@ -276,6 +276,12 @@ export const strategySchema = yup.object().shape({
 });
 
 export const targetingFormSchema = yup.object().shape({
+  prerequisites: yup.array().of(
+    yup.object().shape({
+      featureId: yup.string().required(),
+      variationId: yup.string().required(),
+    })
+  ),
   enabled: yup.bool(),
   targets: yup.array().of(
     yup.object().shape({

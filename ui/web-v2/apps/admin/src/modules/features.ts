@@ -151,6 +151,7 @@ export interface ListFeaturesParams {
   enabled?: boolean;
   archived?: boolean;
   hasExperiment?: boolean;
+  hasPrerequisites?: boolean;
   maintainerId: string;
 }
 
@@ -173,6 +174,10 @@ export const listFeatures = createAsyncThunk<
     request.setArchived(new BoolValue().setValue(params.archived));
   params.hasExperiment != null &&
     request.setHasExperiment(new BoolValue().setValue(params.hasExperiment));
+  params.hasPrerequisites != null &&
+    request.setHasPrerequisites(
+      new BoolValue().setValue(params.hasPrerequisites)
+    );
   request.setMaintainer(params.maintainerId);
   await setupAuthToken();
   const result = await featureGrpc.listFeatures(request);
@@ -210,10 +215,12 @@ export const getFeature = createAsyncThunk<
 
 const initialState = featuresAdapter.getInitialState<{
   loading: boolean;
+  listFeaturesLoading: boolean;
   totalCount: number;
   getFeatureError: SerializedError | null;
 }>({
   loading: false,
+  listFeaturesLoading: false,
   totalCount: 0,
   getFeatureError: null,
 });
@@ -398,16 +405,16 @@ export const featuresSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(listFeatures.pending, (state) => {
-        state.loading = true;
+        state.listFeaturesLoading = true;
       })
       .addCase(listFeatures.fulfilled, (state, action) => {
         featuresAdapter.removeAll(state);
         featuresAdapter.upsertMany(state, action.payload.featuresList);
         state.totalCount = action.payload.totalCount;
-        state.loading = false;
+        state.listFeaturesLoading = false;
       })
       .addCase(listFeatures.rejected, (state) => {
-        state.loading = false;
+        state.listFeaturesLoading = false;
       })
       .addCase(getFeature.pending, (state) => {
         state.getFeatureError = null;

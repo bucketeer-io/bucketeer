@@ -1,5 +1,13 @@
+import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
+import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import { createVariationLabel } from '@/utils/variation';
-import { MinusCircleIcon, XIcon } from '@heroicons/react/solid';
+import {
+  MinusCircleIcon,
+  XIcon,
+  InformationCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from '@heroicons/react/solid';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import ReactDatePicker from 'react-datepicker';
@@ -12,12 +20,17 @@ import {
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import 'react-datepicker/dist/react-datepicker.css';
+import { Link } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
-import { selectById as selectFeatureById } from '../../modules/features';
+import {
+  selectById as selectFeatureById,
+  selectAll as selectAllFeatures,
+  listFeatures,
+} from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import { listSegments, selectAll } from '../../modules/segments';
 import { Clause } from '../../proto/feature/clause_pb';
@@ -27,6 +40,7 @@ import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
 import { CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
+import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 import { Switch } from '../Switch';
 
 interface FeatureTargetingFormProps {
@@ -48,7 +62,10 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       control,
       name: 'targets',
     });
+
     const rules = watch('rules');
+    const prerequisites = watch('prerequisites');
+
     const [feature, _] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
@@ -74,11 +91,13 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     });
 
     const checkSaveBtnDisabled = useCallback(() => {
-      if (Object.values(errors).some(Boolean) || isDirty === false) {
-        return true;
-      }
-      // find if all fields are dirty
-      return !rules.every((rule) =>
+      // check if all prerequisites fields are dirty
+      const checkPrerequisites = prerequisites.every(
+        (p) => p.featureId && p.variationId
+      );
+
+      // check if all rules fields are dirty
+      const checkRules = rules.every((rule) =>
         rule.clauses.every((clause) => {
           if (clause.type === ClauseType.SEGMENT) {
             return clause.values.length > 0;
@@ -86,7 +105,17 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
           return clause.attribute && clause.values.length > 0;
         })
       );
-    }, [rules, isDirty, errors]);
+
+      if (
+        !checkPrerequisites ||
+        !checkRules ||
+        Object.values(errors).some(Boolean) ||
+        !isDirty
+      ) {
+        return true;
+      }
+      return false;
+    }, [rules, isDirty, errors, prerequisites]);
 
     return (
       <div className="p-10 bg-gray-100">
@@ -107,6 +136,13 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 />
               )}
             />
+            <FlagIsPrerequisite featureId={featureId} />
+            <div>
+              <label className="input-section-label">
+                {`${f(messages.feature.prerequisites)}`}
+              </label>
+              <PrerequisiteInput feature={feature} />
+            </div>
             <div>
               <label className="input-section-label">
                 {`${f(messages.feature.targetingUsers)}`}
@@ -207,6 +243,327 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
             </div>
           )}
         </form>
+      </div>
+    );
+  }
+);
+
+export interface FlagIsPrerequisiteProps {
+  featureId: string;
+}
+
+const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
+  const [isSeeMore, setSeeMore] = useState(false);
+  const { formatMessage: f } = useIntl();
+
+  const currentEnvironment = useCurrentEnvironment();
+
+  const features = useSelector<AppState, Feature.AsObject[]>(
+    (state) => selectAllFeatures(state.features),
+    shallowEqual
+  );
+
+  useEffect(() => {
+    listFeatures({
+      environmentNamespace: currentEnvironment.namespace,
+      pageSize: 0,
+      cursor: '',
+      tags: [],
+      searchKeyword: null,
+      maintainerId: null,
+      orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
+      orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+    });
+  }, []);
+
+  const flagList = features.reduce((acc, feature) => {
+    if (
+      feature.prerequisitesList.find(
+        (prerequisite) => prerequisite.featureId === featureId
+      )
+    ) {
+      return [
+        ...acc,
+        {
+          id: feature.id,
+          name: feature.name,
+        },
+      ];
+    }
+    return acc;
+  }, []);
+
+  const flagListLength = flagList.length;
+
+  if (flagListLength === 0) {
+    return null;
+  }
+
+  return (
+    <div className="bg-blue-50 p-4 border-l-4 border-blue-400">
+      <div className="flex">
+        <div className="flex-shrink-0">
+          <InformationCircleIcon
+            className="h-5 w-5 text-blue-400"
+            aria-hidden="true"
+          />
+        </div>
+        <div className="ml-3 flex-1">
+          <p className="text-sm text-blue-700">
+            {f(messages.feature.flagIsPrerequisite, {
+              length: flagListLength,
+            })}
+          </p>
+          <div
+            className="inline-flex space-x-1 cursor-pointer"
+            onClick={() => setSeeMore(!isSeeMore)}
+          >
+            <span className="text-sm font-medium text-gray-700 hover:text-gray-600">
+              {isSeeMore ? f(messages.close) : f(messages.seeMore)}
+            </span>
+            {isSeeMore ? (
+              <ChevronUpIcon className="w-5 text-gray-700" />
+            ) : (
+              <ChevronDownIcon className="w-5 text-gray-700" />
+            )}
+          </div>
+          {isSeeMore && (
+            <div className="pl-4 mt-2 space-y-2 text-sm">
+              <p className="text-gray-600">
+                {f(messages.feature.flagIsPrerequisiteDescription, {
+                  length: flagListLength,
+                })}
+              </p>
+              <ul className="list-disc pl-4">
+                {flagList.map((flag) => (
+                  <li key={flag.id}>
+                    <Link
+                      className="link text-left"
+                      to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
+                    >
+                      <p className="truncate w-96">{flag.name}</p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+export interface PrerequisiteInputProps {
+  feature: Feature.AsObject;
+}
+
+export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
+  ({ feature }) => {
+    const { formatMessage: f } = useIntl();
+    const dispatch = useDispatch<AppDispatch>();
+    const editable = useIsEditable();
+    const methods = useFormContext();
+    const currentEnvironment = useCurrentEnvironment();
+
+    const {
+      control,
+      formState: { errors },
+    } = methods;
+    const {
+      fields: prerequisites,
+      append: appendPrerequisite,
+      remove,
+      update,
+    } = useFieldArray({
+      control,
+      name: 'prerequisites',
+      keyName: 'key',
+    });
+
+    const isFeaturesLoading = useSelector<AppState, boolean>(
+      (state) => state.features.loading,
+      shallowEqual
+    );
+
+    const features = useSelector<AppState, Feature.AsObject[]>(
+      (state) => selectAllFeatures(state.features),
+      shallowEqual
+    );
+
+    const handleAddPrerequisite = useCallback(() => {
+      if (prerequisites.length === 0) {
+        dispatchListFeatures().then(() => {
+          setTimeout(() => {
+            appendPrerequisite({
+              featureId: null,
+              variationId: null,
+            });
+          });
+        });
+      } else {
+        appendPrerequisite({
+          featureId: null,
+          variationId: null,
+        });
+      }
+    }, [prerequisites]);
+
+    const handleRemovePrerequisite = useCallback(
+      (idx) => {
+        remove(idx);
+      },
+      [remove]
+    );
+
+    const dispatchListFeatures = () => {
+      return dispatch(
+        listFeatures({
+          environmentNamespace: currentEnvironment.namespace,
+          pageSize: 99999,
+          cursor: '',
+          tags: [],
+          searchKeyword: null,
+          enabled: null,
+          hasExperiment: null,
+          maintainerId: null,
+          archived: false,
+          orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
+          orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+        })
+      );
+    };
+
+    useEffect(() => {
+      if (prerequisites.length > 0) {
+        dispatchListFeatures();
+      }
+    }, []);
+
+    const disableAddPrerequisite = useCallback(() => {
+      if (prerequisites.length === 0) {
+        return false;
+      }
+      return prerequisites.length === features.length - 1;
+    }, [prerequisites, features]);
+
+    return (
+      <div className="">
+        {prerequisites.length > 0 && (
+          <div className="bg-white rounded-md p-3 border space-y-2">
+            {prerequisites.map((p: any, prerequisitesIdx) => {
+              const featureIdName = `prerequisites[${prerequisitesIdx}].featureId`;
+              const variationIdName = `prerequisites[${prerequisitesIdx}].variationId`;
+
+              const variationList = features.find(
+                (f) => f.id === p.featureId
+              )?.variationsList;
+
+              const variationOptions = variationList?.map((v) => ({
+                label: v.value,
+                value: v.id,
+              }));
+
+              const featureFlagOptions = features
+                .filter((f) => f.id !== feature.id)
+                .filter(
+                  (f) =>
+                    !prerequisites.some(
+                      (p2: any) =>
+                        p2.featureId === f.id && p2.featureId !== p.featureId
+                    )
+                )
+                .map((f) => {
+                  return {
+                    value: f.id,
+                    label: f.name,
+                    enabled: f.enabled,
+                  };
+                });
+
+              return (
+                <div key={p.key} className="flex space-x-2">
+                  <Controller
+                    name={featureIdName}
+                    control={control}
+                    render={({ field }) => {
+                      return (
+                        <SelectFeatureFlag
+                          placeholder={f(messages.feature.selectFlag)}
+                          options={featureFlagOptions}
+                          className="w-full"
+                          onChange={(e: OptionFeatureFlag) => {
+                            if (field.value !== e.value) {
+                              field.onChange(e.value);
+                              update(prerequisitesIdx, {
+                                ...p,
+                                featureId: e.value,
+                                variationId: null,
+                              });
+                            }
+                          }}
+                          value={featureFlagOptions.find(
+                            (o) => o.value === field.value
+                          )}
+                        />
+                      );
+                    }}
+                  />
+
+                  <Controller
+                    name={variationIdName}
+                    control={control}
+                    render={({ field }) => {
+                      return (
+                        <Select
+                          placeholder={f(messages.feature.selectVariation)}
+                          options={variationOptions}
+                          className="w-full"
+                          onChange={(e) => {
+                            field.onChange(e.value);
+                            update(prerequisitesIdx, {
+                              ...p,
+                              variationId: e.value,
+                            });
+                          }}
+                          value={
+                            variationOptions?.find(
+                              (o) => o.value === p.variationId
+                            ) ?? null
+                          }
+                        />
+                      );
+                    }}
+                  />
+                  {editable && (
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleRemovePrerequisite(prerequisitesIdx)
+                        }
+                        className="minus-circle-icon"
+                      >
+                        <MinusCircleIcon aria-hidden="true" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {editable && (
+          <div className="pt-4 flex">
+            <button
+              type="button"
+              className="btn-submit"
+              onClick={handleAddPrerequisite}
+              disabled={disableAddPrerequisite()}
+            >
+              {f(messages.feature.addPrerequisites)}
+            </button>
+          </div>
+        )}
       </div>
     );
   }

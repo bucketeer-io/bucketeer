@@ -218,6 +218,10 @@ export const FeatureIndexPage: FC = memo(() => {
           : typeof options?.tagIds === 'string' && options?.tagIds.length > 0
           ? [options.tagIds]
           : [];
+      const hasPrerequisites =
+        options && options.hasPrerequisites
+          ? options.hasPrerequisites === 'true'
+          : null;
 
       dispatch(
         listFeatures({
@@ -231,6 +235,7 @@ export const FeatureIndexPage: FC = memo(() => {
           enabled: enabled,
           archived: archived,
           hasExperiment: hasExperiment,
+          hasPrerequisites: hasPrerequisites,
           maintainerId: options && (options.maintainerId as string),
         })
       );
@@ -532,6 +537,9 @@ export const FeatureIndexPage: FC = memo(() => {
       </FormProvider>
       <FormProvider {...archiveMethod}>
         <FeatureConfirmDialog
+          isArchive={true}
+          featureId={archiveMethod.getValues().feature?.id}
+          feature={archiveMethod.getValues().feature}
           open={isArchiveConfirmDialogOpen}
           handleSubmit={archiveHandleSubmit(handleArchive)}
           onClose={() => setIsArchiveConfirmDialogOpen(false)}
