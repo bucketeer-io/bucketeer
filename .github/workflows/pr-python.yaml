@@ -56,12 +56,19 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           architecture: "x64"
+      - name: Install Poetry
+        uses: snok/install-poetry@d45b6d76012debf457ab49dffc7fb7b2efe8071d # v1.3.3
+        with:
+          version: 1.5.0
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
       - name: Install Protoc
         uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # v1.1.2
         with:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Check proto go files
+      - name: Check proto python files
         run: |
           cd ${{ env.PYTHON_PATH }}
           make gen-check
