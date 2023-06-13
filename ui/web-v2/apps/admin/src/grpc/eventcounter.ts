@@ -100,7 +100,7 @@ export function getEvaluationTimeseriesCount(
       resolve: (result: GetEvaluationTimeseriesCountResult) => void,
       reject
     ): void => {
-      client.getEvaluationTimeseriesCountV2(
+      client.getEvaluationTimeseriesCount(
         request,
         getMetaData(),
         (error, response): void => {

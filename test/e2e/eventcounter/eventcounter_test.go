@@ -1473,7 +1473,7 @@ LOOP:
 		if i == retryTimes {
 			t.Fatalf("retry timeout")
 		}
-		res := getEvaluationTimeseriesCount(t, featureID, ecClient)
+		res := getEvaluationTimeseriesCount(t, featureID, ecClient, ecproto.GetEvaluationTimeseriesCountRequest_THIRTY_DAYS)
 		if len(res.UserCounts) != 3 {
 			t.Fatalf("the number of user counts is not correct: %d", len(res.UserCounts))
 		}
@@ -1485,7 +1485,7 @@ LOOP:
 			if uc.VariationId != expectedVIDs[idx] {
 				t.Fatalf("variation ID is not correct: %s", uc.VariationId)
 			}
-			if len(uc.Timeseries.Timestamps) != 31 {
+			if len(uc.Timeseries.Timestamps) != 30 {
 				t.Fatalf("the number of user counts is not correct: %d", len(uc.Timeseries.Timestamps))
 			}
 			if uc.Timeseries.Values[len(uc.Timeseries.Values)-1] != expectedUserVal[idx] {
@@ -1496,7 +1496,7 @@ LOOP:
 			if ec.VariationId != expectedVIDs[idx] {
 				t.Fatalf("variation ID is not correct: %s", ec.VariationId)
 			}
-			if len(ec.Timeseries.Timestamps) != 31 {
+			if len(ec.Timeseries.Timestamps) != 30 {
 				t.Fatalf("the number of event counts is not correct: %d", len(ec.Timeseries.Timestamps))
 			}
 			if ec.Timeseries.Values[len(ec.Timeseries.Values)-1] != expectedEventVal[idx] {
@@ -2121,6 +2121,7 @@ func getEvaluationTimeseriesCount(
 	t *testing.T,
 	featureID string,
 	c ecclient.Client,
+	timeRange ecproto.GetEvaluationTimeseriesCountRequest_TimeRange,
 ) *ecproto.GetEvaluationTimeseriesCountResponse {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -2128,6 +2129,7 @@ func getEvaluationTimeseriesCount(
 	req := &ecproto.GetEvaluationTimeseriesCountRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		FeatureId:            featureID,
+		TimeRange:            timeRange,
 	}
 	res, err := c.GetEvaluationTimeseriesCount(
 		ctx,

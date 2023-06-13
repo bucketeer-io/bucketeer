@@ -63,7 +63,6 @@ const (
 )
 
 var (
-	jpLocation          = time.FixedZone("Asia/Tokyo", 9*60*60)
 	errUnknownTimeRange = errors.New("eventcounter: a time range is unknown")
 )
 
@@ -244,143 +243,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	if err != nil {
 		return nil, err
 	}
-	if req.FeatureId == "" {
-		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		EnvironmentNamespace: req.EnvironmentNamespace,
-		Id:                   req.FeatureId,
-	})
-	if err != nil {
-		s.logger.Error(
-			"Failed to get feature",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
-				zap.String("featureId", req.FeatureId),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	endAt := time.Now()
-	startAt := truncateDate(
-		jpLocation,
-		getStartTime(jpLocation, endAt, 30),
-	)
-	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	timestamps := getDailyTimestamps(startAt, 30)
-	vIDs := getVariationIDs(resp.Feature.Variations)
-	variationTSEvents := []*ecproto.VariationTimeseries{}
-	variationTSUsers := []*ecproto.VariationTimeseries{}
-	for _, vID := range vIDs {
-		eventCountKeys := []string{}
-		userCountKeys := []string{}
-		for _, ts := range timestamps {
-			ec := newEvaluationCountkey(eventCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
-			eventCountKeys = append(eventCountKeys, ec)
-			uc := newEvaluationCountkey(userCountPrefix, req.FeatureId, vID, req.EnvironmentNamespace, ts)
-			userCountKeys = append(userCountKeys, uc)
-		}
-		eventCounts, err := s.evaluationCountCacher.GetEventCounts(eventCountKeys)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get event counts",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
-					zap.Time("startAt", startAt),
-					zap.Time("endAt", endAt),
-					zap.String("featureId", req.FeatureId),
-					zap.Int32("featureVersion", resp.Feature.Version),
-					zap.String("variationId", vID),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		userCounts, err := s.evaluationCountCacher.GetUserCounts(userCountKeys)
-		if err != nil {
-			s.logger.Error(
-				"Failed to get user counts",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
-					zap.Time("startAt", startAt),
-					zap.Time("endAt", endAt),
-					zap.String("featureId", req.FeatureId),
-					zap.Int32("featureVersion", resp.Feature.Version),
-					zap.String("variationId", vID),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
-			VariationId: vID,
-			Timeseries: &ecproto.Timeseries{
-				Timestamps: timestamps,
-				Values:     userCounts,
-			},
-		})
-		variationTSEvents = append(variationTSEvents, &ecproto.VariationTimeseries{
-			VariationId: vID,
-			Timeseries: &ecproto.Timeseries{
-				Timestamps: timestamps,
-				Values:     eventCounts,
-			},
-		})
-	}
-	return &ecproto.GetEvaluationTimeseriesCountResponse{
-		EventCounts: variationTSEvents,
-		UserCounts:  variationTSUsers,
-	}, nil
-}
-
-func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
-	ctx context.Context,
-	req *ecproto.GetEvaluationTimeseriesCountRequest,
-) (*ecproto.GetEvaluationTimeseriesCountResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.validateGetEvaluationTimeseriesCountV2(req, localizer); err != nil {
+	if err := s.validateGetEvaluationTimeseriesCount(req, localizer); err != nil {
 		return nil, err
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
@@ -523,7 +386,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCountV2(
 	}, nil
 }
 
-func (s *eventCounterService) validateGetEvaluationTimeseriesCountV2(
+func (s *eventCounterService) validateGetEvaluationTimeseriesCount(
 	req *ecproto.GetEvaluationTimeseriesCountRequest,
 	localizer locale.Localizer,
 ) error {
