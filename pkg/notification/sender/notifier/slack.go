@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
+	"google.golang.org/grpc/metadata"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -42,6 +43,7 @@ const (
 
 var (
 	ErrUnknownNotification = errors.New("slacknotifier: unknown notification")
+	ErrInvalidLanguage     = errors.New("slacknotifier: invalid language")
 )
 
 type options struct {
@@ -92,12 +94,13 @@ func (n *slackNotifier) Notify(
 	ctx context.Context,
 	notification *senderproto.Notification,
 	recipient *notificationproto.Recipient,
+	language notificationproto.Recipient_Language,
 ) error {
 	if recipient.Type != notificationproto.Recipient_SlackChannel {
 		return nil
 	}
 	receivedCounter.WithLabelValues(typeSlack).Inc()
-	if err := n.notify(ctx, notification, recipient.SlackChannelRecipient); err != nil {
+	if err := n.notify(ctx, notification, recipient.SlackChannelRecipient, language); err != nil {
 		n.logger.Error("Failed to notify",
 			zap.Error(err),
 		)
@@ -112,8 +115,13 @@ func (n *slackNotifier) notify(
 	ctx context.Context,
 	notification *sender.Notification,
 	slackRecipient *notificationproto.SlackChannelRecipient,
+	language notificationproto.Recipient_Language,
 ) error {
-	msg, err := n.createMessage(notification, slackRecipient)
+	localizer, err := n.newLocalizer(ctx, language)
+	if err != nil {
+		return err
+	}
+	msg, err := n.createMessage(notification, slackRecipient, localizer)
 	if err != nil {
 		return err
 	}
@@ -124,11 +132,31 @@ func (n *slackNotifier) notify(
 	return nil
 }
 
+func (n *slackNotifier) newLocalizer(
+	ctx context.Context,
+	language notificationproto.Recipient_Language,
+) (locale.Localizer, error) {
+	var l string
+	switch language {
+	case notificationproto.Recipient_JAPANESE:
+		l = locale.Ja
+	case notificationproto.Recipient_ENGLISH:
+		l = locale.En
+	default:
+		return nil, ErrInvalidLanguage
+	}
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{l},
+	})
+	return locale.NewLocalizer(ctx), nil
+}
+
 func (n *slackNotifier) createMessage(
 	notification *sender.Notification,
 	slackRecipient *notificationproto.SlackChannelRecipient,
+	localizer locale.Localizer,
 ) (*slack.WebhookMessage, error) {
-	attachment, err := n.createAttachment(notification)
+	attachment, err := n.createAttachment(notification, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -138,10 +166,13 @@ func (n *slackNotifier) createMessage(
 	return msg, nil
 }
 
-func (n *slackNotifier) createAttachment(notification *sender.Notification) (*slack.Attachment, error) {
+func (n *slackNotifier) createAttachment(
+	notification *sender.Notification,
+	localizer locale.Localizer,
+) (*slack.Attachment, error) {
 	switch notification.Type {
 	case sender.Notification_DomainEvent:
-		return n.createDomainEventAttachment(notification.DomainEventNotification)
+		return n.createDomainEventAttachment(notification.DomainEventNotification, localizer)
 	case sender.Notification_FeatureStale:
 		return n.createFeatureStaleAttachment(notification.FeatureStaleNotification)
 	case sender.Notification_ExperimentRunning:
@@ -154,9 +185,10 @@ func (n *slackNotifier) createAttachment(notification *sender.Notification) (*sl
 
 func (n *slackNotifier) createDomainEventAttachment(
 	notification *senderproto.DomainEventNotification,
+	localizer locale.Localizer,
 ) (*slack.Attachment, error) {
 	// handle loc if multi-lang is necessary
-	localizedMessage := domainevent.LocalizedMessage(notification.Type, locale.Ja)
+	localizedMessage := domainevent.LocalizedMessage(notification.Type, localizer)
 	url, err := domainevent.URL(
 		notification.EntityType,
 		n.webURL,

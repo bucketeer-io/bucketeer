@@ -15,9 +15,11 @@
 package domain
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	proto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -25,6 +27,11 @@ import (
 
 func TestLocalizedMessage(t *testing.T) {
 	t.Parallel()
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	patterns := []struct {
 		desc           string
 		inputEventType proto.Event_Type
@@ -35,7 +42,7 @@ func TestLocalizedMessage(t *testing.T) {
 			inputEventType: proto.Event_UNKNOWN,
 			expected: &proto.LocalizedMessage{
 				Locale:  locale.Ja,
-				Message: "不明な操作を実行しました",
+				Message: "不明な操作が実行されました",
 			},
 		},
 		{
@@ -43,13 +50,13 @@ func TestLocalizedMessage(t *testing.T) {
 			inputEventType: proto.Event_Type(-1),
 			expected: &proto.LocalizedMessage{
 				Locale:  locale.Ja,
-				Message: "不明な操作を実行しました",
+				Message: "不明な操作が実行されました",
 			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual := LocalizedMessage(p.inputEventType, locale.Ja)
+			actual := LocalizedMessage(p.inputEventType, localizer)
 			assert.Equal(t, p.expected, actual)
 		})
 	}
@@ -58,16 +65,21 @@ func TestLocalizedMessage(t *testing.T) {
 // TestImplementedLocalizedMessage checks if every domain event type has a message.
 func TestImplementedLocalizedMessage(t *testing.T) {
 	t.Parallel()
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
 	unknown := &proto.LocalizedMessage{
 		Locale:  locale.Ja,
-		Message: "不明な操作を実行しました",
+		Message: "不明な操作が実行されました",
 	}
 	for k, v := range proto.Event_Type_name {
 		if v == "UNKNOWN" {
 			continue
 		}
 		t.Run(v, func(t *testing.T) {
-			actual := LocalizedMessage(proto.Event_Type(k), locale.Ja)
+			actual := LocalizedMessage(proto.Event_Type(k), localizer)
 			assert.NotEqual(t, unknown, actual)
 		})
 	}

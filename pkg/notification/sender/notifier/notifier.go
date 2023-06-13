@@ -23,5 +23,10 @@ import (
 )
 
 type Notifier interface {
-	Notify(ctx context.Context, notification *senderproto.Notification, recipient *notificationproto.Recipient) error
+	Notify(
+		ctx context.Context,
+		notification *senderproto.Notification,
+		recipient *notificationproto.Recipient,
+		language notificationproto.Recipient_Language,
+	) error
 }

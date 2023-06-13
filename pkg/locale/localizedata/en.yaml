@@ -1,8 +1,62 @@
+# TODO: translate this messages
+
+#############################
+# Status Error Messages
+#############################
+
 # Nouns
 FeatureFlagID: "feature flag ID"
 
 # Error sentences
 RequiredField: "{{ .Field_1 }} is required"
 InternalServerError: "An internal error has occurred"
-WebhookNotFoundError: "The requested {{ .Field_1 }} is not found"
 InvalidArgumentError: "The argument {{ .Field_1 }} is invalid"
+NotFoundError: "リクエストされた{{ .Field_1 }}が見つかりません"
+UnauthenticatedError: "認証されていません"
+PermissionDenied: "権限がありません"
+ExceededMaxError: "{{ .Field_1 }} の最大値 ({{ .Field_2 }}) を超えています"
+AlreadyExistsError: "同じデータが既に存在しています"
+AlreadyDeletedError: "データがすでに削除済みです"
+
+# feature error
+DifferentVariationsSize: "featureのvariationsとrolloutのvariationsの数が異なります"
+InvalidVariationWeight: "weightは0から{{ .Field_1 }}の間である必要があります"
+NothingToChange: "変更点がありません"
+SegmentUsersAlreadyUploading: "segment userのリストはすでにアップロード中です"
+SegmentStatusNotSucceeded: "segmentのstatusがsuceededではありません"
+SegmentInUse: "segmentがfeature flagで使用されているため、削除できません"
+HasWaitingOrRunningExperiment: "開始予定、もしくは実行中のExperimentが存在します。更新する場合はExperimentを停止してください。"
+InvalidArchive: "前提条件のフラグとして登録されているフラグをアーカイブすることはできません"
+InvalidChangingVariation: "前提条件のフラグとして登録されているフラグのバリエーションを変更または削除することはできません"
+
+# autoops error
+IncompatibleOpsType: "対象のオペレーションタイプに対応していない自動オペレーションルールがあります"
+
+# eventcounter error
+StartAtIsAfterEndAt: "start at はend at以前を指定してください。"
+PeriodOutOfRange: "期間は過去30日以内を選択してください。"
+
+# environment error
+ProjectDisabled: "projectのデータが無効化されています"
+
+#############################
+# Domain Events
+#############################
+
+UnknownOperation: "不明な操作が実行されました"
+Created: "{{ .Field_1 }}が作成されました"
+Enabled: "{{ .Field_1 }}が有効化されました"
+Disabled: "{{ .Field_1 }}が無効化されました"
+Archived: "{{ .Field_1 }}がアーカイブされました"
+Unarchived: "{{ .Field_1 }}がアーカイブから解除されました"
+Deleted: "{{ .Field_1 }}が削除されました"
+Added: "{{ .Field_1 }}が追加されました"
+Changed: "{{ .Field_1 }}が変更されました"
+Updated: "{{ .Field_1 }}が更新されました"
+Started: "{{ .Field_1 }}が開始されました"
+Stopped: "{{ .Field_1 }}が停止されました"
+Finished: "{{ .Field_1 }}が終了されました"
+Uploaded: "{{ .Field_1 }}がアップロードされました"
+Cloned: "{{ .Field_1 }}がクローンされました"
+Reset: "{{ .Field_1 }}がリセットされました"
+TrialConverted: "Trialを正式なProjectに変換しました"

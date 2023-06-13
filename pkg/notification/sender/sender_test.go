@@ -104,9 +104,9 @@ func TestHandle(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
-						{Id: "sid0"},
+						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}},
 					}}, nil)
-				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("test"))
+				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("test"))
 			},
 			input: &senderproto.NotificationEvent{
 				Id:                   "id",
@@ -125,9 +125,9 @@ func TestHandle(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
-						{Id: "sid0"},
+						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}},
 					}}, nil)
-				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input: &senderproto.NotificationEvent{
 				Id:                   "id",
@@ -146,9 +146,9 @@ func TestHandle(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
-						{Id: "sid0"}, {Id: "sid1"},
+						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}}, {Id: "sid1", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}},
 					}}, nil)
-				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(2)
+				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(2)
 			},
 			input: &senderproto.NotificationEvent{
 				Id:                   "id",
@@ -167,9 +167,9 @@ func TestHandle(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledAdminSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
-						{Id: "sid0"},
+						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}},
 					}}, nil)
-				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input: &senderproto.NotificationEvent{
 				Id:                   "id",
@@ -188,9 +188,9 @@ func TestHandle(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledAdminSubscriptions(gomock.Any(), gomock.Any()).Return(
 					&notificationproto.ListEnabledAdminSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
-						{Id: "sid0"}, {Id: "sid1"},
+						{Id: "sid0", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}}, {Id: "sid1", Recipient: &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH}},
 					}}, nil)
-				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(2)
+				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(2)
 			},
 			input: &senderproto.NotificationEvent{
 				Id:                   "id",

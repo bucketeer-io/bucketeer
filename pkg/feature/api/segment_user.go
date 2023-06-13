@@ -575,7 +575,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	if segment.Status != featureproto.Segment_SUCEEDED {
 		dt, err := statusSegmentStatusNotSuceeded.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.SegmentStatusNotSuceeded),
+			Message: localizer.MustLocalize(locale.SegmentStatusNotSucceeded),
 		})
 		if err != nil {
 			return nil, statusInternal.Err()

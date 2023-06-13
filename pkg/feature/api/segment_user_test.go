@@ -252,7 +252,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			environmentNamespace: "ns0",
 			segmentID:            "id",
 			state:                featureproto.SegmentUser_INCLUDED,
-			expectedErr:          createError(statusSegmentStatusNotSuceeded, localizer.MustLocalize(locale.SegmentStatusNotSuceeded)),
+			expectedErr:          createError(statusSegmentStatusNotSuceeded, localizer.MustLocalize(locale.SegmentStatusNotSucceeded)),
 		},
 	}
 	for _, tc := range testcases {

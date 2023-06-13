@@ -560,11 +560,11 @@ func TestConvUpdateFeatureError(t *testing.T) {
 		},
 		{
 			input:       domain.ErrAlreadyDisabled,
-			expectedErr: createError(statusNothingChange, localizer.MustLocalize(locale.NothingChange)),
+			expectedErr: createError(statusNothingChange, localizer.MustLocalize(locale.NothingToChange)),
 		},
 		{
 			input:       domain.ErrAlreadyEnabled,
-			expectedErr: createError(statusNothingChange, localizer.MustLocalize(locale.NothingChange)),
+			expectedErr: createError(statusNothingChange, localizer.MustLocalize(locale.NothingToChange)),
 		},
 		{
 			input:       errors.New("test"),

@@ -111,7 +111,12 @@ func (s *sender) Send(ctx context.Context, notificationEvent *senderproto.Notifi
 	}
 	var lastErr error
 	for _, subscription := range subscriptions {
-		if err := s.send(ctx, notificationEvent.Notification, subscription.Recipient); err != nil {
+		if err := s.send(
+			ctx,
+			notificationEvent.Notification,
+			subscription.Recipient,
+			subscription.Recipient.Language,
+		); err != nil {
 			s.logger.Error("Failed to send notification", zap.Error(err),
 				zap.String("environmentNamespace", notificationEvent.EnvironmentNamespace),
 			)
@@ -134,9 +139,10 @@ func (s *sender) send(
 	ctx context.Context,
 	notification *senderproto.Notification,
 	recipient *notificationproto.Recipient,
+	language notificationproto.Recipient_Language,
 ) error {
 	for _, notifier := range s.notifiers {
-		if err := notifier.Notify(ctx, notification, recipient); err != nil {
+		if err := notifier.Notify(ctx, notification, recipient, language); err != nil {
 			return err
 		}
 	}
