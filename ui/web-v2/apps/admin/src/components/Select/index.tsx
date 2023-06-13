@@ -63,6 +63,9 @@ export const Select: FC<SelectProps> = memo(
             : isSelected
             ? backgroundColor
             : null,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
           color: textColor,
           ':active': {
             backgroundColor: backgroundColor,

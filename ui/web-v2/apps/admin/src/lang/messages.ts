@@ -1324,6 +1324,22 @@ export const messages = {
       id: 'feature.targetings',
       defaultMessage: 'Targetings',
     }),
+    addUser: defineMessage({
+      id: 'feature.addUser',
+      defaultMessage: 'Add user {userId}',
+    }),
+    addUserIds: defineMessage({
+      id: 'feature.addUserIds',
+      defaultMessage: 'Add user ids',
+    }),
+    alreadyTargeted: defineMessage({
+      id: 'feature.alreadyTargeted',
+      defaultMessage: 'Already targeted',
+    }),
+    alreadyTargetedInVariation: defineMessage({
+      id: 'feature.alreadyTargetedInVariation',
+      defaultMessage: '"{userId}" is already targeted in "{variationName}"',
+    }),
     updateComment: defineMessage({
       id: 'feature.updateComment',
       defaultMessage: 'Comment for update',

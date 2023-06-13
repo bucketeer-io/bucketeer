@@ -14,3 +14,11 @@ export const createVariationLabel = (variation: Variation.AsObject) => {
   }
   return label;
 };
+
+export const getAlreadyTargetedVariation = (targets, variationId, label) => {
+  const newTargets = targets.filter(
+    (target) => target.variationId !== variationId
+  );
+
+  return newTargets.find((target) => target.users.includes(label));
+};

@@ -1,15 +1,21 @@
 import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
+import { isLanguageJapanese } from '@/lang/getSelectedLanguage';
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
-import { createVariationLabel } from '@/utils/variation';
+import {
+  createVariationLabel,
+  getAlreadyTargetedVariation,
+} from '@/utils/variation';
 import {
   MinusCircleIcon,
   XIcon,
   InformationCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  PlusCircleIcon,
 } from '@heroicons/react/solid';
+import { FileCopyOutlined } from '@material-ui/icons';
 import { SerializedError } from '@reduxjs/toolkit';
-import React, { FC, memo, useCallback, useEffect, useState } from 'react';
+import React, { FC, memo, useCallback, useState, useEffect } from 'react';
 import ReactDatePicker from 'react-datepicker';
 import {
   useFormContext,
@@ -21,6 +27,8 @@ import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Link } from 'react-router-dom';
+import { components } from 'react-select';
+import ReactCreatableSelect from 'react-select/creatable';
 import { v4 as uuid } from 'uuid';
 
 import { intl } from '../../lang';
@@ -38,7 +46,8 @@ import { Feature } from '../../proto/feature/feature_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
 import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
-import { CreatableSelect } from '../CreatableSelect';
+import { CopyChip } from '../CopyChip';
+import { colourStyles, CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
 import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 import { Switch } from '../Switch';
@@ -58,13 +67,11 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       formState: { errors, isDirty },
       watch,
     } = methods;
-    const { fields: targets } = useFieldArray({
-      control,
-      name: 'targets',
-    });
+
+    const prerequisites = watch('prerequisites');
 
     const rules = watch('rules');
-    const prerequisites = watch('prerequisites');
+    const targets = watch('targets');
 
     const [feature, _] = useSelector<
       AppState,
@@ -117,6 +124,32 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       return false;
     }, [rules, isDirty, errors, prerequisites]);
 
+    const handleOnPaste = (e, t, field) => {
+      // Stop data actually being pasted into div
+      e.stopPropagation();
+      e.preventDefault();
+
+      const clipboardData = e.clipboardData;
+      const pastedData: string = clipboardData.getData('Text').split(', ');
+
+      if (pastedData) {
+        const difference = t.users.filter((u) => !pastedData.includes(u));
+        field.onChange([...difference, ...pastedData]);
+      }
+    };
+
+    const NoOptionsMessage = ({ props }) => {
+      return (
+        <components.NoOptionsMessage {...props}>
+          <span className="custom-css-class">
+            {props.selectProps.inputValue
+              ? f(messages.feature.alreadyTargeted)
+              : f(messages.feature.addUserIds)}
+          </span>
+        </components.NoOptionsMessage>
+      );
+    };
+
     return (
       <div className="p-10 bg-gray-100">
         <form className="">
@@ -151,33 +184,133 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 {targets.map((t: any, idx) => {
                   return (
                     <div key={idx} className="col-span-1">
-                      <label htmlFor={`${idx}`} className="input-label">
-                        {createVariationLabel(
-                          feature.variationsList.find(
-                            (v) => v.id == t.variationId
-                          )
-                        )}
-                      </label>
-                      <Controller
-                        name={`targets.[${idx}].users`}
-                        control={control}
-                        render={({ field }) => {
-                          return (
-                            <CreatableSelect
-                              disabled={!editable}
-                              defaultValues={field.value.map((u) => {
-                                return {
-                                  value: u,
-                                  label: u,
-                                };
-                              })}
-                              onChange={(options: Option[]) => {
-                                field.onChange(options.map((o) => o.value));
-                              }}
+                      <div className="truncate">
+                        <label
+                          htmlFor={`${idx}`}
+                          className="input-label w-full"
+                        >
+                          {createVariationLabel(
+                            feature.variationsList.find(
+                              (v) => v.id == t.variationId
+                            )
+                          )}
+                        </label>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Controller
+                          name={`targets.[${idx}].users`}
+                          control={control}
+                          render={({ field }) => {
+                            return (
+                              <div
+                                className="flex-1"
+                                onPaste={(e) => handleOnPaste(e, t, field)}
+                              >
+                                <ReactCreatableSelect
+                                  isMulti
+                                  placeholder={f(messages.feature.addUserIds)}
+                                  classNamePrefix="react-select"
+                                  styles={colourStyles}
+                                  formatCreateLabel={(userInput) => {
+                                    const alreadyTargetedVariaition =
+                                      getAlreadyTargetedVariation(
+                                        targets,
+                                        t.variationId,
+                                        userInput
+                                      );
+                                    if (alreadyTargetedVariaition) {
+                                      let variationName = createVariationLabel(
+                                        feature.variationsList.find(
+                                          (v) =>
+                                            v.id ===
+                                            alreadyTargetedVariaition.variationId
+                                        )
+                                      );
+                                      variationName =
+                                        variationName.length > 50
+                                          ? `${variationName.slice(0, 50)} ...`
+                                          : variationName;
+                                      return (
+                                        <div
+                                          className={
+                                            'text-center text-gray-500'
+                                          }
+                                        >
+                                          <span>
+                                            {f(
+                                              messages.feature
+                                                .alreadyTargetedInVariation,
+                                              {
+                                                userId: userInput,
+                                                variationName,
+                                              }
+                                            )}
+                                          </span>
+                                        </div>
+                                      );
+                                    }
+
+                                    return (
+                                      <div className="flex space-x-1 items-center">
+                                        <PlusCircleIcon
+                                          className="w-4 h-4 text-blue-400"
+                                          aria-hidden="true"
+                                        />
+
+                                        <span className="text-blue-700">
+                                          {f(messages.feature.addUser, {
+                                            userId: userInput,
+                                          })}
+                                        </span>
+                                      </div>
+                                    );
+                                  }}
+                                  components={{
+                                    DropdownIndicator: null,
+                                    NoOptionsMessage: (props) => (
+                                      <NoOptionsMessage props={props} />
+                                    ),
+                                  }}
+                                  value={field.value.map((u) => {
+                                    return {
+                                      value: u,
+                                      label: u,
+                                    };
+                                  })}
+                                  onChange={(options: Option[]) => {
+                                    const newOption = options.find(
+                                      (o) => o['__isNew__']
+                                    );
+
+                                    const alreadyTargetedVariaition =
+                                      getAlreadyTargetedVariation(
+                                        targets,
+                                        t.variationId,
+                                        newOption?.label
+                                      );
+
+                                    if (!alreadyTargetedVariaition) {
+                                      field.onChange(
+                                        options.map((o) => o.value)
+                                      );
+                                    }
+                                  }}
+                                  disabled={!editable}
+                                />
+                              </div>
+                            );
+                          }}
+                        />
+                        <CopyChip text={t.users.join(', ')}>
+                          <div className="flex items-center border border-[#D1D5DB] cursor-pointer hover:bg-gray-50 transition px-2 h-full rounded">
+                            <FileCopyOutlined
+                              aria-hidden="true"
+                              fontSize="small"
+                              className="text-gray-400"
                             />
-                          );
-                        }}
-                      />
+                          </div>
+                        </CopyChip>
+                      </div>
                     </div>
                   );
                 })}
@@ -1174,8 +1307,8 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
           <div className="grid grid-cols-1 gap-2 mt-2">
             {rolloutStrategy.map((s: any, idx: number) => {
               return (
-                <div key={s.id} className="flex">
-                  <div className="w-36 flex">
+                <div key={s.id} className="flex space-x-2 items-center">
+                  <div className="w-36 flex flex-shrink-0">
                     <input
                       {...register(`${rolloutStrategyName}.${idx}.percentage`)}
                       type="number"
@@ -1199,7 +1332,7 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
                       {'%'}
                     </span>
                   </div>
-                  <label className="inline-flex items-center ml-3 text-sm text-gray-700">
+                  <label className="truncate text-sm text-gray-700">
                     {createVariationLabel(
                       feature.variationsList.find((v) => v.id == s.id)
                     )}
