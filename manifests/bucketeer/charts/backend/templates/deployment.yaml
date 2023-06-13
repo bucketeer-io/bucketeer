@@ -1,0 +1,194 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "backend.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "backend.name" . }}
+    chart: {{ template "backend.chart" . }}
+    release: {{ template "backend.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "backend.name" . }}
+      release: {{ template "backend.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "backend.name" . }}
+        release: {{ template "backend.fullname" . }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: {{ template "backend.fullname" . }}-envoy-config
+        - name: service-cert-secret
+          secret:
+            secretName: {{ template "service-cert-secret" . }}
+        - name: issuer-cert-secret
+          secret:
+            secretName: {{ template "issuer-cert-secret" . }}
+        - name: service-token-secret
+          secret:
+            secretName: {{ template "service-token-secret" . }}
+        - name: oauth-key-secret
+          secret:
+            secretName: {{ template "oauth-key-secret" . }}
+      {{- if .Values.serviceAccount.annotations }}
+      serviceAccountName: {{ template "backend.fullname" . }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["server"]
+          env:
+            - name: BUCKETEER_BACKEND_PROJECT
+              value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_BACKEND_MYSQL_USER
+              value: "{{ .Values.env.mysqlUser }}"
+            - name: BUCKETEER_BACKEND_MYSQL_PASS
+              value: "{{ .Values.env.mysqlPass }}"
+            - name: BUCKETEER_BACKEND_MYSQL_HOST
+              value: "{{ .Values.env.mysqlHost }}"
+            - name: BUCKETEER_BACKEND_MYSQL_PORT
+              value: "{{ .Values.env.mysqlPort }}"
+            - name: BUCKETEER_BACKEND_MYSQL_DB_NAME
+              value: "{{ .Values.env.mysqlDbName }}"
+            - name: BUCKETEER_BACKEND_DOMAIN_TOPIC
+              value: "{{ .Values.env.domainTopic }}"
+            - name: BUCKETEER_BACKEND_HEALTH_CHECK_SERVICE_PORT
+              value: "{{ .Values.env.healthCheckServicePort }}"
+            - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE_PORT
+              value: "{{ .Values.env.accountServicePort }}"
+            - name: BUCKETEER_BACKEND_AUTH_SERVICE_PORT
+              value: "{{ .Values.env.authServicePort }}"
+            - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
+              value: "{{ .Values.env.accountService }}"
+            - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE
+              value: "{{ .Values.env.environmentService }}"
+            - name: BUCKETEER_BACKEND_METRICS_PORT
+              value: "{{ .Values.env.metricsPort }}"
+            - name: BUCKETEER_BACKEND_LOG_LEVEL
+              value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_BACKEND_OAUTH_CLIENT_ID
+              value: "{{ .Values.oauth.clientId }}"
+            - name: BUCKETEER_BACKEND_OAUTH_CLIENT_SECRET
+              value: "{{ .Values.oauth.clientSecret }}"
+            - name: BUCKETEER_BACKEND_OAUTH_ISSUER
+              value: "{{ .Values.oauth.issuer }}"
+            - name: BUCKETEER_BACKEND_OAUTH_PUBLIC_KEY
+              value: /usr/local/oauth-key/public.pem
+            - name: BUCKETEER_BACKEND_OAUTH_PRIVATE_KEY
+              value: /usr/local/oauth-key/private.pem
+            - name: BUCKETEER_BACKEND_CERT
+              value: /usr/local/certs/service/tls.crt
+            - name: BUCKETEER_BACKEND_KEY
+              value: /usr/local/certs/service/tls.key
+            - name: BUCKETEER_BACKEND_OAUTH_ISSUER_CERT
+              value: /usr/local/certs/issuer/tls.crt
+            - name: BUCKETEER_BACKEND_SERVICE_TOKEN
+              value: /usr/local/service-token/token
+            - name: BUCKETEER_BACKEND_EMAIL_FILTER
+              value: "{{ .Values.env.emailFilter }}"
+            - name: BUCKETEER_BACKEND_OAUTH_REDIRECT_URLS
+              value: {{- toYaml .Values.oauth.redirectUrls | nindent 16 }}
+            - name: BUCKETEER_BACKEND_WEBHOOK_KMS_RESOURCE_NAME
+              value: "{{ .Values.webhook.kmsResourceName }}"
+          volumeMounts:
+            - name: issuer-cert-secret
+              mountPath: /usr/local/certs/issuer
+              readOnly: true
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+            - name: service-token-secret
+              mountPath: /usr/local/service-token
+              readOnly: true
+            - name: oauth-key-secret
+              mountPath: /usr/local/oauth-key
+              readOnly: true
+          ports:
+            - name: health-check
+              containerPort: {{ .Values.env.healthCheckServicePort }}
+            - name: account
+              containerPort: {{ .Values.env.accountServicePort }}
+            - name: auth
+              containerPort: {{ .Values.env.authServicePort }}
+            - name: metrics
+              containerPort: {{ .Values.env.metricsPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: health-check
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: health-check
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+        - name: envoy
+          image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+          command: ["envoy"]
+          args:
+            - "-c"
+            - "/usr/local/conf/config.yaml"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /usr/local/conf/
+              readOnly: true
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+          ports:
+            - name: envoy
+              containerPort: {{ .Values.envoy.port }}
+            - name: admin
+              containerPort: {{ .Values.envoy.adminPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.envoy.resources | indent 12 }}
+  strategy:
+    type: RollingUpdate

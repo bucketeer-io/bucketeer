@@ -1,0 +1,12 @@
+{{ if .Values.pdb.enabled }}
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "backend.fullname" . }}
+  namespace: {{ .Values.namespace }}
+spec:
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  selector:
+    matchLabels:
+      app: {{ template "backend.name" . }}
+{{ end }}
