@@ -219,11 +219,22 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                         userInput
                                       );
                                     if (alreadyTargetedVariaition) {
+                                      let variationName = createVariationLabel(
+                                        feature.variationsList.find(
+                                          (v) =>
+                                            v.id ===
+                                            alreadyTargetedVariaition.variationId
+                                        )
+                                      );
+                                      variationName =
+                                        variationName.length > 50
+                                          ? `${variationName.slice(0, 50)} ...`
+                                          : variationName;
                                       return (
                                         <div
-                                          className={`text-center text-gray-500 ${
-                                            isLanguageJapanese ? '' : 'truncate'
-                                          }`}
+                                          className={
+                                            'text-center text-gray-500'
+                                          }
                                         >
                                           <span>
                                             {f(
@@ -231,14 +242,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                                 .alreadyTargetedInVariation,
                                               {
                                                 userId: userInput,
-                                                variationName:
-                                                  createVariationLabel(
-                                                    feature.variationsList.find(
-                                                      (v) =>
-                                                        v.id ===
-                                                        alreadyTargetedVariaition.variationId
-                                                    )
-                                                  ),
+                                                variationName,
                                               }
                                             )}
                                           </span>

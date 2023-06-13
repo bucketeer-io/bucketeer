@@ -201,7 +201,7 @@
   "feature.addUser": "「{userId}」ユーザーが追加されます",
   "feature.addUserIds": "ユーザーIDを追加",
   "feature.alreadyTargeted": "すでにターゲットに含まれています",
-  "feature.alreadyTargetedInVariation": "「{userId}」はすでに{variationName}のターゲットに含まれています",
+  "feature.alreadyTargetedInVariation": "「{userId}」はすでに「{variationName}」のターゲットに含まれています",
   "feature.clause.operator.after": "次の値より前",
   "feature.clause.operator.before": "次の値より後",
   "feature.clause.operator.endWith": "次の値で終わる",

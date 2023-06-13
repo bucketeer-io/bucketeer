@@ -1338,7 +1338,7 @@ export const messages = {
     }),
     alreadyTargetedInVariation: defineMessage({
       id: 'feature.alreadyTargetedInVariation',
-      defaultMessage: '{userId} already targeted in {variationName}',
+      defaultMessage: '"{userId}" is already targeted in "{variationName}"',
     }),
     updateComment: defineMessage({
       id: 'feature.updateComment',
