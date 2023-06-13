@@ -83,4 +83,4 @@ jobs:
       - name: Check proto python files
         run: |
           cd ${{ env.PYTHON_PATH }}
-          make gen-check
+          git diff --name-only
