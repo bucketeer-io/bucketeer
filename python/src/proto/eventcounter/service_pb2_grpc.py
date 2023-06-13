@@ -24,11 +24,6 @@ class EventCounterServiceStub(object):
                 request_serializer=proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountRequest.SerializeToString,
                 response_deserializer=proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountResponse.FromString,
                 )
-        self.GetEvaluationTimeseriesCountV2 = channel.unary_unary(
-                '/bucketeer.eventcounter.EventCounterService/GetEvaluationTimeseriesCountV2',
-                request_serializer=proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountRequest.SerializeToString,
-                response_deserializer=proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountResponse.FromString,
-                )
         self.GetExperimentResult = channel.unary_unary(
                 '/bucketeer.eventcounter.EventCounterService/GetExperimentResult',
                 request_serializer=proto_dot_eventcounter_dot_service__pb2.GetExperimentResultRequest.SerializeToString,
@@ -71,12 +66,6 @@ class EventCounterServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def GetEvaluationTimeseriesCount(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetEvaluationTimeseriesCountV2(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -128,11 +117,6 @@ def add_EventCounterServiceServicer_to_server(servicer, server):
             ),
             'GetEvaluationTimeseriesCount': grpc.unary_unary_rpc_method_handler(
                     servicer.GetEvaluationTimeseriesCount,
-                    request_deserializer=proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountRequest.FromString,
-                    response_serializer=proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountResponse.SerializeToString,
-            ),
-            'GetEvaluationTimeseriesCountV2': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetEvaluationTimeseriesCountV2,
                     request_deserializer=proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountRequest.FromString,
                     response_serializer=proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountResponse.SerializeToString,
             ),
@@ -205,23 +189,6 @@ class EventCounterService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/bucketeer.eventcounter.EventCounterService/GetEvaluationTimeseriesCount',
-            proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountRequest.SerializeToString,
-            proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def GetEvaluationTimeseriesCountV2(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/bucketeer.eventcounter.EventCounterService/GetEvaluationTimeseriesCountV2',
             proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountRequest.SerializeToString,
             proto_dot_eventcounter_dot_service__pb2.GetEvaluationTimeseriesCountResponse.FromString,
             options, channel_credentials,
