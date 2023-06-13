@@ -1135,7 +1135,7 @@ func (s *grpcGatewayService) filterByTag(fs []*featureproto.Feature, tag string)
 
 func (s *grpcGatewayService) emptyUserEvaluations() *featureproto.UserEvaluations {
 	return &featureproto.UserEvaluations{
-		Id:                 "",
+		Id:                 "dummy",
 		Evaluations:        []*featureproto.Evaluation{},
 		CreatedAt:          time.Now().Unix(),
 		ArchivedFeatureIds: []string{},

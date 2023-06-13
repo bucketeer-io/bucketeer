@@ -1257,7 +1257,7 @@ func (s *gatewayService) filterOutArchivedFeatures(fs []*featureproto.Feature) [
 
 func (s *gatewayService) emptyUserEvaluations() *featureproto.UserEvaluations {
 	return &featureproto.UserEvaluations{
-		Id:                 "",
+		Id:                 "dummy",
 		Evaluations:        []*featureproto.Evaluation{},
 		CreatedAt:          time.Now().Unix(),
 		ArchivedFeatureIds: []string{},
