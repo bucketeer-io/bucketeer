@@ -2444,7 +2444,7 @@ func newUUID(t *testing.T) string {
 func emptyUserEvaluations(t *testing.T) *featureproto.UserEvaluations {
 	t.Helper()
 	return &featureproto.UserEvaluations{
-		Id:                 "dummy",
+		Id:                 "no_evaluation",
 		Evaluations:        []*featureproto.Evaluation{},
 		CreatedAt:          time.Now().Unix(),
 		ArchivedFeatureIds: []string{},
