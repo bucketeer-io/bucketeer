@@ -45,29 +45,28 @@ const (
 
 type server struct {
 	*kingpin.CmdClause
-	project                *string
-	mysqlUser              *string
-	mysqlPass              *string
-	mysqlHost              *string
-	mysqlPort              *int
-	mysqlDBName            *string
-	domainTopic            *string
-	healthCheckServicePort *int
-	accountServicePort     *int
-	authServicePort        *int
-	accountService         *string
-	environmentService     *string
-	certPath               *string
-	keyPath                *string
-	serviceTokenPath       *string
-	oauthPrivateKeyPath    *string
-	oauthPublicKeyPath     *string
-	oauthClientID          *string
-	oauthClientSecret      *string
-	oauthRedirectURLs      *[]string
-	oauthIssuer            *string
-	oauthIssuerCertPath    *string
-	emailFilter            *string
+	project             *string
+	mysqlUser           *string
+	mysqlPass           *string
+	mysqlHost           *string
+	mysqlPort           *int
+	mysqlDBName         *string
+	domainTopic         *string
+	accountServicePort  *int
+	authServicePort     *int
+	accountService      *string
+	environmentService  *string
+	certPath            *string
+	keyPath             *string
+	serviceTokenPath    *string
+	oauthPrivateKeyPath *string
+	oauthPublicKeyPath  *string
+	oauthClientID       *string
+	oauthClientSecret   *string
+	oauthRedirectURLs   *[]string
+	oauthIssuer         *string
+	oauthIssuerCertPath *string
+	emailFilter         *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -81,10 +80,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
 		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
 		domainTopic: cmd.Flag("domain-topic", "PubSub topic to publish domain events.").Required().String(),
-		healthCheckServicePort: cmd.Flag(
-			"health-check-service-port",
-			"Port to bind to health check service.",
-		).Default("9090").Int(),
 		accountServicePort: cmd.Flag(
 			"account-service-port",
 			"Port to bind to account service.",
@@ -136,12 +131,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	// healthChecker
-	healthChecker := health.NewGrpcChecker(
-		health.WithTimeout(time.Second),
-		health.WithCheck("metrics", metrics.Check),
-	)
-	go healthChecker.Run(ctx)
 	// healthCheckService
 	restHealthChecker := health.NewRestChecker(
 		"", "",
@@ -153,7 +142,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	healthcheckServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
-		//rest.WithPort(*s.healthCheckServicePort),
 		rest.WithService(restHealthChecker),
 		rest.WithMetrics(registerer),
 	)
@@ -208,8 +196,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithPort(*s.authServicePort),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
-		rpc.WithService(healthChecker),
-		rpc.WithHandler("/health", healthChecker),
 	)
 	defer authServer.Stop(10 * time.Second)
 	go authServer.Run()
@@ -225,8 +211,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
-		rpc.WithService(healthChecker),
-		rpc.WithHandler("/health", healthChecker),
 	)
 	defer accountServer.Stop(10 * time.Second)
 	go accountServer.Run()
