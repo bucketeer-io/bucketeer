@@ -9,6 +9,7 @@ on:
       - "!**/**.md"
 
 env:
+  PROTOC_VERSION: 3.18.1
   PYTHON_VERSION: 3.7.6
   PYTHON_PATH: ./python
 
