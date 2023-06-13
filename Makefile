@@ -94,6 +94,10 @@ proto-lock-commit-force:
 proto-go:
 	make -C proto go
 
+.PHONY: proto-go-check
+proto-go-check:
+	make -C proto go-check
+
 .PHONY: proto-go-descriptor
 proto-go-descriptor:
 	make -C proto go-descriptor

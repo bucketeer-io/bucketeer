@@ -30,15 +30,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-      - name: Install Protoc
-        uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # v1.1.2
-        with:
-          version: ${{ env.PROTOC_VERSION }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install protoc-gen-go
-        run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
-      - name: Generate proto go files
-        run: make proto-go
       - name: Download vendor
         run: make vendor
       - name: Run unit test
@@ -52,15 +43,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-      - name: Install Protoc
-        uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # v1.1.2
-        with:
-          version: ${{ env.PROTOC_VERSION }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install protoc-gen-go
-        run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
-      - name: Generate proto go files
-        run: make proto-go
       - name: Download vendor
         run: make vendor
       - name: Build
@@ -111,7 +93,7 @@ jobs:
       - name: Check proto go descriptor
         run: make proto-go-descriptor-check
 
-  update-repos-check:
+  proto-go-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -125,8 +107,16 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install protoc-gen-go
         run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
-      - name: Generate proto go files
-        run: make proto-go
+      - name: Check proto go files
+        run: make proto-go-check
+
+  update-repos-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
       - name: Check repository updates
         run: make update-repos-check
 
@@ -137,15 +127,6 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
-      - name: Install Protoc
-        uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # v1.1.2
-        with:
-          version: ${{ env.PROTOC_VERSION }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install protoc-gen-go
-        run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
-      - name: Generate proto go files
-        run: make proto-go
       - name: Install golangci-lint
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@${{ env.GOLANGCI_LINT }}
       - name: Lint
