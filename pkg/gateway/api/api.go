@@ -255,9 +255,8 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		rest.ReturnSuccessResponse(
 			w,
 			&getEvaluationsResponse{
-				Evaluations: &featureproto.UserEvaluations{
-					Evaluations: []*featureproto.Evaluation{},
-				},
+				Evaluations:       s.emptyUserEvaluations(),
+				UserEvaluationsID: "no_evaluations",
 			},
 		)
 		return
@@ -267,9 +266,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		rest.ReturnSuccessResponse(
 			w,
 			&getEvaluationsResponse{
-				Evaluations: &featureproto.UserEvaluations{
-					Evaluations: []*featureproto.Evaluation{},
-				},
+				Evaluations:       s.emptyUserEvaluations(),
 				UserEvaluationsID: ueid,
 			},
 		)
@@ -1256,4 +1253,14 @@ func (s *gatewayService) filterOutArchivedFeatures(fs []*featureproto.Feature) [
 		result = append(result, f)
 	}
 	return result
+}
+
+func (s *gatewayService) emptyUserEvaluations() *featureproto.UserEvaluations {
+	return &featureproto.UserEvaluations{
+		Id:                 "no_evaluations",
+		Evaluations:        []*featureproto.Evaluation{},
+		CreatedAt:          time.Now().Unix(),
+		ArchivedFeatureIds: []string{},
+		ForceUpdate:        false,
+	}
 }

@@ -311,10 +311,9 @@ func (s *grpcGatewayService) GetEvaluations(
 	if len(features) == 0 {
 		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationNoFeatures).Inc()
 		return &gwproto.GetEvaluationsResponse{
-			State: featureproto.UserEvaluations_FULL,
-			Evaluations: &featureproto.UserEvaluations{
-				Evaluations: []*featureproto.Evaluation{},
-			},
+			State:             featureproto.UserEvaluations_FULL,
+			Evaluations:       s.emptyUserEvaluations(),
+			UserEvaluationsId: "no_evaluations",
 		}, nil
 	}
 	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
@@ -331,10 +330,8 @@ func (s *grpcGatewayService) GetEvaluations(
 			)...,
 		)
 		return &gwproto.GetEvaluationsResponse{
-			State: featureproto.UserEvaluations_FULL,
-			Evaluations: &featureproto.UserEvaluations{
-				Evaluations: []*featureproto.Evaluation{},
-			},
+			State:             featureproto.UserEvaluations_FULL,
+			Evaluations:       s.emptyUserEvaluations(),
 			UserEvaluationsId: ueid,
 		}, nil
 	}
@@ -1134,4 +1131,14 @@ func (s *grpcGatewayService) filterByTag(fs []*featureproto.Feature, tag string)
 		}
 	}
 	return result
+}
+
+func (s *grpcGatewayService) emptyUserEvaluations() *featureproto.UserEvaluations {
+	return &featureproto.UserEvaluations{
+		Id:                 "no_evaluations",
+		Evaluations:        []*featureproto.Evaluation{},
+		CreatedAt:          time.Now().Unix(),
+		ArchivedFeatureIds: []string{},
+		ForceUpdate:        false,
+	}
 }
