@@ -84,4 +84,4 @@ jobs:
         run: |
           cd ${{ env.PYTHON_PATH }}
           make gen
-          git diff --name-only
+          git diff
