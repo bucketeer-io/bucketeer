@@ -44,6 +44,10 @@ gen:
 			$$f/*service.proto; \
 	done
 
+.PHONY: gen-check
+gen-check: gen
+	test -z "$$(git diff --name-only | grep ".*pb2_grpc\.py\|.*pb2\.py")"
+
 .PHONY: docker-build-dev
 docker-build-dev:
 	docker build -t "bucketeer-python-dev:latest" -f Dockerfile.dev .
