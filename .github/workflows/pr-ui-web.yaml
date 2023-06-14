@@ -7,6 +7,7 @@ on:
     paths:
       - "ui/web-v2/**"
       - "!**/**.md"
+      - "proto/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -134,5 +135,5 @@ jobs:
         with:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Generate proto files
+      - name: Check proto files
         run: make gen_proto_check
