@@ -205,7 +205,7 @@ data:
                                   retry_on: 5xx
                                 timeout: 15s
                             - match:
-                                prefix: /bucketeer.account.AuthService
+                                prefix: /bucketeer.auth.AuthService
                                 headers:
                                   - name: content-type
                                     string_match:
