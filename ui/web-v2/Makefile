@@ -43,3 +43,7 @@ gen_proto: clean_proto
 .PHONY: clean_proto
 clean_proto:
 	rm -rf $(SRC_DIR)/proto/**/*.{js,ts}
+
+.PHONY: gen_proto_check
+gen_proto_check: gen_proto
+	test -z "$$(git diff --name-only | grep ".*pb_service\.d\.ts\|.*pb\.d\.ts\|.*pb_service\.js\|.*\.pb\.js")"
