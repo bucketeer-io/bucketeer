@@ -347,10 +347,17 @@ func TestGetSegmentMySQL(t *testing.T) {
 		{
 			setup: func(s *FeatureService) {
 				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(row).Times(2)
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
 			},
 			id:                   "id",
 			environmentNamespace: "ns0",
@@ -405,17 +412,17 @@ func TestListSegmentsMySQL(t *testing.T) {
 		{
 			setup: func(s *FeatureService) {
 				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
+				rows.EXPECT().Close().Return(nil).Times(2)
+				rows.EXPECT().Next().Return(false).Times(2)
+				rows.EXPECT().Err().Return(nil).Times(2)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				).Return(rows, nil).Times(2)
 				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(row).Times(2)
 			},
 			pageSize:             int64(maxPageSizePerRequest),
 			environmentNamespace: "ns0",

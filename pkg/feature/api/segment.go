@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -30,6 +31,11 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+)
+
+var (
+	errFeatureIDsNotFound = errors.New("segment: feature ids not found")
+	errFeatureNotFound    = errors.New("segment: feature not found")
 )
 
 func (s *FeatureService) CreateSegment(
@@ -334,7 +340,7 @@ func (s *FeatureService) updateSegment(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, err := segmentStorage.GetSegment(ctx, segmentID, environmentNamespace)
+		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentNamespace)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
@@ -415,7 +421,7 @@ func (s *FeatureService) GetSegment(
 		return nil, err
 	}
 	segmentStorage := v2fs.NewSegmentStorage(s.mysqlClient)
-	segment, err := segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentNamespace)
+	segment, featureIDs, err := segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -429,6 +435,32 @@ func (s *FeatureService) GetSegment(
 		}
 		s.logger.Error(
 			"Failed to get segment",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if err := s.injectFeaturesIntoSegments(
+		ctx,
+		[]*featureproto.Segment{
+			segment.Segment,
+		},
+		map[string][]string{
+			segment.Id: featureIDs,
+		},
+		req.EnvironmentNamespace,
+	); err != nil {
+		s.logger.Error(
+			"Failed to inject features into segments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
@@ -505,7 +537,7 @@ func (s *FeatureService) ListSegments(
 		isInUseStatus = &req.IsInUseStatus.Value
 	}
 	segmentStorage := v2fs.NewSegmentStorage(s.mysqlClient)
-	segments, nextCursor, totalCount, err := segmentStorage.ListSegments(
+	segments, nextCursor, totalCount, featureIDsMap, err := segmentStorage.ListSegments(
 		ctx,
 		whereParts,
 		orders,
@@ -517,6 +549,28 @@ func (s *FeatureService) ListSegments(
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if err := s.injectFeaturesIntoSegments(
+		ctx,
+		segments,
+		featureIDsMap,
+		req.EnvironmentNamespace,
+	); err != nil {
+		s.logger.Error(
+			"Failed to inject features into segments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
@@ -567,4 +621,63 @@ func (s *FeatureService) newSegmentListOrders(
 		direction = mysql.OrderDirectionDesc
 	}
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
+}
+
+func (s *FeatureService) injectFeaturesIntoSegments(
+	ctx context.Context,
+	segments []*featureproto.Segment,
+	featureIDsMap map[string][]string,
+	environmentNameSpace string,
+) error {
+	allFeatures, err := s.listAllFeatures(
+		ctx,
+		environmentNameSpace,
+	)
+	if err != nil {
+		return err
+	}
+	for _, segment := range segments {
+		featureIDs, ok := featureIDsMap[segment.Id]
+		if !ok {
+			return errFeatureIDsNotFound
+		}
+		features := make([]*featureproto.Feature, 0, len(featureIDs))
+		for _, fID := range featureIDs {
+			feature, ok := allFeatures[fID]
+			if !ok {
+				return errFeatureNotFound
+			}
+			features = append(features, feature)
+		}
+		segment.Features = features
+	}
+	return nil
+}
+
+func (s *FeatureService) listAllFeatures(
+	ctx context.Context,
+	environmentNameSpace string,
+) (map[string]*featureproto.Feature, error) {
+	fs, _, _, err := s.listFeatures(
+		ctx,
+		mysql.QueryNoLimit,
+		"",
+		nil,
+		"",
+		nil,
+		nil,
+		nil,
+		"",
+		featureproto.ListFeaturesRequest_DEFAULT,
+		featureproto.ListFeaturesRequest_ASC,
+		environmentNameSpace,
+	)
+	if err != nil {
+		return nil, err
+	}
+	featuresMap := make(map[string]*featureproto.Feature)
+	for _, f := range fs {
+		featuresMap[f.Id] = f
+	}
+	return featuresMap, nil
 }

@@ -1670,6 +1670,26 @@ func newFixedStrategyRule(variationID string) *feature.Rule {
 	}
 }
 
+func newFixedStrategyRuleWithSegment(variationID, segmentID string) *feature.Rule {
+	uuid, _ := uuid.NewUUID()
+	return &feature.Rule{
+		Id: uuid.String(),
+		Strategy: &feature.Strategy{
+			Type: feature.Strategy_FIXED,
+			FixedStrategy: &feature.FixedStrategy{
+				Variation: variationID,
+			},
+		},
+		Clauses: []*feature.Clause{
+			{
+				Attribute: "attribute-1",
+				Operator:  feature.Clause_SEGMENT,
+				Values:    []string{segmentID},
+			},
+		},
+	}
+}
+
 func newRolloutStrategyRule(variations []*feature.Variation) *feature.Rule {
 	uuid, _ := uuid.NewUUID()
 	return &feature.Rule{

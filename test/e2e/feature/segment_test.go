@@ -22,9 +22,11 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/bucketeer-io/bucketeer/test/util"
 )
 
 const (
@@ -63,6 +65,26 @@ func TestGetSegment(t *testing.T) {
 	actual := getSegment(ctx, t, client, expected.Id)
 	if !proto.Equal(expected, actual) {
 		t.Fatalf("Different segments. Expected: %v, actual: %v", expected, actual)
+	}
+}
+
+func TestGetUsedSegment(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	client := newFeatureClient(t)
+	segment := createSegment(ctx, t, client)
+	featureID := newFeatureID(t)
+	cmd := newCreateFeatureCommand(featureID)
+	createFeature(t, client, cmd)
+	feature := getFeature(t, featureID, client)
+	rule := newFixedStrategyRuleWithSegment(feature.Variations[0].Id, segment.Id)
+	addCmd, err := util.MarshalCommand(&featureproto.AddRuleCommand{Rule: rule})
+	require.NoError(t, err)
+	updateFeatureTargeting(t, client, addCmd, featureID)
+	feature = getFeature(t, featureID, client)
+	actual := getSegment(ctx, t, client, segment.Id)
+	if !proto.Equal(feature, actual.Features[0]) {
+		t.Fatalf("Different feature. Expected: %v actual: %v", feature, actual.Features[0])
 	}
 }
 

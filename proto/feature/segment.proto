@@ -18,6 +18,7 @@ package bucketeer.feature;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
 
 import "proto/feature/rule.proto";
+import "proto/feature/feature.proto";
 
 message Segment {
   enum Status {
@@ -38,6 +39,7 @@ message Segment {
   int64 excluded_user_count = 10 [deprecated = true];
   Status status = 11;
   bool is_in_use_status = 12;  // This field is set only when APIs return.
+  repeated Feature features = 13;
 }
 
 message SegmentUser {
