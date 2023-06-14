@@ -1336,7 +1336,7 @@ var file_proto_eventcounter_service_proto_rawDesc = []byte{
 	0x6e, 0x74, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0a,
 	0x65, 0x76, 0x65, 0x6e, 0x74, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x75, 0x73,
 	0x65, 0x72, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x09,
-	0x75, 0x73, 0x65, 0x72, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x32, 0x8b, 0x0a, 0x0a, 0x13, 0x45, 0x76,
+	0x75, 0x73, 0x65, 0x72, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x32, 0xeb, 0x08, 0x0a, 0x13, 0x45, 0x76,
 	0x65, 0x6e, 0x74, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x65, 0x72, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
 	0x65, 0x12, 0x9b, 0x01, 0x0a, 0x1c, 0x47, 0x65, 0x74, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d,
 	0x65, 0x6e, 0x74, 0x45, 0x76, 0x61, 0x6c, 0x75, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x75,
@@ -1350,16 +1350,6 @@ var file_proto_eventcounter_service_proto_rawDesc = []byte{
 	0x43, 0x6f, 0x75, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
 	0x9b, 0x01, 0x0a, 0x1c, 0x47, 0x65, 0x74, 0x45, 0x76, 0x61, 0x6c, 0x75, 0x61, 0x74, 0x69, 0x6f,
 	0x6e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x65, 0x72, 0x69, 0x65, 0x73, 0x43, 0x6f, 0x75, 0x6e, 0x74,
-	0x12, 0x3b, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x65, 0x76, 0x65,
-	0x6e, 0x74, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x45, 0x76, 0x61,
-	0x6c, 0x75, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x65, 0x72, 0x69, 0x65,
-	0x73, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x3c, 0x2e,
-	0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x63,
-	0x6f, 0x75, 0x6e, 0x74, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x45, 0x76, 0x61, 0x6c, 0x75, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x65, 0x72, 0x69, 0x65, 0x73, 0x43, 0x6f,
-	0x75, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x9d, 0x01,
-	0x0a, 0x1e, 0x47, 0x65, 0x74, 0x45, 0x76, 0x61, 0x6c, 0x75, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x54,
-	0x69, 0x6d, 0x65, 0x73, 0x65, 0x72, 0x69, 0x65, 0x73, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32,
 	0x12, 0x3b, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x65, 0x76, 0x65,
 	0x6e, 0x74, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x65, 0x72, 0x2e, 0x47, 0x65, 0x74, 0x45, 0x76, 0x61,
 	0x6c, 0x75, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x65, 0x72, 0x69, 0x65,
@@ -1474,24 +1464,22 @@ var file_proto_eventcounter_service_proto_depIdxs = []int32{
 	20, // 8: bucketeer.eventcounter.ListExperimentResultsResponse.ResultsEntry.value:type_name -> bucketeer.eventcounter.ExperimentResult
 	1,  // 9: bucketeer.eventcounter.EventCounterService.GetExperimentEvaluationCount:input_type -> bucketeer.eventcounter.GetExperimentEvaluationCountRequest
 	3,  // 10: bucketeer.eventcounter.EventCounterService.GetEvaluationTimeseriesCount:input_type -> bucketeer.eventcounter.GetEvaluationTimeseriesCountRequest
-	3,  // 11: bucketeer.eventcounter.EventCounterService.GetEvaluationTimeseriesCountV2:input_type -> bucketeer.eventcounter.GetEvaluationTimeseriesCountRequest
-	5,  // 12: bucketeer.eventcounter.EventCounterService.GetExperimentResult:input_type -> bucketeer.eventcounter.GetExperimentResultRequest
-	7,  // 13: bucketeer.eventcounter.EventCounterService.ListExperimentResults:input_type -> bucketeer.eventcounter.ListExperimentResultsRequest
-	9,  // 14: bucketeer.eventcounter.EventCounterService.GetExperimentGoalCount:input_type -> bucketeer.eventcounter.GetExperimentGoalCountRequest
-	15, // 15: bucketeer.eventcounter.EventCounterService.GetMAUCount:input_type -> bucketeer.eventcounter.GetMAUCountRequest
-	11, // 16: bucketeer.eventcounter.EventCounterService.GetOpsEvaluationUserCount:input_type -> bucketeer.eventcounter.GetOpsEvaluationUserCountRequest
-	13, // 17: bucketeer.eventcounter.EventCounterService.GetOpsGoalUserCount:input_type -> bucketeer.eventcounter.GetOpsGoalUserCountRequest
-	2,  // 18: bucketeer.eventcounter.EventCounterService.GetExperimentEvaluationCount:output_type -> bucketeer.eventcounter.GetExperimentEvaluationCountResponse
-	4,  // 19: bucketeer.eventcounter.EventCounterService.GetEvaluationTimeseriesCount:output_type -> bucketeer.eventcounter.GetEvaluationTimeseriesCountResponse
-	4,  // 20: bucketeer.eventcounter.EventCounterService.GetEvaluationTimeseriesCountV2:output_type -> bucketeer.eventcounter.GetEvaluationTimeseriesCountResponse
-	6,  // 21: bucketeer.eventcounter.EventCounterService.GetExperimentResult:output_type -> bucketeer.eventcounter.GetExperimentResultResponse
-	8,  // 22: bucketeer.eventcounter.EventCounterService.ListExperimentResults:output_type -> bucketeer.eventcounter.ListExperimentResultsResponse
-	10, // 23: bucketeer.eventcounter.EventCounterService.GetExperimentGoalCount:output_type -> bucketeer.eventcounter.GetExperimentGoalCountResponse
-	16, // 24: bucketeer.eventcounter.EventCounterService.GetMAUCount:output_type -> bucketeer.eventcounter.GetMAUCountResponse
-	12, // 25: bucketeer.eventcounter.EventCounterService.GetOpsEvaluationUserCount:output_type -> bucketeer.eventcounter.GetOpsEvaluationUserCountResponse
-	14, // 26: bucketeer.eventcounter.EventCounterService.GetOpsGoalUserCount:output_type -> bucketeer.eventcounter.GetOpsGoalUserCountResponse
-	18, // [18:27] is the sub-list for method output_type
-	9,  // [9:18] is the sub-list for method input_type
+	5,  // 11: bucketeer.eventcounter.EventCounterService.GetExperimentResult:input_type -> bucketeer.eventcounter.GetExperimentResultRequest
+	7,  // 12: bucketeer.eventcounter.EventCounterService.ListExperimentResults:input_type -> bucketeer.eventcounter.ListExperimentResultsRequest
+	9,  // 13: bucketeer.eventcounter.EventCounterService.GetExperimentGoalCount:input_type -> bucketeer.eventcounter.GetExperimentGoalCountRequest
+	15, // 14: bucketeer.eventcounter.EventCounterService.GetMAUCount:input_type -> bucketeer.eventcounter.GetMAUCountRequest
+	11, // 15: bucketeer.eventcounter.EventCounterService.GetOpsEvaluationUserCount:input_type -> bucketeer.eventcounter.GetOpsEvaluationUserCountRequest
+	13, // 16: bucketeer.eventcounter.EventCounterService.GetOpsGoalUserCount:input_type -> bucketeer.eventcounter.GetOpsGoalUserCountRequest
+	2,  // 17: bucketeer.eventcounter.EventCounterService.GetExperimentEvaluationCount:output_type -> bucketeer.eventcounter.GetExperimentEvaluationCountResponse
+	4,  // 18: bucketeer.eventcounter.EventCounterService.GetEvaluationTimeseriesCount:output_type -> bucketeer.eventcounter.GetEvaluationTimeseriesCountResponse
+	6,  // 19: bucketeer.eventcounter.EventCounterService.GetExperimentResult:output_type -> bucketeer.eventcounter.GetExperimentResultResponse
+	8,  // 20: bucketeer.eventcounter.EventCounterService.ListExperimentResults:output_type -> bucketeer.eventcounter.ListExperimentResultsResponse
+	10, // 21: bucketeer.eventcounter.EventCounterService.GetExperimentGoalCount:output_type -> bucketeer.eventcounter.GetExperimentGoalCountResponse
+	16, // 22: bucketeer.eventcounter.EventCounterService.GetMAUCount:output_type -> bucketeer.eventcounter.GetMAUCountResponse
+	12, // 23: bucketeer.eventcounter.EventCounterService.GetOpsEvaluationUserCount:output_type -> bucketeer.eventcounter.GetOpsEvaluationUserCountResponse
+	14, // 24: bucketeer.eventcounter.EventCounterService.GetOpsGoalUserCount:output_type -> bucketeer.eventcounter.GetOpsGoalUserCountResponse
+	17, // [17:25] is the sub-list for method output_type
+	9,  // [9:17] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -1734,7 +1722,6 @@ const _ = grpc.SupportPackageIsVersion6
 type EventCounterServiceClient interface {
 	GetExperimentEvaluationCount(ctx context.Context, in *GetExperimentEvaluationCountRequest, opts ...grpc.CallOption) (*GetExperimentEvaluationCountResponse, error)
 	GetEvaluationTimeseriesCount(ctx context.Context, in *GetEvaluationTimeseriesCountRequest, opts ...grpc.CallOption) (*GetEvaluationTimeseriesCountResponse, error)
-	GetEvaluationTimeseriesCountV2(ctx context.Context, in *GetEvaluationTimeseriesCountRequest, opts ...grpc.CallOption) (*GetEvaluationTimeseriesCountResponse, error)
 	GetExperimentResult(ctx context.Context, in *GetExperimentResultRequest, opts ...grpc.CallOption) (*GetExperimentResultResponse, error)
 	ListExperimentResults(ctx context.Context, in *ListExperimentResultsRequest, opts ...grpc.CallOption) (*ListExperimentResultsResponse, error)
 	GetExperimentGoalCount(ctx context.Context, in *GetExperimentGoalCountRequest, opts ...grpc.CallOption) (*GetExperimentGoalCountResponse, error)
@@ -1763,15 +1750,6 @@ func (c *eventCounterServiceClient) GetExperimentEvaluationCount(ctx context.Con
 func (c *eventCounterServiceClient) GetEvaluationTimeseriesCount(ctx context.Context, in *GetEvaluationTimeseriesCountRequest, opts ...grpc.CallOption) (*GetEvaluationTimeseriesCountResponse, error) {
 	out := new(GetEvaluationTimeseriesCountResponse)
 	err := c.cc.Invoke(ctx, "/bucketeer.eventcounter.EventCounterService/GetEvaluationTimeseriesCount", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *eventCounterServiceClient) GetEvaluationTimeseriesCountV2(ctx context.Context, in *GetEvaluationTimeseriesCountRequest, opts ...grpc.CallOption) (*GetEvaluationTimeseriesCountResponse, error) {
-	out := new(GetEvaluationTimeseriesCountResponse)
-	err := c.cc.Invoke(ctx, "/bucketeer.eventcounter.EventCounterService/GetEvaluationTimeseriesCountV2", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1836,7 +1814,6 @@ func (c *eventCounterServiceClient) GetOpsGoalUserCount(ctx context.Context, in 
 type EventCounterServiceServer interface {
 	GetExperimentEvaluationCount(context.Context, *GetExperimentEvaluationCountRequest) (*GetExperimentEvaluationCountResponse, error)
 	GetEvaluationTimeseriesCount(context.Context, *GetEvaluationTimeseriesCountRequest) (*GetEvaluationTimeseriesCountResponse, error)
-	GetEvaluationTimeseriesCountV2(context.Context, *GetEvaluationTimeseriesCountRequest) (*GetEvaluationTimeseriesCountResponse, error)
 	GetExperimentResult(context.Context, *GetExperimentResultRequest) (*GetExperimentResultResponse, error)
 	ListExperimentResults(context.Context, *ListExperimentResultsRequest) (*ListExperimentResultsResponse, error)
 	GetExperimentGoalCount(context.Context, *GetExperimentGoalCountRequest) (*GetExperimentGoalCountResponse, error)
@@ -1854,9 +1831,6 @@ func (*UnimplementedEventCounterServiceServer) GetExperimentEvaluationCount(cont
 }
 func (*UnimplementedEventCounterServiceServer) GetEvaluationTimeseriesCount(context.Context, *GetEvaluationTimeseriesCountRequest) (*GetEvaluationTimeseriesCountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEvaluationTimeseriesCount not implemented")
-}
-func (*UnimplementedEventCounterServiceServer) GetEvaluationTimeseriesCountV2(context.Context, *GetEvaluationTimeseriesCountRequest) (*GetEvaluationTimeseriesCountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetEvaluationTimeseriesCountV2 not implemented")
 }
 func (*UnimplementedEventCounterServiceServer) GetExperimentResult(context.Context, *GetExperimentResultRequest) (*GetExperimentResultResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetExperimentResult not implemented")
@@ -1913,24 +1887,6 @@ func _EventCounterService_GetEvaluationTimeseriesCount_Handler(srv interface{}, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EventCounterServiceServer).GetEvaluationTimeseriesCount(ctx, req.(*GetEvaluationTimeseriesCountRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _EventCounterService_GetEvaluationTimeseriesCountV2_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetEvaluationTimeseriesCountRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EventCounterServiceServer).GetEvaluationTimeseriesCountV2(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/bucketeer.eventcounter.EventCounterService/GetEvaluationTimeseriesCountV2",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EventCounterServiceServer).GetEvaluationTimeseriesCountV2(ctx, req.(*GetEvaluationTimeseriesCountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2054,10 +2010,6 @@ var _EventCounterService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetEvaluationTimeseriesCount",
 			Handler:    _EventCounterService_GetEvaluationTimeseriesCount_Handler,
-		},
-		{
-			MethodName: "GetEvaluationTimeseriesCountV2",
-			Handler:    _EventCounterService_GetEvaluationTimeseriesCountV2_Handler,
 		},
 		{
 			MethodName: "GetExperimentResult",
