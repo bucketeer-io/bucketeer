@@ -74,5 +74,7 @@ jobs:
         run: |
           cd ${{ env.PYTHON_PATH }}
           make init
-      - name: Check proto go files
-        run: make gen-check
+      - name: Check proto python files
+        run: |
+          cd ${{ env.PYTHON_PATH }}
+          make gen-check
