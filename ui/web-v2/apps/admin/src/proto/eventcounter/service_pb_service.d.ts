@@ -22,15 +22,6 @@ type EventCounterServiceGetEvaluationTimeseriesCount = {
   readonly responseType: typeof proto_eventcounter_service_pb.GetEvaluationTimeseriesCountResponse;
 };
 
-type EventCounterServiceGetEvaluationTimeseriesCountV2 = {
-  readonly methodName: string;
-  readonly service: typeof EventCounterService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_eventcounter_service_pb.GetEvaluationTimeseriesCountRequest;
-  readonly responseType: typeof proto_eventcounter_service_pb.GetEvaluationTimeseriesCountResponse;
-};
-
 type EventCounterServiceGetExperimentResult = {
   readonly methodName: string;
   readonly service: typeof EventCounterService;
@@ -89,7 +80,6 @@ export class EventCounterService {
   static readonly serviceName: string;
   static readonly GetExperimentEvaluationCount: EventCounterServiceGetExperimentEvaluationCount;
   static readonly GetEvaluationTimeseriesCount: EventCounterServiceGetEvaluationTimeseriesCount;
-  static readonly GetEvaluationTimeseriesCountV2: EventCounterServiceGetEvaluationTimeseriesCountV2;
   static readonly GetExperimentResult: EventCounterServiceGetExperimentResult;
   static readonly ListExperimentResults: EventCounterServiceListExperimentResults;
   static readonly GetExperimentGoalCount: EventCounterServiceGetExperimentGoalCount;
@@ -145,15 +135,6 @@ export class EventCounterServiceClient {
     callback: (error: ServiceError|null, responseMessage: proto_eventcounter_service_pb.GetEvaluationTimeseriesCountResponse|null) => void
   ): UnaryResponse;
   getEvaluationTimeseriesCount(
-    requestMessage: proto_eventcounter_service_pb.GetEvaluationTimeseriesCountRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_eventcounter_service_pb.GetEvaluationTimeseriesCountResponse|null) => void
-  ): UnaryResponse;
-  getEvaluationTimeseriesCountV2(
-    requestMessage: proto_eventcounter_service_pb.GetEvaluationTimeseriesCountRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_eventcounter_service_pb.GetEvaluationTimeseriesCountResponse|null) => void
-  ): UnaryResponse;
-  getEvaluationTimeseriesCountV2(
     requestMessage: proto_eventcounter_service_pb.GetEvaluationTimeseriesCountRequest,
     callback: (error: ServiceError|null, responseMessage: proto_eventcounter_service_pb.GetEvaluationTimeseriesCountResponse|null) => void
   ): UnaryResponse;
