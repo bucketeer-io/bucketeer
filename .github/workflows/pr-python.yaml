@@ -56,10 +56,23 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           architecture: "x64"
-      - name: Install Protoc
-        uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # v1.1.2
+      - name: Install Poetry
+        uses: snok/install-poetry@d45b6d76012debf457ab49dffc7fb7b2efe8071d # v1.3.3
         with:
-          version: ${{ env.PROTOC_VERSION }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          version: 1.5.0
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: |
+          cd ${{ env.PYTHON_PATH }}
+          make init
       - name: Check proto go files
         run: make gen-check
