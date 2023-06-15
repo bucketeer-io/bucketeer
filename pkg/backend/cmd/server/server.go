@@ -99,10 +99,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
-		oauthPrivateKeyPath: cmd.Flag(
-			"oauth-private-key",
-			"Path to private key for signing oauth token.",
-		).Required().String(),
 		oauthPublicKeyPath: cmd.Flag(
 			"oauth-public-key",
 			"Path to public key used to verify oauth token.",
@@ -111,14 +107,19 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-client-id",
 			"The oauth clientID registered at dex.",
 		).Required().String(),
+		oauthIssuer: cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
+		// auth
+		oauthIssuerCertPath: cmd.Flag("oauth-issuer-cert", "Path to TLS certificate of issuer.").Required().String(),
+		emailFilter:         cmd.Flag("email-filter", "Regexp pattern for filtering email.").String(),
+		oauthRedirectURLs:   cmd.Flag("oauth-redirect-urls", "The redirect urls registered at Dex.").Required().Strings(),
 		oauthClientSecret: cmd.Flag(
 			"oauth-client-secret",
 			"The oauth client secret registered at Dex.",
 		).Required().String(),
-		oauthRedirectURLs:   cmd.Flag("oauth-redirect-urls", "The redirect urls registered at Dex.").Required().Strings(),
-		oauthIssuer:         cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
-		oauthIssuerCertPath: cmd.Flag("oauth-issuer-cert", "Path to TLS certificate of issuer.").Required().String(),
-		emailFilter:         cmd.Flag("email-filter", "Regexp pattern for filtering email.").String(),
+		oauthPrivateKeyPath: cmd.Flag(
+			"oauth-private-key",
+			"Path to private key for signing oauth token.",
+		).Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
