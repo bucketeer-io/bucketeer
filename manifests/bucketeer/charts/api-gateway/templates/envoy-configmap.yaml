@@ -154,7 +154,7 @@ data:
                   private_key:
                     filename: /usr/local/certs/service/tls.key
           type: strict_dns
-        - name: account
+        - name: backend
           connect_timeout: 5s
           ignore_health_on_host_removal: true
           circuit_breakers:
@@ -165,13 +165,13 @@ data:
                 max_pending_requests: 100000000
                 max_requests: 100000000
           load_assignment:
-            cluster_name: account
+            cluster_name: backend
             endpoints:
               - lb_endpoints:
                 - endpoint:
                     address:
                       socket_address:
-                        address: account.{{ .Values.namespace }}.svc.cluster.local
+                        address: backend.{{ .Values.namespace }}.svc.cluster.local
                         port_value: 9000
           dns_lookup_family: V4_ONLY
           lb_policy: round_robin
@@ -325,7 +325,7 @@ data:
                                     exact: application/grpc
                               prefix: /bucketeer.account.AccountService
                             route:
-                              cluster: account
+                              cluster: backend
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx

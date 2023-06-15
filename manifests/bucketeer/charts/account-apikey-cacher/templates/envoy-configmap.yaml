@@ -62,20 +62,20 @@ data:
               timeout: 1s
               unhealthy_threshold: 2
           ignore_health_on_host_removal: true
-        - name: account
+        - name: backend
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           ignore_health_on_host_removal: true
           lb_policy: round_robin
           load_assignment:
-            cluster_name: account
+            cluster_name: backend
             endpoints:
               - lb_endpoints:
                   - endpoint:
                       address:
                         socket_address:
-                          address: account.{{ .Values.namespace }}.svc.cluster.local
+                          address: backend.{{ .Values.namespace }}.svc.cluster.local
                           port_value: 9000
           transport_socket:
             name: envoy.transport_sockets.tls
@@ -220,7 +220,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.account.AccountService
                               route:
-                                cluster: account
+                                cluster: backend
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx

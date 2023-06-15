@@ -186,7 +186,7 @@ data:
               healthy_threshold: 1
               unhealthy_threshold: 2
 
-        - name: account
+        - name: backend
           dns_lookup_family: V4_ONLY
           connect_timeout: 5s
           ignore_health_on_host_removal: true
@@ -198,54 +198,13 @@ data:
               explicit_http_config:
                 http2_protocol_options: {}
           load_assignment:
-            cluster_name: account
+            cluster_name: backend
             endpoints:
               - lb_endpoints:
                 - endpoint:
                     address:
                       socket_address:
-                        address: account.{{ .Values.namespace }}.svc.cluster.local
-                        port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols: ["h2"]
-                tls_certificates:
-                - certificate_chain:
-                    filename: /usr/local/certs/service/tls.crt
-                  private_key:
-                    filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
-
-        - name: auth
-          dns_lookup_family: V4_ONLY
-          connect_timeout: 5s
-          ignore_health_on_host_removal: true
-          type: strict_dns
-          lb_policy: round_robin
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          load_assignment:
-            cluster_name: auth
-            endpoints:
-              - lb_endpoints:
-                - endpoint:
-                    address:
-                      socket_address:
-                        address: auth.{{ .Values.namespace }}.svc.cluster.local
+                        address: backend.{{ .Values.namespace }}.svc.cluster.local
                         port_value: 9000
           transport_socket:
             name: envoy.transport_sockets.tls
@@ -695,7 +654,7 @@ data:
                           - match:
                               prefix: /bucketeer.account.AccountService
                             route:
-                              cluster: account
+                              cluster: backend
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx
@@ -711,7 +670,7 @@ data:
                           - match:
                               prefix: /bucketeer.auth.AuthService
                             route:
-                              cluster: auth
+                              cluster: backend
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx
