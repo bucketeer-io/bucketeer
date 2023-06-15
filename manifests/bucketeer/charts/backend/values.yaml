@@ -19,6 +19,7 @@ env:
   healthCheckServicePort: 8000
   accountServicePort: 9091
   authServicePort: 9092
+  auditLogServicePort: 9093
   metricsPort: 9002
   emailFilter:
   logLevel: info

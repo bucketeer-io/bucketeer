@@ -73,6 +73,8 @@ spec:
               value: "{{ .Values.env.accountServicePort }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE_PORT
               value: "{{ .Values.env.authServicePort }}"
+            - name: BUCKETEER_BACKEND_AUDIT_LOG_SERVICE_PORT
+              value: "{{ .Values.env.auditLogServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE

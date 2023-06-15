@@ -24,6 +24,7 @@ import (
 
 	accountapi "github.com/bucketeer-io/bucketeer/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	auditlogapi "github.com/bucketeer-io/bucketeer/pkg/auditlog/api"
 	authapi "github.com/bucketeer-io/bucketeer/pkg/auth/api"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
@@ -54,6 +55,7 @@ type server struct {
 	domainTopic         *string
 	accountServicePort  *int
 	authServicePort     *int
+	auditLogServicePort *int
 	accountService      *string
 	environmentService  *string
 	certPath            *string
@@ -88,6 +90,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"auth-service-port",
 			"Port to bind to auth service.",
 		).Default("9092").Int(),
+		auditLogServicePort: cmd.Flag(
+			"audit-log-service-port",
+			"Port to bind to audit log service.",
+		).Default("9093").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -215,6 +221,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer accountServer.Stop(10 * time.Second)
 	go accountServer.Run()
+	// auditLogService
+	auditLogService := auditlogapi.NewAuditLogService(
+		accountClient,
+		mysqlClient,
+		auditlogapi.WithLogger(logger),
+	)
+	auditLogServer := rpc.NewServer(auditLogService, *s.certPath, *s.keyPath,
+		rpc.WithPort(*s.auditLogServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	defer auditLogServer.Stop(10 * time.Second)
+	go auditLogServer.Run()
 	// other services...
 	<-ctx.Done()
 	return nil
