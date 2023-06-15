@@ -29,6 +29,10 @@ go: remove-go
 			${GIT_TOP_DIR}/proto/$$f/*.proto; \
 	done
 
+.PHONY: go-check
+go-check: go
+	test -z "$$(git diff --name-only | grep ".*\.pb.go\|.*\.pb")"
+
 .PHONY: remove-go
 remove-go:
 	find . -name "*.pb.go" -type f -delete; \
