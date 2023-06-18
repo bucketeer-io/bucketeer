@@ -17,7 +17,7 @@ nginx:
       - 192.168.49.2
 
 mysql:
-  #initdbScriptsConfigMap: mysql-initdb
+  initdbScriptsConfigMap: mysql-initdb
   #diagnosticMode:
   #  enabled: true
   volumePermissions:
@@ -25,6 +25,7 @@ mysql:
   auth:
     database: "bucketeer"
     username: "bucketeer"
+    password: "bucketeer"
     # existingSecret: "mysql-secrets"
 
 bq:
