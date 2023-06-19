@@ -3,6 +3,7 @@
 
 import * as jspb from "google-protobuf";
 import * as proto_feature_rule_pb from "../../proto/feature/rule_pb";
+import * as proto_feature_feature_pb from "../../proto/feature/feature_pb";
 
 export class Segment extends jspb.Message {
   getId(): string;
@@ -43,6 +44,11 @@ export class Segment extends jspb.Message {
   getIsInUseStatus(): boolean;
   setIsInUseStatus(value: boolean): void;
 
+  clearFeaturesList(): void;
+  getFeaturesList(): Array<proto_feature_feature_pb.Feature>;
+  setFeaturesList(value: Array<proto_feature_feature_pb.Feature>): void;
+  addFeatures(value?: proto_feature_feature_pb.Feature, index?: number): proto_feature_feature_pb.Feature;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Segment.AsObject;
   static toObject(includeInstance: boolean, msg: Segment): Segment.AsObject;
@@ -67,6 +73,7 @@ export namespace Segment {
     excludedUserCount: number,
     status: Segment.StatusMap[keyof Segment.StatusMap],
     isInUseStatus: boolean,
+    featuresList: Array<proto_feature_feature_pb.Feature.AsObject>,
   }
 
   export interface StatusMap {
