@@ -45,6 +45,7 @@ func TestExperimentCalculatorBinomialModelSample(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	experimentCalculator := creatExperimentCalculator(mockController)
+	assert.NotNil(t, experimentCalculator, "ExperimentCalculator should not be nil")
 	ctx := context.TODO()
 	vrs, err := experimentCalculator.binomialModelSample(
 		ctx,
@@ -54,7 +55,7 @@ func TestExperimentCalculatorBinomialModelSample(t *testing.T) {
 		0,
 	)
 
-	assert.NoError(t, err, "Should not be error")
+	assert.NoError(t, err, "BinomialModelSample should not be error")
 
 	assert.GreaterOrEqual(t, vrs["vid1"].CvrProb.Mean, 0.37)
 	assert.LessOrEqual(t, vrs["vid1"].CvrProb.Mean, 0.38)

@@ -40,13 +40,19 @@ import (
 	"github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
+var (
+	failedToSampleErr = errors.New("failed to get all samples")
+)
+
 const (
 	day         = 24 * 60 * 60
 	numOfChains = 5
 )
 
 type ExperimentCalculator struct {
-	stan               *stan.Stan
+	httpStan *stan.Stan
+	modelID  string
+
 	environmentClient  envclient.Client
 	eventCounterClient ecclient.Client
 	experimentClient   experimentclient.Client
@@ -56,15 +62,25 @@ type ExperimentCalculator struct {
 }
 
 func NewExperimentCalculator(
-	stan *stan.Stan,
+	httpStan *stan.Stan,
 	environmentClient envclient.Client,
 	eventCounterClient ecclient.Client,
 	experimentClient experimentclient.Client,
 	mysqlClient mysql.Client,
 	logger *zap.Logger,
 ) *ExperimentCalculator {
+	compiledModel, err := httpStan.CompileModel(context.TODO(), stan.ModelCode())
+	if err != nil {
+		logger.Error("Failed to compile model",
+			zap.Error(err),
+		)
+		return nil
+	}
+	modelID := compiledModel.Name[len("models/"):]
 	return &ExperimentCalculator{
-		stan:               stan,
+		httpStan: httpStan,
+		modelID:  modelID,
+
 		environmentClient:  environmentClient,
 		eventCounterClient: eventCounterClient,
 		experimentClient:   experimentClient,
@@ -425,16 +441,6 @@ func (e ExperimentCalculator) binomialModelSample(
 	for i := 1; i <= numOfChains; i++ {
 		go func(chain int) {
 			defer wg.Done()
-			compiledModel, err := e.stan.CompileModel(ctx, stan.ModelCode())
-			if err != nil {
-				e.logger.Error("Failed to compile model",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.Error(err),
-					)...,
-				)
-				return
-			}
-			modelID := compiledModel.Name[len("models/"):]
 			req := stan.CreateFitReq{
 				Chain: chain,
 				Data: map[string]interface{}{
@@ -447,11 +453,11 @@ func (e ExperimentCalculator) binomialModelSample(
 				NumWarmup:  1000,
 				RandomSeed: 1234,
 			}
-			fitResp, err := e.stan.CreateFit(ctx, modelID, req)
+			fitResp, err := e.httpStan.CreateFit(ctx, e.modelID, req)
 			if err != nil {
 				e.logger.Error("Failed to create fit",
 					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("modelId", modelID),
+						zap.String("modelId", e.modelID),
 						zap.Error(err),
 					)...,
 				)
@@ -459,7 +465,7 @@ func (e ExperimentCalculator) binomialModelSample(
 			}
 			fitId := fitResp[len("operations/"):]
 			for {
-				details, err := e.stan.GetOperationDetails(ctx, fitId)
+				details, err := e.httpStan.GetOperationDetails(ctx, fitId)
 				if err != nil {
 					e.logger.Error("Failed to get operation details",
 						log.FieldsFromImcomingContext(ctx).AddFields(
@@ -474,7 +480,7 @@ func (e ExperimentCalculator) binomialModelSample(
 				}
 				time.Sleep(50 * time.Millisecond)
 			}
-			result, err := e.stan.GetFitResult(ctx, modelID, fitId)
+			result, err := e.httpStan.GetFitResult(ctx, e.modelID, fitId)
 			if err != nil {
 				e.logger.Error("Failed to get fit result",
 					log.FieldsFromImcomingContext(ctx).AddFields(
@@ -484,8 +490,8 @@ func (e ExperimentCalculator) binomialModelSample(
 				)
 				return
 			}
-			fit := e.stan.ExtractFromFitResult(ctx, result)
-			constrainedNames, _ := e.stan.StanParams(ctx, modelID, req.Data)
+			fit := e.httpStan.ExtractFromFitResult(ctx, result)
+			constrainedNames, _ := e.httpStan.StanParams(ctx, e.modelID, req.Data)
 			samplesChan <- fit.Select(constrainedNames)
 		}(i)
 	}
@@ -506,7 +512,7 @@ func (e ExperimentCalculator) binomialModelSample(
 				zap.Int("numOfSamples", len(samples)),
 			)...,
 		)
-		return nil, errors.New("failed to get all samples")
+		return nil, failedToSampleErr
 	}
 
 	variationResults := convertFitSamples(samples, vids, baseLineIdx)
