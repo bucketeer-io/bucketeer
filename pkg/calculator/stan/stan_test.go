@@ -57,7 +57,7 @@ func TestStanSample(t *testing.T) {
 		RandomSeed: 1234,
 	}
 	fit, err := stan.CreateFit(context.TODO(), modelID, req)
-	assert.NoError(t, err, "failed to create fit")
+	assert.NoError(t, err, "Failed to create fit")
 	if assert.NotEmpty(t, fit) {
 		fmt.Printf("HttpStan created fit name: %s\n", fit)
 	}
@@ -66,9 +66,9 @@ func TestStanSample(t *testing.T) {
 	checkOperationUntilDone(t, fitId)
 	// get fit
 	res, err := stan.GetFitResult(context.TODO(), modelID, fitId)
-	assert.NoError(t, err, "failed to get fit result")
+	assert.NoError(t, err, "Failed to get fit result")
 	stanDataframe := stan.ExtractFromFitResult(context.TODO(), res)
-	assert.Equal(t, req.NumSamples, stanDataframe.Nrow(), "failed to get fit result")
+	assert.Equal(t, req.NumSamples, stanDataframe.Nrow(), "Failed to get fit result")
 }
 
 func TestStanStanParams(t *testing.T) {
@@ -81,10 +81,10 @@ func TestStanStanParams(t *testing.T) {
 			"x": []int{1, 2, 3},
 			"n": []int{10, 10, 10},
 		})
-	if assert.NotEmpty(t, constrainedNames, "failed to get constrained names") {
+	if assert.NotEmpty(t, constrainedNames, "Failed to get constrained names") {
 		fmt.Printf("HttpStan constrained names: %v\n", constrainedNames)
 	}
-	if assert.NotEmpty(t, paramNames, "failed to get param names") {
+	if assert.NotEmpty(t, paramNames, "Failed to get param names") {
 		fmt.Printf("HttpStan param names: %v\n", paramNames)
 	}
 }
@@ -92,7 +92,7 @@ func TestStanStanParams(t *testing.T) {
 func compileModel(t *testing.T) ModelCompileResp {
 	// compile model
 	compileModel, compileErr := stan.CompileModel(context.TODO(), ModelCode())
-	assert.NoError(t, compileErr, "failed to compile model")
+	assert.NoError(t, compileErr, "Failed to compile model")
 	if assert.NotEmpty(t, compileModel) {
 		if assert.NotEmpty(t, compileModel.Name) {
 			fmt.Printf("HttpStan compiled model name: %s\n", compileModel.Name)
@@ -106,7 +106,7 @@ func compileModel(t *testing.T) ModelCompileResp {
 func checkOperationUntilDone(t *testing.T, fitId string) {
 	for {
 		details, err := stan.GetOperationDetails(context.TODO(), fitId)
-		assert.NoError(t, err, "failed to get operation details")
+		assert.NoError(t, err, "Failed to get operation details")
 		if assert.NotEmpty(t, details) {
 			if details.Done {
 				fmt.Printf("HttpStan operation details name: %s\n", details.Name)

@@ -19,8 +19,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
@@ -34,6 +32,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
 const command = "server"

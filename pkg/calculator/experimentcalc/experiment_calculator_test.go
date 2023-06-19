@@ -46,13 +46,16 @@ func TestExperimentCalculatorBinomialModelSample(t *testing.T) {
 	defer mockController.Finish()
 	experimentCalculator := creatExperimentCalculator(mockController)
 	ctx := context.TODO()
-	vrs := experimentCalculator.binomialModelSample(
+	vrs, err := experimentCalculator.binomialModelSample(
 		ctx,
 		[]string{"vid1", "vid2"},
 		[]int64{38, 51},
 		[]int64{101, 99},
 		0,
 	)
+
+	assert.NoError(t, err, "Should not be error")
+
 	assert.GreaterOrEqual(t, vrs["vid1"].CvrProb.Mean, 0.37)
 	assert.LessOrEqual(t, vrs["vid1"].CvrProb.Mean, 0.38)
 	assert.GreaterOrEqual(t, vrs["vid1"].CvrProb.Sd, 0.045)

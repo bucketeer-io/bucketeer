@@ -18,6 +18,7 @@ package experimentcalc
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"sort"
 	"sync"
 	"time"
@@ -85,7 +86,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 		)
 		return
 	}
-	//	Step 2: Get all the events for the experiment
+	// Step 2: Get all the events for the experiment
 	for _, env := range environments {
 		experiments, experimentErr := e.listExperiments(ctx, env.Namespace)
 		if experimentErr != nil {
@@ -289,7 +290,16 @@ func (e ExperimentCalculator) calcGoalResult(
 		}
 	}
 
-	cvrResult := e.binomialModelSample(ctx, vids, goalUc, evalUc, baselineIdx)
+	cvrResult, sampleErr := e.binomialModelSample(ctx, vids, goalUc, evalUc, baselineIdx)
+	if sampleErr != nil {
+		e.logger.Error("BinomialModelSample error",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(sampleErr),
+				zap.String("baseVariationID", baseVid),
+			)...,
+		)
+		return goalResult
+	}
 	for vid, vr := range cvrResult {
 		vrs[vid].CvrProb = copyDistributionSummary(vr.CvrProb)
 		vrs[vid].CvrProbBest = copyDistributionSummary(vr.CvrProbBest)
@@ -406,8 +416,8 @@ func (e ExperimentCalculator) binomialModelSample(
 	vids []string,
 	goalUc, evalUc []int64,
 	baseLineIdx int,
-) map[string]*eventcounter.VariationResult {
-	//The index starts from 1 in PyStan.
+) (map[string]*eventcounter.VariationResult, error) {
+	// The index starts from 1 in PyStan.
 	baseLineIdx++
 	samplesChan := make(chan dataframe.DataFrame)
 	wg := sync.WaitGroup{}
@@ -417,7 +427,7 @@ func (e ExperimentCalculator) binomialModelSample(
 			defer wg.Done()
 			compiledModel, err := e.stan.CompileModel(ctx, stan.ModelCode())
 			if err != nil {
-				e.logger.Error("failed to compile model",
+				e.logger.Error("Failed to compile model",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
 					)...,
@@ -439,23 +449,25 @@ func (e ExperimentCalculator) binomialModelSample(
 			}
 			fitResp, err := e.stan.CreateFit(ctx, modelID, req)
 			if err != nil {
-				e.logger.Error("failed to create fit",
+				e.logger.Error("Failed to create fit",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.String("modelId", modelID),
 						zap.Error(err),
 					)...,
 				)
+				return
 			}
 			fitId := fitResp[len("operations/"):]
 			for {
 				details, err := e.stan.GetOperationDetails(ctx, fitId)
 				if err != nil {
-					e.logger.Error("failed to get operation details",
+					e.logger.Error("Failed to get operation details",
 						log.FieldsFromImcomingContext(ctx).AddFields(
 							zap.String("fitId", fitId),
 							zap.Error(err),
 						)...,
 					)
+					return
 				}
 				if details.Done {
 					break
@@ -464,12 +476,13 @@ func (e ExperimentCalculator) binomialModelSample(
 			}
 			result, err := e.stan.GetFitResult(ctx, modelID, fitId)
 			if err != nil {
-				e.logger.Error("failed to get fit result",
+				e.logger.Error("Failed to get fit result",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.String("fitId", fitId),
 						zap.Error(err),
 					)...,
 				)
+				return
 			}
 			fit := e.stan.ExtractFromFitResult(ctx, result)
 			constrainedNames, _ := e.stan.StanParams(ctx, modelID, req.Data)
@@ -486,9 +499,19 @@ func (e ExperimentCalculator) binomialModelSample(
 		samples = append(samples, sample)
 	}
 
+	if len(samples) != numOfChains {
+		e.logger.Error("Failed to get all samples",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Int("numOfChains", numOfChains),
+				zap.Int("numOfSamples", len(samples)),
+			)...,
+		)
+		return nil, errors.New("failed to get all samples")
+	}
+
 	variationResults := convertFitSamples(samples, vids, baseLineIdx)
 
-	return variationResults
+	return variationResults, nil
 }
 
 func (e ExperimentCalculator) updateExperimentStatus(
@@ -508,7 +531,7 @@ func (e ExperimentCalculator) updateExperimentStatus(
 			}
 			_, err := e.experimentClient.FinishExperiment(ctx, req)
 			if err != nil {
-				e.logger.Error("failed to finish experiment",
+				e.logger.Error("Failed to finish experiment",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.String("experimentId", ex.Id),
 						zap.Error(err),
@@ -527,7 +550,7 @@ func (e ExperimentCalculator) updateExperimentStatus(
 			}
 			_, err := e.experimentClient.StartExperiment(ctx, req)
 			if err != nil {
-				e.logger.Error("failed to start experiment",
+				e.logger.Error("Failed to start experiment",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.String("experimentId", ex.Id),
 						zap.Error(err),
