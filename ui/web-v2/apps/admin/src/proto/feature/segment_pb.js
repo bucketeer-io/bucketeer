@@ -17,6 +17,8 @@ var global = Function('return this')();
 
 var proto_feature_rule_pb = require('../../proto/feature/rule_pb.js');
 goog.object.extend(proto, proto_feature_rule_pb);
+var proto_feature_feature_pb = require('../../proto/feature/feature_pb.js');
+goog.object.extend(proto, proto_feature_feature_pb);
 goog.exportSymbol('proto.bucketeer.feature.Segment', null, global);
 goog.exportSymbol('proto.bucketeer.feature.Segment.Status', null, global);
 goog.exportSymbol('proto.bucketeer.feature.SegmentUser', null, global);
@@ -91,7 +93,7 @@ if (goog.DEBUG && !COMPILED) {
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.feature.Segment.repeatedFields_ = [4];
+proto.bucketeer.feature.Segment.repeatedFields_ = [4,13];
 
 
 
@@ -136,7 +138,9 @@ proto.bucketeer.feature.Segment.toObject = function(includeInstance, msg) {
     includedUserCount: jspb.Message.getFieldWithDefault(msg, 9, 0),
     excludedUserCount: jspb.Message.getFieldWithDefault(msg, 10, 0),
     status: jspb.Message.getFieldWithDefault(msg, 11, 0),
-    isInUseStatus: jspb.Message.getBooleanFieldWithDefault(msg, 12, false)
+    isInUseStatus: jspb.Message.getBooleanFieldWithDefault(msg, 12, false),
+    featuresList: jspb.Message.toObjectList(msg.getFeaturesList(),
+    proto_feature_feature_pb.Feature.toObject, includeInstance)
   };
 
   if (includeInstance) {
@@ -221,6 +225,11 @@ proto.bucketeer.feature.Segment.deserializeBinaryFromReader = function(msg, read
     case 12:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setIsInUseStatus(value);
+      break;
+    case 13:
+      var value = new proto_feature_feature_pb.Feature;
+      reader.readMessage(value,proto_feature_feature_pb.Feature.deserializeBinaryFromReader);
+      msg.addFeatures(value);
       break;
     default:
       reader.skipField();
@@ -334,6 +343,14 @@ proto.bucketeer.feature.Segment.serializeBinaryToWriter = function(message, writ
     writer.writeBool(
       12,
       f
+    );
+  }
+  f = message.getFeaturesList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      13,
+      f,
+      proto_feature_feature_pb.Feature.serializeBinaryToWriter
     );
   }
 };
@@ -582,6 +599,44 @@ proto.bucketeer.feature.Segment.prototype.getIsInUseStatus = function() {
  */
 proto.bucketeer.feature.Segment.prototype.setIsInUseStatus = function(value) {
   return jspb.Message.setProto3BooleanField(this, 12, value);
+};
+
+
+/**
+ * repeated Feature features = 13;
+ * @return {!Array<!proto.bucketeer.feature.Feature>}
+ */
+proto.bucketeer.feature.Segment.prototype.getFeaturesList = function() {
+  return /** @type{!Array<!proto.bucketeer.feature.Feature>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto_feature_feature_pb.Feature, 13));
+};
+
+
+/**
+ * @param {!Array<!proto.bucketeer.feature.Feature>} value
+ * @return {!proto.bucketeer.feature.Segment} returns this
+*/
+proto.bucketeer.feature.Segment.prototype.setFeaturesList = function(value) {
+  return jspb.Message.setRepeatedWrapperField(this, 13, value);
+};
+
+
+/**
+ * @param {!proto.bucketeer.feature.Feature=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.feature.Feature}
+ */
+proto.bucketeer.feature.Segment.prototype.addFeatures = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 13, opt_value, proto.bucketeer.feature.Feature, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.feature.Segment} returns this
+ */
+proto.bucketeer.feature.Segment.prototype.clearFeaturesList = function() {
+  return this.setFeaturesList([]);
 };
 
 
