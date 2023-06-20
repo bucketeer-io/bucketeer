@@ -386,7 +386,7 @@
   "segment.action.download": "Download user list",
   "segment.add.header.description": "User segment allows you to manage all user targets for a single feature flag variation. You can use it to make changes to a large number of users or to test beta features on a small number of users.",
   "segment.add.header.title": "Create a segment",
-  "segment.confirm.delete.cannotDelete": "This {segmentName} segment can't be deleted because {length} {length, plural, one {flag is} other {flags are}} using it.",
+  "segment.confirm.delete.cannotDelete": "The {segmentName} segment can't be deleted because {length} {length, plural, one {flag is} other {flags are}} using it.",
   "segment.confirm.delete.description": "The {segmentName} segment will be deleted permanently.",
   "segment.confirm.delete.title": "Delete segment",
   "segment.enterUserIdsPlaceholder": "Enter IDs separated by commas (E.g., userId1, userId2, userId3)",

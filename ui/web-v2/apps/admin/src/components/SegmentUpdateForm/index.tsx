@@ -36,9 +36,9 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
       formState: { errors, isSubmitted, isValid, dirtyFields },
     } = methods;
 
-    const { name, isInUseStatus, featureList } = getValues();
+    const { isInUseStatus, featureList } = getValues();
     const [selectedUserIdListType, setSelectedUserIdListType] = useState(
-      isInUseStatus ? UserIdListTypes.USER_IDS : UserIdListTypes.BROWSE
+      UserIdListTypes.BROWSE
     );
 
     useEffect(() => {
@@ -66,12 +66,12 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
             <div className="py-6 px-4 bg-primary">
               <div className="flex items-center justify-between">
                 <Dialog.Title className="text-lg font-medium text-white">
-                  {f(messages.segment.add.header.title)}
+                  {f(messages.segment.update.header.title)}
                 </Dialog.Title>
               </div>
               <div className="mt-1">
                 <p className="text-sm text-indigo-300">
-                  {f(messages.segment.add.header.description)}
+                  {f(messages.segment.update.header.description)}
                 </p>
               </div>
             </div>
@@ -113,6 +113,7 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                     <span className="input-label">
                       {f(messages.description)}
                     </span>
+                    &nbsp;
                     <span className="input-label-optional">
                       {f(messages.input.optional)}
                     </span>
@@ -173,6 +174,7 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                     <span className="input-label">
                       {f(messages.segment.fileUpload.userList)}
                     </span>
+                    &nbsp;
                     <span className="input-label-optional">
                       {f(messages.input.optional)}
                     </span>
@@ -223,7 +225,8 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                             className={classNames(
                               'relative h-[90px] rounded-lg border-dashed',
                               'border-2 border-gray-300 bg-gray-100',
-                              'flex justify-center items-center'
+                              'flex justify-center items-center',
+                              isInUseStatus && 'opacity-60'
                             )}
                           >
                             <div className="absolute">
@@ -245,7 +248,11 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                                   );
                                 } else {
                                   return (
-                                    <div className="flex flex-col items-center ">
+                                    <div
+                                      className={classNames(
+                                        'flex flex-col items-center'
+                                      )}
+                                    >
                                       <div className="text-gray-500">
                                         <FileUploadIcon />
                                       </div>
@@ -270,14 +277,19 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                               accept=".csv,.txt"
                               disabled={
                                 !editable ||
-                                getValues('isInUseStatus') ||
+                                isInUseStatus ||
                                 getValues('status') ==
                                   Segment.Status.UPLOADING ||
                                 isSubmitted
                               }
                             />
                           </div>
-                          <div className="flex text-gray-400 my-2">
+                          <div
+                            className={classNames(
+                              'flex my-2',
+                              isInUseStatus ? 'text-gray-300' : 'text-gray-400'
+                            )}
+                          >
                             {f(messages.segment.fileUpload.fileFormat)}
                           </div>
                         </div>

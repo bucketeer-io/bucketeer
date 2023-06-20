@@ -1892,7 +1892,7 @@ export const messages = {
       cannotDelete: defineMessage({
         id: 'segment.confirm.delete.cannotDelete',
         defaultMessage:
-          "This {segmentName} segment can't be deleted because {length} {length, plural, one {flag is} other {flags are}} using it.",
+          "The {segmentName} segment can't be deleted because {length} {length, plural, one {flag is} other {flags are}} using it.",
       }),
     },
     filter: {

@@ -74,7 +74,7 @@ export const SegmentDeleteDialog: FC<SegmentDeleteDialogProps> = ({
         ) : (
           <p className="text-sm text-red-500">
             {f(messages.segment.confirm.deleteDescription, {
-              segmentName: `${segment && segment.name}`,
+              segmentName: <strong>{segment && segment.name}</strong>,
             })}
           </p>
         )}

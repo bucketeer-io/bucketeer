@@ -107,7 +107,7 @@ export const SegmentAddForm: FC<SegmentAddFormProps> = memo(
                       {f(messages.description)}
                     </span>
                     <span className="input-label-optional">
-                      {' '}
+                      &nbsp;
                       {f(messages.input.optional)}
                     </span>
                   </label>
@@ -132,8 +132,8 @@ export const SegmentAddForm: FC<SegmentAddFormProps> = memo(
                     <span className="input-label">
                       {f(messages.segment.fileUpload.userList)}
                     </span>
+                    &nbsp;
                     <span className="input-label-optional">
-                      {' '}
                       {f(messages.input.optional)}
                     </span>
                   </label>
