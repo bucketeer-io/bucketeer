@@ -77,6 +77,8 @@ spec:
               value: "{{ .Values.env.auditLogServicePort }}"
             - name: BUCKETEER_BACKEND_AUTO_OPS_SERVICE_PORT
               value: "{{ .Values.env.autoOpsServicePort }}"
+            - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE_PORT
+              value: "{{ .Values.env.environmentServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE

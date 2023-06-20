@@ -216,8 +216,8 @@ data:
                   - endpoint:
                       address:
                         socket_address:
-                          address: environment.{{ .Values.namespace }}.svc.cluster.local
-                          port_value: 9000
+                          address: localhost
+                          port_value: 9095
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -389,6 +389,14 @@ data:
                               route:
                                 cluster: autoops
                                 timeout: 15s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
+                                prefix: /bucketeer.environment.EnvironmentService
+                              route:
+                                cluster: environment
+                                timeout: 60s
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3

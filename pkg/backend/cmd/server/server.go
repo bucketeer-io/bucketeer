@@ -36,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/webhookhandler"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/crypto"
+	environmentapi "github.com/bucketeer-io/bucketeer/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -59,28 +60,29 @@ const (
 
 type server struct {
 	*kingpin.CmdClause
-	project             *string
-	mysqlUser           *string
-	mysqlPass           *string
-	mysqlHost           *string
-	mysqlPort           *int
-	mysqlDBName         *string
-	domainTopic         *string
-	accountServicePort  *int
-	authServicePort     *int
-	auditLogServicePort *int
-	autoOpsServicePort  *int
-	accountService      *string
-	authService         *string
-	environmentService  *string
-	experimentService   *string
-	featureService      *string
-	certPath            *string
-	keyPath             *string
-	serviceTokenPath    *string
-	oauthPublicKeyPath  *string
-	oauthClientID       *string
-	oauthIssuer         *string
+	project                *string
+	mysqlUser              *string
+	mysqlPass              *string
+	mysqlHost              *string
+	mysqlPort              *int
+	mysqlDBName            *string
+	domainTopic            *string
+	accountServicePort     *int
+	authServicePort        *int
+	auditLogServicePort    *int
+	autoOpsServicePort     *int
+	environmentServicePort *int
+	accountService         *string
+	authService            *string
+	environmentService     *string
+	experimentService      *string
+	featureService         *string
+	certPath               *string
+	keyPath                *string
+	serviceTokenPath       *string
+	oauthPublicKeyPath     *string
+	oauthClientID          *string
+	oauthIssuer            *string
 	// auth
 	oauthIssuerCertPath *string
 	emailFilter         *string
@@ -120,6 +122,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"auto-ops-service-port",
 			"Port to bind to auto ops service.",
 		).Default("9094").Int(),
+		environmentServicePort: cmd.Flag(
+			"environment-service-port",
+			"Port to bind to environment service.",
+		).Default("9095").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -340,6 +346,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer autoOpsServer.Stop(10 * time.Second)
 	go autoOpsServer.Run()
+	// environmentService
+	environmentService := environmentapi.NewEnvironmentService(
+		accountClient,
+		mysqlClient,
+		domainTopicPublisher,
+		environmentapi.WithLogger(logger),
+	)
+	environmentServer := rpc.NewServer(environmentService, *s.certPath, *s.keyPath,
+		rpc.WithPort(*s.environmentServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	defer environmentServer.Stop(10 * time.Second)
+	go environmentServer.Run()
 	// other services...
 	<-ctx.Done()
 	return nil
