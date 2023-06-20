@@ -247,6 +247,7 @@ export const SegmentIndexPage: FC = memo(() => {
         isInUseStatus: s.isInUseStatus,
         status: s.status,
         file: null,
+        featureList: s.featuresList,
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}/${s.id}`,
@@ -262,6 +263,7 @@ export const SegmentIndexPage: FC = memo(() => {
       name: '',
       description: '',
       file: null,
+      userIds: '',
     },
     mode: 'onChange',
   });
@@ -296,19 +298,29 @@ export const SegmentIndexPage: FC = memo(() => {
           description: data.description,
         })
       ).then((response) => {
-        if (!data.file || data.file.length == 0) {
-          addFinished();
-          return;
+        let file: File;
+        if (data.file && data.file.length > 0) {
+          file = data.file[0];
+        } else if (data.userIds) {
+          // Convert string to file object
+          file = new File([data.userIds], 'filename.txt', {
+            type: 'text/plain',
+          });
         }
-        convertFileToUint8Array(data.file[0], (uint8Array) => {
-          dispatch(
-            bulkUploadSegmentUsers({
-              environmentNamespace: currentEnvironment.namespace,
-              segmentId: response.payload as string,
-              data: uint8Array,
-            })
-          ).then(addFinished);
-        });
+
+        if (file) {
+          convertFileToUint8Array(file, (uint8Array) => {
+            dispatch(
+              bulkUploadSegmentUsers({
+                environmentNamespace: currentEnvironment.namespace,
+                segmentId: response.payload as string,
+                data: uint8Array,
+              })
+            ).then(addFinished);
+          });
+        } else {
+          addFinished();
+        }
       });
     },
     [dispatch]
@@ -338,15 +350,26 @@ export const SegmentIndexPage: FC = memo(() => {
     async (data) => {
       let name: string;
       let description: String;
+      let file: File;
+
       if (dirtyFields.name) {
         name = data.name;
       }
       if (dirtyFields.description) {
         description = data.description;
       }
+      if (data.file && data.file.length > 0) {
+        file = data.file[0];
+      } else if (data.userIds) {
+        // Convert string to file object
+        file = new File([data.userIds], 'filename.txt', {
+          type: 'text/plain',
+        });
+      }
+
       // File only
-      if (!name && !description && data.file && data.file.length > 0) {
-        convertFileToUint8Array(data.file[0], (uint8Array) => {
+      if (!name && !description && file) {
+        convertFileToUint8Array(file, (uint8Array) => {
           dispatch(
             bulkUploadSegmentUsers({
               environmentNamespace: currentEnvironment.namespace,
@@ -373,7 +396,7 @@ export const SegmentIndexPage: FC = memo(() => {
           description: description,
         })
       ).then(() => {
-        if (!data.file || data.file.length == 0) {
+        if (!file) {
           dispatch(
             getSegment({
               environmentNamespace: currentEnvironment.namespace,
@@ -382,7 +405,7 @@ export const SegmentIndexPage: FC = memo(() => {
           ).then(handleOnClose);
           return;
         }
-        convertFileToUint8Array(data.file[0], (uint8Array) => {
+        convertFileToUint8Array(file, (uint8Array) => {
           dispatch(
             bulkUploadSegmentUsers({
               environmentNamespace: currentEnvironment.namespace,
