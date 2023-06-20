@@ -27,16 +27,20 @@ import (
 	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
+	metricsmock "github.com/bucketeer-io/bucketeer/pkg/metrics/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 )
 
 func creatExperimentCalculator(mockController *gomock.Controller) *ExperimentCalculator {
+	registerer := metricsmock.NewMockRegisterer(mockController)
+	registerer.EXPECT().MustRegister(gomock.Any()).Return()
 	return NewExperimentCalculator(
 		stan.NewStan("localhost", "8080"),
 		envclient.NewMockClient(mockController),
 		ecclient.NewMockClient(mockController),
 		experimentclient.NewMockClient(mockController),
 		mysqlmock.NewMockClient(mockController),
+		registerer,
 		zap.NewNop(),
 	)
 }

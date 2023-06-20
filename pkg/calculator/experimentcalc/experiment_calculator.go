@@ -33,6 +33,7 @@ import (
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/proto/calculator"
 	"github.com/bucketeer-io/bucketeer/proto/environment"
@@ -57,6 +58,7 @@ type ExperimentCalculator struct {
 	eventCounterClient ecclient.Client
 	experimentClient   experimentclient.Client
 	mysqlClient        mysql.Client
+	metrics            metrics.Registerer
 
 	logger *zap.Logger
 }
@@ -67,8 +69,10 @@ func NewExperimentCalculator(
 	eventCounterClient ecclient.Client,
 	experimentClient experimentclient.Client,
 	mysqlClient mysql.Client,
+	metrics metrics.Registerer,
 	logger *zap.Logger,
 ) *ExperimentCalculator {
+	registerMetrics(metrics)
 	compiledModel, err := httpStan.CompileModel(context.TODO(), stan.ModelCode())
 	if err != nil {
 		logger.Error("Failed to compile model",
@@ -85,6 +89,7 @@ func NewExperimentCalculator(
 		eventCounterClient: eventCounterClient,
 		experimentClient:   experimentClient,
 		mysqlClient:        mysqlClient,
+		metrics:            metrics,
 
 		logger: logger.Named("experiment-calculator"),
 	}
@@ -308,6 +313,7 @@ func (e ExperimentCalculator) calcGoalResult(
 
 	cvrResult, sampleErr := e.binomialModelSample(ctx, vids, goalUc, evalUc, baselineIdx)
 	if sampleErr != nil {
+		calculationCounter.WithLabelValues(calculateFail).Inc()
 		e.logger.Error("BinomialModelSample error",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(sampleErr),
@@ -333,7 +339,7 @@ func (e ExperimentCalculator) calcGoalResult(
 		vrs[vid].GoalValueSumPerUserProbBest = copyDistributionSummary(vr.GoalValueSumPerUserProbBest)
 		vrs[vid].GoalValueSumPerUserProbBeatBaseline = copyDistributionSummary(vr.GoalValueSumPerUserProbBeatBaseline)
 	}
-
+	calculationCounter.WithLabelValues(calculateSuccess).Inc()
 	return goalResult
 }
 
@@ -434,6 +440,7 @@ func (e ExperimentCalculator) binomialModelSample(
 	baseLineIdx int,
 ) (map[string]*eventcounter.VariationResult, error) {
 	// The index starts from 1 in PyStan.
+	startTime := time.Now()
 	baseLineIdx++
 	samplesChan := make(chan dataframe.DataFrame)
 	wg := sync.WaitGroup{}
@@ -517,6 +524,7 @@ func (e ExperimentCalculator) binomialModelSample(
 
 	variationResults := convertFitSamples(samples, vids, baseLineIdx)
 
+	calculationHistogram.WithLabelValues(binomialModelSampleMethod).Observe(time.Since(startTime).Seconds())
 	return variationResults, nil
 }
 

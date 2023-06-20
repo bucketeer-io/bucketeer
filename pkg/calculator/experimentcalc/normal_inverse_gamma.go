@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/go-gota/gota/dataframe"
 	"github.com/go-gota/gota/series"
@@ -51,6 +52,7 @@ func normalInverseGamma(
 	sizes []int64,
 	baselineIdx, postGenNum int,
 ) map[string]*eventcounter.VariationResult {
+	startTime := time.Now()
 	variationNum := len(means)
 	variationResults := make(map[string]*eventcounter.VariationResult, variationNum)
 	sampleSeries := make([]series.Series, 0, variationNum)
@@ -82,7 +84,7 @@ func normalInverseGamma(
 		}
 		variationResults[vids[i]] = vr
 	}
-
+	calculationHistogram.WithLabelValues(normalInverseGammaMethod).Observe(time.Since(startTime).Seconds())
 	return variationResults
 }
 

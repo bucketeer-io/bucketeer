@@ -24,6 +24,7 @@ import (
 	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/proto/calculator"
@@ -40,6 +41,7 @@ func NewCalculatorService(
 	eventCounterClient ecclient.Client,
 	experimentClient experimentclient.Client,
 	mysqlClient mysql.Client,
+	metrics metrics.Registerer,
 	logger *zap.Logger,
 ) rpc.Service {
 	return &calculatorService{
@@ -49,6 +51,7 @@ func NewCalculatorService(
 			eventCounterClient,
 			experimentClient,
 			mysqlClient,
+			metrics,
 			logger,
 		),
 		logger: logger,

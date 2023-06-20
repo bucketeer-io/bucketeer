@@ -144,6 +144,7 @@ func (s server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Lo
 		ecClient,
 		experimentClient,
 		mysqlClient,
+		registerer,
 		logger,
 	)
 
