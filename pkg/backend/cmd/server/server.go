@@ -16,6 +16,10 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/url"
+	"path"
 	"regexp"
 	"time"
 
@@ -26,9 +30,15 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	auditlogapi "github.com/bucketeer-io/bucketeer/pkg/auditlog/api"
 	authapi "github.com/bucketeer-io/bucketeer/pkg/auth/api"
+	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
+	autoopsapi "github.com/bucketeer-io/bucketeer/pkg/autoops/api"
+	"github.com/bucketeer-io/bucketeer/pkg/autoops/webhookhandler"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
+	"github.com/bucketeer-io/bucketeer/pkg/crypto"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
+	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
@@ -41,7 +51,10 @@ import (
 )
 
 const (
-	command = "server"
+	command            = "server"
+	gcp                = "gcp"
+	aws                = "aws"
+	autoOpsWebhookPath = "hook"
 )
 
 type server struct {
@@ -56,19 +69,28 @@ type server struct {
 	accountServicePort  *int
 	authServicePort     *int
 	auditLogServicePort *int
+	autoOpsServicePort  *int
 	accountService      *string
+	authService         *string
 	environmentService  *string
+	experimentService   *string
+	featureService      *string
 	certPath            *string
 	keyPath             *string
 	serviceTokenPath    *string
-	oauthPrivateKeyPath *string
 	oauthPublicKeyPath  *string
 	oauthClientID       *string
-	oauthClientSecret   *string
-	oauthRedirectURLs   *[]string
 	oauthIssuer         *string
+	// auth
 	oauthIssuerCertPath *string
 	emailFilter         *string
+	oauthRedirectURLs   *[]string
+	oauthClientSecret   *string
+	oauthPrivateKeyPath *string
+	// autoOps
+	webhookBaseURL         *string
+	webhookKMSResourceName *string
+	cloudService           *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -94,14 +116,30 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"audit-log-service-port",
 			"Port to bind to audit log service.",
 		).Default("9093").Int(),
+		autoOpsServicePort: cmd.Flag(
+			"auto-ops-service-port",
+			"Port to bind to auto ops service.",
+		).Default("9094").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
-		).Default("account:9090").String(),
+		).Default("localhost:9001").String(),
+		authService: cmd.Flag(
+			"auth-service",
+			"bucketeer-auth-service address.",
+		).Default("localhost:9001").String(),
 		environmentService: cmd.Flag(
 			"environment-service",
 			"bucketeer-environment-service address.",
-		).Default("environment:9090").String(),
+		).Default("localhost:9001").String(),
+		experimentService: cmd.Flag(
+			"experiment-service",
+			"bucketeer-experiment-service address.",
+		).Default("localhost:9001").String(),
+		featureService: cmd.Flag(
+			"feature-service",
+			"bucketeer-feature-service address.",
+		).Default("localhost:9001").String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -126,6 +164,13 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-private-key",
 			"Path to private key for signing oauth token.",
 		).Required().String(),
+		// autoOps
+		webhookBaseURL: cmd.Flag("webhook-base-url", "the base url for incoming webhooks.").Required().String(),
+		webhookKMSResourceName: cmd.Flag(
+			"webhook-kms-resource-name",
+			"Cloud KMS resource name to encrypt and decrypt webhook credentials.",
+		).Required().String(),
+		cloudService: cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -182,6 +227,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer accountClient.Close()
+	// authClient
+	authClient, err := authclient.NewClient(*s.authService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer authClient.Close()
 	// environmentClient
 	environmentClient, err := environmentclient.NewClient(*s.environmentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -194,6 +251,30 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer environmentClient.Close()
+	// experimentClient
+	experimentClient, err := experimentclient.NewClient(*s.experimentService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer experimentClient.Close()
+	// featureClient
+	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer featureClient.Close()
 	// authService
 	authService, err := s.createAuthService(ctx, accountClient, logger)
 	if err != nil {
@@ -235,6 +316,30 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer auditLogServer.Stop(10 * time.Second)
 	go auditLogServer.Run()
+	// autoOpsService
+	autoOpsService, autoOpsWebhookHandler, err := s.createAutoOpsService(
+		ctx,
+		accountClient,
+		authClient,
+		experimentClient,
+		featureClient,
+		mysqlClient,
+		domainTopicPublisher,
+		verifier,
+		logger,
+	)
+	if err != nil {
+		return err
+	}
+	autoOpsServer := rpc.NewServer(autoOpsService, *s.certPath, *s.keyPath,
+		rpc.WithPort(*s.autoOpsServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+		rpc.WithHandler(fmt.Sprintf("/%s", autoOpsWebhookPath), autoOpsWebhookHandler),
+	)
+	defer autoOpsServer.Stop(10 * time.Second)
+	go autoOpsServer.Run()
 	// other services...
 	<-ctx.Done()
 	return nil
@@ -308,4 +413,62 @@ func (s *server) createAuthService(
 		serviceOptions = append(serviceOptions, authapi.WithEmailFilter(filter))
 	}
 	return authapi.NewAuthService(o, signer, accountClient, serviceOptions...), nil
+}
+
+func (s *server) createAutoOpsService(
+	ctx context.Context,
+	accountClient accountclient.Client,
+	authClient authclient.Client,
+	experimentClient experimentclient.Client,
+	featureClient featureclient.Client,
+	mysqlClient mysql.Client,
+	domainTopicPublisher publisher.Publisher,
+	verifier token.Verifier,
+	logger *zap.Logger,
+) (rpc.Service, http.Handler, error) {
+	u, err := url.Parse(*s.webhookBaseURL)
+	if err != nil {
+		return nil, nil, err
+	}
+	u.Path = path.Join(u.Path, autoOpsWebhookPath)
+
+	var webhookCryptoUtil crypto.EncrypterDecrypter
+	switch *s.cloudService {
+	case gcp:
+		webhookCryptoUtil, err = crypto.NewCloudKMSCrypto(ctx, *s.webhookKMSResourceName)
+		if err != nil {
+			return nil, nil, err
+		}
+	case aws:
+		// TODO: Get region from command-line flags
+		webhookCryptoUtil, err = crypto.NewAwsKMSCrypto(ctx, *s.webhookKMSResourceName, "ap-northeast-1")
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	autoOpsService := autoopsapi.NewAutoOpsService(
+		mysqlClient,
+		featureClient,
+		experimentClient,
+		accountClient,
+		authClient,
+		domainTopicPublisher,
+		u,
+		webhookCryptoUtil,
+		autoopsapi.WithLogger(logger),
+	)
+	autoOpsWebhookHandler, err := webhookhandler.NewHandler(
+		mysqlClient,
+		authClient,
+		featureClient,
+		domainTopicPublisher,
+		verifier,
+		*s.serviceTokenPath,
+		webhookCryptoUtil,
+		webhookhandler.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	return autoOpsService, autoOpsWebhookHandler, nil
 }
