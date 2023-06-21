@@ -22,11 +22,15 @@ import (
 )
 
 const (
-	calculateFail    = "Fail"
-	calculateSuccess = "Success"
+	calculationFail    = "Fail"
+	calculationSuccess = "Success"
 
 	binomialModelSampleMethod = "binomialModelSample"
 	normalInverseGammaMethod  = "normalInverseGamma"
+
+	valuesAreZero                    = "valuesAreZero"
+	evalVariationCountNotFound       = "evalVariationCountNotFound"
+	evaluationCountLessThanGoalEvent = "evaluationCountLessThanGoalEvent"
 )
 
 var (
@@ -37,6 +41,15 @@ var (
 			Name:      "calculate_calls_total",
 			Help:      "Total number of calculate calls",
 		}, []string{"code"})
+
+	calculationExceptionCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "experiment_calculator",
+			Name:      "calculate_skipped_calls_total",
+			Help:      "Total number of calculate skipped calls",
+		}, []string{"exception"})
+
 	calculationHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
@@ -50,6 +63,7 @@ var (
 func registerMetrics(r metrics.Registerer) {
 	r.MustRegister(
 		calculationCounter,
+		calculationExceptionCounter,
 		calculationHistogram,
 	)
 }

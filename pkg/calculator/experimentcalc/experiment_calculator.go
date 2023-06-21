@@ -283,6 +283,12 @@ func (e ExperimentCalculator) calcGoalResult(
 
 	for vid, goalVariationCount := range goalVariationCounts {
 		if _, ok := evalVariationCounts[vid]; !ok {
+			calculationExceptionCounter.WithLabelValues(evalVariationCountNotFound).Inc()
+			e.logger.Error("Variation not found in evaluation count",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("variation_id", vid),
+				)...,
+			)
 			return goalResult
 		}
 		vids = append(vids, vid)
@@ -307,13 +313,21 @@ func (e ExperimentCalculator) calcGoalResult(
 	// Skip the calculation if evaluation count is less than goal count.
 	for i := 0; i < len(evalUc); i++ {
 		if evalUc[i] < goalUc[i] {
+			calculationExceptionCounter.WithLabelValues(evaluationCountLessThanGoalEvent).Inc()
+			e.logger.Error("Evaluation count is less than goal count",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("variation_id", vids[i]),
+					zap.Int64("evaluation_count", evalUc[i]),
+					zap.Int64("goal_count", goalUc[i]),
+				)...,
+			)
 			return goalResult
 		}
 	}
 
 	cvrResult, sampleErr := e.binomialModelSample(ctx, vids, goalUc, evalUc, baselineIdx)
 	if sampleErr != nil {
-		calculationCounter.WithLabelValues(calculateFail).Inc()
+		calculationCounter.WithLabelValues(calculationFail).Inc()
 		e.logger.Error("BinomialModelSample error",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(sampleErr),
@@ -330,6 +344,15 @@ func (e ExperimentCalculator) calcGoalResult(
 	// Skip the calculation if values are zero.
 	for i := 0; i < len(vids); i++ {
 		if goalUc[i] == 0 || valueMeans[i] == 0 || valueVars[i] == 0 {
+			calculationExceptionCounter.WithLabelValues(valuesAreZero).Inc()
+			e.logger.Error("Values are zero",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("variation_id", vids[i]),
+					zap.Int64("goal_uc", goalUc[i]),
+					zap.Float64("value_mean", valueMeans[i]),
+					zap.Float64("value_var", valueVars[i]),
+				)...,
+			)
 			return goalResult
 		}
 	}
@@ -339,7 +362,7 @@ func (e ExperimentCalculator) calcGoalResult(
 		vrs[vid].GoalValueSumPerUserProbBest = copyDistributionSummary(vr.GoalValueSumPerUserProbBest)
 		vrs[vid].GoalValueSumPerUserProbBeatBaseline = copyDistributionSummary(vr.GoalValueSumPerUserProbBeatBaseline)
 	}
-	calculationCounter.WithLabelValues(calculateSuccess).Inc()
+	calculationCounter.WithLabelValues(calculationSuccess).Inc()
 	return goalResult
 }
 

@@ -84,7 +84,7 @@ type CreateFitResp struct {
 	Name string `json:"name"`
 }
 
-type CrateFitErrResp struct {
+type CreateFitErrResp struct {
 	Code    int `json:"code"`
 	Details []struct {
 	} `json:"details"`
@@ -187,7 +187,7 @@ func (s Stan) CompileModel(ctx context.Context, programCode string) (ModelCompil
 //	404 Not Found – Fit not found.
 func (s Stan) CreateFit(ctx context.Context, modelID string, req CreateFitReq) (string, error) {
 	createFitResp := CreateFitResp{}
-	crateFitErrResp := CrateFitErrResp{}
+	crateFitErrResp := CreateFitErrResp{}
 
 	resp, err := s.client.R().
 		SetPathParam("model_id", modelID).
