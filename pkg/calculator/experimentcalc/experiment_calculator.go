@@ -120,8 +120,8 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 			return
 		}
 		for _, ex := range experiments {
-			if ex.StartAt > now.Unix() {
-				// already calculated
+			if ex.StartAt <= now.Unix() {
+				// experiment not started yet
 				continue
 			}
 			experimentResult := e.createExperimentResult(ctx, env.Namespace, ex)
@@ -283,7 +283,7 @@ func (e ExperimentCalculator) calcGoalResult(
 
 	for vid, goalVariationCount := range goalVariationCounts {
 		if _, ok := evalVariationCounts[vid]; !ok {
-			return nil
+			return goalResult
 		}
 		vids = append(vids, vid)
 		evalVariationCount := evalVariationCounts[vid]
