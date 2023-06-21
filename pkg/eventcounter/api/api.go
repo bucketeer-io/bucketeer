@@ -651,7 +651,7 @@ func (s *eventCounterService) getTimestamps(
 	switch timeRange {
 	case ecproto.GetEvaluationTimeseriesCountRequest_TWENTY_FOUR_HOURS:
 		startAt := getStartTime(s.location, endAt, 1)
-		truncated := truncateHour(s.location, startAt)
+		truncated := truncateHour(s.location, startAt).Add(time.Hour * 1)
 		return getOneDayTimestamps(truncated), ecproto.Timeseries_HOUR, nil
 	case ecproto.GetEvaluationTimeseriesCountRequest_SEVEN_DAYS:
 		startAt := getStartTime(s.location, endAt, 6)
