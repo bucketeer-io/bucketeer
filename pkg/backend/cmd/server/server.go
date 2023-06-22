@@ -67,44 +67,52 @@ const (
 
 type server struct {
 	*kingpin.CmdClause
-	project                         *string
-	mysqlUser                       *string
-	mysqlPass                       *string
-	mysqlHost                       *string
-	mysqlPort                       *int
-	mysqlDBName                     *string
-	persistentRedisServerName       *string
-	persistentRedisAddr             *string
-	persistentRedisPoolMaxIdle      *int
-	persistentRedisPoolMaxActive    *int
+	// Common
+	project            *string
+	timezone           *string
+	certPath           *string
+	keyPath            *string
+	serviceTokenPath   *string
+	oauthPublicKeyPath *string
+	oauthClientID      *string
+	oauthIssuer        *string
+	// MySQL
+	mysqlUser   *string
+	mysqlPass   *string
+	mysqlHost   *string
+	mysqlPort   *int
+	mysqlDBName *string
+	// Persistent Redis
+	persistentRedisServerName    *string
+	persistentRedisAddr          *string
+	persistentRedisPoolMaxIdle   *int
+	persistentRedisPoolMaxActive *int
+	// Non Persistent Redis
 	nonPersistentRedisServerName    *string
 	nonPersistentRedisAddr          *string
 	nonPersistentRedisPoolMaxIdle   *int
 	nonPersistentRedisPoolMaxActive *int
-	bigQueryDataSet                 *string
-	bigQueryDataLocation            *string
-	domainTopic                     *string
-	bulkSegmentUsersReceivedTopic   *string
-	accountServicePort              *int
-	authServicePort                 *int
-	auditLogServicePort             *int
-	autoOpsServicePort              *int
-	environmentServicePort          *int
-	eventCounterServicePort         *int
-	experimentServicePort           *int
-	featureServicePort              *int
-	accountService                  *string
-	authService                     *string
-	environmentService              *string
-	experimentService               *string
-	featureService                  *string
-	timezone                        *string
-	certPath                        *string
-	keyPath                         *string
-	serviceTokenPath                *string
-	oauthPublicKeyPath              *string
-	oauthClientID                   *string
-	oauthIssuer                     *string
+	// BigQuery
+	bigQueryDataSet      *string
+	bigQueryDataLocation *string
+	// PubSub
+	domainTopic                   *string
+	bulkSegmentUsersReceivedTopic *string
+	// Port
+	accountServicePort      *int
+	authServicePort         *int
+	auditLogServicePort     *int
+	autoOpsServicePort      *int
+	environmentServicePort  *int
+	eventCounterServicePort *int
+	experimentServicePort   *int
+	featureServicePort      *int
+	// Service
+	accountService     *string
+	authService        *string
+	environmentService *string
+	experimentService  *string
+	featureService     *string
 	// auth
 	oauthIssuerCertPath *string
 	emailFilter         *string
