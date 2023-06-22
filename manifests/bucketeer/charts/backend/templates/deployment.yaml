@@ -65,6 +65,18 @@ spec:
               value: "{{ .Values.env.mysqlPort }}"
             - name: BUCKETEER_BACKEND_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
+            - name: BUCKETEER_BACKEND_REDIS_SERVER_NAME
+              value: "{{ .Values.env.redis.serverName }}"
+            - name: BUCKETEER_BACKEND_REDIS_ADDR
+              value: "{{ .Values.env.redis.addr }}"
+            - name: BUCKETEER_BACKEND_REDIS_POOL_MAX_IDLE
+              value: "{{ .Values.env.redis.poolMaxIdle }}"
+            - name: BUCKETEER_BACKEND_REDIS_POOL_MAX_ACTIVE
+              value: "{{ .Values.env.redis.poolMaxActive }}"
+            - name: BUCKETEER_BACKEND_BIGQUERY_DATA_SET
+              value: "{{ .Values.env.bigQueryDataSet }}"
+            - name: BUCKETEER_BACKEND_BIGQUERY_DATA_LOCATION
+              value: "{{ .Values.env.bigQueryDataLocation }}"
             - name: BUCKETEER_BACKEND_DOMAIN_TOPIC
               value: "{{ .Values.env.domainTopic }}"
             - name: BUCKETEER_BACKEND_HEALTH_CHECK_SERVICE_PORT
@@ -79,6 +91,8 @@ spec:
               value: "{{ .Values.env.autoOpsServicePort }}"
             - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE_PORT
               value: "{{ .Values.env.environmentServicePort }}"
+            - name: BUCKETEER_BACKEND_EVENT_COUNTER_SERVICE_PORT
+              value: "{{ .Values.env.eventCounterServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE
@@ -89,6 +103,8 @@ spec:
               value: "{{ .Values.env.experimentService }}"
             - name: BUCKETEER_BACKEND_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
+            - name: BUCKETEER_BACKEND_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
             - name: BUCKETEER_BACKEND_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_BACKEND_LOG_LEVEL
