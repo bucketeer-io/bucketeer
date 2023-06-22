@@ -42,6 +42,7 @@ import (
 	eventcounterapi "github.com/bucketeer-io/bucketeer/pkg/eventcounter/api"
 	experimentapi "github.com/bucketeer-io/bucketeer/pkg/experiment/api"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	featureapi "github.com/bucketeer-io/bucketeer/pkg/feature/api"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -66,38 +67,40 @@ const (
 
 type server struct {
 	*kingpin.CmdClause
-	project                 *string
-	mysqlUser               *string
-	mysqlPass               *string
-	mysqlHost               *string
-	mysqlPort               *int
-	mysqlDBName             *string
-	redisServerName         *string
-	redisAddr               *string
-	redisPoolMaxIdle        *int
-	redisPoolMaxActive      *int
-	bigQueryDataSet         *string
-	bigQueryDataLocation    *string
-	domainTopic             *string
-	accountServicePort      *int
-	authServicePort         *int
-	auditLogServicePort     *int
-	autoOpsServicePort      *int
-	environmentServicePort  *int
-	eventCounterServicePort *int
-	experimentServicePort   *int
-	accountService          *string
-	authService             *string
-	environmentService      *string
-	experimentService       *string
-	featureService          *string
-	timezone                *string
-	certPath                *string
-	keyPath                 *string
-	serviceTokenPath        *string
-	oauthPublicKeyPath      *string
-	oauthClientID           *string
-	oauthIssuer             *string
+	project                       *string
+	mysqlUser                     *string
+	mysqlPass                     *string
+	mysqlHost                     *string
+	mysqlPort                     *int
+	mysqlDBName                   *string
+	redisServerName               *string
+	redisAddr                     *string
+	redisPoolMaxIdle              *int
+	redisPoolMaxActive            *int
+	bigQueryDataSet               *string
+	bigQueryDataLocation          *string
+	domainTopic                   *string
+	bulkSegmentUsersReceivedTopic *string
+	accountServicePort            *int
+	authServicePort               *int
+	auditLogServicePort           *int
+	autoOpsServicePort            *int
+	environmentServicePort        *int
+	eventCounterServicePort       *int
+	experimentServicePort         *int
+	featureServicePort            *int
+	accountService                *string
+	authService                   *string
+	environmentService            *string
+	experimentService             *string
+	featureService                *string
+	timezone                      *string
+	certPath                      *string
+	keyPath                       *string
+	serviceTokenPath              *string
+	oauthPublicKeyPath            *string
+	oauthClientID                 *string
+	oauthIssuer                   *string
 	// auth
 	oauthIssuerCertPath *string
 	emailFilter         *string
@@ -132,7 +135,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("10").Int(),
 		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
 		bigQueryDataLocation: cmd.Flag("bigquery-data-location", "BigQuery DataSet Location").String(),
-		domainTopic:          cmd.Flag("domain-topic", "PubSub topic to publish domain events.").Required().String(),
+		domainTopic: cmd.Flag(
+			"domain-topic",
+			"PubSub topic to publish domain events.",
+		).Required().String(),
+		bulkSegmentUsersReceivedTopic: cmd.Flag(
+			"bulk-segment-users-received-topic",
+			"PubSub topic to publish bulk segment users received events.",
+		).Required().String(),
 		accountServicePort: cmd.Flag(
 			"account-service-port",
 			"Port to bind to account service.",
@@ -161,6 +171,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"experiment-service-port",
 			"Port to bind to experiment service.",
 		).Default("9097").Int(),
+		featureServicePort: cmd.Flag(
+			"feature-service-port",
+			"Port to bind to feature service.",
+		).Default("9098").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -286,6 +300,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer domainTopicPublisher.Stop()
+	// segmentUsersPublisher
+	segmentUsersPublisher, err := s.createPublisher(ctx, *s.bulkSegmentUsersReceivedTopic, registerer, logger)
+	if err != nil {
+		return err
+	}
+	defer segmentUsersPublisher.Stop()
 	// credential for grpc
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
@@ -467,6 +487,24 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer experimentServer.Stop(10 * time.Second)
 	go experimentServer.Run()
+	// featureService
+	featureService := featureapi.NewFeatureService(
+		mysqlClient,
+		accountClient,
+		experimentClient,
+		redisV3Cache,
+		segmentUsersPublisher,
+		domainTopicPublisher,
+		featureapi.WithLogger(logger),
+	)
+	featureServer := rpc.NewServer(featureService, *s.certPath, *s.keyPath,
+		rpc.WithPort(*s.featureServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	defer featureServer.Stop(10 * time.Second)
+	go featureServer.Run()
 	// other services...
 	<-ctx.Done()
 	return nil

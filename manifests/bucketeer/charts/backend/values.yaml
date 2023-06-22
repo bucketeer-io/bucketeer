@@ -21,6 +21,7 @@ env:
   bigQueryDataSet:
   bigQueryDataLocation:
   domainTopic:
+  bulkSegmentUsersReceivedTopic:
   accountService: localhost:9001
   authService: localhost:9001
   environmentService: localhost:9001
@@ -34,6 +35,7 @@ env:
   environmentServicePort: 9095
   eventCounterServicePort: 9096
   experimentServicePort: 9097
+  featureServicePort: 9098
   metricsPort: 9002
   timezone: UTC
   emailFilter:

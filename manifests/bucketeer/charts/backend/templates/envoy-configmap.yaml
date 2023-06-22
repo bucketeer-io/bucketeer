@@ -320,8 +320,8 @@ data:
                   - endpoint:
                       address:
                         socket_address:
-                          address: feature.{{ .Values.namespace }}.svc.cluster.local
-                          port_value: 9000
+                          address: localhost
+                          port_value: 9098
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -453,6 +453,14 @@ data:
                               route:
                                 cluster: experiment
                                 timeout: 15s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
+                                prefix: /bucketeer.feature.FeatureService
+                              route:
+                                cluster: feature
+                                timeout: 60s
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3

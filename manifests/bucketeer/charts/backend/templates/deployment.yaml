@@ -79,6 +79,8 @@ spec:
               value: "{{ .Values.env.bigQueryDataLocation }}"
             - name: BUCKETEER_BACKEND_DOMAIN_TOPIC
               value: "{{ .Values.env.domainTopic }}"
+            - name: BUCKETEER_BACKEND_BULK_SEGMENT_USERS_RECEIVED_TOPIC
+              value: "{{ .Values.env.bulkSegmentUsersReceivedTopic }}"
             - name: BUCKETEER_BACKEND_HEALTH_CHECK_SERVICE_PORT
               value: "{{ .Values.env.healthCheckServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE_PORT
@@ -95,6 +97,8 @@ spec:
               value: "{{ .Values.env.eventCounterServicePort }}"
             - name: BUCKETEER_BACKEND_EXPERIMENT_SERVICE_PORT
               value: "{{ .Values.env.experimentServicePort }}"
+            - name: BUCKETEER_BACKEND_FEATURE_SERVICE_PORT
+              value: "{{ .Values.env.featureServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE
