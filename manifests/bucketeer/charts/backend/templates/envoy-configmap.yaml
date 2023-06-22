@@ -288,8 +288,8 @@ data:
                   - endpoint:
                       address:
                         socket_address:
-                          address: experiment.{{ .Values.namespace }}.svc.cluster.local
-                          port_value: 9000
+                          address: localhost
+                          port_value: 9097
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -445,6 +445,14 @@ data:
                               route:
                                 cluster: eventcounter
                                 timeout: 10800s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
+                                prefix: /bucketeer.experiment.ExperimentService
+                              route:
+                                cluster: experiment
+                                timeout: 15s
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3

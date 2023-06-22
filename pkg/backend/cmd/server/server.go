@@ -40,6 +40,7 @@ import (
 	environmentapi "github.com/bucketeer-io/bucketeer/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	eventcounterapi "github.com/bucketeer-io/bucketeer/pkg/eventcounter/api"
+	experimentapi "github.com/bucketeer-io/bucketeer/pkg/experiment/api"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
@@ -84,6 +85,7 @@ type server struct {
 	autoOpsServicePort      *int
 	environmentServicePort  *int
 	eventCounterServicePort *int
+	experimentServicePort   *int
 	accountService          *string
 	authService             *string
 	environmentService      *string
@@ -155,6 +157,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"event-counter-service-port",
 			"Port to bind to event counter service.",
 		).Default("9096").Int(),
+		experimentServicePort: cmd.Flag(
+			"experiment-service-port",
+			"Port to bind to experiment service.",
+		).Default("9097").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -445,6 +451,22 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer eventCounterServer.Stop(10 * time.Second)
 	go eventCounterServer.Run()
+	// experimentService
+	experimentService := experimentapi.NewExperimentService(
+		featureClient,
+		accountClient,
+		mysqlClient,
+		domainTopicPublisher,
+		experimentapi.WithLogger(logger),
+	)
+	experimentServer := rpc.NewServer(experimentService, *s.certPath, *s.keyPath,
+		rpc.WithPort(*s.experimentServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	defer experimentServer.Stop(10 * time.Second)
+	go experimentServer.Run()
 	// other services...
 	<-ctx.Done()
 	return nil

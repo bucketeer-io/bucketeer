@@ -33,6 +33,7 @@ env:
   autoOpsServicePort: 9094
   environmentServicePort: 9095
   eventCounterServicePort: 9096
+  experimentServicePort: 9097
   metricsPort: 9002
   timezone: UTC
   emailFilter:
