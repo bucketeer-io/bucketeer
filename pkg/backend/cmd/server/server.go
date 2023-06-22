@@ -67,40 +67,44 @@ const (
 
 type server struct {
 	*kingpin.CmdClause
-	project                       *string
-	mysqlUser                     *string
-	mysqlPass                     *string
-	mysqlHost                     *string
-	mysqlPort                     *int
-	mysqlDBName                   *string
-	redisServerName               *string
-	redisAddr                     *string
-	redisPoolMaxIdle              *int
-	redisPoolMaxActive            *int
-	bigQueryDataSet               *string
-	bigQueryDataLocation          *string
-	domainTopic                   *string
-	bulkSegmentUsersReceivedTopic *string
-	accountServicePort            *int
-	authServicePort               *int
-	auditLogServicePort           *int
-	autoOpsServicePort            *int
-	environmentServicePort        *int
-	eventCounterServicePort       *int
-	experimentServicePort         *int
-	featureServicePort            *int
-	accountService                *string
-	authService                   *string
-	environmentService            *string
-	experimentService             *string
-	featureService                *string
-	timezone                      *string
-	certPath                      *string
-	keyPath                       *string
-	serviceTokenPath              *string
-	oauthPublicKeyPath            *string
-	oauthClientID                 *string
-	oauthIssuer                   *string
+	project                         *string
+	mysqlUser                       *string
+	mysqlPass                       *string
+	mysqlHost                       *string
+	mysqlPort                       *int
+	mysqlDBName                     *string
+	persistentRedisServerName       *string
+	persistentRedisAddr             *string
+	persistentRedisPoolMaxIdle      *int
+	persistentRedisPoolMaxActive    *int
+	nonPersistentRedisServerName    *string
+	nonPersistentRedisAddr          *string
+	nonPersistentRedisPoolMaxIdle   *int
+	nonPersistentRedisPoolMaxActive *int
+	bigQueryDataSet                 *string
+	bigQueryDataLocation            *string
+	domainTopic                     *string
+	bulkSegmentUsersReceivedTopic   *string
+	accountServicePort              *int
+	authServicePort                 *int
+	auditLogServicePort             *int
+	autoOpsServicePort              *int
+	environmentServicePort          *int
+	eventCounterServicePort         *int
+	experimentServicePort           *int
+	featureServicePort              *int
+	accountService                  *string
+	authService                     *string
+	environmentService              *string
+	experimentService               *string
+	featureService                  *string
+	timezone                        *string
+	certPath                        *string
+	keyPath                         *string
+	serviceTokenPath                *string
+	oauthPublicKeyPath              *string
+	oauthClientID                   *string
+	oauthIssuer                     *string
 	// auth
 	oauthIssuerCertPath *string
 	emailFilter         *string
@@ -116,22 +120,44 @@ type server struct {
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the server")
 	server := &server{
-		CmdClause:       cmd,
-		project:         cmd.Flag("project", "Google Cloud project name.").String(),
-		mysqlUser:       cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:       cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:       cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:       cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName:     cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
-		redisServerName: cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
-		redisAddr:       cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
-		redisPoolMaxIdle: cmd.Flag(
-			"redis-pool-max-idle",
-			"Maximum number of idle connections in the pool.",
+		CmdClause:   cmd,
+		project:     cmd.Flag("project", "Google Cloud project name.").String(),
+		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		persistentRedisServerName: cmd.Flag(
+			"persistent-redis-server-name",
+			"Name of the persistent redis.",
+		).Required().String(),
+		persistentRedisAddr: cmd.Flag(
+			"persistent-redis-addr",
+			"Address of the persistent redis.",
+		).Required().String(),
+		persistentRedisPoolMaxIdle: cmd.Flag(
+			"persistent-redis-pool-max-idle",
+			"Maximum number of idle in the persistent redis connections pool.",
 		).Default("5").Int(),
-		redisPoolMaxActive: cmd.Flag(
-			"redis-pool-max-active",
-			"Maximum number of connections allocated by the pool at a given time.",
+		persistentRedisPoolMaxActive: cmd.Flag(
+			"persistent-redis-pool-max-active",
+			"Maximum number of connections allocated by the persistent redis connections pool at a given time.",
+		).Default("10").Int(),
+		nonPersistentRedisServerName: cmd.Flag(
+			"non-persistent-redis-server-name",
+			"Name of the non-persistent redis.",
+		).Required().String(),
+		nonPersistentRedisAddr: cmd.Flag(
+			"non-persistent-redis-addr",
+			"Address of the non-persistent redis.",
+		).Required().String(),
+		nonPersistentRedisPoolMaxIdle: cmd.Flag(
+			"non-persistent-redis-pool-max-idle",
+			"Maximum number of idle in the non-persistent redis connections pool.",
+		).Default("5").Int(),
+		nonPersistentRedisPoolMaxActive: cmd.Flag(
+			"non-persistent-redis-pool-max-active",
+			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
 		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
 		bigQueryDataLocation: cmd.Flag("bigquery-data-location", "BigQuery DataSet Location").String(),
@@ -261,20 +287,34 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer mysqlClient.Close()
-	// redisV3Client
-	redisV3Client, err := redisv3.NewClient(
-		*s.redisAddr,
-		redisv3.WithPoolSize(*s.redisPoolMaxActive),
-		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),
-		redisv3.WithServerName(*s.redisServerName),
+	// persistentRedisClient
+	persistentRedisClient, err := redisv3.NewClient(
+		*s.persistentRedisAddr,
+		redisv3.WithPoolSize(*s.persistentRedisPoolMaxActive),
+		redisv3.WithMinIdleConns(*s.persistentRedisPoolMaxIdle),
+		redisv3.WithServerName(*s.persistentRedisServerName),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
 	if err != nil {
 		return err
 	}
-	defer redisV3Client.Close()
-	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
+	defer persistentRedisClient.Close()
+	persistentRedisV3Cache := cachev3.NewRedisCache(persistentRedisClient)
+	// nonPersistentRedisClient
+	nonPersistentRedisClient, err := redisv3.NewClient(
+		*s.nonPersistentRedisAddr,
+		redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
+		redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
+		redisv3.WithServerName(*s.nonPersistentRedisServerName),
+		redisv3.WithMetrics(registerer),
+		redisv3.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer nonPersistentRedisClient.Close()
+	nonPersistentRedisV3Cache := cachev3.NewRedisCache(nonPersistentRedisClient)
 	// bigQueryQuerier
 	bigQueryQuerier, err := s.createBigQueryQuerier(ctx, *s.project, *s.bigQueryDataLocation, registerer, logger)
 	if err != nil {
@@ -459,7 +499,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		bigQueryQuerier,
 		bigQueryDataSet,
 		registerer,
-		redisV3Cache,
+		persistentRedisV3Cache,
 		location,
 		logger,
 	)
@@ -492,7 +532,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		mysqlClient,
 		accountClient,
 		experimentClient,
-		redisV3Cache,
+		nonPersistentRedisV3Cache,
 		segmentUsersPublisher,
 		domainTopicPublisher,
 		featureapi.WithLogger(logger),

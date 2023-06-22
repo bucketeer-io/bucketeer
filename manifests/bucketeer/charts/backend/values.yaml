@@ -13,7 +13,12 @@ env:
   mysqlHost:
   mysqlPort: 3306
   mysqlDbName:
-  redis:
+  persistentRedis:
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
+  nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
