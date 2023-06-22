@@ -124,6 +124,86 @@ data:
               timeout: 1s
               unhealthy_threshold: 2
           ignore_health_on_host_removal: true
+        - name: auditlog
+          type: strict_dns
+          connect_timeout: 5s
+          dns_lookup_family: V4_ONLY
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: auditlog
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: localhost
+                          port_value: 9093
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols:
+                  - h2
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: { }
+          health_checks:
+            - grpc_health_check: {}
+              healthy_threshold: 1
+              interval: 10s
+              interval_jitter: 1s
+              no_traffic_interval: 2s
+              timeout: 1s
+              unhealthy_threshold: 2
+          ignore_health_on_host_removal: true
+        - name: autoops
+          type: strict_dns
+          connect_timeout: 5s
+          dns_lookup_family: V4_ONLY
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: autoops
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: localhost
+                          port_value: 9094
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols:
+                  - h2
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: { }
+          health_checks:
+            - grpc_health_check: {}
+              healthy_threshold: 1
+              interval: 10s
+              interval_jitter: 1s
+              no_traffic_interval: 2s
+              timeout: 1s
+              unhealthy_threshold: 2
+          ignore_health_on_host_removal: true
         - name: environment
           type: strict_dns
           connect_timeout: 5s
@@ -136,7 +216,71 @@ data:
                   - endpoint:
                       address:
                         socket_address:
-                          address: environment.{{ .Values.namespace }}.svc.cluster.local
+                          address: localhost
+                          port_value: 9095
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols:
+                  - h2
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          ignore_health_on_host_removal: true
+        - name: experiment
+          type: strict_dns
+          connect_timeout: 5s
+          dns_lookup_family: V4_ONLY
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: experiment
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: experiment.{{ .Values.namespace }}.svc.cluster.local
+                          port_value: 9000
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols:
+                  - h2
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          ignore_health_on_host_removal: true
+        - name: feature
+          type: strict_dns
+          connect_timeout: 5s
+          dns_lookup_family: V4_ONLY
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: feature
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: feature.{{ .Values.namespace }}.svc.cluster.local
                           port_value: 9000
           transport_socket:
             name: envoy.transport_sockets.tls
@@ -216,6 +360,46 @@ data:
                                   num_retries: 3
                                   retry_on: 5xx
                                 timeout: 15s
+                            - match:
+                                prefix: /bucketeer.auditlog.AuditLogService
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
+                              route:
+                                cluster: auditlog
+                                retry_policy:
+                                  num_retries: 3
+                                  retry_on: 5xx
+                                timeout: 15s
+                            - match:
+                                prefix: /bucketeer.autoops.AutoOpsService
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
+                              route:
+                                cluster: autoops
+                                retry_policy:
+                                  num_retries: 3
+                                  retry_on: 5xx
+                                timeout: 15s
+                            - match:
+                                prefix: /hook
+                              route:
+                                cluster: autoops
+                                timeout: 15s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
+                                prefix: /bucketeer.environment.EnvironmentService
+                              route:
+                                cluster: environment
+                                timeout: 60s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
                             - match:
                                 prefix: /
                                 headers:
@@ -300,6 +484,30 @@ data:
                                 prefix: /bucketeer.environment.EnvironmentService
                               route:
                                 cluster: environment
+                                retry_policy:
+                                  num_retries: 3
+                                  retry_on: 5xx
+                                timeout: 15s
+                            - match:
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
+                                prefix: /bucketeer.experiment.ExperimentService
+                              route:
+                                cluster: experiment
+                                retry_policy:
+                                  num_retries: 3
+                                  retry_on: 5xx
+                                timeout: 15s
+                            - match:
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
+                                prefix: /bucketeer.feature.FeatureService
+                              route:
+                                cluster: feature
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx

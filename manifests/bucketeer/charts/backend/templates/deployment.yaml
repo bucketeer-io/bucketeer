@@ -73,10 +73,22 @@ spec:
               value: "{{ .Values.env.accountServicePort }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE_PORT
               value: "{{ .Values.env.authServicePort }}"
+            - name: BUCKETEER_BACKEND_AUDIT_LOG_SERVICE_PORT
+              value: "{{ .Values.env.auditLogServicePort }}"
+            - name: BUCKETEER_BACKEND_AUTO_OPS_SERVICE_PORT
+              value: "{{ .Values.env.autoOpsServicePort }}"
+            - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE_PORT
+              value: "{{ .Values.env.environmentServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
+            - name: BUCKETEER_BACKEND_AUTH_SERVICE
+              value: "{{ .Values.env.authService }}"
             - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE
               value: "{{ .Values.env.environmentService }}"
+            - name: BUCKETEER_BACKEND_EXPERIMENT_SERVICE
+              value: "{{ .Values.env.experimentService }}"
+            - name: BUCKETEER_BACKEND_FEATURE_SERVICE
+              value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_BACKEND_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_BACKEND_LOG_LEVEL
@@ -103,6 +115,8 @@ spec:
               value: "{{ .Values.env.emailFilter }}"
             - name: BUCKETEER_BACKEND_OAUTH_REDIRECT_URLS
               value: {{- toYaml .Values.oauth.redirectUrls | nindent 16 }}
+            - name: BUCKETEER_BACKEND_WEBHOOK_BASE_URL
+              value: "{{ .Values.webhook.baseURL }}"
             - name: BUCKETEER_BACKEND_WEBHOOK_KMS_RESOURCE_NAME
               value: "{{ .Values.webhook.kmsResourceName }}"
           volumeMounts:

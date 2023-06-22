@@ -15,10 +15,16 @@ env:
   mysqlDbName:
   domainTopic:
   accountService: localhost:9001
+  authService: localhost:9001
   environmentService: localhost:9001
+  experimentService: localhost:9001
+  featureService: localhost:9001
   healthCheckServicePort: 8000
   accountServicePort: 9091
   authServicePort: 9092
+  auditLogServicePort: 9093
+  autoOpsServicePort: 9094
+  environmentServicePort: 9095
   metricsPort: 9002
   emailFilter:
   logLevel: info
@@ -62,6 +68,7 @@ oauth:
   issuer:
 
 webhook:
+  baseURL:
   kmsResourceName:
 
 envoy:
