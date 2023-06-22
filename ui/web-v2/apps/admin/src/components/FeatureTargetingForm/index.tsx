@@ -1304,11 +1304,11 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
           )}
         />
         {selectedOption.value == Strategy.Type.ROLLOUT && (
-          <div className="grid grid-cols-1 gap-2 mt-2">
+          <div className="mt-2 space-y-2">
             {rolloutStrategy.map((s: any, idx: number) => {
               return (
-                <div key={s.id} className="flex space-x-2 items-center">
-                  <div className="w-36 flex flex-shrink-0">
+                <div key={s.id} className="flex items-center space-x-2">
+                  <div className="flex w-36 flex-shrink-0">
                     <input
                       {...register(`${rolloutStrategyName}.${idx}.percentage`)}
                       type="number"
@@ -1316,7 +1316,7 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
                       max="100"
                       defaultValue={s.percentage}
                       className={classNames(
-                        'flex-grow pr-0 py-1 rounded-l border border-r-0 border-gray-300',
+                        'flex-grow pr-0 py-1 rounded-l border border-r-0 border-gray-300 w-full',
                         'text-right text-sm text-gray-700'
                       )}
                       placeholder={''}
