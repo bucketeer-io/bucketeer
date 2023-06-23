@@ -826,7 +826,7 @@ export namespace DeleteProgressiveRolloutResponse {
   }
 }
 
-export class ListProgressiveRolloutRequest extends jspb.Message {
+export class ListProgressiveRolloutsRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -841,19 +841,16 @@ export class ListProgressiveRolloutRequest extends jspb.Message {
   setFeatureIdsList(value: Array<string>): void;
   addFeatureIds(value: string, index?: number): string;
 
-  getOrderBy(): ListProgressiveRolloutRequest.OrderByMap[keyof ListProgressiveRolloutRequest.OrderByMap];
-  setOrderBy(value: ListProgressiveRolloutRequest.OrderByMap[keyof ListProgressiveRolloutRequest.OrderByMap]): void;
+  getOrderBy(): ListProgressiveRolloutsRequest.OrderByMap[keyof ListProgressiveRolloutsRequest.OrderByMap];
+  setOrderBy(value: ListProgressiveRolloutsRequest.OrderByMap[keyof ListProgressiveRolloutsRequest.OrderByMap]): void;
 
-  getOrderDirection(): ListProgressiveRolloutRequest.OrderDirectionMap[keyof ListProgressiveRolloutRequest.OrderDirectionMap];
-  setOrderDirection(value: ListProgressiveRolloutRequest.OrderDirectionMap[keyof ListProgressiveRolloutRequest.OrderDirectionMap]): void;
+  getOrderDirection(): ListProgressiveRolloutsRequest.OrderDirectionMap[keyof ListProgressiveRolloutsRequest.OrderDirectionMap];
+  setOrderDirection(value: ListProgressiveRolloutsRequest.OrderDirectionMap[keyof ListProgressiveRolloutsRequest.OrderDirectionMap]): void;
 
   hasStatus(): boolean;
   clearStatus(): void;
   getStatus(): proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap];
   setStatus(value: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap]): void;
-
-  getSearchKeyword(): string;
-  setSearchKeyword(value: string): void;
 
   hasType(): boolean;
   clearType(): void;
@@ -861,25 +858,24 @@ export class ListProgressiveRolloutRequest extends jspb.Message {
   setType(value: proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap]): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ListProgressiveRolloutRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: ListProgressiveRolloutRequest): ListProgressiveRolloutRequest.AsObject;
+  toObject(includeInstance?: boolean): ListProgressiveRolloutsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ListProgressiveRolloutsRequest): ListProgressiveRolloutsRequest.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: ListProgressiveRolloutRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ListProgressiveRolloutRequest;
-  static deserializeBinaryFromReader(message: ListProgressiveRolloutRequest, reader: jspb.BinaryReader): ListProgressiveRolloutRequest;
+  static serializeBinaryToWriter(message: ListProgressiveRolloutsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListProgressiveRolloutsRequest;
+  static deserializeBinaryFromReader(message: ListProgressiveRolloutsRequest, reader: jspb.BinaryReader): ListProgressiveRolloutsRequest;
 }
 
-export namespace ListProgressiveRolloutRequest {
+export namespace ListProgressiveRolloutsRequest {
   export type AsObject = {
     environmentNamespace: string,
     pageSize: number,
     cursor: string,
     featureIdsList: Array<string>,
-    orderBy: ListProgressiveRolloutRequest.OrderByMap[keyof ListProgressiveRolloutRequest.OrderByMap],
-    orderDirection: ListProgressiveRolloutRequest.OrderDirectionMap[keyof ListProgressiveRolloutRequest.OrderDirectionMap],
+    orderBy: ListProgressiveRolloutsRequest.OrderByMap[keyof ListProgressiveRolloutsRequest.OrderByMap],
+    orderDirection: ListProgressiveRolloutsRequest.OrderDirectionMap[keyof ListProgressiveRolloutsRequest.OrderDirectionMap],
     status: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap],
-    searchKeyword: string,
     type: proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap],
   }
 
@@ -899,7 +895,7 @@ export namespace ListProgressiveRolloutRequest {
   export const OrderDirection: OrderDirectionMap;
 }
 
-export class ListProgressiveRolloutResponse extends jspb.Message {
+export class ListProgressiveRolloutsResponse extends jspb.Message {
   clearProgressiveRolloutsList(): void;
   getProgressiveRolloutsList(): Array<proto_autoops_progressive_rollout_pb.ProgressiveRollout>;
   setProgressiveRolloutsList(value: Array<proto_autoops_progressive_rollout_pb.ProgressiveRollout>): void;
@@ -912,16 +908,16 @@ export class ListProgressiveRolloutResponse extends jspb.Message {
   setTotalCount(value: number): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ListProgressiveRolloutResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: ListProgressiveRolloutResponse): ListProgressiveRolloutResponse.AsObject;
+  toObject(includeInstance?: boolean): ListProgressiveRolloutsResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ListProgressiveRolloutsResponse): ListProgressiveRolloutsResponse.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: ListProgressiveRolloutResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ListProgressiveRolloutResponse;
-  static deserializeBinaryFromReader(message: ListProgressiveRolloutResponse, reader: jspb.BinaryReader): ListProgressiveRolloutResponse;
+  static serializeBinaryToWriter(message: ListProgressiveRolloutsResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListProgressiveRolloutsResponse;
+  static deserializeBinaryFromReader(message: ListProgressiveRolloutsResponse, reader: jspb.BinaryReader): ListProgressiveRolloutsResponse;
 }
 
-export namespace ListProgressiveRolloutResponse {
+export namespace ListProgressiveRolloutsResponse {
   export type AsObject = {
     progressiveRolloutsList: Array<proto_autoops_progressive_rollout_pb.ProgressiveRollout.AsObject>,
     cursor: string,

@@ -74,6 +74,31 @@ class AutoOpsServiceStub(object):
                 request_serializer=proto_dot_autoops_dot_service__pb2.ListWebhooksRequest.SerializeToString,
                 response_deserializer=proto_dot_autoops_dot_service__pb2.ListWebhooksResponse.FromString,
                 )
+        self.CreateProgressiveRollout = channel.unary_unary(
+                '/bucketeer.autoops.AutoOpsService/CreateProgressiveRollout',
+                request_serializer=proto_dot_autoops_dot_service__pb2.CreateProgressiveRolloutRequest.SerializeToString,
+                response_deserializer=proto_dot_autoops_dot_service__pb2.CreateProgressiveRolloutResponse.FromString,
+                )
+        self.GetProgressiveRollout = channel.unary_unary(
+                '/bucketeer.autoops.AutoOpsService/GetProgressiveRollout',
+                request_serializer=proto_dot_autoops_dot_service__pb2.GetProgressiveRolloutRequest.SerializeToString,
+                response_deserializer=proto_dot_autoops_dot_service__pb2.GetProgressiveRolloutResponse.FromString,
+                )
+        self.DeleteProgressiveRollout = channel.unary_unary(
+                '/bucketeer.autoops.AutoOpsService/DeleteProgressiveRollout',
+                request_serializer=proto_dot_autoops_dot_service__pb2.DeleteProgressiveRolloutRequest.SerializeToString,
+                response_deserializer=proto_dot_autoops_dot_service__pb2.DeleteProgressiveRolloutResponse.FromString,
+                )
+        self.ListProgressiveRollouts = channel.unary_unary(
+                '/bucketeer.autoops.AutoOpsService/ListProgressiveRollouts',
+                request_serializer=proto_dot_autoops_dot_service__pb2.ListProgressiveRolloutsRequest.SerializeToString,
+                response_deserializer=proto_dot_autoops_dot_service__pb2.ListProgressiveRolloutsResponse.FromString,
+                )
+        self.ExecuteProgressiveRollout = channel.unary_unary(
+                '/bucketeer.autoops.AutoOpsService/ExecuteProgressiveRollout',
+                request_serializer=proto_dot_autoops_dot_service__pb2.ExecuteProgressiveRolloutRequest.SerializeToString,
+                response_deserializer=proto_dot_autoops_dot_service__pb2.ExecuteProgressiveRolloutResponse.FromString,
+                )
 
 
 class AutoOpsServiceServicer(object):
@@ -151,6 +176,36 @@ class AutoOpsServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def CreateProgressiveRollout(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetProgressiveRollout(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteProgressiveRollout(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListProgressiveRollouts(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ExecuteProgressiveRollout(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AutoOpsServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -213,6 +268,31 @@ def add_AutoOpsServiceServicer_to_server(servicer, server):
                     servicer.ListWebhooks,
                     request_deserializer=proto_dot_autoops_dot_service__pb2.ListWebhooksRequest.FromString,
                     response_serializer=proto_dot_autoops_dot_service__pb2.ListWebhooksResponse.SerializeToString,
+            ),
+            'CreateProgressiveRollout': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateProgressiveRollout,
+                    request_deserializer=proto_dot_autoops_dot_service__pb2.CreateProgressiveRolloutRequest.FromString,
+                    response_serializer=proto_dot_autoops_dot_service__pb2.CreateProgressiveRolloutResponse.SerializeToString,
+            ),
+            'GetProgressiveRollout': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetProgressiveRollout,
+                    request_deserializer=proto_dot_autoops_dot_service__pb2.GetProgressiveRolloutRequest.FromString,
+                    response_serializer=proto_dot_autoops_dot_service__pb2.GetProgressiveRolloutResponse.SerializeToString,
+            ),
+            'DeleteProgressiveRollout': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteProgressiveRollout,
+                    request_deserializer=proto_dot_autoops_dot_service__pb2.DeleteProgressiveRolloutRequest.FromString,
+                    response_serializer=proto_dot_autoops_dot_service__pb2.DeleteProgressiveRolloutResponse.SerializeToString,
+            ),
+            'ListProgressiveRollouts': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListProgressiveRollouts,
+                    request_deserializer=proto_dot_autoops_dot_service__pb2.ListProgressiveRolloutsRequest.FromString,
+                    response_serializer=proto_dot_autoops_dot_service__pb2.ListProgressiveRolloutsResponse.SerializeToString,
+            ),
+            'ExecuteProgressiveRollout': grpc.unary_unary_rpc_method_handler(
+                    servicer.ExecuteProgressiveRollout,
+                    request_deserializer=proto_dot_autoops_dot_service__pb2.ExecuteProgressiveRolloutRequest.FromString,
+                    response_serializer=proto_dot_autoops_dot_service__pb2.ExecuteProgressiveRolloutResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -425,5 +505,90 @@ class AutoOpsService(object):
         return grpc.experimental.unary_unary(request, target, '/bucketeer.autoops.AutoOpsService/ListWebhooks',
             proto_dot_autoops_dot_service__pb2.ListWebhooksRequest.SerializeToString,
             proto_dot_autoops_dot_service__pb2.ListWebhooksResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def CreateProgressiveRollout(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/bucketeer.autoops.AutoOpsService/CreateProgressiveRollout',
+            proto_dot_autoops_dot_service__pb2.CreateProgressiveRolloutRequest.SerializeToString,
+            proto_dot_autoops_dot_service__pb2.CreateProgressiveRolloutResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetProgressiveRollout(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/bucketeer.autoops.AutoOpsService/GetProgressiveRollout',
+            proto_dot_autoops_dot_service__pb2.GetProgressiveRolloutRequest.SerializeToString,
+            proto_dot_autoops_dot_service__pb2.GetProgressiveRolloutResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def DeleteProgressiveRollout(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/bucketeer.autoops.AutoOpsService/DeleteProgressiveRollout',
+            proto_dot_autoops_dot_service__pb2.DeleteProgressiveRolloutRequest.SerializeToString,
+            proto_dot_autoops_dot_service__pb2.DeleteProgressiveRolloutResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ListProgressiveRollouts(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/bucketeer.autoops.AutoOpsService/ListProgressiveRollouts',
+            proto_dot_autoops_dot_service__pb2.ListProgressiveRolloutsRequest.SerializeToString,
+            proto_dot_autoops_dot_service__pb2.ListProgressiveRolloutsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ExecuteProgressiveRollout(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/bucketeer.autoops.AutoOpsService/ExecuteProgressiveRollout',
+            proto_dot_autoops_dot_service__pb2.ExecuteProgressiveRolloutRequest.SerializeToString,
+            proto_dot_autoops_dot_service__pb2.ExecuteProgressiveRolloutResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

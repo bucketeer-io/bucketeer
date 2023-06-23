@@ -112,6 +112,51 @@ type AutoOpsServiceListWebhooks = {
   readonly responseType: typeof proto_autoops_service_pb.ListWebhooksResponse;
 };
 
+type AutoOpsServiceCreateProgressiveRollout = {
+  readonly methodName: string;
+  readonly service: typeof AutoOpsService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_autoops_service_pb.CreateProgressiveRolloutRequest;
+  readonly responseType: typeof proto_autoops_service_pb.CreateProgressiveRolloutResponse;
+};
+
+type AutoOpsServiceGetProgressiveRollout = {
+  readonly methodName: string;
+  readonly service: typeof AutoOpsService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_autoops_service_pb.GetProgressiveRolloutRequest;
+  readonly responseType: typeof proto_autoops_service_pb.GetProgressiveRolloutResponse;
+};
+
+type AutoOpsServiceDeleteProgressiveRollout = {
+  readonly methodName: string;
+  readonly service: typeof AutoOpsService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_autoops_service_pb.DeleteProgressiveRolloutRequest;
+  readonly responseType: typeof proto_autoops_service_pb.DeleteProgressiveRolloutResponse;
+};
+
+type AutoOpsServiceListProgressiveRollouts = {
+  readonly methodName: string;
+  readonly service: typeof AutoOpsService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_autoops_service_pb.ListProgressiveRolloutsRequest;
+  readonly responseType: typeof proto_autoops_service_pb.ListProgressiveRolloutsResponse;
+};
+
+type AutoOpsServiceExecuteProgressiveRollout = {
+  readonly methodName: string;
+  readonly service: typeof AutoOpsService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_autoops_service_pb.ExecuteProgressiveRolloutRequest;
+  readonly responseType: typeof proto_autoops_service_pb.ExecuteProgressiveRolloutResponse;
+};
+
 export class AutoOpsService {
   static readonly serviceName: string;
   static readonly GetAutoOpsRule: AutoOpsServiceGetAutoOpsRule;
@@ -126,6 +171,11 @@ export class AutoOpsService {
   static readonly UpdateWebhook: AutoOpsServiceUpdateWebhook;
   static readonly DeleteWebhook: AutoOpsServiceDeleteWebhook;
   static readonly ListWebhooks: AutoOpsServiceListWebhooks;
+  static readonly CreateProgressiveRollout: AutoOpsServiceCreateProgressiveRollout;
+  static readonly GetProgressiveRollout: AutoOpsServiceGetProgressiveRollout;
+  static readonly DeleteProgressiveRollout: AutoOpsServiceDeleteProgressiveRollout;
+  static readonly ListProgressiveRollouts: AutoOpsServiceListProgressiveRollouts;
+  static readonly ExecuteProgressiveRollout: AutoOpsServiceExecuteProgressiveRollout;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -267,6 +317,51 @@ export class AutoOpsServiceClient {
   listWebhooks(
     requestMessage: proto_autoops_service_pb.ListWebhooksRequest,
     callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ListWebhooksResponse|null) => void
+  ): UnaryResponse;
+  createProgressiveRollout(
+    requestMessage: proto_autoops_service_pb.CreateProgressiveRolloutRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.CreateProgressiveRolloutResponse|null) => void
+  ): UnaryResponse;
+  createProgressiveRollout(
+    requestMessage: proto_autoops_service_pb.CreateProgressiveRolloutRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.CreateProgressiveRolloutResponse|null) => void
+  ): UnaryResponse;
+  getProgressiveRollout(
+    requestMessage: proto_autoops_service_pb.GetProgressiveRolloutRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.GetProgressiveRolloutResponse|null) => void
+  ): UnaryResponse;
+  getProgressiveRollout(
+    requestMessage: proto_autoops_service_pb.GetProgressiveRolloutRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.GetProgressiveRolloutResponse|null) => void
+  ): UnaryResponse;
+  deleteProgressiveRollout(
+    requestMessage: proto_autoops_service_pb.DeleteProgressiveRolloutRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.DeleteProgressiveRolloutResponse|null) => void
+  ): UnaryResponse;
+  deleteProgressiveRollout(
+    requestMessage: proto_autoops_service_pb.DeleteProgressiveRolloutRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.DeleteProgressiveRolloutResponse|null) => void
+  ): UnaryResponse;
+  listProgressiveRollouts(
+    requestMessage: proto_autoops_service_pb.ListProgressiveRolloutsRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ListProgressiveRolloutsResponse|null) => void
+  ): UnaryResponse;
+  listProgressiveRollouts(
+    requestMessage: proto_autoops_service_pb.ListProgressiveRolloutsRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ListProgressiveRolloutsResponse|null) => void
+  ): UnaryResponse;
+  executeProgressiveRollout(
+    requestMessage: proto_autoops_service_pb.ExecuteProgressiveRolloutRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ExecuteProgressiveRolloutResponse|null) => void
+  ): UnaryResponse;
+  executeProgressiveRollout(
+    requestMessage: proto_autoops_service_pb.ExecuteProgressiveRolloutRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ExecuteProgressiveRolloutResponse|null) => void
   ): UnaryResponse;
 }
 
