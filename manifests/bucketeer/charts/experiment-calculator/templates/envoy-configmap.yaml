@@ -62,7 +62,9 @@ data:
               timeout: 1s
               unhealthy_threshold: 2
           ignore_health_on_host_removal: true
-        - connect_timeout: 5s
+        - name: environment
+          type: strict_dns
+          connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           ignore_health_on_host_removal: true
           lb_policy: round_robin
@@ -75,7 +77,6 @@ data:
                         socket_address:
                           address: environment.{{ .Values.namespace }}.svc.cluster.local
                           port_value: 9000
-          name: environment
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -88,7 +89,6 @@ data:
                       filename: /usr/local/certs/service/tls.crt
                     private_key:
                       filename: /usr/local/certs/service/tls.key
-          type: strict_dns
           typed_extension_protocol_options:
             envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
