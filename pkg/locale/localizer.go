@@ -56,6 +56,18 @@ const (
 	HasWaitingOrRunningExperiment = "HasWaitingOrRunningExperiment"
 	NothingToChange               = "NothingToChange"
 	DifferentVariationsSize       = "DifferentVariationsSize"
+	// auto ops
+	WaitingOrRunningExperimentExists         = "WaitingOrRunningExperimentExists"
+	NothingChange                            = "NothingChange"
+	InvalidVariationSize                     = "InvalidVariationSize"
+	InvalidScheduleSpans                     = "InvalidScheduleSpans"
+	WaitingOrRunningProgressiveRolloutExists = "WaitingOrRunningProgressiveRolloutExists"
+	FeatureDisabled                          = "FeatureDisabled"
+	FeatureHasPrerequisites                  = "FeatureHasPrerequisites"
+	FeatureHasIndividualTargeting            = "FeatureHasIndividualTargeting"
+	FeatureHasRules                          = "FeatureHasRules"
+	AutoOpsHasDatetime                       = "AutoOpsHasDatetime"
+	AutoOpsHasWebhook                        = "AutoOpsHasWebhook"
 )
 
 // domain events
