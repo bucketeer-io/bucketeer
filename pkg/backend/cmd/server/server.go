@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,19 +34,26 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
 	autoopsapi "github.com/bucketeer-io/bucketeer/pkg/autoops/api"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/webhookhandler"
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/crypto"
 	environmentapi "github.com/bucketeer-io/bucketeer/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
+	eventcounterapi "github.com/bucketeer-io/bucketeer/pkg/eventcounter/api"
+	experimentapi "github.com/bucketeer-io/bucketeer/pkg/experiment/api"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	featureapi "github.com/bucketeer-io/bucketeer/pkg/feature/api"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
+	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
@@ -60,29 +67,52 @@ const (
 
 type server struct {
 	*kingpin.CmdClause
-	project                *string
-	mysqlUser              *string
-	mysqlPass              *string
-	mysqlHost              *string
-	mysqlPort              *int
-	mysqlDBName            *string
-	domainTopic            *string
-	accountServicePort     *int
-	authServicePort        *int
-	auditLogServicePort    *int
-	autoOpsServicePort     *int
-	environmentServicePort *int
-	accountService         *string
-	authService            *string
-	environmentService     *string
-	experimentService      *string
-	featureService         *string
-	certPath               *string
-	keyPath                *string
-	serviceTokenPath       *string
-	oauthPublicKeyPath     *string
-	oauthClientID          *string
-	oauthIssuer            *string
+	// Common
+	project            *string
+	timezone           *string
+	certPath           *string
+	keyPath            *string
+	serviceTokenPath   *string
+	oauthPublicKeyPath *string
+	oauthClientID      *string
+	oauthIssuer        *string
+	// MySQL
+	mysqlUser   *string
+	mysqlPass   *string
+	mysqlHost   *string
+	mysqlPort   *int
+	mysqlDBName *string
+	// Persistent Redis
+	persistentRedisServerName    *string
+	persistentRedisAddr          *string
+	persistentRedisPoolMaxIdle   *int
+	persistentRedisPoolMaxActive *int
+	// Non Persistent Redis
+	nonPersistentRedisServerName    *string
+	nonPersistentRedisAddr          *string
+	nonPersistentRedisPoolMaxIdle   *int
+	nonPersistentRedisPoolMaxActive *int
+	// BigQuery
+	bigQueryDataSet      *string
+	bigQueryDataLocation *string
+	// PubSub
+	domainTopic                   *string
+	bulkSegmentUsersReceivedTopic *string
+	// Port
+	accountServicePort      *int
+	authServicePort         *int
+	auditLogServicePort     *int
+	autoOpsServicePort      *int
+	environmentServicePort  *int
+	eventCounterServicePort *int
+	experimentServicePort   *int
+	featureServicePort      *int
+	// Service
+	accountService     *string
+	authService        *string
+	environmentService *string
+	experimentService  *string
+	featureService     *string
 	// auth
 	oauthIssuerCertPath *string
 	emailFilter         *string
@@ -105,7 +135,48 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
 		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
 		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
-		domainTopic: cmd.Flag("domain-topic", "PubSub topic to publish domain events.").Required().String(),
+		persistentRedisServerName: cmd.Flag(
+			"persistent-redis-server-name",
+			"Name of the persistent redis.",
+		).Required().String(),
+		persistentRedisAddr: cmd.Flag(
+			"persistent-redis-addr",
+			"Address of the persistent redis.",
+		).Required().String(),
+		persistentRedisPoolMaxIdle: cmd.Flag(
+			"persistent-redis-pool-max-idle",
+			"Maximum number of idle in the persistent redis connections pool.",
+		).Default("5").Int(),
+		persistentRedisPoolMaxActive: cmd.Flag(
+			"persistent-redis-pool-max-active",
+			"Maximum number of connections allocated by the persistent redis connections pool at a given time.",
+		).Default("10").Int(),
+		nonPersistentRedisServerName: cmd.Flag(
+			"non-persistent-redis-server-name",
+			"Name of the non-persistent redis.",
+		).Required().String(),
+		nonPersistentRedisAddr: cmd.Flag(
+			"non-persistent-redis-addr",
+			"Address of the non-persistent redis.",
+		).Required().String(),
+		nonPersistentRedisPoolMaxIdle: cmd.Flag(
+			"non-persistent-redis-pool-max-idle",
+			"Maximum number of idle in the non-persistent redis connections pool.",
+		).Default("5").Int(),
+		nonPersistentRedisPoolMaxActive: cmd.Flag(
+			"non-persistent-redis-pool-max-active",
+			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
+		).Default("10").Int(),
+		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
+		bigQueryDataLocation: cmd.Flag("bigquery-data-location", "BigQuery DataSet Location").String(),
+		domainTopic: cmd.Flag(
+			"domain-topic",
+			"PubSub topic to publish domain events.",
+		).Required().String(),
+		bulkSegmentUsersReceivedTopic: cmd.Flag(
+			"bulk-segment-users-received-topic",
+			"PubSub topic to publish bulk segment users received events.",
+		).Required().String(),
 		accountServicePort: cmd.Flag(
 			"account-service-port",
 			"Port to bind to account service.",
@@ -126,6 +197,18 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"environment-service-port",
 			"Port to bind to environment service.",
 		).Default("9095").Int(),
+		eventCounterServicePort: cmd.Flag(
+			"event-counter-service-port",
+			"Port to bind to event counter service.",
+		).Default("9096").Int(),
+		experimentServicePort: cmd.Flag(
+			"experiment-service-port",
+			"Port to bind to experiment service.",
+		).Default("9097").Int(),
+		featureServicePort: cmd.Flag(
+			"feature-service-port",
+			"Port to bind to feature service.",
+		).Default("9098").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -146,6 +229,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"feature-service",
 			"bucketeer-feature-service address.",
 		).Default("localhost:9001").String(),
+		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -211,12 +295,65 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer mysqlClient.Close()
+	// persistentRedisClient
+	persistentRedisClient, err := redisv3.NewClient(
+		*s.persistentRedisAddr,
+		redisv3.WithPoolSize(*s.persistentRedisPoolMaxActive),
+		redisv3.WithMinIdleConns(*s.persistentRedisPoolMaxIdle),
+		redisv3.WithServerName(*s.persistentRedisServerName),
+		redisv3.WithMetrics(registerer),
+		redisv3.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer persistentRedisClient.Close()
+	persistentRedisV3Cache := cachev3.NewRedisCache(persistentRedisClient)
+	// nonPersistentRedisClient
+	nonPersistentRedisClient, err := redisv3.NewClient(
+		*s.nonPersistentRedisAddr,
+		redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
+		redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
+		redisv3.WithServerName(*s.nonPersistentRedisServerName),
+		redisv3.WithMetrics(registerer),
+		redisv3.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer nonPersistentRedisClient.Close()
+	nonPersistentRedisV3Cache := cachev3.NewRedisCache(nonPersistentRedisClient)
+	// bigQueryQuerier
+	bigQueryQuerier, err := s.createBigQueryQuerier(ctx, *s.project, *s.bigQueryDataLocation, registerer, logger)
+	if err != nil {
+		logger.Error("Failed to create BigQuery client",
+			zap.Error(err),
+			zap.String("project", *s.project),
+			zap.String("location", *s.bigQueryDataLocation),
+			zap.String("data-set", *s.bigQueryDataSet),
+		)
+		return err
+	}
+	defer bigQueryQuerier.Close()
+	// bigQueryDataSet
+	bigQueryDataSet := *s.bigQueryDataSet
+	// location
+	location, err := locale.GetLocation(*s.timezone)
+	if err != nil {
+		return err
+	}
 	// domainTopicPublisher
 	domainTopicPublisher, err := s.createPublisher(ctx, *s.domainTopic, registerer, logger)
 	if err != nil {
 		return err
 	}
 	defer domainTopicPublisher.Stop()
+	// segmentUsersPublisher
+	segmentUsersPublisher, err := s.createPublisher(ctx, *s.bulkSegmentUsersReceivedTopic, registerer, logger)
+	if err != nil {
+		return err
+	}
+	defer segmentUsersPublisher.Stop()
 	// credential for grpc
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
@@ -361,6 +498,61 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer environmentServer.Stop(10 * time.Second)
 	go environmentServer.Run()
+	// eventCounterService
+	eventCounterService := eventcounterapi.NewEventCounterService(
+		mysqlClient,
+		experimentClient,
+		featureClient,
+		accountClient,
+		bigQueryQuerier,
+		bigQueryDataSet,
+		registerer,
+		persistentRedisV3Cache,
+		location,
+		logger,
+	)
+	eventCounterServer := rpc.NewServer(eventCounterService, *s.certPath, *s.keyPath,
+		rpc.WithPort(*s.eventCounterServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	defer eventCounterServer.Stop(10 * time.Second)
+	go eventCounterServer.Run()
+	// experimentService
+	experimentService := experimentapi.NewExperimentService(
+		featureClient,
+		accountClient,
+		mysqlClient,
+		domainTopicPublisher,
+		experimentapi.WithLogger(logger),
+	)
+	experimentServer := rpc.NewServer(experimentService, *s.certPath, *s.keyPath,
+		rpc.WithPort(*s.experimentServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	defer experimentServer.Stop(10 * time.Second)
+	go experimentServer.Run()
+	// featureService
+	featureService := featureapi.NewFeatureService(
+		mysqlClient,
+		accountClient,
+		experimentClient,
+		nonPersistentRedisV3Cache,
+		segmentUsersPublisher,
+		domainTopicPublisher,
+		featureapi.WithLogger(logger),
+	)
+	featureServer := rpc.NewServer(featureService, *s.certPath, *s.keyPath,
+		rpc.WithPort(*s.featureServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	defer featureServer.Stop(10 * time.Second)
+	go featureServer.Run()
 	// other services...
 	<-ctx.Done()
 	return nil
@@ -380,6 +572,23 @@ func (s *server) createMySQLClient(
 		*s.mysqlDBName,
 		mysql.WithLogger(logger),
 		mysql.WithMetrics(registerer),
+	)
+}
+
+func (s *server) createBigQueryQuerier(
+	ctx context.Context,
+	project, location string,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (bqquerier.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	return bqquerier.NewClient(
+		ctx,
+		project,
+		location,
+		bqquerier.WithMetrics(registerer),
+		bqquerier.WithLogger(logger),
 	)
 }
 

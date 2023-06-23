@@ -65,8 +65,30 @@ spec:
               value: "{{ .Values.env.mysqlPort }}"
             - name: BUCKETEER_BACKEND_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
+            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_SERVER_NAME
+              value: "{{ .Values.env.persistentRedis.serverName }}"
+            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_ADDR
+              value: "{{ .Values.env.persistentRedis.addr }}"
+            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_POOL_MAX_IDLE
+              value: "{{ .Values.env.persistentRedis.poolMaxIdle }}"
+            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_POOL_MAX_ACTIVE
+              value: "{{ .Values.env.persistentRedis.poolMaxActive }}"
+            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_SERVER_NAME
+              value: "{{ .Values.env.nonPersistentRedis.serverName }}"
+            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_ADDR
+              value: "{{ .Values.env.nonPersistentRedis.addr }}"
+            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_POOL_MAX_IDLE
+              value: "{{ .Values.env.nonPersistentRedis.poolMaxIdle }}"
+            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
+              value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
+            - name: BUCKETEER_BACKEND_BIGQUERY_DATA_SET
+              value: "{{ .Values.env.bigQueryDataSet }}"
+            - name: BUCKETEER_BACKEND_BIGQUERY_DATA_LOCATION
+              value: "{{ .Values.env.bigQueryDataLocation }}"
             - name: BUCKETEER_BACKEND_DOMAIN_TOPIC
               value: "{{ .Values.env.domainTopic }}"
+            - name: BUCKETEER_BACKEND_BULK_SEGMENT_USERS_RECEIVED_TOPIC
+              value: "{{ .Values.env.bulkSegmentUsersReceivedTopic }}"
             - name: BUCKETEER_BACKEND_HEALTH_CHECK_SERVICE_PORT
               value: "{{ .Values.env.healthCheckServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE_PORT
@@ -79,6 +101,12 @@ spec:
               value: "{{ .Values.env.autoOpsServicePort }}"
             - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE_PORT
               value: "{{ .Values.env.environmentServicePort }}"
+            - name: BUCKETEER_BACKEND_EVENT_COUNTER_SERVICE_PORT
+              value: "{{ .Values.env.eventCounterServicePort }}"
+            - name: BUCKETEER_BACKEND_EXPERIMENT_SERVICE_PORT
+              value: "{{ .Values.env.experimentServicePort }}"
+            - name: BUCKETEER_BACKEND_FEATURE_SERVICE_PORT
+              value: "{{ .Values.env.featureServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE
@@ -89,6 +117,8 @@ spec:
               value: "{{ .Values.env.experimentService }}"
             - name: BUCKETEER_BACKEND_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
+            - name: BUCKETEER_BACKEND_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
             - name: BUCKETEER_BACKEND_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_BACKEND_LOG_LEVEL

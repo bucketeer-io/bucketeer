@@ -13,7 +13,20 @@ env:
   mysqlHost:
   mysqlPort: 3306
   mysqlDbName:
+  persistentRedis:
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
+  nonPersistentRedis:
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
+  bigQueryDataSet:
+  bigQueryDataLocation:
   domainTopic:
+  bulkSegmentUsersReceivedTopic:
   accountService: localhost:9001
   authService: localhost:9001
   environmentService: localhost:9001
@@ -25,7 +38,11 @@ env:
   auditLogServicePort: 9093
   autoOpsServicePort: 9094
   environmentServicePort: 9095
+  eventCounterServicePort: 9096
+  experimentServicePort: 9097
+  featureServicePort: 9098
   metricsPort: 9002
+  timezone: UTC
   emailFilter:
   logLevel: info
 
