@@ -1,13 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
-import React, {
-  useCallback,
-  FC,
-  memo,
-  useEffect,
-  useState,
-  FunctionComponent,
-} from 'react';
+import React, { useCallback, FC, memo, useEffect, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -24,6 +17,7 @@ import { SegmentAddForm } from '../../components/SegmentAddForm';
 import { SegmentDeleteDialog } from '../../components/SegmentDeleteDialog';
 import { SegmentList } from '../../components/SegmentList';
 import { SegmentUpdateForm } from '../../components/SegmentUpdateForm';
+import { SegmentUploadingDialog } from '../../components/SegmentUploadingDialog';
 import {
   ID_NEW,
   PAGE_PATH_USER_SEGMENTS,
@@ -105,6 +99,7 @@ export const SegmentIndexPage: FC = memo(() => {
   const isNew = segmentId == ID_NEW;
   const isUpdate = segmentId ? segmentId != ID_NEW : false;
   const [open, setOpen] = useState(isNew);
+  const [isUploadingDialogOpen, setIsUploadingDialogOpen] = useState(false);
   const [segment, getSegmentError] = useSelector<
     AppState,
     [Segment.AsObject | undefined, SerializedError | null]
@@ -240,19 +235,23 @@ export const SegmentIndexPage: FC = memo(() => {
 
   const handleOnClickUpdate = useCallback(
     (s: Segment.AsObject) => {
-      setOpen(true);
-      resetUpdate({
-        name: s.name,
-        description: s.description,
-        isInUseStatus: s.isInUseStatus,
-        status: s.status,
-        file: null,
-        featureList: s.featuresList,
-      });
-      history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}/${s.id}`,
-        search: location.search,
-      });
+      if (s.status === Segment.Status.UPLOADING) {
+        setIsUploadingDialogOpen(true);
+      } else {
+        setOpen(true);
+        resetUpdate({
+          name: s.name,
+          description: s.description,
+          isInUseStatus: s.isInUseStatus,
+          status: s.status,
+          file: null,
+          featureList: s.featuresList,
+        });
+        history.push({
+          pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}/${s.id}`,
+          search: location.search,
+        });
+      }
     },
     [setOpen, history, segment, location]
   );
@@ -377,6 +376,7 @@ export const SegmentIndexPage: FC = memo(() => {
               data: uint8Array,
             })
           ).then(() => {
+            console.log('inside');
             dispatch(
               getSegment({
                 environmentNamespace: currentEnvironment.namespace,
@@ -425,6 +425,14 @@ export const SegmentIndexPage: FC = memo(() => {
     },
     [dispatch, segmentId]
   );
+
+  const handleUploadingClose = () => {
+    setIsUploadingDialogOpen(false);
+    updateSegmentList(
+      searchOptions,
+      searchOptions.page ? Number(searchOptions.page) : 1
+    );
+  };
 
   useEffect(() => {
     history.listen(() => {
@@ -486,6 +494,10 @@ export const SegmentIndexPage: FC = memo(() => {
         segment={deleteMethod.getValues().segment}
         onConfirm={deleteHandleSubmit(handleDeleteSegment)}
         onClose={() => setIsConfirmDialogOpen(false)}
+      />
+      <SegmentUploadingDialog
+        open={isUploadingDialogOpen}
+        onClose={handleUploadingClose}
       />
     </>
   );

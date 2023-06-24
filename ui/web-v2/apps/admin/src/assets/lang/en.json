@@ -415,6 +415,8 @@
   "segment.update.header.description": "User segment allows you to manage all user targets for a single feature flag variation. You can use it to make changes to a large number of users or to test beta features on a small number of users.",
   "segment.update.header.title": "Update the segment",
   "segment.update.userId": "The user ID list can't be updated because {length} {length, plural, one {flag is} other {flags are}} using it. Remove the segment from the flag before updating it.",
+  "segment.uploading.message": "Segments can't be updated until the user list has been uploaded.",
+  "segment.uploading.title": "Upload in progress",
   "segment.userCount": "users",
   "settings.list.header.description": "On this page, you can check all settings for this environment. Select a tab to manage the settings.",
   "settings.list.header.title": "Settings",

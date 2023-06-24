@@ -230,42 +230,18 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                             )}
                           >
                             <div className="absolute">
-                              {(() => {
-                                if (
-                                  getValues('status') ==
-                                  Segment.Status.UPLOADING
-                                ) {
-                                  return (
-                                    <div className="flex flex-col items-center ">
-                                      <div className="w-6 h-6 mb-2 border-4 border-t-primary rounded-full animate-spin"></div>
-                                      <span className="block text-gray-500">
-                                        {f(
-                                          messages.segment.fileUpload
-                                            .uploadInProgress
-                                        )}
-                                      </span>
-                                    </div>
-                                  );
-                                } else {
-                                  return (
-                                    <div
-                                      className={classNames(
-                                        'flex flex-col items-center'
-                                      )}
-                                    >
-                                      <div className="text-gray-500">
-                                        <FileUploadIcon />
-                                      </div>
-                                      <span className="block text-gray-500">
-                                        {f(
-                                          messages.segment.fileUpload
-                                            .browseFiles
-                                        )}
-                                      </span>
-                                    </div>
-                                  );
-                                }
-                              })()}
+                              <div
+                                className={classNames(
+                                  'flex flex-col items-center'
+                                )}
+                              >
+                                <div className="text-gray-500">
+                                  <FileUploadIcon />
+                                </div>
+                                <span className="block text-gray-500">
+                                  {f(messages.segment.fileUpload.browseFiles)}
+                                </span>
+                              </div>
                             </div>
                             <input
                               {...register('file')}

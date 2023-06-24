@@ -1942,6 +1942,17 @@ export const messages = {
           "The user ID list can't be updated because {length} {length, plural, one {flag is} other {flags are}} using it. Remove the segment from the flag before updating it.",
       }),
     },
+    uploading: {
+      title: defineMessage({
+        id: 'segment.uploading.title',
+        defaultMessage: 'Upload in progress',
+      }),
+      message: defineMessage({
+        id: 'segment.uploading.message',
+        defaultMessage:
+          "Segments can't be updated until the user list has been uploaded.",
+      }),
+    },
     list: {
       header: {
         title: defineMessage({
