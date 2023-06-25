@@ -3,3 +3,4 @@ helm dependencies update
 helm install localenv .
 minikube addons enable ingress &
 minikube tunnel
+kubectl exec --stdin=true --tty=true localenv-vault-0 -- vault operator init
