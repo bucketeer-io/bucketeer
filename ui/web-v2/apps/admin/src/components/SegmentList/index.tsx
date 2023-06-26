@@ -81,12 +81,13 @@ export const SegmentList: FC<SegmentListProps> = memo(
           );
       }
     };
-    const createMenuItems = (): Array<MenuItem> => {
+    const createMenuItems = (includedUserCount: Number): Array<MenuItem> => {
       const items: Array<MenuItem> = [];
       items.push({
         action: MenuActions.DOWNLOAD,
         name: intl.formatMessage(messages.segment.action.download),
         iconElement: <MUCloudDownloadIcon />,
+        disabled: includedUserCount === 0,
       });
       items.push({
         action: MenuActions.DELETE,
@@ -206,7 +207,9 @@ export const SegmentList: FC<SegmentListProps> = memo(
                                   return;
                               }
                             }}
-                            menuItems={createMenuItems()}
+                            menuItems={createMenuItems(
+                              segment.includedUserCount
+                            )}
                           />
                         </td>
                       )}
