@@ -1887,12 +1887,12 @@ export const messages = {
       deleteDescription: defineMessage({
         id: 'segment.confirm.delete.description',
         defaultMessage:
-          'The 「{segmentName}」 segment will be deleted permanently.',
+          'The {segmentName} segment will be deleted permanently.',
       }),
       cannotDelete: defineMessage({
         id: 'segment.confirm.delete.cannotDelete',
         defaultMessage:
-          'The 「{segmentName}」 segment is being used, and you cannot delete it.',
+          "The {segmentName} segment can't be deleted because {length} {length, plural, one {flag is} other {flags are}} using it.",
       }),
     },
     filter: {
@@ -1936,6 +1936,22 @@ export const messages = {
             'User segment allows you to manage all user targets for a single feature flag variation. You can use it to make changes to a large number of users or to test beta features on a small number of users.',
         }),
       },
+      userId: defineMessage({
+        id: 'segment.update.userId',
+        defaultMessage:
+          "The user ID list can't be updated because {length} {length, plural, one {flag is} other {flags are}} using it. Remove the segment from the flag before updating it.",
+      }),
+    },
+    uploading: {
+      title: defineMessage({
+        id: 'segment.uploading.title',
+        defaultMessage: 'Upload in progress',
+      }),
+      message: defineMessage({
+        id: 'segment.uploading.message',
+        defaultMessage:
+          "Segments can't be updated until the user list has been uploaded.",
+      }),
     },
     list: {
       header: {
@@ -2001,11 +2017,6 @@ export const messages = {
         id: 'segment.fileUpload.uploadInProgress',
         defaultMessage: 'The file cannot be updated due to upload in progress',
       }),
-      segmentInUse: defineMessage({
-        id: 'segment.fileUpload.segmentInUse',
-        defaultMessage:
-          'This segment is in use and should remove from the feature flag before updating it',
-      }),
     },
     search: {
       placeholder: defineMessage({
@@ -2044,6 +2055,11 @@ export const messages = {
     userCount: defineMessage({
       id: 'segment.userCount',
       defaultMessage: 'users',
+    }),
+    enterUserIdsPlaceholder: defineMessage({
+      id: 'segment.enterUserIdsPlaceholder',
+      defaultMessage:
+        'Enter IDs separated by commas (E.g., userId1, userId2, userId3)',
     }),
   },
   push: {
