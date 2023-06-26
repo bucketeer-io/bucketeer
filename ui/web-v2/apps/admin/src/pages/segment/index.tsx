@@ -376,7 +376,6 @@ export const SegmentIndexPage: FC = memo(() => {
               data: uint8Array,
             })
           ).then(() => {
-            console.log('inside');
             dispatch(
               getSegment({
                 environmentNamespace: currentEnvironment.namespace,

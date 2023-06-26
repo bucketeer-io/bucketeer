@@ -415,7 +415,7 @@
   "segment.update.header.description": "ユーザーセグメントを使用すると、単一のフィーチャーフラグバリエーションのすべてのユーザーターゲットを管理できます。これを使用して、多数のユーザーターゲットに対して一度に変更を加えることができます。例えば、既存のベータユーザー群に対して、機能をテスト可能になります。",
   "segment.update.header.title": "ユーザーセグメントの更新",
   "segment.update.userId": "ユーザーID一覧は他の{length}件のフラグに使用中のため、更新できません。このセグメントをフラグから削除してから更新してください。",
-  "segment.uploading.message": "ユーザー一覧のアップロードが完了するまでセグメントの更新はできません。",
+  "segment.uploading.message": "ユーザー一覧はアップロード中のため、セグメントユーザーの更新ができません。",
   "segment.uploading.title": "アップロード中",
   "segment.userCount": "ユーザー数",
   "settings.list.header.description": "このページでは、環境にあるすべての設定を確認できます。タブを選択すると設定の管理ができます。",
