@@ -112,6 +112,8 @@ spec:
               value: "{{ .Values.env.featureServicePort }}"
             - name: BUCKETEER_BACKEND_MIGRATE_MYSQL_SERVICE_PORT
               value: "{{ .Values.env.migrateMysqlServicePort }}"
+            - name: BUCKETEER_BACKEND_NOTIFICATION_SERVICE_PORT
+              value: "{{ .Values.env.notificationServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE

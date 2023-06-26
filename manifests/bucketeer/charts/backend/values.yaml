@@ -42,6 +42,7 @@ env:
   experimentServicePort: 9097
   featureServicePort: 9098
   migrateMysqlServicePort: 9099
+  notificationServicePort: 9100
   metricsPort: 9002
   timezone: UTC
   emailFilter:

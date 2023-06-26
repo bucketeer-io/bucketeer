@@ -49,6 +49,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	migratemysqlapi "github.com/bucketeer-io/bucketeer/pkg/migration/mysql/api"
 	"github.com/bucketeer-io/bucketeer/pkg/migration/mysql/migrate"
+	notificationapi "github.com/bucketeer-io/bucketeer/pkg/notification/api"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
@@ -110,6 +111,7 @@ type server struct {
 	experimentServicePort   *int
 	featureServicePort      *int
 	migrateMySQLServicePort *int
+	notificationServicePort *int
 	// Service
 	accountService     *string
 	authService        *string
@@ -220,6 +222,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"migrate-mysql-service-port",
 			"Port to bind to migrate mysql service.",
 		).Default("9099").Int(),
+		notificationServicePort: cmd.Flag(
+			"notification-service-port",
+			"Port to bind to notification service.",
+		).Default("9100").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -591,6 +597,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer migrateMySQLServer.Stop(10 * time.Second)
 	go migrateMySQLServer.Run()
+	// notificationService
+	notificationService := notificationapi.NewNotificationService(
+		mysqlClient,
+		accountClient,
+		domainTopicPublisher,
+		notificationapi.WithLogger(logger),
+	)
+	notificationServer := rpc.NewServer(notificationService, *s.certPath, *s.keyPath,
+		rpc.WithPort(*s.notificationServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	defer notificationServer.Stop(10 * time.Second)
+	go notificationServer.Run()
 	// other services...
 	<-ctx.Done()
 	return nil
