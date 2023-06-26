@@ -47,6 +47,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	migratemysqlapi "github.com/bucketeer-io/bucketeer/pkg/migration/mysql/api"
+	"github.com/bucketeer-io/bucketeer/pkg/migration/mysql/migrate"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
@@ -107,6 +109,7 @@ type server struct {
 	eventCounterServicePort *int
 	experimentServicePort   *int
 	featureServicePort      *int
+	migrateMySQLServicePort *int
 	// Service
 	accountService     *string
 	authService        *string
@@ -123,6 +126,10 @@ type server struct {
 	webhookBaseURL         *string
 	webhookKMSResourceName *string
 	cloudService           *string
+	// migration-mysql
+	githubUser                *string
+	githubAccessTokenPath     *string
+	githubMigrationSourcePath *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -209,6 +216,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"feature-service-port",
 			"Port to bind to feature service.",
 		).Default("9098").Int(),
+		migrateMySQLServicePort: cmd.Flag(
+			"migrate-mysql-service-port",
+			"Port to bind to migrate mysql service.",
+		).Default("9099").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -261,6 +272,13 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"Cloud KMS resource name to encrypt and decrypt webhook credentials.",
 		).Required().String(),
 		cloudService: cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
+		// migration-mysql
+		githubUser:            cmd.Flag("github-user", "GitHub user.").Required().String(),
+		githubAccessTokenPath: cmd.Flag("github-access-token-path", "Path to GitHub access token.").Required().String(),
+		githubMigrationSourcePath: cmd.Flag(
+			"github-migration-source-path",
+			"Path to migration file in GitHub. (e.g. owner/repo/path#ref)",
+		).Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -553,6 +571,26 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer featureServer.Stop(10 * time.Second)
 	go featureServer.Run()
+	// migrateMySQLService
+	migrateClientFactory, err := migrate.NewClientFactory(
+		*s.githubUser, *s.githubAccessTokenPath, *s.githubMigrationSourcePath,
+		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost, *s.mysqlPort, *s.mysqlDBName,
+	)
+	if err != nil {
+		return err
+	}
+	migrateMySQLService := migratemysqlapi.NewMySQLService(
+		migrateClientFactory,
+		migratemysqlapi.WithLogger(logger),
+	)
+	migrateMySQLServer := rpc.NewServer(migrateMySQLService, *s.certPath, *s.keyPath,
+		rpc.WithPort(*s.migrateMySQLServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	defer migrateMySQLServer.Stop(10 * time.Second)
+	go migrateMySQLServer.Run()
 	// other services...
 	<-ctx.Done()
 	return nil
