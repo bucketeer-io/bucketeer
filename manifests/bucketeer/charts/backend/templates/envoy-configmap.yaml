@@ -346,7 +346,7 @@ data:
           dns_lookup_family: V4_ONLY
           lb_policy: round_robin
           load_assignment:
-            cluster_name: mygrationmysql
+            cluster_name: migrationmysql
             endpoints:
               - lb_endpoints:
                   - endpoint:
