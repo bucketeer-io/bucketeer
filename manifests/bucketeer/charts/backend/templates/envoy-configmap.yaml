@@ -340,6 +340,103 @@ data:
               explicit_http_config:
                 http2_protocol_options: {}
           ignore_health_on_host_removal: true
+        - name: migrationmysql
+          type: strict_dns
+          connect_timeout: 5s
+          dns_lookup_family: V4_ONLY
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: mygrationmysql
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: localhost
+                          port_value: 9099
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols:
+                  - h2
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          ignore_health_on_host_removal: true
+        - name: notification
+          type: strict_dns
+          connect_timeout: 5s
+          dns_lookup_family: V4_ONLY
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: notification
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: localhost
+                          port_value: 9100
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols:
+                  - h2
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          ignore_health_on_host_removal: true
+        - name: push
+          type: strict_dns
+          connect_timeout: 5s
+          dns_lookup_family: V4_ONLY
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: push
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: localhost
+                          port_value: 9101
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols:
+                  - h2
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          ignore_health_on_host_removal: true
+
       listeners:
         - name: ingress
           address:
@@ -461,6 +558,30 @@ data:
                               route:
                                 cluster: feature
                                 timeout: 60s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
+                                prefix: /bucketeer.migration.MigrationMySQLService
+                              route:
+                                cluster: migrationmysql
+                                timeout: 600s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
+                                prefix: /bucketeer.notification.NotificationService
+                              route:
+                                cluster: notification
+                                timeout: 15s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
+                                prefix: /bucketeer.push.PushService
+                              route:
+                                cluster: push
+                                timeout: 15s
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3
