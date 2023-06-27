@@ -62,51 +62,20 @@ data:
               timeout: 1s
               unhealthy_threshold: 2
           ignore_health_on_host_removal: true
-        - connect_timeout: 5s
-          dns_lookup_family: V4_ONLY
-          ignore_health_on_host_removal: true
-          lb_policy: round_robin
-          load_assignment:
-            cluster_name: environment
-            endpoints:
-              - lb_endpoints:
-                  - endpoint:
-                      address:
-                        socket_address:
-                          address: environment.{{ .Values.namespace }}.svc.cluster.local
-                          port_value: 9000
-          name: environment
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols:
-                  - h2
-                tls_certificates:
-                  - certificate_chain:
-                      filename: /usr/local/certs/service/tls.crt
-                    private_key:
-                      filename: /usr/local/certs/service/tls.key
-          type: strict_dns
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-        - name: feature
+
+        - name: backend
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           lb_policy: round_robin
           load_assignment:
-            cluster_name: feature
+            cluster_name: backend
             endpoints:
               - lb_endpoints:
                   - endpoint:
                       address:
                         socket_address:
-                          address: feature.{{ .Values.namespace }}.svc.cluster.local
+                          address: backend.{{ .Values.namespace }}.svc.cluster.local
                           port_value: 9000
           transport_socket:
             name: envoy.transport_sockets.tls
@@ -126,70 +95,7 @@ data:
               explicit_http_config:
                 http2_protocol_options: {}
           ignore_health_on_host_removal: true
-        - name: experiment
-          type: strict_dns
-          connect_timeout: 5s
-          dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
-          load_assignment:
-            cluster_name: experiment
-            endpoints:
-              - lb_endpoints:
-                  - endpoint:
-                      address:
-                        socket_address:
-                          address: experiment.{{ .Values.namespace }}.svc.cluster.local
-                          port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols:
-                  - h2
-                tls_certificates:
-                  - certificate_chain:
-                      filename: /usr/local/certs/service/tls.crt
-                    private_key:
-                      filename: /usr/local/certs/service/tls.key
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          ignore_health_on_host_removal: true
-        - name: event-counter-server
-          type: strict_dns
-          connect_timeout: 5s
-          dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
-          load_assignment:
-            cluster_name: event-counter-server
-            endpoints:
-              - lb_endpoints:
-                  - endpoint:
-                      address:
-                        socket_address:
-                          address: event-counter.{{ .Values.namespace }}.svc.cluster.local
-                          port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols:
-                  - h2
-                tls_certificates:
-                  - certificate_chain:
-                      filename: /usr/local/certs/service/tls.crt
-                    private_key:
-                      filename: /usr/local/certs/service/tls.key
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          ignore_health_on_host_removal: true
+
       listeners:
         - name: ingress
           address:
@@ -284,7 +190,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.environment.EnvironmentService
                               route:
-                                cluster: environment
+                                cluster: backend
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
@@ -296,7 +202,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.feature.FeatureService
                               route:
-                                cluster: feature
+                                cluster: backend
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
@@ -308,7 +214,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.experiment.ExperimentService
                               route:
-                                cluster: experiment
+                                cluster: backend
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
@@ -320,7 +226,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.eventcounter.EventCounterService
                               route:
-                                cluster: event-counter-server
+                                cluster: backend
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
