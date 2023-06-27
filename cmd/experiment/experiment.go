@@ -19,7 +19,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/cmd/batch"
-	"github.com/bucketeer-io/bucketeer/pkg/experiment/cmd/server"
 )
 
 var (
@@ -39,5 +38,4 @@ func main() {
 
 func registerCommands(app *cli.App) {
 	batch.RegisterCommand(app, app)
-	server.RegisterCommand(app, app)
 }
