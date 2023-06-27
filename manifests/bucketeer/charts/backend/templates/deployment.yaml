@@ -44,6 +44,9 @@ spec:
         - name: oauth-key-secret
           secret:
             secretName: {{ template "oauth-key-secret" . }}
+        - name: github-access-token-secret
+          secret:
+            secretName: github-token
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "backend.fullname" . }}
       {{- end }}
@@ -107,6 +110,12 @@ spec:
               value: "{{ .Values.env.experimentServicePort }}"
             - name: BUCKETEER_BACKEND_FEATURE_SERVICE_PORT
               value: "{{ .Values.env.featureServicePort }}"
+            - name: BUCKETEER_BACKEND_MIGRATE_MYSQL_SERVICE_PORT
+              value: "{{ .Values.env.migrateMysqlServicePort }}"
+            - name: BUCKETEER_BACKEND_NOTIFICATION_SERVICE_PORT
+              value: "{{ .Values.env.notificationServicePort }}"
+            - name: BUCKETEER_BACKEND_PUSH_SERVICE_PORT
+              value: "{{ .Values.env.pushServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE
@@ -149,6 +158,12 @@ spec:
               value: "{{ .Values.webhook.baseURL }}"
             - name: BUCKETEER_BACKEND_WEBHOOK_KMS_RESOURCE_NAME
               value: "{{ .Values.webhook.kmsResourceName }}"
+            - name: BUCKETEER_BACKEND_GITHUB_USER
+              value: "{{ .Values.env.githubUser }}"
+            - name: BUCKETEER_BACKEND_GITHUB_ACCESS_TOKEN_PATH
+              value: /usr/local/github-access-token/bucketeer-bot-access-token
+            - name: BUCKETEER_BACKEND_GITHUB_MIGRATION_SOURCE_PATH
+              value: "{{ .Values.env.githubMigrationSourcePath }}"
           volumeMounts:
             - name: issuer-cert-secret
               mountPath: /usr/local/certs/issuer
@@ -161,6 +176,9 @@ spec:
               readOnly: true
             - name: oauth-key-secret
               mountPath: /usr/local/oauth-key
+              readOnly: true
+            - name: github-access-token-secret
+              mountPath: /usr/local/github-access-token
               readOnly: true
           ports:
             - name: health-check
