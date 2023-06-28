@@ -317,18 +317,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithService(restHealthChecker),
 		rest.WithMetrics(registerer),
 	)
-	defer func() {
-		go healthcheckServer.Stop(10 * time.Second)
-	}()
 	go healthcheckServer.Run()
 	// mysqlClient
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		go mysqlClient.Close()
-	}()
 	// persistentRedisClient
 	persistentRedisClient, err := redisv3.NewClient(
 		*s.persistentRedisAddr,
@@ -341,9 +335,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer func() {
-		go persistentRedisClient.Close()
-	}()
 	persistentRedisV3Cache := cachev3.NewRedisCache(persistentRedisClient)
 	// nonPersistentRedisClient
 	nonPersistentRedisClient, err := redisv3.NewClient(
@@ -357,9 +348,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer func() {
-		go nonPersistentRedisClient.Close()
-	}()
 	nonPersistentRedisV3Cache := cachev3.NewRedisCache(nonPersistentRedisClient)
 	// bigQueryQuerier
 	bigQueryQuerier, err := s.createBigQueryQuerier(ctx, *s.project, *s.bigQueryDataLocation, registerer, logger)
@@ -372,9 +360,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		)
 		return err
 	}
-	defer func() {
-		go bigQueryQuerier.Close()
-	}()
 	// bigQueryDataSet
 	bigQueryDataSet := *s.bigQueryDataSet
 	// location
@@ -387,17 +372,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer func() {
-		go domainTopicPublisher.Stop()
-	}()
 	// segmentUsersPublisher
 	segmentUsersPublisher, err := s.createPublisher(ctx, *s.bulkSegmentUsersReceivedTopic, registerer, logger)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		go segmentUsersPublisher.Stop()
-	}()
 	// credential for grpc
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
@@ -413,9 +392,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer func() {
-		go accountClient.Close()
-	}()
 	// authClient
 	authClient, err := authclient.NewClient(*s.authService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -427,9 +403,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer func() {
-		go authClient.Close()
-	}()
 	// environmentClient
 	environmentClient, err := environmentclient.NewClient(*s.environmentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -441,9 +414,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer func() {
-		go environmentClient.Close()
-	}()
 	// experimentClient
 	experimentClient, err := experimentclient.NewClient(*s.experimentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -455,9 +425,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer func() {
-		go experimentClient.Close()
-	}()
 	// featureClient
 	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -469,9 +436,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer func() {
-		go featureClient.Close()
-	}()
 	// authService
 	authService, err := s.createAuthService(ctx, accountClient, logger)
 	if err != nil {
@@ -483,9 +447,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer func() {
-		go authServer.Stop(10 * time.Second)
-	}()
 	go authServer.Run()
 	// accountService
 	accountService := accountapi.NewAccountService(
@@ -501,9 +462,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer func() {
-		go accountServer.Stop(10 * time.Second)
-	}()
 	go accountServer.Run()
 	// auditLogService
 	auditLogService := auditlogapi.NewAuditLogService(
@@ -518,9 +476,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer func() {
-		go auditLogServer.Stop(10 * time.Second)
-	}()
 	go auditLogServer.Run()
 	// autoOpsService
 	autoOpsService, autoOpsWebhookHandler, err := s.createAutoOpsService(
@@ -545,9 +500,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 		rpc.WithHandler(fmt.Sprintf("/%s", autoOpsWebhookPath), autoOpsWebhookHandler),
 	)
-	defer func() {
-		go autoOpsServer.Stop(10 * time.Second)
-	}()
 	go autoOpsServer.Run()
 	// environmentService
 	environmentService := environmentapi.NewEnvironmentService(
@@ -563,9 +515,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer func() {
-		go environmentServer.Stop(10 * time.Second)
-	}()
 	go environmentServer.Run()
 	// eventCounterService
 	eventCounterService := eventcounterapi.NewEventCounterService(
@@ -587,9 +536,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer func() {
-		go eventCounterServer.Stop(10 * time.Second)
-	}()
 	go eventCounterServer.Run()
 	// experimentService
 	experimentService := experimentapi.NewExperimentService(
@@ -606,9 +552,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer func() {
-		go experimentServer.Stop(10 * time.Second)
-	}()
 	go experimentServer.Run()
 	// featureService
 	featureService := featureapi.NewFeatureService(
@@ -627,9 +570,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer func() {
-		go featureServer.Stop(10 * time.Second)
-	}()
 	go featureServer.Run()
 	// migrateMySQLService
 	migrateClientFactory, err := migrate.NewClientFactory(
@@ -650,9 +590,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer func() {
-		go migrateMySQLServer.Stop(10 * time.Second)
-	}()
 	go migrateMySQLServer.Run()
 	// notificationService
 	notificationService := notificationapi.NewNotificationService(
@@ -668,9 +605,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer func() {
-		go notificationServer.Stop(10 * time.Second)
-	}()
 	go notificationServer.Run()
 	// pushService
 	pushService := pushapi.NewPushService(
@@ -688,11 +622,36 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer func() {
-		go pushServer.Stop(10 * time.Second)
-	}()
 	go pushServer.Run()
-	// other services...
+	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
+	// Then, after 10 seconds of sleep, the application server can be shut down, as no new requests are expected to be sent.
+	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
+	defer func() {
+		go healthcheckServer.Stop(10 * time.Second)
+		time.Sleep(10 * time.Second)
+		go authServer.Stop(10 * time.Second)
+		go accountServer.Stop(10 * time.Second)
+		go auditLogServer.Stop(10 * time.Second)
+		go autoOpsServer.Stop(10 * time.Second)
+		go environmentServer.Stop(10 * time.Second)
+		go experimentServer.Stop(10 * time.Second)
+		go eventCounterServer.Stop(10 * time.Second)
+		go featureServer.Stop(10 * time.Second)
+		go migrateMySQLServer.Stop(10 * time.Second)
+		go notificationServer.Stop(10 * time.Second)
+		go pushServer.Stop(10 * time.Second)
+		go mysqlClient.Close()
+		go persistentRedisClient.Close()
+		go nonPersistentRedisClient.Close()
+		go bigQueryQuerier.Close()
+		go domainTopicPublisher.Stop()
+		go segmentUsersPublisher.Stop()
+		go accountClient.Close()
+		go authClient.Close()
+		go environmentClient.Close()
+		go experimentClient.Close()
+		go featureClient.Close()
+	}()
 	defer func() {
 		dur := 1
 		go func() {
