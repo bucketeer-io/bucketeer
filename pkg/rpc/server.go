@@ -33,6 +33,7 @@ import (
 type Server struct {
 	certPath   string
 	keyPath    string
+	name       string
 	logger     *zap.Logger
 	port       int
 	metrics    metrics.Registerer

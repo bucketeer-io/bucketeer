@@ -98,13 +98,13 @@ func (s *Server) Run() {
 }
 
 func (s *Server) Stop(timeout time.Duration) {
-	s.logger.Info("Server is going to sleep 10 seconds before shutting down")
+	s.logger.Info("Health check server is going to sleep 1 seconds before shutting down")
 	// When the sigterm signal is sent, sometimes the app could get the signal before envoy,
 	// when it does, the requests will fail because the app cannot receive any request after the shutdown.
 	// So we wait a bit in case there are still requests to be processed
 	// between the envoy and app after the signal.
 	time.Sleep(time.Second)
-	s.logger.Info("Server is awakening from sleep, and going to shutdown")
+	s.logger.Info("Health check server is awakening from sleep, and going to shutdown")
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	err := s.httpServer.Shutdown(ctx)
