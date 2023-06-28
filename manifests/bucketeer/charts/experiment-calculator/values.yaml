@@ -24,6 +24,7 @@ env:
   port: 9090
   metricsPort: 9002
   traceSamplingProbability: 0.001
+  timezone: UTC
 
 affinity: {}
 

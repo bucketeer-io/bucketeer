@@ -113,6 +113,8 @@ spec:
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_CALCULATOR_TRACE_SAMPLING_PROBABILITY
               value: "{{ .Values.env.traceSamplingProbability }}"
+            - name: BUCKETEER_CALCULATOR_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
