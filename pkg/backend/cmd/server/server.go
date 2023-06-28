@@ -478,6 +478,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	authServer := rpc.NewServer(authService, *s.certPath, *s.keyPath,
+		"auth-server",
 		rpc.WithPort(*s.authServicePort),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
@@ -494,6 +495,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountapi.WithLogger(logger),
 	)
 	accountServer := rpc.NewServer(accountService, *s.certPath, *s.keyPath,
+		"account-server",
 		rpc.WithPort(*s.accountServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
@@ -510,6 +512,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		auditlogapi.WithLogger(logger),
 	)
 	auditLogServer := rpc.NewServer(auditLogService, *s.certPath, *s.keyPath,
+		"audit-log-server",
 		rpc.WithPort(*s.auditLogServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
@@ -535,6 +538,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	autoOpsServer := rpc.NewServer(autoOpsService, *s.certPath, *s.keyPath,
+		"auto-ops-server",
 		rpc.WithPort(*s.autoOpsServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
@@ -553,6 +557,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentapi.WithLogger(logger),
 	)
 	environmentServer := rpc.NewServer(environmentService, *s.certPath, *s.keyPath,
+		"environment-server",
 		rpc.WithPort(*s.environmentServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
@@ -576,6 +581,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		logger,
 	)
 	eventCounterServer := rpc.NewServer(eventCounterService, *s.certPath, *s.keyPath,
+		"event-counter-server",
 		rpc.WithPort(*s.eventCounterServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
@@ -594,6 +600,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentapi.WithLogger(logger),
 	)
 	experimentServer := rpc.NewServer(experimentService, *s.certPath, *s.keyPath,
+		"experiment-server",
 		rpc.WithPort(*s.experimentServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
@@ -614,6 +621,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureapi.WithLogger(logger),
 	)
 	featureServer := rpc.NewServer(featureService, *s.certPath, *s.keyPath,
+		"feature-server",
 		rpc.WithPort(*s.featureServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
@@ -636,6 +644,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		migratemysqlapi.WithLogger(logger),
 	)
 	migrateMySQLServer := rpc.NewServer(migrateMySQLService, *s.certPath, *s.keyPath,
+		"migrate-mysql-server",
 		rpc.WithPort(*s.migrateMySQLServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
@@ -653,6 +662,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		notificationapi.WithLogger(logger),
 	)
 	notificationServer := rpc.NewServer(notificationService, *s.certPath, *s.keyPath,
+		"notification-server",
 		rpc.WithPort(*s.notificationServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
@@ -672,13 +682,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		pushapi.WithLogger(logger),
 	)
 	pushServer := rpc.NewServer(pushService, *s.certPath, *s.keyPath,
+		"push-server",
 		rpc.WithPort(*s.pushServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
 	defer func() {
-		pushServer.Stop(10 * time.Second)
+		go pushServer.Stop(10 * time.Second)
 	}()
 	go pushServer.Run()
 	// other services...

@@ -87,15 +87,16 @@ func WithHandler(path string, handler http.Handler) Option {
 	}
 }
 
-func NewServer(service Service, certPath, keyPath string, opt ...Option) *Server {
+func NewServer(service Service, certPath, keyPath, serverName string, opt ...Option) *Server {
 	server := &Server{
 		port:   9000,
+		name:   serverName,
 		logger: zap.NewNop(),
 	}
 	for _, o := range opt {
 		o(server)
 	}
-	server.logger = server.logger.Named("rpc-server")
+	server.logger = server.logger.Named(fmt.Sprintf("rpc-server.%s", serverName))
 	if len(certPath) == 0 {
 		server.logger.Fatal("CertPath must not be empty")
 	}

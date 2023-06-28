@@ -94,6 +94,7 @@ func newServer(ctx context.Context) *Server {
 		&testService{},
 		certPath,
 		keyPath,
+		"test-server",
 		WithService(health),
 		WithVerifier(&dummyVerifier{}),
 		WithMetrics(&dummyRegisterer{}),

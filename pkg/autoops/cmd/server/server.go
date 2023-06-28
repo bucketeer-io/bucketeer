@@ -245,6 +245,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	server := rpc.NewServer(service, *s.certPath, *s.keyPath,
+		"auto-ops-server",
 		rpc.WithPort(*s.port),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
