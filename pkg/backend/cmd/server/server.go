@@ -33,6 +33,7 @@ import (
 	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
 	autoopsapi "github.com/bucketeer-io/bucketeer/pkg/autoops/api"
+	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/webhookhandler"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
@@ -120,6 +121,7 @@ type server struct {
 	environmentService *string
 	experimentService  *string
 	featureService     *string
+	autoOpsService     *string
 	// auth
 	oauthIssuerCertPath *string
 	emailFilter         *string
@@ -251,6 +253,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		featureService: cmd.Flag(
 			"feature-service",
 			"bucketeer-feature-service address.",
+		).Default("localhost:9001").String(),
+		autoOpsService: cmd.Flag(
+			"autoops-service",
+			"bucketeer-autoops-service address.",
 		).Default("localhost:9001").String(),
 		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -448,6 +454,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer featureClient.Close()
+	// autoOpsClient
+	autoOpsClient, err := autoopsclient.NewClient(*s.autoOpsService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer autoOpsClient.Close()
 	// authService
 	authService, err := s.createAuthService(ctx, accountClient, logger)
 	if err != nil {
@@ -570,6 +588,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		mysqlClient,
 		accountClient,
 		experimentClient,
+		autoOpsClient,
 		nonPersistentRedisV3Cache,
 		segmentUsersPublisher,
 		domainTopicPublisher,
