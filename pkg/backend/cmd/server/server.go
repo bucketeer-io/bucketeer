@@ -652,15 +652,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go experimentClient.Close()
 		go featureClient.Close()
 	}()
-	defer func() {
-		dur := 1
-		go func() {
-			for i := 0; i < dur; i++ {
-				logger.Info(fmt.Sprintf("%d iteration after receiving a signal of shutdown", i))
-				time.Sleep(1 * time.Second)
-			}
-		}()
-	}()
 	<-ctx.Done()
 	return nil
 }
