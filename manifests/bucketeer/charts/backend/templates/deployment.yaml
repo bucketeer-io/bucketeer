@@ -247,9 +247,9 @@ spec:
               port: envoy
               scheme: HTTPS
           readinessProbe:
-            initialDelaySeconds: { { .Values.health.readinessProbe.initialDelaySeconds } }
-            periodSeconds: { { .Values.health.readinessProbe.periodSeconds } }
-            failureThreshold: { { .Values.health.readinessProbe.failureThreshold } }
+            initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
             httpGet:
               path: /health
               port: envoy
