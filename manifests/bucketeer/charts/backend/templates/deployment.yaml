@@ -126,6 +126,8 @@ spec:
               value: "{{ .Values.env.experimentService }}"
             - name: BUCKETEER_BACKEND_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
+            - name: BUCKETEER_BACKEND_AUTO_OPS_SERVICE
+              value: "{{ .Values.env.autoOpsService }}"
             - name: BUCKETEER_BACKEND_TIMEZONE
               value: "{{ .Values.env.timezone }}"
             - name: BUCKETEER_BACKEND_METRICS_PORT
