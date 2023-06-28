@@ -937,10 +937,6 @@ func (s *FeatureService) EnableFeature(
 ) (*featureproto.EnableFeatureResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	if err := validateEnableFeatureRequest(req, localizer); err != nil {
-		s.logger.Error(
-			"Invalid Feature",
-			zap.Error(err),
-		)
 		return nil, err
 	}
 	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
