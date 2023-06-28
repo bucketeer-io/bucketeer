@@ -203,4 +203,8 @@ var (
 		codes.InvalidArgument,
 		"autoops: schedule id must be specified for a progressive rollout",
 	)
+	statusWaitingOrRunningProgressiveRolloutExists = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops: progressive rollout in waiting or running status exists",
+	)
 )

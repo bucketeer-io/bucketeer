@@ -116,7 +116,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateCreateAutoOpsRuleRequest(req, localizer); err != nil {
+	if err := s.validateCreateAutoOpsRuleRequest(ctx, req, localizer); err != nil {
 		return nil, err
 	}
 	autoOpsRule, err := domain.NewAutoOpsRule(
@@ -243,7 +243,73 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	return &autoopsproto.CreateAutoOpsRuleResponse{}, nil
 }
 
+func (s *AutoOpsService) existsRunningProgressiveRollout(
+	ctx context.Context,
+	featureID, environmentNamespace string,
+	localizer locale.Localizer,
+) (bool, error) {
+	progressiveRollouts, err := s.listProgressiveRolloutsByFeatureID(
+		ctx,
+		environmentNamespace, featureID,
+		localizer,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list progressiveRollouts",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+			)...,
+		)
+		return false, err
+	}
+	return containsRunningProgressiveRollout(progressiveRollouts), nil
+}
+
+func containsRunningProgressiveRollout(progressiveRollouts []*autoopsproto.ProgressiveRollout) bool {
+	for _, p := range progressiveRollouts {
+		dp := &domain.ProgressiveRollout{
+			ProgressiveRollout: p,
+		}
+		if !dp.IsFinished() {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *AutoOpsService) listProgressiveRolloutsByFeatureID(
+	ctx context.Context,
+	featureID, environmentNamespace string,
+	localizer locale.Localizer,
+) ([]*autoopsproto.ProgressiveRollout, error) {
+	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0)
+	cursor := ""
+	for {
+		progressiveRollout, _, nextOffset, err := s.listProgressiveRollouts(
+			ctx,
+			&autoopsproto.ListProgressiveRolloutsRequest{
+				EnvironmentNamespace: environmentNamespace,
+				PageSize:             listRequestSize,
+				Cursor:               cursor,
+				FeatureIds:           []string{featureID},
+			},
+			localizer,
+		)
+		if err != nil {
+			return nil, err
+		}
+		progressiveRollouts = append(progressiveRollouts, progressiveRollout...)
+		size := len(progressiveRollouts)
+		if size == 0 || size < listRequestSize {
+			return progressiveRollouts, nil
+		}
+		cursor = strconv.Itoa(nextOffset)
+	}
+}
+
 func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
+	ctx context.Context,
 	req *autoopsproto.CreateAutoOpsRuleRequest,
 	localizer locale.Localizer,
 ) error {
@@ -297,6 +363,32 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 	}
 	if err := s.validateWebhookClauses(req.Command.WebhookClauses, localizer); err != nil {
 		return err
+	}
+	runningProgressiveRolloutExists, err := s.existsRunningProgressiveRollout(
+		ctx,
+		req.Command.FeatureId,
+		req.EnvironmentNamespace,
+		localizer,
+	)
+	if err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if runningProgressiveRolloutExists && (len(req.Command.DatetimeClauses) == 0 || len(req.Command.WebhookClauses) == 0) {
+		dt, err := statusWaitingOrRunningProgressiveRolloutExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }
