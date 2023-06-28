@@ -42,7 +42,9 @@ import (
 )
 
 var (
-	errFailedToSample = errors.New("failed to get all samples")
+	errFailedToSample                = errors.New("calculator: failed to get all the samples")
+	errFailedToGetEvalVariationCount = errors.New("calculator: failed to get eval variation count")
+	errFailedToGetGoalEventCount     = errors.New("calculator: failed to get goal event count")
 )
 
 const (
@@ -127,7 +129,17 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 				// experiment not started yet
 				continue
 			}
-			experimentResult := e.createExperimentResult(ctx, env.Namespace, ex)
+			experimentResult, calculationErr := e.createExperimentResult(ctx, env.Namespace, ex)
+			if calculationErr != nil {
+				e.logger.Error("ExperimentCalculator failed to calculate experiment result",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.String("namespace", env.Namespace),
+						zap.String("experiment_id", ex.Id),
+						zap.Error(calculationErr),
+					)...,
+				)
+				continue
+			}
 			err := v2es.NewExperimentResultStorage(e.mysqlClient).
 				UpdateExperimentResult(ctx, env.Namespace, &domain.ExperimentResult{
 					ExperimentResult: experimentResult,
@@ -151,7 +163,7 @@ func (e ExperimentCalculator) createExperimentResult(
 	ctx context.Context,
 	envNamespace string,
 	experiment *experiment.Experiment,
-) *eventcounter.ExperimentResult {
+) (*eventcounter.ExperimentResult, error) {
 	experimentResult := &eventcounter.ExperimentResult{
 		Id:           experiment.Id,
 		ExperimentId: experiment.Id,
@@ -181,7 +193,14 @@ func (e ExperimentCalculator) createExperimentResult(
 				VariationIds:         variationIDs,
 			})
 			if evalErr != nil {
-				return nil
+				e.logger.Error("ExperimentCalculator failed to get evaluation count",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.String("namespace", envNamespace),
+						zap.String("experiment_id", experiment.Id),
+						zap.Error(evalErr),
+					)...,
+				)
+				return nil, errFailedToGetEvalVariationCount
 			}
 			goalVc, goalErr := e.getGoalCount(ctx, &eventcounter.GetExperimentGoalCountRequest{
 				EnvironmentNamespace: envNamespace,
@@ -193,7 +212,14 @@ func (e ExperimentCalculator) createExperimentResult(
 				VariationIds:         variationIDs,
 			})
 			if goalErr != nil {
-				return nil
+				e.logger.Error("ExperimentCalculator failed to get goal count",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.String("namespace", envNamespace),
+						zap.String("experiment_id", experiment.Id),
+						zap.Error(goalErr),
+					)...,
+				)
+				return nil, errFailedToGetGoalEventCount
 			}
 			gr := e.calcGoalResult(ctx, evalVc, goalVc, experiment.BaseVariationId)
 			gr.GoalId = experiment.GoalId
@@ -202,7 +228,7 @@ func (e ExperimentCalculator) createExperimentResult(
 		experimentResult.GoalResults = append(experimentResult.GoalResults, goalResult)
 	}
 
-	return experimentResult
+	return experimentResult, nil
 }
 
 func (e ExperimentCalculator) listEnvironments(
@@ -274,7 +300,7 @@ func (e ExperimentCalculator) calcGoalResult(
 	ctx context.Context,
 	evalVariationCounts,
 	goalVariationCounts map[string]*eventcounter.VariationCount,
-	baseVid string,
+	baselineVariationID string,
 ) *eventcounter.GoalResult {
 	goalResult := &eventcounter.GoalResult{}
 	length := len(goalVariationCounts)
@@ -308,7 +334,7 @@ func (e ExperimentCalculator) calcGoalResult(
 
 		goalResult.VariationResults = append(goalResult.VariationResults, vr)
 		vrs[vid] = vr
-		if vid == baseVid {
+		if vid == baselineVariationID {
 			baselineIdx = loopIdx
 		}
 		loopIdx++
@@ -334,7 +360,7 @@ func (e ExperimentCalculator) calcGoalResult(
 		e.logger.Error("BinomialModelSample error",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(sampleErr),
-				zap.String("baseVariationID", baseVid),
+				zap.String("baselineVariationID", baselineVariationID),
 			)...,
 		)
 		return goalResult
