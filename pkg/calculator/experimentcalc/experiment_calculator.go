@@ -42,7 +42,7 @@ import (
 )
 
 var (
-	failedToSampleErr = errors.New("failed to get all samples")
+	errFailedToSample = errors.New("failed to get all samples")
 )
 
 const (
@@ -60,7 +60,8 @@ type ExperimentCalculator struct {
 	mysqlClient        mysql.Client
 	metrics            metrics.Registerer
 
-	logger *zap.Logger
+	location *time.Location
+	logger   *zap.Logger
 }
 
 func NewExperimentCalculator(
@@ -70,6 +71,7 @@ func NewExperimentCalculator(
 	experimentClient experimentclient.Client,
 	mysqlClient mysql.Client,
 	metrics metrics.Registerer,
+	loc *time.Location,
 	logger *zap.Logger,
 ) *ExperimentCalculator {
 	registerMetrics(metrics)
@@ -90,13 +92,14 @@ func NewExperimentCalculator(
 		experimentClient:   experimentClient,
 		mysqlClient:        mysqlClient,
 		metrics:            metrics,
+		location:           loc,
 
 		logger: logger.Named("experiment-calculator"),
 	}
 }
 
 func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.BatchCalcRequest) {
-	now := time.Now()
+	now := time.Now().In(e.location)
 	// Step 1: Get all the environments
 	environments, environmentErr := e.listEnvironments(ctx)
 	if environmentErr != nil {
@@ -152,13 +155,13 @@ func (e ExperimentCalculator) createExperimentResult(
 	experimentResult := &eventcounter.ExperimentResult{
 		Id:           experiment.Id,
 		ExperimentId: experiment.Id,
-		UpdatedAt:    time.Now().Unix(),
+		UpdatedAt:    time.Now().In(e.location).Unix(),
 	}
 	var variationIDs []string
 	for _, variation := range experiment.Variations {
 		variationIDs = append(variationIDs, variation.Id)
 	}
-	endAts := listEndAt(experiment.StartAt, experiment.StopAt, time.Now().Unix())
+	endAts := listEndAt(experiment.StartAt, experiment.StopAt, time.Now().In(e.location).Unix())
 	for _, goalID := range experiment.GoalIds {
 		goalResult := &eventcounter.GoalResult{
 			GoalId: goalID,
@@ -221,7 +224,7 @@ func (e ExperimentCalculator) listExperiments(
 	namespace string,
 ) ([]*experiment.Experiment, error) {
 	req := &experiment.ListExperimentsRequest{
-		From:                 time.Now().Add(-2 * 24 * time.Hour).Unix(),
+		From:                 time.Now().In(e.location).Add(-2 * 24 * time.Hour).Unix(),
 		PageSize:             0,
 		Cursor:               "",
 		EnvironmentNamespace: namespace,
@@ -542,7 +545,7 @@ func (e ExperimentCalculator) binomialModelSample(
 				zap.Int("numOfSamples", len(samples)),
 			)...,
 		)
-		return nil, failedToSampleErr
+		return nil, errFailedToSample
 	}
 
 	variationResults := convertFitSamples(samples, vids, baseLineIdx)

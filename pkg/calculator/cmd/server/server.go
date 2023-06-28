@@ -29,6 +29,7 @@ import (
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
@@ -43,6 +44,7 @@ type server struct {
 	port     *int
 	stanHost *string
 	stanPort *string
+	timezone *string
 
 	mysqlUser   *string
 	mysqlPass   *string
@@ -66,6 +68,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		port:        cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
 		stanHost:    cmd.Flag("stan-host", "httpstan host.").Default("localhost").String(),
 		stanPort:    cmd.Flag("stan-port", "httpstan port.").Default("8080").String(),
+		timezone:    cmd.Flag("timezone", "Time zone").Required().String(),
 		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
@@ -138,6 +141,11 @@ func (s server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Lo
 		return err
 	}
 
+	location, err := locale.GetLocation(*s.timezone)
+	if err != nil {
+		return err
+	}
+
 	service := api.NewCalculatorService(
 		stan.NewStan(*s.stanHost, *s.stanPort),
 		envClient,
@@ -145,6 +153,7 @@ func (s server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Lo
 		experimentClient,
 		mysqlClient,
 		registerer,
+		location,
 		logger,
 	)
 

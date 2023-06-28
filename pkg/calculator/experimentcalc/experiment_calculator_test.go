@@ -18,6 +18,7 @@ package experimentcalc
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -31,6 +32,10 @@ import (
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 )
 
+var (
+	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
+)
+
 func creatExperimentCalculator(mockController *gomock.Controller) *ExperimentCalculator {
 	registerer := metricsmock.NewMockRegisterer(mockController)
 	registerer.EXPECT().MustRegister(gomock.Any()).Return()
@@ -41,6 +46,7 @@ func creatExperimentCalculator(mockController *gomock.Controller) *ExperimentCal
 		experimentclient.NewMockClient(mockController),
 		mysqlmock.NewMockClient(mockController),
 		registerer,
+		jpLocation,
 		zap.NewNop(),
 	)
 }

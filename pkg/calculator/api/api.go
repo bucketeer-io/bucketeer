@@ -16,6 +16,8 @@
 package api
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
@@ -42,6 +44,7 @@ func NewCalculatorService(
 	experimentClient experimentclient.Client,
 	mysqlClient mysql.Client,
 	metrics metrics.Registerer,
+	loc *time.Location,
 	logger *zap.Logger,
 ) rpc.Service {
 	return &calculatorService{
@@ -52,6 +55,7 @@ func NewCalculatorService(
 			experimentClient,
 			mysqlClient,
 			metrics,
+			loc,
 			logger,
 		),
 		logger: logger,
