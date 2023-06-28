@@ -791,15 +791,17 @@ func (s *AutoOpsService) validateTargetFeature(
 		}
 		return dt.Err()
 	}
-	if len(f.Targets) > 0 {
-		dt, err := statusProgressiveRolloutFeatureHasIndividualTargeting.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.FeatureHasIndividualTargeting),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
+	for _, t := range f.Targets {
+		if len(t.Users) > 0 {
+			dt, err := statusProgressiveRolloutFeatureHasIndividualTargeting.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.FeatureHasIndividualTargeting),
+			})
+			if err != nil {
+				return statusProgressiveRolloutInternal.Err()
+			}
+			return dt.Err()
 		}
-		return dt.Err()
 	}
 	if len(f.Rules) > 0 {
 		dt, err := statusProgressiveRolloutFeatureHasRules.WithDetails(&errdetails.LocalizedMessage{
