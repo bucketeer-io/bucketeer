@@ -299,8 +299,8 @@ func TestProgressiveRolloutBatch(t *testing.T) {
 			},
 		},
 	}
-	if !proto.Equal(feature.Rules[0].Strategy.RolloutStrategy, expectedStrategy) {
-		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.Rules[0].Strategy.RolloutStrategy)
+	if !proto.Equal(feature.DefaultStrategy.RolloutStrategy, expectedStrategy) {
+		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.DefaultStrategy.RolloutStrategy)
 	}
 	actual := listProgressiveRollouts(t, autoOpsClient, featureID)
 	if actual[0].Status != autoopsproto.ProgressiveRollout_FINISHED {
