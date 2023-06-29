@@ -27,8 +27,9 @@ In this case, Template Setting is useful.
 * Users can't use same scheduled time in single auto ops rules. For example, users can not set true for 50% at 2023-01-01 00:06:00 and 80% at the same time.
 * The interval of time for each scheduled time must be at least 5 minutes.
 * We do not support the feature to stop Progressive Rollout temporary. We might support it in the feature.
-* Users can use both Progressive Rollout and Feature Flag Trigger at the same time.
-* The operation of Progressive Rollout is done regardless of whether the feature flag is enabled or disabled.
+* Users cannot the update the feature while running Progressive Rollout.
+* Users can use both Progressive Rollout and Feature Flag Trigger in Event Rate mode at the same time, but not in other mode such as Datetime mode.
+* Users cannot configure the Progressive Rollout when the feature flag is disabled.
 * If the operation of Progressive Rollout is deleted, the operation is stopped.
 * The operation of Progressive Rollout can not be modified after creating it.
 
