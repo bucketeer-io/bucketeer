@@ -627,7 +627,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go pushServer.Run()
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
-	// Then, after 10 seconds of sleep, the application server can be shut down, as no new requests are expected to be sent.
+	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
 	defer func() {
 		go healthcheckServer.Stop(serverShutDownTimeout)
