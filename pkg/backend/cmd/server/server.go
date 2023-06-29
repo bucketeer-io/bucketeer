@@ -63,10 +63,13 @@ import (
 )
 
 const (
-	command            = "server"
-	gcp                = "gcp"
-	aws                = "aws"
-	autoOpsWebhookPath = "hook"
+	command               = "server"
+	gcp                   = "gcp"
+	aws                   = "aws"
+	autoOpsWebhookPath    = "hook"
+	healthCheckTimeout    = 1 * time.Second
+	clientDialTimeout     = 30 * time.Second
+	serverShutDownTimeout = 10 * time.Second
 )
 
 type server struct {
@@ -306,7 +309,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// healthCheckService
 	restHealthChecker := health.NewRestChecker(
 		"", "",
-		health.WithTimeout(time.Second),
+		health.WithTimeout(healthCheckTimeout),
 		health.WithCheck("metrics", metrics.Check),
 	)
 	go restHealthChecker.Run(ctx)
@@ -385,7 +388,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// accountClient
 	accountClient, err := accountclient.NewClient(*s.accountService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
+		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
 		client.WithMetrics(registerer),
 		client.WithLogger(logger))
@@ -395,7 +398,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// authClient
 	authClient, err := authclient.NewClient(*s.authService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
+		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
 		client.WithMetrics(registerer),
 		client.WithLogger(logger),
@@ -406,7 +409,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// environmentClient
 	environmentClient, err := environmentclient.NewClient(*s.environmentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
+		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
 		client.WithMetrics(registerer),
 		client.WithLogger(logger),
@@ -417,7 +420,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// experimentClient
 	experimentClient, err := experimentclient.NewClient(*s.experimentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
+		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
 		client.WithMetrics(registerer),
 		client.WithLogger(logger),
@@ -428,7 +431,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// featureClient
 	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
+		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
 		client.WithMetrics(registerer),
 		client.WithLogger(logger),
@@ -627,19 +630,19 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// Then, after 10 seconds of sleep, the application server can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
 	defer func() {
-		go healthcheckServer.Stop(10 * time.Second)
-		time.Sleep(10 * time.Second)
-		go authServer.Stop(10 * time.Second)
-		go accountServer.Stop(10 * time.Second)
-		go auditLogServer.Stop(10 * time.Second)
-		go autoOpsServer.Stop(10 * time.Second)
-		go environmentServer.Stop(10 * time.Second)
-		go experimentServer.Stop(10 * time.Second)
-		go eventCounterServer.Stop(10 * time.Second)
-		go featureServer.Stop(10 * time.Second)
-		go migrateMySQLServer.Stop(10 * time.Second)
-		go notificationServer.Stop(10 * time.Second)
-		go pushServer.Stop(10 * time.Second)
+		go healthcheckServer.Stop(serverShutDownTimeout)
+		time.Sleep(serverShutDownTimeout)
+		go authServer.Stop(serverShutDownTimeout)
+		go accountServer.Stop(serverShutDownTimeout)
+		go auditLogServer.Stop(serverShutDownTimeout)
+		go autoOpsServer.Stop(serverShutDownTimeout)
+		go environmentServer.Stop(serverShutDownTimeout)
+		go experimentServer.Stop(serverShutDownTimeout)
+		go eventCounterServer.Stop(serverShutDownTimeout)
+		go featureServer.Stop(serverShutDownTimeout)
+		go migrateMySQLServer.Stop(serverShutDownTimeout)
+		go notificationServer.Stop(serverShutDownTimeout)
+		go pushServer.Stop(serverShutDownTimeout)
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
