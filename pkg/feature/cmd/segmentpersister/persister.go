@@ -182,6 +182,7 @@ func (p *persister) Run(ctx context.Context, metrics metrics.Metrics, logger *za
 	go healthChecker.Run(ctx)
 
 	server := rpc.NewServer(healthChecker, *p.certPath, *p.keyPath,
+		"feature-persister",
 		rpc.WithPort(*p.port),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),

@@ -198,7 +198,9 @@ spec:
               port: health-check
               scheme: HTTPS
           readinessProbe:
-            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
             httpGet:
               path: /health
               port: health-check
@@ -245,7 +247,9 @@ spec:
               port: envoy
               scheme: HTTPS
           readinessProbe:
-            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
             httpGet:
               path: /health
               port: envoy

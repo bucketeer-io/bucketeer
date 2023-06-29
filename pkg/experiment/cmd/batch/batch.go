@@ -118,6 +118,7 @@ func (b *batch) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Lo
 	go healthChecker.Run(ctx)
 
 	server := rpc.NewServer(healthChecker, *b.certPath, *b.keyPath,
+		"experiment-batch",
 		rpc.WithPort(*b.port),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),

@@ -136,6 +136,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go healthChecker.Run(ctx)
 
 	server := rpc.NewServer(service, *s.certPath, *s.keyPath,
+		"auth-server",
 		rpc.WithPort(*s.port),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
