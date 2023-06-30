@@ -10906,6 +10906,11 @@
                 "id": 8,
                 "name": "variation_value",
                 "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "variation_name",
+                "type": "string"
               }
             ]
           },

@@ -16,7 +16,7 @@ from proto.feature import variation_pb2 as proto_dot_feature_dot_variation__pb2
 from proto.feature import reason_pb2 as proto_dot_feature_dot_reason__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1eproto/feature/evaluation.proto\x12\x11\x62ucketeer.feature\x1a\x1dproto/feature/variation.proto\x1a\x1aproto/feature/reason.proto\"\xe5\x01\n\nEvaluation\x12\n\n\x02id\x18\x01 \x01(\t\x12\x12\n\nfeature_id\x18\x02 \x01(\t\x12\x17\n\x0f\x66\x65\x61ture_version\x18\x03 \x01(\x05\x12\x0f\n\x07user_id\x18\x04 \x01(\t\x12\x14\n\x0cvariation_id\x18\x05 \x01(\t\x12\x33\n\tvariation\x18\x06 \x01(\x0b\x32\x1c.bucketeer.feature.VariationB\x02\x18\x01\x12)\n\x06reason\x18\x07 \x01(\x0b\x32\x19.bucketeer.feature.Reason\x12\x17\n\x0fvariation_value\x18\x08 \x01(\t\"\xc9\x01\n\x0fUserEvaluations\x12\x0e\n\x02id\x18\x01 \x01(\tB\x02\x18\x01\x12\x32\n\x0b\x65valuations\x18\x02 \x03(\x0b\x32\x1d.bucketeer.feature.Evaluation\x12\x12\n\ncreated_at\x18\x03 \x01(\x03\x12\x1c\n\x14\x61rchived_feature_ids\x18\x04 \x03(\t\x12\x14\n\x0c\x66orce_update\x18\x05 \x01(\x08\"*\n\x05State\x12\n\n\x06QUEUED\x10\x00\x12\x0b\n\x07PARTIAL\x10\x01\x12\x08\n\x04\x46ULL\x10\x02\x42\x31Z/github.com/bucketeer-io/bucketeer/proto/featureb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1eproto/feature/evaluation.proto\x12\x11\x62ucketeer.feature\x1a\x1dproto/feature/variation.proto\x1a\x1aproto/feature/reason.proto\"\xfd\x01\n\nEvaluation\x12\n\n\x02id\x18\x01 \x01(\t\x12\x12\n\nfeature_id\x18\x02 \x01(\t\x12\x17\n\x0f\x66\x65\x61ture_version\x18\x03 \x01(\x05\x12\x0f\n\x07user_id\x18\x04 \x01(\t\x12\x14\n\x0cvariation_id\x18\x05 \x01(\t\x12\x33\n\tvariation\x18\x06 \x01(\x0b\x32\x1c.bucketeer.feature.VariationB\x02\x18\x01\x12)\n\x06reason\x18\x07 \x01(\x0b\x32\x19.bucketeer.feature.Reason\x12\x17\n\x0fvariation_value\x18\x08 \x01(\t\x12\x16\n\x0evariation_name\x18\t \x01(\t\"\xc9\x01\n\x0fUserEvaluations\x12\x0e\n\x02id\x18\x01 \x01(\tB\x02\x18\x01\x12\x32\n\x0b\x65valuations\x18\x02 \x03(\x0b\x32\x1d.bucketeer.feature.Evaluation\x12\x12\n\ncreated_at\x18\x03 \x01(\x03\x12\x1c\n\x14\x61rchived_feature_ids\x18\x04 \x03(\t\x12\x14\n\x0c\x66orce_update\x18\x05 \x01(\x08\"*\n\x05State\x12\n\n\x06QUEUED\x10\x00\x12\x0b\n\x07PARTIAL\x10\x01\x12\x08\n\x04\x46ULL\x10\x02\x42\x31Z/github.com/bucketeer-io/bucketeer/proto/featureb\x06proto3')
 
 
 
@@ -46,9 +46,9 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _USEREVALUATIONS.fields_by_name['id']._options = None
   _USEREVALUATIONS.fields_by_name['id']._serialized_options = b'\030\001'
   _EVALUATION._serialized_start=113
-  _EVALUATION._serialized_end=342
-  _USEREVALUATIONS._serialized_start=345
-  _USEREVALUATIONS._serialized_end=546
-  _USEREVALUATIONS_STATE._serialized_start=504
-  _USEREVALUATIONS_STATE._serialized_end=546
+  _EVALUATION._serialized_end=366
+  _USEREVALUATIONS._serialized_start=369
+  _USEREVALUATIONS._serialized_end=570
+  _USEREVALUATIONS_STATE._serialized_start=528
+  _USEREVALUATIONS_STATE._serialized_end=570
 # @@protoc_insertion_point(module_scope)
