@@ -66,7 +66,7 @@ RUN cd $GOPATH/src/github.com/googleapis/googleapis && \
 
 RUN go install golang.org/x/tools/cmd/goimports@latest
 RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCILINT_VERSION}
-RUN go install github.com/golang/mock/mockgen@${MOCKGEN_VERSION}
+RUN go install go.uber.org/mock/mockgen@${MOCKGEN_VERSION}
 RUN go install github.com/golang/protobuf/protoc-gen-go@${GOPROTOGEN_VERSION}
 RUN go install github.com/nilslice/protolock/...@${PROTOLOCK_VERSION}
 RUN go install github.com/bazelbuild/buildtools/buildifier@${BUILDIFIER_VERSION}
