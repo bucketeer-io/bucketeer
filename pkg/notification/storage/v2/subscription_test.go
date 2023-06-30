@@ -19,8 +19,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"

@@ -7,7 +7,7 @@ package mock
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 
 	migrate "github.com/bucketeer-io/bucketeer/pkg/migration/mysql/migrate"
 )

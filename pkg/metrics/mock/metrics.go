@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
 	prometheus "github.com/prometheus/client_golang/prometheus"
+	gomock "go.uber.org/mock/gomock"
 
 	health "github.com/bucketeer-io/bucketeer/pkg/health"
 	metrics "github.com/bucketeer-io/bucketeer/pkg/metrics"
