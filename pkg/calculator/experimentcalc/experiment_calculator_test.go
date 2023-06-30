@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"go.uber.org/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/calculator/stan"
