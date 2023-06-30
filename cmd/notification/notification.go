@@ -20,7 +20,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/ldflags"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/cmd/sender"
-	"github.com/bucketeer-io/bucketeer/pkg/notification/cmd/server"
 )
 
 var (
@@ -40,5 +39,4 @@ func main() {
 
 func registerCommands(app *cli.App) {
 	sender.RegisterCommand(app, app)
-	server.RegisterCommand(app, app)
 }

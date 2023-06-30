@@ -18,7 +18,6 @@ import (
 	"log"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auditlog/cmd/persister"
-	"github.com/bucketeer-io/bucketeer/pkg/auditlog/cmd/server"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 )
 
@@ -38,6 +37,5 @@ func main() {
 }
 
 func registerCommands(app *cli.App) {
-	server.RegisterCommand(app, app)
 	persister.RegisterCommand(app, app)
 }
