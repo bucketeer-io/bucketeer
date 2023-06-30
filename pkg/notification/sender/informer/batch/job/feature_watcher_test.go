@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
 	environmentclientmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"

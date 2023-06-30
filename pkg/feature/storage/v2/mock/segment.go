@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -53,12 +53,13 @@ func (mr *MockSegmentStorageMockRecorder) CreateSegment(ctx, segment, environmen
 }
 
 // GetSegment mocks base method.
-func (m *MockSegmentStorage) GetSegment(ctx context.Context, id, environmentNamespace string) (*domain.Segment, error) {
+func (m *MockSegmentStorage) GetSegment(ctx context.Context, id, environmentNamespace string) (*domain.Segment, []string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSegment", ctx, id, environmentNamespace)
 	ret0, _ := ret[0].(*domain.Segment)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].([]string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetSegment indicates an expected call of GetSegment.
@@ -68,14 +69,15 @@ func (mr *MockSegmentStorageMockRecorder) GetSegment(ctx, id, environmentNamespa
 }
 
 // ListSegments mocks base method.
-func (m *MockSegmentStorage) ListSegments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int, isInUseStatus *bool, environmentNamespace string) ([]*feature.Segment, int, int64, error) {
+func (m *MockSegmentStorage) ListSegments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int, isInUseStatus *bool, environmentNamespace string) ([]*feature.Segment, int, int64, map[string][]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListSegments", ctx, whereParts, orders, limit, offset, isInUseStatus, environmentNamespace)
 	ret0, _ := ret[0].([]*feature.Segment)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
-	ret3, _ := ret[3].(error)
-	return ret0, ret1, ret2, ret3
+	ret3, _ := ret[3].(map[string][]string)
+	ret4, _ := ret[4].(error)
+	return ret0, ret1, ret2, ret3, ret4
 }
 
 // ListSegments indicates an expected call of ListSegments.

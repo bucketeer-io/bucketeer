@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 

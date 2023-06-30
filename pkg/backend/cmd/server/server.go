@@ -63,10 +63,13 @@ import (
 )
 
 const (
-	command            = "server"
-	gcp                = "gcp"
-	aws                = "aws"
-	autoOpsWebhookPath = "hook"
+	command               = "server"
+	gcp                   = "gcp"
+	aws                   = "aws"
+	autoOpsWebhookPath    = "hook"
+	healthCheckTimeout    = 1 * time.Second
+	clientDialTimeout     = 30 * time.Second
+	serverShutDownTimeout = 10 * time.Second
 )
 
 type server struct {
@@ -306,7 +309,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// healthCheckService
 	restHealthChecker := health.NewRestChecker(
 		"", "",
-		health.WithTimeout(time.Second),
+		health.WithTimeout(healthCheckTimeout),
 		health.WithCheck("metrics", metrics.Check),
 	)
 	go restHealthChecker.Run(ctx)
@@ -317,14 +320,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithService(restHealthChecker),
 		rest.WithMetrics(registerer),
 	)
-	defer healthcheckServer.Stop(10 * time.Second)
 	go healthcheckServer.Run()
 	// mysqlClient
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
 	}
-	defer mysqlClient.Close()
 	// persistentRedisClient
 	persistentRedisClient, err := redisv3.NewClient(
 		*s.persistentRedisAddr,
@@ -337,7 +338,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer persistentRedisClient.Close()
 	persistentRedisV3Cache := cachev3.NewRedisCache(persistentRedisClient)
 	// nonPersistentRedisClient
 	nonPersistentRedisClient, err := redisv3.NewClient(
@@ -351,7 +351,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer nonPersistentRedisClient.Close()
 	nonPersistentRedisV3Cache := cachev3.NewRedisCache(nonPersistentRedisClient)
 	// bigQueryQuerier
 	bigQueryQuerier, err := s.createBigQueryQuerier(ctx, *s.project, *s.bigQueryDataLocation, registerer, logger)
@@ -364,7 +363,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		)
 		return err
 	}
-	defer bigQueryQuerier.Close()
 	// bigQueryDataSet
 	bigQueryDataSet := *s.bigQueryDataSet
 	// location
@@ -377,13 +375,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer domainTopicPublisher.Stop()
 	// segmentUsersPublisher
 	segmentUsersPublisher, err := s.createPublisher(ctx, *s.bulkSegmentUsersReceivedTopic, registerer, logger)
 	if err != nil {
 		return err
 	}
-	defer segmentUsersPublisher.Stop()
 	// credential for grpc
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
@@ -392,18 +388,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// accountClient
 	accountClient, err := accountclient.NewClient(*s.accountService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
+		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
 		client.WithMetrics(registerer),
 		client.WithLogger(logger))
 	if err != nil {
 		return err
 	}
-	defer accountClient.Close()
 	// authClient
 	authClient, err := authclient.NewClient(*s.authService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
+		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
 		client.WithMetrics(registerer),
 		client.WithLogger(logger),
@@ -411,11 +406,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer authClient.Close()
 	// environmentClient
 	environmentClient, err := environmentclient.NewClient(*s.environmentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
+		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
 		client.WithMetrics(registerer),
 		client.WithLogger(logger),
@@ -423,11 +417,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer environmentClient.Close()
 	// experimentClient
 	experimentClient, err := experimentclient.NewClient(*s.experimentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
+		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
 		client.WithMetrics(registerer),
 		client.WithLogger(logger),
@@ -435,11 +428,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer experimentClient.Close()
 	// featureClient
 	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
+		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
 		client.WithMetrics(registerer),
 		client.WithLogger(logger),
@@ -447,18 +439,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer featureClient.Close()
 	// authService
 	authService, err := s.createAuthService(ctx, accountClient, logger)
 	if err != nil {
 		return err
 	}
 	authServer := rpc.NewServer(authService, *s.certPath, *s.keyPath,
+		"auth-server",
 		rpc.WithPort(*s.authServicePort),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer authServer.Stop(10 * time.Second)
 	go authServer.Run()
 	// accountService
 	accountService := accountapi.NewAccountService(
@@ -468,12 +459,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountapi.WithLogger(logger),
 	)
 	accountServer := rpc.NewServer(accountService, *s.certPath, *s.keyPath,
+		"account-server",
 		rpc.WithPort(*s.accountServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer accountServer.Stop(10 * time.Second)
 	go accountServer.Run()
 	// auditLogService
 	auditLogService := auditlogapi.NewAuditLogService(
@@ -482,12 +473,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		auditlogapi.WithLogger(logger),
 	)
 	auditLogServer := rpc.NewServer(auditLogService, *s.certPath, *s.keyPath,
+		"audit-log-server",
 		rpc.WithPort(*s.auditLogServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer auditLogServer.Stop(10 * time.Second)
 	go auditLogServer.Run()
 	// autoOpsService
 	autoOpsService, autoOpsWebhookHandler, err := s.createAutoOpsService(
@@ -505,13 +496,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	autoOpsServer := rpc.NewServer(autoOpsService, *s.certPath, *s.keyPath,
+		"auto-ops-server",
 		rpc.WithPort(*s.autoOpsServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 		rpc.WithHandler(fmt.Sprintf("/%s", autoOpsWebhookPath), autoOpsWebhookHandler),
 	)
-	defer autoOpsServer.Stop(10 * time.Second)
 	go autoOpsServer.Run()
 	// environmentService
 	environmentService := environmentapi.NewEnvironmentService(
@@ -521,12 +512,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentapi.WithLogger(logger),
 	)
 	environmentServer := rpc.NewServer(environmentService, *s.certPath, *s.keyPath,
+		"environment-server",
 		rpc.WithPort(*s.environmentServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer environmentServer.Stop(10 * time.Second)
 	go environmentServer.Run()
 	// eventCounterService
 	eventCounterService := eventcounterapi.NewEventCounterService(
@@ -542,12 +533,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		logger,
 	)
 	eventCounterServer := rpc.NewServer(eventCounterService, *s.certPath, *s.keyPath,
+		"event-counter-server",
 		rpc.WithPort(*s.eventCounterServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer eventCounterServer.Stop(10 * time.Second)
 	go eventCounterServer.Run()
 	// experimentService
 	experimentService := experimentapi.NewExperimentService(
@@ -558,12 +549,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentapi.WithLogger(logger),
 	)
 	experimentServer := rpc.NewServer(experimentService, *s.certPath, *s.keyPath,
+		"experiment-server",
 		rpc.WithPort(*s.experimentServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer experimentServer.Stop(10 * time.Second)
 	go experimentServer.Run()
 	// featureService
 	featureService := featureapi.NewFeatureService(
@@ -576,12 +567,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureapi.WithLogger(logger),
 	)
 	featureServer := rpc.NewServer(featureService, *s.certPath, *s.keyPath,
+		"feature-server",
 		rpc.WithPort(*s.featureServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer featureServer.Stop(10 * time.Second)
 	go featureServer.Run()
 	// migrateMySQLService
 	migrateClientFactory, err := migrate.NewClientFactory(
@@ -596,12 +587,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		migratemysqlapi.WithLogger(logger),
 	)
 	migrateMySQLServer := rpc.NewServer(migrateMySQLService, *s.certPath, *s.keyPath,
+		"migrate-mysql-server",
 		rpc.WithPort(*s.migrateMySQLServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer migrateMySQLServer.Stop(10 * time.Second)
 	go migrateMySQLServer.Run()
 	// notificationService
 	notificationService := notificationapi.NewNotificationService(
@@ -611,12 +602,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		notificationapi.WithLogger(logger),
 	)
 	notificationServer := rpc.NewServer(notificationService, *s.certPath, *s.keyPath,
+		"notification-server",
 		rpc.WithPort(*s.notificationServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer notificationServer.Stop(10 * time.Second)
 	go notificationServer.Run()
 	// pushService
 	pushService := pushapi.NewPushService(
@@ -628,14 +619,42 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		pushapi.WithLogger(logger),
 	)
 	pushServer := rpc.NewServer(pushService, *s.certPath, *s.keyPath,
+		"push-server",
 		rpc.WithPort(*s.pushServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
 	)
-	defer pushServer.Stop(10 * time.Second)
 	go pushServer.Run()
-	// other services...
+	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
+	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
+	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
+	defer func() {
+		go healthcheckServer.Stop(serverShutDownTimeout)
+		time.Sleep(serverShutDownTimeout)
+		go authServer.Stop(serverShutDownTimeout)
+		go accountServer.Stop(serverShutDownTimeout)
+		go auditLogServer.Stop(serverShutDownTimeout)
+		go autoOpsServer.Stop(serverShutDownTimeout)
+		go environmentServer.Stop(serverShutDownTimeout)
+		go experimentServer.Stop(serverShutDownTimeout)
+		go eventCounterServer.Stop(serverShutDownTimeout)
+		go featureServer.Stop(serverShutDownTimeout)
+		go migrateMySQLServer.Stop(serverShutDownTimeout)
+		go notificationServer.Stop(serverShutDownTimeout)
+		go pushServer.Stop(serverShutDownTimeout)
+		go mysqlClient.Close()
+		go persistentRedisClient.Close()
+		go nonPersistentRedisClient.Close()
+		go bigQueryQuerier.Close()
+		go domainTopicPublisher.Stop()
+		go segmentUsersPublisher.Stop()
+		go accountClient.Close()
+		go authClient.Close()
+		go environmentClient.Close()
+		go experimentClient.Close()
+		go featureClient.Close()
+	}()
 	<-ctx.Done()
 	return nil
 }

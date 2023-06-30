@@ -93,24 +93,22 @@ func (s *Server) Run() {
 		registerMetrics(s.metrics)
 	}
 	s.setup()
-	s.logger.Info(fmt.Sprintf("Running on %d", s.port))
+	s.logger.Info(fmt.Sprintf("Rest server is running on %d", s.port))
 	s.runServer()
 }
 
 func (s *Server) Stop(timeout time.Duration) {
-	s.logger.Info("Server is going to sleep 10 seconds before shutting down")
-	// When the sigterm signal is sent, sometimes the app could get the signal before envoy,
-	// when it does, the requests will fail because the app cannot receive any request after the shutdown.
-	// So we wait a bit in case there are still requests to be processed
-	// between the envoy and app after the signal.
-	time.Sleep(time.Second)
-	s.logger.Info("Server is awakening from sleep, and going to shutdown")
+	s.logger.Info("Rest server is going to shut down")
+	startTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	err := s.httpServer.Shutdown(ctx)
 	if err != nil {
-		s.logger.Error("Failed to shutdown", zap.Error(err))
+		s.logger.Error("Rest server failed to shut down", zap.Error(err))
 	}
+	s.logger.Info("Rest server has shut down gracefully",
+		zap.Duration("elapsedTime", time.Since(startTime)),
+	)
 }
 
 func (s *Server) setup() {

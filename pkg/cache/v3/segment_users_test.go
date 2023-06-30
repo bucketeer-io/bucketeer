@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachemock "github.com/bucketeer-io/bucketeer/pkg/cache/mock"

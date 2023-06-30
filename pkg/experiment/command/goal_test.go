@@ -18,8 +18,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"

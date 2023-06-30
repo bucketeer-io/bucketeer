@@ -136,6 +136,7 @@ func (r *recorder) Run(ctx context.Context, metrics metrics.Metrics, logger *zap
 	go healthChecker.Run(ctx)
 
 	server := rpc.NewServer(healthChecker, *r.certPath, *r.keyPath,
+		"feature-recorder",
 		rpc.WithPort(*r.port),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),

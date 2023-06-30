@@ -186,6 +186,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go healthChecker.Run(ctx)
 
 	server := rpc.NewServer(healthChecker, *s.certPath, *s.keyPath,
+		"event-persister-dwh",
 		rpc.WithPort(*s.port),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
