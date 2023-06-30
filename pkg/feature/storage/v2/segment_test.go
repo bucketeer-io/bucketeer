@@ -17,8 +17,8 @@ package v2
 import (
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 )
