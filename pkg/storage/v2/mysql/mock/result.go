@@ -7,7 +7,7 @@ package mock
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockResult is a mock of Result interface.

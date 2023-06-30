@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 	time "time"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 
 	v2 "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 )

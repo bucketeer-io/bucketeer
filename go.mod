@@ -31,6 +31,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/tkuchiki/go-timezone v0.2.2
 	go.opencensus.io v0.24.0
+	go.uber.org/mock v0.1.0
 	go.uber.org/zap v1.13.0
 	golang.org/x/oauth2 v0.8.0
 	golang.org/x/sync v0.2.0
