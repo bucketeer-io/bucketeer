@@ -33,6 +33,7 @@ import (
 	experimentjob "github.com/bucketeer-io/bucketeer/pkg/experiment/batch/job"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
@@ -300,11 +301,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		logger,
 	)
 
+	healthChecker := health.NewGrpcChecker(
+		health.WithTimeout(time.Second),
+		health.WithCheck("metrics", metrics.Check),
+	)
+	go healthChecker.Run(ctx)
+
 	server := rpc.NewServer(service, *s.certPath, *s.keyPath,
 		"batch-server",
 		rpc.WithPort(*s.port),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithHandler("/health", healthChecker),
 	)
 	defer server.Stop(10 * time.Second)
 	go server.Run()
