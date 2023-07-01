@@ -1,0 +1,163 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "batch-server.fullname" . }}-experiment-status-updater
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "batch-server.name" . }}
+    chart: {{ template "batch-server.chart" . }}
+    release: {{ template "batch-server.fullname" . }}
+    heritage: {{ .Release.Service }} 
+spec:
+  schedule: "*/30 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - curl
+          restartPolicy: OnFailure
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "batch-server.fullname" . }}-experiment-running-watcher
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "batch-server.name" . }}
+    chart: {{ template "batch-server.chart" . }}
+    release: {{ template "batch-server.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: "0 1 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+          restartPolicy: OnFailure
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "batch-server.fullname" . }}-feature-state-watcher
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "batch-server.name" . }}
+    chart: {{ template "batch-server.chart" . }}
+    release: {{ template "batch-server.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: "0 1 * * MON"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - curl
+          restartPolicy: OnFailure
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "batch-server.fullname" . }}-mau-count-watcher
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "batch-server.name" . }}
+    chart: {{ template "batch-server.chart" . }}
+    release: {{ template "batch-server.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  timeZone: {{ .Values.env.timezone }}
+  schedule: "0 1 1 * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - curl
+          restartPolicy: OnFailure
+
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "batch-server.fullname" . }}-ops-datetime-watcher
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "batch-server.name" . }}
+    chart: {{ template "batch-server.chart" . }}
+    release: {{ template "batch-server.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - curl
+          restartPolicy: OnFailure
+
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "batch-server.fullname" . }}-ops-event-count-watcher
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "batch-server.name" . }}
+    chart: {{ template "batch-server.chart" . }}
+    release: {{ template "batch-server.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - curl
+          restartPolicy: OnFailure
