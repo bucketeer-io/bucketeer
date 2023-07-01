@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package server
 
 import (
 	"context"
@@ -76,7 +76,7 @@ type server struct {
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
-	cmd := p.Command(command, "Start batch layer")
+	cmd := p.Command(command, "Start batch server")
 	server := &server{
 		CmdClause:        cmd,
 		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),

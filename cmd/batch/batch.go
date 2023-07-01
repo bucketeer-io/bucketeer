@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package batch
+package main
 
 import (
 	"log"
 
-	server "github.com/bucketeer-io/bucketeer/pkg/batch/cmd/server"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/cmd/server"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 )
 
