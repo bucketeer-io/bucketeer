@@ -15,18 +15,18 @@ The user can use them automatically or manually.
 - When the user starts the new version of the app, a Kubernetes Job will migrate the DB automatically if needed.
 - When the migration process fails, a notification will be sent to the channel that the user has set.
   - The user doesn't need to do anything unless the failure notification is sent.
-  - If the failure notification is sent, the user needs to do the manual migration as described later.
+  - If the failure notification is sent, the user needs to do the manual migration described later.
 
 ### Manual migration
 
 - If the automatic migration fails or the user wants to do it manually, the user can do the manual migration.
-- If there are disruptive changes to the DB schema, we may ask for a manual migration.
+- If there are disruptive changes to the DB schema, we may ask for manual migration.
 - The user can do the manual migration by sending a request to the migration API endpoint directly.
   - The user specifies the Github Releases tag to migrate to.
 
 ## Change on Migration API
 
-Current migration API is as follows:
+The current migration API is as follows:
 
 ```proto
 message MigrateAllMasterSchemaRequest {}
@@ -46,7 +46,7 @@ We'll create a Kubernetes Job for the automatic migration.
 The job just sends a request to the migration API endpoint without specifying the Github Releases tag.
 Automatic migration migrates with the latest migration files.
 
-The manifest of the job is as like follows:
+The manifest of the job is as follows:
 
 ```yaml
 apiVersion: batch/v1
