@@ -1,0 +1,86 @@
+# Summary
+
+- We'll prepare the DB migration files for our self-host users.
+- Basically, the migration process will be done automatically when the user starts the new version of the app.
+- We'll also prepare the manual migration process for the case that the automatic migration fails or the user wants to do it manually.
+
+## Proposal
+
+Currently, we have the DB migration files on private repositories.
+We'll move them to the public repository so that the self-host users can use them.
+The user can use them automatically or manually.
+
+### Automatic migration
+
+- When the user starts the new version of the app, a Kubernetes Job will migrate the DB automatically if needed.
+- When the migration process fails, a notification will be sent to the channel that the user has set.
+  - The user doesn't need to do anything unless the failure notification is sent.
+  - If the failure notification is sent, the user needs to do the manual migration as described later.
+
+### Manual migration
+
+- If the automatic migration fails or the user wants to do it manually, the user can do the manual migration.
+- If there are disruptive changes to the DB schema, we may ask for a manual migration.
+- The user can do the manual migration by sending a request to the migration API endpoint directly.
+  - The user specifies the Github Releases tag to migrate to.
+
+## Change on Migration API
+
+Current migration API is as follows:
+
+```proto
+message MigrateAllMasterSchemaRequest {}
+```
+
+We'll add a new field to specify the Github Releases tag to migrate to.
+
+```proto
+message MigrateAllMasterSchemaRequest {
+  string release_version_tag = 1;
+}
+```
+
+## Job for Automatic Migration
+
+We'll create a Kubernetes Job for the automatic migration.
+The job just sends a request to the migration API endpoint without specifying the Github Releases tag.
+Automatic migration migrates with the latest migration files.
+
+The manifest of the job is as like follows:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: automatic-migration
+spec:
+    template:
+        spec:
+        containers:
+            - name: automatic-migration-executor
+            image: curlimages/curl:7.83.1
+                command:
+                - /bin/sh
+                args:
+                - -c
+                - |
+                  echo "START automatic DB migration."
+                  ENDPOINT="http://backend:9100/bucketeer.migration.MigrationMySQLService/MigrateAllMasterSchema
+                  echo ${ENDPOINT}
+                  RES=`curl -X POST -m 300 ${ENDPOINT} -H "authorization: bearer $token" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n'`
+                  echo "response = "${RES}
+                  echo "END automatic DB migration."
+```
+
+## How to do the manual migration
+
+```bash
+kubectl port-forward svc/backend 9099:9099
+curl -X POST -m $TIMEOUT_DURATION_SECOND \
+http://localhost:9099/bucketeer.migration.MigrationMySQLService/MigrateAllMasterSchema \
+-H "authorization: bearer $TOKEN" \
+-H "Content-Type: application/json"\
+-d '{"release_version_tag": "$RELEASE_VERSION_TAG"}'
+```
+
+The user needs to specify the service token and the Github Releases tag to migrate to.
