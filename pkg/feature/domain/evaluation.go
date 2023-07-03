@@ -64,10 +64,9 @@ func EvaluateFeatures(
 		if exist := tagExist(f.Tags, targetTag); !exist {
 			continue
 		}
-		// FIXME: Remove the next two lines when the Variation
+		// FIXME: Remove the next line when the Variation
 		// no longer is being used
-		// For security reasons, it removes the variation name and description
-		variation.Name = ""
+		// For security reasons, it removes the variation description
 		variation.Description = ""
 		evaluationID := EvaluationID(f.Id, f.Version, user.Id)
 		evaluation := &featureproto.Evaluation{
@@ -76,6 +75,7 @@ func EvaluateFeatures(
 			FeatureVersion: f.Version,
 			UserId:         user.Id,
 			VariationId:    variation.Id,
+			VariationName:  variation.Name,
 			VariationValue: variation.Value,
 			Variation:      variation, // deprecated
 			Reason:         reason,
@@ -178,6 +178,7 @@ func evaluate(
 			FeatureVersion: f.Version,
 			UserId:         user.Id,
 			VariationId:    variation.Id,
+			VariationName:  variation.Name,
 			VariationValue: variation.Value,
 			Variation:      variation, // deprecated
 			Reason:         reason,

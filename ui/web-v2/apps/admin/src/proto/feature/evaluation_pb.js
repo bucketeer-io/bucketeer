@@ -103,7 +103,8 @@ proto.bucketeer.feature.Evaluation.toObject = function(includeInstance, msg) {
     variationId: jspb.Message.getFieldWithDefault(msg, 5, ""),
     variation: (f = msg.getVariation()) && proto_feature_variation_pb.Variation.toObject(includeInstance, f),
     reason: (f = msg.getReason()) && proto_feature_reason_pb.Reason.toObject(includeInstance, f),
-    variationValue: jspb.Message.getFieldWithDefault(msg, 8, "")
+    variationValue: jspb.Message.getFieldWithDefault(msg, 8, ""),
+    variationName: jspb.Message.getFieldWithDefault(msg, 9, "")
   };
 
   if (includeInstance) {
@@ -173,6 +174,10 @@ proto.bucketeer.feature.Evaluation.deserializeBinaryFromReader = function(msg, r
     case 8:
       var value = /** @type {string} */ (reader.readString());
       msg.setVariationValue(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setVariationName(value);
       break;
     default:
       reader.skipField();
@@ -258,6 +263,13 @@ proto.bucketeer.feature.Evaluation.serializeBinaryToWriter = function(message, w
   if (f.length > 0) {
     writer.writeString(
       8,
+      f
+    );
+  }
+  f = message.getVariationName();
+  if (f.length > 0) {
+    writer.writeString(
+      9,
       f
     );
   }
@@ -443,6 +455,24 @@ proto.bucketeer.feature.Evaluation.prototype.getVariationValue = function() {
  */
 proto.bucketeer.feature.Evaluation.prototype.setVariationValue = function(value) {
   return jspb.Message.setProto3StringField(this, 8, value);
+};
+
+
+/**
+ * optional string variation_name = 9;
+ * @return {string}
+ */
+proto.bucketeer.feature.Evaluation.prototype.getVariationName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.Evaluation} returns this
+ */
+proto.bucketeer.feature.Evaluation.prototype.setVariationName = function(value) {
+  return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 
