@@ -29,6 +29,7 @@ message Evaluation {
   Variation variation = 6 [deprecated = true];
   Reason reason = 7;
   string variation_value = 8;
+  string variation_name = 9;
 }
 
 message UserEvaluations {
