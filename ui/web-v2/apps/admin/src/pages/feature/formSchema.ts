@@ -115,7 +115,7 @@ const variationsSchema = yup.array().of(
             return !unChangedList.find((val) => val.value === value);
           }
         ),
-      name: yup.string().max(VARIATION_NAME_MAX_LENGTH),
+      name: yup.string().required().max(VARIATION_NAME_MAX_LENGTH),
       description: yup.string().max(VARIATION_DESCRIPTION_MAX_LENGTH),
     })
     .required()

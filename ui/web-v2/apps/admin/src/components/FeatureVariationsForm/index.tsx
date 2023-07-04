@@ -45,7 +45,7 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
     const variations = watch('variations');
 
     const isValid = Object.keys(errors).length == 0;
-    const isEmpty = variations.some((v) => !v.value);
+    const isEmpty = variations.some((v) => !v.value || !v.name);
 
     const onVariationIds = [];
     if (feature.defaultStrategy.type === Strategy.Type.FIXED) {
