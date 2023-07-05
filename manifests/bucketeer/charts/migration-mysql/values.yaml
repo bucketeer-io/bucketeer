@@ -1,0 +1,18 @@
+image:
+  repository: curlimages/curl
+  tag: 8.1.2
+  pullPolicy: IfNotPresent
+
+fullnameOverride: "migration-mysql"
+
+namespace: default
+
+webGatewayPort: 9000
+ttlSecondsAfterFinished: 60
+
+tls:
+  service:
+    secret:
+
+serviceToken:
+  secret:

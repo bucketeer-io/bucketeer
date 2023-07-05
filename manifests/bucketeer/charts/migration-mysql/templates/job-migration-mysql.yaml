@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migration-mysql-{{ .Values.global.image.tag }}
+  labels:
+    app: migration-mysql-{{ .Values.global.image.tag }}
+    chart: {{ template "migration-mysql.chart" . }}
+    release: {{ template "migration-mysql.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: migration-mysql-{{ .Values.global.image.tag }}
+        release: {{ template "migration-mysql.fullname" . }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+          args:
+            - -c
+            - |
+              echo "START automatic migration mysql."
+              ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.webGatewayPort }}/bucketeer.migration.MigrationMySQLService/MigrateAllMasterSchema"
+              TOKEN=`cat /usr/local/service-token/token`
+              RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -m 300 ${ENDPOINT} -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n'`
+              echo "response = "${RES}
+              echo "END automatic migration mysql."
+          volumeMounts:
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+            - name: service-token-secret
+              mountPath: /usr/local/service-token
+              readOnly: true
+      volumes:
+        - name: service-cert-secret
+          secret:
+            secretName: {{ template "service-cert-secret" . }}
+        - name: service-token-secret
+          secret:
+            secretName: {{ template "service-token-secret" . }}
+  backoffLimit: 0
+  completions: 1
+  parallelism: 1
+  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
