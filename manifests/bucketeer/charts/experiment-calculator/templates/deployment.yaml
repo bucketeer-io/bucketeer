@@ -69,51 +69,52 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
-          lifecycle:
-            postStart:
-              httpGet:
-                host: {{ .Values.env.stanHost }}
-                port: {{ .Values.env.stanPort }}
-                path: {{ .Values.httpstan.healthPath }}
-                scheme: HTTP
+          # FIXME: Because it gets connection refused error, the experiment calculator doesn't deploy.
+          # lifecycle:
+          #   postStart:
+          #     httpGet:
+          #       host: {{ .Values.env.stanHost }}
+          #       port: {{ .Values.env.stanPort }}
+          #       path: {{ .Values.httpstan.healthPath }}
+          #       scheme: HTTP
           env:
-            - name: BUCKETEER_CALCULATOR_PROJECT
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_PROJECT
               value: "{{ .Values.env.project }}"
-            - name: BUCKETEER_CALCULATOR_STAN_HOST
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_STAN_HOST
               value: "{{ .Values.env.stanHost }}"
-            - name: BUCKETEER_CALCULATOR_STAN_PORT
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_STAN_PORT
               value: "{{ .Values.env.stanPort }}"
-            - name: BUCKETEER_CALCULATOR_MYSQL_USER
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_MYSQL_USER
               value: "{{ .Values.env.mysqlUser }}"
-            - name: BUCKETEER_CALCULATOR_MYSQL_PASS
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_MYSQL_PASS
               value: "{{ .Values.env.mysqlPass }}"
-            - name: BUCKETEER_CALCULATOR_MYSQL_HOST
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_MYSQL_HOST
               value: "{{ .Values.env.mysqlHost }}"
-            - name: BUCKETEER_CALCULATOR_MYSQL_PORT
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_MYSQL_PORT
               value: "{{ .Values.env.mysqlPort }}"
-            - name: BUCKETEER_CALCULATOR_MYSQL_DB_NAME
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
-            - name: BUCKETEER_CALCULATOR_ENVIRONMENT_SERVICE
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_ENVIRONMENT_SERVICE
               value: "{{ .Values.env.environmentService }}"
-            - name: BUCKETEER_CALCULATOR_EXPERIMENT_SERVICE
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_EXPERIMENT_SERVICE
               value: "{{ .Values.env.experimentService }}"
-            - name: BUCKETEER_CALCULATOR_EVENT_COUNTER_SERVICE
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_EVENT_COUNTER_SERVICE
               value: "{{ .Values.env.eventCounterService }}"
-            - name: BUCKETEER_CALCULATOR_PORT
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_PORT
               value: "{{ .Values.env.port }}"
-            - name: BUCKETEER_CALCULATOR_METRICS_PORT
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
-            - name: BUCKETEER_CALCULATOR_LOG_LEVEL
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
-            - name: BUCKETEER_CALCULATOR_SERVICE_TOKEN
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_SERVICE_TOKEN
               value: /usr/local/service-token/token
-            - name: BUCKETEER_CALCULATOR_CERT
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_CERT
               value: /usr/local/certs/service/tls.crt
-            - name: BUCKETEER_CALCULATOR_KEY
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_KEY
               value: /usr/local/certs/service/tls.key
-            - name: BUCKETEER_CALCULATOR_TRACE_SAMPLING_PROBABILITY
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_TRACE_SAMPLING_PROBABILITY
               value: "{{ .Values.env.traceSamplingProbability }}"
-            - name: BUCKETEER_CALCULATOR_TIMEZONE
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_TIMEZONE
               value: "{{ .Values.env.timezone }}"
           volumeMounts:
             - name: service-cert-secret

@@ -43,11 +43,11 @@ hpa:
 httpstan:
   image:
     repository: ghcr.io/bucketeer-io/bucketeer-httpstan
-    tag: 4.10.1
+    tag: 0.0.1
     pullPolicy: IfNotPresent
   config:
   port: 8080
-  healthPath: /v1/health
+  healthPath: v1/health
   resources: {}
 
 envoy:
