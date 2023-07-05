@@ -17,7 +17,7 @@ package migrate
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	libmigrate "github.com/golang-migrate/migrate/v4"
@@ -37,7 +37,7 @@ type client struct {
 }
 
 type ClientFactory interface {
-	New() (Client, error)
+	New(string) (Client, error)
 }
 
 type clientFactory struct {
@@ -55,13 +55,17 @@ func NewClientFactory(
 	githubUser, githubAccessTokenPath, githubSourcePath string,
 	mysqlUser, mysqlPass, mysqlHost string, mysqlPort int, mysqlDBName string,
 ) (ClientFactory, error) {
-	data, err := ioutil.ReadFile(githubAccessTokenPath)
-	if err != nil {
-		return nil, err
+	githubAccessToken := ""
+	if githubAccessTokenPath != "" {
+		data, err := os.ReadFile(githubAccessTokenPath)
+		if err != nil {
+			return nil, err
+		}
+		githubAccessToken = strings.TrimSpace(string(data))
 	}
 	return &clientFactory{
 		githubUser:        githubUser,
-		githubAccessToken: strings.TrimSpace(string(data)),
+		githubAccessToken: githubAccessToken,
 		githubSourcePath:  githubSourcePath,
 		mysqlUser:         mysqlUser,
 		mysqlPass:         mysqlPass,
@@ -71,11 +75,18 @@ func NewClientFactory(
 	}, nil
 }
 
-func (cf *clientFactory) New() (Client, error) {
-	sourceURL := fmt.Sprintf(
-		"github://%s:%s@%s",
-		cf.githubUser, cf.githubAccessToken, cf.githubSourcePath,
-	)
+func (cf *clientFactory) New(ref string) (Client, error) {
+	//sourceURL := fmt.Sprintf("github://bucketeer:password@%s", cf.githubSourcePath)
+	sourceURL := fmt.Sprintf("github://%s", cf.githubSourcePath)
+	if cf.githubUser != "" && cf.githubAccessToken != "" {
+		sourceURL = fmt.Sprintf(
+			"github://%s:%s@%s",
+			cf.githubUser, cf.githubAccessToken, cf.githubSourcePath,
+		)
+	}
+	if ref != "" {
+		sourceURL = fmt.Sprintf("%s#%s", sourceURL, ref)
+	}
 	databaseURL := fmt.Sprintf(
 		"mysql://%s:%s@tcp(%s:%d)/%s?%s",
 		cf.mysqlUser, cf.mysqlPass, cf.mysqlHost, cf.mysqlPort, cf.mysqlDBName, mysqlParams,

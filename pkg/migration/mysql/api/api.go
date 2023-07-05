@@ -81,7 +81,7 @@ func (s *MySQLService) MigrateAllMasterSchema(
 	if err != nil {
 		return nil, err
 	}
-	migrateClient, err := s.migrateClientFactory.New()
+	migrateClient, err := s.migrateClientFactory.New(req.ReleaseVersionTag)
 	if err != nil {
 		s.logger.Error(
 			"Failed to new migrate client",
@@ -111,7 +111,7 @@ func (s *MySQLService) RollbackMasterSchema(
 	if err != nil {
 		return nil, err
 	}
-	migrateClient, err := s.migrateClientFactory.New()
+	migrateClient, err := s.migrateClientFactory.New(req.ReleaseVersionTag)
 	if err != nil {
 		s.logger.Error(
 			"Failed to new migrate client",

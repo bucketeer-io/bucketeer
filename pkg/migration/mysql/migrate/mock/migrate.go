@@ -87,16 +87,16 @@ func (m *MockClientFactory) EXPECT() *MockClientFactoryMockRecorder {
 }
 
 // New mocks base method.
-func (m *MockClientFactory) New() (migrate.Client, error) {
+func (m *MockClientFactory) New(arg0 string) (migrate.Client, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "New")
+	ret := m.ctrl.Call(m, "New", arg0)
 	ret0, _ := ret[0].(migrate.Client)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // New indicates an expected call of New.
-func (mr *MockClientFactoryMockRecorder) New() *gomock.Call {
+func (mr *MockClientFactoryMockRecorder) New(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "New", reflect.TypeOf((*MockClientFactory)(nil).New))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "New", reflect.TypeOf((*MockClientFactory)(nil).New), arg0)
 }

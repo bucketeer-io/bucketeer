@@ -288,11 +288,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Required().String(),
 		cloudService: cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
 		// migration-mysql
-		githubUser:            cmd.Flag("github-user", "GitHub user.").Required().String(),
-		githubAccessTokenPath: cmd.Flag("github-access-token-path", "Path to GitHub access token.").Required().String(),
+		githubUser:            cmd.Flag("github-user", "GitHub user.").Default("").String(),
+		githubAccessTokenPath: cmd.Flag("github-access-token-path", "Path to GitHub access token.").Default("").String(),
 		githubMigrationSourcePath: cmd.Flag(
 			"github-migration-source-path",
-			"Path to migration file in GitHub. (e.g. owner/repo/path#ref)",
+			"Path to migration file in GitHub. (e.g. owner/repo/path)",
 		).Required().String(),
 	}
 	r.RegisterCommand(server)

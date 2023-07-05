@@ -60,7 +60,7 @@ func TestMigrateAllMasterSchema(t *testing.T) {
 			desc: "err: failed to new migrate client",
 			setup: func(ms *MySQLService) {
 				cf := mock.NewMockClientFactory(mockController)
-				cf.EXPECT().New().Return(nil, errors.New("error"))
+				cf.EXPECT().New("").Return(nil, errors.New("error"))
 				ms.migrateClientFactory = cf
 			},
 			req:         &proto.MigrateAllMasterSchemaRequest{},
@@ -72,7 +72,7 @@ func TestMigrateAllMasterSchema(t *testing.T) {
 				c := mock.NewMockClient(mockController)
 				c.EXPECT().Up().Return(errors.New("error"))
 				cf := mock.NewMockClientFactory(mockController)
-				cf.EXPECT().New().Return(c, nil)
+				cf.EXPECT().New("").Return(c, nil)
 				ms.migrateClientFactory = cf
 			},
 			req:         &proto.MigrateAllMasterSchemaRequest{},
@@ -84,7 +84,7 @@ func TestMigrateAllMasterSchema(t *testing.T) {
 				c := mock.NewMockClient(mockController)
 				c.EXPECT().Up().Return(libmigrate.ErrNoChange)
 				cf := mock.NewMockClientFactory(mockController)
-				cf.EXPECT().New().Return(c, nil)
+				cf.EXPECT().New("").Return(c, nil)
 				ms.migrateClientFactory = cf
 			},
 			req:         &proto.MigrateAllMasterSchemaRequest{},
@@ -96,7 +96,7 @@ func TestMigrateAllMasterSchema(t *testing.T) {
 				c := mock.NewMockClient(mockController)
 				c.EXPECT().Up().Return(nil)
 				cf := mock.NewMockClientFactory(mockController)
-				cf.EXPECT().New().Return(c, nil)
+				cf.EXPECT().New("").Return(c, nil)
 				ms.migrateClientFactory = cf
 			},
 			req:         &proto.MigrateAllMasterSchemaRequest{},
@@ -129,7 +129,7 @@ func TestRollbackMasterSchema(t *testing.T) {
 			desc: "err: failed to new migrate client",
 			setup: func(ms *MySQLService, step int64) {
 				cf := mock.NewMockClientFactory(mockController)
-				cf.EXPECT().New().Return(nil, errors.New("error"))
+				cf.EXPECT().New("").Return(nil, errors.New("error"))
 				ms.migrateClientFactory = cf
 			},
 			req:         &proto.RollbackMasterSchemaRequest{},
@@ -141,7 +141,7 @@ func TestRollbackMasterSchema(t *testing.T) {
 				c := mock.NewMockClient(mockController)
 				c.EXPECT().Steps(-int(step)).Return(errors.New("error"))
 				cf := mock.NewMockClientFactory(mockController)
-				cf.EXPECT().New().Return(c, nil)
+				cf.EXPECT().New("").Return(c, nil)
 				ms.migrateClientFactory = cf
 			},
 			req:         &proto.RollbackMasterSchemaRequest{Step: 1},
@@ -153,7 +153,7 @@ func TestRollbackMasterSchema(t *testing.T) {
 				c := mock.NewMockClient(mockController)
 				c.EXPECT().Steps(-int(step)).Return(nil)
 				cf := mock.NewMockClientFactory(mockController)
-				cf.EXPECT().New().Return(c, nil)
+				cf.EXPECT().New("").Return(c, nil)
 				ms.migrateClientFactory = cf
 			},
 			req:         &proto.RollbackMasterSchemaRequest{Step: 1},

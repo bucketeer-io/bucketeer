@@ -17,12 +17,15 @@ syntax = "proto3";
 package bucketeer.migration;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/migration";
 
-message MigrateAllMasterSchemaRequest {}
+message MigrateAllMasterSchemaRequest {
+    string release_version_tag = 1;
+}
 
 message MigrateAllMasterSchemaResponse {}
 
 message RollbackMasterSchemaRequest {
   int64 step = 1;
+  string release_version_tag = 2;
 }
 
 message RollbackMasterSchemaResponse {}
