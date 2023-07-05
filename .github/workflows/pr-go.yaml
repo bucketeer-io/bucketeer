@@ -27,7 +27,7 @@ jobs:
     services:
       # setup httpstan container used to run unit test in experiment service
       httpstan:
-        image: ghcr.io/bucketeer-io/bucketeer-httpstan:4.10.1
+        image: ghcr.io/bucketeer-io/bucketeer-httpstan:0.0.1
         ports:
           - 8080:8080
     steps:
