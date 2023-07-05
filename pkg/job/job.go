@@ -24,29 +24,29 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
 
-type options struct {
-	timeout time.Duration
-	metrics metrics.Registerer
-	logger  *zap.Logger
+type Options struct {
+	Timeout time.Duration
+	Metrics metrics.Registerer
+	Logger  *zap.Logger
 }
 
-type Option func(*options)
+type Option func(*Options)
 
 func WithTimeout(timeout time.Duration) Option {
-	return func(opts *options) {
-		opts.timeout = timeout
+	return func(opts *Options) {
+		opts.Timeout = timeout
 	}
 }
 
 func WithMetrics(r metrics.Registerer) Option {
-	return func(opts *options) {
-		opts.metrics = r
+	return func(opts *Options) {
+		opts.Metrics = r
 	}
 }
 
 func WithLogger(l *zap.Logger) Option {
-	return func(opts *options) {
-		opts.logger = l
+	return func(opts *Options) {
+		opts.Logger = l
 	}
 }
 

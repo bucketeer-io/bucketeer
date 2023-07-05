@@ -16,20 +16,205 @@ package experiment
 
 import (
 	"context"
+	"time"
 
+	"go.uber.org/zap"
+
+	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
+	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/job"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
 )
 
-type ExperimentStatusUpdaterJob struct {
-	ExperimentStatusUpdater job.Job
+const (
+	listRequestSize = 500
+)
+
+type ExperimentStatusUpdater struct {
+	environmentClient environmentclient.Client
+	experimentClient  experimentclient.Client
+	opts              *job.Options
+	logger            *zap.Logger
 }
 
-func NewExperimentStatusUpdaterJob(experimentStatusUpdater job.Job) *ExperimentStatusUpdaterJob {
-	return &ExperimentStatusUpdaterJob{
-		ExperimentStatusUpdater: experimentStatusUpdater,
+func NewExperimentStatusUpdater(
+	environmentClient environmentclient.Client,
+	experimentClient experimentclient.Client,
+	opts ...job.Option) job.Job {
+
+	dopts := &job.Options{
+		Timeout: 1 * time.Minute,
+		Logger:  zap.NewNop(),
+	}
+	for _, opt := range opts {
+		opt(dopts)
+	}
+	return &ExperimentStatusUpdater{
+		environmentClient: environmentClient,
+		experimentClient:  experimentClient,
+		opts:              dopts,
+		logger:            dopts.Logger.Named("status-updater"),
 	}
 }
 
-func (j *ExperimentStatusUpdaterJob) Run(ctx context.Context) error {
-	return j.ExperimentStatusUpdater.Run(ctx)
+func (u *ExperimentStatusUpdater) Run(ctx context.Context) (lastErr error) {
+	ctx, cancel := context.WithTimeout(ctx, u.opts.Timeout)
+	defer cancel()
+	environments, err := u.listEnvironments(ctx)
+	if err != nil {
+		u.logger.Error("Failed to list environments", zap.Error(err))
+		lastErr = err
+		return
+	}
+	for _, env := range environments {
+		var experiments []*experimentproto.Experiment
+		statuses := []experimentproto.Experiment_Status{
+			experimentproto.Experiment_WAITING,
+			experimentproto.Experiment_RUNNING,
+		}
+		for _, status := range statuses {
+			exps, err := u.listExperiments(ctx, env.Namespace, status)
+			if err != nil {
+				u.logger.Error("Failed to list experiments", zap.Error(err),
+					zap.String("environmentNamespace", env.Namespace),
+					zap.Int32("status", int32(status)),
+				)
+				lastErr = err
+				continue
+			}
+			experiments = append(experiments, exps...)
+		}
+		for _, e := range experiments {
+			if err = u.updateStatus(ctx, env.Namespace, e); err != nil {
+				lastErr = err
+			}
+		}
+	}
+	return
+}
+
+func (u *ExperimentStatusUpdater) updateStatus(
+	ctx context.Context,
+	environmentNamespace string,
+	experiment *experimentproto.Experiment,
+) error {
+	if experiment.Status == experimentproto.Experiment_WAITING {
+		if err := u.updateToRunning(ctx, environmentNamespace, experiment); err != nil {
+			return err
+		}
+		return nil
+	}
+	if experiment.Status == experimentproto.Experiment_RUNNING {
+		if err := u.updateToStopped(ctx, environmentNamespace, experiment); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (u *ExperimentStatusUpdater) updateToRunning(
+	ctx context.Context,
+	environmentNamespace string,
+	experiment *experimentproto.Experiment,
+) error {
+	de := domain.Experiment{Experiment: experiment}
+	if err := de.Start(); err != nil {
+		if err != domain.ErrExperimentBeforeStart {
+			u.logger.Error("Failed to start check if experiment running", zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("id", experiment.Id))
+			return err
+		}
+		return nil
+	}
+	_, err := u.experimentClient.StartExperiment(ctx, &experimentproto.StartExperimentRequest{
+		EnvironmentNamespace: environmentNamespace,
+		Id:                   experiment.Id,
+		Command:              &experimentproto.StartExperimentCommand{},
+	})
+	if err != nil {
+		u.logger.Error("Failed to update status to running", zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("id", experiment.Id))
+		return err
+	}
+	return nil
+}
+
+func (u *ExperimentStatusUpdater) updateToStopped(
+	ctx context.Context,
+	environmentNamespace string,
+	experiment *experimentproto.Experiment,
+) error {
+	de := domain.Experiment{Experiment: experiment}
+	if err := de.Finish(); err != nil {
+		if err != domain.ErrExperimentBeforeStop {
+			u.logger.Error("Failed to end check if experiment running", zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("id", experiment.Id))
+			return err
+		}
+		return nil
+	}
+	_, err := u.experimentClient.FinishExperiment(ctx, &experimentproto.FinishExperimentRequest{
+		EnvironmentNamespace: environmentNamespace,
+		Id:                   experiment.Id,
+		Command:              &experimentproto.FinishExperimentCommand{},
+	})
+	if err != nil {
+		u.logger.Error("Failed to update status to stopped", zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("id", experiment.Id))
+		return err
+	}
+	return nil
+}
+
+func (u *ExperimentStatusUpdater) listExperiments(
+	ctx context.Context,
+	environmentNamespace string,
+	status experimentproto.Experiment_Status,
+) ([]*experimentproto.Experiment, error) {
+	var experiments []*experimentproto.Experiment
+	cursor := ""
+	for {
+		resp, err := u.experimentClient.ListExperiments(ctx, &experimentproto.ListExperimentsRequest{
+			PageSize:             listRequestSize,
+			Cursor:               cursor,
+			EnvironmentNamespace: environmentNamespace,
+			Status:               &wrappersproto.Int32Value{Value: int32(status)},
+		})
+		if err != nil {
+			return nil, err
+		}
+		experiments = append(experiments, resp.Experiments...)
+		size := len(resp.Experiments)
+		if size == 0 || size < listRequestSize {
+			return experiments, nil
+		}
+		cursor = resp.Cursor
+	}
+}
+
+func (u *ExperimentStatusUpdater) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
+	var environments []*environmentproto.Environment
+	cursor := ""
+	for {
+		resp, err := u.environmentClient.ListEnvironments(ctx, &environmentproto.ListEnvironmentsRequest{
+			PageSize: listRequestSize,
+			Cursor:   cursor,
+		})
+		if err != nil {
+			return nil, err
+		}
+		environments = append(environments, resp.Environments...)
+		environmentSize := len(resp.Environments)
+		if environmentSize == 0 || environmentSize < listRequestSize {
+			return environments, nil
+		}
+		cursor = resp.Cursor
+	}
 }

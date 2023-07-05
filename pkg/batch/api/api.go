@@ -18,12 +18,11 @@ import (
 	"context"
 	"errors"
 
+	"github.com/bucketeer-io/bucketeer/pkg/job"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/proto/batch"
 )
@@ -33,32 +32,29 @@ var (
 )
 
 type BatchService struct {
-	experimentStatusUpdaterJob *experiment.ExperimentStatusUpdaterJob
-	experimentRunningWatcher   *notification.ExperimentRunningWatcherJob
-	featureWatcherJob          *notification.FeatureWatcherJob
-	mauCountWatcherJob         *notification.MauCountWatcherJob
-	datetimeWatcherJob         *opsevent.DatetimeWatcherJob
-	eventCountWatcherJob       *opsevent.EventCountWatcherJob
-	logger                     *zap.Logger
+	experimentStatusUpdater  job.Job
+	experimentRunningWatcher job.Job
+	featureWatcher           job.Job
+	mauCountWatcher          job.Job
+	datetimeWatcher          job.Job
+	countWatcher             job.Job
+	logger                   *zap.Logger
 }
 
 func NewBatchService(
-	experimentStatusUpdaterJob *experiment.ExperimentStatusUpdaterJob,
-	experimentRunningWatcher *notification.ExperimentRunningWatcherJob,
-	featureWatcherJob *notification.FeatureWatcherJob,
-	mauCountWatcherJob *notification.MauCountWatcherJob,
-	eventWatcherJob *opsevent.DatetimeWatcherJob,
-	eventCountWatcherJob *opsevent.EventCountWatcherJob,
+	experimentStatusUpdater, experimentRunningWatcher,
+	featureWatcher, mauCountWatcher,
+	datetimeWatcher, eventCountWatcher job.Job,
 	logger *zap.Logger,
 ) *BatchService {
 	return &BatchService{
-		experimentStatusUpdaterJob: experimentStatusUpdaterJob,
-		experimentRunningWatcher:   experimentRunningWatcher,
-		featureWatcherJob:          featureWatcherJob,
-		mauCountWatcherJob:         mauCountWatcherJob,
-		datetimeWatcherJob:         eventWatcherJob,
-		eventCountWatcherJob:       eventCountWatcherJob,
-		logger:                     logger.Named("batch-service"),
+		experimentStatusUpdater:  experimentStatusUpdater,
+		experimentRunningWatcher: experimentRunningWatcher,
+		featureWatcher:           featureWatcher,
+		mauCountWatcher:          mauCountWatcher,
+		datetimeWatcher:          datetimeWatcher,
+		countWatcher:             eventCountWatcher,
+		logger:                   logger.Named("batch-service"),
 	}
 }
 
@@ -68,22 +64,23 @@ func (s *BatchService) ExecuteBatchJob(
 	resp := &batch.BatchJobResponse{}
 	switch req.Job {
 	case batch.BatchJob_ExprimentStatusUpdater:
-		err = s.experimentStatusUpdaterJob.Run(ctx)
+		err = s.experimentStatusUpdater.Run(ctx)
 	case batch.BatchJob_ExperimentRunningWatcher:
 		err = s.experimentRunningWatcher.Run(ctx)
 	case batch.BatchJob_FeatureStateWatcher:
-		err = s.featureWatcherJob.Run(ctx)
+		err = s.featureWatcher.Run(ctx)
 	case batch.BatchJob_MauCountWatcher:
-		err = s.mauCountWatcherJob.Run(ctx)
+		err = s.mauCountWatcher.Run(ctx)
 	case batch.BatchJob_DatetimeWatcher:
-		err = s.datetimeWatcherJob.Run(ctx)
+		err = s.datetimeWatcher.Run(ctx)
 	case batch.BatchJob_EventCountWatcher:
-		err = s.eventCountWatcherJob.Run(ctx)
+		err = s.countWatcher.Run(ctx)
 	default:
 		s.logger.Error("Batch Service unknown job",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("job_name", req.Job.String()),
-			)...)
+			)...,
+		)
 		err = errUnknownJob
 	}
 	return resp, err

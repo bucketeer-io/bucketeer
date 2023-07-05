@@ -30,18 +30,16 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
-	experimentjob "github.com/bucketeer-io/bucketeer/pkg/experiment/batch/job"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
+	"github.com/bucketeer-io/bucketeer/pkg/job"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
 	notificationsender "github.com/bucketeer-io/bucketeer/pkg/notification/sender"
-	notificationjob "github.com/bucketeer-io/bucketeer/pkg/notification/sender/informer/batch/job"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
-	opseventjob "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/job"
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
@@ -244,59 +242,47 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	service := api.NewBatchService(
-		experiment.NewExperimentStatusUpdaterJob(
-			experimentjob.NewExperimentStatusUpdater(
-				environmentClient,
-				experimentClient,
-				experimentjob.WithLogger(logger),
-			),
+		experiment.NewExperimentStatusUpdater(
+			environmentClient,
+			experimentClient,
+			job.WithLogger(logger),
 		),
-		notification.NewExperimentRunningWatcherJob(
-			notificationjob.NewExperimentRunningWatcher(
-				environmentClient,
-				experimentClient,
-				notificationSender,
-				notificationjob.WithTimeout(1*time.Minute),
-				notificationjob.WithLogger(logger),
-			),
+		notification.NewExperimentRunningWatcher(
+			environmentClient,
+			experimentClient,
+			notificationSender,
+			job.WithTimeout(1*time.Minute),
+			job.WithLogger(logger),
 		),
-		notification.NewFeatureWatcherJob(
-			notificationjob.NewFeatureWatcher(
-				environmentClient,
-				featureClient,
-				notificationSender,
-				notificationjob.WithTimeout(1*time.Minute),
-				notificationjob.WithLogger(logger),
-			),
+		notification.NewFeatureWatcher(
+			environmentClient,
+			featureClient,
+			notificationSender,
+			job.WithTimeout(1*time.Minute),
+			job.WithLogger(logger),
 		),
-		notification.NewMAUCountWatcherJob(
-			notificationjob.NewMAUCountWatcher(
-				environmentClient,
-				eventCounterClient,
-				notificationSender,
-				location,
-				notificationjob.WithTimeout(60*time.Minute),
-				notificationjob.WithLogger(logger),
-			),
+		notification.NewMAUCountWatcher(
+			environmentClient,
+			eventCounterClient,
+			notificationSender,
+			location,
+			job.WithTimeout(60*time.Minute),
+			job.WithLogger(logger),
 		),
-		opsevent.NewDatetimeWatcherJob(
-			opseventjob.NewDatetimeWatcher(
-				targetStore,
-				autoOpsExecutor,
-				opseventjob.WithTimeout(5*time.Minute),
-				opseventjob.WithLogger(logger),
-			),
+		opsevent.NewDatetimeWatcher(
+			targetStore,
+			autoOpsExecutor,
+			job.WithTimeout(5*time.Minute),
+			job.WithLogger(logger),
 		),
-		opsevent.NewEventCountWatcherJob(
-			opseventjob.NewCountWatcher(
-				mysqlClient,
-				targetStore,
-				eventCounterClient,
-				featureClient,
-				autoOpsExecutor,
-				opseventjob.WithTimeout(5*time.Minute),
-				opseventjob.WithLogger(logger),
-			),
+		opsevent.NewCountWatcher(
+			mysqlClient,
+			targetStore,
+			eventCounterClient,
+			featureClient,
+			autoOpsExecutor,
+			job.WithTimeout(5*time.Minute),
+			job.WithLogger(logger),
 		),
 		logger,
 	)
