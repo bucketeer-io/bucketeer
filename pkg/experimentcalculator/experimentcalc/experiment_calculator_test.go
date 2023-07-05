@@ -24,10 +24,10 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/calculator/stan"
 	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
 	metricsmock "github.com/bucketeer-io/bucketeer/pkg/metrics/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 )

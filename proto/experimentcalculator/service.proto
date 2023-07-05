@@ -11,21 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-package api
+syntax = "proto3";
 
-import (
-	"context"
+package bucketeer.experimentcalculator;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/experimentcalculator";
 
-	"github.com/bucketeer-io/bucketeer/proto/calculator"
-)
+message BatchCalcRequest {}
 
-func (c calculatorService) CalcExperiment(
-	ctx context.Context,
-	request *calculator.BatchCalcRequest,
-) (*calculator.BatchCalcResponse, error) {
-	resp := &calculator.BatchCalcResponse{}
-	c.calculator.Run(ctx, request)
-	return resp, nil
+message BatchCalcResponse {}
+
+service ExperimentCalculatorService {
+  rpc CalcExperiment(BatchCalcRequest) returns (BatchCalcResponse) {}
 }

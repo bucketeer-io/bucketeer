@@ -21,15 +21,15 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/bucketeer-io/bucketeer/pkg/calculator/experimentcalc"
-	"github.com/bucketeer-io/bucketeer/pkg/calculator/stan"
 	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/experimentcalc"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/proto/calculator"
+	calculator "github.com/bucketeer-io/bucketeer/proto/experimentcalculator"
 )
 
 type calculatorService struct {
@@ -63,5 +63,5 @@ func NewCalculatorService(
 }
 
 func (c calculatorService) Register(server *grpc.Server) {
-	calculator.RegisterCalculatorServiceServer(server, c)
+	calculator.RegisterExperimentCalculatorServiceServer(server, c)
 }

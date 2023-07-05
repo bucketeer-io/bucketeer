@@ -19,7 +19,7 @@ import (
 	"context"
 	_ "embed"
 
-	"github.com/bucketeer-io/bucketeer/pkg/calculator/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 

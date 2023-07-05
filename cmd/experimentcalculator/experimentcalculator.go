@@ -18,8 +18,8 @@ package main
 import (
 	"log"
 
-	"github.com/bucketeer-io/bucketeer/pkg/calculator/cmd/server"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/cmd/server"
 )
 
 var (

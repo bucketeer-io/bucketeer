@@ -26,19 +26,19 @@ import (
 	"github.com/go-gota/gota/dataframe"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/calculator/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/calculator/stan"
-	v2es "github.com/bucketeer-io/bucketeer/pkg/calculator/storage/v2"
 	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
+	v2es "github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/proto/calculator"
 	"github.com/bucketeer-io/bucketeer/proto/environment"
 	"github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	"github.com/bucketeer-io/bucketeer/proto/experiment"
+	calculator "github.com/bucketeer-io/bucketeer/proto/experimentcalculator"
 )
 
 var (
