@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	domaineventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"

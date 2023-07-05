@@ -13,14 +13,42 @@ env:
   mysqlHost:
   mysqlPort: 3306
   mysqlDbName:
+  persistentRedis:
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
+  nonPersistentRedis:
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
+  bigQueryDataSet:
+  bigQueryDataLocation:
   domainTopic:
+  bulkSegmentUsersReceivedTopic:
   accountService: localhost:9001
+  authService: localhost:9001
   environmentService: localhost:9001
+  experimentService: localhost:9001
+  featureService: localhost:9001
   healthCheckServicePort: 8000
   accountServicePort: 9091
   authServicePort: 9092
+  auditLogServicePort: 9093
+  autoOpsServicePort: 9094
+  environmentServicePort: 9095
+  eventCounterServicePort: 9096
+  experimentServicePort: 9097
+  featureServicePort: 9098
+  migrateMysqlServicePort: 9099
+  notificationServicePort: 9100
+  pushServicePort: 9101
   metricsPort: 9002
+  timezone: UTC
   emailFilter:
+  githubUser:
+  githubMigrationSourcePath:
   logLevel: info
 
 affinity: {}
@@ -62,6 +90,7 @@ oauth:
   issuer:
 
 webhook:
+  baseURL:
   kmsResourceName:
 
 envoy:
@@ -83,6 +112,10 @@ health:
   initialDelaySeconds: 10
   periodSeconds: 10
   failureThreshold: 10
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 2
 
 resources: {}
 

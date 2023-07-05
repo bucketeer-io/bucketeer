@@ -18,7 +18,6 @@ import (
 	"log"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/cmd/apikeycacher"
-	"github.com/bucketeer-io/bucketeer/pkg/account/cmd/server"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 )
 
@@ -38,6 +37,5 @@ func main() {
 }
 
 func registerCommands(app *cli.App) {
-	server.RegisterCommand(app, app)
 	apikeycacher.RegisterCommand(app, app)
 }

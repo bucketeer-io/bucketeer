@@ -44,6 +44,9 @@ spec:
         - name: oauth-key-secret
           secret:
             secretName: {{ template "oauth-key-secret" . }}
+        - name: github-access-token-secret
+          secret:
+            secretName: github-token
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "backend.fullname" . }}
       {{- end }}
@@ -65,18 +68,66 @@ spec:
               value: "{{ .Values.env.mysqlPort }}"
             - name: BUCKETEER_BACKEND_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
+            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_SERVER_NAME
+              value: "{{ .Values.env.persistentRedis.serverName }}"
+            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_ADDR
+              value: "{{ .Values.env.persistentRedis.addr }}"
+            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_POOL_MAX_IDLE
+              value: "{{ .Values.env.persistentRedis.poolMaxIdle }}"
+            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_POOL_MAX_ACTIVE
+              value: "{{ .Values.env.persistentRedis.poolMaxActive }}"
+            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_SERVER_NAME
+              value: "{{ .Values.env.nonPersistentRedis.serverName }}"
+            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_ADDR
+              value: "{{ .Values.env.nonPersistentRedis.addr }}"
+            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_POOL_MAX_IDLE
+              value: "{{ .Values.env.nonPersistentRedis.poolMaxIdle }}"
+            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
+              value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
+            - name: BUCKETEER_BACKEND_BIGQUERY_DATA_SET
+              value: "{{ .Values.env.bigQueryDataSet }}"
+            - name: BUCKETEER_BACKEND_BIGQUERY_DATA_LOCATION
+              value: "{{ .Values.env.bigQueryDataLocation }}"
             - name: BUCKETEER_BACKEND_DOMAIN_TOPIC
               value: "{{ .Values.env.domainTopic }}"
+            - name: BUCKETEER_BACKEND_BULK_SEGMENT_USERS_RECEIVED_TOPIC
+              value: "{{ .Values.env.bulkSegmentUsersReceivedTopic }}"
             - name: BUCKETEER_BACKEND_HEALTH_CHECK_SERVICE_PORT
               value: "{{ .Values.env.healthCheckServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE_PORT
               value: "{{ .Values.env.accountServicePort }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE_PORT
               value: "{{ .Values.env.authServicePort }}"
+            - name: BUCKETEER_BACKEND_AUDIT_LOG_SERVICE_PORT
+              value: "{{ .Values.env.auditLogServicePort }}"
+            - name: BUCKETEER_BACKEND_AUTO_OPS_SERVICE_PORT
+              value: "{{ .Values.env.autoOpsServicePort }}"
+            - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE_PORT
+              value: "{{ .Values.env.environmentServicePort }}"
+            - name: BUCKETEER_BACKEND_EVENT_COUNTER_SERVICE_PORT
+              value: "{{ .Values.env.eventCounterServicePort }}"
+            - name: BUCKETEER_BACKEND_EXPERIMENT_SERVICE_PORT
+              value: "{{ .Values.env.experimentServicePort }}"
+            - name: BUCKETEER_BACKEND_FEATURE_SERVICE_PORT
+              value: "{{ .Values.env.featureServicePort }}"
+            - name: BUCKETEER_BACKEND_MIGRATE_MYSQL_SERVICE_PORT
+              value: "{{ .Values.env.migrateMysqlServicePort }}"
+            - name: BUCKETEER_BACKEND_NOTIFICATION_SERVICE_PORT
+              value: "{{ .Values.env.notificationServicePort }}"
+            - name: BUCKETEER_BACKEND_PUSH_SERVICE_PORT
+              value: "{{ .Values.env.pushServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
+            - name: BUCKETEER_BACKEND_AUTH_SERVICE
+              value: "{{ .Values.env.authService }}"
             - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE
               value: "{{ .Values.env.environmentService }}"
+            - name: BUCKETEER_BACKEND_EXPERIMENT_SERVICE
+              value: "{{ .Values.env.experimentService }}"
+            - name: BUCKETEER_BACKEND_FEATURE_SERVICE
+              value: "{{ .Values.env.featureService }}"
+            - name: BUCKETEER_BACKEND_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
             - name: BUCKETEER_BACKEND_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_BACKEND_LOG_LEVEL
@@ -103,8 +154,16 @@ spec:
               value: "{{ .Values.env.emailFilter }}"
             - name: BUCKETEER_BACKEND_OAUTH_REDIRECT_URLS
               value: {{- toYaml .Values.oauth.redirectUrls | nindent 16 }}
+            - name: BUCKETEER_BACKEND_WEBHOOK_BASE_URL
+              value: "{{ .Values.webhook.baseURL }}"
             - name: BUCKETEER_BACKEND_WEBHOOK_KMS_RESOURCE_NAME
               value: "{{ .Values.webhook.kmsResourceName }}"
+            - name: BUCKETEER_BACKEND_GITHUB_USER
+              value: "{{ .Values.env.githubUser }}"
+            - name: BUCKETEER_BACKEND_GITHUB_ACCESS_TOKEN_PATH
+              value: /usr/local/github-access-token/bucketeer-bot-access-token
+            - name: BUCKETEER_BACKEND_GITHUB_MIGRATION_SOURCE_PATH
+              value: "{{ .Values.env.githubMigrationSourcePath }}"
           volumeMounts:
             - name: issuer-cert-secret
               mountPath: /usr/local/certs/issuer
@@ -117,6 +176,9 @@ spec:
               readOnly: true
             - name: oauth-key-secret
               mountPath: /usr/local/oauth-key
+              readOnly: true
+            - name: github-access-token-secret
+              mountPath: /usr/local/github-access-token
               readOnly: true
           ports:
             - name: health-check
@@ -136,7 +198,9 @@ spec:
               port: health-check
               scheme: HTTPS
           readinessProbe:
-            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
             httpGet:
               path: /health
               port: health-check
@@ -183,7 +247,9 @@ spec:
               port: envoy
               scheme: HTTPS
           readinessProbe:
-            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
             httpGet:
               path: /health
               port: envoy

@@ -166,6 +166,7 @@ func (c *apiKeyCacher) Run(ctx context.Context, metrics metrics.Metrics, logger 
 	go healthChecker.Run(ctx)
 
 	server := rpc.NewServer(healthChecker, *c.certPath, *c.keyPath,
+		"api-key-cacher-server",
 		rpc.WithPort(*c.port),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),

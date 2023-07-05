@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 
 	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )

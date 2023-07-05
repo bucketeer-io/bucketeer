@@ -20,7 +20,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/cmd/recorder"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/cmd/segmentpersister"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/cmd/server"
 )
 
 var (
@@ -39,7 +38,6 @@ func main() {
 }
 
 func registerCommands(app *cli.App) {
-	server.RegisterServerCommand(app, app)
 	recorder.RegisterCommand(app, app)
 	segmentpersister.RegisterCommand(app, app)
 }

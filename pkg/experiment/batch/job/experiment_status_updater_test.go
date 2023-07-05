@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"

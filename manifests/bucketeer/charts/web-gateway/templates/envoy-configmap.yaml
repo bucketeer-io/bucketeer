@@ -22,170 +22,6 @@ data:
           port_value: 8001
     static_resources:
       clusters:
-        - name: feature
-          dns_lookup_family: V4_ONLY
-          connect_timeout: 5s
-          ignore_health_on_host_removal: true
-          type: strict_dns
-          lb_policy: round_robin
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          load_assignment:
-            cluster_name: feature
-            endpoints:
-              - lb_endpoints:
-                - endpoint:
-                    address:
-                      socket_address:
-                        address: feature.{{ .Values.namespace }}.svc.cluster.local
-                        port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols: ["h2"]
-                tls_certificates:
-                - certificate_chain:
-                    filename: /usr/local/certs/service/tls.crt
-                  private_key:
-                    filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
-
-        - name: experiment
-          dns_lookup_family: V4_ONLY
-          connect_timeout: 5s
-          ignore_health_on_host_removal: true
-          type: strict_dns
-          lb_policy: round_robin
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          load_assignment:
-            cluster_name: experiment
-            endpoints:
-              - lb_endpoints:
-                - endpoint:
-                    address:
-                      socket_address:
-                        address: experiment.{{ .Values.namespace }}.svc.cluster.local
-                        port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols: ["h2"]
-                tls_certificates:
-                - certificate_chain:
-                    filename: /usr/local/certs/service/tls.crt
-                  private_key:
-                    filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
-
-        - name: event-counter
-          dns_lookup_family: V4_ONLY
-          connect_timeout: 5s
-          ignore_health_on_host_removal: true
-          type: strict_dns
-          lb_policy: round_robin
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          load_assignment:
-            cluster_name: event-counter
-            endpoints:
-              - lb_endpoints:
-                - endpoint:
-                    address:
-                      socket_address:
-                        address: event-counter.{{ .Values.namespace }}.svc.cluster.local
-                        port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols: ["h2"]
-                tls_certificates:
-                - certificate_chain:
-                    filename: /usr/local/certs/service/tls.crt
-                  private_key:
-                    filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
-
-        - name: auditlog
-          dns_lookup_family: V4_ONLY
-          connect_timeout: 5s
-          ignore_health_on_host_removal: true
-          type: strict_dns
-          lb_policy: round_robin
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          load_assignment:
-            cluster_name: auditlog
-            endpoints:
-              - lb_endpoints:
-                - endpoint:
-                    address:
-                      socket_address:
-                        address: auditlog.{{ .Values.namespace }}.svc.cluster.local
-                        port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols: ["h2"]
-                tls_certificates:
-                - certificate_chain:
-                    filename: /usr/local/certs/service/tls.crt
-                  private_key:
-                    filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
-
         - name: backend
           dns_lookup_family: V4_ONLY
           connect_timeout: 5s
@@ -205,211 +41,6 @@ data:
                     address:
                       socket_address:
                         address: backend.{{ .Values.namespace }}.svc.cluster.local
-                        port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols: ["h2"]
-                tls_certificates:
-                - certificate_chain:
-                    filename: /usr/local/certs/service/tls.crt
-                  private_key:
-                    filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
-
-        - name: environment
-          dns_lookup_family: V4_ONLY
-          connect_timeout: 5s
-          ignore_health_on_host_removal: true
-          type: strict_dns
-          lb_policy: round_robin
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          load_assignment:
-            cluster_name: environment
-            endpoints:
-              - lb_endpoints:
-                - endpoint:
-                    address:
-                      socket_address:
-                        address: environment.{{ .Values.namespace }}.svc.cluster.local
-                        port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols: ["h2"]
-                tls_certificates:
-                - certificate_chain:
-                    filename: /usr/local/certs/service/tls.crt
-                  private_key:
-                    filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
-
-        - name: auto-ops
-          dns_lookup_family: V4_ONLY
-          connect_timeout: 5s
-          ignore_health_on_host_removal: true
-          type: strict_dns
-          lb_policy: round_robin
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          load_assignment:
-            cluster_name: auto-ops
-            endpoints:
-              - lb_endpoints:
-                - endpoint:
-                    address:
-                      socket_address:
-                        address: auto-ops.{{ .Values.namespace }}.svc.cluster.local
-                        port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols: ["h2"]
-                tls_certificates:
-                - certificate_chain:
-                    filename: /usr/local/certs/service/tls.crt
-                  private_key:
-                    filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
-
-        - name: push
-          dns_lookup_family: V4_ONLY
-          connect_timeout: 5s
-          ignore_health_on_host_removal: true
-          type: strict_dns
-          lb_policy: round_robin
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          load_assignment:
-            cluster_name: push
-            endpoints:
-              - lb_endpoints:
-                - endpoint:
-                    address:
-                      socket_address:
-                        address: push.{{ .Values.namespace }}.svc.cluster.local
-                        port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols: ["h2"]
-                tls_certificates:
-                - certificate_chain:
-                    filename: /usr/local/certs/service/tls.crt
-                  private_key:
-                    filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
-
-        - name: notification
-          dns_lookup_family: V4_ONLY
-          connect_timeout: 5s
-          ignore_health_on_host_removal: true
-          type: strict_dns
-          lb_policy: round_robin
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          load_assignment:
-            cluster_name: notification
-            endpoints:
-              - lb_endpoints:
-                - endpoint:
-                    address:
-                      socket_address:
-                        address: notification.{{ .Values.namespace }}.svc.cluster.local
-                        port_value: 9000
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-              common_tls_context:
-                alpn_protocols: ["h2"]
-                tls_certificates:
-                - certificate_chain:
-                    filename: /usr/local/certs/service/tls.crt
-                  private_key:
-                    filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
-
-        - name: migration-mysql
-          dns_lookup_family: V4_ONLY
-          connect_timeout: 5s
-          ignore_health_on_host_removal: true
-          type: strict_dns
-          lb_policy: round_robin
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              explicit_http_config:
-                http2_protocol_options: {}
-          load_assignment:
-            cluster_name: migration-mysql
-            endpoints:
-              - lb_endpoints:
-                - endpoint:
-                    address:
-                      socket_address:
-                        address: migration-mysql.{{ .Values.namespace }}.svc.cluster.local
                         port_value: 9000
           transport_socket:
             name: envoy.transport_sockets.tls
@@ -662,7 +293,7 @@ data:
                           - match:
                               prefix: /bucketeer.auditlog.AuditLogService
                             route:
-                              cluster: auditlog
+                              cluster: backend
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx
@@ -678,7 +309,7 @@ data:
                           - match:
                               prefix: /bucketeer.autoops.AutoOpsService
                             route:
-                              cluster: auto-ops
+                              cluster: backend
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx
@@ -686,7 +317,7 @@ data:
                           - match:
                               prefix: /hook
                             route:
-                              cluster: auto-ops
+                              cluster: backend
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx
@@ -694,7 +325,7 @@ data:
                           - match:
                               prefix: /bucketeer.environment.EnvironmentService
                             route:
-                              cluster: environment
+                              cluster: backend
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
@@ -702,7 +333,7 @@ data:
                           - match:
                               prefix: /bucketeer.eventcounter.EventCounterService
                             route:
-                              cluster: event-counter
+                              cluster: backend
                               timeout: 10800s
                               retry_policy:
                                 retry_on: 5xx
@@ -710,7 +341,7 @@ data:
                           - match:
                               prefix: /bucketeer.experiment.ExperimentService
                             route:
-                              cluster: experiment
+                              cluster: backend
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx
@@ -718,7 +349,7 @@ data:
                           - match:
                               prefix: /bucketeer.feature.FeatureService
                             route:
-                              cluster: feature
+                              cluster: backend
                               timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
@@ -726,7 +357,7 @@ data:
                           - match:
                               prefix: /bucketeer.notification.NotificationService
                             route:
-                              cluster: notification
+                              cluster: backend
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx
@@ -734,7 +365,7 @@ data:
                           - match:
                               prefix: /bucketeer.push.PushService
                             route:
-                              cluster: push
+                              cluster: backend
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx
@@ -742,7 +373,7 @@ data:
                           - match:
                               prefix: /bucketeer.migration.MigrationMySQLService
                             route:
-                              cluster: migration-mysql
+                              cluster: backend
                               timeout: 600s
                               retry_policy:
                                 retry_on: 5xx
