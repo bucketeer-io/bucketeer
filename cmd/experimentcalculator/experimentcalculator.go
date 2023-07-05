@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	name    = "bucketeer-calculator"
+	name    = "bucketeer-experiment-calculator"
 	version = ""
 	build   = ""
 )

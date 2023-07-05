@@ -10,5 +10,6 @@ case $APP in
     "eventpersisterops") echo "event-persister-ops" ;;
     "metricsevent") echo "metrics-event" ;;
     "opsevent") echo "ops-event" ;;
+    "experimentcalculator") echo "experiment-calculator" ;;
     *) echo $APP
 esac
