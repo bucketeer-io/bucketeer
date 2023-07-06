@@ -69,14 +69,12 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
-          # FIXME: Because it gets connection refused error, the experiment calculator doesn't deploy.
-          # lifecycle:
-          #   postStart:
-          #     httpGet:
-          #       host: {{ .Values.env.stanHost }}
-          #       port: {{ .Values.env.stanPort }}
-          #       path: {{ .Values.httpstan.healthPath }}
-          #       scheme: HTTP
+          lifecycle:
+            postStart:
+              httpGet:
+                port: {{ .Values.env.stanPort }}
+                path: {{ .Values.httpstan.healthPath }}
+                scheme: HTTP
           env:
             - name: BUCKETEER_EXPERIMENT_CALCULATOR_PROJECT
               value: "{{ .Values.env.project }}"
