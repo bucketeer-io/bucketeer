@@ -24,6 +24,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	environmentdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -38,7 +39,6 @@ import (
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func TestNewEvaluationRealtimeCountPersister(t *testing.T) {

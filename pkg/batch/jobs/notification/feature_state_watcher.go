@@ -18,6 +18,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/wrappers"
+	"go.uber.org/zap"
+
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -27,8 +30,6 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
 	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
-	"github.com/golang/protobuf/ptypes/wrappers"
-	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/job"
 )

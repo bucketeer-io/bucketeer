@@ -18,6 +18,7 @@ import (
 	"context"
 	"time"
 
+	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -26,7 +27,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/job"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
 )
 
 const (
