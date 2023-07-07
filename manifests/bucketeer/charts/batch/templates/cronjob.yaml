@@ -7,7 +7,7 @@ metadata:
     app: {{ template "batch-server.name" . }}
     chart: {{ template "batch-server.chart" . }}
     release: {{ template "batch-server.fullname" . }}
-    heritage: {{ .Release.Service }} 
+    heritage: {{ .Release.Service }}
 spec:
   schedule: "*/30 * * * *"
   jobTemplate:
@@ -15,14 +15,20 @@ spec:
       template:
         spec:
           containers:
-          - name: hello
-            image: busybox:1.28
-            imagePullPolicy: IfNotPresent
-            command:
-            - /bin/sh
-            - -c
-            - curl
-          restartPolicy: OnFailure
+            - name: experiment-status-updater
+              image: curlimages/curl:8.1.2
+              imagePullPolicy: IfNotPresent
+              command:
+                - "curl"
+              args:
+                - "-X"
+                - "POST"
+                - "-d"
+                - '{"job": "ExperimentStatusUpdater"}'
+                - "-H"
+                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+          restartPolicy: Never
 
 ---
 apiVersion: batch/v1
@@ -42,14 +48,20 @@ spec:
       template:
         spec:
           containers:
-          - name: hello
-            image: busybox:1.28
-            imagePullPolicy: IfNotPresent
-            command:
-            - /bin/sh
-            - -c
-            - date; echo Hello from the Kubernetes cluster
-          restartPolicy: OnFailure
+            - name: experiment-running-watcher
+              image: curlimages/curl:8.1.2
+              imagePullPolicy: IfNotPresent
+              command:
+                - "curl"
+              args:
+                - "-X"
+                - "POST"
+                - "-d"
+                - '{"job": "ExperimentRunningWatcher"}'
+                - "-H"
+                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+          restartPolicy: Never
 
 ---
 apiVersion: batch/v1
@@ -69,14 +81,20 @@ spec:
       template:
         spec:
           containers:
-          - name: hello
-            image: busybox:1.28
-            imagePullPolicy: IfNotPresent
-            command:
-            - /bin/sh
-            - -c
-            - curl
-          restartPolicy: OnFailure
+            - name: feature-state-watcher
+              image: curlimages/curl:8.1.2
+              imagePullPolicy: IfNotPresent
+              command:
+                - "curl"
+              args:
+                - "-X"
+                - "POST"
+                - "-d"
+                - '{"job": "FeatureStateWatcher"}'
+                - "-H"
+                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+          restartPolicy: Never
 
 ---
 apiVersion: batch/v1
@@ -97,14 +115,20 @@ spec:
       template:
         spec:
           containers:
-          - name: hello
-            image: busybox:1.28
-            imagePullPolicy: IfNotPresent
-            command:
-            - /bin/sh
-            - -c
-            - curl
-          restartPolicy: OnFailure
+            - name: mau-count-watcher
+              image: curlimages/curl:8.1.2
+              imagePullPolicy: IfNotPresent
+              command:
+                - "curl"
+              args:
+                - "-X"
+                - "POST"
+                - "-d"
+                - '{"job": "MauCountWatcher"}'
+                - "-H"
+                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+          restartPolicy: Never
 
 
 ---
@@ -125,14 +149,20 @@ spec:
       template:
         spec:
           containers:
-          - name: hello
-            image: busybox:1.28
-            imagePullPolicy: IfNotPresent
-            command:
-            - /bin/sh
-            - -c
-            - curl
-          restartPolicy: OnFailure
+            - name: ops-datetime-watcher
+              image: curlimages/curl:8.1.2
+              imagePullPolicy: IfNotPresent
+              command:
+                - "curl"
+              args:
+                - "-X"
+                - "POST"
+                - "-d"
+                - '{"job": "DatetimeWatcher"}'
+                - "-H"
+                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+          restartPolicy: Never
 
 
 ---
@@ -153,11 +183,17 @@ spec:
       template:
         spec:
           containers:
-          - name: hello
-            image: busybox:1.28
-            imagePullPolicy: IfNotPresent
-            command:
-            - /bin/sh
-            - -c
-            - curl
-          restartPolicy: OnFailure
+            - name: ops-event-count-watcher
+              image: curlimages/curl:8.1.2
+              imagePullPolicy: IfNotPresent
+              command:
+                - "curl"
+              args:
+                - "-X"
+                - "POST"
+                - "-d"
+                - '{"job": "EventCountWatcher"}'
+                - "-H"
+                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+          restartPolicy: Never

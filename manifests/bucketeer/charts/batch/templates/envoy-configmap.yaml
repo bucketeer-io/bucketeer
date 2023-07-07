@@ -22,13 +22,13 @@ data:
           port_value: 8001
     static_resources:
       clusters:
-        - name: batch-server
+        - name: batch
           type: strict_dns
           lb_policy: round_robin
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           load_assignment:
-            cluster_name: batch-server
+            cluster_name: batch
             endpoints:
               - lb_endpoints:
                   - endpoint:
@@ -118,7 +118,7 @@ data:
                         typed_config:
                           '@type': type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
                           cluster_min_healthy_percentages:
-                            batch-server:
+                            batch:
                               value: 25
                           headers:
                             - name: :path
@@ -137,9 +137,9 @@ data:
                                   - name: content-type
                                     string_match:
                                       exact: application/grpc
-                                prefix: /
+                                prefix: /bucketeer.batch.BatchService
                               route:
-                                cluster: batch-server
+                                cluster: batch
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx

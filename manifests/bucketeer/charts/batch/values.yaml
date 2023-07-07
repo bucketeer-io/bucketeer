@@ -66,3 +66,7 @@ resources: {}
 
 serviceAccount:
   annotations: {}
+
+cronjob:
+  token:
+  webGatewayPort: 9000
