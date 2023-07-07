@@ -63,7 +63,7 @@ func (s *BatchService) ExecuteBatchJob(
 	var err error
 	resp := &batch.BatchJobResponse{}
 	switch req.Job {
-	case batch.BatchJob_ExprimentStatusUpdater:
+	case batch.BatchJob_ExperimentStatusUpdater:
 		err = s.experimentStatusUpdater.Run(ctx)
 	case batch.BatchJob_ExperimentRunningWatcher:
 		err = s.experimentRunningWatcher.Run(ctx)

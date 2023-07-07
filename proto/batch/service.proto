@@ -18,7 +18,7 @@ package bucketeer.batch;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/batch";
 
 enum BatchJob {
-  ExprimentStatusUpdater = 0;
+  ExperimentStatusUpdater = 0;
   ExperimentRunningWatcher = 1;
   FeatureStateWatcher = 2;
   MauCountWatcher = 3;
