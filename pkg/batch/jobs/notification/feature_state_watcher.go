@@ -24,14 +24,13 @@ import (
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/job"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
 	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
-
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 )
 
 type FeatureWatcher struct {

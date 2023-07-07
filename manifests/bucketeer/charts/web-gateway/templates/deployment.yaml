@@ -61,6 +61,9 @@ spec:
         - name: envoy-migration-descriptor-secret
           secret:
             secretName: {{ template "web-gateway.fullname" . }}-migration
+        - name: envoy-batch-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-batch
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
@@ -127,6 +130,9 @@ spec:
               readOnly: true
             - name: envoy-migration-descriptor-secret
               mountPath: /usr/local/migration-secret
+              readOnly: true
+            - name: envoy-batch-descriptor-secret
+              mountPath: /usr/local/batch-secret
               readOnly: true
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
