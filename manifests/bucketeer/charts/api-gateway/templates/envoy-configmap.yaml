@@ -176,17 +176,6 @@ data:
                     # set longer timeout than lb session timeout (600s)
                     idle_timeout: 620s
                   http_filters:
-                    - name: envoy.filters.http.health_check
-                      typed_config:
-                        "@type": type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
-                        cluster_min_healthy_percentages:
-                          api-gateway:
-                            value: 25
-                        pass_through_mode: false
-                        headers:
-                          - name: :path
-                            string_match:
-                              exact: /health
                     - name: envoy.filters.http.cors
                     - name: envoy.filters.http.grpc_web
                     - name: envoy.filters.http.grpc_json_transcoder
