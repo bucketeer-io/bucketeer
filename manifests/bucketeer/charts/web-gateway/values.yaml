@@ -34,9 +34,14 @@ ingress:
   host:
   staticIPName:
 health:
-  initialDelaySeconds: 10
-  periodSeconds: 10
-  failureThreshold: 10
+  livenessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 3
+    failureThreshold: 5
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 3
+    failureThreshold: 2
 resources: {}
 affinity: {}
 nodeSelector: {}
