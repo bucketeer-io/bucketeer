@@ -3252,7 +3252,7 @@
             "name": "BatchJob",
             "enum_fields": [
               {
-                "name": "ExprimentStatusUpdater"
+                "name": "ExperimentStatusUpdater"
               },
               {
                 "name": "ExperimentRunningWatcher",

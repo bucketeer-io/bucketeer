@@ -18,11 +18,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/bucketeer-io/bucketeer/pkg/job"
-
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
+	"github.com/bucketeer-io/bucketeer/pkg/job"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/proto/batch"
 )
