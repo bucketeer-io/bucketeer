@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PROTOC_VERSION: 3.18.1
+  PROTOC_VERSION: 18.1
   GO_VERSION: 1.20.4
   GOLANGCI_LINT: v1.51.2
   PROTOLOCK_VERSION: v0.15.0

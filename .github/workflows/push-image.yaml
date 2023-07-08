@@ -31,7 +31,7 @@ on:
 env:
   GHCR_REGISTRY: ghcr.io/bucketeer-io
   GAR_REGISTRY: asia-docker.pkg.dev
-  PROTOC_VERSION: 3.18.1
+  PROTOC_VERSION: 18.1
   PROTOC_GEN_GO_VERSION: v1.5.2
   GO_VERSION: 1.20.4
   PYTHON_VERSION: 3.7.6
