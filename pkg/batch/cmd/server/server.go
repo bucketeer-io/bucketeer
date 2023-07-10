@@ -48,6 +48,8 @@ import (
 
 const command = "server"
 
+var serverShutDownTimeout = 10 * time.Second
+
 type server struct {
 	*kingpin.CmdClause
 	// Common
@@ -134,7 +136,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer mysqlClient.Close()
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
@@ -151,7 +152,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer notificationClient.Close()
 
 	environmentClient, err := environmentclient.NewClient(*s.environmentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -163,7 +163,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer environmentClient.Close()
 
 	eventCounterClient, err := ecclient.NewClient(*s.eventCounterService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -175,7 +174,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer eventCounterClient.Close()
 
 	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -187,7 +185,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer featureClient.Close()
 
 	experimentClient, err := experimentclient.NewClient(*s.experimentService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -199,7 +196,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer experimentClient.Close()
 
 	autoOpsClient, err := autoopsclient.NewClient(*s.autoOpsService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -211,7 +207,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	defer autoOpsClient.Close()
 
 	targetStore := targetstore.NewTargetStore(
 		environmentClient,
@@ -220,7 +215,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		targetstore.WithMetrics(registerer),
 		targetstore.WithLogger(logger),
 	)
-	defer targetStore.Stop()
 	go targetStore.Run()
 
 	autoOpsExecutor := opsexecutor.NewAutoOpsExecutor(
@@ -300,8 +294,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 		rpc.WithHandler("/health", healthChecker),
 	)
-	defer server.Stop(10 * time.Second)
 	go server.Run()
+
+	defer func() {
+		server.Stop(serverShutDownTimeout)
+		time.Sleep(serverShutDownTimeout)
+		targetStore.Stop()
+		notificationClient.Close()
+		experimentClient.Close()
+		environmentClient.Close()
+		eventCounterClient.Close()
+		featureClient.Close()
+		autoOpsClient.Close()
+		mysqlClient.Close()
+	}()
 
 	<-ctx.Done()
 	return nil
