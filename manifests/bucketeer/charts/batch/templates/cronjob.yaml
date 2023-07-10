@@ -9,7 +9,7 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: "*/30 * * * *"
+  schedule: {{ .Values.cronjob.experimentStatusUpdaterSchedule }}
   jobTemplate:
     spec:
       template:
@@ -26,7 +26,7 @@ spec:
                 - "-d"
                 - '{"job": "ExperimentStatusUpdater"}'
                 - "-H"
-                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "authorization: bearer {{ template "service-token-secret" . }}"
                 - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
           restartPolicy: Never
 
@@ -42,7 +42,7 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: "0 1 * * *"
+  schedule: {{ .Values.cronjob.experimentRunningWatcherSchedule }}
   jobTemplate:
     spec:
       template:
@@ -59,7 +59,7 @@ spec:
                 - "-d"
                 - '{"job": "ExperimentRunningWatcher"}'
                 - "-H"
-                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "authorization: bearer {{ template "service-token-secret" . }}"
                 - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
           restartPolicy: Never
 
@@ -75,7 +75,7 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: "0 1 * * MON"
+  schedule: {{ .Values.cronjob.featureStateWatcherSchedule }}
   jobTemplate:
     spec:
       template:
@@ -92,7 +92,7 @@ spec:
                 - "-d"
                 - '{"job": "FeatureStateWatcher"}'
                 - "-H"
-                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "authorization: bearer {{ template "service-token-secret" . }}"
                 - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
           restartPolicy: Never
 
@@ -109,7 +109,7 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   timeZone: {{ .Values.env.timezone }}
-  schedule: "0 1 1 * *"
+  schedule: {{ .Values.cronjob.mauCountWatcherSchedule }}
   jobTemplate:
     spec:
       template:
@@ -126,7 +126,7 @@ spec:
                 - "-d"
                 - '{"job": "MauCountWatcher"}'
                 - "-H"
-                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "authorization: bearer {{ template "service-token-secret" . }}"
                 - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
           restartPolicy: Never
 
@@ -143,7 +143,7 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: "* * * * *"
+  schedule: {{ .Values.cronjob.opsDatetimeWatcherSchedule }}
   jobTemplate:
     spec:
       template:
@@ -160,7 +160,7 @@ spec:
                 - "-d"
                 - '{"job": "DatetimeWatcher"}'
                 - "-H"
-                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "authorization: bearer {{ template "service-token-secret" . }}"
                 - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
           restartPolicy: Never
 
@@ -177,7 +177,7 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: "* * * * *"
+  schedule: {{ .Values.cronjob.opsEventCountWatcherSchedule }}}
   jobTemplate:
     spec:
       template:
@@ -194,6 +194,6 @@ spec:
                 - "-d"
                 - '{"job": "EventCountWatcher"}'
                 - "-H"
-                - "authorization: bearer {{ .Values.cronjob.token }}"
+                - "authorization: bearer {{ template "service-token-secret" . }}"
                 - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
           restartPolicy: Never

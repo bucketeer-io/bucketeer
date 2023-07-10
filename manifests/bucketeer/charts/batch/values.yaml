@@ -34,8 +34,8 @@ replicaCount: 1
 
 envoy:
   image:
-    repository: envoyproxy/envoy-alpine
-    tag: v1.21.1
+    repository: ghcr.io/bucketeer-io/bucketeer-envoy
+    tag: v1.26.2
     pullPolicy: IfNotPresent
   config:
   port: 9000
@@ -68,5 +68,10 @@ serviceAccount:
   annotations: {}
 
 cronjob:
-  token:
+  experimentStatusUpdaterSchedule: "*/30 * * * *"
+  experimentRunningWatcherSchedule: "0 1 * * *"
+  featureStateWatcherSchedule: "0 1 * * MON"
+  mauCountWatcherSchedule: "0 1 1 * *"
+  opsDatetimeWatcherSchedule: "* * * * *"
+  opsEventCountWatcherSchedule: "* * * * *"
   webGatewayPort: 9000
