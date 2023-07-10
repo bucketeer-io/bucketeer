@@ -11,8 +11,8 @@ tls:
     key:
 envoy:
   image:
-    repository: envoyproxy/envoy-alpine
-    tag: v1.21.1
+    repository: ghcr.io/bucketeer-io/bucketeer-envoy
+    tag: v1.26.2
     pullPolicy: IfNotPresent
   serviceCluster: bucketeer
   adminPort: 8001
