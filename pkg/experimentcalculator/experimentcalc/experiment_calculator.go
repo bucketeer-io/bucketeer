@@ -131,7 +131,8 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 			}
 			if ex.Status == experiment.Experiment_STOPPED &&
 				now.Unix()-ex.StopAt > 2*day {
-				// experiment stopped and 2 days passed
+				// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
+				// we still calculate the results for two days after it stopped.
 				continue
 			}
 			experimentResult, calculationErr := e.createExperimentResult(ctx, env.Namespace, ex)
