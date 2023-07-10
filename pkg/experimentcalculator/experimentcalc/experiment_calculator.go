@@ -129,6 +129,11 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 				// experiment not started yet
 				continue
 			}
+			if ex.Status == experiment.Experiment_STOPPED &&
+				now.Unix()-ex.StopAt > 2*day {
+				// experiment stopped and 2 days passed
+				continue
+			}
 			experimentResult, calculationErr := e.createExperimentResult(ctx, env.Namespace, ex)
 			if calculationErr != nil {
 				e.logger.Error("ExperimentCalculator failed to calculate experiment result",
@@ -154,7 +159,6 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 				)
 				continue
 			}
-			e.updateExperimentStatus(ctx, env.Namespace, ex, now)
 		}
 	}
 }
@@ -257,6 +261,7 @@ func (e ExperimentCalculator) listExperiments(
 		Statuses: []experiment.Experiment_Status{
 			experiment.Experiment_WAITING,
 			experiment.Experiment_RUNNING,
+			experiment.Experiment_STOPPED,
 		},
 	}
 	resp, err := e.experimentClient.ListExperiments(ctx, req)
@@ -578,54 +583,6 @@ func (e ExperimentCalculator) binomialModelSample(
 
 	calculationHistogram.WithLabelValues(binomialModelSampleMethod).Observe(time.Since(startTime).Seconds())
 	return variationResults, nil
-}
-
-func (e ExperimentCalculator) updateExperimentStatus(
-	ctx context.Context,
-	namespace string,
-	ex *experiment.Experiment,
-	now time.Time,
-) {
-	if ex.Status == experiment.Experiment_RUNNING ||
-		ex.Status == experiment.Experiment_WAITING {
-		twoDaysAgo := now.Add(-2 * 24 * time.Hour).Unix()
-		if ex.StopAt < twoDaysAgo {
-			req := &experiment.FinishExperimentRequest{
-				EnvironmentNamespace: namespace,
-				Id:                   ex.Id,
-				Command:              &experiment.FinishExperimentCommand{},
-			}
-			_, err := e.experimentClient.FinishExperiment(ctx, req)
-			if err != nil {
-				e.logger.Error("Failed to finish experiment",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("experimentId", ex.Id),
-						zap.Error(err),
-					)...,
-				)
-			}
-			return
-		}
-	}
-	if ex.Status == experiment.Experiment_WAITING {
-		if ex.StartAt <= now.Unix() {
-			req := &experiment.StartExperimentRequest{
-				EnvironmentNamespace: namespace,
-				Id:                   ex.Id,
-				Command:              &experiment.StartExperimentCommand{},
-			}
-			_, err := e.experimentClient.StartExperiment(ctx, req)
-			if err != nil {
-				e.logger.Error("Failed to start experiment",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("experimentId", ex.Id),
-						zap.Error(err),
-					)...,
-				)
-			}
-			return
-		}
-	}
 }
 
 //-------------------------------------utility functions----------------------------------------------
