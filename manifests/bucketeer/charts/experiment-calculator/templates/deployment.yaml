@@ -69,12 +69,6 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
-          lifecycle:
-            postStart:
-              httpGet:
-                port: {{ .Values.env.stanPort }}
-                path: {{ .Values.httpstan.healthPath }}
-                scheme: HTTP
           env:
             - name: BUCKETEER_EXPERIMENT_CALCULATOR_PROJECT
               value: "{{ .Values.env.project }}"
