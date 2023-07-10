@@ -23,9 +23,9 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentclientmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 	sendermock "github.com/bucketeer-io/bucketeer/pkg/notification/sender/mock"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -132,7 +132,7 @@ func newFeatureWatcherWithMock(t *testing.T, c *gomock.Controller) *FeatureWatch
 		featureClient:     featureclientmock.NewMockClient(c),
 		sender:            sendermock.NewMockSender(c),
 		logger:            zap.NewNop(),
-		opts: &job.Options{
+		opts: &jobs.Options{
 			Timeout: 5 * time.Minute,
 		},
 	}

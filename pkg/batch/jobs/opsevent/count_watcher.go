@@ -21,8 +21,8 @@ import (
 	"go.uber.org/zap"
 
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
@@ -32,16 +32,16 @@ type DatetimeWatcher struct {
 	environmentLister targetstore.EnvironmentLister
 	autoOpsRuleLister targetstore.AutoOpsRuleLister
 	autoOpsExecutor   executor.AutoOpsExecutor
-	opts              *job.Options
+	opts              *jobs.Options
 	logger            *zap.Logger
 }
 
 func NewDatetimeWatcher(
 	targetStore targetstore.TargetStore,
 	autoOpsExecutor executor.AutoOpsExecutor,
-	opts ...job.Option) job.Job {
+	opts ...jobs.Option) jobs.Job {
 
-	dopts := &job.Options{
+	dopts := &jobs.Options{
 		Timeout: 5 * time.Minute,
 		Logger:  zap.NewNop(),
 	}

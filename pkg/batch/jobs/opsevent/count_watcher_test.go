@@ -27,10 +27,10 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	eccmock "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	executormock "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor/mock"
 	targetstoremock "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore/mock"
@@ -57,7 +57,7 @@ func newNewCountWatcherWithMock(t *testing.T, mockController *gomock.Controller)
 		featureClient:      ftmock.NewMockClient(mockController),
 		autoOpsExecutor:    executormock.NewMockAutoOpsExecutor(mockController),
 		logger:             logger,
-		opts: &job.Options{
+		opts: &jobs.Options{
 			Timeout: time.Minute,
 		},
 	}

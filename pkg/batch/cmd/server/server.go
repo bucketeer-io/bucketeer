@@ -24,6 +24,7 @@ import (
 
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/api"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
@@ -33,7 +34,6 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
@@ -245,35 +245,35 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experiment.NewExperimentStatusUpdater(
 			environmentClient,
 			experimentClient,
-			job.WithLogger(logger),
+			jobs.WithLogger(logger),
 		),
 		notification.NewExperimentRunningWatcher(
 			environmentClient,
 			experimentClient,
 			notificationSender,
-			job.WithTimeout(1*time.Minute),
-			job.WithLogger(logger),
+			jobs.WithTimeout(1*time.Minute),
+			jobs.WithLogger(logger),
 		),
 		notification.NewFeatureWatcher(
 			environmentClient,
 			featureClient,
 			notificationSender,
-			job.WithTimeout(1*time.Minute),
-			job.WithLogger(logger),
+			jobs.WithTimeout(1*time.Minute),
+			jobs.WithLogger(logger),
 		),
 		notification.NewMAUCountWatcher(
 			environmentClient,
 			eventCounterClient,
 			notificationSender,
 			location,
-			job.WithTimeout(60*time.Minute),
-			job.WithLogger(logger),
+			jobs.WithTimeout(60*time.Minute),
+			jobs.WithLogger(logger),
 		),
 		opsevent.NewDatetimeWatcher(
 			targetStore,
 			autoOpsExecutor,
-			job.WithTimeout(5*time.Minute),
-			job.WithLogger(logger),
+			jobs.WithTimeout(5*time.Minute),
+			jobs.WithLogger(logger),
 		),
 		opsevent.NewCountWatcher(
 			mysqlClient,
@@ -281,8 +281,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			eventCounterClient,
 			featureClient,
 			autoOpsExecutor,
-			job.WithTimeout(5*time.Minute),
-			job.WithLogger(logger),
+			jobs.WithTimeout(5*time.Minute),
+			jobs.WithLogger(logger),
 		),
 		logger,
 	)

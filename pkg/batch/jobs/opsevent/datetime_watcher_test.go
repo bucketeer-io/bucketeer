@@ -25,8 +25,8 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	executormock "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor/mock"
 	targetstoremock "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore/mock"
@@ -47,7 +47,7 @@ func newNewDatetimeWatcherWithMock(t *testing.T, mockController *gomock.Controll
 		autoOpsRuleLister: targetstoremock.NewMockAutoOpsRuleLister(mockController),
 		autoOpsExecutor:   executormock.NewMockAutoOpsExecutor(mockController),
 		logger:            logger,
-		opts: &job.Options{
+		opts: &jobs.Options{
 			Timeout: time.Minute,
 		},
 	}

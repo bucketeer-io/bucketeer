@@ -21,9 +21,9 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -37,7 +37,7 @@ type MAUCountWatcher struct {
 	eventCounterClient ecclient.Client
 	sender             sender.Sender
 	location           *time.Location
-	opts               *job.Options
+	opts               *jobs.Options
 	logger             *zap.Logger
 }
 
@@ -46,8 +46,8 @@ func NewMAUCountWatcher(
 	eventCounterClient ecclient.Client,
 	sender sender.Sender,
 	location *time.Location,
-	opts ...job.Option) job.Job {
-	dopts := &job.Options{
+	opts ...jobs.Option) jobs.Job {
+	dopts := &jobs.Options{
 		Timeout: 5 * time.Minute,
 		Logger:  zap.NewNop(),
 	}

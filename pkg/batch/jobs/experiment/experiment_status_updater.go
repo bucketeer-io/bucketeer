@@ -21,10 +21,10 @@ import (
 	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
@@ -36,16 +36,16 @@ const (
 type ExperimentStatusUpdater struct {
 	environmentClient environmentclient.Client
 	experimentClient  experimentclient.Client
-	opts              *job.Options
+	opts              *jobs.Options
 	logger            *zap.Logger
 }
 
 func NewExperimentStatusUpdater(
 	environmentClient environmentclient.Client,
 	experimentClient experimentclient.Client,
-	opts ...job.Option) job.Job {
+	opts ...jobs.Option) jobs.Job {
 
-	dopts := &job.Options{
+	dopts := &jobs.Options{
 		Timeout: 1 * time.Minute,
 		Logger:  zap.NewNop(),
 	}

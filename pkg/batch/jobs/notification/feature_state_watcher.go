@@ -21,10 +21,10 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -37,7 +37,7 @@ type FeatureWatcher struct {
 	environmentClient environmentclient.Client
 	featureClient     featureclient.Client
 	sender            sender.Sender
-	opts              *job.Options
+	opts              *jobs.Options
 	logger            *zap.Logger
 }
 
@@ -45,9 +45,9 @@ func NewFeatureWatcher(
 	environmentClient environmentclient.Client,
 	featureClient featureclient.Client,
 	sender sender.Sender,
-	opts ...job.Option) job.Job {
+	opts ...jobs.Option) jobs.Job {
 
-	dopts := &job.Options{
+	dopts := &jobs.Options{
 		Timeout: 5 * time.Minute,
 		Logger:  zap.NewNop(),
 	}

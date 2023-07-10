@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	ftclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -42,7 +43,7 @@ type CountWatcher struct {
 	eventCounterClient ecclient.Client
 	featureClient      ftclient.Client
 	autoOpsExecutor    executor.AutoOpsExecutor
-	opts               *job.Options
+	opts               *jobs.Options
 	logger             *zap.Logger
 }
 
@@ -52,9 +53,9 @@ func NewCountWatcher(
 	eventCounterClient ecclient.Client,
 	featureClient ftclient.Client,
 	autoOpsExecutor executor.AutoOpsExecutor,
-	opts ...job.Option,
+	opts ...jobs.Option,
 ) job.Job {
-	dopts := &job.Options{
+	dopts := &jobs.Options{
 		Timeout: 5 * time.Minute,
 		Logger:  zap.NewNop(),
 	}

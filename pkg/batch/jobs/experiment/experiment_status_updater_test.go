@@ -24,8 +24,8 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
@@ -128,7 +128,7 @@ func TestUpdateStatus(t *testing.T) {
 func newMockExperimentStatusUpdater(t *testing.T, c *gomock.Controller) *ExperimentStatusUpdater {
 	return &ExperimentStatusUpdater{
 		experimentClient: ecmock.NewMockClient(c),
-		opts: &job.Options{
+		opts: &jobs.Options{
 			Timeout: 5 * time.Second,
 		},
 		logger: zap.NewNop().Named("test-experiment-status-updater"),

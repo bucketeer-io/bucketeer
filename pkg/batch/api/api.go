@@ -21,7 +21,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/bucketeer-io/bucketeer/pkg/job"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/proto/batch"
 )
@@ -31,19 +31,19 @@ var (
 )
 
 type BatchService struct {
-	experimentStatusUpdater  job.Job
-	experimentRunningWatcher job.Job
-	featureWatcher           job.Job
-	mauCountWatcher          job.Job
-	datetimeWatcher          job.Job
-	countWatcher             job.Job
+	experimentStatusUpdater  jobs.Job
+	experimentRunningWatcher jobs.Job
+	featureWatcher           jobs.Job
+	mauCountWatcher          jobs.Job
+	datetimeWatcher          jobs.Job
+	countWatcher             jobs.Job
 	logger                   *zap.Logger
 }
 
 func NewBatchService(
 	experimentStatusUpdater, experimentRunningWatcher,
 	featureWatcher, mauCountWatcher,
-	datetimeWatcher, eventCountWatcher job.Job,
+	datetimeWatcher, eventCountWatcher jobs.Job,
 	logger *zap.Logger,
 ) *BatchService {
 	return &BatchService{
