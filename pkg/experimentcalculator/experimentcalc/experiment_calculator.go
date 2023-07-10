@@ -125,10 +125,6 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 			return
 		}
 		for _, ex := range experiments {
-			if ex.StartAt <= now.Unix() {
-				// experiment not started yet
-				continue
-			}
 			if ex.Status == experiment.Experiment_STOPPED &&
 				now.Unix()-ex.StopAt > 2*day {
 				// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
@@ -260,7 +256,6 @@ func (e ExperimentCalculator) listExperiments(
 		Cursor:               "",
 		EnvironmentNamespace: namespace,
 		Statuses: []experiment.Experiment_Status{
-			experiment.Experiment_WAITING,
 			experiment.Experiment_RUNNING,
 			experiment.Experiment_STOPPED,
 		},
