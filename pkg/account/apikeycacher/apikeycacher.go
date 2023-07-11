@@ -238,14 +238,17 @@ func (c *EnvAPIKeyCacher) handleAPIKeyEvent(msg *puller.Message, event *domainev
 		c.logger.Warn("Message contains an empty apiKeyID", zap.Any("event", event))
 		return
 	}
-	envResp, err := c.environmentClient.GetEnvironment(c.ctx, &environmentproto.GetEnvironmentRequest{
-		Id: event.EnvironmentNamespace,
-	})
+	envResp, err := c.environmentClient.GetEnvironmentByNamespace(
+		c.ctx,
+		&environmentproto.GetEnvironmentByNamespaceRequest{
+			Namespace: event.EnvironmentNamespace,
+		},
+	)
 	if err != nil {
 		if code := status.Code(err); code == grpccodes.NotFound {
 			msg.Ack()
 			handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
-			c.logger.Error("The specified environmentNamespace ID does not exist",
+			c.logger.Error("The specified environmentNamespace does not exist",
 				zap.Error(err),
 				zap.String("apiKeyID", apiKeyID),
 				zap.String("environmentNamespace", event.EnvironmentNamespace),
@@ -329,14 +332,17 @@ func (c *EnvAPIKeyCacher) handleEnvironmentEvent(msg *puller.Message, event *dom
 		return
 	}
 	environmentNamespace := ede.Namespace
-	envResp, err := c.environmentClient.GetEnvironment(c.ctx, &environmentproto.GetEnvironmentRequest{
-		Id: event.EnvironmentNamespace,
-	})
+	envResp, err := c.environmentClient.GetEnvironmentByNamespace(
+		c.ctx,
+		&environmentproto.GetEnvironmentByNamespaceRequest{
+			Namespace: event.EnvironmentNamespace,
+		},
+	)
 	if err != nil {
 		if code := status.Code(err); code == grpccodes.NotFound {
 			msg.Ack()
 			handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
-			c.logger.Error("The specified environmentNamespace ID does not exist",
+			c.logger.Error("The specified environmentNamespace does not exist",
 				zap.Error(err),
 				zap.String("environmentNamespace", event.EnvironmentNamespace),
 				zap.Any("event", event),

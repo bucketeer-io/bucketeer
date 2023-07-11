@@ -169,7 +169,11 @@ data:
                   request_timeout: 10800s
                   http_filters:
                     - name: envoy.filters.http.cors
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
                     - name: envoy.filters.http.grpc_web
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
                     - name: envoy.filters.http.grpc_json_transcoder
                       typed_config:
                         "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
@@ -270,6 +274,8 @@ data:
                         print_options:
                           always_print_primitive_fields: true
                     - name: envoy.filters.http.router
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                   route_config:
                     virtual_hosts:
                       - name: web-gateway

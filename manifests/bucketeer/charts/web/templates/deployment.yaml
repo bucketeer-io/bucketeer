@@ -44,7 +44,7 @@ spec:
                 command:
                   - "/bin/sh"
                   - "-c"
-                  - "sleep 5 && /usr/sbin/nginx -s quit"
+                  - "sleep 10; nginx -s quit"
           volumeMounts:
             - name: config
               mountPath: /var/nginx
