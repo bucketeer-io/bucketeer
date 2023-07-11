@@ -23,6 +23,11 @@ RUN python3 -m poetry build
 # Install the wheel
 RUN python3 -m pip install dist/*.whl
 
+# Pre Compile the model
+COPY ./model.stan ./model.stan
+COPY ./stan_model_compile.py ./stan_model_compile.py
+RUN python3 stan_model_compile.py
+
 EXPOSE 8080
 
 CMD ["python3", "-m", "httpstan", "--host", "0.0.0.0"]

@@ -27,6 +27,7 @@ import (
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	ft "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -51,6 +52,7 @@ type server struct {
 	flushSize     *int
 	flushInterval *time.Duration
 	flushTimeout  *time.Duration
+	timezone      *string
 	// pubsub
 	project                      *string
 	subscription                 *string
@@ -85,6 +87,7 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 		).Default("50").Int(),
 		flushInterval: cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
 		flushTimeout:  cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
+		timezone:      cmd.Flag("timezone", "Time zone").Required().String(),
 		subscription:  cmd.Flag("subscription", "Google PubSub subscription name.").String(),
 		topic:         cmd.Flag("topic", "Google PubSub topic name.").String(),
 		pullerNumGoroutines: cmd.Flag(
@@ -149,12 +152,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	defer featureClient.Close()
+	location, err := locale.GetLocation(*s.timezone)
+	if err != nil {
+		return err
+	}
 	writer, err := s.newBigQueryWriter(
 		ctx,
 		registerer,
 		logger,
 		experimentClient,
 		featureClient,
+		location,
 	)
 	if err != nil {
 		return err
@@ -220,6 +228,7 @@ func (s *server) newBigQueryWriter(
 	logger *zap.Logger,
 	exClient ec.Client,
 	ftClient ft.Client,
+	location *time.Location,
 ) (persister.Writer, error) {
 	var writer persister.Writer
 	var err error
@@ -233,6 +242,7 @@ func (s *server) newBigQueryWriter(
 			*s.project,
 			*s.bigQueryDataSet,
 			*s.bigQueryBatchSize,
+			location,
 		)
 	case evalGoalSvcName:
 		writer, err = persister.NewGoalEventWriter(
@@ -244,6 +254,7 @@ func (s *server) newBigQueryWriter(
 			*s.project,
 			*s.bigQueryDataSet,
 			*s.bigQueryBatchSize,
+			location,
 		)
 	default:
 		return nil, errUnknownSvcName

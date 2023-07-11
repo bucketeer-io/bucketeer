@@ -61,6 +61,8 @@ spec:
               value: "{{ .Values.env.port }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_MAX_MPS

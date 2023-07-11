@@ -38,6 +38,8 @@ import (
 )
 
 var (
+	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
+
 	feature = &featureproto.Feature{
 		Id:      "fid",
 		Version: int32(1),
@@ -198,6 +200,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(nil, errors.New("internal"))
@@ -218,6 +221,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(nil, ErrNoExperiments)
@@ -226,6 +230,38 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expected:           nil,
 			expectedErr:        ErrNoExperiments,
 			expectedRepeatable: true,
+		},
+		{
+			desc: "error: stop_at is older than 3 days",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      evaluationEvent.FeatureId,
+							FeatureVersion: evaluation.FeatureVersion,
+							Status:         exproto.Experiment_STOPPED,
+							StopAt:         time.Now().Unix() - 3*day,
+						},
+					},
+				}, nil)
+			},
+			input:              evaluationEvent,
+			expected:           nil,
+			expectedErr:        ErrNoExperiments,
+			expectedRepeatable: false,
 		},
 		{
 			desc: "error: experiment not found",
@@ -238,6 +274,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -257,7 +294,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "success: evaluation event",
+			desc: "success: evaluation event with running status",
 			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
@@ -267,6 +304,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -276,6 +314,51 @@ func TestConvToEvaluationEvent(t *testing.T) {
 							GoalIds:        []string{"goal-id"},
 							FeatureId:      evaluationEvent.FeatureId,
 							FeatureVersion: evaluation.FeatureVersion,
+							Status:         exproto.Experiment_RUNNING,
+						},
+					},
+				}, nil)
+			},
+			input: evaluationEvent,
+			expected: &epproto.EvaluationEvent{
+				Id:                   eventID,
+				FeatureId:            evaluationEvent.FeatureId,
+				FeatureVersion:       evaluationEvent.FeatureVersion,
+				UserData:             string(userData),
+				UserId:               evaluationEvent.UserId,
+				VariationId:          evaluationEvent.VariationId,
+				Reason:               evaluationEvent.Reason.Type.String(),
+				Tag:                  evaluationEvent.Tag,
+				SourceId:             evaluationEvent.SourceId.String(),
+				EnvironmentNamespace: environmentNamespace,
+				Timestamp:            time.Unix(evaluationEvent.Timestamp, 0).UnixMicro(),
+			},
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "success: evaluation event with stopped status",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      evaluationEvent.FeatureId,
+							FeatureVersion: evaluation.FeatureVersion,
+							Status:         exproto.Experiment_STOPPED,
+							StopAt:         time.Now().Unix() - 2*day,
 						},
 					},
 				}, nil)
@@ -351,6 +434,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(nil, errors.New("internal"))
@@ -383,6 +467,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
@@ -415,6 +500,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -454,6 +540,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -500,6 +587,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -548,6 +636,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -698,6 +787,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 func newEvalEventWriter(c *gomock.Controller) *evalEvtWriter {
 	return &evalEvtWriter{
 		experimentClient: ecmock.NewMockClient(c),
+		location:         jpLocation,
 		logger:           defaultOptions.logger,
 	}
 }
@@ -706,6 +796,7 @@ func newGoalEventWriter(c *gomock.Controller) *goalEvtWriter {
 	return &goalEvtWriter{
 		experimentClient: ecmock.NewMockClient(c),
 		featureClient:    ftmock.NewMockClient(c),
+		location:         jpLocation,
 		logger:           defaultOptions.logger,
 	}
 }

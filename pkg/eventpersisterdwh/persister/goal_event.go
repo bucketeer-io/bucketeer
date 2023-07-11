@@ -42,6 +42,7 @@ type goalEvtWriter struct {
 	experimentClient ec.Client
 	featureClient    ft.Client
 	flightgroup      singleflight.Group
+	location         *time.Location
 	logger           *zap.Logger
 }
 
@@ -53,6 +54,7 @@ func NewGoalEventWriter(
 	ftClient ft.Client,
 	project, ds string,
 	size int,
+	location *time.Location,
 ) (Writer, error) {
 	evt := epproto.GoalEvent{}
 	goalWriter, err := writer.NewWriter(
@@ -71,6 +73,7 @@ func NewGoalEventWriter(
 		writer:           storage.NewGoalEventWriter(goalWriter, size),
 		experimentClient: exClient,
 		featureClient:    ftClient,
+		location:         location,
 		logger:           l,
 	}, nil
 }
@@ -283,6 +286,7 @@ func (w *goalEvtWriter) listExperiments(
 					EnvironmentNamespace: environmentNamespace,
 					Statuses: []exproto.Experiment_Status{
 						exproto.Experiment_RUNNING,
+						exproto.Experiment_STOPPED,
 					},
 				})
 				if err != nil {
@@ -301,7 +305,18 @@ func (w *goalEvtWriter) listExperiments(
 		handledCounter.WithLabelValues(codeFailedToListExperiments).Inc()
 		return nil, err
 	}
-	return exp.([]*exproto.Experiment), nil
+	// Filter the stopped experiments
+	// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
+	// we still calculate the results for two days after it stopped.
+	now := time.Now().In(w.location)
+	experiments := make([]*exproto.Experiment, 0, len(exp.([]*exproto.Experiment)))
+	for _, e := range exp.([]*exproto.Experiment) {
+		if e.Status == exproto.Experiment_STOPPED && now.Unix()-e.StopAt > 2*day {
+			continue
+		}
+		experiments = append(experiments, e)
+	}
+	return experiments, nil
 }
 
 // TODO: Evaluate the user based on Feature Flag ID and version.
