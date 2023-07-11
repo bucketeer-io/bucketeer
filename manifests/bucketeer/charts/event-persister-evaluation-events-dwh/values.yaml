@@ -12,6 +12,7 @@ env:
   logLevel: info
   port: 9090
   metricsPort: 9002
+  timezone: UTC
   # egress services
   experimentService: localhost:9001
   featureService: localhost:9001
