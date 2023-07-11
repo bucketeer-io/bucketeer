@@ -79,7 +79,7 @@ export const FeatureDetailPage: FC = memo(() => {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-white h-full">
       <div className="pt-5 px-10">
         <FeatureHeader featureId={featureId} />
         <div className="hidden sm:block">
@@ -132,7 +132,13 @@ export const FeatureDetailPage: FC = memo(() => {
         <Route exact path={`${url}${PAGE_PATH_FEATURE_VARIATION}`}>
           <FeatureVariationsPage featureId={featureId} />
         </Route>
-        <Route exact path={`${url}${PAGE_PATH_FEATURE_AUTOOPS}`}>
+        <Route
+          exact
+          path={[
+            `${url}${PAGE_PATH_FEATURE_AUTOOPS}`,
+            `${url}${PAGE_PATH_FEATURE_AUTOOPS}/:operationId`,
+          ]}
+        >
           <FeatureAutoOpsPage featureId={featureId} />
         </Route>
         <Route exact path={`${url}${PAGE_PATH_FEATURE_HISTORY}`}>

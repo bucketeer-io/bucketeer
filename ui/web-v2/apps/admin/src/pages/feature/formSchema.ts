@@ -186,6 +186,56 @@ const autoOpsRulesSchema = yup.array().of(
   })
 );
 
+export const operationFormSchema = yup.object().shape({
+  opsType: yup.string().required(),
+  clauseType: yup.string().required(),
+  datetime: yup.object().shape({
+    time: yup
+      .date()
+      .test(
+        'isLaterThanNow',
+        intl.formatMessage(messages.input.error.notLaterThanCurrentTime),
+        function (value) {
+          const { from } = this as any;
+          if (from[1].value.clauseType === ClauseType.DATETIME) {
+            return value.getTime() > new Date().getTime();
+          }
+          return true;
+        }
+      ),
+  }),
+  eventRate: yup.object().shape({
+    variation: yup.string(),
+    goal: yup
+      .string()
+      .nullable()
+      .test(
+        'required',
+        intl.formatMessage(messages.input.error.required),
+        function (value) {
+          const { from } = this as any;
+          if (from[1].value.clauseType == ClauseType.EVENT_RATE) {
+            return value != null;
+          }
+          return true;
+        }
+      ),
+    minCount: yup
+      .number()
+      .transform((value) => (isNaN(value) ? undefined : value))
+      .required()
+      .min(1)
+      .max(AUTOOPS_MAX_MIN_COUNT),
+    threadsholdRate: yup
+      .number()
+      .transform((value) => (isNaN(value) ? undefined : value))
+      .required()
+      .moreThan(0)
+      .max(100),
+    operator: yup.string(),
+  }),
+});
+
 const tagsSchema = yup.array().min(FEATURE_TAG_MIN_SIZE).of(yup.string());
 
 export const switchEnabledFormSchema = yup.object().shape({

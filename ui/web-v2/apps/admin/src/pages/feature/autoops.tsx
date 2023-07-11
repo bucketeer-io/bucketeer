@@ -1,10 +1,11 @@
+import { Feature } from '@/proto/feature/feature_pb';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { useParams, useHistory } from 'react-router-dom';
-import * as yup from 'yup';
+// import { useParams, useHistory } from 'react-router-dom';
+// import * as yup from 'yup';
 
 import { DetailSkeleton } from '../../components/DetailSkeleton';
 import {
@@ -13,24 +14,27 @@ import {
   createInitialOpsEventRateClause,
   FeatureAutoOpsRulesForm,
 } from '../../components/FeatureAutoOpsRulesForm';
-import {
-  PAGE_PATH_FEATURES,
-  PAGE_PATH_FEATURE_AUTOOPS,
-  PAGE_PATH_ROOT,
-} from '../../constants/routing';
+// import {
+//   PAGE_PATH_FEATURES,
+//   PAGE_PATH_FEATURE_AUTOOPS,
+//   PAGE_PATH_ROOT,
+// } from '../../constants/routing';
 import { AppState } from '../../modules';
 import {
-  createAutoOpsRule,
-  deleteAutoOpsRule,
+  // createAutoOpsRule,
+  // deleteAutoOpsRule,
   listAutoOpsRules,
-  selectAll as selectAllAutoOpsRules,
-  updateAutoOpsRule,
+  // selectAll as selectAllAutoOpsRules,
+  // updateAutoOpsRule,
   UpdateAutoOpsRuleParams,
 } from '../../modules/autoOpsRules';
 import { selectById as selectFeatureById } from '../../modules/features';
 import { listGoals } from '../../modules/goals';
 import { useCurrentEnvironment } from '../../modules/me';
-import { AutoOpsRule, OpsType } from '../../proto/autoops/auto_ops_rule_pb';
+import {
+  //  AutoOpsRule,
+  OpsType,
+} from '../../proto/autoops/auto_ops_rule_pb';
 import {
   DatetimeClause,
   OpsEventRateClause,
@@ -42,15 +46,17 @@ import {
   ChangeDatetimeClauseCommand,
   ChangeOpsEventRateClauseCommand,
   CreateAutoOpsRuleCommand,
-  DeleteAutoOpsRuleCommand,
+  // DeleteAutoOpsRuleCommand,
   DeleteClauseCommand,
 } from '../../proto/autoops/command_pb';
 import { ListGoalsRequest } from '../../proto/experiment/service_pb';
-import { AddUserToVariationCommand } from '../../proto/feature/command_pb';
-import { Feature } from '../../proto/feature/feature_pb';
+// import { AddUserToVariationCommand } from '../../proto/feature/command_pb';
+// import { Feature } from '../../proto/feature/feature_pb';
 import { AppDispatch } from '../../store';
 
-import { autoOpsRulesFormSchema } from './formSchema';
+import { operationFormSchema } from './formSchema';
+
+// import { autoOpsRulesFormSchema } from './formSchema';
 
 interface FeatureAutoOpsPageProps {
   featureId: string;
@@ -59,22 +65,10 @@ interface FeatureAutoOpsPageProps {
 export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
   ({ featureId }) => {
     const dispatch = useDispatch<AppDispatch>();
-    const history = useHistory();
+    // const history = useHistory();
     const currentEnvironment = useCurrentEnvironment();
     const isFeatureLoading = useSelector<AppState, boolean>(
       (state) => state.features.loading,
-      shallowEqual
-    );
-    const isAutoOpsRuleLoading = useSelector<AppState, boolean>(
-      (state) => state.autoOpsRules.loading,
-      shallowEqual
-    );
-    const isLoading = isFeatureLoading || isAutoOpsRuleLoading;
-    const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
-      (state) =>
-        selectAllAutoOpsRules(state.autoOpsRules).filter(
-          (rule) => rule.featureId === featureId
-        ),
       shallowEqual
     );
     const [feature, getFeatureError] = useSelector<
@@ -84,127 +78,163 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       selectFeatureById(state.features, featureId),
       state.features.getFeatureError,
     ]);
+    const isAutoOpsRuleLoading = useSelector<AppState, boolean>(
+      (state) => state.autoOpsRules.loading,
+      shallowEqual
+    );
+    const isLoading = isFeatureLoading || isAutoOpsRuleLoading;
+
+    // const [feature, getFeatureError] = useSelector<
+    //   AppState,
+    //   [Feature.AsObject | undefined, SerializedError | null]
+    // >((state) => [
+    //   selectFeatureById(state.features, featureId),
+    //   state.features.getFeatureError,
+    // ]);
+
+    // const defaultValues = {
+    //   autoOpsRules: autoOpsRules.map((rule) => {
+    //     return {
+    //       id: rule.id,
+    //       featureId: rule.featureId,
+    //       triggeredAt: rule.triggeredAt,
+    //       opsType: rule.opsType.toString(),
+    //       clauses: rule.clausesList.map((clause) => {
+    //         const typeUrl = clause.clause.typeUrl;
+    //         const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+    //         if (type === ClauseType.EVENT_RATE) {
+    //           const opsEventRateClause = OpsEventRateClause.deserializeBinary(
+    //             clause.clause.value as Uint8Array
+    //           ).toObject();
+    //           return {
+    //             id: clause.id,
+    //             clauseType: ClauseType.EVENT_RATE.toString(),
+    //             opsEventRateClause: {
+    //               variation: opsEventRateClause.variationId,
+    //               goal: opsEventRateClause.goalId,
+    //               minCount: opsEventRateClause.minCount,
+    //               threadsholdRate: opsEventRateClause.threadsholdRate * 100,
+    //               operator: opsEventRateClause.operator.toString(),
+    //             },
+    //             datetimeClause: createInitialDatetimeClause(),
+    //           };
+    //         }
+    //         if (type === ClauseType.DATETIME) {
+    //           const datetimeClause = DatetimeClause.deserializeBinary(
+    //             clause.clause.value as Uint8Array
+    //           ).toObject();
+    //           return {
+    //             id: clause.id,
+    //             clauseType: ClauseType.DATETIME.toString(),
+    //             datetimeClause: {
+    //               time: new Date(datetimeClause.time * 1000),
+    //             },
+    //             opsEventRateClause: createInitialOpsEventRateClause(feature),
+    //           };
+    //         }
+    //       }),
+    //     };
+    //   }),
+    // };
+    // const methods = useForm({
+    //   resolver: yupResolver(autoOpsRulesFormSchema),
+    //   defaultValues: defaultValues,
+    //   mode: 'onChange',
+    // });
+    // const { handleSubmit, reset, trigger } = methods;
+
     const defaultValues = {
-      autoOpsRules: autoOpsRules.map((rule) => {
-        return {
-          id: rule.id,
-          featureId: rule.featureId,
-          triggeredAt: rule.triggeredAt,
-          opsType: rule.opsType.toString(),
-          clauses: rule.clausesList.map((clause) => {
-            const typeUrl = clause.clause.typeUrl;
-            const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
-            if (type === ClauseType.EVENT_RATE) {
-              const opsEventRateClause = OpsEventRateClause.deserializeBinary(
-                clause.clause.value as Uint8Array
-              ).toObject();
-              return {
-                id: clause.id,
-                clauseType: ClauseType.EVENT_RATE.toString(),
-                opsEventRateClause: {
-                  variation: opsEventRateClause.variationId,
-                  goal: opsEventRateClause.goalId,
-                  minCount: opsEventRateClause.minCount,
-                  threadsholdRate: opsEventRateClause.threadsholdRate * 100,
-                  operator: opsEventRateClause.operator.toString(),
-                },
-                datetimeClause: createInitialDatetimeClause(),
-              };
-            }
-            if (type === ClauseType.DATETIME) {
-              const datetimeClause = DatetimeClause.deserializeBinary(
-                clause.clause.value as Uint8Array
-              ).toObject();
-              return {
-                id: clause.id,
-                clauseType: ClauseType.DATETIME.toString(),
-                datetimeClause: {
-                  time: new Date(datetimeClause.time * 1000),
-                },
-                opsEventRateClause: createInitialOpsEventRateClause(feature),
-              };
-            }
-          }),
-        };
-      }),
+      opsType: OpsType.ENABLE_FEATURE,
+      clauseType: ClauseType.DATETIME,
+      datetime: createInitialDatetimeClause(),
+      eventRate: createInitialOpsEventRateClause(feature),
     };
+
     const methods = useForm({
-      resolver: yupResolver(autoOpsRulesFormSchema),
-      defaultValues: defaultValues,
+      resolver: yupResolver(operationFormSchema),
+      defaultValues,
       mode: 'onChange',
     });
-    const { handleSubmit, reset, trigger } = methods;
 
-    const handleUpdate = useCallback(
-      async (data) => {
-        const createAutoOpsRuleCommands = createCreateAutoOpsRuleCommands(
-          defaultValues.autoOpsRules,
-          data.autoOpsRules
-        );
-        const deleteAutoOpsRuleIds = createDeleteAutoOpsRuleIds(
-          defaultValues.autoOpsRules,
-          data.autoOpsRules
-        );
+    const handleRefetchAutoOpsRules = useCallback(() => {
+      dispatch(
+        listAutoOpsRules({
+          featureId: featureId,
+          environmentNamespace: currentEnvironment.namespace,
+        })
+      );
+    }, [dispatch]);
 
-        const updateAutoOpsRuleParams = createUpdateAutoOpsRuleParams(
-          currentEnvironment.id,
-          defaultValues.autoOpsRules,
-          data.autoOpsRules
-        );
+    // const handleUpdate = useCallback(
+    //   async (data) => {
+    //     const createAutoOpsRuleCommands = createCreateAutoOpsRuleCommands(
+    //       defaultValues.autoOpsRules,
+    //       data.autoOpsRules
+    //     );
+    //     const deleteAutoOpsRuleIds = createDeleteAutoOpsRuleIds(
+    //       defaultValues.autoOpsRules,
+    //       data.autoOpsRules
+    //     );
 
-        const promises = [];
+    //     const updateAutoOpsRuleParams = createUpdateAutoOpsRuleParams(
+    //       currentEnvironment.namespace,
+    //       defaultValues.autoOpsRules,
+    //       data.autoOpsRules
+    //     );
 
-        createAutoOpsRuleCommands.forEach((command) => {
-          promises.push(
-            new Promise((resolve) => {
-              dispatch(
-                createAutoOpsRule({
-                  environmentNamespace: currentEnvironment.id,
-                  command: command,
-                })
-              ).then((res) => {
-                resolve(res);
-              });
-            })
-          );
-        });
+    //     const promises = [];
 
-        deleteAutoOpsRuleIds.forEach((id) => {
-          promises.push(
-            new Promise((resolve) => {
-              dispatch(
-                deleteAutoOpsRule({
-                  environmentNamespace: currentEnvironment.id,
-                  id: id,
-                })
-              ).then((res) => {
-                resolve(res);
-              });
-            })
-          );
-        });
+    //     createAutoOpsRuleCommands.forEach((command) => {
+    //       promises.push(
+    //         new Promise((resolve) => {
+    //           dispatch(
+    //             createAutoOpsRule({
+    //               environmentNamespace: currentEnvironment.namespace,
+    //               command: command,
+    //             })
+    //           ).then((res) => {
+    //             resolve(res);
+    //           });
+    //         })
+    //       );
+    //     });
 
-        updateAutoOpsRuleParams.forEach((param) => {
-          promises.push(
-            new Promise((resolve) => {
-              dispatch(updateAutoOpsRule(param)).then((res) => {
-                resolve(res);
-              });
-            })
-          );
-        });
+    //     deleteAutoOpsRuleIds.forEach((id) => {
+    //       promises.push(
+    //         new Promise((resolve) => {
+    //           dispatch(
+    //             deleteAutoOpsRule({
+    //               environmentNamespace: currentEnvironment.namespace,
+    //               id: id,
+    //             })
+    //           ).then((res) => {
+    //             resolve(res);
+    //           });
+    //         })
+    //       );
+    //     });
 
-        Promise.all(promises).then((res) => {
-          dispatch(
-            listAutoOpsRules({
-              featureId: featureId,
-              environmentNamespace: currentEnvironment.id,
-            })
-          );
-        });
-      },
-      [dispatch, defaultValues]
-    );
+    //     updateAutoOpsRuleParams.forEach((param) => {
+    //       promises.push(
+    //         new Promise((resolve) => {
+    //           dispatch(updateAutoOpsRule(param)).then((res) => {
+    //             resolve(res);
+    //           });
+    //         })
+    //       );
+    //     });
+
+    //     Promise.all(promises).then((res) => {
+    //       dispatch(
+    //         listAutoOpsRules({
+    //           featureId: featureId,
+    //           environmentNamespace: currentEnvironment.namespace,
+    //         })
+    //       );
+    //     });
+    //   },
+    //   [dispatch, defaultValues]
+    // );
 
     useEffect(() => {
       dispatch(
@@ -226,9 +256,9 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       );
     }, [dispatch, featureId, currentEnvironment]);
 
-    useEffect(() => {
-      reset(defaultValues);
-    }, [autoOpsRules]);
+    // useEffect(() => {
+    //   reset(defaultValues);
+    // }, [autoOpsRules]);
 
     if (isLoading) {
       return (
@@ -237,11 +267,24 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
         </div>
       );
     }
+    // return (
+    //   <FormProvider {...methods}>
+    //     <FeatureAutoOpsRulesForm
+    //       featureId={featureId}
+    //       autoOpsRules={autoOpsRules}
+    //       // onSubmit={handleSubmit(handleUpdate)}
+    //       onSubmit={() => {
+    //         handleUpdate();
+    //       }}
+    //     />
+    //   </FormProvider>
+    // );
+
     return (
       <FormProvider {...methods}>
         <FeatureAutoOpsRulesForm
           featureId={featureId}
-          onSubmit={handleSubmit(handleUpdate)}
+          refetchAutoOpsRules={handleRefetchAutoOpsRules}
         />
       </FormProvider>
     );
@@ -396,8 +439,10 @@ export function createUpdateAutoOpsRuleParams(
   const params: UpdateAutoOpsRuleParams[] = [];
   const orgRuleIds = org.filter((r) => r.id).map((r) => r.id);
   const valRuleIds = val.filter((r) => r.id).map((r) => r.id);
+
   // Intersection of org and val rules.
   const ruleIds = orgRuleIds.filter((id) => valRuleIds.includes(id));
+
   ruleIds.forEach((rid) => {
     const orgRule = org.find((r) => r.id === rid);
     const valRule = val.find((r) => r.id === rid);
