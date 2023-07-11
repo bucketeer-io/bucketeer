@@ -13,7 +13,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kms v1.21.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/coreos/go-oidc v2.2.1+incompatible
+	github.com/go-gota/gota v0.12.0
 	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-migrate/migrate/v4 v4.11.0
 	github.com/golang/protobuf v1.5.3
@@ -36,6 +38,7 @@ require (
 	golang.org/x/sync v0.2.0
 	golang.org/x/text v0.9.0
 	golang.org/x/time v0.3.0
+	gonum.org/v1/gonum v0.11.0
 	google.golang.org/api v0.126.0
 	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
@@ -107,6 +110,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect

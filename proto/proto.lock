@@ -10122,6 +10122,40 @@
       }
     },
     {
+      "protopath": "experimentcalculator:/:service.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "BatchCalcRequest"
+          },
+          {
+            "name": "BatchCalcResponse"
+          }
+        ],
+        "services": [
+          {
+            "name": "ExperimentCalculatorService",
+            "rpcs": [
+              {
+                "name": "CalcExperiment",
+                "in_type": "BatchCalcRequest",
+                "out_type": "BatchCalcResponse"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.experimentcalculator"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/experimentcalculator"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "feature:/:clause.proto",
       "def": {
         "enums": [

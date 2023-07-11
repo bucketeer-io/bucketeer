@@ -24,6 +24,12 @@ env:
 jobs:
   unit-test:
     runs-on: ubuntu-latest
+    services:
+      # setup httpstan container used to run unit test in experiment service
+      httpstan:
+        image: ghcr.io/bucketeer-io/bucketeer-httpstan:0.0.1
+        ports:
+          - 8080:8080
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
