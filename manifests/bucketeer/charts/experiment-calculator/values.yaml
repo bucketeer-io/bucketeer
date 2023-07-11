@@ -1,0 +1,93 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/bucketeer-io/bucketeer-experiment-calculator
+  pullPolicy: IfNotPresent
+
+fullnameOverride: "experiment-calculator"
+
+namespace: default
+
+env:
+  project:
+  stanHost: localhost
+  stanPort: 8080
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
+  environmentService: localhost:9001
+  experimentService: localhost:9001
+  eventCounterService: localhost:9001
+  logLevel: info
+  port: 9090
+  metricsPort: 9002
+  traceSamplingProbability: 0.001
+  timezone: UTC
+
+affinity: {}
+
+nodeSelector:
+
+hpa:
+  enabled:
+  minReplicas:
+  maxReplicas:
+  metrics:
+    cpu:
+      targetAverageUtilization:
+    memory:
+      targetAverageUtilization:
+
+httpstan:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-httpstan
+    tag: 0.0.1
+    pullPolicy: IfNotPresent
+  config:
+  port: 8080
+  healthPath: v1/health
+  resources: {}
+
+envoy:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-envoy
+    tag: v1.26.2
+    pullPolicy: IfNotPresent
+  config:
+  port: 9000
+  adminPort: 8001
+  resources: {}
+
+tls:
+  service:
+    secret:
+    cert:
+    key:
+
+serviceToken:
+  secret:
+  token:
+
+service:
+  type: ClusterIP
+  clusterIP: None
+  externalPort: 9000
+
+health:
+  periodSeconds: 10
+  failureThreshold: 10
+  # It is necessary to wait for the model compilation to be done.
+  # The duration is up to resources.
+  # cf. CPU: 500m, MEM: 3Gi -> 280sec
+  initialDelaySeconds:
+
+resources: {}
+
+serviceAccount:
+  annotations: {}
+
+pdb:
+  enabled:
+  maxUnavailable: 50%

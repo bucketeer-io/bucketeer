@@ -1,0 +1,189 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "experiment-calculator.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "experiment-calculator.name" . }}
+    chart: {{ template "experiment-calculator.chart" . }}
+    release: {{ template "experiment-calculator.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "experiment-calculator.name" . }}
+      release: {{ template "experiment-calculator.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "experiment-calculator.name" . }}
+        release: {{ template "experiment-calculator.fullname" . }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: {{ template "experiment-calculator.fullname" . }}-envoy-config
+        - name: service-cert-secret
+          secret:
+            secretName: {{ template "service-cert-secret" . }}
+        - name: service-token-secret
+          secret:
+            secretName: {{ template "service-token-secret" . }}
+      {{- if .Values.serviceAccount.annotations }}
+      serviceAccountName: {{ template "experiment-calculator.fullname" . }}
+      {{- end }}
+      containers:
+        - name: httpstan
+          image: "{{ .Values.httpstan.image.repository }}:{{ .Values.httpstan.image.tag }}"
+          imagePullPolicy: {{ .Values.httpstan.image.pullPolicy }}
+          ports:
+            - name: httpstan
+              containerPort: {{ .Values.httpstan.port }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: {{ .Values.httpstan.healthPath }}
+              port: {{ .Values.httpstan.port }}
+              scheme: HTTP
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: {{ .Values.httpstan.healthPath }}
+              port: {{ .Values.httpstan.port }}
+              scheme: HTTP
+          resources:
+{{ toYaml .Values.httpstan.resources | indent 12 }}
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["server"]
+          env:
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_PROJECT
+              value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_STAN_HOST
+              value: "{{ .Values.env.stanHost }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_STAN_PORT
+              value: "{{ .Values.env.stanPort }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_MYSQL_USER
+              value: "{{ .Values.env.mysqlUser }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_MYSQL_PASS
+              value: "{{ .Values.env.mysqlPass }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_MYSQL_HOST
+              value: "{{ .Values.env.mysqlHost }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_MYSQL_PORT
+              value: "{{ .Values.env.mysqlPort }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_MYSQL_DB_NAME
+              value: "{{ .Values.env.mysqlDbName }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_ENVIRONMENT_SERVICE
+              value: "{{ .Values.env.environmentService }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_EXPERIMENT_SERVICE
+              value: "{{ .Values.env.experimentService }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_EVENT_COUNTER_SERVICE
+              value: "{{ .Values.env.eventCounterService }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_PORT
+              value: "{{ .Values.env.port }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_METRICS_PORT
+              value: "{{ .Values.env.metricsPort }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_LOG_LEVEL
+              value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_SERVICE_TOKEN
+              value: /usr/local/service-token/token
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_CERT
+              value: /usr/local/certs/service/tls.crt
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_KEY
+              value: /usr/local/certs/service/tls.key
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_TRACE_SAMPLING_PROBABILITY
+              value: "{{ .Values.env.traceSamplingProbability }}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
+          volumeMounts:
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+            - name: service-token-secret
+              mountPath: /usr/local/service-token
+              readOnly: true
+          ports:
+            - name: service
+              containerPort: {{ .Values.env.port }}
+            - name: metrics
+              containerPort: {{ .Values.env.metricsPort }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+        - name: envoy
+          image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+          command: ["envoy"]
+          args:
+            - "-c"
+            - "/usr/local/conf/config.yaml"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /usr/local/conf/
+              readOnly: true
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+          ports:
+            - name: envoy
+              containerPort: {{ .Values.envoy.port }}
+            - name: admin
+              containerPort: {{ .Values.envoy.adminPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: /health
+              port: envoy
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.envoy.resources | indent 12 }}
+  strategy:
+    type: RollingUpdate

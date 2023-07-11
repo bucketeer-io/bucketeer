@@ -46,6 +46,9 @@ spec:
         - name: envoy-experiment-descriptor-secret
           secret:
             secretName: {{ template "web-gateway.fullname" . }}-experiment
+        - name: envoy-experiment-calculator-descriptor-secret
+          secret:
+            secretName: {{ template "web-gateway.fullname" . }}-experimentcalculator
         - name: envoy-feature-descriptor-secret
           secret:
             secretName: {{ template "web-gateway.fullname" . }}-feature
@@ -110,6 +113,8 @@ spec:
               readOnly: true
             - name: envoy-experiment-descriptor-secret
               mountPath: /usr/local/experiment-secret
+            - name: envoy-experiment-calculator-descriptor-secret
+              mountPath: /usr/local/experiment-calculator-secret
               readOnly: true
             - name: envoy-feature-descriptor-secret
               mountPath: /usr/local/feature-secret
