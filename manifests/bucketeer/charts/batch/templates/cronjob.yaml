@@ -14,20 +14,34 @@ spec:
     spec:
       template:
         spec:
+          volumes:
+            - name: service-cert-secret
+              secret:
+                secretName: {{ template "service-cert-secret" . }}
+            - name: service-token-secret
+              secret:
+                secretName: {{ template "service-token-secret" . }}
           containers:
             - name: experiment-status-updater
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - name: service-cert-secret
+                  mountPath: /usr/local/certs/service
+                  readOnly: true
+                - name: service-token-secret
+                  mountPath: /usr/local/service-token
+                  readOnly: true
               command:
-                - "curl"
+                - /bin/sh
               args:
-                - "-X"
-                - "POST"
-                - "-d"
-                - '{"job": "ExperimentStatusUpdater"}'
-                - "-H"
-                - "authorization: bearer {{ template "service-token-secret" . }}"
-                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                - -c
+                - |
+                  echo "Start experiment-status-updater job."
+                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                  TOKEN=`cat /usr/local/service-token/token`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "ExperimentStatusUpdater"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  echo "experiment-status-updater job result: ${RES}"
           restartPolicy: Never
 
 ---
@@ -47,20 +61,34 @@ spec:
     spec:
       template:
         spec:
+          volumes:
+            - name: service-cert-secret
+              secret:
+                secretName: {{ template "service-cert-secret" . }}
+            - name: service-token-secret
+              secret:
+                secretName: {{ template "service-token-secret" . }}
           containers:
             - name: experiment-running-watcher
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - name: service-cert-secret
+                  mountPath: /usr/local/certs/service
+                  readOnly: true
+                - name: service-token-secret
+                  mountPath: /usr/local/service-token
+                  readOnly: true
               command:
-                - "curl"
+                - /bin/sh
               args:
-                - "-X"
-                - "POST"
-                - "-d"
-                - '{"job": "ExperimentRunningWatcher"}'
-                - "-H"
-                - "authorization: bearer {{ template "service-token-secret" . }}"
-                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                - -c
+                - |
+                  echo "Start experiment-running-watcher job."
+                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                  TOKEN=`cat /usr/local/service-token/token`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "ExperimentRunningWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  echo "experiment-running-watcher job result: ${RES}"
           restartPolicy: Never
 
 ---
@@ -80,20 +108,34 @@ spec:
     spec:
       template:
         spec:
+          volumes:
+            - name: service-cert-secret
+              secret:
+                secretName: {{ template "service-cert-secret" . }}
+            - name: service-token-secret
+              secret:
+                secretName: {{ template "service-token-secret" . }}
           containers:
             - name: feature-state-watcher
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - name: service-cert-secret
+                  mountPath: /usr/local/certs/service
+                  readOnly: true
+                - name: service-token-secret
+                  mountPath: /usr/local/service-token
+                  readOnly: true
               command:
-                - "curl"
+                - /bin/sh
               args:
-                - "-X"
-                - "POST"
-                - "-d"
-                - '{"job": "FeatureStateWatcher"}'
-                - "-H"
-                - "authorization: bearer {{ template "service-token-secret" . }}"
-                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                - -c
+                - |
+                  echo "Start feature-state-watcher job."
+                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                  TOKEN=`cat /usr/local/service-token/token`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "FeatureStateWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  echo "feature-state-watcher job result: ${RES}"
           restartPolicy: Never
 
 ---
@@ -114,20 +156,34 @@ spec:
     spec:
       template:
         spec:
+          volumes:
+            - name: service-cert-secret
+              secret:
+                secretName: {{ template "service-cert-secret" . }}
+            - name: service-token-secret
+              secret:
+                secretName: {{ template "service-token-secret" . }}
           containers:
             - name: mau-count-watcher
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - name: service-cert-secret
+                  mountPath: /usr/local/certs/service
+                  readOnly: true
+                - name: service-token-secret
+                  mountPath: /usr/local/service-token
+                  readOnly: true
               command:
-                - "curl"
+                - /bin/sh
               args:
-                - "-X"
-                - "POST"
-                - "-d"
-                - '{"job": "MauCountWatcher"}'
-                - "-H"
-                - "authorization: bearer {{ template "service-token-secret" . }}"
-                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                - -c
+                - |
+                  echo "Start mau-count-watcher job."
+                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                  TOKEN=`cat /usr/local/service-token/token`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "MauCountWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  echo "mau-count-watcher job result: ${RES}"
           restartPolicy: Never
 
 
@@ -148,20 +204,34 @@ spec:
     spec:
       template:
         spec:
+          volumes:
+            - name: service-cert-secret
+              secret:
+                secretName: {{ template "service-cert-secret" . }}
+            - name: service-token-secret
+              secret:
+                secretName: {{ template "service-token-secret" . }}
           containers:
             - name: ops-datetime-watcher
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - name: service-cert-secret
+                  mountPath: /usr/local/certs/service
+                  readOnly: true
+                - name: service-token-secret
+                  mountPath: /usr/local/service-token
+                  readOnly: true
               command:
-                - "curl"
+                - /bin/sh
               args:
-                - "-X"
-                - "POST"
-                - "-d"
-                - '{"job": "DatetimeWatcher"}'
-                - "-H"
-                - "authorization: bearer {{ template "service-token-secret" . }}"
-                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                - -c
+                - |
+                  echo "Start ops-datetime-watcher job."
+                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                  TOKEN=`cat /usr/local/service-token/token`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "DatetimeWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  echo "ops-datetime-watcher job result: ${RES}"
           restartPolicy: Never
 
 
@@ -177,23 +247,37 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: {{ .Values.cronjob.opsEventCountWatcherSchedule }}}
+  schedule: {{ .Values.cronjob.opsEventCountWatcherSchedule }}
   jobTemplate:
     spec:
       template:
         spec:
+          volumes:
+            - name: service-cert-secret
+              secret:
+                secretName: {{ template "service-cert-secret" . }}
+            - name: service-token-secret
+              secret:
+                secretName: {{ template "service-token-secret" . }}
           containers:
             - name: ops-event-count-watcher
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - name: service-cert-secret
+                  mountPath: /usr/local/certs/service
+                  readOnly: true
+                - name: service-token-secret
+                  mountPath: /usr/local/service-token
+                  readOnly: true
               command:
-                - "curl"
+                - /bin/sh
               args:
-                - "-X"
-                - "POST"
-                - "-d"
-                - '{"job": "EventCountWatcher"}'
-                - "-H"
-                - "authorization: bearer {{ template "service-token-secret" . }}"
-                - "https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                - -c
+                - |
+                  echo "Start ops-event-count-watcher job."
+                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                  TOKEN=`cat /usr/local/service-token/token`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "EventCountWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  echo "ops-event-count-watcher job result: ${RES}"
           restartPolicy: Never
