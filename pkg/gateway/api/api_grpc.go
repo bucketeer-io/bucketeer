@@ -347,10 +347,11 @@ func (s *grpcGatewayService) GetEvaluations(
 		)
 		return nil, err
 	}
-
 	var evaluations *featureproto.UserEvaluations
-	// FIXME Remove s.getEvaluations once all SDKs use evaluatedAt.
-	if req.EvaluatedAt == 0 && !req.UserAttributesUpdated {
+	// FIXME Remove s.getEvaluations once all SDKs use UserEvaluationCondition.
+	// New SDKs always use UserEvaluationCondition.
+	if req.UserEvaluationCondition == nil {
+		// Old evaluation requires tag to be set.
 		if req.Tag == "" {
 			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationBadRequest).Inc()
 			return nil, ErrTagRequired
@@ -380,8 +381,8 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.User,
 			segmentUsersMap,
 			req.UserEvaluationsId,
-			req.EvaluatedAt,
-			req.UserAttributesUpdated,
+			req.UserEvaluationCondition.EvaluatedAt,
+			req.UserEvaluationCondition.UserAttributesUpdated,
 			req.Tag,
 		)
 		if err != nil {

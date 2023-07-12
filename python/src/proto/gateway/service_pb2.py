@@ -18,13 +18,14 @@ from proto.feature import evaluation_pb2 as proto_dot_feature_dot_evaluation__pb
 from proto.event.client import event_pb2 as proto_dot_event_dot_client_dot_event__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bproto/gateway/service.proto\x12\x11\x62ucketeer.gateway\x1a\x1cgoogle/api/annotations.proto\x1a\x15proto/user/user.proto\x1a\x1eproto/feature/evaluation.proto\x1a\x1eproto/event/client/event.proto\"\r\n\x0bPingRequest\"\x1c\n\x0cPingResponse\x12\x0c\n\x04time\x18\x01 \x01(\x03\"\xe9\x01\n\x15GetEvaluationsRequest\x12\x0b\n\x03tag\x18\x01 \x01(\t\x12\"\n\x04user\x18\x02 \x01(\x0b\x32\x14.bucketeer.user.User\x12\x1b\n\x13user_evaluations_id\x18\x03 \x01(\t\x12\x16\n\nfeature_id\x18\x04 \x01(\tB\x02\x18\x01\x12\x33\n\tsource_id\x18\x05 \x01(\x0e\x32 .bucketeer.event.client.SourceId\x12\x14\n\x0c\x65valuated_at\x18\x06 \x01(\x03\x12\x1f\n\x17user_attributes_updated\x18\x07 \x01(\x08\"\xa7\x01\n\x16GetEvaluationsResponse\x12\x37\n\x05state\x18\x01 \x01(\x0e\x32(.bucketeer.feature.UserEvaluations.State\x12\x37\n\x0b\x65valuations\x18\x02 \x01(\x0b\x32\".bucketeer.feature.UserEvaluations\x12\x1b\n\x13user_evaluations_id\x18\x03 \x01(\t\"\x90\x01\n\x14GetEvaluationRequest\x12\x0b\n\x03tag\x18\x01 \x01(\t\x12\"\n\x04user\x18\x02 \x01(\x0b\x32\x14.bucketeer.user.User\x12\x12\n\nfeature_id\x18\x03 \x01(\t\x12\x33\n\tsource_id\x18\x04 \x01(\x0e\x32 .bucketeer.event.client.SourceId\"J\n\x15GetEvaluationResponse\x12\x31\n\nevaluation\x18\x01 \x01(\x0b\x32\x1d.bucketeer.feature.Evaluation\"F\n\x15RegisterEventsRequest\x12-\n\x06\x65vents\x18\x01 \x03(\x0b\x32\x1d.bucketeer.event.client.Event\"\xec\x01\n\x16RegisterEventsResponse\x12\x45\n\x06\x65rrors\x18\x01 \x03(\x0b\x32\x35.bucketeer.gateway.RegisterEventsResponse.ErrorsEntry\x1a+\n\x05\x45rror\x12\x11\n\tretriable\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x1a^\n\x0b\x45rrorsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12>\n\x05value\x18\x02 \x01(\x0b\x32/.bucketeer.gateway.RegisterEventsResponse.Error:\x02\x38\x01\"m\n\x0cTrackRequest\x12\x0e\n\x06\x61pikey\x18\x01 \x01(\t\x12\x0e\n\x06userid\x18\x02 \x01(\t\x12\x0e\n\x06goalid\x18\x03 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x11\n\ttimestamp\x18\x05 \x01(\x03\x12\r\n\x05value\x18\x06 \x01(\x01\"\x0f\n\rTrackResponse2\xca\x04\n\x07Gateway\x12Y\n\x04Ping\x12\x1e.bucketeer.gateway.PingRequest\x1a\x1f.bucketeer.gateway.PingResponse\"\x10\x82\xd3\xe4\x93\x02\n\"\x05/ping:\x01*\x12\x82\x01\n\x0eGetEvaluations\x12(.bucketeer.gateway.GetEvaluationsRequest\x1a).bucketeer.gateway.GetEvaluationsResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\"\x10/get_evaluations:\x01*\x12~\n\rGetEvaluation\x12\'.bucketeer.gateway.GetEvaluationRequest\x1a(.bucketeer.gateway.GetEvaluationResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\"\x0f/get_evaluation:\x01*\x12\x82\x01\n\x0eRegisterEvents\x12(.bucketeer.gateway.RegisterEventsRequest\x1a).bucketeer.gateway.RegisterEventsResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\"\x10/register_events:\x01*\x12Z\n\x05Track\x12\x1f.bucketeer.gateway.TrackRequest\x1a .bucketeer.gateway.TrackResponse\"\x0e\x82\xd3\xe4\x93\x02\x08\x12\x06/trackB1Z/github.com/bucketeer-io/bucketeer/proto/gatewayb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bproto/gateway/service.proto\x12\x11\x62ucketeer.gateway\x1a\x1cgoogle/api/annotations.proto\x1a\x15proto/user/user.proto\x1a\x1eproto/feature/evaluation.proto\x1a\x1eproto/event/client/event.proto\"\r\n\x0bPingRequest\"\x1c\n\x0cPingResponse\x12\x0c\n\x04time\x18\x01 \x01(\x03\"\xfe\x02\n\x15GetEvaluationsRequest\x12\x0b\n\x03tag\x18\x01 \x01(\t\x12\"\n\x04user\x18\x02 \x01(\x0b\x32\x14.bucketeer.user.User\x12\x1b\n\x13user_evaluations_id\x18\x03 \x01(\t\x12\x16\n\nfeature_id\x18\x04 \x01(\tB\x02\x18\x01\x12\x33\n\tsource_id\x18\x05 \x01(\x0e\x32 .bucketeer.event.client.SourceId\x12\x63\n\x19user_evaluation_condition\x18\x06 \x01(\x0b\x32@.bucketeer.gateway.GetEvaluationsRequest.UserEvaluationCondition\x12\x13\n\x0bsdk_version\x18\x07 \x01(\t\x1aP\n\x17UserEvaluationCondition\x12\x14\n\x0c\x65valuated_at\x18\x01 \x01(\x03\x12\x1f\n\x17user_attributes_updated\x18\x02 \x01(\x08\"\xa7\x01\n\x16GetEvaluationsResponse\x12\x37\n\x05state\x18\x01 \x01(\x0e\x32(.bucketeer.feature.UserEvaluations.State\x12\x37\n\x0b\x65valuations\x18\x02 \x01(\x0b\x32\".bucketeer.feature.UserEvaluations\x12\x1b\n\x13user_evaluations_id\x18\x03 \x01(\t\"\xa5\x01\n\x14GetEvaluationRequest\x12\x0b\n\x03tag\x18\x01 \x01(\t\x12\"\n\x04user\x18\x02 \x01(\x0b\x32\x14.bucketeer.user.User\x12\x12\n\nfeature_id\x18\x03 \x01(\t\x12\x33\n\tsource_id\x18\x04 \x01(\x0e\x32 .bucketeer.event.client.SourceId\x12\x13\n\x0bsdk_version\x18\x05 \x01(\t\"J\n\x15GetEvaluationResponse\x12\x31\n\nevaluation\x18\x01 \x01(\x0b\x32\x1d.bucketeer.feature.Evaluation\"[\n\x15RegisterEventsRequest\x12-\n\x06\x65vents\x18\x01 \x03(\x0b\x32\x1d.bucketeer.event.client.Event\x12\x13\n\x0bsdk_version\x18\x02 \x01(\t\"\xec\x01\n\x16RegisterEventsResponse\x12\x45\n\x06\x65rrors\x18\x01 \x03(\x0b\x32\x35.bucketeer.gateway.RegisterEventsResponse.ErrorsEntry\x1a+\n\x05\x45rror\x12\x11\n\tretriable\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x1a^\n\x0b\x45rrorsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12>\n\x05value\x18\x02 \x01(\x0b\x32/.bucketeer.gateway.RegisterEventsResponse.Error:\x02\x38\x01\"m\n\x0cTrackRequest\x12\x0e\n\x06\x61pikey\x18\x01 \x01(\t\x12\x0e\n\x06userid\x18\x02 \x01(\t\x12\x0e\n\x06goalid\x18\x03 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x11\n\ttimestamp\x18\x05 \x01(\x03\x12\r\n\x05value\x18\x06 \x01(\x01\"\x0f\n\rTrackResponse2\xca\x04\n\x07Gateway\x12Y\n\x04Ping\x12\x1e.bucketeer.gateway.PingRequest\x1a\x1f.bucketeer.gateway.PingResponse\"\x10\x82\xd3\xe4\x93\x02\n\"\x05/ping:\x01*\x12\x82\x01\n\x0eGetEvaluations\x12(.bucketeer.gateway.GetEvaluationsRequest\x1a).bucketeer.gateway.GetEvaluationsResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\"\x10/get_evaluations:\x01*\x12~\n\rGetEvaluation\x12\'.bucketeer.gateway.GetEvaluationRequest\x1a(.bucketeer.gateway.GetEvaluationResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\"\x0f/get_evaluation:\x01*\x12\x82\x01\n\x0eRegisterEvents\x12(.bucketeer.gateway.RegisterEventsRequest\x1a).bucketeer.gateway.RegisterEventsResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\"\x10/register_events:\x01*\x12Z\n\x05Track\x12\x1f.bucketeer.gateway.TrackRequest\x1a .bucketeer.gateway.TrackResponse\"\x0e\x82\xd3\xe4\x93\x02\x08\x12\x06/trackB1Z/github.com/bucketeer-io/bucketeer/proto/gatewayb\x06proto3')
 
 
 
 _PINGREQUEST = DESCRIPTOR.message_types_by_name['PingRequest']
 _PINGRESPONSE = DESCRIPTOR.message_types_by_name['PingResponse']
 _GETEVALUATIONSREQUEST = DESCRIPTOR.message_types_by_name['GetEvaluationsRequest']
+_GETEVALUATIONSREQUEST_USEREVALUATIONCONDITION = _GETEVALUATIONSREQUEST.nested_types_by_name['UserEvaluationCondition']
 _GETEVALUATIONSRESPONSE = DESCRIPTOR.message_types_by_name['GetEvaluationsResponse']
 _GETEVALUATIONREQUEST = DESCRIPTOR.message_types_by_name['GetEvaluationRequest']
 _GETEVALUATIONRESPONSE = DESCRIPTOR.message_types_by_name['GetEvaluationResponse']
@@ -49,11 +50,19 @@ PingResponse = _reflection.GeneratedProtocolMessageType('PingResponse', (_messag
 _sym_db.RegisterMessage(PingResponse)
 
 GetEvaluationsRequest = _reflection.GeneratedProtocolMessageType('GetEvaluationsRequest', (_message.Message,), {
+
+  'UserEvaluationCondition' : _reflection.GeneratedProtocolMessageType('UserEvaluationCondition', (_message.Message,), {
+    'DESCRIPTOR' : _GETEVALUATIONSREQUEST_USEREVALUATIONCONDITION,
+    '__module__' : 'proto.gateway.service_pb2'
+    # @@protoc_insertion_point(class_scope:bucketeer.gateway.GetEvaluationsRequest.UserEvaluationCondition)
+    })
+  ,
   'DESCRIPTOR' : _GETEVALUATIONSREQUEST,
   '__module__' : 'proto.gateway.service_pb2'
   # @@protoc_insertion_point(class_scope:bucketeer.gateway.GetEvaluationsRequest)
   })
 _sym_db.RegisterMessage(GetEvaluationsRequest)
+_sym_db.RegisterMessage(GetEvaluationsRequest.UserEvaluationCondition)
 
 GetEvaluationsResponse = _reflection.GeneratedProtocolMessageType('GetEvaluationsResponse', (_message.Message,), {
   'DESCRIPTOR' : _GETEVALUATIONSRESPONSE,
@@ -144,25 +153,27 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _PINGRESPONSE._serialized_start=182
   _PINGRESPONSE._serialized_end=210
   _GETEVALUATIONSREQUEST._serialized_start=213
-  _GETEVALUATIONSREQUEST._serialized_end=446
-  _GETEVALUATIONSRESPONSE._serialized_start=449
-  _GETEVALUATIONSRESPONSE._serialized_end=616
-  _GETEVALUATIONREQUEST._serialized_start=619
-  _GETEVALUATIONREQUEST._serialized_end=763
-  _GETEVALUATIONRESPONSE._serialized_start=765
-  _GETEVALUATIONRESPONSE._serialized_end=839
-  _REGISTEREVENTSREQUEST._serialized_start=841
-  _REGISTEREVENTSREQUEST._serialized_end=911
-  _REGISTEREVENTSRESPONSE._serialized_start=914
-  _REGISTEREVENTSRESPONSE._serialized_end=1150
-  _REGISTEREVENTSRESPONSE_ERROR._serialized_start=1011
-  _REGISTEREVENTSRESPONSE_ERROR._serialized_end=1054
-  _REGISTEREVENTSRESPONSE_ERRORSENTRY._serialized_start=1056
-  _REGISTEREVENTSRESPONSE_ERRORSENTRY._serialized_end=1150
-  _TRACKREQUEST._serialized_start=1152
-  _TRACKREQUEST._serialized_end=1261
-  _TRACKRESPONSE._serialized_start=1263
-  _TRACKRESPONSE._serialized_end=1278
-  _GATEWAY._serialized_start=1281
-  _GATEWAY._serialized_end=1867
+  _GETEVALUATIONSREQUEST._serialized_end=595
+  _GETEVALUATIONSREQUEST_USEREVALUATIONCONDITION._serialized_start=515
+  _GETEVALUATIONSREQUEST_USEREVALUATIONCONDITION._serialized_end=595
+  _GETEVALUATIONSRESPONSE._serialized_start=598
+  _GETEVALUATIONSRESPONSE._serialized_end=765
+  _GETEVALUATIONREQUEST._serialized_start=768
+  _GETEVALUATIONREQUEST._serialized_end=933
+  _GETEVALUATIONRESPONSE._serialized_start=935
+  _GETEVALUATIONRESPONSE._serialized_end=1009
+  _REGISTEREVENTSREQUEST._serialized_start=1011
+  _REGISTEREVENTSREQUEST._serialized_end=1102
+  _REGISTEREVENTSRESPONSE._serialized_start=1105
+  _REGISTEREVENTSRESPONSE._serialized_end=1341
+  _REGISTEREVENTSRESPONSE_ERROR._serialized_start=1202
+  _REGISTEREVENTSRESPONSE_ERROR._serialized_end=1245
+  _REGISTEREVENTSRESPONSE_ERRORSENTRY._serialized_start=1247
+  _REGISTEREVENTSRESPONSE_ERRORSENTRY._serialized_end=1341
+  _TRACKREQUEST._serialized_start=1343
+  _TRACKREQUEST._serialized_end=1452
+  _TRACKRESPONSE._serialized_start=1454
+  _TRACKRESPONSE._serialized_end=1469
+  _GATEWAY._serialized_start=1472
+  _GATEWAY._serialized_end=2058
 # @@protoc_insertion_point(module_scope)

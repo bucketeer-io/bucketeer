@@ -13035,13 +13035,30 @@
               },
               {
                 "id": 6,
-                "name": "evaluated_at",
-                "type": "int64"
+                "name": "user_evaluation_condition",
+                "type": "UserEvaluationCondition"
               },
               {
                 "id": 7,
-                "name": "user_attributes_updated",
-                "type": "bool"
+                "name": "sdk_version",
+                "type": "string"
+              }
+            ],
+            "messages": [
+              {
+                "name": "UserEvaluationCondition",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "evaluated_at",
+                    "type": "int64"
+                  },
+                  {
+                    "id": 2,
+                    "name": "user_attributes_updated",
+                    "type": "bool"
+                  }
+                ]
               }
             ]
           },
@@ -13087,6 +13104,11 @@
                 "id": 4,
                 "name": "source_id",
                 "type": "bucketeer.event.client.SourceId"
+              },
+              {
+                "id": 5,
+                "name": "sdk_version",
+                "type": "string"
               }
             ]
           },
@@ -13108,6 +13130,11 @@
                 "name": "events",
                 "type": "bucketeer.event.client.Event",
                 "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "sdk_version",
+                "type": "string"
               }
             ]
           },

@@ -330,13 +330,30 @@ func TestGrpcGetEvaluationsWithPreviousEvaluation31daysAgo(t *testing.T) {
 	}
 }
 
+func TestGrpcGetEvaluationsWithEvaluatedAtIsZero(t *testing.T) {
+	t.Parallel()
+	c := newGatewayClient(t)
+	defer c.Close()
+	uuid := newUUID(t)
+	userID := newUserID(t, uuid)
+	var prevEvalAt int64 = 0
+	userEvaluationsID := ""
+	response := grpcGetEvaluationsByEvaluatedAt(t, userID, userEvaluationsID, prevEvalAt, false)
+	if response.Evaluations == nil {
+		t.Fatal("Evaluations field is nil")
+	}
+	if !response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be true because the evaluatedAt is zero, which means that previous evaluation is performed more than 30 days ago.")
+	}
+}
+
 func TestGrpcGetEvaluationsWithEmptyUserEvaluationsID(t *testing.T) {
 	t.Parallel()
 	c := newGatewayClient(t)
 	defer c.Close()
 	uuid := newUUID(t)
 	userID := newUserID(t, uuid)
-	prevEvalAt := time.Now().Add(-31 * 24 * time.Hour).Unix()
+	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
 	userEvaluationsID := ""
 	response := grpcGetEvaluationsByEvaluatedAt(t, userID, userEvaluationsID, prevEvalAt, false)
 	if response.Evaluations == nil {
@@ -827,10 +844,12 @@ func grpcGetEvaluationsByEvaluatedAt(
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req := &gatewayproto.GetEvaluationsRequest{
-		UserEvaluationsId:     userEvaluationsID,
-		User:                  &userproto.User{Id: userID},
-		EvaluatedAt:           evaluatedAt,
-		UserAttributesUpdated: userAttributesUpdated,
+		UserEvaluationsId: userEvaluationsID,
+		User:              &userproto.User{Id: userID},
+		UserEvaluationCondition: &gatewayproto.GetEvaluationsRequest_UserEvaluationCondition{
+			EvaluatedAt:           evaluatedAt,
+			UserAttributesUpdated: userAttributesUpdated,
+		},
 	}
 	response, err := c.GetEvaluations(ctx, req)
 	if err != nil {
