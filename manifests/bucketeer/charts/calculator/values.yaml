@@ -2,6 +2,7 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/bucketeer-io/bucketeer-calculator
+  tag:
   pullPolicy: IfNotPresent
 
 fullnameOverride: "calculator"
