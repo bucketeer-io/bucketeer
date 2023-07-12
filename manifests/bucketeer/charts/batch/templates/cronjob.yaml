@@ -32,15 +32,17 @@ spec:
                 - name: service-token-secret
                   mountPath: /usr/local/service-token
                   readOnly: true
+              env:
+                - name: WEB_GATEWAY_ADDRESS
+                  value: "{{ .Values.cronjob.webGatewayAddress }}"
               command:
                 - /bin/sh
               args:
                 - -c
                 - |
                   echo "Start experiment-status-updater job."
-                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "ExperimentStatusUpdater"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "ExperimentStatusUpdater"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
                   echo "experiment-status-updater job result: ${RES}"
           restartPolicy: Never
 
@@ -79,15 +81,17 @@ spec:
                 - name: service-token-secret
                   mountPath: /usr/local/service-token
                   readOnly: true
+              env:
+                - name: WEB_GATEWAY_ADDRESS
+                  value: "{{ .Values.cronjob.webGatewayAddress }}"
               command:
                 - /bin/sh
               args:
                 - -c
                 - |
                   echo "Start experiment-running-watcher job."
-                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "ExperimentRunningWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "ExperimentRunningWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
                   echo "experiment-running-watcher job result: ${RES}"
           restartPolicy: Never
 
@@ -126,15 +130,17 @@ spec:
                 - name: service-token-secret
                   mountPath: /usr/local/service-token
                   readOnly: true
+              env:
+                - name: WEB_GATEWAY_ADDRESS
+                  value: "{{ .Values.cronjob.webGatewayAddress }}"
               command:
                 - /bin/sh
               args:
                 - -c
                 - |
                   echo "Start feature-state-watcher job."
-                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "FeatureStateWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "FeatureStateWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
                   echo "feature-state-watcher job result: ${RES}"
           restartPolicy: Never
 
@@ -174,15 +180,17 @@ spec:
                 - name: service-token-secret
                   mountPath: /usr/local/service-token
                   readOnly: true
+              env:
+                - name: WEB_GATEWAY_ADDRESS
+                  value: "{{ .Values.cronjob.webGatewayAddress }}"
               command:
                 - /bin/sh
               args:
                 - -c
                 - |
                   echo "Start mau-count-watcher job."
-                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "MauCountWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "MauCountWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
                   echo "mau-count-watcher job result: ${RES}"
           restartPolicy: Never
 
@@ -222,15 +230,17 @@ spec:
                 - name: service-token-secret
                   mountPath: /usr/local/service-token
                   readOnly: true
+              env:
+                - name: WEB_GATEWAY_ADDRESS
+                  value: "{{ .Values.cronjob.webGatewayAddress }}"
               command:
                 - /bin/sh
               args:
                 - -c
                 - |
                   echo "Start ops-datetime-watcher job."
-                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "DatetimeWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "DatetimeWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
                   echo "ops-datetime-watcher job result: ${RES}"
           restartPolicy: Never
 
@@ -270,14 +280,16 @@ spec:
                 - name: service-token-secret
                   mountPath: /usr/local/service-token
                   readOnly: true
+              env:
+                - name: WEB_GATEWAY_ADDRESS
+                  value: "{{ .Values.cronjob.webGatewayAddress }}"
               command:
                 - /bin/sh
               args:
                 - -c
                 - |
                   echo "Start ops-event-count-watcher job."
-                  ENDPOINT="https://web-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.cronjob.webGatewayPort }}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "EventCountWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "EventCountWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
                   echo "ops-event-count-watcher job result: ${RES}"
           restartPolicy: Never
