@@ -2014,7 +2014,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 				Tag:               "test",
 				User:              &userproto.User{Id: "user-id-1"},
 				UserEvaluationsId: "user-evaluations-id-1",
-				UserEvaluationCondition: &featureproto.UserEvaluationCondition{
+				UserEvaluationCondition: &gwproto.GetEvaluationsRequest_UserEvaluationCondition{
 					EvaluatedAt:           now.Add(-10 * time.Minute).Unix(),
 					UserAttributesUpdated: false,
 				},
@@ -2121,7 +2121,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 				Tag:               "test",
 				User:              &userproto.User{Id: "user-id-1"},
 				UserEvaluationsId: "",
-				UserEvaluationCondition: &featureproto.UserEvaluationCondition{
+				UserEvaluationCondition: &gwproto.GetEvaluationsRequest_UserEvaluationCondition{
 					EvaluatedAt:           now.Add(-10 * time.Minute).Unix(),
 					UserAttributesUpdated: false,
 				},
@@ -2226,7 +2226,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 				Tag:               "test",
 				User:              &userproto.User{Id: "user-id-1"},
 				UserEvaluationsId: "user-evaluations-id-1",
-				UserEvaluationCondition: &featureproto.UserEvaluationCondition{
+				UserEvaluationCondition: &gwproto.GetEvaluationsRequest_UserEvaluationCondition{
 					EvaluatedAt:           0,
 					UserAttributesUpdated: false,
 				},
@@ -2331,7 +2331,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 				Tag:               "test",
 				User:              &userproto.User{Id: "user-id-1"},
 				UserEvaluationsId: "user-evaluations-id-1",
-				UserEvaluationCondition: &featureproto.UserEvaluationCondition{
+				UserEvaluationCondition: &gwproto.GetEvaluationsRequest_UserEvaluationCondition{
 					EvaluatedAt:           now.Add(-31 * 24 * time.Hour).Unix(),
 					UserAttributesUpdated: false,
 				},

@@ -846,7 +846,7 @@ func grpcGetEvaluationsByEvaluatedAt(
 	req := &gatewayproto.GetEvaluationsRequest{
 		UserEvaluationsId: userEvaluationsID,
 		User:              &userproto.User{Id: userID},
-		UserEvaluationCondition: &featureproto.UserEvaluationCondition{
+		UserEvaluationCondition: &gatewayproto.GetEvaluationsRequest_UserEvaluationCondition{
 			EvaluatedAt:           evaluatedAt,
 			UserAttributesUpdated: userAttributesUpdated,
 		},
