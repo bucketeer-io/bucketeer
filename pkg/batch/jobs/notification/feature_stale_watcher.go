@@ -33,7 +33,7 @@ import (
 	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
 )
 
-type FeatureWatcher struct {
+type featureStaleWatcher struct {
 	environmentClient environmentclient.Client
 	featureClient     featureclient.Client
 	sender            sender.Sender
@@ -41,7 +41,7 @@ type FeatureWatcher struct {
 	logger            *zap.Logger
 }
 
-func NewFeatureWatcher(
+func NewFeatureStaleWatcher(
 	environmentClient environmentclient.Client,
 	featureClient featureclient.Client,
 	sender sender.Sender,
@@ -54,16 +54,16 @@ func NewFeatureWatcher(
 	for _, opt := range opts {
 		opt(dopts)
 	}
-	return &FeatureWatcher{
+	return &featureStaleWatcher{
 		environmentClient: environmentClient,
 		featureClient:     featureClient,
 		sender:            sender,
 		opts:              dopts,
-		logger:            dopts.Logger.Named("count-watcher"),
+		logger:            dopts.Logger.Named("feature-stale-watcher"),
 	}
 }
 
-func (w *FeatureWatcher) Run(ctx context.Context) (lastErr error) {
+func (w *featureStaleWatcher) Run(ctx context.Context) (lastErr error) {
 	ctx, cancel := context.WithTimeout(ctx, w.opts.Timeout)
 	defer cancel()
 	environments, err := w.listEnvironments(ctx)
@@ -99,7 +99,7 @@ func (w *FeatureWatcher) Run(ctx context.Context) (lastErr error) {
 	return
 }
 
-func (w *FeatureWatcher) createNotificationEvent(
+func (w *featureStaleWatcher) createNotificationEvent(
 	environment *environmentproto.Environment,
 	features []*featureproto.Feature,
 ) (*senderproto.NotificationEvent, error) {
@@ -123,7 +123,7 @@ func (w *FeatureWatcher) createNotificationEvent(
 	return ne, nil
 }
 
-func (w *FeatureWatcher) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
+func (w *featureStaleWatcher) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
 	var environments []*environmentproto.Environment
 	cursor := ""
 	for {
@@ -143,7 +143,7 @@ func (w *FeatureWatcher) listEnvironments(ctx context.Context) ([]*environmentpr
 	}
 }
 
-func (w *FeatureWatcher) listFeatures(
+func (w *featureStaleWatcher) listFeatures(
 	ctx context.Context,
 	environmentNamespace string,
 ) ([]*featureproto.Feature, error) {

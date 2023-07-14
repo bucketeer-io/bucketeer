@@ -36,13 +36,13 @@ import (
 
 func TestNewDatetimeWatcher(t *testing.T) {
 	w := NewDatetimeWatcher(nil, nil)
-	assert.IsType(t, &DatetimeWatcher{}, w)
+	assert.IsType(t, &datetimeWatcher{}, w)
 }
 
-func newNewDatetimeWatcherWithMock(t *testing.T, mockController *gomock.Controller) *DatetimeWatcher {
+func newNewDatetimeWatcherWithMock(t *testing.T, mockController *gomock.Controller) *datetimeWatcher {
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	return &DatetimeWatcher{
+	return &datetimeWatcher{
 		environmentLister: targetstoremock.NewMockEnvironmentLister(mockController),
 		autoOpsRuleLister: targetstoremock.NewMockAutoOpsRuleLister(mockController),
 		autoOpsExecutor:   executormock.NewMockAutoOpsExecutor(mockController),
@@ -60,12 +60,12 @@ func TestRunDatetimeWatcher(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(*DatetimeWatcher)
+		setup       func(*datetimeWatcher)
 		expectedErr error
 	}{
 		{
 			desc: "success: assess: false",
-			setup: func(w *DatetimeWatcher) {
+			setup: func(w *datetimeWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).
 					EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{
@@ -90,7 +90,7 @@ func TestRunDatetimeWatcher(t *testing.T) {
 		},
 		{
 			desc: "success: assess: true",
-			setup: func(w *DatetimeWatcher) {
+			setup: func(w *datetimeWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).
 					EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{

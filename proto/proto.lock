@@ -3259,7 +3259,7 @@
                 "integer": 1
               },
               {
-                "name": "FeatureStateWatcher",
+                "name": "FeatureStaleWatcher",
                 "integer": 2
               },
               {

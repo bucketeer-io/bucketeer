@@ -33,7 +33,7 @@ const (
 	listRequestSize = 500
 )
 
-type ExperimentStatusUpdater struct {
+type experimentStatusUpdater struct {
 	environmentClient environmentclient.Client
 	experimentClient  experimentclient.Client
 	opts              *jobs.Options
@@ -52,7 +52,7 @@ func NewExperimentStatusUpdater(
 	for _, opt := range opts {
 		opt(dopts)
 	}
-	return &ExperimentStatusUpdater{
+	return &experimentStatusUpdater{
 		environmentClient: environmentClient,
 		experimentClient:  experimentClient,
 		opts:              dopts,
@@ -60,7 +60,7 @@ func NewExperimentStatusUpdater(
 	}
 }
 
-func (u *ExperimentStatusUpdater) Run(ctx context.Context) (lastErr error) {
+func (u *experimentStatusUpdater) Run(ctx context.Context) (lastErr error) {
 	ctx, cancel := context.WithTimeout(ctx, u.opts.Timeout)
 	defer cancel()
 	environments, err := u.listEnvironments(ctx)
@@ -96,7 +96,7 @@ func (u *ExperimentStatusUpdater) Run(ctx context.Context) (lastErr error) {
 	return
 }
 
-func (u *ExperimentStatusUpdater) updateStatus(
+func (u *experimentStatusUpdater) updateStatus(
 	ctx context.Context,
 	environmentNamespace string,
 	experiment *experimentproto.Experiment,
@@ -115,7 +115,7 @@ func (u *ExperimentStatusUpdater) updateStatus(
 	return nil
 }
 
-func (u *ExperimentStatusUpdater) updateToRunning(
+func (u *experimentStatusUpdater) updateToRunning(
 	ctx context.Context,
 	environmentNamespace string,
 	experiment *experimentproto.Experiment,
@@ -144,7 +144,7 @@ func (u *ExperimentStatusUpdater) updateToRunning(
 	return nil
 }
 
-func (u *ExperimentStatusUpdater) updateToStopped(
+func (u *experimentStatusUpdater) updateToStopped(
 	ctx context.Context,
 	environmentNamespace string,
 	experiment *experimentproto.Experiment,
@@ -173,7 +173,7 @@ func (u *ExperimentStatusUpdater) updateToStopped(
 	return nil
 }
 
-func (u *ExperimentStatusUpdater) listExperiments(
+func (u *experimentStatusUpdater) listExperiments(
 	ctx context.Context,
 	environmentNamespace string,
 	status experimentproto.Experiment_Status,
@@ -199,7 +199,7 @@ func (u *ExperimentStatusUpdater) listExperiments(
 	}
 }
 
-func (u *ExperimentStatusUpdater) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
+func (u *experimentStatusUpdater) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
 	var environments []*environmentproto.Environment
 	cursor := ""
 	for {

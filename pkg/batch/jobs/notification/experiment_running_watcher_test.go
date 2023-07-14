@@ -38,12 +38,12 @@ func TestCreateExperimentRunningNotification(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(*testing.T, *ExperimentRunningWatcher)
+		setup       func(*testing.T, *experimentRunningWatcher)
 		expectedErr error
 	}{
 		{
 			desc: "no experiment",
-			setup: func(t *testing.T, w *ExperimentRunningWatcher) {
+			setup: func(t *testing.T, w *experimentRunningWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListEnvironmentsResponse{
@@ -59,7 +59,7 @@ func TestCreateExperimentRunningNotification(t *testing.T) {
 		},
 		{
 			desc: "experiments exist",
-			setup: func(t *testing.T, w *ExperimentRunningWatcher) {
+			setup: func(t *testing.T, w *experimentRunningWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListEnvironmentsResponse{
@@ -95,9 +95,9 @@ func TestCreateExperimentRunningNotification(t *testing.T) {
 	}
 }
 
-func newExperimentRunningWatcherWithMock(t *testing.T, c *gomock.Controller) *ExperimentRunningWatcher {
+func newExperimentRunningWatcherWithMock(t *testing.T, c *gomock.Controller) *experimentRunningWatcher {
 	t.Helper()
-	return &ExperimentRunningWatcher{
+	return &experimentRunningWatcher{
 		environmentClient: environmentclientmock.NewMockClient(c),
 		experimentClient:  experimentclientmock.NewMockClient(c),
 		sender:            sendermock.NewMockSender(c),

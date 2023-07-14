@@ -72,7 +72,7 @@ data:
                   - endpoint:
                       address:
                         socket_address:
-                          address: batch.{{ .Values.namespace }}.svc.cluster.local
+                          address: batch-server.{{ .Values.namespace }}.svc.cluster.local
                           port_value: 9000
           transport_socket:
             name: envoy.transport_sockets.tls
@@ -394,6 +394,14 @@ data:
                                 retry_on: 5xx
                                 num_retries: 3
                           - match:
+                              prefix: /bucketeer.batch.BatchService
+                            route:
+                              cluster: batch
+                              timeout: 3600s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
+                          - match:
                               prefix: /bucketeer.environment.EnvironmentService
                             route:
                               cluster: backend
@@ -454,14 +462,6 @@ data:
                             route:
                               cluster: backend
                               timeout: 600s
-                              retry_policy:
-                                retry_on: 5xx
-                                num_retries: 3
-                          - match:
-                              prefix: /bucketeer.batch.BatchService
-                            route:
-                              cluster: batch
-                              timeout: 15s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 3

@@ -36,13 +36,13 @@ func TestUpdateStatus(t *testing.T) {
 
 	patterns := []struct {
 		desc     string
-		setup    func(t *testing.T, u *ExperimentStatusUpdater)
+		setup    func(t *testing.T, u *experimentStatusUpdater)
 		input    *experimentproto.Experiment
 		expected error
 	}{
 		{
 			desc: "error: StartExperiment fails",
-			setup: func(t *testing.T, u *ExperimentStatusUpdater) {
+			setup: func(t *testing.T, u *experimentStatusUpdater) {
 				u.experimentClient.(*ecmock.MockClient).EXPECT().StartExperiment(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
 			},
@@ -55,7 +55,7 @@ func TestUpdateStatus(t *testing.T) {
 		},
 		{
 			desc: "error: FinishExperiment fails",
-			setup: func(t *testing.T, u *ExperimentStatusUpdater) {
+			setup: func(t *testing.T, u *experimentStatusUpdater) {
 				u.experimentClient.(*ecmock.MockClient).EXPECT().FinishExperiment(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
 			},
@@ -77,7 +77,7 @@ func TestUpdateStatus(t *testing.T) {
 		},
 		{
 			desc: "success: update waiting to running",
-			setup: func(t *testing.T, u *ExperimentStatusUpdater) {
+			setup: func(t *testing.T, u *experimentStatusUpdater) {
 				u.experimentClient.(*ecmock.MockClient).EXPECT().StartExperiment(gomock.Any(), gomock.Any()).Return(
 					&experimentproto.StartExperimentResponse{}, nil)
 			},
@@ -99,7 +99,7 @@ func TestUpdateStatus(t *testing.T) {
 		},
 		{
 			desc: "success: update running to stopped",
-			setup: func(t *testing.T, u *ExperimentStatusUpdater) {
+			setup: func(t *testing.T, u *experimentStatusUpdater) {
 				u.experimentClient.(*ecmock.MockClient).EXPECT().FinishExperiment(gomock.Any(), gomock.Any()).Return(
 					&experimentproto.FinishExperimentResponse{}, nil)
 			},
@@ -125,8 +125,8 @@ func TestUpdateStatus(t *testing.T) {
 	}
 }
 
-func newMockExperimentStatusUpdater(t *testing.T, c *gomock.Controller) *ExperimentStatusUpdater {
-	return &ExperimentStatusUpdater{
+func newMockExperimentStatusUpdater(t *testing.T, c *gomock.Controller) *experimentStatusUpdater {
+	return &experimentStatusUpdater{
 		experimentClient: ecmock.NewMockClient(c),
 		opts: &jobs.Options{
 			Timeout: 5 * time.Second,

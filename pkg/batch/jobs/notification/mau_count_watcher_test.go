@@ -43,12 +43,12 @@ func TestCreateMAUNotification(t *testing.T) {
 	errInternal := errors.New("internal error")
 	patterns := []struct {
 		desc        string
-		setup       func(*testing.T, *MAUCountWatcher)
+		setup       func(*testing.T, *mauCountWatcher)
 		expectedErr error
 	}{
 		{
 			desc: "err project",
-			setup: func(t *testing.T, w *MAUCountWatcher) {
+			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
 					nil, errInternal)
@@ -57,7 +57,7 @@ func TestCreateMAUNotification(t *testing.T) {
 		},
 		{
 			desc: "no projects",
-			setup: func(t *testing.T, w *MAUCountWatcher) {
+			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListProjectsResponse{}, nil)
@@ -66,7 +66,7 @@ func TestCreateMAUNotification(t *testing.T) {
 		},
 		{
 			desc: "err environments",
-			setup: func(t *testing.T, w *MAUCountWatcher) {
+			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListProjectsResponse{
@@ -81,7 +81,7 @@ func TestCreateMAUNotification(t *testing.T) {
 		},
 		{
 			desc: "no environments",
-			setup: func(t *testing.T, w *MAUCountWatcher) {
+			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListProjectsResponse{
@@ -96,7 +96,7 @@ func TestCreateMAUNotification(t *testing.T) {
 		},
 		{
 			desc: "err counts",
-			setup: func(t *testing.T, w *MAUCountWatcher) {
+			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListProjectsResponse{
@@ -118,7 +118,7 @@ func TestCreateMAUNotification(t *testing.T) {
 		},
 		{
 			desc: "err sender",
-			setup: func(t *testing.T, w *MAUCountWatcher) {
+			setup: func(t *testing.T, w *mauCountWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListProjectsResponse{
@@ -143,7 +143,7 @@ func TestCreateMAUNotification(t *testing.T) {
 		},
 		{
 			desc: "success",
-			setup: func(t *testing.T, w *MAUCountWatcher) {
+			setup: func(t *testing.T, w *mauCountWatcher) {
 				// list projects
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(),
@@ -203,7 +203,7 @@ func TestCreateMAUNotification(t *testing.T) {
 
 func TestGetYearLastMonth(t *testing.T) {
 	t.Parallel()
-	watcher := &MAUCountWatcher{}
+	watcher := &mauCountWatcher{}
 	unixTime := time.Unix(1672531200, 0) // 2023/01/01 00:00:00 UTC
 	unixTime.In(jpLocation)
 	year, month := watcher.getLastYearMonth(unixTime)
@@ -213,7 +213,7 @@ func TestGetYearLastMonth(t *testing.T) {
 
 func TestNewYearMonth(t *testing.T) {
 	t.Parallel()
-	watcher := &MAUCountWatcher{}
+	watcher := &mauCountWatcher{}
 	uniTime := time.Unix(1675209600, 0) // 2023/02/01 00:00:00 UTC
 	uniTime.In(jpLocation)
 	year, month := watcher.getLastYearMonth(uniTime)
@@ -221,9 +221,9 @@ func TestNewYearMonth(t *testing.T) {
 	assert.Equal(t, "202301", yearMonth)
 }
 
-func newMAUCountWatcherWithMock(t *testing.T, c *gomock.Controller) *MAUCountWatcher {
+func newMAUCountWatcherWithMock(t *testing.T, c *gomock.Controller) *mauCountWatcher {
 	t.Helper()
-	return &MAUCountWatcher{
+	return &mauCountWatcher{
 		environmentClient:  environmentclientmock.NewMockClient(c),
 		eventCounterClient: ecclientmock.NewMockClient(c),
 		sender:             sendermock.NewMockSender(c),

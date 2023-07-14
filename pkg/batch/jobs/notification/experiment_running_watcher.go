@@ -36,7 +36,7 @@ const (
 	listRequestSize = 500
 )
 
-type ExperimentRunningWatcher struct {
+type experimentRunningWatcher struct {
 	environmentClient environmentclient.Client
 	experimentClient  experimentclient.Client
 	sender            sender.Sender
@@ -57,16 +57,16 @@ func NewExperimentRunningWatcher(
 	for _, opt := range opts {
 		opt(dopts)
 	}
-	return &ExperimentRunningWatcher{
+	return &experimentRunningWatcher{
 		environmentClient: environmentClient,
 		experimentClient:  experimentClient,
 		sender:            sender,
 		opts:              dopts,
-		logger:            dopts.Logger.Named("experiment-result-watcher"),
+		logger:            dopts.Logger.Named("experiment-running-watcher"),
 	}
 }
 
-func (w *ExperimentRunningWatcher) Run(ctx context.Context) (lastErr error) {
+func (w *experimentRunningWatcher) Run(ctx context.Context) (lastErr error) {
 	ctx, cancel := context.WithTimeout(ctx, w.opts.Timeout)
 	defer cancel()
 	environments, err := w.listEnvironments(ctx)
@@ -92,7 +92,7 @@ func (w *ExperimentRunningWatcher) Run(ctx context.Context) (lastErr error) {
 	return
 }
 
-func (w *ExperimentRunningWatcher) createNotificationEvent(
+func (w *experimentRunningWatcher) createNotificationEvent(
 	environment *environmentproto.Environment,
 	experiments []*experimentproto.Experiment,
 ) (*senderproto.NotificationEvent, error) {
@@ -116,7 +116,7 @@ func (w *ExperimentRunningWatcher) createNotificationEvent(
 	return ne, nil
 }
 
-func (w *ExperimentRunningWatcher) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
+func (w *experimentRunningWatcher) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
 	var environments []*environmentproto.Environment
 	cursor := ""
 	for {
@@ -136,7 +136,7 @@ func (w *ExperimentRunningWatcher) listEnvironments(ctx context.Context) ([]*env
 	}
 }
 
-func (w *ExperimentRunningWatcher) listExperiments(
+func (w *experimentRunningWatcher) listExperiments(
 	ctx context.Context,
 	environmentNamespace string,
 ) ([]*experimentproto.Experiment, error) {

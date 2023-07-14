@@ -38,12 +38,12 @@ func TestCreateNotification(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(*testing.T, *FeatureWatcher)
+		setup       func(*testing.T, *featureStaleWatcher)
 		expectedErr error
 	}{
 		{
 			desc: "no featres",
-			setup: func(t *testing.T, w *FeatureWatcher) {
+			setup: func(t *testing.T, w *featureStaleWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListEnvironmentsResponse{
@@ -59,7 +59,7 @@ func TestCreateNotification(t *testing.T) {
 		},
 		{
 			desc: "no stale featres",
-			setup: func(t *testing.T, w *FeatureWatcher) {
+			setup: func(t *testing.T, w *featureStaleWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListEnvironmentsResponse{
@@ -82,7 +82,7 @@ func TestCreateNotification(t *testing.T) {
 		},
 		{
 			desc: "stale exists",
-			setup: func(t *testing.T, w *FeatureWatcher) {
+			setup: func(t *testing.T, w *featureStaleWatcher) {
 				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
 					&environmentproto.ListEnvironmentsResponse{
@@ -125,9 +125,9 @@ func TestCreateNotification(t *testing.T) {
 	}
 }
 
-func newFeatureWatcherWithMock(t *testing.T, c *gomock.Controller) *FeatureWatcher {
+func newFeatureWatcherWithMock(t *testing.T, c *gomock.Controller) *featureStaleWatcher {
 	t.Helper()
-	return &FeatureWatcher{
+	return &featureStaleWatcher{
 		environmentClient: environmentclientmock.NewMockClient(c),
 		featureClient:     featureclientmock.NewMockClient(c),
 		sender:            sendermock.NewMockSender(c),

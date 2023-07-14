@@ -32,7 +32,7 @@ import (
 	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
 )
 
-type MAUCountWatcher struct {
+type mauCountWatcher struct {
 	environmentClient  environmentclient.Client
 	eventCounterClient ecclient.Client
 	sender             sender.Sender
@@ -54,7 +54,7 @@ func NewMAUCountWatcher(
 	for _, opt := range opts {
 		opt(dopts)
 	}
-	return &MAUCountWatcher{
+	return &mauCountWatcher{
 		environmentClient:  environmentClient,
 		eventCounterClient: eventCounterClient,
 		sender:             sender,
@@ -64,7 +64,7 @@ func NewMAUCountWatcher(
 	}
 }
 
-func (w *MAUCountWatcher) Run(ctx context.Context) (lastErr error) {
+func (w *mauCountWatcher) Run(ctx context.Context) (lastErr error) {
 	ctx, cancel := context.WithTimeout(ctx, w.opts.Timeout)
 	defer cancel()
 	projects, err := w.listProjects(ctx)
@@ -98,7 +98,7 @@ func (w *MAUCountWatcher) Run(ctx context.Context) (lastErr error) {
 	return
 }
 
-func (w *MAUCountWatcher) listProjects(ctx context.Context) ([]*environmentproto.Project, error) {
+func (w *mauCountWatcher) listProjects(ctx context.Context) ([]*environmentproto.Project, error) {
 	var projects []*environmentproto.Project
 	cursor := ""
 	for {
@@ -118,16 +118,16 @@ func (w *MAUCountWatcher) listProjects(ctx context.Context) ([]*environmentproto
 	}
 }
 
-func (w *MAUCountWatcher) getLastYearMonth(now time.Time) (int32, int32) {
+func (w *mauCountWatcher) getLastYearMonth(now time.Time) (int32, int32) {
 	targetDate := now.AddDate(0, -1, 0)
 	return int32(targetDate.Year()), int32(targetDate.Month())
 }
 
-func (w *MAUCountWatcher) newYearMonth(year, month int32) string {
+func (w *mauCountWatcher) newYearMonth(year, month int32) string {
 	return fmt.Sprintf("%d%02d", year, month)
 }
 
-func (w *MAUCountWatcher) listEnvironments(
+func (w *mauCountWatcher) listEnvironments(
 	ctx context.Context,
 	projectID string,
 ) ([]*environmentproto.Environment, error) {
@@ -151,7 +151,7 @@ func (w *MAUCountWatcher) listEnvironments(
 	}
 }
 
-func (w *MAUCountWatcher) getUserCount(
+func (w *mauCountWatcher) getUserCount(
 	ctx context.Context,
 	environmentNamespace, yearMonth string,
 ) (eventCount, userCount int64, err error) {
@@ -168,7 +168,7 @@ func (w *MAUCountWatcher) getUserCount(
 	return
 }
 
-func (w *MAUCountWatcher) sendNotification(
+func (w *mauCountWatcher) sendNotification(
 	ctx context.Context,
 	environment *environmentproto.Environment,
 	eventCount, userCount int64,
@@ -184,7 +184,7 @@ func (w *MAUCountWatcher) sendNotification(
 	return nil
 }
 
-func (w *MAUCountWatcher) createNotificationEvent(
+func (w *mauCountWatcher) createNotificationEvent(
 	environment *environmentproto.Environment,
 	eventCount, userCount int64,
 	month int32,

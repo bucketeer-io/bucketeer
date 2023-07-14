@@ -16,10 +16,11 @@ package api
 
 import (
 	"context"
-	"errors"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -27,13 +28,13 @@ import (
 )
 
 var (
-	errUnknownJob = errors.New("batch: unknown job")
+	errUnknownJob = status.Error(codes.InvalidArgument, "batch: unknown job")
 )
 
-type BatchService struct {
+type batchService struct {
 	experimentStatusUpdater  jobs.Job
 	experimentRunningWatcher jobs.Job
-	featureWatcher           jobs.Job
+	featureStaleWatcher      jobs.Job
 	mauCountWatcher          jobs.Job
 	datetimeWatcher          jobs.Job
 	countWatcher             jobs.Job
@@ -42,14 +43,14 @@ type BatchService struct {
 
 func NewBatchService(
 	experimentStatusUpdater, experimentRunningWatcher,
-	featureWatcher, mauCountWatcher,
+	featureStaleWatcher, mauCountWatcher,
 	datetimeWatcher, eventCountWatcher jobs.Job,
 	logger *zap.Logger,
-) *BatchService {
-	return &BatchService{
+) *batchService {
+	return &batchService{
 		experimentStatusUpdater:  experimentStatusUpdater,
 		experimentRunningWatcher: experimentRunningWatcher,
-		featureWatcher:           featureWatcher,
+		featureStaleWatcher:      featureStaleWatcher,
 		mauCountWatcher:          mauCountWatcher,
 		datetimeWatcher:          datetimeWatcher,
 		countWatcher:             eventCountWatcher,
@@ -57,17 +58,16 @@ func NewBatchService(
 	}
 }
 
-func (s *BatchService) ExecuteBatchJob(
+func (s *batchService) ExecuteBatchJob(
 	ctx context.Context, req *batch.BatchJobRequest) (*batch.BatchJobResponse, error) {
 	var err error
-	resp := &batch.BatchJobResponse{}
 	switch req.Job {
 	case batch.BatchJob_ExperimentStatusUpdater:
 		err = s.experimentStatusUpdater.Run(ctx)
 	case batch.BatchJob_ExperimentRunningWatcher:
 		err = s.experimentRunningWatcher.Run(ctx)
-	case batch.BatchJob_FeatureStateWatcher:
-		err = s.featureWatcher.Run(ctx)
+	case batch.BatchJob_FeatureStaleWatcher:
+		err = s.featureStaleWatcher.Run(ctx)
 	case batch.BatchJob_MauCountWatcher:
 		err = s.mauCountWatcher.Run(ctx)
 	case batch.BatchJob_DatetimeWatcher:
@@ -75,16 +75,25 @@ func (s *BatchService) ExecuteBatchJob(
 	case batch.BatchJob_EventCountWatcher:
 		err = s.countWatcher.Run(ctx)
 	default:
-		s.logger.Error("Batch Service unknown job",
+		s.logger.Error("Unknown job",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("job_name", req.Job.String()),
 			)...,
 		)
-		err = errUnknownJob
+		return nil, errUnknownJob
 	}
-	return resp, err
+	if err != nil {
+		s.logger.Error("Failed to run the job",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("job_name", req.Job.String()),
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+	return &batch.BatchJobResponse{}, nil
 }
 
-func (s *BatchService) Register(server *grpc.Server) {
+func (s *batchService) Register(server *grpc.Server) {
 	batch.RegisterBatchServiceServer(server, s)
 }

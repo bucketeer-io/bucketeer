@@ -42,14 +42,14 @@ import (
 )
 
 func TestNewEvaluationRealtimeCountPersister(t *testing.T) {
-	g := NewCountWatcher(nil, nil, nil, nil, nil)
-	assert.IsType(t, &CountWatcher{}, g)
+	g := NewEventCountWatcher(nil, nil, nil, nil, nil)
+	assert.IsType(t, &eventCountWatcher{}, g)
 }
 
-func newNewCountWatcherWithMock(t *testing.T, mockController *gomock.Controller) *CountWatcher {
+func newNewCountWatcherWithMock(t *testing.T, mockController *gomock.Controller) *eventCountWatcher {
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	return &CountWatcher{
+	return &eventCountWatcher{
 		mysqlClient:        mysqlmock.NewMockClient(mockController),
 		environmentLister:  targetstoremock.NewMockEnvironmentLister(mockController),
 		autoOpsRuleLister:  targetstoremock.NewMockAutoOpsRuleLister(mockController),
@@ -70,12 +70,12 @@ func TestRunCountWatcher(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(*testing.T, *CountWatcher)
+		setup       func(*testing.T, *eventCountWatcher)
 		expectedErr error
 	}{
 		{
 			desc: "error: GetFeature fails",
-			setup: func(t *testing.T, w *CountWatcher) {
+			setup: func(t *testing.T, w *eventCountWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).
 					EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{
@@ -102,7 +102,7 @@ func TestRunCountWatcher(t *testing.T) {
 		},
 		{
 			desc: "error: GetOpsEvaluationUserCount fails",
-			setup: func(t *testing.T, w *CountWatcher) {
+			setup: func(t *testing.T, w *eventCountWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).
 					EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{
@@ -136,7 +136,7 @@ func TestRunCountWatcher(t *testing.T) {
 		},
 		{
 			desc: "error: GetOpsEvaluationUserCount fails",
-			setup: func(t *testing.T, w *CountWatcher) {
+			setup: func(t *testing.T, w *eventCountWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).
 					EXPECT().GetEnvironments(gomock.Any()).Return(
 					[]*environmentdomain.Environment{

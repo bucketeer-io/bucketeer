@@ -248,7 +248,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(1*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		notification.NewFeatureWatcher(
+		notification.NewFeatureStaleWatcher(
 			environmentClient,
 			featureClient,
 			notificationSender,
@@ -269,7 +269,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		opsevent.NewCountWatcher(
+		opsevent.NewEventCountWatcher(
 			mysqlClient,
 			targetStore,
 			eventCounterClient,
@@ -292,6 +292,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithPort(*s.port),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithService(healthChecker),
 		rpc.WithHandler("/health", healthChecker),
 	)
 	go server.Run()
