@@ -9,9 +9,14 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: {{ .Values.cronjob.experimentStatusUpdaterSchedule }}
+  concurrencyPolicy: Forbid
+  timeZone: {{ .Values.env.timezone }}
+  schedule: "{{ .Values.cronjob.experimentStatusUpdaterSchedule }}"
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
   jobTemplate:
     spec:
+      backoffLimit: 0
       template:
         spec:
           volumes:
@@ -41,9 +46,16 @@ spec:
                 - -c
                 - |
                   echo "Start experiment-status-updater job."
+                  ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "ExperimentStatusUpdater"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "ExperimentStatusUpdater"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
                   echo "experiment-status-updater job result: ${RES}"
+                  if [ "$RES" == 200 ]
+                  then
+                    exit 0
+                  else
+                    exit 1
+                  fi
           restartPolicy: Never
 
 ---
@@ -58,9 +70,14 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: {{ .Values.cronjob.experimentRunningWatcherSchedule }}
+  concurrencyPolicy: Forbid
+  timeZone: {{ .Values.env.timezone }}
+  schedule: "{{ .Values.cronjob.experimentRunningWatcherSchedule }}"
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
   jobTemplate:
     spec:
+      backoffLimit: 0
       template:
         spec:
           volumes:
@@ -90,16 +107,23 @@ spec:
                 - -c
                 - |
                   echo "Start experiment-running-watcher job."
+                  ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "ExperimentRunningWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "ExperimentRunningWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
                   echo "experiment-running-watcher job result: ${RES}"
+                  if [ "$RES" == 200 ]
+                  then
+                    exit 0
+                  else
+                    exit 1
+                  fi
           restartPolicy: Never
 
 ---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ template "batch-server.fullname" . }}-feature-state-watcher
+  name: {{ template "batch-server.fullname" . }}-feature-stale-watcher
   namespace: {{ .Values.namespace }}
   labels:
     app: {{ template "batch-server.name" . }}
@@ -107,9 +131,14 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: {{ .Values.cronjob.featureStateWatcherSchedule }}
+  concurrencyPolicy: Forbid
+  timeZone: {{ .Values.env.timezone }}
+  schedule: "{{ .Values.cronjob.featureStaleWatcherSchedule }}"
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
   jobTemplate:
     spec:
+      backoffLimit: 0
       template:
         spec:
           volumes:
@@ -120,7 +149,7 @@ spec:
               secret:
                 secretName: {{ template "service-token-secret" . }}
           containers:
-            - name: feature-state-watcher
+            - name: feature-stale-watcher
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
               volumeMounts:
@@ -138,10 +167,17 @@ spec:
               args:
                 - -c
                 - |
-                  echo "Start feature-state-watcher job."
+                  echo "Start feature-stale-watcher job."
+                  ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "FeatureStateWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
-                  echo "feature-state-watcher job result: ${RES}"
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "FeatureStaleWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  echo "feature-stale-watcher job result: ${RES}"
+                  if [ "$RES" == 200 ]
+                  then
+                    exit 0
+                  else
+                    exit 1
+                  fi
           restartPolicy: Never
 
 ---
@@ -156,10 +192,14 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
+  concurrencyPolicy: Forbid
   timeZone: {{ .Values.env.timezone }}
-  schedule: {{ .Values.cronjob.mauCountWatcherSchedule }}
+  schedule: "{{ .Values.cronjob.mauCountWatcherSchedule }}"
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
   jobTemplate:
     spec:
+      backoffLimit: 0
       template:
         spec:
           volumes:
@@ -189,11 +229,17 @@ spec:
                 - -c
                 - |
                   echo "Start mau-count-watcher job."
+                  ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "MauCountWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "MauCountWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
                   echo "mau-count-watcher job result: ${RES}"
+                  if [ "$RES" == 200 ]
+                  then
+                    exit 0
+                  else
+                    exit 1
+                  fi
           restartPolicy: Never
-
 
 ---
 apiVersion: batch/v1
@@ -207,9 +253,14 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: {{ .Values.cronjob.opsDatetimeWatcherSchedule }}
+  concurrencyPolicy: Forbid
+  timeZone: {{ .Values.env.timezone }}
+  schedule: "{{ .Values.cronjob.opsDatetimeWatcherSchedule }}"
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
   jobTemplate:
     spec:
+      backoffLimit: 0
       template:
         spec:
           volumes:
@@ -239,11 +290,17 @@ spec:
                 - -c
                 - |
                   echo "Start ops-datetime-watcher job."
+                  ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "DatetimeWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "DatetimeWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
                   echo "ops-datetime-watcher job result: ${RES}"
+                  if [ "$RES" == 200 ]
+                  then
+                    exit 0
+                  else
+                    exit 1
+                  fi
           restartPolicy: Never
-
 
 ---
 apiVersion: batch/v1
@@ -257,9 +314,14 @@ metadata:
     release: {{ template "batch-server.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: {{ .Values.cronjob.opsEventCountWatcherSchedule }}
+  concurrencyPolicy: Forbid
+  timeZone: {{ .Values.env.timezone }}
+  schedule: "{{ .Values.cronjob.opsEventCountWatcherSchedule }}"
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
   jobTemplate:
     spec:
+      backoffLimit: 0
       template:
         spec:
           volumes:
@@ -289,7 +351,14 @@ spec:
                 - -c
                 - |
                   echo "Start ops-event-count-watcher job."
+                  ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "EventCountWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${WEB_GATEWAY_ADDRESS}`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "EventCountWatcher"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
                   echo "ops-event-count-watcher job result: ${RES}"
+                  if [ "$RES" == 200 ]
+                  then
+                    exit 0
+                  else
+                    exit 1
+                  fi
           restartPolicy: Never

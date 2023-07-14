@@ -130,22 +130,22 @@ data:
                           "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                     route_config:
                       virtual_hosts:
-                        - domains:
+                        - name: ingress_services
+                          domains:
                             - '*'
-                          name: ingress_services
                           routes:
                             - match:
                                 headers:
                                   - name: content-type
                                     string_match:
                                       exact: application/grpc
-                                prefix: /bucketeer.batch.BatchService
+                                prefix: /
                               route:
                                 cluster: batch
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
-                                timeout: 15s
+                                timeout: 3600s
                     stat_prefix: ingress_http
                     stream_idle_timeout: 3600s
               transport_socket:
@@ -184,10 +184,22 @@ data:
                           "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                     route_config:
                       virtual_hosts:
-                        - domains:
+                        - name: egress_services
+                          domains:
                             - '*'
-                          name: egress_services
                           routes:
+                            - match:
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
+                                prefix: /bucketeer.autoops.AutoOpsService
+                              route:
+                                cluster: backend
+                                retry_policy:
+                                  num_retries: 3
+                                  retry_on: 5xx
+                                timeout: 15s
                             - match:
                                 headers:
                                   - name: content-type
@@ -248,18 +260,6 @@ data:
                                   num_retries: 3
                                   retry_on: 5xx
                                 timeout: 15s
-                            - match:
-                                prefix: /bucketeer.autoops.AutoOpsService
-                                headers:
-                                  - name: content-type
-                                    string_match:
-                                      exact: application/grpc
-                                route:
-                                  cluster: backend
-                                  retry_policy:
-                                    num_retries: 3
-                                    retry_on: 5xx
-                                  timeout: 15s
                     stat_prefix: egress_http
                     stream_idle_timeout: 3600s
               transport_socket:
