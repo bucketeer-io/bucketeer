@@ -24,7 +24,6 @@ on:
     paths-ignore:
       - "README.md"
       - "ui/web-v2/README.md"
-      - "python/README.md"
       - "CLA.md"
       - "CONTRIBUTING.md"
       - "DEPLOYMENT.md"
@@ -36,8 +35,6 @@ env:
   PROTOC_VERSION: 3.18.1
   PROTOC_GEN_GO_VERSION: v1.5.2
   GO_VERSION: 1.20.4
-  PYTHON_VERSION: 3.7.6
-  PYTHON_PATH: ./python
   NODE_VERSION: 16
   WEB_PATH: ./ui/web-v2
 
@@ -172,74 +169,6 @@ jobs:
             exit "$exit_code"
           fi
           done
-  python:
-    needs: setup
-    runs-on: ubuntu-20.04
-    permissions:
-      contents: "read"
-      id-token: "write"
-    defaults:
-      run:
-        working-directory: ${{ env.PYTHON_PATH }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          architecture: "x64"
-      - name: Install Poetry
-        uses: snok/install-poetry@d45b6d76012debf457ab49dffc7fb7b2efe8071d # v1.3.3
-        with:
-          version: 1.5.0
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: make init
-      - name: Build python
-        run: |
-          source .venv/bin/activate
-          make gen
-      - name: Set up docker
-        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # v2.5.0
-        with:
-          install: true
-      - name: Build python application images
-        run: docker build -t bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }} --load .
-      - name: Login to GHCR
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v2.1.0
-        with:
-          registry: ghcr.io
-          username: ${{ secrets.GHCR_USER_NAME }}
-          password: ${{ secrets.GHCR_PAT }}
-      - name: Push python application image to GHCR
-        run: |
-          docker tag bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
-          docker push ${{ env.GHCR_REGISTRY }}/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@35b0e87d162680511bf346c299f71c9c5c379033 # v1.1.1
-        with:
-          token_format: "access_token"
-          workload_identity_provider: ${{ secrets.GAR_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GAR_SA_MAIL_ADDRESS }}
-      - name: Login to GAR
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.GAR_REGISTRY }}
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
-      - name: Push python application image to GAR
-        run: |
-          docker tag bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
-          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-calculator:${{ needs.setup.outputs.IMAGE_TAG }}
 
   web-v2:
     needs: setup
@@ -314,7 +243,7 @@ jobs:
           docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }}
 
   dispatch:
-    needs: [setup, go, python, web-v2]
+    needs: [setup, go, web-v2]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -366,7 +295,7 @@ jobs:
             }
 
   notify-failure-to-slack:
-    needs: [setup, go, python, web-v2, dispatch]
+    needs: [setup, go, web-v2, dispatch]
     if: ${{ failure() }}
     runs-on: ubuntu-latest
     steps:
