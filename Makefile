@@ -93,7 +93,6 @@ proto-lock-commit-force:
 .PHONY: proto-all
 proto-all:
 	make -C proto go
-	make -C python gen
 	make -C ui/web-v2 gen_proto
 
 .PHONY: proto-go
