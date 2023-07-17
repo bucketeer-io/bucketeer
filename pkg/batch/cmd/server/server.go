@@ -27,6 +27,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
+	domaineventinformer "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -41,6 +42,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -74,6 +77,12 @@ type server struct {
 	eventCounterService *string
 	featureService      *string
 	notificationService *string
+	// pubsub config
+	domainSubscription           *string
+	domainTopic                  *string
+	pullerNumGoroutines          *int
+	pullerMaxOutstandingMessages *int
+	pullerMaxOutstandingBytes    *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -120,6 +129,24 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"notification-service",
 			"bucketeer-notification-service address.",
 		).Default("notification:9090").String(),
+		domainTopic: cmd.Flag(
+			"domain-topic",
+			"Google PubSub topic name of incoming domain events.").String(),
+		domainSubscription: cmd.Flag(
+			"domain-subscription",
+			"Google PubSub subscription name of incoming domain event.",
+		).String(),
+		pullerNumGoroutines: cmd.Flag(
+			"puller-num-goroutines",
+			"Number of goroutines will be spawned to pull messages.",
+		).Int(),
+		pullerMaxOutstandingMessages: cmd.Flag(
+			"puller-max-outstanding-messages",
+			"Maximum number of unprocessed messages.",
+		).Int(),
+		pullerMaxOutstandingBytes: cmd.Flag(
+			"puller-max-outstanding-bytes",
+			"Maximum size of unprocessed messages.").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -230,6 +257,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		notificationsender.WithLogger(logger),
 	)
 
+	domainEventPuller, err := s.createPuller(ctx, registerer, logger)
+	if err != nil {
+		return err
+	}
+
+	domainEventInformer := domaineventinformer.NewDomainEventInformer(
+		environmentClient,
+		domainEventPuller,
+		notificationSender,
+		domaineventinformer.WithMetrics(registerer),
+		domaineventinformer.WithLogger(logger),
+	)
+	go domainEventInformer.Run()
+
 	location, err := locale.GetLocation(*s.timezone)
 	if err != nil {
 		return err
@@ -284,6 +325,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
+		health.WithCheck("domain_event_informer", domainEventInformer.Check),
 	)
 	go healthChecker.Run(ctx)
 
@@ -308,6 +350,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureClient.Close()
 		autoOpsClient.Close()
 		mysqlClient.Close()
+		domainEventInformer.Stop()
 	}()
 
 	<-ctx.Done()
@@ -337,4 +380,30 @@ func (s *server) insertTelepresenceMountRoot(path string) string {
 		return path
 	}
 	return volumeRoot + path
+}
+
+func (s *server) createPuller(ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (puller.Puller, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	pubsubClient, err := pubsub.NewClient(
+		ctx,
+		*s.project,
+		pubsub.WithMetrics(registerer),
+		pubsub.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, err
+	}
+	pubsubPuller, err := pubsubClient.CreatePuller(*s.domainSubscription, *s.domainTopic,
+		pubsub.WithNumGoroutines(*s.pullerNumGoroutines),
+		pubsub.WithMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
+		pubsub.WithMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return pubsubPuller, nil
 }
