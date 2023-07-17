@@ -18,7 +18,6 @@ package notification
 import (
 	"context"
 	"errors"
-	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -28,6 +27,7 @@ import (
 
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
+	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
