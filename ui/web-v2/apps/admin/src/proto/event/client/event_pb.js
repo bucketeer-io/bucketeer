@@ -13,7 +13,13 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = Function('return this')();
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var google_protobuf_any_pb = require('google-protobuf/google/protobuf/any_pb.js');
 goog.object.extend(proto, google_protobuf_any_pb);
@@ -1238,7 +1244,8 @@ proto.bucketeer.event.client.EvaluationEvent.prototype.getMetadataMap = function
  */
 proto.bucketeer.event.client.EvaluationEvent.prototype.clearMetadataMap = function() {
   this.getMetadataMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -1692,7 +1699,8 @@ proto.bucketeer.event.client.GoalEvent.prototype.getMetadataMap = function(opt_n
  */
 proto.bucketeer.event.client.GoalEvent.prototype.clearMetadataMap = function() {
   this.getMetadataMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -1966,7 +1974,8 @@ proto.bucketeer.event.client.MetricsEvent.prototype.getMetadataMap = function(op
  */
 proto.bucketeer.event.client.MetricsEvent.prototype.clearMetadataMap = function() {
   this.getMetadataMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -2113,7 +2122,8 @@ proto.bucketeer.event.client.GetEvaluationLatencyMetricsEvent.prototype.getLabel
  */
 proto.bucketeer.event.client.GetEvaluationLatencyMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 /**
@@ -2295,7 +2305,8 @@ proto.bucketeer.event.client.GetEvaluationSizeMetricsEvent.prototype.getLabelsMa
  */
 proto.bucketeer.event.client.GetEvaluationSizeMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 /**
@@ -2502,7 +2513,8 @@ proto.bucketeer.event.client.LatencyMetricsEvent.prototype.getLabelsMap = functi
  */
 proto.bucketeer.event.client.LatencyMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 /**
@@ -2732,7 +2744,8 @@ proto.bucketeer.event.client.SizeMetricsEvent.prototype.getLabelsMap = function(
  */
 proto.bucketeer.event.client.SizeMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 /**
@@ -3173,7 +3186,8 @@ proto.bucketeer.event.client.BadRequestErrorMetricsEvent.prototype.getLabelsMap 
  */
 proto.bucketeer.event.client.BadRequestErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -3336,7 +3350,8 @@ proto.bucketeer.event.client.UnauthorizedErrorMetricsEvent.prototype.getLabelsMa
  */
 proto.bucketeer.event.client.UnauthorizedErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -3499,7 +3514,8 @@ proto.bucketeer.event.client.ForbiddenErrorMetricsEvent.prototype.getLabelsMap =
  */
 proto.bucketeer.event.client.ForbiddenErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -3662,7 +3678,8 @@ proto.bucketeer.event.client.NotFoundErrorMetricsEvent.prototype.getLabelsMap = 
  */
 proto.bucketeer.event.client.NotFoundErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -3825,7 +3842,8 @@ proto.bucketeer.event.client.ClientClosedRequestErrorMetricsEvent.prototype.getL
  */
 proto.bucketeer.event.client.ClientClosedRequestErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -3988,7 +4006,8 @@ proto.bucketeer.event.client.InternalServerErrorMetricsEvent.prototype.getLabels
  */
 proto.bucketeer.event.client.InternalServerErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -4151,7 +4170,8 @@ proto.bucketeer.event.client.ServiceUnavailableErrorMetricsEvent.prototype.getLa
  */
 proto.bucketeer.event.client.ServiceUnavailableErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -4314,7 +4334,8 @@ proto.bucketeer.event.client.TimeoutErrorMetricsEvent.prototype.getLabelsMap = f
  */
 proto.bucketeer.event.client.TimeoutErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -4477,7 +4498,8 @@ proto.bucketeer.event.client.InternalErrorMetricsEvent.prototype.getLabelsMap = 
  */
 proto.bucketeer.event.client.InternalErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -4640,7 +4662,8 @@ proto.bucketeer.event.client.NetworkErrorMetricsEvent.prototype.getLabelsMap = f
  */
 proto.bucketeer.event.client.NetworkErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -4803,7 +4826,8 @@ proto.bucketeer.event.client.InternalSdkErrorMetricsEvent.prototype.getLabelsMap
  */
 proto.bucketeer.event.client.InternalSdkErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 
@@ -4966,7 +4990,8 @@ proto.bucketeer.event.client.UnknownErrorMetricsEvent.prototype.getLabelsMap = f
  */
 proto.bucketeer.event.client.UnknownErrorMetricsEvent.prototype.clearLabelsMap = function() {
   this.getLabelsMap().clear();
-  return this;};
+  return this;
+};
 
 
 

@@ -1,17 +1,3 @@
-// Copyright 2023 The Bucketeer Authors.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 // Protocol Buffers - Google's data interchange format
 // Copyright 2008 Google Inc.  All rights reserved.
 // https://developers.google.com/protocol-buffers/
@@ -46,13 +32,13 @@ syntax = "proto3";
 
 package google.protobuf;
 
-option csharp_namespace = "Google.Protobuf.WellKnownTypes";
 option cc_enable_arenas = true;
 option go_package = "google.golang.org/protobuf/types/known/timestamppb";
 option java_package = "com.google.protobuf";
 option java_outer_classname = "TimestampProto";
 option java_multiple_files = true;
 option objc_class_prefix = "GPB";
+option csharp_namespace = "Google.Protobuf.WellKnownTypes";
 
 // A Timestamp represents a point in time independent of any time zone or local
 // calendar, encoded as a count of seconds and fractions of seconds at
@@ -104,7 +90,6 @@ option objc_class_prefix = "GPB";
 //     Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
 //         .setNanos((int) ((millis % 1000) * 1000000)).build();
 //
-//
 // Example 5: Compute Timestamp from Java `Instant.now()`.
 //
 //     Instant now = Instant.now();
@@ -112,7 +97,6 @@ option objc_class_prefix = "GPB";
 //     Timestamp timestamp =
 //         Timestamp.newBuilder().setSeconds(now.getEpochSecond())
 //             .setNanos(now.getNano()).build();
-//
 //
 // Example 6: Compute Timestamp from current time in Python.
 //
@@ -143,9 +127,8 @@ option objc_class_prefix = "GPB";
 // [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
 // the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
 // the Joda Time's [`ISODateTimeFormat.dateTime()`](
-// http://www.joda.org/joda-time/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime%2D%2D
+// http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
 // ) to obtain a formatter capable of generating timestamps in this format.
-//
 //
 message Timestamp {
   // Represents seconds of UTC time since Unix epoch

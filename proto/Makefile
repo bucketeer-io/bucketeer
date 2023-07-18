@@ -3,7 +3,7 @@ PROTO_WITH_DESCRIPTOR_FOLDERS := ./account ./auditlog ./auth ./autoops ./environ
 PROTO_WITHOUT_DESCRIPTOR_FOLDERS := $(filter-out $(PROTO_WITH_DESCRIPTOR_FOLDERS), $(PROTO_FOLDERS))
 
 GIT_TOP_DIR := $(shell cd .. ; pwd)
-PROTOBUF_INCLUDE_DIR := ./external/protocolbuffers/protobuf/v3.18.1
+PROTOBUF_INCLUDE_DIR := ./external/protocolbuffers/protobuf/v23.4
 GOOGLEAPIS := ./external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974
 
 .PHONY: go
