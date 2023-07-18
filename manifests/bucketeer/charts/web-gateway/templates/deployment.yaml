@@ -77,7 +77,7 @@ spec:
                 command:
                   - "/bin/sh"
                   - "-c"
-                  - "busybox wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail; sleep 15"
+                  - "wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail; sleep 15"
           command: ["envoy"]
           args:
             - "-c"
