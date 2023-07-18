@@ -131,7 +131,7 @@ spec:
                 command:
                   - "/bin/sh"
                   - "-c"
-                  - "busybox wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail; while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+                  - "wget -O- --post-data='{}' http://localhost:$ENVOY_ADMIN_PORT/healthcheck/fail; while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
           command: ["envoy"]
           args:
             - "-c"
