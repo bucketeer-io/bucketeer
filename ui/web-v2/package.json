@@ -129,6 +129,7 @@
     "postcss-import": "14.0.2",
     "postcss-loader": "4.0.4",
     "prettier": "2.3.2",
+    "protoc-gen-js": "^3.21.2",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat",
     "ts-jest": "26.4.0",
     "ts-node": "9.1.1",

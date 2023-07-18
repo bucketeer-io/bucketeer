@@ -27,13 +27,14 @@ lint:
 
 ROOT_DIR := $(CURDIR)/../..
 SRC_DIR := $(CURDIR)/apps/admin/src
-PROTOBUF_INCLUDE_DIR := $(ROOT_DIR)/proto/external/protocolbuffers/protobuf/v3.18.1
+PROTOBUF_INCLUDE_DIR := $(ROOT_DIR)/proto/external/protocolbuffers/protobuf/v23.4
 NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
 
 .PHONY: gen_proto
 gen_proto: clean_proto
 	protoc \
 	--plugin=protoc-gen-ts=$(NPM_BIN_DIR)/protoc-gen-ts \
+	--plugin=protoc-gen-js=$(NPM_BIN_DIR)/protoc-gen-js \
 	--js_out=import_style=commonjs,binary:$(SRC_DIR) \
 	--ts_out=service=grpc-web:$(SRC_DIR) \
 	-I $(ROOT_DIR) \
