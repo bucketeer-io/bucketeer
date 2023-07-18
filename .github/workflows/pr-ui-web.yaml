@@ -97,9 +97,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
       - name: Install Protoc
-        uses: arduino/setup-protoc@v1
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        uses: arduino/setup-protoc@9b1ee5b22b0a3f1feb8c2ff99b32c89b3c3191e9 # v2.0.0
         with:
-          version: ${{ env.PROTOC_VERSION }}
+          version: "${{ env.PROTOC_VERSION }}"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate proto files
         run: make gen_proto
@@ -131,9 +133,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
       - name: Install Protoc
-        uses: arduino/setup-protoc@v1
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        uses: arduino/setup-protoc@9b1ee5b22b0a3f1feb8c2ff99b32c89b3c3191e9 # v2.0.0
         with:
-          version: ${{ env.PROTOC_VERSION }}
+          version: "${{ env.PROTOC_VERSION }}"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Check proto files
         run: make gen_proto_check
