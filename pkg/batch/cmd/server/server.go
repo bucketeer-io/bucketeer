@@ -27,7 +27,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
-	domaineventinformer "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -257,19 +256,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		notificationsender.WithLogger(logger),
 	)
 
-	domainEventPuller, err := s.createPuller(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-
-	domainEventInformer := domaineventinformer.NewDomainEventInformer(
-		environmentClient,
-		domainEventPuller,
-		notificationSender,
-		domaineventinformer.WithMetrics(registerer),
-		domaineventinformer.WithLogger(logger),
-	)
-	go domainEventInformer.Run()
+	//domainEventPuller, err := s.createPuller(ctx, registerer, logger)
+	//if err != nil {
+	//	return err
+	//}
 
 	location, err := locale.GetLocation(*s.timezone)
 	if err != nil {
@@ -325,7 +315,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
-		health.WithCheck("domain_event_informer", domainEventInformer.Check),
 	)
 	go healthChecker.Run(ctx)
 
@@ -350,7 +339,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureClient.Close()
 		autoOpsClient.Close()
 		mysqlClient.Close()
-		domainEventInformer.Stop()
 	}()
 
 	<-ctx.Done()
