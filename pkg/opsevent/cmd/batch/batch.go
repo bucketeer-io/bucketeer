@@ -210,6 +210,11 @@ func (b *batch) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Lo
 	defer server.Stop(10 * time.Second)
 	go server.Run()
 
+	// Ensure to stop the health check before stopping the application
+	// so the Kubernetes Readiness can detect it faster and remove the pod
+	// from the service load balancer.
+	defer healthChecker.Stop()
+
 	<-ctx.Done()
 	return nil
 }
