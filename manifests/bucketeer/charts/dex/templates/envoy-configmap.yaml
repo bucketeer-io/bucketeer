@@ -41,7 +41,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 5556
+                          port_value: {{ .Values.service.dexPort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:

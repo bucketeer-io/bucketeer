@@ -121,7 +121,7 @@ spec:
             periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
             httpGet:
-              path: /health
+              path: /dex/healthz
               port: service
               scheme: HTTPS
           readinessProbe:
@@ -129,7 +129,7 @@ spec:
             periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
             httpGet:
-              path: /health
+              path: /dex/healthz
               port: service
               scheme: HTTPS
           resources:
