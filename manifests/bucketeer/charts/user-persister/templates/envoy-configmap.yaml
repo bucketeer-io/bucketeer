@@ -53,14 +53,6 @@ data:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
               explicit_http_config:
                 http2_protocol_options: {}
-          health_checks:
-            - grpc_health_check: {}
-              healthy_threshold: 1
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              timeout: 1s
-              unhealthy_threshold: 2
           ignore_health_on_host_removal: true
       listeners:
         - name: ingress
@@ -80,17 +72,6 @@ data:
                         path: /dev/stdout
                     codec_type: auto
                     http_filters:
-                      - name: envoy.filters.http.health_check
-                        typed_config:
-                          '@type': type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
-                          cluster_min_healthy_percentages:
-                            user-persister:
-                              value: 25
-                          headers:
-                            - name: :path
-                              string_match:
-                                exact: /health
-                          pass_through_mode: false
                       - name: envoy.filters.http.router
                         typed_config:
                           "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router

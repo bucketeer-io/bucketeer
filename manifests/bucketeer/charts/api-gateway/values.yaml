@@ -63,11 +63,11 @@ ingress:
   staticIPName:
 health:
   livenessProbe:
-    initialDelaySeconds: 5
+    initialDelaySeconds: 10
     periodSeconds: 3
     failureThreshold: 5
   readinessProbe:
-    initialDelaySeconds: 5
+    initialDelaySeconds: 10
     periodSeconds: 3
     failureThreshold: 2
 resources: {}

@@ -109,14 +109,17 @@ spec:
             - name: metrics
               containerPort: {{ .Values.env.metricsPort }}
           livenessProbe:
-            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
-            periodSeconds: {{ .Values.health.periodSeconds }}
+            initialDelaySeconds: {{ .Values.health.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
             httpGet:
               path: /health
               port: service
               scheme: HTTPS
           readinessProbe:
-            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
             httpGet:
               path: /health
               port: service
@@ -155,18 +158,21 @@ spec:
             - name: admin
               containerPort: {{ .Values.envoy.adminPort }}
           livenessProbe:
-            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
-            periodSeconds: {{ .Values.health.periodSeconds }}
+            initialDelaySeconds: {{ .Values.health.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
             httpGet:
-              path: /health
-              port: envoy
-              scheme: HTTPS
+              path: /ready
+              port: admin
+              scheme: HTTP
           readinessProbe:
-            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
             httpGet:
-              path: /health
-              port: envoy
-              scheme: HTTPS
+              path: /ready
+              port: admin
+              scheme: HTTP
           resources:
 {{ toYaml .Values.envoy.resources | indent 12 }}
   strategy:

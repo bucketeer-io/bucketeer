@@ -53,15 +53,6 @@ data:
                     filename: /usr/local/certs/service/tls.crt
                   private_key:
                     filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
 
         - name: dex
           dns_lookup_family: V4_ONLY
@@ -94,15 +85,6 @@ data:
                     filename: /usr/local/certs/service/tls.crt
                   private_key:
                     filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
 
         - name: experiment-calculator
           dns_lookup_family: V4_ONLY
@@ -135,15 +117,6 @@ data:
                     filename: /usr/local/certs/service/tls.crt
                   private_key:
                     filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 5s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 3
 
         - name: web
           dns_lookup_family: V4_ONLY
@@ -176,15 +149,7 @@ data:
                     filename: /usr/local/certs/service/tls.crt
                   private_key:
                     filename: /usr/local/certs/service/tls.key
-          health_checks:
-            - http_health_check:
-                path: /health
-              timeout: 1s
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              healthy_threshold: 1
-              unhealthy_threshold: 2
+
       listeners:
         - name: ingress
           address:

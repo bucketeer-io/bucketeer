@@ -45,7 +45,14 @@ envoy:
       memory: 64Mi
 
 health:
-  initialDelaySeconds: 10
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 5
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 2
 
 resources:
   limits:
