@@ -122,7 +122,7 @@ func (s *EnvironmentService) ListProjects(
 		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
 	}
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "creator_email"}, req.SearchKeyword))
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "url_code", "creator_email"}, req.SearchKeyword))
 	}
 	orders, err := s.newProjectListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -187,7 +187,11 @@ func (s *EnvironmentService) newProjectListOrders(
 	var column string
 	switch orderBy {
 	case environmentproto.ListProjectsRequest_DEFAULT,
-		environmentproto.ListProjectsRequest_ID:
+		environmentproto.ListProjectsRequest_NAME:
+		column = "name"
+	case environmentproto.ListProjectsRequest_URL_CODE:
+		column = "url_code"
+	case environmentproto.ListProjectsRequest_ID:
 		column = "id"
 	case environmentproto.ListProjectsRequest_CREATED_AT:
 		column = "created_at"

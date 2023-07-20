@@ -26,8 +26,11 @@ type Project struct {
 
 func NewProject(id, description, creatorEmail string, trial bool) *Project {
 	now := time.Now().Unix()
+	// TODO: Name and UrlCode are set to the same value as ID temporarily.
 	return &Project{&proto.Project{
 		Id:           id,
+		Name:         id,
+		UrlCode:      id,
 		Description:  description,
 		Disabled:     false,
 		Trial:        trial,

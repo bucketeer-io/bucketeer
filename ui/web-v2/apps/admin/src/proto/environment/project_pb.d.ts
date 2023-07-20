@@ -25,6 +25,12 @@ export class Project extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Project.AsObject;
   static toObject(includeInstance: boolean, msg: Project): Project.AsObject;
@@ -44,6 +50,8 @@ export namespace Project {
     creatorEmail: string,
     createdAt: number,
     updatedAt: number,
+    name: string,
+    urlCode: string,
   }
 }
 
