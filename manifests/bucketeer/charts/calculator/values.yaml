@@ -67,12 +67,17 @@ service:
   externalPort: 9000
 
 health:
-  periodSeconds: 10
-  failureThreshold: 10
   # It is necessary to wait for the model compilation to be done.
   # The duration is up to resources.
   # cf. CPU: 500m, MEM: 3Gi -> 280sec
-  initialDelaySeconds:
+  livenessProbe:
+    initialDelaySeconds: 300
+    periodSeconds: 3
+    failureThreshold: 5
+  readinessProbe:
+    initialDelaySeconds: 300
+    periodSeconds: 3
+    failureThreshold: 2
 
 resources: {}
 
