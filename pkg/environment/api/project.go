@@ -37,7 +37,8 @@ import (
 )
 
 var (
-	projectIDRegex = regexp.MustCompile("^[a-z0-9-]{1,50}$")
+	projectIDRegex   = regexp.MustCompile("^[a-z0-9-]{1,50}$")
+	projectNameRegex = regexp.MustCompile("^[a-z0-9-]{1,50}$")
 
 	//nolint:lll
 	emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
@@ -226,7 +227,21 @@ func (s *EnvironmentService) CreateProject(
 	if err := validateCreateProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	project := domain.NewProject(req.Command.Id, req.Command.Description, editor.Email, false)
+	// TODO Once we support new create project API requiring name instead of id, we should remove this process.
+	name := req.Command.Name
+	if req.Command.Name == "" {
+		name = req.Command.Id
+	}
+	project, err := domain.NewProject(name, req.Command.Description, editor.Email, false)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create project",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
 	if err := s.createProject(ctx, req.Command, project, editor, localizer); err != nil {
 		return nil, err
 	}
@@ -244,10 +259,11 @@ func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, lo
 		}
 		return dt.Err()
 	}
-	if !projectIDRegex.MatchString(req.Command.Id) {
-		dt, err := statusInvalidProjectID.WithDetails(&errdetails.LocalizedMessage{
+	// TODO Once we support new create project API requiring name instead of id, we should validate name using regex.
+	if !projectNameRegex.MatchString(req.Command.Name) && !projectIDRegex.MatchString(req.Command.Id) {
+		dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id"),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -347,7 +363,21 @@ func (s *EnvironmentService) CreateTrialProject(
 		}
 		return nil, dt.Err()
 	}
-	project := domain.NewProject(req.Command.Id, "", editor.Email, true)
+	// TODO Once we support new create project API requiring name instead of id, we should remove this process.
+	name := req.Command.Name
+	if req.Command.Name == "" {
+		name = req.Command.Id
+	}
+	project, err := domain.NewProject(name, "", editor.Email, true)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create trial project",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
 	if err := s.createProject(ctx, req.Command, project, editor, localizer); err != nil {
 		return nil, err
 	}
@@ -371,10 +401,11 @@ func validateCreateTrialProjectRequest(
 		}
 		return dt.Err()
 	}
-	if !projectIDRegex.MatchString(req.Command.Id) {
-		dt, err := statusInvalidProjectID.WithDetails(&errdetails.LocalizedMessage{
+	// TODO Once we support new create project API requiring name instead of id, we should validate name using regex.
+	if !projectNameRegex.MatchString(req.Command.Name) && !projectIDRegex.MatchString(req.Command.Id) {
+		dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id"),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
 		})
 		if err != nil {
 			return statusInternal.Err()

@@ -15,8 +15,10 @@
 package domain
 
 import (
+	"strings"
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
@@ -24,20 +26,24 @@ type Project struct {
 	*proto.Project
 }
 
-func NewProject(id, description, creatorEmail string, trial bool) *Project {
+func NewProject(name, description, creatorEmail string, trial bool) (*Project, error) {
 	now := time.Now().Unix()
-	// TODO: Name and UrlCode are set to the same value as ID temporarily.
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
+	uid := strings.ReplaceAll(id.String(), "-", "")
 	return &Project{&proto.Project{
-		Id:           id,
-		Name:         id,
-		UrlCode:      id,
+		Id:           uid,
+		Name:         name,
+		UrlCode:      name,
 		Description:  description,
 		Disabled:     false,
 		Trial:        trial,
 		CreatorEmail: creatorEmail,
 		CreatedAt:    now,
 		UpdatedAt:    now,
-	}}
+	}}, nil
 }
 
 func (p *Project) ChangeDescription(description string) {

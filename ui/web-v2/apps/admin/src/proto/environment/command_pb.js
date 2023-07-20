@@ -885,7 +885,8 @@ proto.bucketeer.environment.CreateProjectCommand.prototype.toObject = function(o
 proto.bucketeer.environment.CreateProjectCommand.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    description: jspb.Message.getFieldWithDefault(msg, 2, "")
+    description: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    name: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -930,6 +931,10 @@ proto.bucketeer.environment.CreateProjectCommand.deserializeBinaryFromReader = f
       var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setName(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -973,6 +978,13 @@ proto.bucketeer.environment.CreateProjectCommand.serializeBinaryToWriter = funct
       f
     );
   }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -1012,6 +1024,24 @@ proto.bucketeer.environment.CreateProjectCommand.prototype.setDescription = func
 };
 
 
+/**
+ * optional string name = 3;
+ * @return {string}
+ */
+proto.bucketeer.environment.CreateProjectCommand.prototype.getName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.CreateProjectCommand} returns this
+ */
+proto.bucketeer.environment.CreateProjectCommand.prototype.setName = function(value) {
+  return jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
 
 
 
@@ -1045,7 +1075,8 @@ proto.bucketeer.environment.CreateTrialProjectCommand.prototype.toObject = funct
 proto.bucketeer.environment.CreateTrialProjectCommand.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    email: jspb.Message.getFieldWithDefault(msg, 2, "")
+    email: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    name: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -1090,6 +1121,10 @@ proto.bucketeer.environment.CreateTrialProjectCommand.deserializeBinaryFromReade
       var value = /** @type {string} */ (reader.readString());
       msg.setEmail(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setName(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1133,6 +1168,13 @@ proto.bucketeer.environment.CreateTrialProjectCommand.serializeBinaryToWriter = 
       f
     );
   }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -1169,6 +1211,24 @@ proto.bucketeer.environment.CreateTrialProjectCommand.prototype.getEmail = funct
  */
 proto.bucketeer.environment.CreateTrialProjectCommand.prototype.setEmail = function(value) {
   return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional string name = 3;
+ * @return {string}
+ */
+proto.bucketeer.environment.CreateTrialProjectCommand.prototype.getName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.CreateTrialProjectCommand} returns this
+ */
+proto.bucketeer.environment.CreateTrialProjectCommand.prototype.setName = function(value) {
+  return jspb.Message.setProto3StringField(this, 3, value);
 };
 
 
