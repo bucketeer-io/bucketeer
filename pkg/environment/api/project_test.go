@@ -257,6 +257,22 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
+			desc:  "err: ErrInvalidProjectUrlCode: can't use uppercase",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: "CODE"},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: max id length exceeded",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+		},
+		{
 			desc: "err: ErrProjectAlreadyExists: duplicate id",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
@@ -365,6 +381,22 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				Command: &proto.CreateTrialProjectCommand{Name: strings.Repeat("a", 51)},
 			},
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: can't use uppercase",
+			setup: nil,
+			req: &proto.CreateTrialProjectRequest{
+				Command: &proto.CreateTrialProjectCommand{Name: "id-1", UrlCode: "CODE"},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: max id length exceeded",
+			setup: nil,
+			req: &proto.CreateTrialProjectRequest{
+				Command: &proto.CreateTrialProjectCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
 		},
 		{
 			desc:  "err: ErrInvalidProjectCreatorEmail",

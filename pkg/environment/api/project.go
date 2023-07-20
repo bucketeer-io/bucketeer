@@ -37,8 +37,9 @@ import (
 )
 
 var (
-	projectIDRegex   = regexp.MustCompile("^[a-z0-9-]{1,50}$")
-	projectNameRegex = regexp.MustCompile("^[a-z0-9-]{1,50}$")
+	projectIDRegex      = regexp.MustCompile("^[a-z0-9-]{1,50}$")
+	projectNameRegex    = regexp.MustCompile("^[a-z0-9-]{1,50}$")
+	projectUrlCodeRegex = regexp.MustCompile("^[a-z0-9-]{1,50}$")
 
 	//nolint:lll
 	emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
@@ -281,6 +282,16 @@ func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, lo
 		}
 		return dt.Err()
 	}
+	if req.Command.UrlCode != "" && !projectUrlCodeRegex.MatchString(req.Command.UrlCode) {
+		dt, err := statusInvalidProjectUrlCode.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
 	return nil
 }
 
@@ -422,6 +433,16 @@ func validateCreateTrialProjectRequest(
 		dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Command.UrlCode != "" && !projectUrlCodeRegex.MatchString(req.Command.UrlCode) {
+		dt, err := statusInvalidProjectUrlCode.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
 		})
 		if err != nil {
 			return statusInternal.Err()

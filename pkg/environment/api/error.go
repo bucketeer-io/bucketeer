@@ -27,6 +27,7 @@ var (
 	statusInvalidEnvironmentID       = gstatus.New(codes.InvalidArgument, "environment: invalid environment id")
 	statusProjectIDRequired          = gstatus.New(codes.InvalidArgument, "environment: project id must be specified")
 	statusInvalidProjectName         = gstatus.New(codes.InvalidArgument, "environment: invalid project name")
+	statusInvalidProjectUrlCode      = gstatus.New(codes.InvalidArgument, "environment: invalid project url code")
 	statusInvalidProjectCreatorEmail = gstatus.New(codes.InvalidArgument, "environment: invalid project creator email")
 	statusInvalidOrderBy             = gstatus.New(codes.InvalidArgument, "environment: order_by is invalid")
 	statusEnvironmentNotFound        = gstatus.New(codes.NotFound, "environment: environment not found")
