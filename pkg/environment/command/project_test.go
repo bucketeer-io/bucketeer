@@ -34,7 +34,7 @@ func TestHandleCreateProjectCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	project, err := domain.NewProject("project-name", "project desc", "test@example.com", false)
+	project, err := domain.NewProject("project-name", "project-code", "project desc", "test@example.com", false)
 	assert.NoError(t, err)
 
 	h := newProjectCommandHandler(t, publisher, project)
@@ -49,7 +49,7 @@ func TestHandleCreateTrialProjectCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	project, err := domain.NewProject("project-name", "", "test@example.com", true)
+	project, err := domain.NewProject("project-name", "project-code", "", "test@example.com", true)
 	assert.NoError(t, err)
 
 	h := newProjectCommandHandler(t, publisher, project)
@@ -64,7 +64,7 @@ func TestHandleChangeDescriptionProjectCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	project, err := domain.NewProject("project-name", "project desc", "test@example.com", false)
+	project, err := domain.NewProject("project-name", "project-code", "project desc", "test@example.com", false)
 	assert.NoError(t, err)
 
 	h := newProjectCommandHandler(t, publisher, project)
@@ -81,7 +81,7 @@ func TestHandleEnableProjectCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	project, err := domain.NewProject("project-name", "project desc", "test@example.com", false)
+	project, err := domain.NewProject("project-name", "project-code", "project desc", "test@example.com", false)
 	assert.NoError(t, err)
 	project.Disabled = true
 
@@ -98,7 +98,7 @@ func TestHandleDisableProjectCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	project, err := domain.NewProject("project-name", "project desc", "test@example.com", false)
+	project, err := domain.NewProject("project-name", "project-code", "project desc", "test@example.com", false)
 	assert.NoError(t, err)
 
 	h := newProjectCommandHandler(t, publisher, project)
@@ -114,7 +114,7 @@ func TestHandleConvertTrialProjectCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	project, err := domain.NewProject("project-name", "project desc", "test@example.com", true)
+	project, err := domain.NewProject("project-name", "project-code", "project desc", "test@example.com", true)
 	assert.NoError(t, err)
 
 	h := newProjectCommandHandler(t, publisher, project)

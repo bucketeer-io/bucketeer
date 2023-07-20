@@ -26,7 +26,7 @@ type Project struct {
 	*proto.Project
 }
 
-func NewProject(name, description, creatorEmail string, trial bool) (*Project, error) {
+func NewProject(name, urlCode, description, creatorEmail string, trial bool) (*Project, error) {
 	now := time.Now().Unix()
 	id, err := uuid.NewUUID()
 	if err != nil {
@@ -36,7 +36,7 @@ func NewProject(name, description, creatorEmail string, trial bool) (*Project, e
 	return &Project{&proto.Project{
 		Id:           uid,
 		Name:         name,
-		UrlCode:      name,
+		UrlCode:      urlCode,
 		Description:  description,
 		Disabled:     false,
 		Trial:        trial,

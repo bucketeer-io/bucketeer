@@ -238,7 +238,12 @@ func (s *EnvironmentService) CreateProject(
 	if req.Command.Name == "" {
 		name = req.Command.Id
 	}
-	project, err := domain.NewProject(name, req.Command.Description, editor.Email, false)
+	// TODO Once we support new create project API requiring urlCode instead of id, we should remove this process.
+	urlCode := name
+	if req.Command.UrlCode != "" {
+		urlCode = req.Command.UrlCode
+	}
+	project, err := domain.NewProject(name, urlCode, req.Command.Description, editor.Email, false)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create project",
@@ -374,7 +379,12 @@ func (s *EnvironmentService) CreateTrialProject(
 	if req.Command.Name == "" {
 		name = req.Command.Id
 	}
-	project, err := domain.NewProject(name, "", editor.Email, true)
+	// TODO Once we support new create project API requiring urlCode instead of id, we should remove this process.
+	urlCode := name
+	if req.Command.UrlCode != "" {
+		urlCode = req.Command.UrlCode
+	}
+	project, err := domain.NewProject(name, urlCode, "", editor.Email, true)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create trial project",

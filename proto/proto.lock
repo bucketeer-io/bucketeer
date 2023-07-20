@@ -3336,6 +3336,11 @@
                 "id": 3,
                 "name": "name",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "url_code",
+                "type": "string"
               }
             ]
           },
@@ -3361,6 +3366,11 @@
               {
                 "id": 3,
                 "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "url_code",
                 "type": "string"
               }
             ]
