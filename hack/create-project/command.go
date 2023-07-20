@@ -66,6 +66,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	req := &environmentproto.CreateProjectRequest{
 		Command: &environmentproto.CreateProjectCommand{
 			Name:        *c.name,
+			UrlCode:     *c.name,
 			Description: *c.description,
 		},
 	}
