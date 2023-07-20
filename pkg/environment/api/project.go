@@ -123,7 +123,13 @@ func (s *EnvironmentService) ListProjects(
 		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
 	}
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "url_code", "creator_email"}, req.SearchKeyword))
+		whereParts = append(
+			whereParts,
+			mysql.NewSearchQuery(
+				[]string{"id", "name", "url_code", "creator_email"},
+				req.SearchKeyword,
+			),
+		)
 	}
 	orders, err := s.newProjectListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
