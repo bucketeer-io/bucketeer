@@ -24189,7 +24189,9 @@ proto.bucketeer.event.domain.ProjectCreatedEvent.toObject = function(includeInst
     trial: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
     creatorEmail: jspb.Message.getFieldWithDefault(msg, 5, ""),
     createdAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
-    updatedAt: jspb.Message.getFieldWithDefault(msg, 7, 0)
+    updatedAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
+    name: jspb.Message.getFieldWithDefault(msg, 8, ""),
+    urlCode: jspb.Message.getFieldWithDefault(msg, 9, "")
   };
 
   if (includeInstance) {
@@ -24253,6 +24255,14 @@ proto.bucketeer.event.domain.ProjectCreatedEvent.deserializeBinaryFromReader = f
     case 7:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setUpdatedAt(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setName(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUrlCode(value);
       break;
     default:
       reader.skipField();
@@ -24329,6 +24339,20 @@ proto.bucketeer.event.domain.ProjectCreatedEvent.serializeBinaryToWriter = funct
   if (f !== 0) {
     writer.writeInt64(
       7,
+      f
+    );
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(
+      8,
+      f
+    );
+  }
+  f = message.getUrlCode();
+  if (f.length > 0) {
+    writer.writeString(
+      9,
       f
     );
   }
@@ -24458,6 +24482,42 @@ proto.bucketeer.event.domain.ProjectCreatedEvent.prototype.getUpdatedAt = functi
  */
 proto.bucketeer.event.domain.ProjectCreatedEvent.prototype.setUpdatedAt = function(value) {
   return jspb.Message.setProto3IntField(this, 7, value);
+};
+
+
+/**
+ * optional string name = 8;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.ProjectCreatedEvent.prototype.getName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.ProjectCreatedEvent} returns this
+ */
+proto.bucketeer.event.domain.ProjectCreatedEvent.prototype.setName = function(value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
+};
+
+
+/**
+ * optional string url_code = 9;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.ProjectCreatedEvent.prototype.getUrlCode = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.ProjectCreatedEvent} returns this
+ */
+proto.bucketeer.event.domain.ProjectCreatedEvent.prototype.setUrlCode = function(value) {
+  return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 
@@ -24919,7 +24979,9 @@ proto.bucketeer.event.domain.ProjectTrialCreatedEvent.toObject = function(includ
     trial: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
     creatorEmail: jspb.Message.getFieldWithDefault(msg, 5, ""),
     createdAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
-    updatedAt: jspb.Message.getFieldWithDefault(msg, 7, 0)
+    updatedAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
+    name: jspb.Message.getFieldWithDefault(msg, 8, ""),
+    urlCode: jspb.Message.getFieldWithDefault(msg, 9, "")
   };
 
   if (includeInstance) {
@@ -24983,6 +25045,14 @@ proto.bucketeer.event.domain.ProjectTrialCreatedEvent.deserializeBinaryFromReade
     case 7:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setUpdatedAt(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setName(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUrlCode(value);
       break;
     default:
       reader.skipField();
@@ -25059,6 +25129,20 @@ proto.bucketeer.event.domain.ProjectTrialCreatedEvent.serializeBinaryToWriter = 
   if (f !== 0) {
     writer.writeInt64(
       7,
+      f
+    );
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(
+      8,
+      f
+    );
+  }
+  f = message.getUrlCode();
+  if (f.length > 0) {
+    writer.writeString(
+      9,
       f
     );
   }
@@ -25188,6 +25272,42 @@ proto.bucketeer.event.domain.ProjectTrialCreatedEvent.prototype.getUpdatedAt = f
  */
 proto.bucketeer.event.domain.ProjectTrialCreatedEvent.prototype.setUpdatedAt = function(value) {
   return jspb.Message.setProto3IntField(this, 7, value);
+};
+
+
+/**
+ * optional string name = 8;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.ProjectTrialCreatedEvent.prototype.getName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.ProjectTrialCreatedEvent} returns this
+ */
+proto.bucketeer.event.domain.ProjectTrialCreatedEvent.prototype.setName = function(value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
+};
+
+
+/**
+ * optional string url_code = 9;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.ProjectTrialCreatedEvent.prototype.getUrlCode = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.ProjectTrialCreatedEvent} returns this
+ */
+proto.bucketeer.event.domain.ProjectTrialCreatedEvent.prototype.setUrlCode = function(value) {
+  return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 

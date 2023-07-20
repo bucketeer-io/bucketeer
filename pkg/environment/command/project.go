@@ -66,6 +66,8 @@ func (h *projectCommandHandler) Handle(ctx context.Context, cmd Command) error {
 func (h *projectCommandHandler) create(ctx context.Context, cmd *proto.CreateProjectCommand) error {
 	return h.send(ctx, eventproto.Event_PROJECT_CREATED, &eventproto.ProjectCreatedEvent{
 		Id:           h.project.Id,
+		Name:         h.project.Name,
+		UrlCode:      h.project.UrlCode,
 		Description:  h.project.Description,
 		Disabled:     h.project.Disabled,
 		Trial:        h.project.Trial,
@@ -78,6 +80,8 @@ func (h *projectCommandHandler) create(ctx context.Context, cmd *proto.CreatePro
 func (h *projectCommandHandler) createTrial(ctx context.Context, cmd *proto.CreateTrialProjectCommand) error {
 	return h.send(ctx, eventproto.Event_PROJECT_TRIAL_CREATED, &eventproto.ProjectTrialCreatedEvent{
 		Id:           h.project.Id,
+		Name:         h.project.Name,
+		UrlCode:      h.project.UrlCode,
 		Description:  h.project.Description,
 		Disabled:     h.project.Disabled,
 		Trial:        h.project.Trial,
