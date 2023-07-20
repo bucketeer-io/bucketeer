@@ -136,3 +136,7 @@ func (hc *checker) getStatus() Status {
 func (hc *checker) setStatus(s Status) {
 	atomic.StoreUint32(&hc.status, uint32(s))
 }
+
+func (hc *checker) Stop() {
+	hc.setStatus(Unhealthy)
+}
