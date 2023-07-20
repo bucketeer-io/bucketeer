@@ -486,9 +486,9 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 		adminAccountExists = true
 	}
 	envIDs := []string{
-		fmt.Sprintf("%s-development", project.Id),
-		fmt.Sprintf("%s-staging", project.Id),
-		fmt.Sprintf("%s-production", project.Id),
+		fmt.Sprintf("%s-development", project.Name),
+		fmt.Sprintf("%s-staging", project.Name),
+		fmt.Sprintf("%s-production", project.Name),
 	}
 	for _, envID := range envIDs {
 		createEnvCmd := &environmentproto.CreateEnvironmentCommand{
