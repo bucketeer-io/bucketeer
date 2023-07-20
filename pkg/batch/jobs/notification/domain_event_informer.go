@@ -25,9 +25,9 @@ import (
 	gcodes "google.golang.org/grpc/codes"
 	gstatus "google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
-	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -44,10 +44,11 @@ var (
 )
 
 type options struct {
-	maxMPS     int
-	numWorkers int
-	metrics    metrics.Registerer
-	logger     *zap.Logger
+	maxMPS                  int
+	numWorkers              int
+	runningDurationPerBatch time.Duration
+	metrics                 metrics.Registerer
+	logger                  *zap.Logger
 }
 
 var defaultOptions = options{
@@ -57,6 +58,12 @@ var defaultOptions = options{
 }
 
 type Option func(*options)
+
+func WithRunningDurationPerBatch(d time.Duration) Option {
+	return func(opts *options) {
+		opts.runningDurationPerBatch = d
+	}
+}
 
 func WithMaxMPS(mps int) Option {
 	return func(opts *options) {
@@ -89,17 +96,13 @@ type domainEventInformer struct {
 	group             errgroup.Group
 	opts              *options
 	logger            *zap.Logger
-	ctx               context.Context
-	cancel            func()
-	doneCh            chan struct{}
 }
 
 func NewDomainEventInformer(
 	environmentClient environmentclient.Client,
 	p puller.Puller,
 	sender sender.Sender,
-	opts ...Option) *domainEventInformer {
-	ctx, cancel := context.WithCancel(context.Background())
+	opts ...Option) jobs.Job {
 	options := defaultOptions
 	for _, opt := range opts {
 		opt(&options)
@@ -113,47 +116,27 @@ func NewDomainEventInformer(
 		sender:            sender,
 		opts:              &options,
 		logger:            options.logger.Named("sender"),
-		ctx:               ctx,
-		cancel:            cancel,
-		doneCh:            make(chan struct{}),
 	}
 }
 
-func (i *domainEventInformer) Run() error {
-	defer close(i.doneCh)
+func (i *domainEventInformer) Run(ctx context.Context) error {
 	i.logger.Info("DomainEventInformer start running")
+	runningDurationCtx, cancel := context.WithTimeout(ctx, i.opts.runningDurationPerBatch)
+	defer cancel()
 	i.group.Go(func() error {
-		return i.puller.Run(i.ctx)
+		return i.puller.Run(runningDurationCtx)
 	})
 	for idx := 0; idx < i.opts.numWorkers; idx++ {
-		i.group.Go(i.runWorker)
+		i.group.Go(func() error {
+			return i.runWorker(runningDurationCtx)
+		})
 	}
 	err := i.group.Wait()
 	i.logger.Info("DomainEventInformer start stopping")
 	return err
 }
 
-func (i *domainEventInformer) Stop() {
-	i.logger.Info("DomainEventInformer start stopping")
-	i.cancel()
-	<-i.doneCh
-}
-
-func (i *domainEventInformer) Check(ctx context.Context) health.Status {
-	select {
-	case <-i.ctx.Done():
-		i.logger.Error("Unhealthy due to context Done is closed", zap.Error(i.ctx.Err()))
-		return health.Unhealthy
-	default:
-		if i.group.FinishedCount() > 0 {
-			i.logger.Error("Unhealthy", zap.Int32("FinishedCount", i.group.FinishedCount()))
-			return health.Unhealthy
-		}
-		return health.Healthy
-	}
-}
-
-func (i *domainEventInformer) runWorker() error {
+func (i *domainEventInformer) runWorker(ctx context.Context) error {
 	for {
 		select {
 		case msg, ok := <-i.puller.MessageCh():
@@ -162,7 +145,7 @@ func (i *domainEventInformer) runWorker() error {
 			}
 			receivedCounter.WithLabelValues(typeDomainEvent).Inc()
 			i.handleMessage(msg)
-		case <-i.ctx.Done():
+		case <-ctx.Done():
 			return nil
 		}
 	}

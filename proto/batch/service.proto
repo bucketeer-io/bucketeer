@@ -24,6 +24,7 @@ enum BatchJob {
   MauCountWatcher = 3;
   DatetimeWatcher = 4;
   EventCountWatcher = 5;
+  DomainEventInformer = 6;
 }
 
 message BatchJobRequest {

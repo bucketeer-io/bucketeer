@@ -82,6 +82,7 @@ type server struct {
 	pullerNumGoroutines          *int
 	pullerMaxOutstandingMessages *int
 	pullerMaxOutstandingBytes    *int
+	runningDurationPerBatch      *time.Duration
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -146,6 +147,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pullerMaxOutstandingBytes: cmd.Flag(
 			"puller-max-outstanding-bytes",
 			"Maximum size of unprocessed messages.").Int(),
+		runningDurationPerBatch: cmd.Flag(
+			"running-duration-per-batch",
+			"Duration of running domain event informer per batch.",
+		).Default("30s").Duration(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -256,10 +261,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		notificationsender.WithLogger(logger),
 	)
 
-	//domainEventPuller, err := s.createPuller(ctx, registerer, logger)
-	//if err != nil {
-	//	return err
-	//}
+	domainEventPuller, err := s.createPuller(ctx, registerer, logger)
+	if err != nil {
+		return err
+	}
 
 	location, err := locale.GetLocation(*s.timezone)
 	if err != nil {
@@ -293,6 +298,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			location,
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
+		),
+		notification.NewDomainEventInformer(
+			environmentClient,
+			domainEventPuller,
+			notificationSender,
+			notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
 		),
 		opsevent.NewDatetimeWatcher(
 			targetStore,

@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -36,6 +35,7 @@ type batchService struct {
 	experimentRunningWatcher jobs.Job
 	featureStaleWatcher      jobs.Job
 	mauCountWatcher          jobs.Job
+	domainEventInformer      jobs.Job
 	datetimeWatcher          jobs.Job
 	countWatcher             jobs.Job
 	logger                   *zap.Logger
@@ -44,7 +44,8 @@ type batchService struct {
 func NewBatchService(
 	experimentStatusUpdater, experimentRunningWatcher,
 	featureStaleWatcher, mauCountWatcher,
-	datetimeWatcher, eventCountWatcher jobs.Job,
+	domainEventInformer, datetimeWatcher,
+	eventCountWatcher jobs.Job,
 	logger *zap.Logger,
 ) *batchService {
 	return &batchService{
@@ -52,6 +53,7 @@ func NewBatchService(
 		experimentRunningWatcher: experimentRunningWatcher,
 		featureStaleWatcher:      featureStaleWatcher,
 		mauCountWatcher:          mauCountWatcher,
+		domainEventInformer:      domainEventInformer,
 		datetimeWatcher:          datetimeWatcher,
 		countWatcher:             eventCountWatcher,
 		logger:                   logger.Named("batch-service"),
@@ -74,6 +76,8 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.datetimeWatcher.Run(ctx)
 	case batch.BatchJob_EventCountWatcher:
 		err = s.countWatcher.Run(ctx)
+	case batch.BatchJob_DomainEventInformer:
+		err = s.domainEventInformer.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromImcomingContext(ctx).AddFields(

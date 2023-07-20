@@ -3273,6 +3273,10 @@
               {
                 "name": "EventCountWatcher",
                 "integer": 5
+              },
+              {
+                "name": "DomainEventInformer",
+                "integer": 6
               }
             ]
           }
