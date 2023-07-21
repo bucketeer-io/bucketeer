@@ -36,6 +36,7 @@ env:
   GO_VERSION: 1.20.4
   NODE_VERSION: 16
   WEB_PATH: ./ui/web-v2
+  GO_BUILD_CONCURRENCY: 15
 
 jobs:
   setup:
@@ -70,7 +71,7 @@ jobs:
       - name: Install go dependencies
         run: make vendor
       - name: Build go applications
-        run: make build-go
+        run: make build-go -j ${{ env.GO_BUILD_CONCURRENCY }}
       - name: Add executable permission to go binary files
         run: chmod +x bin/*
       - name: Set up docker
