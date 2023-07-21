@@ -65,9 +65,11 @@ func TestUpdateProject(t *testing.T) {
 	defer c.Close()
 	id := defaultProjectID
 	newDesc := fmt.Sprintf("Description %v", time.Now().Unix())
+	newName := fmt.Sprintf("name-%v", time.Now().Unix())
 	_, err := c.UpdateProject(ctx, &environmentproto.UpdateProjectRequest{
 		Id:                       id,
 		ChangeDescriptionCommand: &environmentproto.ChangeDescriptionProjectCommand{Description: newDesc},
+		RenameCommand:            &environmentproto.RenameProjectCommand{Name: newName},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -81,5 +83,8 @@ func TestUpdateProject(t *testing.T) {
 	}
 	if getResp.Project.Description != newDesc {
 		t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Project.Description)
+	}
+	if getResp.Project.Name != newName {
+		t.Fatalf("different names, expected: %v, actual: %v", newName, getResp.Project.Name)
 	}
 }
