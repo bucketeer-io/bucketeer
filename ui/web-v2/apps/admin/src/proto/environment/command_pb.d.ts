@@ -159,6 +159,26 @@ export namespace CreateTrialProjectCommand {
   }
 }
 
+export class RenameProjectCommand extends jspb.Message {
+  getName(): string;
+  setName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RenameProjectCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: RenameProjectCommand): RenameProjectCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: RenameProjectCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): RenameProjectCommand;
+  static deserializeBinaryFromReader(message: RenameProjectCommand, reader: jspb.BinaryReader): RenameProjectCommand;
+}
+
+export namespace RenameProjectCommand {
+  export type AsObject = {
+    name: string,
+  }
+}
+
 export class ChangeDescriptionProjectCommand extends jspb.Message {
   getDescription(): string;
   setDescription(value: string): void;

@@ -219,6 +219,7 @@ export namespace Event {
     PROJECT_DISABLED: 1203;
     PROJECT_TRIAL_CREATED: 1204;
     PROJECT_TRIAL_CONVERTED: 1205;
+    PROJECT_RENAMED: 1206;
     WEBHOOK_CREATED: 1300;
     WEBHOOK_DELETED: 1301;
     WEBHOOK_NAME_CHANGED: 1302;
@@ -3307,6 +3308,30 @@ export namespace ProjectDescriptionChangedEvent {
   export type AsObject = {
     id: string,
     description: string,
+  }
+}
+
+export class ProjectRenamedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ProjectRenamedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: ProjectRenamedEvent): ProjectRenamedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ProjectRenamedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ProjectRenamedEvent;
+  static deserializeBinaryFromReader(message: ProjectRenamedEvent, reader: jspb.BinaryReader): ProjectRenamedEvent;
+}
+
+export namespace ProjectRenamedEvent {
+  export type AsObject = {
+    id: string,
+    name: string,
   }
 }
 

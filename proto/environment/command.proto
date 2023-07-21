@@ -50,6 +50,10 @@ message CreateTrialProjectCommand {
   string url_code = 4;
 }
 
+message RenameProjectCommand {
+  string name = 1;
+}
+
 message ChangeDescriptionProjectCommand {
   string description = 1;
 }
