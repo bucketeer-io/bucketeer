@@ -19,7 +19,6 @@ on:
   push:
     branches:
       - main
-      - improve-image-push
     tags:
         - "v*"
     paths-ignore:
