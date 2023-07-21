@@ -134,6 +134,7 @@ message CreateTrialProjectResponse {}
 message UpdateProjectRequest {
   string id = 1;
   ChangeDescriptionProjectCommand change_description_command = 2;
+  RenameProjectCommand rename_command = 3;
 }
 
 message UpdateProjectResponse {}

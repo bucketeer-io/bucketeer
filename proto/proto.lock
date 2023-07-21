@@ -3376,6 +3376,16 @@
             ]
           },
           {
+            "name": "RenameProjectCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "ChangeDescriptionProjectCommand",
             "fields": [
               {
@@ -3887,6 +3897,11 @@
                 "id": 2,
                 "name": "change_description_command",
                 "type": "ChangeDescriptionProjectCommand"
+              },
+              {
+                "id": 3,
+                "name": "rename_command",
+                "type": "RenameProjectCommand"
               }
             ]
           },
@@ -5314,6 +5329,10 @@
               {
                 "name": "PROJECT_TRIAL_CONVERTED",
                 "integer": 1205
+              },
+              {
+                "name": "PROJECT_RENAMED",
+                "integer": 1206
               },
               {
                 "name": "WEBHOOK_CREATED",
@@ -7407,6 +7426,21 @@
               {
                 "id": 2,
                 "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ProjectRenamedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
                 "type": "string"
               }
             ]
