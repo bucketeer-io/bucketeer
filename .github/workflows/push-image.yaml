@@ -35,7 +35,7 @@ env:
   GO_VERSION: 1.20.4
   NODE_VERSION: 16
   WEB_PATH: ./ui/web-v2
-  GO_BUILD_CONCURRENCY: 15
+  GO_BUILD_CONCURRENCY: 15 # Set the same number of apps to build.
 
 jobs:
   setup:
