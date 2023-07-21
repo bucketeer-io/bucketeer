@@ -32,11 +32,10 @@ on:
 env:
   GHCR_REGISTRY: ghcr.io/bucketeer-io
   GAR_REGISTRY: asia-docker.pkg.dev
-  PROTOC_VERSION: 23.4
-  PROTOC_GEN_GO_VERSION: v1.5.2
   GO_VERSION: 1.20.4
   NODE_VERSION: 16
   WEB_PATH: ./ui/web-v2
+  GO_BUILD_CONCURRENCY: 15 # Set the same number of apps to build.
 
 jobs:
   setup:
@@ -68,19 +67,10 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
-      - name: Install Protoc
-        uses: arduino/setup-protoc@9b1ee5b22b0a3f1feb8c2ff99b32c89b3c3191e9 # v2.0.0
-        with:
-          version: ${{ env.PROTOC_VERSION }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install protoc-gen-go
-        run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
-      - name: Generate proto go files
-        run: make proto-go
       - name: Install go dependencies
         run: make vendor
       - name: Build go applications
-        run: make build-go
+        run: make build-go -j ${{ env.GO_BUILD_CONCURRENCY }}
       - name: Add executable permission to go binary files
         run: chmod +x bin/*
       - name: Set up docker
@@ -197,13 +187,6 @@ jobs:
             ${{ runner.os }}-yarn-
       - name: Install dependencies
         run: make install
-      - name: Install Protoc
-        uses: arduino/setup-protoc@9b1ee5b22b0a3f1feb8c2ff99b32c89b3c3191e9 # v2.0.0
-        with:
-          version: ${{ env.PROTOC_VERSION }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Generate proto files
-        run: make gen_proto
       - name: Build web
         env:
           RELEASE_CHANNEL: prod
