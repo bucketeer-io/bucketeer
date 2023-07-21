@@ -52,6 +52,8 @@ func (h *projectCommandHandler) Handle(ctx context.Context, cmd Command) error {
 		return h.createTrial(ctx, c)
 	case *proto.ChangeDescriptionProjectCommand:
 		return h.changeDescription(ctx, c)
+	case *proto.RenameProjectCommand:
+		return h.rename(ctx, c)
 	case *proto.EnableProjectCommand:
 		return h.enable(ctx, c)
 	case *proto.DisableProjectCommand:
@@ -99,6 +101,14 @@ func (h *projectCommandHandler) changeDescription(
 	return h.send(ctx, eventproto.Event_PROJECT_DESCRIPTION_CHANGED, &eventproto.ProjectDescriptionChangedEvent{
 		Id:          h.project.Id,
 		Description: cmd.Description,
+	})
+}
+
+func (h *projectCommandHandler) rename(ctx context.Context, cmd *proto.RenameProjectCommand) error {
+	h.project.Rename(cmd.Name)
+	return h.send(ctx, eventproto.Event_PROJECT_RENAMED, &eventproto.ProjectRenamedEvent{
+		Id:   h.project.Id,
+		Name: cmd.Name,
 	})
 }
 

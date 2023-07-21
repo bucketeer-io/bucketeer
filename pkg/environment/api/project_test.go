@@ -530,6 +530,15 @@ func TestUpdateProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusProjectIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
+			desc:  "err: ErrInvalidProjectName",
+			setup: nil,
+			req: &proto.UpdateProjectRequest{
+				Id:            "id-0",
+				RenameCommand: &proto.RenameProjectCommand{Name: strings.Repeat("a", 51)},
+			},
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+		},
+		{
 			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)

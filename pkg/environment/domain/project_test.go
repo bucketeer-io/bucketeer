@@ -39,6 +39,15 @@ func TestChangeDescriptionProject(t *testing.T) {
 	assert.Equal(t, newDesc, project.Description)
 }
 
+func TestRenameProject(t *testing.T) {
+	t.Parallel()
+	project, err := NewProject("project-name", "project-code", "project desc", "test@example.com", false)
+	assert.NoError(t, err)
+	newName := "new-project-name"
+	project.Rename(newName)
+	assert.Equal(t, newName, project.Name)
+}
+
 func TestEnableProject(t *testing.T) {
 	t.Parallel()
 	project, err := NewProject("project-name", "project-code", "project desc", "test@example.com", false)

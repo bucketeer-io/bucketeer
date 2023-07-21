@@ -578,6 +578,9 @@ func getUpdateProjectCommands(req *environmentproto.UpdateProjectRequest) []comm
 	if req.ChangeDescriptionCommand != nil {
 		commands = append(commands, req.ChangeDescriptionCommand)
 	}
+	if req.RenameCommand != nil {
+		commands = append(commands, req.RenameCommand)
+	}
 	return commands
 }
 
@@ -601,6 +604,20 @@ func validateUpdateProjectRequest(id string, commands []command.Command, localiz
 			return statusInternal.Err()
 		}
 		return dt.Err()
+	}
+	for _, cmd := range commands {
+		if c, ok := cmd.(*environmentproto.RenameProjectCommand); ok {
+			if !projectNameRegex.MatchString(c.Name) {
+				dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+		}
 	}
 	return nil
 }

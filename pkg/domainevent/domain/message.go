@@ -617,6 +617,11 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.TrialConverted),
 		}
+	case proto.Event_PROJECT_RENAMED:
+		return &proto.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.ChangedTemplate, "Projectの名前"),
+		}
 	case proto.Event_WEBHOOK_CREATED:
 		return &proto.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
