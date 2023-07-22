@@ -154,7 +154,7 @@ func (i *domainEventInformer) runWorker(ctx context.Context) error {
 func (i *domainEventInformer) handleMessage(msg *puller.Message) {
 	if id := msg.Attributes["id"]; id == "" {
 		msg.Ack()
-		handledCounter.WithLabelValues(codes.MissingID.String()).Inc()
+		handledCounter.WithLabelValues(codes.MissingID.String(), codes.BadMessage.String()).Inc()
 		return
 	}
 	domainEvent, err := i.unmarshalMessage(msg)
