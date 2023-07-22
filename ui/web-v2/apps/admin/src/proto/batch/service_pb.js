@@ -13,7 +13,13 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = Function('return this')();
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 goog.exportSymbol('proto.bucketeer.batch.BatchJob', null, global);
 goog.exportSymbol('proto.bucketeer.batch.BatchJobRequest', null, global);
@@ -300,7 +306,8 @@ proto.bucketeer.batch.BatchJob = {
   FEATURESTALEWATCHER: 2,
   MAUCOUNTWATCHER: 3,
   DATETIMEWATCHER: 4,
-  EVENTCOUNTWATCHER: 5
+  EVENTCOUNTWATCHER: 5,
+  DOMAINEVENTINFORMER: 6
 };
 
 goog.object.extend(exports, proto.bucketeer.batch);
