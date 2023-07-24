@@ -37,13 +37,17 @@ message ChangeDescriptionEnvironmentCommand {
 message DeleteEnvironmentCommand {}
 
 message CreateProjectCommand {
-  string id = 1;
+  string id = 1 [deprecated = true];
   string description = 2;  // optional
+  string name = 3;
+  string url_code = 4;
 }
 
 message CreateTrialProjectCommand {
-  string id = 1;
+  string id = 1 [deprecated = true];
   string email = 2;
+  string name = 3;
+  string url_code = 4;
 }
 
 message ChangeDescriptionProjectCommand {

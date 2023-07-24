@@ -3058,7 +3058,9 @@ proto.bucketeer.environment.ListProjectsRequest.OrderBy = {
   DEFAULT: 0,
   ID: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3
+  UPDATED_AT: 3,
+  NAME: 4,
+  URL_CODE: 5
 };
 
 /**

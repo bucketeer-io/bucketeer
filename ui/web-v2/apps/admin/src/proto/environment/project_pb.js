@@ -81,7 +81,9 @@ proto.bucketeer.environment.Project.toObject = function(includeInstance, msg) {
     trial: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
     creatorEmail: jspb.Message.getFieldWithDefault(msg, 5, ""),
     createdAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
-    updatedAt: jspb.Message.getFieldWithDefault(msg, 7, 0)
+    updatedAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
+    name: jspb.Message.getFieldWithDefault(msg, 8, ""),
+    urlCode: jspb.Message.getFieldWithDefault(msg, 9, "")
   };
 
   if (includeInstance) {
@@ -145,6 +147,14 @@ proto.bucketeer.environment.Project.deserializeBinaryFromReader = function(msg, 
     case 7:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setUpdatedAt(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setName(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUrlCode(value);
       break;
     default:
       reader.skipField();
@@ -221,6 +231,20 @@ proto.bucketeer.environment.Project.serializeBinaryToWriter = function(message, 
   if (f !== 0) {
     writer.writeInt64(
       7,
+      f
+    );
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(
+      8,
+      f
+    );
+  }
+  f = message.getUrlCode();
+  if (f.length > 0) {
+    writer.writeString(
+      9,
       f
     );
   }
@@ -350,6 +374,42 @@ proto.bucketeer.environment.Project.prototype.getUpdatedAt = function() {
  */
 proto.bucketeer.environment.Project.prototype.setUpdatedAt = function(value) {
   return jspb.Message.setProto3IntField(this, 7, value);
+};
+
+
+/**
+ * optional string name = 8;
+ * @return {string}
+ */
+proto.bucketeer.environment.Project.prototype.getName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.Project} returns this
+ */
+proto.bucketeer.environment.Project.prototype.setName = function(value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
+};
+
+
+/**
+ * optional string url_code = 9;
+ * @return {string}
+ */
+proto.bucketeer.environment.Project.prototype.getUrlCode = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.Project} returns this
+ */
+proto.bucketeer.environment.Project.prototype.setUrlCode = function(value) {
+  return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 

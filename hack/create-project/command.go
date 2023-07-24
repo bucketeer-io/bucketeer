@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -26,6 +27,7 @@ import (
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
@@ -34,7 +36,7 @@ type command struct {
 	certPath           *string
 	serviceTokenPath   *string
 	webGatewayAddress  *string
-	id                 *string
+	name               *string
 	description        *string
 	createEnvironments *bool
 }
@@ -46,7 +48,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		certPath:           cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		serviceTokenPath:   cmd.Flag("service-token", "Path to service token file.").Required().String(),
 		webGatewayAddress:  cmd.Flag("web-gateway", "Address of web-gateway.").Required().String(),
-		id:                 cmd.Flag("id", "Id of an project.").Required().String(),
+		name:               cmd.Flag("name", "Name of an project.").Required().String(),
 		description:        cmd.Flag("description", "(optional) Description of an project.").String(),
 		createEnvironments: cmd.Flag("create-environments", "create environments or not").Bool(),
 	}
@@ -63,7 +65,8 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	// create project
 	req := &environmentproto.CreateProjectRequest{
 		Command: &environmentproto.CreateProjectCommand{
-			Id:          *c.id,
+			Name:        *c.name,
+			UrlCode:     *c.name,
 			Description: *c.description,
 		},
 	}
@@ -71,19 +74,25 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		logger.Error("Failed to create project", zap.Error(err))
 		return err
 	}
-	logger.Info(fmt.Sprintf("%s project created", *c.id))
+	logger.Info(fmt.Sprintf("%s project created", *c.name))
 	// create environments (optional)
 	if *c.createEnvironments {
 		envIDs := []string{
-			fmt.Sprintf("%s-development", *c.id),
-			fmt.Sprintf("%s-staging", *c.id),
-			fmt.Sprintf("%s-production", *c.id),
+			fmt.Sprintf("%s-development", *c.name),
+			fmt.Sprintf("%s-staging", *c.name),
+			fmt.Sprintf("%s-production", *c.name),
 		}
 		for _, envID := range envIDs {
+			id, err := uuid.NewUUID()
+			if err != nil {
+				logger.Error("Failed to create uuid", zap.Error(err))
+				return err
+			}
+			uid := strings.ReplaceAll(id.String(), "-", "")
 			req := &environmentproto.CreateEnvironmentRequest{
 				Command: &environmentproto.CreateEnvironmentCommand{
 					Id:        envID,
-					ProjectId: *c.id,
+					ProjectId: uid,
 				},
 			}
 			if _, err = client.CreateEnvironment(ctx, req); err != nil {

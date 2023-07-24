@@ -3319,11 +3319,27 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 2,
                 "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "url_code",
                 "type": "string"
               }
             ]
@@ -3334,11 +3350,27 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 2,
                 "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "url_code",
                 "type": "string"
               }
             ]
@@ -3482,6 +3514,16 @@
                 "id": 7,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "url_code",
+                "type": "string"
               }
             ]
           }
@@ -3550,6 +3592,14 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "NAME",
+                "integer": 4
+              },
+              {
+                "name": "URL_CODE",
+                "integer": 5
               }
             ]
           },
@@ -7333,6 +7383,16 @@
                 "id": 7,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "url_code",
+                "type": "string"
               }
             ]
           },
@@ -7408,6 +7468,16 @@
                 "id": 7,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "url_code",
+                "type": "string"
               }
             ]
           },

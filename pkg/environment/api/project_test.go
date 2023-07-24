@@ -233,28 +233,44 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: empty id",
+			desc:  "err: ErrInvalidProjectName: empty name",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: ""},
+				Command: &proto.CreateProjectCommand{Name: ""},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: can't use uppercase",
+			desc:  "err: ErrInvalidProjectName: can't use uppercase",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: "ID-1"},
+				Command: &proto.CreateProjectCommand{Name: "ID-1"},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: max id length exceeded",
+			desc:  "err: ErrInvalidProjectName: max name length exceeded",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: strings.Repeat("a", 51)},
+				Command: &proto.CreateProjectCommand{Name: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: can't use uppercase",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: "CODE"},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: max id length exceeded",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
 		},
 		{
 			desc: "err: ErrProjectAlreadyExists: duplicate id",
@@ -265,7 +281,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(v2es.ErrProjectAlreadyExists)
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: "id-0"},
+				Command: &proto.CreateProjectCommand{Name: "id-0"},
 			},
 			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -278,7 +294,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(errors.New("error"))
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: "id-1"},
+				Command: &proto.CreateProjectCommand{Name: "id-1"},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -291,7 +307,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: "id-2"},
+				Command: &proto.CreateProjectCommand{Name: "id-2"},
 			},
 			expectedErr: nil,
 		},
@@ -343,34 +359,50 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: empty id",
+			desc:  "err: ErrInvalidProjectName: empty name",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: ""},
+				Command: &proto.CreateTrialProjectCommand{Name: ""},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: can't use uppercase",
+			desc:  "err: ErrInvalidProjectName: can't use uppercase",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "ID-1"},
+				Command: &proto.CreateTrialProjectCommand{Name: "ID-1"},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: max id length exceeded",
+			desc:  "err: ErrInvalidProjectName: max id length exceeded",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: strings.Repeat("a", 51)},
+				Command: &proto.CreateTrialProjectCommand{Name: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: can't use uppercase",
+			setup: nil,
+			req: &proto.CreateTrialProjectRequest{
+				Command: &proto.CreateTrialProjectCommand{Name: "id-1", UrlCode: "CODE"},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: max id length exceeded",
+			setup: nil,
+			req: &proto.CreateTrialProjectRequest{
+				Command: &proto.CreateTrialProjectCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
 		},
 		{
 			desc:  "err: ErrInvalidProjectCreatorEmail",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "id-0", Email: "email"},
+				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "email"},
 			},
 			expectedErr: createError(statusInvalidProjectCreatorEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
@@ -384,7 +416,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "id-0", Email: "test@example.com"},
+				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "test@example.com"},
 			},
 			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -402,7 +434,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				).Return(v2es.ErrProjectAlreadyExists)
 			},
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "id-0", Email: "test@example.com"},
+				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "test@example.com"},
 			},
 			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -416,7 +448,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "id-1", Email: "test@example.com"},
+				Command: &proto.CreateTrialProjectCommand{Name: "id-1", Email: "test@example.com"},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -438,7 +470,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 					&accountproto.CreateAccountResponse{}, nil).Times(3)
 			},
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "id-2", Email: "test@example.com"},
+				Command: &proto.CreateTrialProjectCommand{Name: "id-2", Email: "test@example.com"},
 			},
 			expectedErr: nil,
 		},

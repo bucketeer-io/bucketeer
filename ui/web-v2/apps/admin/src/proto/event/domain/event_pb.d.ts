@@ -3256,6 +3256,12 @@ export class ProjectCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ProjectCreatedEvent.AsObject;
   static toObject(includeInstance: boolean, msg: ProjectCreatedEvent): ProjectCreatedEvent.AsObject;
@@ -3275,6 +3281,8 @@ export namespace ProjectCreatedEvent {
     creatorEmail: string,
     createdAt: number,
     updatedAt: number,
+    name: string,
+    urlCode: string,
   }
 }
 
@@ -3364,6 +3372,12 @@ export class ProjectTrialCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ProjectTrialCreatedEvent.AsObject;
   static toObject(includeInstance: boolean, msg: ProjectTrialCreatedEvent): ProjectTrialCreatedEvent.AsObject;
@@ -3383,6 +3397,8 @@ export namespace ProjectTrialCreatedEvent {
     creatorEmail: string,
     createdAt: number,
     updatedAt: number,
+    name: string,
+    urlCode: string,
   }
 }
 

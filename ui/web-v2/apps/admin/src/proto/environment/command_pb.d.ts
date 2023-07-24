@@ -102,6 +102,12 @@ export class CreateProjectCommand extends jspb.Message {
   getDescription(): string;
   setDescription(value: string): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateProjectCommand.AsObject;
   static toObject(includeInstance: boolean, msg: CreateProjectCommand): CreateProjectCommand.AsObject;
@@ -116,6 +122,8 @@ export namespace CreateProjectCommand {
   export type AsObject = {
     id: string,
     description: string,
+    name: string,
+    urlCode: string,
   }
 }
 
@@ -125,6 +133,12 @@ export class CreateTrialProjectCommand extends jspb.Message {
 
   getEmail(): string;
   setEmail(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateTrialProjectCommand.AsObject;
@@ -140,6 +154,8 @@ export namespace CreateTrialProjectCommand {
   export type AsObject = {
     id: string,
     email: string,
+    name: string,
+    urlCode: string,
   }
 }
 
