@@ -99,6 +99,7 @@ func (s *projectStorage) UpdateProject(ctx context.Context, p *domain.Project) e
 		UPDATE 
 			project
 		SET
+			name = ?,
 			description = ?,
 			disabled = ?,
 			trial = ?,
@@ -111,6 +112,7 @@ func (s *projectStorage) UpdateProject(ctx context.Context, p *domain.Project) e
 	result, err := s.qe.ExecContext(
 		ctx,
 		query,
+		p.Name,
 		p.Description,
 		p.Disabled,
 		p.Trial,

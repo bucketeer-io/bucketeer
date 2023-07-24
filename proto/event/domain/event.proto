@@ -172,6 +172,7 @@ message Event {
     PROJECT_DISABLED = 1203;
     PROJECT_TRIAL_CREATED = 1204;
     PROJECT_TRIAL_CONVERTED = 1205;
+    PROJECT_RENAMED = 1206;
     WEBHOOK_CREATED = 1300;
     WEBHOOK_DELETED = 1301;
     WEBHOOK_NAME_CHANGED = 1302;
@@ -812,6 +813,11 @@ message ProjectCreatedEvent {
 message ProjectDescriptionChangedEvent {
   string id = 1;
   string description = 2;
+}
+
+message ProjectRenamedEvent {
+  string id = 1;
+  string name = 2;
 }
 
 message ProjectEnabledEvent {

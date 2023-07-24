@@ -76,6 +76,23 @@ func TestHandleChangeDescriptionProjectCommand(t *testing.T) {
 	assert.Equal(t, newDesc, project.Description)
 }
 
+func TestHandleChangeNameProjectCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	publisher := publishermock.NewMockPublisher(mockController)
+	project, err := domain.NewProject("project-name", "project-code", "project desc", "test@example.com", false)
+	assert.NoError(t, err)
+
+	h := newProjectCommandHandler(t, publisher, project)
+	publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+	newName := "new-project-name"
+	cmd := &environmentproto.RenameProjectCommand{Name: newName}
+	err = h.Handle(context.Background(), cmd)
+	assert.NoError(t, err)
+	assert.Equal(t, newName, project.Name)
+}
+
 func TestHandleEnableProjectCommand(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

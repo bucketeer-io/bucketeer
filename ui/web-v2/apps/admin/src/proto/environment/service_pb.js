@@ -3955,7 +3955,8 @@ proto.bucketeer.environment.UpdateProjectRequest.prototype.toObject = function(o
 proto.bucketeer.environment.UpdateProjectRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    changeDescriptionCommand: (f = msg.getChangeDescriptionCommand()) && proto_environment_command_pb.ChangeDescriptionProjectCommand.toObject(includeInstance, f)
+    changeDescriptionCommand: (f = msg.getChangeDescriptionCommand()) && proto_environment_command_pb.ChangeDescriptionProjectCommand.toObject(includeInstance, f),
+    renameCommand: (f = msg.getRenameCommand()) && proto_environment_command_pb.RenameProjectCommand.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -4001,6 +4002,11 @@ proto.bucketeer.environment.UpdateProjectRequest.deserializeBinaryFromReader = f
       reader.readMessage(value,proto_environment_command_pb.ChangeDescriptionProjectCommand.deserializeBinaryFromReader);
       msg.setChangeDescriptionCommand(value);
       break;
+    case 3:
+      var value = new proto_environment_command_pb.RenameProjectCommand;
+      reader.readMessage(value,proto_environment_command_pb.RenameProjectCommand.deserializeBinaryFromReader);
+      msg.setRenameCommand(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -4043,6 +4049,14 @@ proto.bucketeer.environment.UpdateProjectRequest.serializeBinaryToWriter = funct
       2,
       f,
       proto_environment_command_pb.ChangeDescriptionProjectCommand.serializeBinaryToWriter
+    );
+  }
+  f = message.getRenameCommand();
+  if (f != null) {
+    writer.writeMessage(
+      3,
+      f,
+      proto_environment_command_pb.RenameProjectCommand.serializeBinaryToWriter
     );
   }
 };
@@ -4100,6 +4114,43 @@ proto.bucketeer.environment.UpdateProjectRequest.prototype.clearChangeDescriptio
  */
 proto.bucketeer.environment.UpdateProjectRequest.prototype.hasChangeDescriptionCommand = function() {
   return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional RenameProjectCommand rename_command = 3;
+ * @return {?proto.bucketeer.environment.RenameProjectCommand}
+ */
+proto.bucketeer.environment.UpdateProjectRequest.prototype.getRenameCommand = function() {
+  return /** @type{?proto.bucketeer.environment.RenameProjectCommand} */ (
+    jspb.Message.getWrapperField(this, proto_environment_command_pb.RenameProjectCommand, 3));
+};
+
+
+/**
+ * @param {?proto.bucketeer.environment.RenameProjectCommand|undefined} value
+ * @return {!proto.bucketeer.environment.UpdateProjectRequest} returns this
+*/
+proto.bucketeer.environment.UpdateProjectRequest.prototype.setRenameCommand = function(value) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.UpdateProjectRequest} returns this
+ */
+proto.bucketeer.environment.UpdateProjectRequest.prototype.clearRenameCommand = function() {
+  return this.setRenameCommand(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.UpdateProjectRequest.prototype.hasRenameCommand = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 

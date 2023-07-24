@@ -51,6 +51,11 @@ func (p *Project) ChangeDescription(description string) {
 	p.Project.UpdatedAt = time.Now().Unix()
 }
 
+func (p *Project) Rename(name string) {
+	p.Project.Name = name
+	p.Project.UpdatedAt = time.Now().Unix()
+}
+
 func (p *Project) Enable() {
 	p.Project.Disabled = false
 	p.Project.UpdatedAt = time.Now().Unix()

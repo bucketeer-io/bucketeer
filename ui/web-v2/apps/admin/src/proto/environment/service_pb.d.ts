@@ -522,6 +522,11 @@ export class UpdateProjectRequest extends jspb.Message {
   getChangeDescriptionCommand(): proto_environment_command_pb.ChangeDescriptionProjectCommand | undefined;
   setChangeDescriptionCommand(value?: proto_environment_command_pb.ChangeDescriptionProjectCommand): void;
 
+  hasRenameCommand(): boolean;
+  clearRenameCommand(): void;
+  getRenameCommand(): proto_environment_command_pb.RenameProjectCommand | undefined;
+  setRenameCommand(value?: proto_environment_command_pb.RenameProjectCommand): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateProjectRequest.AsObject;
   static toObject(includeInstance: boolean, msg: UpdateProjectRequest): UpdateProjectRequest.AsObject;
@@ -536,6 +541,7 @@ export namespace UpdateProjectRequest {
   export type AsObject = {
     id: string,
     changeDescriptionCommand?: proto_environment_command_pb.ChangeDescriptionProjectCommand.AsObject,
+    renameCommand?: proto_environment_command_pb.RenameProjectCommand.AsObject,
   }
 }
 
