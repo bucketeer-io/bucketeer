@@ -99,7 +99,7 @@ func (s *projectStorage) UpdateProject(ctx context.Context, p *domain.Project) e
 		UPDATE 
 			project
 		SET
-		    name = ?,
+			name = ?,
 			description = ?,
 			disabled = ?,
 			trial = ?,
