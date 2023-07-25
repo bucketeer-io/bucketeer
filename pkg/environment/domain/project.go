@@ -15,7 +15,6 @@
 package domain
 
 import (
-	"strings"
 	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
@@ -28,13 +27,12 @@ type Project struct {
 
 func NewProject(name, urlCode, description, creatorEmail string, trial bool) (*Project, error) {
 	now := time.Now().Unix()
-	id, err := uuid.NewUUID()
+	uid, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
-	uid := strings.ReplaceAll(id.String(), "-", "")
 	return &Project{&proto.Project{
-		Id:           uid,
+		Id:           uid.String(),
 		Name:         name,
 		UrlCode:      urlCode,
 		Description:  description,

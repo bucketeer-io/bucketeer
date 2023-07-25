@@ -46,6 +46,15 @@ type EnvironmentStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Environment, int, int64, error)
+	CreateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error
+	UpdateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error
+	GetEnvironmentV2(ctx context.Context, id string) (*domain.EnvironmentV2, error)
+	ListEnvironmentsV2(
+		ctx context.Context,
+		whereParts []mysql.WherePart,
+		orders []*mysql.Order,
+		limit, offset int,
+	) ([]*proto.EnvironmentV2, int, int64, error)
 }
 
 type environmentStorage struct {
@@ -275,6 +284,184 @@ func (s *environmentStorage) ListEnvironments(ctx context.Context,
 			COUNT(1)
 		FROM
 			environment
+		%s %s
+		`, whereSQL, orderBySQL,
+	)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return environments, nextOffset, totalCount, nil
+}
+
+func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
+	query := `
+		INSERT INTO environment_v2 (
+			id,
+			name,
+			url_code,
+			description,
+			project_id,
+			archived,
+			created_at,
+			updated_at
+		) VALUES (
+			?, ?, ?, ?, ?, ?, ?, ?
+		)
+	`
+	_, err := s.qe.ExecContext(
+		ctx,
+		query,
+		e.Id,
+		e.Name,
+		e.UrlCode,
+		e.Description,
+		e.ProjectId,
+		e.Archived,
+		e.CreatedAt,
+		e.UpdatedAt,
+	)
+	if err != nil {
+		if err == mysql.ErrDuplicateEntry {
+			return ErrEnvironmentAlreadyExists
+		}
+		return err
+	}
+	return nil
+}
+
+func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
+	query := `
+		UPDATE 
+			environment_v2
+		SET
+			name = ?,
+			description = ?,
+			archived = ?,
+			created_at = ?,
+			updated_at = ?
+		WHERE
+			id = ?
+	`
+	result, err := s.qe.ExecContext(
+		ctx,
+		query,
+		e.Name,
+		e.Description,
+		e.Archived,
+		e.CreatedAt,
+		e.UpdatedAt,
+		e.Id,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return ErrEnvironmentUnexpectedAffectedRows
+	}
+	return nil
+}
+
+func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*domain.EnvironmentV2, error) {
+	e := proto.EnvironmentV2{}
+	query := `
+		SELECT
+			id,
+			name,
+			url_code,
+			description,
+			project_id,
+			archived,
+			created_at,
+			updated_at
+		FROM
+			environment_v2
+		WHERE
+			id = ?
+	`
+	err := s.qe.QueryRowContext(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&e.Id,
+		&e.Name,
+		&e.UrlCode,
+		&e.Description,
+		&e.ProjectId,
+		&e.Archived,
+		&e.CreatedAt,
+		&e.UpdatedAt,
+	)
+	if err != nil {
+		if err == mysql.ErrNoRows {
+			return nil, ErrEnvironmentNotFound
+		}
+		return nil, err
+	}
+	return &domain.EnvironmentV2{EnvironmentV2: &e}, nil
+}
+
+func (s *environmentStorage) ListEnvironmentsV2(ctx context.Context,
+	whereParts []mysql.WherePart,
+	orders []*mysql.Order,
+	limit, offset int,
+) ([]*proto.EnvironmentV2, int, int64, error) {
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	orderBySQL := mysql.ConstructOrderBySQLString(orders)
+	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
+	query := fmt.Sprintf(`
+		SELECT
+			id,
+			name,
+			url_code,
+			description,
+			project_id,
+			archived,
+			created_at,
+			updated_at
+		FROM
+			environment_v2
+		%s %s %s
+		`, whereSQL, orderBySQL, limitOffsetSQL,
+	)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	defer rows.Close()
+	environments := make([]*proto.EnvironmentV2, 0, limit)
+	for rows.Next() {
+		e := proto.EnvironmentV2{}
+		err := rows.Scan(
+			&e.Id,
+			&e.Name,
+			&e.UrlCode,
+			&e.Description,
+			&e.ProjectId,
+			&e.Archived,
+			&e.CreatedAt,
+			&e.UpdatedAt,
+		)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		environments = append(environments, &e)
+	}
+	if rows.Err() != nil {
+		return nil, 0, 0, err
+	}
+	nextOffset := offset + len(environments)
+	var totalCount int64
+	countQuery := fmt.Sprintf(`
+		SELECT
+			COUNT(1)
+		FROM
+			environment_v2
 		%s %s
 		`, whereSQL, orderBySQL,
 	)
