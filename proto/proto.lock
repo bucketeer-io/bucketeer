@@ -3470,6 +3470,51 @@
                 "type": "string"
               }
             ]
+          },
+          {
+            "name": "EnvironmentV2",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "project_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "archived",
+                "type": "bool"
+              },
+              {
+                "id": 7,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "package": {

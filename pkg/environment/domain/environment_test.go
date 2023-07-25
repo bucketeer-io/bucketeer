@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestNewEnvironment(t *testing.T) {
@@ -49,4 +50,42 @@ func TestSetDeletedEnvironment(t *testing.T) {
 	env := NewEnvironment("env-id", "env desc", "project-id")
 	env.SetDeleted()
 	assert.True(t, env.Deleted)
+}
+
+func TestNewEnvironmentV2(t *testing.T) {
+	t.Parallel()
+	env, err := NewEnvironmentV2("name", "code", "desc", "project-id", zap.NewNop())
+	assert.NoError(t, err)
+	assert.IsType(t, &EnvironmentV2{}, env)
+	assert.Equal(t, "name", env.Name)
+	assert.Equal(t, "code", env.UrlCode)
+	assert.Equal(t, "desc", env.Description)
+	assert.Equal(t, "project-id", env.ProjectId)
+	assert.Equal(t, false, env.Archived)
+}
+
+func TestRenameEnvironmentV2(t *testing.T) {
+	t.Parallel()
+	env, err := NewEnvironmentV2("name", "code", "desc", "project-id", zap.NewNop())
+	assert.NoError(t, err)
+	newName := "new-name"
+	env.Rename(newName)
+	assert.Equal(t, newName, env.Name)
+}
+
+func TestChangeDescriptionEnvironmentV2(t *testing.T) {
+	t.Parallel()
+	env, err := NewEnvironmentV2("name", "code", "desc", "project-id", zap.NewNop())
+	assert.NoError(t, err)
+	newDesc := "new desc"
+	env.ChangeDescription(newDesc)
+	assert.Equal(t, newDesc, env.Description)
+}
+
+func TestSetArchivedEnvironmentV2(t *testing.T) {
+	t.Parallel()
+	env, err := NewEnvironmentV2("name", "code", "desc", "project-id", zap.NewNop())
+	assert.NoError(t, err)
+	env.SetArchived()
+	assert.Equal(t, true, env.Archived)
 }
