@@ -339,7 +339,7 @@ func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.
 			description = ?,
 			archived = ?,
 			created_at = ?,
-			updated_at = ?,
+			updated_at = ?
 		WHERE
 			id = ?
 	`
@@ -377,7 +377,7 @@ func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*
 			project_id,
 			archived,
 			created_at,
-			updated_at,
+			updated_at
 		FROM
 			environment_v2
 		WHERE
@@ -423,7 +423,7 @@ func (s *environmentStorage) ListEnvironmentsV2(ctx context.Context,
 			project_id,
 			archived,
 			created_at,
-			updated_at,
+			updated_at
 		FROM
 			environment_v2
 		%s %s %s
