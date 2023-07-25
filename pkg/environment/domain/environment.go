@@ -63,15 +63,14 @@ type EnvironmentV2 struct {
 }
 
 func NewEnvironmentV2(name, urlCode, description, projectID string, logger *zap.Logger) (*EnvironmentV2, error) {
-	id, err := uuid.NewUUID()
+	uid, err := uuid.NewUUID()
 	if err != nil {
 		logger.Error("failed to generate uuid", zap.Error(err))
 		return nil, err
 	}
-	uid := strings.ReplaceAll(id.String(), "-", "")
 	now := time.Now().Unix()
 	return &EnvironmentV2{&proto.EnvironmentV2{
-		Id:          uid,
+		Id:          uid.String(),
 		Name:        name,
 		UrlCode:     urlCode,
 		Description: description,
