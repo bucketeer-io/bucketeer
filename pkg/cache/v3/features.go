@@ -27,7 +27,7 @@ import (
 
 const (
 	featuresKind = "features"
-	featuresTTL  = 1 * time.Hour
+	featuresTTL  = time.Duration(0)
 )
 
 type FeaturesCache interface {
