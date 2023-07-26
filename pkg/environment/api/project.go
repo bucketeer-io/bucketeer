@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -38,8 +39,8 @@ import (
 
 var (
 	projectIDRegex      = regexp.MustCompile("^[a-z0-9-]{1,50}$")
-	projectNameRegex    = regexp.MustCompile("^[a-z0-9-]{1,50}$")
-	projectUrlCodeRegex = regexp.MustCompile("^[a-z0-9-]{1,50}$")
+	projectNameRegex    = regexp.MustCompile("^[A-Za-z0-9-_ ]{1,50}$")
+	projectUrlCodeRegex = regexp.MustCompile("^[a-z0-9-_.]{1,50}$")
 
 	//nolint:lll
 	emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
@@ -235,7 +236,7 @@ func (s *EnvironmentService) CreateProject(
 		return nil, err
 	}
 	// TODO Once we support new create project API requiring name instead of id, we should remove this process.
-	name := req.Command.Name
+	name := strings.TrimSpace(req.Command.Name)
 	if req.Command.Name == "" {
 		name = req.Command.Id
 	}
@@ -271,8 +272,9 @@ func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, lo
 		}
 		return dt.Err()
 	}
-	// TODO Once we support new create project API requiring name instead of id, we should validate name using regex.
-	if !projectNameRegex.MatchString(req.Command.Name) && !projectIDRegex.MatchString(req.Command.Id) {
+	// TODO Once we support new create project API requiring name instead of id, we should validate name only.
+	name := strings.TrimSpace(req.Command.Name)
+	if !projectNameRegex.MatchString(name) && !projectIDRegex.MatchString(req.Command.Id) {
 		dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
@@ -386,7 +388,7 @@ func (s *EnvironmentService) CreateTrialProject(
 		return nil, dt.Err()
 	}
 	// TODO Once we support new create project API requiring name instead of id, we should remove this process.
-	name := req.Command.Name
+	name := strings.TrimSpace(req.Command.Name)
 	if req.Command.Name == "" {
 		name = req.Command.Id
 	}
@@ -429,7 +431,8 @@ func validateCreateTrialProjectRequest(
 		return dt.Err()
 	}
 	// TODO Once we support new create project API requiring name instead of id, we should validate name using regex.
-	if !projectNameRegex.MatchString(req.Command.Name) && !projectIDRegex.MatchString(req.Command.Id) {
+	name := strings.TrimSpace(req.Command.Name)
+	if !projectNameRegex.MatchString(name) && !projectIDRegex.MatchString(req.Command.Id) {
 		dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
@@ -622,7 +625,8 @@ func validateUpdateProjectRequest(id string, commands []command.Command, localiz
 	}
 	for _, cmd := range commands {
 		if c, ok := cmd.(*environmentproto.RenameProjectCommand); ok {
-			if !projectNameRegex.MatchString(c.Name) {
+			name := strings.TrimSpace(c.Name)
+			if !projectNameRegex.MatchString(name) {
 				dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
 					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),

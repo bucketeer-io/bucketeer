@@ -16,6 +16,7 @@ package command
 
 import (
 	"context"
+	"strings"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 
@@ -105,10 +106,11 @@ func (h *projectCommandHandler) changeDescription(
 }
 
 func (h *projectCommandHandler) rename(ctx context.Context, cmd *proto.RenameProjectCommand) error {
-	h.project.Rename(cmd.Name)
+	newName := strings.TrimSpace(cmd.Name)
+	h.project.Rename(newName)
 	return h.send(ctx, eventproto.Event_PROJECT_RENAMED, &eventproto.ProjectRenamedEvent{
 		Id:   h.project.Id,
-		Name: cmd.Name,
+		Name: newName,
 	})
 }
 

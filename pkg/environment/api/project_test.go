@@ -241,10 +241,10 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectName: can't use uppercase",
+			desc:  "err: ErrInvalidProjectName: only space",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "ID-1"},
+				Command: &proto.CreateProjectCommand{Name: "    "},
 			},
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
@@ -307,7 +307,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "id-2"},
+				Command: &proto.CreateProjectCommand{Name: "Project Name-001"},
 			},
 			expectedErr: nil,
 		},
@@ -367,10 +367,10 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectName: can't use uppercase",
+			desc:  "err: ErrInvalidProjectName: only space",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "ID-1"},
+				Command: &proto.CreateTrialProjectCommand{Name: "   "},
 			},
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
@@ -470,7 +470,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 					&accountproto.CreateAccountResponse{}, nil).Times(3)
 			},
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "id-2", Email: "test@example.com"},
+				Command: &proto.CreateTrialProjectCommand{Name: "Project Name_001", Email: "test@example.com"},
 			},
 			expectedErr: nil,
 		},
