@@ -95,6 +95,110 @@ export namespace DeleteEnvironmentCommand {
   }
 }
 
+export class CreateEnvironmentV2Command extends jspb.Message {
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getProjectId(): string;
+  setProjectId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateEnvironmentV2Command.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateEnvironmentV2Command): CreateEnvironmentV2Command.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: CreateEnvironmentV2Command, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateEnvironmentV2Command;
+  static deserializeBinaryFromReader(message: CreateEnvironmentV2Command, reader: jspb.BinaryReader): CreateEnvironmentV2Command;
+}
+
+export namespace CreateEnvironmentV2Command {
+  export type AsObject = {
+    name: string,
+    urlCode: string,
+    description: string,
+    projectId: string,
+  }
+}
+
+export class RenameEnvironmentV2Command extends jspb.Message {
+  getName(): string;
+  setName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RenameEnvironmentV2Command.AsObject;
+  static toObject(includeInstance: boolean, msg: RenameEnvironmentV2Command): RenameEnvironmentV2Command.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: RenameEnvironmentV2Command, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): RenameEnvironmentV2Command;
+  static deserializeBinaryFromReader(message: RenameEnvironmentV2Command, reader: jspb.BinaryReader): RenameEnvironmentV2Command;
+}
+
+export namespace RenameEnvironmentV2Command {
+  export type AsObject = {
+    name: string,
+  }
+}
+
+export class ChangeDescriptionEnvironmentV2Command extends jspb.Message {
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeDescriptionEnvironmentV2Command.AsObject;
+  static toObject(includeInstance: boolean, msg: ChangeDescriptionEnvironmentV2Command): ChangeDescriptionEnvironmentV2Command.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ChangeDescriptionEnvironmentV2Command, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeDescriptionEnvironmentV2Command;
+  static deserializeBinaryFromReader(message: ChangeDescriptionEnvironmentV2Command, reader: jspb.BinaryReader): ChangeDescriptionEnvironmentV2Command;
+}
+
+export namespace ChangeDescriptionEnvironmentV2Command {
+  export type AsObject = {
+    description: string,
+  }
+}
+
+export class ArchiveEnvironmentV2Command extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ArchiveEnvironmentV2Command.AsObject;
+  static toObject(includeInstance: boolean, msg: ArchiveEnvironmentV2Command): ArchiveEnvironmentV2Command.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ArchiveEnvironmentV2Command, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ArchiveEnvironmentV2Command;
+  static deserializeBinaryFromReader(message: ArchiveEnvironmentV2Command, reader: jspb.BinaryReader): ArchiveEnvironmentV2Command;
+}
+
+export namespace ArchiveEnvironmentV2Command {
+  export type AsObject = {
+  }
+}
+
+export class UnarchiveEnvironmentV2Command extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UnarchiveEnvironmentV2Command.AsObject;
+  static toObject(includeInstance: boolean, msg: UnarchiveEnvironmentV2Command): UnarchiveEnvironmentV2Command.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UnarchiveEnvironmentV2Command, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UnarchiveEnvironmentV2Command;
+  static deserializeBinaryFromReader(message: UnarchiveEnvironmentV2Command, reader: jspb.BinaryReader): UnarchiveEnvironmentV2Command;
+}
+
+export namespace UnarchiveEnvironmentV2Command {
+  export type AsObject = {
+  }
+}
+
 export class CreateProjectCommand extends jspb.Message {
   getId(): string;
   setId(value: string): void;
