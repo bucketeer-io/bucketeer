@@ -95,3 +95,8 @@ func (e *EnvironmentV2) SetArchived() {
 	e.EnvironmentV2.Archived = true
 	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
 }
+
+func (e *EnvironmentV2) SetUnarchived() {
+	e.EnvironmentV2.Archived = false
+	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
+}
