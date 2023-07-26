@@ -106,11 +106,3 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)
 	}
 }
-
-//func getEnvironmentIDByName(t *testing.T) string {
-//	t.Helper()
-//	if *environmentNameSpace == "" {
-//		return "production"
-//	}
-//	return *environmentNamespace
-//}
