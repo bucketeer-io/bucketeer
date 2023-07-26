@@ -85,6 +85,70 @@ message DeleteEnvironmentRequest {
 
 message DeleteEnvironmentResponse {}
 
+message GetEnvironmentV2Request {
+  string id = 1;
+}
+
+message GetEnvironmentV2Response {
+  EnvironmentV2 environment = 1;
+}
+
+message ListEnvironmentsV2Request {
+  enum OrderBy {
+    DEFAULT = 0;
+    ID = 1;
+    NAME = 2;
+    URL_CODE = 3;
+    CREATED_AT = 4;
+    UPDATED_AT = 5;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  OrderBy order_by = 3;
+  OrderDirection order_direction = 4;
+  string project_id = 5;
+  google.protobuf.BoolValue archived = 6;
+  string search_keyword = 7;
+}
+
+message ListEnvironmentsV2Response {
+  repeated EnvironmentV2 environments = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message CreateEnvironmentV2Request {
+  CreateEnvironmentV2Command command = 1;
+}
+
+message CreateEnvironmentV2Response {}
+
+message UpdateEnvironmentV2Request {
+  string id = 1;
+  RenameEnvironmentV2Command rename_command = 2;
+  ChangeDescriptionEnvironmentV2Command change_description_command = 3;
+}
+
+message UpdateEnvironmentV2Response {}
+
+message ArchiveEnvironmentV2Request {
+  string id = 1;
+  ArchiveEnvironmentV2Command command = 2;
+}
+
+message ArchiveEnvironmentV2Response {}
+
+message UnarchiveEnvironmentV2Request {
+  string id = 1;
+  UnarchiveEnvironmentV2Command command = 2;
+}
+
+message UnarchiveEnvironmentV2Response {}
+
 message GetProjectRequest {
   string id = 1;
 }
@@ -172,6 +236,19 @@ service EnvironmentService {
       returns (UpdateEnvironmentResponse) {}
   rpc DeleteEnvironment(DeleteEnvironmentRequest)
       returns (DeleteEnvironmentResponse) {}
+
+  rpc GetEnvironmentV2(GetEnvironmentV2Request)
+      returns (GetEnvironmentV2Response) {}
+  rpc ListEnvironmentsV2(ListEnvironmentsV2Request)
+      returns (ListEnvironmentsV2Response) {}
+  rpc CreateEnvironmentV2(CreateEnvironmentV2Request)
+      returns (CreateEnvironmentV2Response) {}
+  rpc UpdateEnvironmentV2(UpdateEnvironmentV2Request)
+      returns (UpdateEnvironmentV2Response) {}
+  rpc ArchiveEnvironmentV2(ArchiveEnvironmentV2Request)
+      returns (ArchiveEnvironmentV2Response) {}
+  rpc UnarchiveEnvironmentV2(UnarchiveEnvironmentV2Request)
+      returns (UnarchiveEnvironmentV2Response) {}
 
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {}
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {}

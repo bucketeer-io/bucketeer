@@ -250,6 +250,247 @@ func (*DeleteEnvironmentCommand) Descriptor() ([]byte, []int) {
 	return file_proto_environment_command_proto_rawDescGZIP(), []int{3}
 }
 
+type CreateEnvironmentV2Command struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name        string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	UrlCode     string `protobuf:"bytes,2,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"` // optional
+	ProjectId   string `protobuf:"bytes,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+}
+
+func (x *CreateEnvironmentV2Command) Reset() {
+	*x = CreateEnvironmentV2Command{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_command_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateEnvironmentV2Command) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateEnvironmentV2Command) ProtoMessage() {}
+
+func (x *CreateEnvironmentV2Command) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_command_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateEnvironmentV2Command.ProtoReflect.Descriptor instead.
+func (*CreateEnvironmentV2Command) Descriptor() ([]byte, []int) {
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *CreateEnvironmentV2Command) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateEnvironmentV2Command) GetUrlCode() string {
+	if x != nil {
+		return x.UrlCode
+	}
+	return ""
+}
+
+func (x *CreateEnvironmentV2Command) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *CreateEnvironmentV2Command) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+type RenameEnvironmentV2Command struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *RenameEnvironmentV2Command) Reset() {
+	*x = RenameEnvironmentV2Command{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_command_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RenameEnvironmentV2Command) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RenameEnvironmentV2Command) ProtoMessage() {}
+
+func (x *RenameEnvironmentV2Command) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_command_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RenameEnvironmentV2Command.ProtoReflect.Descriptor instead.
+func (*RenameEnvironmentV2Command) Descriptor() ([]byte, []int) {
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RenameEnvironmentV2Command) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type ChangeDescriptionEnvironmentV2Command struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+}
+
+func (x *ChangeDescriptionEnvironmentV2Command) Reset() {
+	*x = ChangeDescriptionEnvironmentV2Command{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_command_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ChangeDescriptionEnvironmentV2Command) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeDescriptionEnvironmentV2Command) ProtoMessage() {}
+
+func (x *ChangeDescriptionEnvironmentV2Command) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_command_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeDescriptionEnvironmentV2Command.ProtoReflect.Descriptor instead.
+func (*ChangeDescriptionEnvironmentV2Command) Descriptor() ([]byte, []int) {
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ChangeDescriptionEnvironmentV2Command) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+type ArchiveEnvironmentV2Command struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *ArchiveEnvironmentV2Command) Reset() {
+	*x = ArchiveEnvironmentV2Command{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_command_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ArchiveEnvironmentV2Command) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArchiveEnvironmentV2Command) ProtoMessage() {}
+
+func (x *ArchiveEnvironmentV2Command) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_command_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ArchiveEnvironmentV2Command.ProtoReflect.Descriptor instead.
+func (*ArchiveEnvironmentV2Command) Descriptor() ([]byte, []int) {
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{7}
+}
+
+type UnarchiveEnvironmentV2Command struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *UnarchiveEnvironmentV2Command) Reset() {
+	*x = UnarchiveEnvironmentV2Command{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_environment_command_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UnarchiveEnvironmentV2Command) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnarchiveEnvironmentV2Command) ProtoMessage() {}
+
+func (x *UnarchiveEnvironmentV2Command) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_environment_command_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnarchiveEnvironmentV2Command.ProtoReflect.Descriptor instead.
+func (*UnarchiveEnvironmentV2Command) Descriptor() ([]byte, []int) {
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{8}
+}
+
 type CreateProjectCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -265,7 +506,7 @@ type CreateProjectCommand struct {
 func (x *CreateProjectCommand) Reset() {
 	*x = CreateProjectCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_environment_command_proto_msgTypes[4]
+		mi := &file_proto_environment_command_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -278,7 +519,7 @@ func (x *CreateProjectCommand) String() string {
 func (*CreateProjectCommand) ProtoMessage() {}
 
 func (x *CreateProjectCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_environment_command_proto_msgTypes[4]
+	mi := &file_proto_environment_command_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -291,7 +532,7 @@ func (x *CreateProjectCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProjectCommand.ProtoReflect.Descriptor instead.
 func (*CreateProjectCommand) Descriptor() ([]byte, []int) {
-	return file_proto_environment_command_proto_rawDescGZIP(), []int{4}
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{9}
 }
 
 // Deprecated: Do not use.
@@ -338,7 +579,7 @@ type CreateTrialProjectCommand struct {
 func (x *CreateTrialProjectCommand) Reset() {
 	*x = CreateTrialProjectCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_environment_command_proto_msgTypes[5]
+		mi := &file_proto_environment_command_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -351,7 +592,7 @@ func (x *CreateTrialProjectCommand) String() string {
 func (*CreateTrialProjectCommand) ProtoMessage() {}
 
 func (x *CreateTrialProjectCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_environment_command_proto_msgTypes[5]
+	mi := &file_proto_environment_command_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -364,7 +605,7 @@ func (x *CreateTrialProjectCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTrialProjectCommand.ProtoReflect.Descriptor instead.
 func (*CreateTrialProjectCommand) Descriptor() ([]byte, []int) {
-	return file_proto_environment_command_proto_rawDescGZIP(), []int{5}
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{10}
 }
 
 // Deprecated: Do not use.
@@ -407,7 +648,7 @@ type RenameProjectCommand struct {
 func (x *RenameProjectCommand) Reset() {
 	*x = RenameProjectCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_environment_command_proto_msgTypes[6]
+		mi := &file_proto_environment_command_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -420,7 +661,7 @@ func (x *RenameProjectCommand) String() string {
 func (*RenameProjectCommand) ProtoMessage() {}
 
 func (x *RenameProjectCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_environment_command_proto_msgTypes[6]
+	mi := &file_proto_environment_command_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -433,7 +674,7 @@ func (x *RenameProjectCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenameProjectCommand.ProtoReflect.Descriptor instead.
 func (*RenameProjectCommand) Descriptor() ([]byte, []int) {
-	return file_proto_environment_command_proto_rawDescGZIP(), []int{6}
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RenameProjectCommand) GetName() string {
@@ -454,7 +695,7 @@ type ChangeDescriptionProjectCommand struct {
 func (x *ChangeDescriptionProjectCommand) Reset() {
 	*x = ChangeDescriptionProjectCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_environment_command_proto_msgTypes[7]
+		mi := &file_proto_environment_command_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -467,7 +708,7 @@ func (x *ChangeDescriptionProjectCommand) String() string {
 func (*ChangeDescriptionProjectCommand) ProtoMessage() {}
 
 func (x *ChangeDescriptionProjectCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_environment_command_proto_msgTypes[7]
+	mi := &file_proto_environment_command_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -480,7 +721,7 @@ func (x *ChangeDescriptionProjectCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeDescriptionProjectCommand.ProtoReflect.Descriptor instead.
 func (*ChangeDescriptionProjectCommand) Descriptor() ([]byte, []int) {
-	return file_proto_environment_command_proto_rawDescGZIP(), []int{7}
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ChangeDescriptionProjectCommand) GetDescription() string {
@@ -499,7 +740,7 @@ type EnableProjectCommand struct {
 func (x *EnableProjectCommand) Reset() {
 	*x = EnableProjectCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_environment_command_proto_msgTypes[8]
+		mi := &file_proto_environment_command_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -512,7 +753,7 @@ func (x *EnableProjectCommand) String() string {
 func (*EnableProjectCommand) ProtoMessage() {}
 
 func (x *EnableProjectCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_environment_command_proto_msgTypes[8]
+	mi := &file_proto_environment_command_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -525,7 +766,7 @@ func (x *EnableProjectCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnableProjectCommand.ProtoReflect.Descriptor instead.
 func (*EnableProjectCommand) Descriptor() ([]byte, []int) {
-	return file_proto_environment_command_proto_rawDescGZIP(), []int{8}
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{13}
 }
 
 type DisableProjectCommand struct {
@@ -537,7 +778,7 @@ type DisableProjectCommand struct {
 func (x *DisableProjectCommand) Reset() {
 	*x = DisableProjectCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_environment_command_proto_msgTypes[9]
+		mi := &file_proto_environment_command_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -550,7 +791,7 @@ func (x *DisableProjectCommand) String() string {
 func (*DisableProjectCommand) ProtoMessage() {}
 
 func (x *DisableProjectCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_environment_command_proto_msgTypes[9]
+	mi := &file_proto_environment_command_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -563,7 +804,7 @@ func (x *DisableProjectCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableProjectCommand.ProtoReflect.Descriptor instead.
 func (*DisableProjectCommand) Descriptor() ([]byte, []int) {
-	return file_proto_environment_command_proto_rawDescGZIP(), []int{9}
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{14}
 }
 
 type ConvertTrialProjectCommand struct {
@@ -575,7 +816,7 @@ type ConvertTrialProjectCommand struct {
 func (x *ConvertTrialProjectCommand) Reset() {
 	*x = ConvertTrialProjectCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_environment_command_proto_msgTypes[10]
+		mi := &file_proto_environment_command_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -588,7 +829,7 @@ func (x *ConvertTrialProjectCommand) String() string {
 func (*ConvertTrialProjectCommand) ProtoMessage() {}
 
 func (x *ConvertTrialProjectCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_environment_command_proto_msgTypes[10]
+	mi := &file_proto_environment_command_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -601,7 +842,7 @@ func (x *ConvertTrialProjectCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConvertTrialProjectCommand.ProtoReflect.Descriptor instead.
 func (*ConvertTrialProjectCommand) Descriptor() ([]byte, []int) {
-	return file_proto_environment_command_proto_rawDescGZIP(), []int{10}
+	return file_proto_environment_command_proto_rawDescGZIP(), []int{15}
 }
 
 var File_proto_environment_command_proto protoreflect.FileDescriptor
@@ -630,38 +871,59 @@ var file_proto_environment_command_proto_rawDesc = []byte{
 	0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65,
 	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x1a, 0x0a, 0x18, 0x44, 0x65, 0x6c,
 	0x65, 0x74, 0x65, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x43, 0x6f,
-	0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x7b, 0x0a, 0x14, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50,
-	0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a,
-	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x02, 0x18, 0x01, 0x52, 0x02, 0x69,
-	0x64, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74,
-	0x69, 0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x75, 0x72, 0x6c, 0x5f, 0x63,
-	0x6f, 0x64, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x75, 0x72, 0x6c, 0x43, 0x6f,
-	0x64, 0x65, 0x22, 0x74, 0x0a, 0x19, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x54, 0x72, 0x69, 0x61,
-	0x6c, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12,
-	0x12, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x02, 0x18, 0x01, 0x52,
-	0x02, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
-	0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x19, 0x0a,
-	0x08, 0x75, 0x72, 0x6c, 0x5f, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x07, 0x75, 0x72, 0x6c, 0x43, 0x6f, 0x64, 0x65, 0x22, 0x2a, 0x0a, 0x14, 0x52, 0x65, 0x6e, 0x61,
-	0x6d, 0x65, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64,
-	0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
-	0x6e, 0x61, 0x6d, 0x65, 0x22, 0x43, 0x0a, 0x1f, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x44, 0x65,
-	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74,
-	0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72,
-	0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65,
-	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x16, 0x0a, 0x14, 0x45, 0x6e, 0x61,
-	0x62, 0x6c, 0x65, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e,
-	0x64, 0x22, 0x17, 0x0a, 0x15, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x50, 0x72, 0x6f, 0x6a,
-	0x65, 0x63, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x1c, 0x0a, 0x1a, 0x43, 0x6f,
-	0x6e, 0x76, 0x65, 0x72, 0x74, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63,
-	0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
-	0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x2f, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x62,
-	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x8c, 0x01, 0x0a, 0x1a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
+	0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x32, 0x43, 0x6f, 0x6d,
+	0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x75, 0x72, 0x6c, 0x5f,
+	0x63, 0x6f, 0x64, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x75, 0x72, 0x6c, 0x43,
+	0x6f, 0x64, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69,
+	0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74,
+	0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x6a, 0x65,
+	0x63, 0x74, 0x49, 0x64, 0x22, 0x30, 0x0a, 0x1a, 0x52, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x45, 0x6e,
+	0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61,
+	0x6e, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x49, 0x0a, 0x25, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72,
+	0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12,
+	0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f,
+	0x6e, 0x22, 0x1d, 0x0a, 0x1b, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x45, 0x6e, 0x76, 0x69,
+	0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64,
+	0x22, 0x1f, 0x0a, 0x1d, 0x55, 0x6e, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x45, 0x6e, 0x76,
+	0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e,
+	0x64, 0x22, 0x7b, 0x0a, 0x14, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x6a, 0x65,
+	0x63, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a, 0x02, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x02, 0x18, 0x01, 0x52, 0x02, 0x69, 0x64, 0x12, 0x20, 0x0a,
+	0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12,
+	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x75, 0x72, 0x6c, 0x5f, 0x63, 0x6f, 0x64, 0x65, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x75, 0x72, 0x6c, 0x43, 0x6f, 0x64, 0x65, 0x22, 0x74,
+	0x0a, 0x19, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x50, 0x72, 0x6f,
+	0x6a, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a, 0x02, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x02, 0x18, 0x01, 0x52, 0x02, 0x69, 0x64, 0x12,
+	0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05,
+	0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x75, 0x72, 0x6c,
+	0x5f, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x75, 0x72, 0x6c,
+	0x43, 0x6f, 0x64, 0x65, 0x22, 0x2a, 0x0a, 0x14, 0x52, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x50, 0x72,
+	0x6f, 0x6a, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a, 0x04,
+	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65,
+	0x22, 0x43, 0x0a, 0x1f, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6d, 0x6d,
+	0x61, 0x6e, 0x64, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69,
+	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x16, 0x0a, 0x14, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x50,
+	0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x17, 0x0a,
+	0x15, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x43,
+	0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x1c, 0x0a, 0x1a, 0x43, 0x6f, 0x6e, 0x76, 0x65, 0x72,
+	0x74, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6d,
+	0x6d, 0x61, 0x6e, 0x64, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f,
+	0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
+	0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
@@ -676,19 +938,24 @@ func file_proto_environment_command_proto_rawDescGZIP() []byte {
 	return file_proto_environment_command_proto_rawDescData
 }
 
-var file_proto_environment_command_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_proto_environment_command_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_proto_environment_command_proto_goTypes = []interface{}{
-	(*CreateEnvironmentCommand)(nil),            // 0: bucketeer.environment.CreateEnvironmentCommand
-	(*RenameEnvironmentCommand)(nil),            // 1: bucketeer.environment.RenameEnvironmentCommand
-	(*ChangeDescriptionEnvironmentCommand)(nil), // 2: bucketeer.environment.ChangeDescriptionEnvironmentCommand
-	(*DeleteEnvironmentCommand)(nil),            // 3: bucketeer.environment.DeleteEnvironmentCommand
-	(*CreateProjectCommand)(nil),                // 4: bucketeer.environment.CreateProjectCommand
-	(*CreateTrialProjectCommand)(nil),           // 5: bucketeer.environment.CreateTrialProjectCommand
-	(*RenameProjectCommand)(nil),                // 6: bucketeer.environment.RenameProjectCommand
-	(*ChangeDescriptionProjectCommand)(nil),     // 7: bucketeer.environment.ChangeDescriptionProjectCommand
-	(*EnableProjectCommand)(nil),                // 8: bucketeer.environment.EnableProjectCommand
-	(*DisableProjectCommand)(nil),               // 9: bucketeer.environment.DisableProjectCommand
-	(*ConvertTrialProjectCommand)(nil),          // 10: bucketeer.environment.ConvertTrialProjectCommand
+	(*CreateEnvironmentCommand)(nil),              // 0: bucketeer.environment.CreateEnvironmentCommand
+	(*RenameEnvironmentCommand)(nil),              // 1: bucketeer.environment.RenameEnvironmentCommand
+	(*ChangeDescriptionEnvironmentCommand)(nil),   // 2: bucketeer.environment.ChangeDescriptionEnvironmentCommand
+	(*DeleteEnvironmentCommand)(nil),              // 3: bucketeer.environment.DeleteEnvironmentCommand
+	(*CreateEnvironmentV2Command)(nil),            // 4: bucketeer.environment.CreateEnvironmentV2Command
+	(*RenameEnvironmentV2Command)(nil),            // 5: bucketeer.environment.RenameEnvironmentV2Command
+	(*ChangeDescriptionEnvironmentV2Command)(nil), // 6: bucketeer.environment.ChangeDescriptionEnvironmentV2Command
+	(*ArchiveEnvironmentV2Command)(nil),           // 7: bucketeer.environment.ArchiveEnvironmentV2Command
+	(*UnarchiveEnvironmentV2Command)(nil),         // 8: bucketeer.environment.UnarchiveEnvironmentV2Command
+	(*CreateProjectCommand)(nil),                  // 9: bucketeer.environment.CreateProjectCommand
+	(*CreateTrialProjectCommand)(nil),             // 10: bucketeer.environment.CreateTrialProjectCommand
+	(*RenameProjectCommand)(nil),                  // 11: bucketeer.environment.RenameProjectCommand
+	(*ChangeDescriptionProjectCommand)(nil),       // 12: bucketeer.environment.ChangeDescriptionProjectCommand
+	(*EnableProjectCommand)(nil),                  // 13: bucketeer.environment.EnableProjectCommand
+	(*DisableProjectCommand)(nil),                 // 14: bucketeer.environment.DisableProjectCommand
+	(*ConvertTrialProjectCommand)(nil),            // 15: bucketeer.environment.ConvertTrialProjectCommand
 }
 var file_proto_environment_command_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -753,7 +1020,7 @@ func file_proto_environment_command_proto_init() {
 			}
 		}
 		file_proto_environment_command_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateProjectCommand); i {
+			switch v := v.(*CreateEnvironmentV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -765,7 +1032,7 @@ func file_proto_environment_command_proto_init() {
 			}
 		}
 		file_proto_environment_command_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateTrialProjectCommand); i {
+			switch v := v.(*RenameEnvironmentV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -777,7 +1044,7 @@ func file_proto_environment_command_proto_init() {
 			}
 		}
 		file_proto_environment_command_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RenameProjectCommand); i {
+			switch v := v.(*ChangeDescriptionEnvironmentV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -789,7 +1056,7 @@ func file_proto_environment_command_proto_init() {
 			}
 		}
 		file_proto_environment_command_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeDescriptionProjectCommand); i {
+			switch v := v.(*ArchiveEnvironmentV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -801,7 +1068,7 @@ func file_proto_environment_command_proto_init() {
 			}
 		}
 		file_proto_environment_command_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EnableProjectCommand); i {
+			switch v := v.(*UnarchiveEnvironmentV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -813,7 +1080,7 @@ func file_proto_environment_command_proto_init() {
 			}
 		}
 		file_proto_environment_command_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DisableProjectCommand); i {
+			switch v := v.(*CreateProjectCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -825,6 +1092,66 @@ func file_proto_environment_command_proto_init() {
 			}
 		}
 		file_proto_environment_command_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateTrialProjectCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_environment_command_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RenameProjectCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_environment_command_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ChangeDescriptionProjectCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_environment_command_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EnableProjectCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_environment_command_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DisableProjectCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_environment_command_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ConvertTrialProjectCommand); i {
 			case 0:
 				return &v.state
@@ -843,7 +1170,7 @@ func file_proto_environment_command_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_environment_command_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

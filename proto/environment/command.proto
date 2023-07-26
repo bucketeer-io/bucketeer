@@ -36,6 +36,25 @@ message ChangeDescriptionEnvironmentCommand {
 
 message DeleteEnvironmentCommand {}
 
+message CreateEnvironmentV2Command {
+  string name = 1;
+  string url_code = 2;
+  string description = 3;  // optional
+  string project_id = 4;
+}
+
+message RenameEnvironmentV2Command {
+  string name = 1;
+}
+
+message ChangeDescriptionEnvironmentV2Command {
+  string description = 1;
+}
+
+message ArchiveEnvironmentV2Command {}
+
+message UnarchiveEnvironmentV2Command {}
+
 message CreateProjectCommand {
   string id = 1 [deprecated = true];
   string description = 2;  // optional
