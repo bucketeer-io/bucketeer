@@ -531,6 +531,21 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 		if err := s.createEnvironment(ctx, createEnvCmd, env, editor, localizer); err != nil {
 			return err
 		}
+		// TODO: We create environments with v1 and v2 APIs for now.
+		// We should remove v1 API once we migrate all environments to v2.
+		createEnvCmdV2 := &environmentproto.CreateEnvironmentV2Command{
+			Name:        envID,
+			UrlCode:     envID,
+			ProjectId:   project.Id,
+			Description: "",
+		}
+		envV2, err := domain.NewEnvironmentV2(envID, envID, "", project.Id, s.logger)
+		if err != nil {
+			return err
+		}
+		if err := s.createEnvironmentV2(ctx, createEnvCmdV2, envV2, editor, localizer); err != nil {
+			return err
+		}
 		if !adminAccountExists {
 			createAccountReq := &accountproto.CreateAccountRequest{
 				Command: &accountproto.CreateAccountCommand{
