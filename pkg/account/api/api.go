@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -113,13 +114,14 @@ func (s *AccountService) listProjects(ctx context.Context) ([]*environmentproto.
 	}
 }
 
-func (s *AccountService) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
-	environments := []*environmentproto.Environment{}
+func (s *AccountService) listEnvironments(ctx context.Context) ([]*environmentproto.EnvironmentV2, error) {
+	var environments []*environmentproto.EnvironmentV2
 	cursor := ""
 	for {
-		resp, err := s.environmentClient.ListEnvironments(ctx, &environmentproto.ListEnvironmentsRequest{
+		resp, err := s.environmentClient.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
 			PageSize: listRequestPageSize,
 			Cursor:   cursor,
+			Archived: wrapperspb.Bool(false),
 		})
 		if err != nil {
 			return nil, err

@@ -537,7 +537,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		if !ok || p.Disabled {
 			continue
 		}
-		apiKey, err := apiKeyStorage.GetAPIKey(ctx, req.Id, e.Namespace)
+		apiKey, err := apiKeyStorage.GetAPIKey(ctx, req.Id, e.Id)
 		if err != nil {
 			if err == v2as.ErrAPIKeyNotFound {
 				continue
@@ -546,7 +546,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 				"Failed to get api key",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", e.Namespace),
+					zap.String("environmentNamespace", e.Id),
 					zap.String("id", req.Id),
 				)...,
 			)
@@ -561,7 +561,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		}
 		return &proto.GetAPIKeyBySearchingAllEnvironmentsResponse{
 			EnvironmentApiKey: &proto.EnvironmentAPIKey{
-				EnvironmentNamespace: e.Namespace,
+				EnvironmentNamespace: e.Id,
 				ApiKey:               apiKey.APIKey,
 				ProjectId:            p.Id,
 			},
