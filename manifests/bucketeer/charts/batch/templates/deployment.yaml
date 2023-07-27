@@ -72,6 +72,8 @@ spec:
               value: "{{ .Values.env.pullerMaxOutstandingMessages }}"
             - name: BUCKETEER_BATCH_PULLER_MAX_OUTSTANDING_BYTES
               value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
+            - name: BUCKETEER_BATCH_RUNNING_DURATION_PER_BATCH
+              value: "{{ .Values.env.runningDurationPerBatch }}"
             - name: BUCKETEER_BATCH_MYSQL_USER
               value: "{{ .Values.env.mysqlUser }}"
             - name: BUCKETEER_BATCH_MYSQL_PASS

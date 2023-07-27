@@ -30,6 +30,7 @@ env:
   pullerNumGoroutines: 5
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
+  runningDurationPerBatch: 30s
 
 affinity: {}
 
@@ -82,3 +83,4 @@ cronjob:
   mauCountWatcherSchedule: "0 1 1 * *"
   opsDatetimeWatcherSchedule: "* * * * *"
   opsEventCountWatcherSchedule: "* * * * *"
+  domainEventInformerSchedule: "* * * * *"
