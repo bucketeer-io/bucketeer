@@ -62,7 +62,7 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 	defer cancel()
 	environments := w.environmentLister.GetEnvironments(ctx)
 	for _, env := range environments {
-		autoOpsRules := w.autoOpsRuleLister.GetAutoOpsRules(ctx, env.Namespace)
+		autoOpsRules := w.autoOpsRuleLister.GetAutoOpsRules(ctx, env.Id)
 		for _, a := range autoOpsRules {
 			asmt, err := w.assessAutoOpsRule(ctx, env, a)
 			if err != nil {
@@ -71,7 +71,7 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 			if !asmt {
 				continue
 			}
-			if err = w.autoOpsExecutor.Execute(ctx, env.Namespace, a.Id); err != nil {
+			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id); err != nil {
 				lastErr = err
 			}
 		}
@@ -81,13 +81,13 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 
 func (w *datetimeWatcher) assessAutoOpsRule(
 	ctx context.Context,
-	env *environmentdomain.Environment,
+	env *environmentdomain.EnvironmentV2,
 	a *autoopsdomain.AutoOpsRule,
 ) (bool, error) {
 	datetimeClauses, err := a.ExtractDatetimeClauses()
 	if err != nil {
 		w.logger.Error("Failed to extract datetime clauses", zap.Error(err),
-			zap.String("environmentNamespace", env.Namespace),
+			zap.String("environmentNamespace", env.Id),
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
@@ -98,7 +98,7 @@ func (w *datetimeWatcher) assessAutoOpsRule(
 	for _, c := range datetimeClauses {
 		if asmt := w.assessRule(c, nowTimestamp); asmt {
 			w.logger.Info("Clause satisfies condition",
-				zap.String("environmentNamespace", env.Namespace),
+				zap.String("environmentNamespace", env.Id),
 				zap.String("featureId", a.FeatureId),
 				zap.String("autoOpsRuleId", a.Id),
 				zap.Any("datetimeClause", c),

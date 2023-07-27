@@ -78,7 +78,7 @@ func (w *countWatcher) Run(ctx context.Context) (lastErr error) {
 	defer cancel()
 	environments := w.environmentLister.GetEnvironments(ctx)
 	for _, env := range environments {
-		autoOpsRules := w.autoOpsRuleLister.GetAutoOpsRules(ctx, env.Namespace)
+		autoOpsRules := w.autoOpsRuleLister.GetAutoOpsRules(ctx, env.Id)
 		for _, a := range autoOpsRules {
 			asmt, err := w.assessAutoOpsRule(ctx, env, a)
 			if err != nil {
@@ -87,7 +87,7 @@ func (w *countWatcher) Run(ctx context.Context) (lastErr error) {
 			if !asmt {
 				continue
 			}
-			if err = w.autoOpsExecutor.Execute(ctx, env.Namespace, a.Id); err != nil {
+			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id); err != nil {
 				lastErr = err
 			}
 		}
@@ -97,22 +97,22 @@ func (w *countWatcher) Run(ctx context.Context) (lastErr error) {
 
 func (w *countWatcher) assessAutoOpsRule(
 	ctx context.Context,
-	env *environmentdomain.Environment,
+	env *environmentdomain.EnvironmentV2,
 	a *autoopsdomain.AutoOpsRule,
 ) (bool, error) {
 	opsEventRateClauses, err := a.ExtractOpsEventRateClauses()
 	if err != nil {
 		w.logger.Error("Failed to extract ops event rate clauses", zap.Error(err),
-			zap.String("environmentNamespace", env.Namespace),
+			zap.String("environmentNamespace", env.Id),
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
 		return false, err
 	}
-	featureVersion, err := w.getLatestFeatureVersion(ctx, a.FeatureId, env.Namespace)
+	featureVersion, err := w.getLatestFeatureVersion(ctx, a.FeatureId, env.Id)
 	if err != nil {
 		w.logger.Error("Failed to get the latest feature version", zap.Error(err),
-			zap.String("environmentNamespace", env.Namespace),
+			zap.String("environmentNamespace", env.Id),
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
@@ -122,7 +122,7 @@ func (w *countWatcher) assessAutoOpsRule(
 	for id, c := range opsEventRateClauses {
 		logFunc := func(msg string) {
 			w.logger.Debug(msg,
-				zap.String("environmentNamespace", env.Namespace),
+				zap.String("environmentNamespace", env.Id),
 				zap.String("featureId", a.FeatureId),
 				zap.String("autoOpsRuleId", a.Id),
 				zap.Any("opsEventRateClause", c),
@@ -130,7 +130,7 @@ func (w *countWatcher) assessAutoOpsRule(
 		}
 		evaluationCount, err := w.getTargetOpsEvaluationCount(ctx,
 			logFunc,
-			env.Namespace,
+			env.Id,
 			a.Id,
 			id,
 			a.FeatureId,
@@ -147,7 +147,7 @@ func (w *countWatcher) assessAutoOpsRule(
 		opsEventCount, err := w.getTargetOpsGoalEventCount(
 			ctx,
 			logFunc,
-			env.Namespace,
+			env.Id,
 			a.Id,
 			id,
 			a.FeatureId,
@@ -162,13 +162,13 @@ func (w *countWatcher) assessAutoOpsRule(
 			continue
 		}
 		opsCount := opseventdomain.NewOpsCount(a.FeatureId, a.Id, id, opsEventCount, evaluationCount)
-		if err = w.persistOpsCount(ctx, env.Namespace, opsCount); err != nil {
+		if err = w.persistOpsCount(ctx, env.Id, opsCount); err != nil {
 			lastErr = err
 			continue
 		}
 		if asmt := w.assessRule(c, evaluationCount, opsEventCount); asmt {
 			w.logger.Info("Clause satisfies condition",
-				zap.String("environmentNamespace", env.Namespace),
+				zap.String("environmentNamespace", env.Id),
 				zap.String("featureId", a.FeatureId),
 				zap.String("autoOpsRuleId", a.Id),
 				zap.Any("opsEventRateClause", c),

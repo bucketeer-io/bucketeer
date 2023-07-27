@@ -82,23 +82,23 @@ func TestListEnvironments(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*targetStore)
-		expected    []*environmentproto.Environment
+		expected    []*environmentproto.EnvironmentV2
 		expectedErr error
 	}{
 		{
 			desc: "enable",
 			setup: func(ts *targetStore) {
-				ts.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsResponse{Environments: []*environmentproto.Environment{
-						{Id: "ns0", Namespace: "ns0"},
+				ts.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(gomock.Any(), gomock.Any()).Return(
+					&environmentproto.ListEnvironmentsV2Response{Environments: []*environmentproto.EnvironmentV2{
+						{Id: "ns0", Name: "ns0"},
 					}}, nil)
 			},
-			expected: []*environmentproto.Environment{{Id: "ns0", Namespace: "ns0"}},
+			expected: []*environmentproto.EnvironmentV2{{Id: "ns0", Name: "ns0"}},
 		},
 		{
 			desc: "list environments fails",
 			setup: func(ts *targetStore) {
-				ts.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(gomock.Any(), gomock.Any()).Return(
+				ts.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.Unknown, "test"))
 			},
 			expectedErr: status.Errorf(codes.Unknown, "test"),
@@ -173,20 +173,20 @@ func TestRefreshEnvironments(t *testing.T) {
 	patterns := []struct {
 		desc     string
 		setup    func(*targetStore)
-		expected []*environmentdomain.Environment
+		expected []*environmentdomain.EnvironmentV2
 	}{
 		{
 			desc: "enable",
 			setup: func(ts *targetStore) {
-				ts.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsResponse{Environments: []*environmentproto.Environment{
-						{Id: "ns0", Namespace: "ns0"},
-						{Id: "ns1", Namespace: "ns1"},
+				ts.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(gomock.Any(), gomock.Any()).Return(
+					&environmentproto.ListEnvironmentsV2Response{Environments: []*environmentproto.EnvironmentV2{
+						{Id: "ns0", Name: "ns0"},
+						{Id: "ns1", Name: "ns1"},
 					}}, nil)
 			},
-			expected: []*environmentdomain.Environment{
-				{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
-				{Environment: &environmentproto.Environment{Id: "ns1", Namespace: "ns1"}},
+			expected: []*environmentdomain.EnvironmentV2{
+				{EnvironmentV2: &environmentproto.EnvironmentV2{Id: "ns0", Name: "ns0"}},
+				{EnvironmentV2: &environmentproto.EnvironmentV2{Id: "ns1", Name: "ns1"}},
 			},
 		},
 	}
@@ -215,7 +215,7 @@ func TestRefreshAutoOpsRules(t *testing.T) {
 		{
 			desc: "enable",
 			setup: func(ts *targetStore) {
-				ts.environments.Store([]*environmentdomain.Environment{{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}}})
+				ts.environments.Store([]*environmentdomain.EnvironmentV2{{EnvironmentV2: &environmentproto.EnvironmentV2{Id: "ns0", Name: "ns0"}}})
 				ts.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListAutoOpsRules(gomock.Any(), gomock.Any()).Return(
 					&autoopsproto.ListAutoOpsRulesResponse{AutoOpsRules: []*autoopsproto.AutoOpsRule{
 						{Id: "id-0", FeatureId: "fid-0",
@@ -257,7 +257,7 @@ func newTargetStoreWithMock(t *testing.T, mockController *gomock.Controller) *ta
 		cancel:            cancel,
 		doneCh:            make(chan struct{}),
 	}
-	store.environments.Store(make([]*environmentdomain.Environment, 0))
+	store.environments.Store(make([]*environmentdomain.EnvironmentV2, 0))
 	return store
 }
 

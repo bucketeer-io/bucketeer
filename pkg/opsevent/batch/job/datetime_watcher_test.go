@@ -66,8 +66,8 @@ func TestRunDatetimeWatcher(t *testing.T) {
 			desc: "success: assess: false",
 			setup: func(w *datetimeWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
-					[]*environmentdomain.Environment{
-						{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
+					[]*environmentdomain.EnvironmentV2{
+						{EnvironmentV2: &environmentproto.EnvironmentV2{Id: "ns0", Name: "ns0"}},
 					},
 				)
 				dc := &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix()}
@@ -89,8 +89,8 @@ func TestRunDatetimeWatcher(t *testing.T) {
 			desc: "success: assess: true",
 			setup: func(w *datetimeWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
-					[]*environmentdomain.Environment{
-						{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
+					[]*environmentdomain.EnvironmentV2{
+						{EnvironmentV2: &environmentproto.EnvironmentV2{Id: "ns0", Name: "ns0"}},
 					},
 				)
 				dc := &autoopsproto.DatetimeClause{Time: time.Now().Unix()}

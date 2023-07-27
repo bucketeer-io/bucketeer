@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	autoopsservice "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
@@ -37,7 +38,7 @@ const (
 )
 
 type EnvironmentLister interface {
-	GetEnvironments(ctx context.Context) []*environmentdomain.Environment
+	GetEnvironments(ctx context.Context) []*environmentdomain.EnvironmentV2
 }
 
 type AutoOpsRuleLister interface {
@@ -118,7 +119,7 @@ func NewTargetStore(
 		cancel:            cancel,
 		doneCh:            make(chan struct{}),
 	}
-	store.environments.Store(make([]*environmentdomain.Environment, 0))
+	store.environments.Store(make([]*environmentdomain.EnvironmentV2, 0))
 	return store
 }
 
@@ -167,22 +168,23 @@ func (s *targetStore) refreshEnvironments(ctx context.Context) error {
 		s.logger.Error("Failed to list environments", zap.Error(err))
 		return err
 	}
-	domainEnvironments := []*environmentdomain.Environment{}
+	var domainEnvironments []*environmentdomain.EnvironmentV2
 	for _, e := range pbEnvironments {
-		domainEnvironments = append(domainEnvironments, &environmentdomain.Environment{Environment: e})
+		domainEnvironments = append(domainEnvironments, &environmentdomain.EnvironmentV2{EnvironmentV2: e})
 	}
 	s.environments.Store(domainEnvironments)
 	itemsGauge.WithLabelValues(typeEnvironment).Set(float64(len(domainEnvironments)))
 	return nil
 }
 
-func (s *targetStore) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
-	environments := []*environmentproto.Environment{}
+func (s *targetStore) listEnvironments(ctx context.Context) ([]*environmentproto.EnvironmentV2, error) {
+	var environments []*environmentproto.EnvironmentV2
 	cursor := ""
 	for {
-		resp, err := s.environmentClient.ListEnvironments(ctx, &environmentproto.ListEnvironmentsRequest{
+		resp, err := s.environmentClient.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
 			PageSize: listRequestSize,
 			Cursor:   cursor,
+			Archived: wrapperspb.Bool(false),
 		})
 		if err != nil {
 			return nil, err
@@ -200,13 +202,13 @@ func (s *targetStore) refreshAutoOpsRules(ctx context.Context) error {
 	autoOpsRulesMap := make(map[string][]*autoopsdomain.AutoOpsRule)
 	environments := s.GetEnvironments(ctx)
 	for _, e := range environments {
-		autoOpsRules, err := s.listTargetAutoOpsRules(ctx, e.Namespace)
+		autoOpsRules, err := s.listTargetAutoOpsRules(ctx, e.Id)
 		if err != nil {
-			s.logger.Error("Failed to list auto ops rules", zap.Error(err), zap.String("environmentNamespace", e.Namespace))
+			s.logger.Error("Failed to list auto ops rules", zap.Error(err), zap.String("environmentNamespace", e.Id))
 			continue
 		}
-		s.logger.Debug("Succeeded to list auto ops rules", zap.String("environmentNamespace", e.Namespace))
-		autoOpsRulesMap[e.Namespace] = autoOpsRules
+		s.logger.Debug("Succeeded to list auto ops rules", zap.String("environmentNamespace", e.Id))
+		autoOpsRulesMap[e.Id] = autoOpsRules
 	}
 	s.autoOpsRulesMtx.Lock()
 	s.autoOpsRules = autoOpsRulesMap
@@ -258,8 +260,8 @@ func (s *targetStore) listAutoOpsRules(
 	}
 }
 
-func (s *targetStore) GetEnvironments(ctx context.Context) []*environmentdomain.Environment {
-	return s.environments.Load().([]*environmentdomain.Environment)
+func (s *targetStore) GetEnvironments(ctx context.Context) []*environmentdomain.EnvironmentV2 {
+	return s.environments.Load().([]*environmentdomain.EnvironmentV2)
 }
 
 func (s *targetStore) GetAutoOpsRules(ctx context.Context, environmentNamespace string) []*autoopsdomain.AutoOpsRule {

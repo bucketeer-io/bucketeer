@@ -38,10 +38,10 @@ func (m *MockEnvironmentLister) EXPECT() *MockEnvironmentListerMockRecorder {
 }
 
 // GetEnvironments mocks base method.
-func (m *MockEnvironmentLister) GetEnvironments(ctx context.Context) []*domain0.Environment {
+func (m *MockEnvironmentLister) GetEnvironments(ctx context.Context) []*domain0.EnvironmentV2 {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEnvironments", ctx)
-	ret0, _ := ret[0].([]*domain0.Environment)
+	ret0, _ := ret[0].([]*domain0.EnvironmentV2)
 	return ret0
 }
 
@@ -126,10 +126,10 @@ func (mr *MockTargetStoreMockRecorder) GetAutoOpsRules(ctx, environmentNamespace
 }
 
 // GetEnvironments mocks base method.
-func (m *MockTargetStore) GetEnvironments(ctx context.Context) []*domain0.Environment {
+func (m *MockTargetStore) GetEnvironments(ctx context.Context) []*domain0.EnvironmentV2 {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEnvironments", ctx)
-	ret0, _ := ret[0].([]*domain0.Environment)
+	ret0, _ := ret[0].([]*domain0.EnvironmentV2)
 	return ret0
 }
 

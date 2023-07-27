@@ -76,8 +76,8 @@ func TestRunCountWatcher(t *testing.T) {
 			desc: "error: GetFeature fails",
 			setup: func(t *testing.T, w *countWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
-					[]*environmentdomain.Environment{
-						{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
+					[]*environmentdomain.EnvironmentV2{
+						{EnvironmentV2: &environmentproto.EnvironmentV2{Id: "ns0", Name: "ns0"}},
 					},
 				)
 				oerc1, _ := newOpsEventRateClauses(t)
@@ -101,8 +101,8 @@ func TestRunCountWatcher(t *testing.T) {
 			desc: "error: GetOpsEvaluationUserCount fails",
 			setup: func(t *testing.T, w *countWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
-					[]*environmentdomain.Environment{
-						{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
+					[]*environmentdomain.EnvironmentV2{
+						{EnvironmentV2: &environmentproto.EnvironmentV2{Id: "ns0", Name: "ns0"}},
 					},
 				)
 				oerc1, _ := newOpsEventRateClauses(t)
@@ -132,8 +132,8 @@ func TestRunCountWatcher(t *testing.T) {
 			desc: "error: GetOpsEvaluationUserCount fails",
 			setup: func(t *testing.T, w *countWatcher) {
 				w.environmentLister.(*targetstoremock.MockEnvironmentLister).EXPECT().GetEnvironments(gomock.Any()).Return(
-					[]*environmentdomain.Environment{
-						{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
+					[]*environmentdomain.EnvironmentV2{
+						{EnvironmentV2: &environmentproto.EnvironmentV2{Id: "ns0", Name: "ns0"}},
 					},
 				)
 				oerc1, _ := newOpsEventRateClauses(t)
