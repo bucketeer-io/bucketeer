@@ -241,10 +241,10 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectName: can't use uppercase",
+			desc:  "err: ErrInvalidProjectName: only space",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "ID-1"},
+				Command: &proto.CreateProjectCommand{Name: "    "},
 			},
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
@@ -307,7 +307,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "id-2"},
+				Command: &proto.CreateProjectCommand{Name: "Project Name-001"},
 			},
 			expectedErr: nil,
 		},
@@ -367,10 +367,10 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectName: can't use uppercase",
+			desc:  "err: ErrInvalidProjectName: only space",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "ID-1"},
+				Command: &proto.CreateTrialProjectCommand{Name: "   "},
 			},
 			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
@@ -460,17 +460,17 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(4)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(7)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil).Times(4)
+				).Return(nil).Times(7)
 				s.accountClient.(*acmock.MockClient).EXPECT().GetAdminAccount(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.NotFound, "not found"))
 				s.accountClient.(*acmock.MockClient).EXPECT().CreateAccount(gomock.Any(), gomock.Any()).Return(
 					&accountproto.CreateAccountResponse{}, nil).Times(3)
 			},
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Name: "id-2", Email: "test@example.com"},
+				Command: &proto.CreateTrialProjectCommand{Name: "Project Name_001", Email: "test@example.com"},
 			},
 			expectedErr: nil,
 		},

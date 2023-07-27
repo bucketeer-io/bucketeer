@@ -432,6 +432,31 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.DeletedTemplate, "Environment"),
 		}
+	case proto.Event_ENVIRONMENT_V2_CREATED:
+		return &proto.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.CreatedTemplate, "Environment"),
+		}
+	case proto.Event_ENVIRONMENT_V2_RENAMED:
+		return &proto.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.ChangedTemplate, "Environmentの名前"),
+		}
+	case proto.Event_ENVIRONMENT_V2_DESCRIPTION_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.ChangedTemplate, "Environmentの説明文"),
+		}
+	case proto.Event_ENVIRONMENT_V2_ARCHIVED:
+		return &proto.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.ArchivedTemplate, "Environment"),
+		}
+	case proto.Event_ENVIRONMENT_V2_UNARCHIVED:
+		return &proto.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.UnarchivedTemplate, "Environment"),
+		}
 	case proto.Event_ADMIN_ACCOUNT_CREATED:
 		return &proto.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

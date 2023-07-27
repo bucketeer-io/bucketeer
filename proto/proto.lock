@@ -3314,6 +3314,57 @@
             "name": "DeleteEnvironmentCommand"
           },
           {
+            "name": "CreateEnvironmentV2Command",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "project_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "RenameEnvironmentV2Command",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeDescriptionEnvironmentV2Command",
+            "fields": [
+              {
+                "id": 1,
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ArchiveEnvironmentV2Command"
+          },
+          {
+            "name": "UnarchiveEnvironmentV2Command"
+          },
+          {
             "name": "CreateProjectCommand",
             "fields": [
               {
@@ -3631,6 +3682,46 @@
             ]
           },
           {
+            "name": "ListEnvironmentsV2Request.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "ID",
+                "integer": 1
+              },
+              {
+                "name": "NAME",
+                "integer": 2
+              },
+              {
+                "name": "URL_CODE",
+                "integer": 3
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 4
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 5
+              }
+            ]
+          },
+          {
+            "name": "ListEnvironmentsV2Request.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          },
+          {
             "name": "ListProjectsRequest.OrderBy",
             "enum_fields": [
               {
@@ -3827,6 +3918,159 @@
           },
           {
             "name": "DeleteEnvironmentResponse"
+          },
+          {
+            "name": "GetEnvironmentV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetEnvironmentV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment",
+                "type": "EnvironmentV2"
+              }
+            ]
+          },
+          {
+            "name": "ListEnvironmentsV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "project_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "archived",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 7,
+                "name": "search_keyword",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListEnvironmentsV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environments",
+                "type": "EnvironmentV2",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CreateEnvironmentV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "command",
+                "type": "CreateEnvironmentV2Command"
+              }
+            ]
+          },
+          {
+            "name": "CreateEnvironmentV2Response"
+          },
+          {
+            "name": "UpdateEnvironmentV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "rename_command",
+                "type": "RenameEnvironmentV2Command"
+              },
+              {
+                "id": 3,
+                "name": "change_description_command",
+                "type": "ChangeDescriptionEnvironmentV2Command"
+              }
+            ]
+          },
+          {
+            "name": "UpdateEnvironmentV2Response"
+          },
+          {
+            "name": "ArchiveEnvironmentV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "command",
+                "type": "ArchiveEnvironmentV2Command"
+              }
+            ]
+          },
+          {
+            "name": "ArchiveEnvironmentV2Response"
+          },
+          {
+            "name": "UnarchiveEnvironmentV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "command",
+                "type": "UnarchiveEnvironmentV2Command"
+              }
+            ]
+          },
+          {
+            "name": "UnarchiveEnvironmentV2Response"
           },
           {
             "name": "GetProjectRequest",
@@ -4041,6 +4285,36 @@
                 "name": "DeleteEnvironment",
                 "in_type": "DeleteEnvironmentRequest",
                 "out_type": "DeleteEnvironmentResponse"
+              },
+              {
+                "name": "GetEnvironmentV2",
+                "in_type": "GetEnvironmentV2Request",
+                "out_type": "GetEnvironmentV2Response"
+              },
+              {
+                "name": "ListEnvironmentsV2",
+                "in_type": "ListEnvironmentsV2Request",
+                "out_type": "ListEnvironmentsV2Response"
+              },
+              {
+                "name": "CreateEnvironmentV2",
+                "in_type": "CreateEnvironmentV2Request",
+                "out_type": "CreateEnvironmentV2Response"
+              },
+              {
+                "name": "UpdateEnvironmentV2",
+                "in_type": "UpdateEnvironmentV2Request",
+                "out_type": "UpdateEnvironmentV2Response"
+              },
+              {
+                "name": "ArchiveEnvironmentV2",
+                "in_type": "ArchiveEnvironmentV2Request",
+                "out_type": "ArchiveEnvironmentV2Response"
+              },
+              {
+                "name": "UnarchiveEnvironmentV2",
+                "in_type": "UnarchiveEnvironmentV2Request",
+                "out_type": "UnarchiveEnvironmentV2Response"
               },
               {
                 "name": "GetProject",
@@ -5226,6 +5500,26 @@
               {
                 "name": "ENVIRONMENT_DELETED",
                 "integer": 603
+              },
+              {
+                "name": "ENVIRONMENT_V2_CREATED",
+                "integer": 604
+              },
+              {
+                "name": "ENVIRONMENT_V2_RENAMED",
+                "integer": 605
+              },
+              {
+                "name": "ENVIRONMENT_V2_DESCRIPTION_CHANGED",
+                "integer": 606
+              },
+              {
+                "name": "ENVIRONMENT_V2_ARCHIVED",
+                "integer": 607
+              },
+              {
+                "name": "ENVIRONMENT_V2_UNARCHIVED",
+                "integer": 608
               },
               {
                 "name": "ADMIN_ACCOUNT_CREATED",
@@ -7034,6 +7328,146 @@
               {
                 "id": 2,
                 "name": "namespace",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EnvironmentV2CreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "project_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "archived",
+                "type": "bool"
+              },
+              {
+                "id": 7,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "EnvironmentV2RenamedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "project_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "old_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "new_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EnvironmentV2DescriptionChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "project_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "old_description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "new_description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EnvironmentV2ArchivedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "project_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EnvironmentV2UnarchivedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "project_id",
                 "type": "string"
               }
             ]
