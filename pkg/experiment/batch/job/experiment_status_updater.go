@@ -18,6 +18,8 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 
 	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
@@ -77,10 +79,10 @@ func (u *experimentStatusUpdater) Run(ctx context.Context) (lastErr error) {
 			experimentproto.Experiment_RUNNING,
 		}
 		for _, status := range statuses {
-			exps, err := u.listExperiments(ctx, env.Namespace, status)
+			exps, err := u.listExperiments(ctx, env.Id, status)
 			if err != nil {
 				u.logger.Error("Failed to list experiments", zap.Error(err),
-					zap.String("environmentNamespace", env.Namespace),
+					zap.String("environmentNamespace", env.Id),
 					zap.Int32("status", int32(status)),
 				)
 				lastErr = err
@@ -89,7 +91,7 @@ func (u *experimentStatusUpdater) Run(ctx context.Context) (lastErr error) {
 			experiments = append(experiments, exps...)
 		}
 		for _, e := range experiments {
-			if err = u.updateStatus(ctx, env.Namespace, e); err != nil {
+			if err = u.updateStatus(ctx, env.Id, e); err != nil {
 				lastErr = err
 			}
 		}
@@ -200,13 +202,14 @@ func (u *experimentStatusUpdater) listExperiments(
 	}
 }
 
-func (u *experimentStatusUpdater) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
-	environments := []*environmentproto.Environment{}
+func (u *experimentStatusUpdater) listEnvironments(ctx context.Context) ([]*environmentproto.EnvironmentV2, error) {
+	var environments []*environmentproto.EnvironmentV2
 	cursor := ""
 	for {
-		resp, err := u.environmentClient.ListEnvironments(ctx, &environmentproto.ListEnvironmentsRequest{
+		resp, err := u.environmentClient.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
 			PageSize: listRequestSize,
 			Cursor:   cursor,
+			Archived: wrapperspb.Bool(false),
 		})
 		if err != nil {
 			return nil, err
