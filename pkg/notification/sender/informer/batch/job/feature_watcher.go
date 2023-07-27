@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 
@@ -72,7 +73,7 @@ func (w *featureWatcher) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	for _, env := range environments {
-		features, err := w.listFeatures(ctx, env.Namespace)
+		features, err := w.listFeatures(ctx, env.Id)
 		if err != nil {
 			return err
 		}
@@ -101,7 +102,7 @@ func (w *featureWatcher) Run(ctx context.Context) (lastErr error) {
 }
 
 func (w *featureWatcher) createNotificationEvent(
-	environment *environmentproto.Environment,
+	environment *environmentproto.EnvironmentV2,
 	features []*featureproto.Feature,
 ) (*senderproto.NotificationEvent, error) {
 	id, err := uuid.NewUUID()
@@ -110,7 +111,7 @@ func (w *featureWatcher) createNotificationEvent(
 	}
 	ne := &senderproto.NotificationEvent{
 		Id:                   id.String(),
-		EnvironmentNamespace: environment.Namespace,
+		EnvironmentNamespace: environment.Id,
 		SourceType:           notificationproto.Subscription_FEATURE_STALE,
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_FeatureStale,
@@ -124,13 +125,14 @@ func (w *featureWatcher) createNotificationEvent(
 	return ne, nil
 }
 
-func (w *featureWatcher) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
-	environments := []*environmentproto.Environment{}
+func (w *featureWatcher) listEnvironments(ctx context.Context) ([]*environmentproto.EnvironmentV2, error) {
+	var environments []*environmentproto.EnvironmentV2
 	cursor := ""
 	for {
-		resp, err := w.environmentClient.ListEnvironments(ctx, &environmentproto.ListEnvironmentsRequest{
+		resp, err := w.environmentClient.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
 			PageSize: listRequestSize,
 			Cursor:   cursor,
+			Archived: wrapperspb.Bool(false),
 		})
 		if err != nil {
 			return nil, err
