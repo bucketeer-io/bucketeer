@@ -81,6 +81,23 @@ func NewEnvironmentV2(name, urlCode, description, projectID string, logger *zap.
 	}}, nil
 }
 
+// TmpNewEnvironmentV2 sets the id field to the same value as the namespace field in v1.
+// TODO: remove this function after migration
+func TmpNewEnvironmentV2(name, urlCode, description, projectID string) *EnvironmentV2 {
+	now := time.Now().Unix()
+	id := strings.ReplaceAll(name, "-", "")
+	return &EnvironmentV2{&proto.EnvironmentV2{
+		Id:          id,
+		Name:        name,
+		UrlCode:     urlCode,
+		Description: description,
+		ProjectId:   projectID,
+		Archived:    false,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}}
+}
+
 func (e *EnvironmentV2) Rename(name string) {
 	e.EnvironmentV2.Name = name
 	e.EnvironmentV2.UpdatedAt = time.Now().Unix()

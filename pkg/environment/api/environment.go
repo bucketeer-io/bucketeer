@@ -274,16 +274,12 @@ func (s *EnvironmentService) CreateEnvironment(
 		ProjectId:   newEnvironment.ProjectId,
 		Description: newEnvironment.Description,
 	}
-	newEnvironmentV2, err := domain.NewEnvironmentV2(
+	newEnvironmentV2 := domain.TmpNewEnvironmentV2(
 		createEnvCmdV2.Name,
 		createEnvCmdV2.UrlCode,
 		createEnvCmdV2.Description,
 		createEnvCmdV2.ProjectId,
-		s.logger,
 	)
-	if err != nil {
-		return nil, err
-	}
 	if err := s.createEnvironmentV2(ctx, createEnvCmdV2, newEnvironmentV2, editor, localizer); err != nil {
 		return nil, err
 	}
