@@ -358,6 +358,19 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 	if err := validateUpdateEnvironmentV2Request(req.Id, commands, localizer); err != nil {
 		return nil, err
 	}
+	if err := s.updateEnvironmentV2(ctx, req.Id, commands, editor, localizer); err != nil {
+		return nil, err
+	}
+	return &environmentproto.UpdateEnvironmentV2Response{}, nil
+}
+
+func (s *EnvironmentService) updateEnvironmentV2(
+	ctx context.Context,
+	envId string,
+	commands []command.Command,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -371,13 +384,13 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			return nil, statusInternal.Err()
+			return statusInternal.Err()
 		}
-		return nil, dt.Err()
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		environmentStorage := v2es.NewEnvironmentStorage(tx)
-		environment, err := environmentStorage.GetEnvironmentV2(ctx, req.Id)
+		environment, err := environmentStorage.GetEnvironmentV2(ctx, envId)
 		if err != nil {
 			return err
 		}
@@ -396,9 +409,9 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 				Message: localizer.MustLocalize(locale.NotFoundError),
 			})
 			if err != nil {
-				return nil, statusInternal.Err()
+				return statusInternal.Err()
 			}
-			return nil, dt.Err()
+			return dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update environment",
@@ -409,11 +422,11 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			return nil, statusInternal.Err()
+			return statusInternal.Err()
 		}
-		return nil, dt.Err()
+		return dt.Err()
 	}
-	return &environmentproto.UpdateEnvironmentV2Response{}, nil
+	return nil
 }
 
 func getUpdateEnvironmentV2Commands(req *environmentproto.UpdateEnvironmentV2Request) []command.Command {

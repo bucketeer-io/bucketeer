@@ -422,6 +422,27 @@ func (s *EnvironmentService) UpdateEnvironment(
 	if err := validateUpdateEnvironmentRequest(req.Id, commands, localizer); err != nil {
 		return nil, err
 	}
+	if err := s.updateEnvironment(ctx, req.Id, commands, editor, localizer); err != nil {
+		return nil, err
+	}
+	// TODO: We update environments with v1 and v2 for now.
+	// We should remove v1 once we migrate all environments to v2.
+	v2Commands := createV2UpdateEnvironmentCommands(req)
+	if len(v2Commands) != 0 {
+		if err := s.updateEnvironmentV2(ctx, req.Id, v2Commands, editor, localizer); err != nil {
+			return nil, err
+		}
+	}
+	return &environmentproto.UpdateEnvironmentResponse{}, nil
+}
+
+func (s *EnvironmentService) updateEnvironment(
+	ctx context.Context,
+	envId string,
+	commands []command.Command,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -435,19 +456,19 @@ func (s *EnvironmentService) UpdateEnvironment(
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			return nil, statusInternal.Err()
+			return statusInternal.Err()
 		}
-		return nil, dt.Err()
+		return dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		environmentStorage := v2es.NewEnvironmentStorage(tx)
-		environment, err := environmentStorage.GetEnvironment(ctx, req.Id)
+		environment, err := environmentStorage.GetEnvironment(ctx, envId)
 		if err != nil {
 			return err
 		}
 		handler := command.NewEnvironmentCommandHandler(editor, environment, s.publisher)
-		for _, command := range commands {
-			if err := handler.Handle(ctx, command); err != nil {
+		for _, cmd := range commands {
+			if err := handler.Handle(ctx, cmd); err != nil {
 				return err
 			}
 		}
@@ -460,9 +481,9 @@ func (s *EnvironmentService) UpdateEnvironment(
 				Message: localizer.MustLocalize(locale.NotFoundError),
 			})
 			if err != nil {
-				return nil, statusInternal.Err()
+				return statusInternal.Err()
 			}
-			return nil, dt.Err()
+			return dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update environment",
@@ -473,11 +494,11 @@ func (s *EnvironmentService) UpdateEnvironment(
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			return nil, statusInternal.Err()
+			return statusInternal.Err()
 		}
-		return nil, dt.Err()
+		return dt.Err()
 	}
-	return &environmentproto.UpdateEnvironmentResponse{}, nil
+	return nil
 }
 
 func getUpdateEnvironmentCommands(req *environmentproto.UpdateEnvironmentRequest) []command.Command {
@@ -487,6 +508,17 @@ func getUpdateEnvironmentCommands(req *environmentproto.UpdateEnvironmentRequest
 	}
 	if req.ChangeDescriptionCommand != nil {
 		commands = append(commands, req.ChangeDescriptionCommand)
+	}
+	return commands
+}
+
+func createV2UpdateEnvironmentCommands(req *environmentproto.UpdateEnvironmentRequest) []command.Command {
+	commands := make([]command.Command, 0)
+	if req.ChangeDescriptionCommand != nil {
+		cmd := &environmentproto.ChangeDescriptionEnvironmentV2Command{
+			Description: req.ChangeDescriptionCommand.Description,
+		}
+		commands = append(commands, cmd)
 	}
 	return commands
 }
