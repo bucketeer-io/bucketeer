@@ -266,6 +266,27 @@ func (s *EnvironmentService) CreateEnvironment(
 	if err := s.createEnvironment(ctx, req.Command, newEnvironment, editor, localizer); err != nil {
 		return nil, err
 	}
+	// TODO: We create environments with v1 and v2 APIs for now.
+	// We should remove v1 API once we migrate all environments to v2.
+	createEnvCmdV2 := &environmentproto.CreateEnvironmentV2Command{
+		Name:        newEnvironment.Id,
+		UrlCode:     newEnvironment.Id,
+		ProjectId:   newEnvironment.ProjectId,
+		Description: newEnvironment.Description,
+	}
+	newEnvironmentV2, err := domain.NewEnvironmentV2(
+		createEnvCmdV2.Name,
+		createEnvCmdV2.UrlCode,
+		createEnvCmdV2.Description,
+		createEnvCmdV2.ProjectId,
+		s.logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.createEnvironmentV2(ctx, createEnvCmdV2, newEnvironmentV2, editor, localizer); err != nil {
+		return nil, err
+	}
 	return &environmentproto.CreateEnvironmentResponse{}, nil
 }
 
