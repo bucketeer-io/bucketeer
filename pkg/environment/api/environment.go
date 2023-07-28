@@ -18,6 +18,7 @@ import (
 	"context"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -425,7 +426,8 @@ func (s *EnvironmentService) UpdateEnvironment(
 	// We should remove v1 once we migrate all environments to v2.
 	v2Commands := createV2UpdateEnvironmentCommands(req)
 	if len(v2Commands) != 0 {
-		if err := s.updateEnvironmentV2(ctx, req.Id, v2Commands, editor, localizer); err != nil {
+		envId := strings.ReplaceAll(req.Id, "-", "")
+		if err := s.updateEnvironmentV2(ctx, envId, v2Commands, editor, localizer); err != nil {
 			return nil, err
 		}
 	}
