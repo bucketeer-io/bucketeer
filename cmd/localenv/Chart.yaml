@@ -1,0 +1,20 @@
+apiVersion: v2
+name: localenv
+version: 1.0.0
+description: This Chart deploys local environment.
+dependencies:
+- name: pubsub
+  version: "0.1.0"
+  repository: "file://./dependencies/pubsub"
+- name: bq
+  version: "0.1.0"
+  repository: "file://./dependencies/bq"
+- name: redis
+  version: "17.7.5"
+  repository: "https://charts.bitnami.com/bitnami"
+- name: mysql
+  version: "9.10.1"
+  repository: "oci://registry-1.docker.io/bitnamicharts"
+- name: vault
+  version: "0.23.0"
+  repository: "https://helm.releases.hashicorp.com"
