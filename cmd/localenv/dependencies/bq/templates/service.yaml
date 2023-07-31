@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bq.fullname" . }}
+  labels:
+    {{- include "bq.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: "grpc"
+      port: {{ .Values.service.portgrpc }}
+      targetPort: {{ .Values.service.portgrpc }}
+      protocol: TCP
+    - name: "json"
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+      protocol: TCP
+  selector:
+    {{- include "bq.selectorLabels" . | nindent 4 }}
