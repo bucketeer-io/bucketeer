@@ -239,10 +239,11 @@ func (c *EnvAPIKeyCacher) handleAPIKeyEvent(msg *puller.Message, event *domainev
 		c.logger.Warn("Message contains an empty apiKeyID", zap.Any("event", event))
 		return
 	}
-	envResp, err := c.environmentClient.GetEnvironmentByNamespace(
+	envResp, err := c.environmentClient.GetEnvironmentV2(
 		c.ctx,
-		&environmentproto.GetEnvironmentByNamespaceRequest{
-			Namespace: event.EnvironmentNamespace,
+		&environmentproto.GetEnvironmentV2Request{
+			// EnvironmentNamespace in the domain event is same as the ID of the environment v2.
+			Id: event.EnvironmentNamespace,
 		},
 	)
 	if err != nil {
@@ -332,11 +333,11 @@ func (c *EnvAPIKeyCacher) handleEnvironmentEvent(msg *puller.Message, event *dom
 		c.logger.Warn("Message doesn't contain an environment deleted event", zap.Any("event", event))
 		return
 	}
-	environmentNamespace := ede.Namespace
-	envResp, err := c.environmentClient.GetEnvironmentByNamespace(
+	environmentID := ede.Namespace
+	envResp, err := c.environmentClient.GetEnvironmentV2(
 		c.ctx,
-		&environmentproto.GetEnvironmentByNamespaceRequest{
-			Namespace: event.EnvironmentNamespace,
+		&environmentproto.GetEnvironmentV2Request{
+			Id: environmentID,
 		},
 	)
 	if err != nil {
@@ -354,17 +355,17 @@ func (c *EnvAPIKeyCacher) handleEnvironmentEvent(msg *puller.Message, event *dom
 		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 		c.logger.Error("Failed to get environment",
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentNamespace", environmentID),
 			zap.Any("event", event),
 		)
 		return
 	}
-	if err := c.refreshAll(environmentNamespace, true, envResp.Environment.ProjectId); err != nil {
+	if err := c.refreshAll(environmentID, true, envResp.Environment.ProjectId); err != nil {
 		msg.Nack()
 		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 		c.logger.Error("Failed to refresh all api keys in the environment",
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentNamespace", environmentID),
 			zap.Any("event", event),
 		)
 		return
