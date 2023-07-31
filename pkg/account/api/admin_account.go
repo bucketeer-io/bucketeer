@@ -796,9 +796,9 @@ func (s *AccountService) newAdminAccountListOrders(
 
 func convertEnvironmentV2ToV1(v2 *environmentproto.EnvironmentV2) *environmentproto.Environment {
 	return &environmentproto.Environment{
-		Id:          v2.Id,
+		Id:          v2.UrlCode,
 		Namespace:   v2.Id,
-		Name:        v2.Id,
+		Name:        v2.Name,
 		Description: v2.Description,
 		Deleted:     v2.Archived,
 		UpdatedAt:   v2.UpdatedAt,
