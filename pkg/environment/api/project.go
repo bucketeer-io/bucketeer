@@ -542,10 +542,7 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 			ProjectId:   project.Id,
 			Description: "",
 		}
-		envV2, err := domain.NewEnvironmentV2(envID, envID, "", project.Id, s.logger)
-		if err != nil {
-			return err
-		}
+		envV2 := domain.TmpNewEnvironmentV2(envID, envID, "", project.Id)
 		if err := s.createEnvironmentV2(ctx, createEnvCmdV2, envV2, editor, localizer); err != nil {
 			return err
 		}
