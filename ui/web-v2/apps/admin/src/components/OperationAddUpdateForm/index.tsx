@@ -290,7 +290,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                 'ring-primary',
                                 active && checked ? 'ring ring-offset-1' : '',
                                 !active && checked ? 'ring-2' : '',
-                                'relative -m-0.5 flex cursor-pointer items-center justify-center rounded-full p-0.5 focus:outline-none self-start'
+                                'relative flex mt-[1px] cursor-pointer items-center justify-center rounded-full p-0.5 focus:outline-none self-start'
                               )
                             }
                           >
@@ -301,7 +301,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                               aria-hidden="true"
                               className={classNames(
                                 radio.value === value ? 'bg-primary' : '',
-                                'h-6 w-6 rounded-full border border-black border-opacity-20'
+                                'h-[18px] w-[18px] rounded-full border border-black border-opacity-20'
                               )}
                             />
                           </RadioGroup.Option>
