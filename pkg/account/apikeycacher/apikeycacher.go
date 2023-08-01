@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -238,10 +239,11 @@ func (c *EnvAPIKeyCacher) handleAPIKeyEvent(msg *puller.Message, event *domainev
 		c.logger.Warn("Message contains an empty apiKeyID", zap.Any("event", event))
 		return
 	}
-	envResp, err := c.environmentClient.GetEnvironmentByNamespace(
+	envResp, err := c.environmentClient.GetEnvironmentV2(
 		c.ctx,
-		&environmentproto.GetEnvironmentByNamespaceRequest{
-			Namespace: event.EnvironmentNamespace,
+		&environmentproto.GetEnvironmentV2Request{
+			// EnvironmentNamespace in the domain event is same as the ID of the environment v2.
+			Id: event.EnvironmentNamespace,
 		},
 	)
 	if err != nil {
@@ -303,12 +305,12 @@ func (c *EnvAPIKeyCacher) handleProjectEvent(msg *puller.Message, event *domaine
 		return
 	}
 	for _, environment := range environments {
-		if err := c.refreshAll(environment.Namespace, environmentDisabled, projectID); err != nil {
+		if err := c.refreshAll(environment.Id, environmentDisabled, projectID); err != nil {
 			msg.Nack()
 			handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 			c.logger.Error("Failed to refresh all api keys in the environment",
 				zap.Error(err),
-				zap.String("environmentNamespace", environment.Namespace),
+				zap.String("environmentNamespace", environment.Id),
 				zap.Any("event", event),
 			)
 			return
@@ -331,11 +333,11 @@ func (c *EnvAPIKeyCacher) handleEnvironmentEvent(msg *puller.Message, event *dom
 		c.logger.Warn("Message doesn't contain an environment deleted event", zap.Any("event", event))
 		return
 	}
-	environmentNamespace := ede.Namespace
-	envResp, err := c.environmentClient.GetEnvironmentByNamespace(
+	environmentID := ede.Namespace
+	envResp, err := c.environmentClient.GetEnvironmentV2(
 		c.ctx,
-		&environmentproto.GetEnvironmentByNamespaceRequest{
-			Namespace: event.EnvironmentNamespace,
+		&environmentproto.GetEnvironmentV2Request{
+			Id: environmentID,
 		},
 	)
 	if err != nil {
@@ -353,17 +355,17 @@ func (c *EnvAPIKeyCacher) handleEnvironmentEvent(msg *puller.Message, event *dom
 		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 		c.logger.Error("Failed to get environment",
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentNamespace", environmentID),
 			zap.Any("event", event),
 		)
 		return
 	}
-	if err := c.refreshAll(environmentNamespace, true, envResp.Environment.ProjectId); err != nil {
+	if err := c.refreshAll(environmentID, true, envResp.Environment.ProjectId); err != nil {
 		msg.Nack()
 		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 		c.logger.Error("Failed to refresh all api keys in the environment",
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentNamespace", environmentID),
 			zap.Any("event", event),
 		)
 		return
@@ -434,14 +436,15 @@ func (c *EnvAPIKeyCacher) upsert(envAPIKey *acproto.EnvironmentAPIKey) error {
 	return nil
 }
 
-func (c *EnvAPIKeyCacher) listEnvironments(projectID string) ([]*environmentproto.Environment, error) {
-	environments := []*environmentproto.Environment{}
+func (c *EnvAPIKeyCacher) listEnvironments(projectID string) ([]*environmentproto.EnvironmentV2, error) {
+	var environments []*environmentproto.EnvironmentV2
 	cursor := ""
 	for {
-		resp, err := c.environmentClient.ListEnvironments(c.ctx, &environmentproto.ListEnvironmentsRequest{
+		resp, err := c.environmentClient.ListEnvironmentsV2(c.ctx, &environmentproto.ListEnvironmentsV2Request{
 			PageSize:  listRequestPageSize,
 			Cursor:    cursor,
 			ProjectId: projectID,
+			Archived:  wrapperspb.Bool(false),
 		})
 		if err != nil {
 			return nil, err

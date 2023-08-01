@@ -126,11 +126,11 @@ func TestGetMeMySQL(t *testing.T) {
 					},
 					nil,
 				)
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
 					gomock.Any(),
 				).Return(
-					&environmentproto.ListEnvironmentsResponse{},
+					&environmentproto.ListEnvironmentsV2Response{},
 					nil,
 				)
 			},
@@ -152,11 +152,11 @@ func TestGetMeMySQL(t *testing.T) {
 					},
 					nil,
 				)
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
 					gomock.Any(),
 				).Return(
-					&environmentproto.ListEnvironmentsResponse{
+					&environmentproto.ListEnvironmentsV2Response{
 						Environments: getEnvironments(t),
 						Cursor:       "",
 					},
@@ -242,7 +242,7 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)))
 			},
@@ -257,9 +257,9 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errAlreadyExists_EnvironmentAccount",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any(),
-				).Return(&environmentproto.ListEnvironmentsResponse{
+				).Return(&environmentproto.ListEnvironmentsV2Response{
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
@@ -280,9 +280,9 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errAlreadyExists_AdminAccount",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any(),
-				).Return(&environmentproto.ListEnvironmentsResponse{
+				).Return(&environmentproto.ListEnvironmentsV2Response{
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
@@ -307,9 +307,9 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any(),
-				).Return(&environmentproto.ListEnvironmentsResponse{
+				).Return(&environmentproto.ListEnvironmentsV2Response{
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
@@ -587,10 +587,10 @@ func TestConvertAccountMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
 					gomock.Any(),
-				).Return(&environmentproto.ListEnvironmentsResponse{
+				).Return(&environmentproto.ListEnvironmentsV2Response{
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
@@ -609,10 +609,10 @@ func TestConvertAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
 					gomock.Any(),
-				).Return(&environmentproto.ListEnvironmentsResponse{
+				).Return(&environmentproto.ListEnvironmentsV2Response{
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
@@ -810,10 +810,10 @@ func getProjects(t *testing.T) []*environmentproto.Project {
 	}
 }
 
-func getEnvironments(t *testing.T) []*environmentproto.Environment {
+func getEnvironments(t *testing.T) []*environmentproto.EnvironmentV2 {
 	t.Helper()
-	return []*environmentproto.Environment{
-		{Id: "ns0", Namespace: "ns0", ProjectId: "pj0"},
-		{Id: "ns1", Namespace: "ns1", ProjectId: "pj0"},
+	return []*environmentproto.EnvironmentV2{
+		{Id: "ns0", Name: "ns0", ProjectId: "pj0"},
+		{Id: "ns1", Name: "ns1", ProjectId: "pj0"},
 	}
 }

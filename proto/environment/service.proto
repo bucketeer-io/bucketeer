@@ -225,17 +225,29 @@ message ConvertTrialProjectRequest {
 message ConvertTrialProjectResponse {}
 
 service EnvironmentService {
-  rpc GetEnvironment(GetEnvironmentRequest) returns (GetEnvironmentResponse) {}
+  rpc GetEnvironment(GetEnvironmentRequest) returns (GetEnvironmentResponse) {
+    option deprecated = true;
+  }
   rpc GetEnvironmentByNamespace(GetEnvironmentByNamespaceRequest)
-      returns (GetEnvironmentByNamespaceResponse) {}
+      returns (GetEnvironmentByNamespaceResponse) {
+    option deprecated = true;
+  }
   rpc ListEnvironments(ListEnvironmentsRequest)
-      returns (ListEnvironmentsResponse) {}
+      returns (ListEnvironmentsResponse) {
+    option deprecated = true;
+  }
   rpc CreateEnvironment(CreateEnvironmentRequest)
-      returns (CreateEnvironmentResponse) {}
+      returns (CreateEnvironmentResponse) {
+    option deprecated = true;
+  }
   rpc UpdateEnvironment(UpdateEnvironmentRequest)
-      returns (UpdateEnvironmentResponse) {}
+      returns (UpdateEnvironmentResponse) {
+    option deprecated = true;
+  }
   rpc DeleteEnvironment(DeleteEnvironmentRequest)
-      returns (DeleteEnvironmentResponse) {}
+      returns (DeleteEnvironmentResponse) {
+    option deprecated = true;
+  }
 
   rpc GetEnvironmentV2(GetEnvironmentV2Request)
       returns (GetEnvironmentV2Response) {}

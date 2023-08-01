@@ -177,7 +177,7 @@ func (s *AccountService) getMe(
 			Deleted:          false,
 		}, nil
 	}
-	// environment acccount response
+	// environment account response
 	environmentRoles, account, err := s.makeEnvironmentRoles(ctx, email, projects, environments, localizer)
 	if err != nil {
 		return nil, err
@@ -195,7 +195,7 @@ func (s *AccountService) getMe(
 
 func (s *AccountService) makeAdminEnvironmentRoles(
 	projects []*environmentproto.Project,
-	environments []*environmentproto.Environment,
+	environments []*environmentproto.EnvironmentV2,
 	adminRole accountproto.Account_Role,
 	localizer locale.Localizer,
 ) ([]*accountproto.EnvironmentRole, error) {
@@ -206,7 +206,7 @@ func (s *AccountService) makeAdminEnvironmentRoles(
 		if !ok || p.Disabled {
 			continue
 		}
-		er := &accountproto.EnvironmentRole{Environment: e, Role: adminRole}
+		er := &accountproto.EnvironmentRole{Environment: convertEnvironmentV2ToV1(e), Role: adminRole}
 		if p.Trial {
 			er.TrialProject = true
 			er.TrialStartedAt = p.CreatedAt
@@ -231,7 +231,7 @@ func (s *AccountService) makeEnvironmentRoles(
 	ctx context.Context,
 	email string,
 	projects []*environmentproto.Project,
-	environments []*environmentproto.Environment,
+	environments []*environmentproto.EnvironmentV2,
 	localizer locale.Localizer,
 ) ([]*accountproto.EnvironmentRole, *accountproto.Account, error) {
 	projectSet := s.makeProjectSet(projects)
@@ -242,7 +242,7 @@ func (s *AccountService) makeEnvironmentRoles(
 		if !ok || p.Disabled {
 			continue
 		}
-		account, err := s.getAccount(ctx, email, e.Namespace, localizer)
+		account, err := s.getAccount(ctx, email, e.Id, localizer)
 		if err != nil && status.Code(err) != codes.NotFound {
 			return nil, nil, err
 		}
@@ -250,7 +250,7 @@ func (s *AccountService) makeEnvironmentRoles(
 			continue
 		}
 		lastAccount = account.Account
-		er := &accountproto.EnvironmentRole{Environment: e, Role: account.Role}
+		er := &accountproto.EnvironmentRole{Environment: convertEnvironmentV2ToV1(e), Role: account.Role}
 		if p.Trial {
 			er.TrialProject = true
 			er.TrialStartedAt = p.CreatedAt
@@ -319,7 +319,7 @@ func (s *AccountService) CreateAdminAccount(
 	// check if an Account that has the same email already exists in any environment
 	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
 	for _, env := range environments {
-		_, err := accountStorage.GetAccount(ctx, account.Id, env.Namespace)
+		_, err := accountStorage.GetAccount(ctx, account.Id, env.Id)
 		if err == nil {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -571,7 +571,7 @@ func (s *AccountService) ConvertAccount(
 		accountStorage := v2as.NewAccountStorage(tx)
 		var existedAccountCount int
 		for _, env := range environments {
-			existedAccount, err := accountStorage.GetAccount(ctx, account.Id, env.Namespace)
+			existedAccount, err := accountStorage.GetAccount(ctx, account.Id, env.Id)
 			if err != nil {
 				if err == v2as.ErrAccountNotFound {
 					continue
@@ -583,12 +583,12 @@ func (s *AccountService) ConvertAccount(
 				editor,
 				existedAccount,
 				s.publisher,
-				env.Namespace,
+				env.Id,
 			)
 			if err := handler.Handle(ctx, deleteAccountCommand); err != nil {
 				return err
 			}
-			if err := accountStorage.UpdateAccount(ctx, existedAccount, env.Namespace); err != nil {
+			if err := accountStorage.UpdateAccount(ctx, existedAccount, env.Id); err != nil {
 				return err
 			}
 		}
@@ -792,4 +792,17 @@ func (s *AccountService) newAdminAccountListOrders(
 		direction = mysql.OrderDirectionDesc
 	}
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
+}
+
+func convertEnvironmentV2ToV1(v2 *environmentproto.EnvironmentV2) *environmentproto.Environment {
+	return &environmentproto.Environment{
+		Id:          v2.UrlCode,
+		Namespace:   v2.Id,
+		Name:        v2.Name,
+		Description: v2.Description,
+		Deleted:     v2.Archived,
+		UpdatedAt:   v2.UpdatedAt,
+		CreatedAt:   v2.CreatedAt,
+		ProjectId:   v2.ProjectId,
+	}
 }

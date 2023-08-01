@@ -4259,32 +4259,68 @@
               {
                 "name": "GetEnvironment",
                 "in_type": "GetEnvironmentRequest",
-                "out_type": "GetEnvironmentResponse"
+                "out_type": "GetEnvironmentResponse",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "GetEnvironmentByNamespace",
                 "in_type": "GetEnvironmentByNamespaceRequest",
-                "out_type": "GetEnvironmentByNamespaceResponse"
+                "out_type": "GetEnvironmentByNamespaceResponse",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "ListEnvironments",
                 "in_type": "ListEnvironmentsRequest",
-                "out_type": "ListEnvironmentsResponse"
+                "out_type": "ListEnvironmentsResponse",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "CreateEnvironment",
                 "in_type": "CreateEnvironmentRequest",
-                "out_type": "CreateEnvironmentResponse"
+                "out_type": "CreateEnvironmentResponse",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "UpdateEnvironment",
                 "in_type": "UpdateEnvironmentRequest",
-                "out_type": "UpdateEnvironmentResponse"
+                "out_type": "UpdateEnvironmentResponse",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "DeleteEnvironment",
                 "in_type": "DeleteEnvironmentRequest",
-                "out_type": "DeleteEnvironmentResponse"
+                "out_type": "DeleteEnvironmentResponse",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "GetEnvironmentV2",
