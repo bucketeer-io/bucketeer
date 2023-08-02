@@ -291,8 +291,6 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait until trasformer and watcher's targetstores are refreshed.
-	time.Sleep(40 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -301,19 +299,17 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	for _, uid := range userIDs {
 		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, "")
 	}
-	for i := 0; i < retryTimes; i++ {
-		feature = getFeature(t, featureClient, featureID)
-		if !feature.Enabled {
-			autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-			if autoOpsRules[0].TriggeredAt == 0 {
-				t.Fatalf("triggered at must not be zero")
-			}
-			break
-		}
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(time.Second)
+
+	// Wait until trasformer and watcher's targetstores are refreshed.
+	time.Sleep(90 * time.Second)
+
+	feature = getFeature(t, featureClient, featureID)
+	if feature.Enabled {
+		t.Fatalf("feature must be disabled")
+	}
+	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if autoOpsRules[0].TriggeredAt == 0 {
+		t.Fatalf("triggered at must not be zero")
 	}
 }
 
@@ -338,8 +334,6 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait until trasformer and watcher's targetstores are refreshed.
-	time.Sleep(40 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -348,19 +342,17 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	for _, uid := range userIDs {
 		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
 	}
-	for i := 0; i < retryTimes; i++ {
-		feature = getFeature(t, featureClient, featureID)
-		if !feature.Enabled {
-			autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-			if autoOpsRules[0].TriggeredAt == 0 {
-				t.Fatalf("triggered at must not be zero")
-			}
-			break
-		}
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(time.Second)
+
+	// Wait until trasformer and watcher's targetstores are refreshed.
+	time.Sleep(90 * time.Second)
+
+	feature = getFeature(t, featureClient, featureID)
+	if feature.Enabled {
+		t.Fatalf("feature must be disabled")
+	}
+	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if autoOpsRules[0].TriggeredAt == 0 {
+		t.Fatalf("triggered at must not be zero")
 	}
 }
 
@@ -385,8 +377,6 @@ func TestOpsEventRateBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait until trasformer and watcher's targetstores are refreshed.
-	time.Sleep(40 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -395,19 +385,17 @@ func TestOpsEventRateBatch(t *testing.T) {
 	for _, uid := range userIDs {
 		registerEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
 	}
-	for i := 0; i < retryTimes; i++ {
-		feature = getFeature(t, featureClient, featureID)
-		if !feature.Enabled {
-			autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-			if autoOpsRules[0].TriggeredAt == 0 {
-				t.Fatalf("triggered at must not be zero")
-			}
-			break
-		}
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(time.Second)
+
+	// Wait until trasformer and watcher's targetstores are refreshed.
+	time.Sleep(90 * time.Second)
+
+	feature = getFeature(t, featureClient, featureID)
+	if feature.Enabled {
+		t.Fatalf("feature must be disabled")
+	}
+	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if autoOpsRules[0].TriggeredAt == 0 {
+		t.Fatalf("triggered at must not be zero")
 	}
 }
 
@@ -428,8 +416,9 @@ func TestDatetimeBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait until watcher's targetstore is refreshed and autoOps is executed.
-	time.Sleep(50 * time.Second)
+
+	// Wait until trasformer and watcher's targetstores are refreshed.
+	time.Sleep(90 * time.Second)
 
 	feature := getFeature(t, featureClient, featureID)
 	if feature.Enabled {
