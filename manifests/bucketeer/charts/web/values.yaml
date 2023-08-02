@@ -9,6 +9,9 @@ namespace: default
 nginx:
   config:
 
+env:
+  googleAnalyticsId:
+
 tls:
   secret:
   cert:
