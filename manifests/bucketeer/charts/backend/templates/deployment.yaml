@@ -164,6 +164,10 @@ spec:
               value: /usr/local/github-access-token/bucketeer-bot-access-token
             - name: BUCKETEER_BACKEND_GITHUB_MIGRATION_SOURCE_PATH
               value: "{{ .Values.env.githubMigrationSourcePath }}"
+            - name: BUCKETEER_BACKEND_MYSQL_MIGRATION_USER
+              value: "{{ .Values.env.mysqlMigrationUser }}"
+            - name: BUCKETEER_BACKEND_MYSQL_MIGRATION_PASS
+              value: "{{ .Values.env.mysqlMigrationPass }}"
           volumeMounts:
             - name: issuer-cert-secret
               mountPath: /usr/local/certs/issuer
