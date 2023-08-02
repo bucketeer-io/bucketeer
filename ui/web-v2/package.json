@@ -71,7 +71,7 @@
     "react-datetime-picker": "3.3.0",
     "react-dom": "17.0.2",
     "react-dropzone": "11.2.4",
-    "react-ga": "^3.3.1",
+    "react-ga4": "^2.1.0",
     "react-hook-form": "7.14.1",
     "react-intl": "5.20.10",
     "react-popper": "^2.2.5",
