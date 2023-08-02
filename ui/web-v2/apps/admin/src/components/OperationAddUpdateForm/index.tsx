@@ -277,210 +277,173 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                 ))}
               </div>
               <div className="mt-6">
-                <Controller
-                  name="clauseType"
-                  render={({ field: { onChange, value } }) => (
-                    <RadioGroup value={value} onChange={(e) => onChange(e)}>
-                      {radioList.map((radio) => (
-                        <div key={radio.label} className="mb-4 flex space-x-4">
-                          <RadioGroup.Option
-                            value={radio.value}
-                            className={({ active, checked }) =>
-                              classNames(
-                                'ring-primary',
-                                active && checked ? 'ring ring-offset-1' : '',
-                                !active && checked ? 'ring-2' : '',
-                                'relative flex mt-[1px] cursor-pointer items-center justify-center rounded-full p-0.5 focus:outline-none self-start'
-                              )
-                            }
-                          >
-                            <RadioGroup.Label as="span" className="sr-only">
-                              {radio.label}
-                            </RadioGroup.Label>
-                            <span
-                              aria-hidden="true"
-                              className={classNames(
-                                radio.value === value ? 'bg-primary' : '',
-                                'h-[18px] w-[18px] rounded-full border border-black border-opacity-20'
+                {radioList.map((radio) => (
+                  <div key={radio.label} className="mb-4 flex space-x-4">
+                    <input
+                      {...register('clauseType')}
+                      id={radio.label}
+                      type="radio"
+                      value={radio.value}
+                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-[2px]"
+                    />
+                    <div className="flex-1">
+                      <label htmlFor={radio.label}>{radio.label}</label>
+                      {radio.value === ClauseType.DATETIME &&
+                        clauseType === ClauseType.DATETIME && (
+                          <div className="mt-1">
+                            <span className="input-label">Start Date</span>
+                            <DatetimeClauseInput name="datetime.time" />
+                            <p className="input-error">
+                              {errors.datetime?.time?.message && (
+                                <span role="alert">
+                                  {errors.datetime?.time?.message}
+                                </span>
                               )}
-                            />
-                          </RadioGroup.Option>
-                          <div className="flex-1">
-                            <RadioGroup.Label>{radio.label}</RadioGroup.Label>
-                            {radio.value === ClauseType.DATETIME &&
-                              clauseType === ClauseType.DATETIME && (
-                                <div className="mt-1">
-                                  <span className="input-label">
-                                    Start Date
-                                  </span>
-                                  <DatetimeClauseInput name="datetime.time" />
-                                  <p className="input-error">
-                                    {errors.datetime?.time?.message && (
-                                      <span role="alert">
-                                        {errors.datetime?.time?.message}
-                                      </span>
-                                    )}
-                                  </p>
-                                </div>
-                              )}
-                            {radio.value === ClauseType.EVENT_RATE &&
-                              clauseType === ClauseType.EVENT_RATE && (
-                                <div className="mt-4 space-y-2">
-                                  <div className="px-4 py-1 text-pink-500 bg-pink-50 inline-block">
-                                    If
-                                  </div>
-                                  <div>
-                                    <span className="input-label">
-                                      {f(messages.feature.variation)}
-                                    </span>
-                                    <Controller
-                                      name="eventRate.variation"
-                                      control={control}
-                                      render={({ field }) => (
-                                        <Select
-                                          onChange={(o: Option) => {
-                                            field.onChange(o.value);
-                                          }}
-                                          options={variationOptions}
-                                          disabled={!editable}
-                                          value={variationOptions.find(
-                                            (o) => o.value === field.value
-                                          )}
-                                        />
-                                      )}
-                                    />
-                                  </div>
-                                  <div>
-                                    <span className="input-label">
-                                      {f(
-                                        messages.autoOps.opsEventRateClause.goal
-                                      )}
-                                    </span>
-                                    <Controller
-                                      name="eventRate.goal"
-                                      control={control}
-                                      render={({ field }) => (
-                                        <AddGoalSelect
-                                          onChange={(o: Option) =>
-                                            field.onChange(o.value)
-                                          }
-                                          options={goalOptions}
-                                          disabled={!editable}
-                                          value={goalOptions.find(
-                                            (o) => o.value === field.value
-                                          )}
-                                          openAddGoalModal={() =>
-                                            setIsAddGoalOpen(true)
-                                          }
-                                        />
-                                      )}
-                                    />
-                                  </div>
-                                  <div className="grid grid-cols-3 gap-3">
-                                    <div>
-                                      <span className="input-label">
-                                        Condition
-                                      </span>
-                                      <Controller
-                                        name="eventRate.operator"
-                                        control={control}
-                                        render={({ field }) => (
-                                          <Select
-                                            onChange={(o: Option) =>
-                                              field.onChange(o.value)
-                                            }
-                                            options={operatorOptions}
-                                            disabled={!editable}
-                                            value={operatorOptions.find(
-                                              (o) => o.value === field.value
-                                            )}
-                                          />
-                                        )}
-                                      />
-                                    </div>
-                                    <div>
-                                      <span className="input-label">
-                                        Percentage
-                                      </span>
-                                      <div className="flex">
-                                        <input
-                                          {...register(
-                                            'eventRate.threadsholdRate'
-                                          )}
-                                          type="number"
-                                          min="0"
-                                          max="100"
-                                          className={classNames(
-                                            'w-full',
-                                            errors.eventRate?.threadsholdRate
-                                              ? 'input-text-error'
-                                              : 'input-text'
-                                          )}
-                                          placeholder={''}
-                                          required
-                                          disabled={!editable}
-                                        />
-                                        <span
-                                          className={classNames(
-                                            'px-1 py-1 inline-flex items-center bg-gray-100',
-                                            'rounded-r border border-l-0 border-gray-300 text-gray-600'
-                                          )}
-                                        >
-                                          {'%'}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <span className="input-label">
-                                        {f(
-                                          messages.autoOps.opsEventRateClause
-                                            .minCount
-                                        )}
-                                      </span>
-                                      <div>
-                                        <input
-                                          {...register('eventRate.minCount')}
-                                          type="number"
-                                          min="0"
-                                          className={classNames(
-                                            'w-full',
-                                            errors.eventRate?.minCount
-                                              ? 'input-text-error'
-                                              : 'input-text'
-                                          )}
-                                          disabled={!editable}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    {errors.eventRate?.threadsholdRate
-                                      ?.message && (
-                                      <p className="input-error">
-                                        <span role="alert">
-                                          {
-                                            errors.eventRate?.threadsholdRate
-                                              ?.message
-                                          }
-                                        </span>
-                                      </p>
-                                    )}
-                                    {errors.eventRate?.minCount?.message && (
-                                      <p className="input-error">
-                                        <span role="alert">
-                                          {errors.eventRate?.minCount?.message}
-                                        </span>
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
+                            </p>
                           </div>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  )}
-                />
+                        )}
+                      {radio.value === ClauseType.EVENT_RATE &&
+                        clauseType === ClauseType.EVENT_RATE && (
+                          <div className="mt-4 space-y-2">
+                            <div className="px-4 py-1 text-pink-500 bg-pink-50 inline-block">
+                              If
+                            </div>
+                            <div>
+                              <span className="input-label">
+                                {f(messages.feature.variation)}
+                              </span>
+                              <Controller
+                                name="eventRate.variation"
+                                control={control}
+                                render={({ field }) => (
+                                  <Select
+                                    onChange={(o: Option) => {
+                                      field.onChange(o.value);
+                                    }}
+                                    options={variationOptions}
+                                    disabled={!editable}
+                                    value={variationOptions.find(
+                                      (o) => o.value === field.value
+                                    )}
+                                  />
+                                )}
+                              />
+                            </div>
+                            <div>
+                              <span className="input-label">
+                                {f(messages.autoOps.opsEventRateClause.goal)}
+                              </span>
+                              <Controller
+                                name="eventRate.goal"
+                                control={control}
+                                render={({ field }) => (
+                                  <AddGoalSelect
+                                    onChange={(o: Option) =>
+                                      field.onChange(o.value)
+                                    }
+                                    options={goalOptions}
+                                    disabled={!editable}
+                                    value={goalOptions.find(
+                                      (o) => o.value === field.value
+                                    )}
+                                    openAddGoalModal={() =>
+                                      setIsAddGoalOpen(true)
+                                    }
+                                  />
+                                )}
+                              />
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                              <div>
+                                <span className="input-label">Condition</span>
+                                <Controller
+                                  name="eventRate.operator"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <Select
+                                      onChange={(o: Option) =>
+                                        field.onChange(o.value)
+                                      }
+                                      options={operatorOptions}
+                                      disabled={!editable}
+                                      value={operatorOptions.find(
+                                        (o) => o.value === field.value
+                                      )}
+                                    />
+                                  )}
+                                />
+                              </div>
+                              <div>
+                                <span className="input-label">Percentage</span>
+                                <div className="flex">
+                                  <input
+                                    {...register('eventRate.threadsholdRate')}
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className={classNames(
+                                      'w-full',
+                                      errors.eventRate?.threadsholdRate
+                                        ? 'input-text-error'
+                                        : 'input-text'
+                                    )}
+                                    placeholder={''}
+                                    required
+                                    disabled={!editable}
+                                  />
+                                  <span
+                                    className={classNames(
+                                      'px-1 py-1 inline-flex items-center bg-gray-100',
+                                      'rounded-r border border-l-0 border-gray-300 text-gray-600'
+                                    )}
+                                  >
+                                    {'%'}
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <span className="input-label">
+                                  {f(
+                                    messages.autoOps.opsEventRateClause.minCount
+                                  )}
+                                </span>
+                                <div>
+                                  <input
+                                    {...register('eventRate.minCount')}
+                                    type="number"
+                                    min="0"
+                                    className={classNames(
+                                      'w-full',
+                                      errors.eventRate?.minCount
+                                        ? 'input-text-error'
+                                        : 'input-text'
+                                    )}
+                                    disabled={!editable}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              {errors.eventRate?.threadsholdRate?.message && (
+                                <p className="input-error">
+                                  <span role="alert">
+                                    {errors.eventRate?.threadsholdRate?.message}
+                                  </span>
+                                </p>
+                              )}
+                              {errors.eventRate?.minCount?.message && (
+                                <p className="input-error">
+                                  <span role="alert">
+                                    {errors.eventRate?.minCount?.message}
+                                  </span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
