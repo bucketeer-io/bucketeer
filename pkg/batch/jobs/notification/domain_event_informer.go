@@ -45,16 +45,14 @@ var (
 
 type options struct {
 	maxMPS                  int
-	numWorkers              int
 	runningDurationPerBatch time.Duration
 	metrics                 metrics.Registerer
 	logger                  *zap.Logger
 }
 
 var defaultOptions = options{
-	maxMPS:     10,
-	numWorkers: 1,
-	logger:     zap.NewNop(),
+	maxMPS: 50,
+	logger: zap.NewNop(),
 }
 
 type Option func(*options)
@@ -68,12 +66,6 @@ func WithRunningDurationPerBatch(d time.Duration) Option {
 func WithMaxMPS(mps int) Option {
 	return func(opts *options) {
 		opts.maxMPS = mps
-	}
-}
-
-func WithNumWorkers(n int) Option {
-	return func(opts *options) {
-		opts.numWorkers = n
 	}
 }
 
@@ -126,29 +118,23 @@ func (i *domainEventInformer) Run(ctx context.Context) error {
 	i.group.Go(func() error {
 		return i.puller.Run(runningDurationCtx)
 	})
-	for idx := 0; idx < i.opts.numWorkers; idx++ {
-		i.group.Go(func() error {
-			return i.runWorker(runningDurationCtx)
-		})
-	}
+	i.group.Go(func() error {
+		for {
+			select {
+			case msg, ok := <-i.puller.MessageCh():
+				if !ok {
+					return nil
+				}
+				receivedCounter.WithLabelValues(typeDomainEvent).Inc()
+				i.handleMessage(msg)
+			case <-runningDurationCtx.Done():
+				return nil
+			}
+		}
+	})
 	err := i.group.Wait()
 	i.logger.Info("DomainEventInformer start stopping")
 	return err
-}
-
-func (i *domainEventInformer) runWorker(ctx context.Context) error {
-	for {
-		select {
-		case msg, ok := <-i.puller.MessageCh():
-			if !ok {
-				return nil
-			}
-			receivedCounter.WithLabelValues(typeDomainEvent).Inc()
-			i.handleMessage(msg)
-		case <-ctx.Done():
-			return nil
-		}
-	}
 }
 
 func (i *domainEventInformer) handleMessage(msg *puller.Message) {

@@ -98,7 +98,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		refreshInterval: cmd.Flag(
 			"refresh-interval",
 			"Interval between refreshing target objects.",
-		).Default("10m").Duration(),
+		).Default("1m").Duration(),
 		webURL:      cmd.Flag("web-url", "Web console URL.").Required().String(),
 		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
@@ -131,26 +131,26 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("notification:9090").String(),
 		domainTopic: cmd.Flag(
 			"domain-topic",
-			"Google PubSub topic name of incoming domain events.").String(),
+			"Google PubSub topic name of incoming domain events.").Required().String(),
 		domainSubscription: cmd.Flag(
 			"domain-subscription",
 			"Google PubSub subscription name of incoming domain event.",
-		).String(),
+		).Required().String(),
 		pullerNumGoroutines: cmd.Flag(
 			"puller-num-goroutines",
 			"Number of goroutines will be spawned to pull messages.",
-		).Int(),
+		).Required().Int(),
 		pullerMaxOutstandingMessages: cmd.Flag(
 			"puller-max-outstanding-messages",
 			"Maximum number of unprocessed messages.",
-		).Int(),
+		).Required().Int(),
 		pullerMaxOutstandingBytes: cmd.Flag(
 			"puller-max-outstanding-bytes",
 			"Maximum size of unprocessed messages.").Int(),
 		runningDurationPerBatch: cmd.Flag(
 			"running-duration-per-batch",
 			"Duration of running domain event informer per batch.",
-		).Default("30s").Duration(),
+		).Required().Duration(),
 	}
 	r.RegisterCommand(server)
 	return server
