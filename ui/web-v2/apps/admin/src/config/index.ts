@@ -9,4 +9,6 @@ export const urls = {
       : `${window.location.origin}/auth/callback`,
 };
 
+export const GOOGLE_ANALYTICS_ID = process.env.GOOGLE_ANALYTICS_ID;
+
 export const ENABLE_SETTINGS = true;

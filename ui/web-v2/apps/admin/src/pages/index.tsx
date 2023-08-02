@@ -1,4 +1,6 @@
+import { GOOGLE_ANALYTICS_ID } from '@/config';
 import React, { FC, useEffect, memo, useState, useCallback } from 'react';
+import ReactGA from 'react-ga';
 import { useDispatch } from 'react-redux';
 import {
   Route,
@@ -6,6 +8,7 @@ import {
   Redirect,
   useRouteMatch,
   useParams,
+  useLocation,
 } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 
@@ -51,6 +54,25 @@ import { SegmentIndexPage } from './segment';
 import { SettingsIndexPage } from './settings';
 
 export const App: FC = memo(() => {
+  const location = useLocation();
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (
+      !window.location.href.includes('localhost') &&
+      GOOGLE_ANALYTICS_ID.trim().length > 0
+    ) {
+      ReactGA.initialize(GOOGLE_ANALYTICS_ID);
+      setInitialized(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (initialized) {
+      ReactGA.pageview(location.pathname + location.search);
+    }
+  }, [initialized, location]);
+
   return (
     <Switch>
       <Route
