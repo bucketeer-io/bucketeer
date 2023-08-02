@@ -23,7 +23,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
+	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	notificationsender "github.com/bucketeer-io/bucketeer/pkg/notification/sender"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/proto/batch"
 )
 
@@ -36,27 +40,36 @@ type batchService struct {
 	experimentRunningWatcher jobs.Job
 	featureStaleWatcher      jobs.Job
 	mauCountWatcher          jobs.Job
-	domainEventInformer      jobs.Job
 	datetimeWatcher          jobs.Job
 	countWatcher             jobs.Job
+	environmentClient        envclient.Client
+	domainEventPuller        puller.Puller
+	notificationSender       notificationsender.Sender
+	notificationOpts         []notification.Option
 	logger                   *zap.Logger
 }
 
 func NewBatchService(
 	experimentStatusUpdater, experimentRunningWatcher,
-	featureStaleWatcher, mauCountWatcher,
-	domainEventInformer, datetimeWatcher,
+	featureStaleWatcher, mauCountWatcher, datetimeWatcher,
 	eventCountWatcher jobs.Job,
+	environmentClient envclient.Client,
+	domainEventPuller puller.Puller,
+	notificationSender notificationsender.Sender,
 	logger *zap.Logger,
+	options ...notification.Option,
 ) *batchService {
 	return &batchService{
 		experimentStatusUpdater:  experimentStatusUpdater,
 		experimentRunningWatcher: experimentRunningWatcher,
 		featureStaleWatcher:      featureStaleWatcher,
 		mauCountWatcher:          mauCountWatcher,
-		domainEventInformer:      domainEventInformer,
 		datetimeWatcher:          datetimeWatcher,
 		countWatcher:             eventCountWatcher,
+		environmentClient:        environmentClient,
+		domainEventPuller:        domainEventPuller,
+		notificationSender:       notificationSender,
+		notificationOpts:         options,
 		logger:                   logger.Named("batch-service"),
 	}
 }
@@ -78,7 +91,13 @@ func (s *batchService) ExecuteBatchJob(
 	case batch.BatchJob_EventCountWatcher:
 		err = s.countWatcher.Run(ctx)
 	case batch.BatchJob_DomainEventInformer:
-		err = s.domainEventInformer.Run(ctx)
+		domainEventInformer := notification.NewDomainEventInformer(
+			s.environmentClient,
+			s.domainEventPuller,
+			s.notificationSender,
+			s.notificationOpts...,
+		)
+		err = domainEventInformer.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromImcomingContext(ctx).AddFields(

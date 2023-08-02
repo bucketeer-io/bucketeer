@@ -299,12 +299,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		notification.NewDomainEventInformer(
-			environmentClient,
-			domainEventPuller,
-			notificationSender,
-			notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
-		),
 		opsevent.NewDatetimeWatcher(
 			targetStore,
 			autoOpsExecutor,
@@ -320,7 +314,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		environmentClient,
+		domainEventPuller,
+		notificationSender,
 		logger,
+		notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
 	)
 
 	healthChecker := health.NewGrpcChecker(

@@ -95,17 +95,6 @@ func (d domainEventPullerMock) Pull(
 	}
 }
 
-func TestNewDomainEventInformer(t *testing.T) {
-	logger, err := log.NewLogger()
-	require.NoError(t, err)
-	batch := NewBatchService(
-		nil, nil, nil,
-		nil, nil, nil,
-		nil, logger,
-	)
-	assert.IsType(t, &batchService{}, batch)
-}
-
 func TestExperimentStatusUpdater(t *testing.T) {
 	setupMock := func(
 		environmentMockClient *environmentclient.MockClient,
@@ -481,12 +470,6 @@ func newBatchService(t *testing.T,
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		notification.NewDomainEventInformer(
-			environmentMockClient,
-			domainMockEventPuller,
-			notificationMockSender,
-			notification.WithRunningDurationPerBatch(pullerRunningDuration),
-		),
 		opsevent.NewDatetimeWatcher(
 			mockTargetStore,
 			mockAutoOpsExecutor,
@@ -502,7 +485,11 @@ func newBatchService(t *testing.T,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		environmentMockClient,
+		domainMockEventPuller,
+		notificationMockSender,
 		logger,
+		notification.WithRunningDurationPerBatch(pullerRunningDuration),
 	)
 	return service
 }
