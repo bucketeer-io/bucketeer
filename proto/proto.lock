@@ -3245,6 +3245,81 @@
       }
     },
     {
+      "protopath": "batch:/:service.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "BatchJob",
+            "enum_fields": [
+              {
+                "name": "ExperimentStatusUpdater"
+              },
+              {
+                "name": "ExperimentRunningWatcher",
+                "integer": 1
+              },
+              {
+                "name": "FeatureStaleWatcher",
+                "integer": 2
+              },
+              {
+                "name": "MauCountWatcher",
+                "integer": 3
+              },
+              {
+                "name": "DatetimeWatcher",
+                "integer": 4
+              },
+              {
+                "name": "EventCountWatcher",
+                "integer": 5
+              },
+              {
+                "name": "DomainEventInformer",
+                "integer": 6
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "BatchJobRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "job",
+                "type": "BatchJob"
+              }
+            ]
+          },
+          {
+            "name": "BatchJobResponse"
+          }
+        ],
+        "services": [
+          {
+            "name": "BatchService",
+            "rpcs": [
+              {
+                "name": "ExecuteBatchJob",
+                "in_type": "BatchJobRequest",
+                "out_type": "BatchJobResponse"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.batch"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/batch"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "environment:/:command.proto",
       "def": {
         "messages": [
