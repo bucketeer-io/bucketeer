@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "web.fullname" . }}-env-js
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "web.name" . }}
+    chart: {{ template "web.chart" . }}
+    release: {{ template "web.fullname" . }}
+    heritage: {{ .Release.Service }}
+data:
+  env.js: |-
+    window.env = {"GOOGLE_ANALYTICS_ID":"{{ .Values.env.googleAnalyticsId }}"};

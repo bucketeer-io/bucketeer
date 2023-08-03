@@ -31,6 +31,9 @@ spec:
         - name: certs
           secret:
             secretName: {{ template "cert-secret" . }}
+        - name: env-js
+          configMap:
+            name: {{ template "web.fullname" . }}-env-js
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "web.fullname" . }}
       {{- end }}
@@ -51,6 +54,9 @@ spec:
               readOnly: true
             - name: certs
               mountPath: /usr/local/certs
+              readOnly: true
+            - name: env-js
+              mountPath: /var/www/static/js
               readOnly: true
           ports:
             - name: https

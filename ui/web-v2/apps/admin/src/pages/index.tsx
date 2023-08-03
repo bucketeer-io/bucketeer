@@ -1,6 +1,6 @@
 import { GOOGLE_ANALYTICS_ID } from '@/config';
 import React, { FC, useEffect, memo, useState, useCallback } from 'react';
-import ReactGA from 'react-ga';
+import ReactGA from 'react-ga4';
 import { useDispatch } from 'react-redux';
 import {
   Route,
@@ -60,7 +60,6 @@ export const App: FC = memo(() => {
   useEffect(() => {
     if (
       !window.location.href.includes('localhost') &&
-      GOOGLE_ANALYTICS_ID !== undefined &&
       GOOGLE_ANALYTICS_ID.trim().length > 0
     ) {
       ReactGA.initialize(GOOGLE_ANALYTICS_ID);
@@ -70,7 +69,10 @@ export const App: FC = memo(() => {
 
   useEffect(() => {
     if (initialized) {
-      ReactGA.pageview(location.pathname + location.search);
+      ReactGA.send({
+        hitType: 'pageview',
+        page: location.pathname + location.search,
+      });
     }
   }, [initialized, location]);
 

@@ -9,6 +9,14 @@ export const urls = {
       : `${window.location.origin}/auth/callback`,
 };
 
-export const GOOGLE_ANALYTICS_ID = process.env.NX_GOOGLE_ANALYTICS_ID;
-
 export const ENABLE_SETTINGS = true;
+
+declare global {
+  interface Window {
+    env: {
+      [key: string]: any;
+    };
+  }
+}
+
+export const GOOGLE_ANALYTICS_ID = window.env?.GOOGLE_ANALYTICS_ID || '';
