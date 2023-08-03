@@ -60,7 +60,6 @@ export const App: FC = memo(() => {
   useEffect(() => {
     if (
       !window.location.href.includes('localhost') &&
-      GOOGLE_ANALYTICS_ID !== undefined &&
       GOOGLE_ANALYTICS_ID.trim().length > 0
     ) {
       ReactGA.initialize(GOOGLE_ANALYTICS_ID);
