@@ -89,6 +89,9 @@ type server struct {
 	mysqlHost   *string
 	mysqlPort   *int
 	mysqlDBName *string
+	// MySQL for Migration
+	mysqlMigrationUser *string
+	mysqlMigrationPass *string
 	// Persistent Redis
 	persistentRedisServerName    *string
 	persistentRedisAddr          *string
@@ -294,6 +297,8 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"github-migration-source-path",
 			"Path to migration file in GitHub. (e.g. owner/repo/path#ref)",
 		).Required().String(),
+		mysqlMigrationUser: cmd.Flag("mysql-migration-user", "MySQL user for migration.").Required().String(),
+		mysqlMigrationPass: cmd.Flag("mysql-migration-pass", "MySQL password for migration.").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -577,7 +582,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// migrateMySQLService
 	migrateClientFactory, err := migrate.NewClientFactory(
 		*s.githubUser, *s.githubAccessTokenPath, *s.githubMigrationSourcePath,
-		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost, *s.mysqlPort, *s.mysqlDBName,
+		*s.mysqlMigrationUser, *s.mysqlMigrationPass, *s.mysqlHost, *s.mysqlPort, *s.mysqlDBName,
 	)
 	if err != nil {
 		return err
