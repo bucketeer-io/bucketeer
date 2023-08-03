@@ -36,6 +36,7 @@ var (
 )
 
 type batchService struct {
+	runningJobManager        *RunningJobManager
 	experimentStatusUpdater  jobs.Job
 	experimentRunningWatcher jobs.Job
 	featureStaleWatcher      jobs.Job
@@ -50,6 +51,7 @@ type batchService struct {
 }
 
 func NewBatchService(
+	runningJobManager *RunningJobManager,
 	experimentStatusUpdater, experimentRunningWatcher,
 	featureStaleWatcher, mauCountWatcher, datetimeWatcher,
 	eventCountWatcher jobs.Job,
@@ -60,6 +62,7 @@ func NewBatchService(
 	options ...notification.Option,
 ) *batchService {
 	return &batchService{
+		runningJobManager:        runningJobManager,
 		experimentStatusUpdater:  experimentStatusUpdater,
 		experimentRunningWatcher: experimentRunningWatcher,
 		featureStaleWatcher:      featureStaleWatcher,
@@ -77,6 +80,8 @@ func NewBatchService(
 func (s *batchService) ExecuteBatchJob(
 	ctx context.Context, req *batch.BatchJobRequest) (*batch.BatchJobResponse, error) {
 	var err error
+	s.runningJobManager.AddRunningJob()
+	defer s.runningJobManager.RemoveRunningJob()
 	switch req.Job {
 	case batch.BatchJob_ExperimentStatusUpdater:
 		err = s.experimentStatusUpdater.Run(ctx)

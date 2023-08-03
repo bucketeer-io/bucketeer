@@ -271,7 +271,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	// used to implement gracefully shutdown when there are running jobs
+	runningJobManager := api.NewRunningJobManager()
+
 	service := api.NewBatchService(
+		runningJobManager,
 		experiment.NewExperimentStatusUpdater(
 			environmentClient,
 			experimentClient,
@@ -338,8 +342,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go server.Run()
 
 	defer func() {
+		// stop server
 		server.Stop(serverShutDownTimeout)
 		time.Sleep(serverShutDownTimeout)
+		// check if there are running jobs need to wait
+		for {
+			runningJobs := runningJobManager.GetCurrentRunningJobs()
+			if runningJobs == 0 {
+				break
+			}
+			logger.Info("batch service still remain running jobs", zap.Int32("running_jobs", runningJobs))
+			time.Sleep(time.Second)
+		}
 		targetStore.Stop()
 		notificationClient.Close()
 		experimentClient.Close()
@@ -349,7 +363,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		autoOpsClient.Close()
 		mysqlClient.Close()
 	}()
-
 	<-ctx.Done()
 	return nil
 }

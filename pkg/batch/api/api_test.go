@@ -443,6 +443,7 @@ func newBatchService(t *testing.T,
 	)
 
 	service := NewBatchService(
+		NewRunningJobManager(),
 		experiment.NewExperimentStatusUpdater(
 			environmentMockClient,
 			experimentMockClient,

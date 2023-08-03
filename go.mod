@@ -32,6 +32,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/tkuchiki/go-timezone v0.2.2
 	go.opencensus.io v0.24.0
+	go.uber.org/atomic v1.9.0
 	go.uber.org/mock v0.2.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/oauth2 v0.10.0
@@ -107,7 +108,6 @@ require (
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/prometheus/prometheus v0.35.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0 // indirect
