@@ -34,58 +34,15 @@ func EvaluationID(featureID string, featureVersion int32, userID string) string 
 	return fmt.Sprintf("%s:%d:%s", featureID, featureVersion, userID)
 }
 
+// Deprecated: use EvaluateFeaturesByEvaluatedAt instead.
+// This function will be removed once all the SDK clients are updated.
 func EvaluateFeatures(
 	fs []*featureproto.Feature,
 	user *userproto.User,
 	mapSegmentUsers map[string][]*featureproto.SegmentUser,
 	targetTag string,
 ) (*featureproto.UserEvaluations, error) {
-	flagVariations := map[string]string{}
-	// fs need to be sorted in order from upstream to downstream.
-	sortedFs, err := TopologicalSort(fs)
-	if err != nil {
-		return nil, err
-	}
-	evaluations := make([]*featureproto.Evaluation, 0, len(fs))
-	for _, f := range sortedFs {
-		feature := &Feature{Feature: f}
-		segmentUsers := []*featureproto.SegmentUser{}
-		for _, id := range feature.ListSegmentIDs() {
-			segmentUsers = append(segmentUsers, mapSegmentUsers[id]...)
-		}
-		reason, variation, err := feature.assignUser(user, segmentUsers, flagVariations)
-		if err != nil {
-			return nil, err
-		}
-		// VariationId is used to check if prerequisite flag's result is what user expects it to be.
-		flagVariations[f.Id] = variation.Id
-
-		// We need to filter evaluations because we fetch all features in the environment namespace.
-		if exist := tagExist(f.Tags, targetTag); !exist {
-			continue
-		}
-		// FIXME: Remove the next line when the Variation
-		// no longer is being used
-		// For security reasons, it removes the variation description
-		variation.Description = ""
-		evaluationID := EvaluationID(f.Id, f.Version, user.Id)
-		evaluation := &featureproto.Evaluation{
-			Id:             evaluationID,
-			FeatureId:      f.Id,
-			FeatureVersion: f.Version,
-			UserId:         user.Id,
-			VariationId:    variation.Id,
-			VariationName:  variation.Name,
-			VariationValue: variation.Value,
-			Variation:      variation, // deprecated
-			Reason:         reason,
-		}
-		evaluations = append(evaluations, evaluation)
-	}
-	// FIXME: Remove id once all SDKs will be updated.
-	id := UserEvaluationsID(user.Id, user.Data, fs)
-	userEvaluations := NewUserEvaluations(id, evaluations, []string{}, false)
-	return userEvaluations.UserEvaluations, nil
+	return evaluate(fs, user, mapSegmentUsers, false, targetTag)
 }
 
 func EvaluateFeaturesByEvaluatedAt(
@@ -166,10 +123,9 @@ func evaluate(
 		if targetTag != "" && !tagExist(f.Tags, targetTag) {
 			continue
 		}
-		// FIXME: Remove the next two lines when the Variation
+		// FIXME: Remove the next line when the Variation
 		// no longer is being used
-		// For security reasons, it removes the variation name and description
-		variation.Name = ""
+		// For security reasons, it removes the variation description
 		variation.Description = ""
 		evaluationID := EvaluationID(f.Id, f.Version, user.Id)
 		evaluation := &featureproto.Evaluation{
