@@ -229,7 +229,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	cmd := createFeatureWithTag(t, tag, featureID2)
 	time.Sleep(3 * time.Second)
 	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
-	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, false)
+	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
@@ -289,7 +289,7 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
-	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, false)
+	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
@@ -330,7 +330,7 @@ func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 	createFeatureWithRule(t, tag, featureID2)
 	time.Sleep(20 * time.Second)
 	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
-	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, true)
+	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, true)
 	if response.State != featureproto.UserEvaluations_FULL {
 		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)
 	}
@@ -358,7 +358,7 @@ func TestGrpcGetEvaluationsWithPreviousEvaluation31daysAgo(t *testing.T) {
 	uuid := newUUID(t)
 	userID := newUserID(t, uuid)
 	prevEvalAt := time.Now().Add(-31 * 24 * time.Hour).Unix()
-	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, false)
+	response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
@@ -375,7 +375,7 @@ func TestGrpcGetEvaluationsWithEvaluatedAtIsZero(t *testing.T) {
 	userID := newUserID(t, uuid)
 	var prevEvalAt int64 = 0
 	userEvaluationsID := ""
-	response := grpcGetEvaluationsByEvaluatedAt(t, userID, userEvaluationsID, prevEvalAt, false)
+	response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, userEvaluationsID, prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
@@ -392,12 +392,46 @@ func TestGrpcGetEvaluationsWithEmptyUserEvaluationsID(t *testing.T) {
 	userID := newUserID(t, uuid)
 	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
 	userEvaluationsID := ""
-	response := grpcGetEvaluationsByEvaluatedAt(t, userID, userEvaluationsID, prevEvalAt, false)
+	response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, userEvaluationsID, prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
 	if !response.Evaluations.ForceUpdate {
 		t.Fatal("ForceUpdate should be true because the UserEvaluationsID is empty")
+	}
+}
+
+func TestGrpcGetEvaluationsWithoutTag(t *testing.T) {
+	t.Parallel()
+	c := newGatewayClient(t)
+	defer c.Close()
+	uuid := newUUID(t)
+	userID := newUserID(t, uuid)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	featureID := newFeatureID(t, uuid)
+	createFeatureWithTag(t, tag, featureID)
+	uuid2 := newUUID(t)
+	tag2 := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid2)
+	featureID2 := newFeatureID(t, uuid2)
+	createFeatureWithTag(t, tag2, featureID2)
+
+	// Wait until the cache is updated in the Redis
+	time.Sleep(60 * time.Second)
+
+	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
+	response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, "userEvaluationsID", prevEvalAt, false)
+	if response.Evaluations == nil {
+		t.Fatal("Evaluations field is nil")
+	}
+	evaluationSize := len(response.Evaluations.Evaluations)
+	if len(response.Evaluations.Evaluations) < 2 {
+		t.Fatalf("Wrong evaluation size. Expected equal or higher than 2. Actual: %d", evaluationSize)
+	}
+	if !contains(response.Evaluations.Evaluations, featureID) {
+		t.Fatalf("Evaluation doesn't contain the feature flag: %s", featureID)
+	}
+	if !contains(response.Evaluations.Evaluations, featureID2) {
+		t.Fatalf("Evaluation doesn't contain the feature flag: %s", featureID2)
 	}
 }
 
@@ -871,8 +905,7 @@ func grpcGetEvaluations(t *testing.T, tag, userID string) *gatewayproto.GetEvalu
 
 func grpcGetEvaluationsByEvaluatedAt(
 	t *testing.T,
-	userID string,
-	userEvaluationsID string,
+	tag, userID, userEvaluationsID string,
 	evaluatedAt int64,
 	userAttributesUpdated bool,
 ) *gatewayproto.GetEvaluationsResponse {
@@ -888,6 +921,7 @@ func grpcGetEvaluationsByEvaluatedAt(
 			EvaluatedAt:           evaluatedAt,
 			UserAttributesUpdated: userAttributesUpdated,
 		},
+		Tag: tag,
 	}
 	response, err := c.GetEvaluations(ctx, req)
 	if err != nil {
