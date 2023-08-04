@@ -116,10 +116,7 @@ func TestGrpcGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
-	cmd := newCreateFeatureCommand(featureID)
-	createFeature(t, client, cmd)
-	addTag(t, tag, featureID, client)
-	enableFeature(t, featureID, client)
+	cmd := createFeatureWithTag(t, tag, featureID)
 	time.Sleep(3 * time.Second)
 	response := grpcGetEvaluations(t, tag, userID)
 	if response.State != featureproto.UserEvaluations_FULL {
@@ -135,6 +132,19 @@ func TestGrpcGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	reason := response.Evaluations.Evaluations[0].Reason.Type
 	if reason != featureproto.Reason_DEFAULT {
 		t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_DEFAULT, reason)
+	}
+	cmdVariation := cmd.Variations[0]
+	variationValue := response.Evaluations.Evaluations[0].VariationValue
+	if variationValue != cmdVariation.Value {
+		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, cmdVariation.Value)
+	}
+	variationName := response.Evaluations.Evaluations[0].VariationName
+	if variationName != cmdVariation.Name {
+		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, cmdVariation.Name)
+	}
+	valueDescription := response.Evaluations.Evaluations[0].Variation.Description
+	if valueDescription != "" {
+		t.Fatalf("Variation description is not empty. Actual: %s", valueDescription)
 	}
 }
 
@@ -164,6 +174,19 @@ func TestGrpcGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 	reason := response.Evaluations.Evaluations[0].Reason.Type
 	if reason != featureproto.Reason_OFF_VARIATION {
 		t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_OFF_VARIATION, reason)
+	}
+	cmdVariation := cmd.Variations[1]
+	variationValue := response.Evaluations.Evaluations[0].VariationValue
+	if variationValue != cmdVariation.Value {
+		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, cmdVariation.Value)
+	}
+	variationName := response.Evaluations.Evaluations[0].VariationName
+	if variationName != cmdVariation.Name {
+		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, cmdVariation.Name)
+	}
+	valueDescription := response.Evaluations.Evaluations[0].Variation.Description
+	if valueDescription != "" {
+		t.Fatalf("Variation description is not empty. Actual: %s", valueDescription)
 	}
 }
 
@@ -203,15 +226,16 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	createFeatureWithTag(t, tag, featureID)
 	time.Sleep(20 * time.Second)
 	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
-	createFeatureWithTag(t, tag, featureID2)
+	cmd := createFeatureWithTag(t, tag, featureID2)
 	time.Sleep(3 * time.Second)
 	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
 	response := grpcGetEvaluationsByEvaluatedAt(t, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
-	if len(response.Evaluations.Evaluations) == 0 {
-		t.Fatal("Evaluation is empty")
+	evaluationSize := len(response.Evaluations.Evaluations)
+	if len(response.Evaluations.Evaluations) != 1 {
+		t.Fatalf("Wrong evaluation size. Expected 1, actual: %d", evaluationSize)
 	}
 	if contains(response.Evaluations.Evaluations, featureID) {
 		t.Fatalf("Evaluation should not contain the evaluation of feature: %s", featureID)
@@ -221,6 +245,19 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	}
 	if response.Evaluations.ForceUpdate {
 		t.Fatal("ForceUpdate should be false")
+	}
+	cmdVariation := cmd.Variations[0]
+	variationValue := response.Evaluations.Evaluations[0].VariationValue
+	if variationValue != cmdVariation.Value {
+		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, cmdVariation.Value)
+	}
+	variationName := response.Evaluations.Evaluations[0].VariationName
+	if variationName != cmdVariation.Name {
+		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, cmdVariation.Name)
+	}
+	valueDescription := response.Evaluations.Evaluations[0].Variation.Description
+	if valueDescription != "" {
+		t.Fatalf("Variation description is not empty. Actual: %s", valueDescription)
 	}
 }
 
@@ -670,13 +707,14 @@ func newUUID(t *testing.T) string {
 	return id.String()
 }
 
-func createFeatureWithTag(t *testing.T, tag, featureID string) {
+func createFeatureWithTag(t *testing.T, tag, featureID string) *featureproto.CreateFeatureCommand {
 	client := newFeatureClient(t)
 	defer client.Close()
 	cmd := newCreateFeatureCommand(featureID)
 	createFeature(t, client, cmd)
 	addTag(t, tag, cmd.Id, client)
 	enableFeature(t, featureID, client)
+	return cmd
 }
 
 func createFeatureWithRule(t *testing.T, tag, featureID string) {
