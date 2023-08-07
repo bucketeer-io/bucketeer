@@ -1,0 +1,185 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "batch-server.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "batch-server.name" . }}
+    chart: {{ template "batch-server.chart" . }}
+    release: {{ template "batch-server.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "batch-server.name" . }}
+      release: {{ template "batch-server.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "batch-server.name" . }}
+        release: {{ template "batch-server.fullname" . }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: {{ template "batch-server.fullname" . }}-envoy-config
+        - name: service-cert-secret
+          secret:
+            secretName: {{ template "service-cert-secret" . }}
+        - name: service-token-secret
+          secret:
+            secretName: {{ template "service-token-secret" . }} 
+      {{- if .Values.serviceAccount.annotations }}
+      serviceAccountName: {{ template "batch-server.fullname" . }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["server"]
+          env:
+            - name: BUCKETEER_BATCH_PROJECT
+              value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_BATCH_NOTIFICATION_SERVICE
+              value: "{{ .Values.env.notificationService }}"
+            - name: BUCKETEER_BATCH_ENVIRONMENT_SERVICE
+              value: "{{ .Values.env.environmentService }}"
+            - name: BUCKETEER_BATCH_AUTO_OPS_SERVICE
+              value: "{{ .Values.env.autoOpsService }}"
+            - name: BUCKETEER_BATCH_EXPERIMENT_SERVICE
+              value: "{{ .Values.env.experimentService }}"
+            - name: BUCKETEER_BATCH_EVENT_COUNTER_SERVICE
+              value: "{{ .Values.env.eventCounterService }}"
+            - name: BUCKETEER_BATCH_FEATURE_SERVICE
+              value: "{{ .Values.env.featureService }}"
+            - name: BUCKETEER_BATCH_DOMAIN_TOPIC
+              value: "{{ .Values.env.domainTopic }}"
+            - name: BUCKETEER_BATCH_DOMAIN_SUBSCRIPTION
+              value: "{{ .Values.env.domainSubscription }}"
+            - name: BUCKETEER_BATCH_PULLER_NUM_GOROUTINES
+              value: "{{ .Values.env.pullerNumGoroutines }}"
+            - name: BUCKETEER_BATCH_PULLER_MAX_OUTSTANDING_MESSAGES
+              value: "{{ .Values.env.pullerMaxOutstandingMessages }}"
+            - name: BUCKETEER_BATCH_PULLER_MAX_OUTSTANDING_BYTES
+              value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
+            - name: BUCKETEER_BATCH_RUNNING_DURATION_PER_BATCH
+              value: "{{ .Values.env.runningDurationPerBatch }}"
+            - name: BUCKETEER_BATCH_MYSQL_USER
+              value: "{{ .Values.env.mysqlUser }}"
+            - name: BUCKETEER_BATCH_MYSQL_PASS
+              value: "{{ .Values.env.mysqlPass }}"
+            - name: BUCKETEER_BATCH_MYSQL_HOST
+              value: "{{ .Values.env.mysqlHost }}"
+            - name: BUCKETEER_BATCH_MYSQL_PORT
+              value: "{{ .Values.env.mysqlPort }}"
+            - name: BUCKETEER_BATCH_MYSQL_DB_NAME
+              value: "{{ .Values.env.mysqlDbName }}"
+            - name: BUCKETEER_BATCH_WEB_URL
+              value: "{{ .Values.env.webURL }}"
+            - name: BUCKETEER_BATCH_LOG_LEVEL
+              value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_BATCH_REFRESH_INTERVAL
+              value: "{{ .Values.env.refreshInterval }}"
+            - name: BUCKETEER_BATCH_PORT
+              value: "{{ .Values.env.port }}"
+            - name: BUCKETEER_BATCH_METRICS_PORT
+              value: "{{ .Values.env.metricsPort }}"
+            - name: BUCKETEER_BATCH_SERVICE_TOKEN
+              value: /usr/local/service-token/token
+            - name: BUCKETEER_BATCH_CERT
+              value: /usr/local/certs/service/tls.crt
+            - name: BUCKETEER_BATCH_KEY
+              value: /usr/local/certs/service/tls.key
+            - name: BUCKETEER_BATCH_TIMEZONE
+              value: "{{ .Values.env.timezone }}"
+          volumeMounts:
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+            - name: service-token-secret
+              mountPath: /usr/local/service-token
+              readOnly: true
+          ports:
+            - name: service
+              containerPort: {{ .Values.env.port }}
+            - name: metrics
+              containerPort: {{ .Values.env.metricsPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
+            httpGet:
+              path: /health
+              port: service
+              scheme: HTTPS
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+        - name: envoy
+          image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "while [ $(netstat -plunt | grep tcp | grep -v envoy | wc -l) -ne 0 ]; do sleep 1; done;"
+          command: ["envoy"]
+          args:
+            - "-c"
+            - "/usr/local/conf/config.yaml"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /usr/local/conf/
+              readOnly: true
+            - name: service-cert-secret
+              mountPath: /usr/local/certs/service
+              readOnly: true
+          ports:
+            - name: envoy
+              containerPort: {{ .Values.envoy.port }}
+            - name: admin
+              containerPort: {{ .Values.envoy.adminPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.livenessProbe.failureThreshold }}
+            httpGet:
+              path: /ready
+              port: admin
+              scheme: HTTP
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.health.readinessProbe.failureThreshold }}
+            httpGet:
+              path: /ready
+              port: admin
+              scheme: HTTP
+          resources:
+{{ toYaml .Values.envoy.resources | indent 12 }}
+  strategy:
+    type: RollingUpdate
