@@ -15,7 +15,7 @@ import { ListGoalsRequest } from '@/proto/experiment/service_pb';
 import { Feature } from '@/proto/feature/feature_pb';
 import { AppDispatch } from '@/store';
 import { classNames } from '@/utils/css';
-import { RadioGroup, Dialog, Transition } from '@headlessui/react';
+import { Dialog, Transition } from '@headlessui/react';
 import { XIcon, ExclamationCircleIcon } from '@heroicons/react/outline';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';

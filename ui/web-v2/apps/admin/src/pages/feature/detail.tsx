@@ -58,11 +58,6 @@ export const FeatureDetailPage: FC = memo(() => {
     shallowEqual
   );
 
-  const isLoading = useSelector<AppState, boolean>(
-    (state) => state.features.loading,
-    shallowEqual
-  );
-
   useEffect(() => {
     if (featureId) {
       dispatch(
