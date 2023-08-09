@@ -40,7 +40,6 @@ import (
 	notificationsender "github.com/bucketeer-io/bucketeer/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
-	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -239,15 +238,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	targetStore := targetstore.NewTargetStore(
-		environmentClient,
-		autoOpsClient,
-		targetstore.WithRefreshInterval(*s.refreshInterval),
-		targetstore.WithMetrics(registerer),
-		targetstore.WithLogger(logger),
-	)
-	go targetStore.Run()
-
 	autoOpsExecutor := opsexecutor.NewAutoOpsExecutor(
 		autoOpsClient,
 		opsexecutor.WithLogger(logger),
@@ -300,14 +290,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		opsevent.NewDatetimeWatcher(
-			targetStore,
+			environmentClient,
+			autoOpsClient,
 			autoOpsExecutor,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
 		opsevent.NewEventCountWatcher(
 			mysqlClient,
-			targetStore,
+			environmentClient,
+			autoOpsClient,
 			eventCounterClient,
 			featureClient,
 			autoOpsExecutor,
@@ -339,8 +331,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	defer func() {
 		server.Stop(serverShutDownTimeout)
-		time.Sleep(serverShutDownTimeout)
-		targetStore.Stop()
 		notificationClient.Close()
 		experimentClient.Close()
 		environmentClient.Close()
