@@ -25,7 +25,6 @@ import (
 	environmentdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	ftclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/job"
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore"
 	opseventdomain "github.com/bucketeer-io/bucketeer/pkg/opsevent/domain"
@@ -54,7 +53,7 @@ func NewEventCountWatcher(
 	featureClient ftclient.Client,
 	autoOpsExecutor executor.AutoOpsExecutor,
 	opts ...jobs.Option,
-) job.Job {
+) jobs.Job {
 	dopts := &jobs.Options{
 		Timeout: 5 * time.Minute,
 		Logger:  zap.NewNop(),
