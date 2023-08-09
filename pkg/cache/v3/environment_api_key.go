@@ -16,6 +16,8 @@
 package v3
 
 import (
+	"time"
+
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -24,8 +26,9 @@ import (
 )
 
 const (
-	environmentAPIKeyKind = "environment_apikey"
-	environmentAPIKeyTTL  = 0
+	environmentAPIKeyKind             = "environment_apikey"
+	environmentAPIKeyTTL              = 1 * time.Minute
+	EnvironmentAPIKeyEvictionInterval = 10 * time.Second
 )
 
 type EnvironmentAPIKeyCache interface {

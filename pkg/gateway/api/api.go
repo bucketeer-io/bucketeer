@@ -69,7 +69,8 @@ func NewGatewayService(
 	ep publisher.Publisher,
 	up publisher.Publisher,
 	mp publisher.Publisher,
-	v3Cache cache.MultiGetCache,
+	redisV3Cache cache.MultiGetCache,
+	inMemoryCache cache.Cache,
 	opts ...Option,
 ) *gatewayService {
 	options := defaultOptions
@@ -86,9 +87,9 @@ func NewGatewayService(
 		evaluationPublisher:    ep,
 		userPublisher:          up,
 		metricsPublisher:       mp,
-		featuresCache:          cachev3.NewFeaturesCache(v3Cache),
-		segmentUsersCache:      cachev3.NewSegmentUsersCache(v3Cache),
-		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(v3Cache),
+		featuresCache:          cachev3.NewFeaturesCache(redisV3Cache),
+		segmentUsersCache:      cachev3.NewSegmentUsersCache(redisV3Cache),
+		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(inMemoryCache),
 		opts:                   &options,
 		logger:                 options.logger.Named("api"),
 	}
@@ -569,6 +570,16 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	if id == "" {
 		return nil, errMissingAPIKey
 	}
+	envAPIKey, err := getEnvironmentAPIKeyFromCache(
+		ctx,
+		id,
+		s.environmentAPIKeyCache,
+		callerGatewayService,
+		cacheLayerInMemory,
+	)
+	if err == nil {
+		return envAPIKey, nil
+	}
 	k, err, _ := s.flightgroup.Do(
 		id,
 		func() (interface{}, error) {
@@ -577,7 +588,6 @@ func (s *gatewayService) findEnvironmentAPIKey(
 				id,
 				s.accountClient,
 				s.environmentAPIKeyCache,
-				callerGatewayService,
 				s.logger,
 			)
 		},
@@ -585,7 +595,7 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	if err != nil {
 		return nil, err
 	}
-	envAPIKey := k.(*accountproto.EnvironmentAPIKey)
+	envAPIKey = k.(*accountproto.EnvironmentAPIKey)
 	return envAPIKey, nil
 }
 
@@ -594,13 +604,8 @@ func (s *gatewayService) getEnvironmentAPIKey(
 	id string,
 	accountClient accountclient.Client,
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
-	caller string,
 	logger *zap.Logger,
 ) (*accountproto.EnvironmentAPIKey, error) {
-	envAPIKey, err := getEnvironmentAPIKeyFromCache(ctx, id, environmentAPIKeyCache, caller, cacheLayerExternal)
-	if err == nil {
-		return envAPIKey, nil
-	}
 	resp, err := accountClient.GetAPIKeyBySearchingAllEnvironments(
 		ctx,
 		&accountproto.GetAPIKeyBySearchingAllEnvironmentsRequest{Id: id},
@@ -615,7 +620,7 @@ func (s *gatewayService) getEnvironmentAPIKey(
 		)
 		return nil, errInternal
 	}
-	envAPIKey = resp.EnvironmentApiKey
+	envAPIKey := resp.EnvironmentApiKey
 	if err := environmentAPIKeyCache.Put(envAPIKey); err != nil {
 		logger.Error(
 			"Failed to cache environment APIKey",
