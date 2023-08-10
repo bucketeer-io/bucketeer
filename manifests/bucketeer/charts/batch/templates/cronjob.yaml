@@ -393,7 +393,7 @@ spec:
               secret:
                 secretName: {{ template "service-token-secret" . }}
           containers:
-            - name: ops-event-count-watcher
+            - name: domain-event-informer
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
               volumeMounts:
@@ -415,7 +415,7 @@ spec:
                   ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
                   RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "DomainEventInformer"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
-                  echo "ops-event-count-watcher job result: ${RES}"
+                  echo "domain-event-informer job result: ${RES}"
                   if [ "$RES" == 200 ]
                   then
                     exit 0
@@ -454,7 +454,7 @@ spec:
               secret:
                 secretName: {{ template "service-token-secret" . }}
           containers:
-            - name: ops-event-count-watcher
+            - name: redis-counter-deleter
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
               volumeMounts:
@@ -476,7 +476,7 @@ spec:
                   ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
                   RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "RedisCounterDeleter"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
-                  echo "ops-event-count-watcher job result: ${RES}"
+                  echo "redis-counter-deleter job result: ${RES}"
                   if [ "$RES" == 200 ]
                   then
                     exit 0
