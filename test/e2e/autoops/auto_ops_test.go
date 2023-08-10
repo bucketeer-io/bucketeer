@@ -51,7 +51,7 @@ const (
 	evaluationEventType
 	metricsEventType
 	prefixTestName   = "e2e-test"
-	retryTimes       = 60
+	retryTimes       = 30
 	timeout          = 10 * time.Second
 	prefixID         = "e2e-test"
 	version          = "/v1"
@@ -300,16 +300,20 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, "")
 	}
 
-	// Wait until trasformer and watcher's targetstores are refreshed.
-	time.Sleep(90 * time.Second)
-
-	feature = getFeature(t, featureClient, featureID)
-	if feature.Enabled {
-		t.Fatalf("feature must be disabled")
-	}
-	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at must not be zero")
+	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout")
+		}
+		time.Sleep(10 * time.Second)
+		feature = getFeature(t, featureClient, featureID)
+		if feature.Enabled {
+			continue
+		}
+		autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if autoOpsRules[0].TriggeredAt == 0 {
+			t.Fatalf("triggered at must not be zero")
+		}
+		break
 	}
 }
 
@@ -343,16 +347,20 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
 	}
 
-	// Wait until trasformer and watcher's targetstores are refreshed.
-	time.Sleep(90 * time.Second)
-
-	feature = getFeature(t, featureClient, featureID)
-	if feature.Enabled {
-		t.Fatalf("feature must be disabled")
-	}
-	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at must not be zero")
+	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout")
+		}
+		time.Sleep(10 * time.Second)
+		feature = getFeature(t, featureClient, featureID)
+		if feature.Enabled {
+			continue
+		}
+		autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if autoOpsRules[0].TriggeredAt == 0 {
+			t.Fatalf("triggered at must not be zero")
+		}
+		break
 	}
 }
 
@@ -386,16 +394,20 @@ func TestOpsEventRateBatch(t *testing.T) {
 		registerEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
 	}
 
-	// Wait until trasformer and watcher's targetstores are refreshed.
-	time.Sleep(90 * time.Second)
-
-	feature = getFeature(t, featureClient, featureID)
-	if feature.Enabled {
-		t.Fatalf("feature must be disabled")
-	}
-	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at must not be zero")
+	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout")
+		}
+		time.Sleep(10 * time.Second)
+		feature = getFeature(t, featureClient, featureID)
+		if feature.Enabled {
+			continue
+		}
+		autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if autoOpsRules[0].TriggeredAt == 0 {
+			t.Fatalf("triggered at must not be zero")
+		}
+		break
 	}
 }
 
@@ -417,16 +429,20 @@ func TestDatetimeBatch(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait until trasformer and watcher's targetstores are refreshed.
-	time.Sleep(90 * time.Second)
-
-	feature := getFeature(t, featureClient, featureID)
-	if feature.Enabled {
-		t.Fatalf("feature must be disabled")
-	}
-	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at must not be zero")
+	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout")
+		}
+		time.Sleep(10 * time.Second)
+		feature := getFeature(t, featureClient, featureID)
+		if feature.Enabled {
+			continue
+		}
+		autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if autoOpsRules[0].TriggeredAt == 0 {
+			t.Fatalf("triggered at must not be zero")
+		}
+		break
 	}
 }
 
