@@ -19,26 +19,28 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	environmentdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
+	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	ftclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
-	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore"
 	opseventdomain "github.com/bucketeer-io/bucketeer/pkg/opsevent/domain"
 	v2os "github.com/bucketeer-io/bucketeer/pkg/opsevent/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 type eventCountWatcher struct {
 	mysqlClient        mysql.Client
-	environmentLister  targetstore.EnvironmentLister
-	autoOpsRuleLister  targetstore.AutoOpsRuleLister
+	envClient          envclient.Client
+	aoClient           aoclient.Client
 	eventCounterClient ecclient.Client
 	featureClient      ftclient.Client
 	autoOpsExecutor    executor.AutoOpsExecutor
@@ -48,7 +50,8 @@ type eventCountWatcher struct {
 
 func NewEventCountWatcher(
 	mysqlClient mysql.Client,
-	targetStore targetstore.TargetStore,
+	envClient envclient.Client,
+	aoClient aoclient.Client,
 	eventCounterClient ecclient.Client,
 	featureClient ftclient.Client,
 	autoOpsExecutor executor.AutoOpsExecutor,
@@ -63,8 +66,8 @@ func NewEventCountWatcher(
 	}
 	return &eventCountWatcher{
 		mysqlClient:        mysqlClient,
-		environmentLister:  targetStore,
-		autoOpsRuleLister:  targetStore,
+		envClient:          envClient,
+		aoClient:           aoClient,
 		eventCounterClient: eventCounterClient,
 		featureClient:      featureClient,
 		autoOpsExecutor:    autoOpsExecutor,
@@ -76,18 +79,27 @@ func NewEventCountWatcher(
 func (w *eventCountWatcher) Run(ctx context.Context) (lastErr error) {
 	ctx, cancel := context.WithTimeout(ctx, w.opts.Timeout)
 	defer cancel()
-	environments := w.environmentLister.GetEnvironments(ctx)
-	for _, env := range environments {
-		autoOpsRules := w.autoOpsRuleLister.GetAutoOpsRules(ctx, env.Namespace)
+	envs, err := w.listEnvironments(ctx)
+	if err != nil {
+		lastErr = err
+		return
+	}
+	for _, env := range envs {
+		autoOpsRules, err := w.listAutoOpsRules(ctx, env.Id)
+		if err != nil {
+			lastErr = err
+			return
+		}
 		for _, a := range autoOpsRules {
-			asmt, err := w.assessAutoOpsRule(ctx, env, a)
+			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: a}
+			asmt, err := w.assessAutoOpsRule(ctx, env.Id, aor)
 			if err != nil {
 				lastErr = err
 			}
 			if !asmt {
 				continue
 			}
-			if err = w.autoOpsExecutor.Execute(ctx, env.Namespace, a.Id); err != nil {
+			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id); err != nil {
 				lastErr = err
 			}
 		}
@@ -95,24 +107,49 @@ func (w *eventCountWatcher) Run(ctx context.Context) (lastErr error) {
 	return
 }
 
+func (w *eventCountWatcher) listEnvironments(ctx context.Context) ([]*envproto.EnvironmentV2, error) {
+	resp, err := w.envClient.ListEnvironmentsV2(ctx, &envproto.ListEnvironmentsV2Request{
+		PageSize: 0,
+		Archived: wrapperspb.Bool(false),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Environments, nil
+}
+
+func (w *eventCountWatcher) listAutoOpsRules(
+	ctx context.Context,
+	environmentNamespace string,
+) ([]*autoopsproto.AutoOpsRule, error) {
+	resp, err := w.aoClient.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{
+		PageSize:             0,
+		EnvironmentNamespace: environmentNamespace,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.AutoOpsRules, nil
+}
+
 func (w *eventCountWatcher) assessAutoOpsRule(
 	ctx context.Context,
-	env *environmentdomain.Environment,
+	environmentNamespace string,
 	a *autoopsdomain.AutoOpsRule,
 ) (bool, error) {
 	opsEventRateClauses, err := a.ExtractOpsEventRateClauses()
 	if err != nil {
 		w.logger.Error("Failed to extract ops event rate clauses", zap.Error(err),
-			zap.String("environmentNamespace", env.Namespace),
+			zap.String("environmentNamespace", environmentNamespace),
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
 		return false, err
 	}
-	featureVersion, err := w.getLatestFeatureVersion(ctx, a.FeatureId, env.Namespace)
+	featureVersion, err := w.getLatestFeatureVersion(ctx, a.FeatureId, environmentNamespace)
 	if err != nil {
 		w.logger.Error("Failed to get the latest feature version", zap.Error(err),
-			zap.String("environmentNamespace", env.Namespace),
+			zap.String("environmentNamespace", environmentNamespace),
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
@@ -122,7 +159,7 @@ func (w *eventCountWatcher) assessAutoOpsRule(
 	for id, c := range opsEventRateClauses {
 		logFunc := func(msg string) {
 			w.logger.Debug(msg,
-				zap.String("environmentNamespace", env.Namespace),
+				zap.String("environmentNamespace", environmentNamespace),
 				zap.String("featureId", a.FeatureId),
 				zap.String("autoOpsRuleId", a.Id),
 				zap.Any("opsEventRateClause", c),
@@ -130,7 +167,7 @@ func (w *eventCountWatcher) assessAutoOpsRule(
 		}
 		evaluationCount, err := w.getTargetOpsEvaluationCount(ctx,
 			logFunc,
-			env.Namespace,
+			environmentNamespace,
 			a.Id,
 			id,
 			a.FeatureId,
@@ -147,7 +184,7 @@ func (w *eventCountWatcher) assessAutoOpsRule(
 		opsEventCount, err := w.getTargetOpsGoalEventCount(
 			ctx,
 			logFunc,
-			env.Namespace,
+			environmentNamespace,
 			a.Id,
 			id,
 			a.FeatureId,
@@ -162,13 +199,13 @@ func (w *eventCountWatcher) assessAutoOpsRule(
 			continue
 		}
 		opsCount := opseventdomain.NewOpsCount(a.FeatureId, a.Id, id, opsEventCount, evaluationCount)
-		if err = w.persistOpsCount(ctx, env.Namespace, opsCount); err != nil {
+		if err = w.persistOpsCount(ctx, environmentNamespace, opsCount); err != nil {
 			lastErr = err
 			continue
 		}
 		if asmt := w.assessRule(c, evaluationCount, opsEventCount); asmt {
 			w.logger.Info("Clause satisfies condition",
-				zap.String("environmentNamespace", env.Namespace),
+				zap.String("environmentNamespace", environmentNamespace),
 				zap.String("featureId", a.FeatureId),
 				zap.String("autoOpsRuleId", a.Id),
 				zap.Any("opsEventRateClause", c),

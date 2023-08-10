@@ -25,13 +25,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	aoclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	environmentdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
@@ -39,7 +39,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	notificationsender "github.com/bucketeer-io/bucketeer/pkg/notification/sender/mock"
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor/mock"
-	targetstoremock "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
@@ -58,11 +57,11 @@ var (
 
 type setupMockFunc func(
 	environmentMockClient *environmentclient.MockClient,
+	autoOpsRulesMockClient *aoclientmock.MockClient,
 	experimentMockClient *experimentclient.MockClient,
 	featureMockClient *featureclientmock.MockClient,
 	eventCounterMockClient *ecclient.MockClient,
 	notificationMockSender *notificationsender.MockSender,
-	mockTargetStore *targetstoremock.MockTargetStore,
 	mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 	domainMockEventPuller *domainEventPullerMock,
 	mysqlMockClient *mysqlmock.MockClient)
@@ -98,11 +97,11 @@ func (d domainEventPullerMock) Pull(
 func TestExperimentStatusUpdater(t *testing.T) {
 	setupMock := func(
 		environmentMockClient *environmentclient.MockClient,
+		autoOpsRulesMockClient *aoclientmock.MockClient,
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
 		notificationMockSender *notificationsender.MockSender,
-		mockTargetStore *targetstoremock.MockTargetStore,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
@@ -146,11 +145,11 @@ func TestExperimentStatusUpdater(t *testing.T) {
 func TestExperimentRunningWatcher(t *testing.T) {
 	setupMock := func(
 		environmentMockClient *environmentclient.MockClient,
+		autoOpsRulesMockClient *aoclientmock.MockClient,
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
 		notificationMockSender *notificationsender.MockSender,
-		mockTargetStore *targetstoremock.MockTargetStore,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
@@ -184,11 +183,11 @@ func TestExperimentRunningWatcher(t *testing.T) {
 func TestFeatureStaleWatcher(t *testing.T) {
 	setupMock := func(
 		environmentMockClient *environmentclient.MockClient,
+		autoOpsRulesMockClient *aoclientmock.MockClient,
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
 		notificationMockSender *notificationsender.MockSender,
-		mockTargetStore *targetstoremock.MockTargetStore,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
@@ -222,11 +221,11 @@ func TestFeatureStaleWatcher(t *testing.T) {
 func TestMAUCountWatcher(t *testing.T) {
 	setupMock := func(
 		environmentMockClient *environmentclient.MockClient,
+		autoOpsRulesMockClient *aoclientmock.MockClient,
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
 		notificationMockSender *notificationsender.MockSender,
-		mockTargetStore *targetstoremock.MockTargetStore,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
@@ -267,36 +266,46 @@ func TestMAUCountWatcher(t *testing.T) {
 		Job: batchproto.BatchJob_MauCountWatcher,
 	}, setupMock)
 }
-
 func TestDatetimeWatcher(t *testing.T) {
 	setupMock := func(
 		environmentMockClient *environmentclient.MockClient,
+		autoOpsRulesMockClient *aoclientmock.MockClient,
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
 		notificationMockSender *notificationsender.MockSender,
-		mockTargetStore *targetstoremock.MockTargetStore,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
-		mockTargetStore.EXPECT().
-			GetEnvironments(gomock.Any()).
+		environmentMockClient.EXPECT().
+			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
 			Times(1).
-			Return([]*environmentdomain.Environment{
-				environmentdomain.NewEnvironment("eid0", "env0", "pj0"),
-				environmentdomain.NewEnvironment("eid1", "env1", "pj1"),
-			})
-		mockTargetStore.EXPECT().
-			GetAutoOpsRules(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return([]*autoopsdomain.AutoOpsRule{
-				newAutoOpsRule(t),
-			})
+			Return(
+				&environmentproto.ListEnvironmentsV2Response{
+					Environments: []*environmentproto.EnvironmentV2{
+						{Id: "env0", ProjectId: "pj0"},
+					},
+				},
+				nil,
+			)
+		autoOpsRulesMockClient.EXPECT().ListAutoOpsRules(
+			gomock.Any(),
+			&autoopsproto.ListAutoOpsRulesRequest{
+				PageSize:             0,
+				EnvironmentNamespace: "env0",
+			},
+		).Return(
+			&autoopsproto.ListAutoOpsRulesResponse{
+				AutoOpsRules: []*autoopsproto.AutoOpsRule{
+					newAutoOpsRule(t),
+				},
+			},
+			nil,
+		)
 		mockAutoOpsExecutor.EXPECT().
 			Execute(gomock.Any(), gomock.Any(), gomock.Any()).
-			Times(2).
+			Times(1).
 			Return(nil)
-
 	}
 	executeMockBatchJob(t, &batchproto.BatchJobRequest{
 		Job: batchproto.BatchJob_DatetimeWatcher,
@@ -306,27 +315,54 @@ func TestDatetimeWatcher(t *testing.T) {
 func TestEventCountWatcher(t *testing.T) {
 	setupMock := func(
 		environmentMockClient *environmentclient.MockClient,
+		autoOpsRulesMockClient *aoclientmock.MockClient,
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
 		notificationMockSender *notificationsender.MockSender,
-		mockTargetStore *targetstoremock.MockTargetStore,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
-		mockTargetStore.EXPECT().
-			GetEnvironments(gomock.Any()).
+		environmentMockClient.EXPECT().
+			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
 			Times(1).
-			Return([]*environmentdomain.Environment{
-				environmentdomain.NewEnvironment("eid0", "env0", "pj0"),
-				environmentdomain.NewEnvironment("eid1", "env1", "pj1"),
-			})
-		mockTargetStore.EXPECT().
-			GetAutoOpsRules(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return([]*autoopsdomain.AutoOpsRule{
-				newAutoOpsRule(t),
-			})
+			Return(
+				&environmentproto.ListEnvironmentsV2Response{
+					Environments: []*environmentproto.EnvironmentV2{
+						{Id: "env0", ProjectId: "pj0"},
+						{Id: "env1", ProjectId: "pj1"},
+					},
+				},
+				nil,
+			)
+		autoOpsRulesMockClient.EXPECT().ListAutoOpsRules(
+			gomock.Any(),
+			&autoopsproto.ListAutoOpsRulesRequest{
+				PageSize:             0,
+				EnvironmentNamespace: "env0",
+			},
+		).Return(
+			&autoopsproto.ListAutoOpsRulesResponse{
+				AutoOpsRules: []*autoopsproto.AutoOpsRule{
+					newAutoOpsRule(t),
+				},
+			},
+			nil,
+		)
+		autoOpsRulesMockClient.EXPECT().ListAutoOpsRules(
+			gomock.Any(),
+			&autoopsproto.ListAutoOpsRulesRequest{
+				PageSize:             0,
+				EnvironmentNamespace: "env1",
+			},
+		).Return(
+			&autoopsproto.ListAutoOpsRulesResponse{
+				AutoOpsRules: []*autoopsproto.AutoOpsRule{
+					newAutoOpsRule(t),
+				},
+			},
+			nil,
+		)
 		featureMockClient.EXPECT().
 			GetFeature(gomock.Any(), gomock.Any()).
 			Times(2).
@@ -376,11 +412,11 @@ func TestEventCountWatcher(t *testing.T) {
 func TestDomainEventInformer(t *testing.T) {
 	setupMock := func(
 		environmentMockClient *environmentclient.MockClient,
+		autoOpsRulesMockClient *aoclientmock.MockClient,
 		experimentMockClient *experimentclient.MockClient,
 		featureMockClient *featureclientmock.MockClient,
 		eventCounterMockClient *ecclient.MockClient,
 		notificationMockSender *notificationsender.MockSender,
-		mockTargetStore *targetstoremock.MockTargetStore,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
@@ -421,22 +457,22 @@ func newBatchService(t *testing.T,
 	require.NoError(t, err)
 
 	environmentMockClient := environmentclient.NewMockClient(mockController)
+	autoOpsRulesMockClient := aoclientmock.NewMockClient(mockController)
 	experimentMockClient := experimentclient.NewMockClient(mockController)
 	featureMockClient := featureclientmock.NewMockClient(mockController)
 	eventCounterMockClient := ecclient.NewMockClient(mockController)
 	notificationMockSender := notificationsender.NewMockSender(mockController)
-	mockTargetStore := targetstoremock.NewMockTargetStore(mockController)
 	mockAutoOpsExecutor := opsexecutor.NewMockAutoOpsExecutor(mockController)
 	domainMockEventPuller := &domainEventPullerMock{}
 	mysqlMockClient := mysqlmock.NewMockClient(mockController)
 
 	setupMock(
 		environmentMockClient,
+		autoOpsRulesMockClient,
 		experimentMockClient,
 		featureMockClient,
 		eventCounterMockClient,
 		notificationMockSender,
-		mockTargetStore,
 		mockAutoOpsExecutor,
 		domainMockEventPuller,
 		mysqlMockClient,
@@ -471,14 +507,16 @@ func newBatchService(t *testing.T,
 			jobs.WithLogger(logger),
 		),
 		opsevent.NewDatetimeWatcher(
-			mockTargetStore,
+			environmentMockClient,
+			autoOpsRulesMockClient,
 			mockAutoOpsExecutor,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
 		opsevent.NewEventCountWatcher(
 			mysqlMockClient,
-			mockTargetStore,
+			environmentMockClient,
+			autoOpsRulesMockClient,
 			eventCounterMockClient,
 			featureMockClient,
 			mockAutoOpsExecutor,
@@ -541,7 +579,7 @@ func getProjects(t *testing.T) []*environmentproto.Project {
 	}
 }
 
-func newAutoOpsRule(t *testing.T) *autoopsdomain.AutoOpsRule {
+func newAutoOpsRule(t *testing.T) *autoopsproto.AutoOpsRule {
 	oerc1 := &autoopsproto.OpsEventRateClause{
 		GoalId:          "gid",
 		MinCount:        10,
@@ -568,5 +606,5 @@ func newAutoOpsRule(t *testing.T) *autoopsdomain.AutoOpsRule {
 		[]*autoopsproto.WebhookClause{},
 	)
 	require.NoError(t, err)
-	return aor
+	return aor.AutoOpsRule
 }

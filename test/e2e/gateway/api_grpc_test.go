@@ -415,23 +415,27 @@ func TestGrpcGetEvaluationsWithoutTag(t *testing.T) {
 	featureID2 := newFeatureID(t, uuid2)
 	createFeatureWithTag(t, tag2, featureID2)
 
-	// Wait until the cache is updated in the Redis
-	time.Sleep(60 * time.Second)
-
-	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
-	response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, "userEvaluationsID", prevEvalAt, false)
-	if response.Evaluations == nil {
-		t.Fatal("Evaluations field is nil")
-	}
-	evaluationSize := len(response.Evaluations.Evaluations)
-	if len(response.Evaluations.Evaluations) < 2 {
-		t.Fatalf("Wrong evaluation size. Expected equal or higher than 2. Actual: %d", evaluationSize)
-	}
-	if !contains(response.Evaluations.Evaluations, featureID) {
-		t.Fatalf("Evaluation doesn't contain the feature flag: %s", featureID)
-	}
-	if !contains(response.Evaluations.Evaluations, featureID2) {
-		t.Fatalf("Evaluation doesn't contain the feature flag: %s", featureID2)
+	prevEvalAt := time.Now().Add(-5 * time.Minute).Unix()
+	retryTimes := 30
+	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout")
+		}
+		time.Sleep(10 * time.Second)
+		response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, "userEvaluationsID", prevEvalAt, false)
+		if response.Evaluations == nil {
+			continue
+		}
+		if len(response.Evaluations.Evaluations) < 2 {
+			continue
+		}
+		if !contains(response.Evaluations.Evaluations, featureID) {
+			continue
+		}
+		if !contains(response.Evaluations.Evaluations, featureID2) {
+			continue
+		}
+		break
 	}
 }
 

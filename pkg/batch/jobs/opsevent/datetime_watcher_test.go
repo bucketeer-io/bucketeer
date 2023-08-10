@@ -23,19 +23,19 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
+	aoclientemock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	environmentdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
+	envclientemock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	executormock "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor/mock"
-	targetstoremock "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
 func TestNewDatetimeWatcher(t *testing.T) {
-	w := NewDatetimeWatcher(nil, nil)
+	w := NewDatetimeWatcher(nil, nil, nil)
 	assert.IsType(t, &datetimeWatcher{}, w)
 }
 
@@ -43,10 +43,10 @@ func newNewDatetimeWatcherWithMock(t *testing.T, mockController *gomock.Controll
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	return &datetimeWatcher{
-		environmentLister: targetstoremock.NewMockEnvironmentLister(mockController),
-		autoOpsRuleLister: targetstoremock.NewMockAutoOpsRuleLister(mockController),
-		autoOpsExecutor:   executormock.NewMockAutoOpsExecutor(mockController),
-		logger:            logger,
+		envClient:       envclientemock.NewMockClient(mockController),
+		aoClient:        aoclientemock.NewMockClient(mockController),
+		autoOpsExecutor: executormock.NewMockAutoOpsExecutor(mockController),
+		logger:          logger,
 		opts: &jobs.Options{
 			Timeout: time.Minute,
 		},
@@ -66,24 +66,40 @@ func TestRunDatetimeWatcher(t *testing.T) {
 		{
 			desc: "success: assess: false",
 			setup: func(w *datetimeWatcher) {
-				w.environmentLister.(*targetstoremock.MockEnvironmentLister).
-					EXPECT().GetEnvironments(gomock.Any()).Return(
-					[]*environmentdomain.Environment{
-						{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
 					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "ns0", ProjectId: "pj0"},
+						},
+					},
+					nil,
 				)
 				dc := &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix()}
 				c, err := anypb.New(dc)
 				require.NoError(t, err)
-				w.autoOpsRuleLister.(*targetstoremock.MockAutoOpsRuleLister).
-					EXPECT().GetAutoOpsRules(gomock.Any(), "ns0").Return(
-					[]*autoopsdomain.AutoOpsRule{
-						{AutoOpsRule: &autoopsproto.AutoOpsRule{
-							Id:        "id-0",
-							FeatureId: "fid-0",
-							Clauses:   []*autoopsproto.Clause{{Clause: c}},
-						}},
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(),
+					&autoopsproto.ListAutoOpsRulesRequest{
+						PageSize:             0,
+						EnvironmentNamespace: "ns0",
 					},
+				).Return(
+					&autoopsproto.ListAutoOpsRulesResponse{
+						AutoOpsRules: []*autoopsproto.AutoOpsRule{
+							{
+								Id:        "id-0",
+								FeatureId: "fid-0",
+								Clauses:   []*autoopsproto.Clause{{Clause: c}},
+							},
+						},
+					},
+					nil,
 				)
 			},
 			expectedErr: nil,
@@ -91,24 +107,40 @@ func TestRunDatetimeWatcher(t *testing.T) {
 		{
 			desc: "success: assess: true",
 			setup: func(w *datetimeWatcher) {
-				w.environmentLister.(*targetstoremock.MockEnvironmentLister).
-					EXPECT().GetEnvironments(gomock.Any()).Return(
-					[]*environmentdomain.Environment{
-						{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
 					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "ns0", ProjectId: "pj0"},
+						},
+					},
+					nil,
 				)
 				dc := &autoopsproto.DatetimeClause{Time: time.Now().Unix()}
 				c, err := anypb.New(dc)
 				require.NoError(t, err)
-				w.autoOpsRuleLister.(*targetstoremock.MockAutoOpsRuleLister).
-					EXPECT().GetAutoOpsRules(gomock.Any(), "ns0").Return(
-					[]*autoopsdomain.AutoOpsRule{
-						{AutoOpsRule: &autoopsproto.AutoOpsRule{
-							Id:        "id-0",
-							FeatureId: "fid-0",
-							Clauses:   []*autoopsproto.Clause{{Clause: c}},
-						}},
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(),
+					&autoopsproto.ListAutoOpsRulesRequest{
+						PageSize:             0,
+						EnvironmentNamespace: "ns0",
 					},
+				).Return(
+					&autoopsproto.ListAutoOpsRulesResponse{
+						AutoOpsRules: []*autoopsproto.AutoOpsRule{
+							{
+								Id:        "id-0",
+								FeatureId: "fid-0",
+								Clauses:   []*autoopsproto.Clause{{Clause: c}},
+							},
+						},
+					},
+					nil,
 				)
 				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
 					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)

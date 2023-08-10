@@ -25,15 +25,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
+	aoclientemock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	environmentdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
+	envclientemock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	eccmock "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	executormock "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor/mock"
-	targetstoremock "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/targetstore/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -42,7 +42,7 @@ import (
 )
 
 func TestNewEvaluationRealtimeCountPersister(t *testing.T) {
-	g := NewEventCountWatcher(nil, nil, nil, nil, nil)
+	g := NewEventCountWatcher(nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &eventCountWatcher{}, g)
 }
 
@@ -51,8 +51,8 @@ func newNewCountWatcherWithMock(t *testing.T, mockController *gomock.Controller)
 	require.NoError(t, err)
 	return &eventCountWatcher{
 		mysqlClient:        mysqlmock.NewMockClient(mockController),
-		environmentLister:  targetstoremock.NewMockEnvironmentLister(mockController),
-		autoOpsRuleLister:  targetstoremock.NewMockAutoOpsRuleLister(mockController),
+		envClient:          envclientemock.NewMockClient(mockController),
+		aoClient:           aoclientemock.NewMockClient(mockController),
 		eventCounterClient: eccmock.NewMockClient(mockController),
 		featureClient:      ftmock.NewMockClient(mockController),
 		autoOpsExecutor:    executormock.NewMockAutoOpsExecutor(mockController),
@@ -76,24 +76,40 @@ func TestRunCountWatcher(t *testing.T) {
 		{
 			desc: "error: GetFeature fails",
 			setup: func(t *testing.T, w *eventCountWatcher) {
-				w.environmentLister.(*targetstoremock.MockEnvironmentLister).
-					EXPECT().GetEnvironments(gomock.Any()).Return(
-					[]*environmentdomain.Environment{
-						{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
 					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "ns0", ProjectId: "pj0"},
+						},
+					},
+					nil,
 				)
 				oerc1, _ := newOpsEventRateClauses(t)
 				c1, err := anypb.New(oerc1)
 				require.NoError(t, err)
-				w.autoOpsRuleLister.(*targetstoremock.MockAutoOpsRuleLister).
-					EXPECT().GetAutoOpsRules(gomock.Any(), "ns0").Return(
-					[]*autoopsdomain.AutoOpsRule{
-						{AutoOpsRule: &autoopsproto.AutoOpsRule{
-							Id:        "id-0",
-							FeatureId: "fid-0",
-							Clauses:   []*autoopsproto.Clause{{Clause: c1}},
-						}},
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(),
+					&autoopsproto.ListAutoOpsRulesRequest{
+						PageSize:             0,
+						EnvironmentNamespace: "ns0",
 					},
+				).Return(
+					&autoopsproto.ListAutoOpsRulesResponse{
+						AutoOpsRules: []*autoopsproto.AutoOpsRule{
+							{
+								Id:        "id-0",
+								FeatureId: "fid-0",
+								Clauses:   []*autoopsproto.Clause{{Clause: c1}},
+							},
+						},
+					},
+					nil,
 				)
 				w.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.Internal, "test"))
@@ -103,24 +119,40 @@ func TestRunCountWatcher(t *testing.T) {
 		{
 			desc: "error: GetOpsEvaluationUserCount fails",
 			setup: func(t *testing.T, w *eventCountWatcher) {
-				w.environmentLister.(*targetstoremock.MockEnvironmentLister).
-					EXPECT().GetEnvironments(gomock.Any()).Return(
-					[]*environmentdomain.Environment{
-						{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
 					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "ns0", ProjectId: "pj0"},
+						},
+					},
+					nil,
 				)
 				oerc1, _ := newOpsEventRateClauses(t)
 				c1, err := anypb.New(oerc1)
 				require.NoError(t, err)
-				w.autoOpsRuleLister.(*targetstoremock.MockAutoOpsRuleLister).
-					EXPECT().GetAutoOpsRules(gomock.Any(), "ns0").Return(
-					[]*autoopsdomain.AutoOpsRule{
-						{AutoOpsRule: &autoopsproto.AutoOpsRule{
-							Id:        "id-0",
-							FeatureId: "fid-0",
-							Clauses:   []*autoopsproto.Clause{{Clause: c1}},
-						}},
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(),
+					&autoopsproto.ListAutoOpsRulesRequest{
+						PageSize:             0,
+						EnvironmentNamespace: "ns0",
 					},
+				).Return(
+					&autoopsproto.ListAutoOpsRulesResponse{
+						AutoOpsRules: []*autoopsproto.AutoOpsRule{
+							{
+								Id:        "id-0",
+								FeatureId: "fid-0",
+								Clauses:   []*autoopsproto.Clause{{Clause: c1}},
+							},
+						},
+					},
+					nil,
 				)
 				w.eventCounterClient.(*eccmock.MockClient).
 					EXPECT().GetOpsEvaluationUserCount(gomock.Any(), gomock.Any()).Return(
@@ -137,24 +169,40 @@ func TestRunCountWatcher(t *testing.T) {
 		{
 			desc: "error: GetOpsEvaluationUserCount fails",
 			setup: func(t *testing.T, w *eventCountWatcher) {
-				w.environmentLister.(*targetstoremock.MockEnvironmentLister).
-					EXPECT().GetEnvironments(gomock.Any()).Return(
-					[]*environmentdomain.Environment{
-						{Environment: &environmentproto.Environment{Id: "ns0", Namespace: "ns0"}},
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
 					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "ns0", ProjectId: "pj0"},
+						},
+					},
+					nil,
 				)
 				oerc1, _ := newOpsEventRateClauses(t)
 				c1, err := anypb.New(oerc1)
 				require.NoError(t, err)
-				w.autoOpsRuleLister.(*targetstoremock.MockAutoOpsRuleLister).
-					EXPECT().GetAutoOpsRules(gomock.Any(), "ns0").Return(
-					[]*autoopsdomain.AutoOpsRule{
-						{AutoOpsRule: &autoopsproto.AutoOpsRule{
-							Id:        "id-0",
-							FeatureId: "fid-0",
-							Clauses:   []*autoopsproto.Clause{{Clause: c1}},
-						}},
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(),
+					&autoopsproto.ListAutoOpsRulesRequest{
+						PageSize:             0,
+						EnvironmentNamespace: "ns0",
 					},
+				).Return(
+					&autoopsproto.ListAutoOpsRulesResponse{
+						AutoOpsRules: []*autoopsproto.AutoOpsRule{
+							{
+								Id:        "id-0",
+								FeatureId: "fid-0",
+								Clauses:   []*autoopsproto.Clause{{Clause: c1}},
+							},
+						},
+					},
+					nil,
 				)
 				w.eventCounterClient.(*eccmock.MockClient).
 					EXPECT().GetOpsEvaluationUserCount(gomock.Any(), gomock.Any()).Return(
