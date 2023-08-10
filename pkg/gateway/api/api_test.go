@@ -49,7 +49,7 @@ const dummyURL = "http://example.com"
 
 func TestNewGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil)
+	g := NewGatewayService(nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &gatewayService{}, g)
 }
 
@@ -66,7 +66,7 @@ func TestGetEnvironmentAPIKey(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "exists in redis",
+			desc: "exists in cache",
 			setup: func(gs *gatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{

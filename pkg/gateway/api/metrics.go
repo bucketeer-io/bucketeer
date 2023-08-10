@@ -35,6 +35,7 @@ const (
 	typeUnknown       = "Unknown"
 	typeTrack         = "Track"
 
+	cacheLayerInMemory = "InMemory"
 	cacheLayerExternal = "External"
 
 	codeHit  = "Hit"

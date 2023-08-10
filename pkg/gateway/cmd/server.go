@@ -238,6 +238,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
+	inMemoryCache := cachev3.NewInMemoryCache(cachev3.WithEvictionInterval(cachev3.EnvironmentAPIKeyEvictionInterval))
+
 	service := api.NewGrpcGatewayService(
 		featureClient,
 		accountClient,
@@ -245,6 +247,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		evaluationPublisher,
 		userPublisher,
 		redisV3Cache,
+		inMemoryCache,
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -283,6 +286,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		userPublisher,
 		metricsPublisher,
 		redisV3Cache,
+		inMemoryCache,
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
