@@ -76,6 +76,9 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 		}
 		for _, a := range autoOpsRules {
 			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: a}
+			if aor.AlreadyTriggered() {
+				continue
+			}
 			asmt, err := w.assessAutoOpsRule(ctx, env.Id, aor)
 			if err != nil {
 				lastErr = err
@@ -130,7 +133,6 @@ func (w *datetimeWatcher) assessAutoOpsRule(
 		)
 		return false, err
 	}
-	var lastErr error
 	nowTimestamp := time.Now().Unix()
 	for _, c := range datetimeClauses {
 		if asmt := w.assessRule(c, nowTimestamp); asmt {
@@ -143,7 +145,7 @@ func (w *datetimeWatcher) assessAutoOpsRule(
 			return true, nil
 		}
 	}
-	return false, lastErr
+	return false, nil
 }
 
 func (w *datetimeWatcher) assessRule(datetimeClause *autoopsproto.DatetimeClause, nowTimestamp int64) bool {
