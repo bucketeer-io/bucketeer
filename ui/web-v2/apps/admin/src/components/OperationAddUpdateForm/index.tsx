@@ -270,7 +270,10 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                         ? 'text-primary border-b-2 border-primary'
                         : 'text-gray-400'
                     )}
-                    onClick={() => setValue('opsType', tab.value)}
+                    onClick={() => {
+                      setValue('opsType', tab.value);
+                      setValue('clauseType', ClauseType.DATETIME);
+                    }}
                   >
                     {tab.label}
                   </div>
