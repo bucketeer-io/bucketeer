@@ -31,6 +31,12 @@ env:
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
   runningDurationPerBatch: 15s
+  # redis settings
+  redis:
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
 
 affinity: {}
 
@@ -92,4 +98,4 @@ cronjob:
   mauCountWatcherSchedule: "0 1 1 * *"
   opsDatetimeWatcherSchedule: "* * * * *"
   opsEventCountWatcherSchedule: "* * * * *"
-  domainEventInformerSchedule: "* * * * *"
+  redisCounterDeleterSchedule: "0 0 * * *"

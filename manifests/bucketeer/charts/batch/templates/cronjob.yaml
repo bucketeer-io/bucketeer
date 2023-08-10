@@ -393,7 +393,7 @@ spec:
               secret:
                 secretName: {{ template "service-token-secret" . }}
           containers:
-            - name: ops-event-count-watcher
+            - name: domain-event-informer
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
               volumeMounts:
@@ -415,7 +415,68 @@ spec:
                   ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
                   RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "DomainEventInformer"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
-                  echo "ops-event-count-watcher job result: ${RES}"
+                  echo "domain-event-informer job result: ${RES}"
+                  if [ "$RES" == 200 ]
+                  then
+                    exit 0
+                  else
+                    exit 1
+                  fi
+          restartPolicy: Never
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "batch-server.fullname" . }}-redis-counter-deleter
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "batch-server.name" . }}
+    chart: {{ template "batch-server.chart" . }}
+    release: {{ template "batch-server.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  concurrencyPolicy: Forbid
+  timeZone: {{ .Values.env.timezone }}
+  schedule: "{{ .Values.cronjob.redisCounterDeleterSchedule }}"
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          volumes:
+            - name: service-cert-secret
+              secret:
+                secretName: {{ template "service-cert-secret" . }}
+            - name: service-token-secret
+              secret:
+                secretName: {{ template "service-token-secret" . }}
+          containers:
+            - name: redis-counter-deleter
+              image: curlimages/curl:8.1.2
+              imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - name: service-cert-secret
+                  mountPath: /usr/local/certs/service
+                  readOnly: true
+                - name: service-token-secret
+                  mountPath: /usr/local/service-token
+                  readOnly: true
+              env:
+                - name: WEB_GATEWAY_ADDRESS
+                  value: "{{ .Values.cronjob.webGatewayAddress }}"
+              command:
+                - /bin/sh
+              args:
+                - -c
+                - |
+                  echo "Start redis-counter-deleter job."
+                  ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                  TOKEN=`cat /usr/local/service-token/token`
+                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "RedisCounterDeleter"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  echo "redis-counter-deleter job result: ${RES}"
                   if [ "$RES" == 200 ]
                   then
                     exit 0

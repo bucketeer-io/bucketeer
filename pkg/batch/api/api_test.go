@@ -31,6 +31,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/rediscounter"
+	cachemock "github.com/bucketeer-io/bucketeer/pkg/cache/mock"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
@@ -64,6 +66,7 @@ type setupMockFunc func(
 	notificationMockSender *notificationsender.MockSender,
 	mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 	domainMockEventPuller *domainEventPullerMock,
+	// redisCounterDeleterMock *redisCounterDeleterMock,
 	mysqlMockClient *mysqlmock.MockClient)
 
 type domainEventPullerMock struct{}
@@ -464,6 +467,7 @@ func newBatchService(t *testing.T,
 	notificationMockSender := notificationsender.NewMockSender(mockController)
 	mockAutoOpsExecutor := opsexecutor.NewMockAutoOpsExecutor(mockController)
 	domainMockEventPuller := &domainEventPullerMock{}
+	cacheMock := cachemock.NewMockMultiGetDeleteCountCache(mockController)
 	mysqlMockClient := mysqlmock.NewMockClient(mockController)
 
 	setupMock(
@@ -526,6 +530,12 @@ func newBatchService(t *testing.T,
 		environmentMockClient,
 		domainMockEventPuller,
 		notificationMockSender,
+		rediscounter.NewRedisCounterDeleter(
+			cacheMock,
+			environmentMockClient,
+			jobs.WithTimeout(5*time.Minute),
+			jobs.WithLogger(logger),
+		),
 		logger,
 		notification.WithRunningDurationPerBatch(pullerRunningDuration),
 	)

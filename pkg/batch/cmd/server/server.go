@@ -28,6 +28,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/rediscounter"
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
@@ -42,6 +44,7 @@ import (
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -75,13 +78,18 @@ type server struct {
 	eventCounterService *string
 	featureService      *string
 	notificationService *string
-	// pubsub config
+	// PubSub config
 	domainSubscription           *string
 	domainTopic                  *string
 	pullerNumGoroutines          *int
 	pullerMaxOutstandingMessages *int
 	pullerMaxOutstandingBytes    *int
 	runningDurationPerBatch      *time.Duration
+	// Redis
+	redisServerName    *string
+	redisAddr          *string
+	redisPoolMaxIdle   *int
+	redisPoolMaxActive *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -150,6 +158,16 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"running-duration-per-batch",
 			"Duration of running domain event informer per batch.",
 		).Required().Duration(),
+		redisServerName: cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
+		redisAddr:       cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
+		redisPoolMaxIdle: cmd.Flag(
+			"redis-pool-max-idle",
+			"Maximum number of idle connections in the pool.",
+		).Default("5").Int(),
+		redisPoolMaxActive: cmd.Flag(
+			"redis-pool-max-active",
+			"Maximum number of connections allocated by the pool at a given time.",
+		).Default("10").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -261,6 +279,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
+	redisV3Client, err := redisv3.NewClient(
+		*s.redisAddr,
+		redisv3.WithPoolSize(*s.redisPoolMaxActive),
+		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),
+		redisv3.WithServerName(*s.redisServerName),
+		redisv3.WithMetrics(registerer),
+		redisv3.WithLogger(logger),
+	)
+
+	if err != nil {
+		return err
+	}
+	defer redisV3Client.Close()
+	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
+
 	service := api.NewBatchService(
 		experiment.NewExperimentStatusUpdater(
 			environmentClient,
@@ -309,6 +342,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentClient,
 		domainEventPuller,
 		notificationSender,
+		rediscounter.NewRedisCounterDeleter(
+			redisV3Cache,
+			environmentClient,
+			jobs.WithTimeout(5*time.Minute),
+			jobs.WithLogger(logger),
+		),
 		logger,
 		notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
 	)

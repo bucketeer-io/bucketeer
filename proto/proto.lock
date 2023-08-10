@@ -3277,6 +3277,10 @@
               {
                 "name": "DomainEventInformer",
                 "integer": 6
+              },
+              {
+                "name": "RedisCounterDeleter",
+                "integer": 7
               }
             ]
           }
