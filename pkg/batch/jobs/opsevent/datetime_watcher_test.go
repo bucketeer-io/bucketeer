@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	aoclientemock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
@@ -69,6 +70,7 @@ func TestRunDatetimeWatcher(t *testing.T) {
 					gomock.Any(),
 					&environmentproto.ListEnvironmentsV2Request{
 						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
 					},
 				).Return(
 					&environmentproto.ListEnvironmentsV2Response{
@@ -109,6 +111,7 @@ func TestRunDatetimeWatcher(t *testing.T) {
 					gomock.Any(),
 					&environmentproto.ListEnvironmentsV2Request{
 						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
 					},
 				).Return(
 					&environmentproto.ListEnvironmentsV2Response{

@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	aoclientemock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
@@ -79,6 +80,7 @@ func TestRunCountWatcher(t *testing.T) {
 					gomock.Any(),
 					&environmentproto.ListEnvironmentsV2Request{
 						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
 					},
 				).Return(
 					&environmentproto.ListEnvironmentsV2Response{
@@ -121,6 +123,7 @@ func TestRunCountWatcher(t *testing.T) {
 					gomock.Any(),
 					&environmentproto.ListEnvironmentsV2Request{
 						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
 					},
 				).Return(
 					&environmentproto.ListEnvironmentsV2Response{
@@ -170,6 +173,7 @@ func TestRunCountWatcher(t *testing.T) {
 					gomock.Any(),
 					&environmentproto.ListEnvironmentsV2Request{
 						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
 					},
 				).Return(
 					&environmentproto.ListEnvironmentsV2Response{

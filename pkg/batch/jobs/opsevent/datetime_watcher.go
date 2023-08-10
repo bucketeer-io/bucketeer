@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
@@ -93,6 +94,7 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 func (w *datetimeWatcher) listEnvironments(ctx context.Context) ([]*envproto.EnvironmentV2, error) {
 	resp, err := w.envClient.ListEnvironmentsV2(ctx, &envproto.ListEnvironmentsV2Request{
 		PageSize: 0,
+		Archived: wrapperspb.Bool(false),
 	})
 	if err != nil {
 		return nil, err
