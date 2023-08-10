@@ -33,10 +33,10 @@ env:
   runningDurationPerBatch: 15s
   # redis settings
   redis:
-  serverName:
-  addr:
-  poolMaxIdle: 25
-  poolMaxActive: 25
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
 
 affinity: {}
 
