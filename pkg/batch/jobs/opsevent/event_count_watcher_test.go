@@ -167,7 +167,7 @@ func TestRunCountWatcher(t *testing.T) {
 			expectedErr: status.Errorf(codes.NotFound, "test"),
 		},
 		{
-			desc: "error: GetOpsEvaluationUserCount fails",
+			desc: "error: GetOpsGoalUserCount fails",
 			setup: func(t *testing.T, w *eventCountWatcher) {
 				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
@@ -222,6 +222,84 @@ func TestRunCountWatcher(t *testing.T) {
 					}, nil)
 			},
 			expectedErr: status.Errorf(codes.NotFound, "test"),
+		},
+		{
+			desc: "success",
+			setup: func(t *testing.T, w *eventCountWatcher) {
+				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					&environmentproto.ListEnvironmentsV2Request{
+						PageSize: 0,
+						Archived: wrapperspb.Bool(false),
+					},
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{
+							{Id: "ns0", ProjectId: "pj0"},
+						},
+					},
+					nil,
+				)
+				oerc1, _ := newOpsEventRateClauses(t)
+				c1, err := anypb.New(oerc1)
+				require.NoError(t, err)
+				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(),
+					&autoopsproto.ListAutoOpsRulesRequest{
+						PageSize:             0,
+						EnvironmentNamespace: "ns0",
+					},
+				).Return(
+					&autoopsproto.ListAutoOpsRulesResponse{
+						AutoOpsRules: []*autoopsproto.AutoOpsRule{
+							{
+								Id:          "id-0",
+								FeatureId:   "fid-0",
+								Clauses:     []*autoopsproto.Clause{{Clause: c1}},
+								TriggeredAt: 0,
+							},
+							{
+								Id:          "id-1",
+								FeatureId:   "fid-1",
+								Clauses:     []*autoopsproto.Clause{{Clause: c1}},
+								TriggeredAt: 1,
+							},
+						},
+					},
+					nil,
+				)
+				w.eventCounterClient.(*eccmock.MockClient).
+					EXPECT().GetOpsEvaluationUserCount(gomock.Any(), gomock.Any()).Return(
+					&ecproto.GetOpsEvaluationUserCountResponse{
+						OpsRuleId: "rule-id",
+						ClauseId:  "clause-id",
+						Count:     15,
+					}, nil)
+				w.eventCounterClient.(*eccmock.MockClient).
+					EXPECT().GetOpsGoalUserCount(gomock.Any(), gomock.Any()).
+					Return(
+						&ecproto.GetOpsGoalUserCountResponse{
+							OpsRuleId: "rule-id",
+							ClauseId:  "clause-id",
+							Count:     15,
+						},
+						nil,
+					)
+				w.featureClient.(*ftmock.MockClient).EXPECT().GetFeature(gomock.Any(), gomock.Any()).Return(
+					&ftproto.GetFeatureResponse{
+						Feature: &ftproto.Feature{
+							Version: 1,
+						},
+					}, nil)
+
+				w.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+					nil, nil,
+				)
+
+				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
+					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			},
+			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
