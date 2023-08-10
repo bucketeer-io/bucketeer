@@ -199,7 +199,14 @@ func (p *persister) handle(message *puller.Message) error {
 	}
 	err = p.saveMetrics(metricsEvents)
 	if err != nil {
-		p.logger.Error("could not store data to prometheus client", zap.Error(err))
+		p.logger.Error(
+			"could not store data to prometheus client",
+			zap.Error(err),
+			zap.String("sourceId", metricsEvents.SourceId.String()),
+			zap.String("sdkVersion", metricsEvents.SdkVersion),
+			zap.Any("metrics", metricsEvents.Event),
+			zap.Any("metadata", metricsEvents.Metadata),
+		)
 		return err
 	}
 	return nil
