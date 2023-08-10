@@ -92,6 +92,9 @@ func (w *eventCountWatcher) Run(ctx context.Context) (lastErr error) {
 		}
 		for _, a := range autoOpsRules {
 			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: a}
+			if aor.AlreadyTriggered() {
+				continue
+			}
 			asmt, err := w.assessAutoOpsRule(ctx, env.Id, aor)
 			if err != nil {
 				lastErr = err
