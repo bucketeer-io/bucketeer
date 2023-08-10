@@ -25,6 +25,7 @@ enum BatchJob {
   DatetimeWatcher = 4;
   EventCountWatcher = 5;
   DomainEventInformer = 6;
+  RedisCounterDeleter = 7;
 }
 
 message BatchJobRequest {

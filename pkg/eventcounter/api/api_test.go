@@ -1218,7 +1218,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 						val, nil)
 					uc := getUserCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
 					pfMergeKey := newPFMergeKey(
-						userCountPrefix,
+						UserCountPrefix,
 						fID,
 						environmentNamespace,
 					)
@@ -1594,7 +1594,7 @@ func getRandomNumbers() []float64 {
 func getEventCountKeys(vID, fID, environmentNamespace string, timeStamps []int64) []string {
 	eventCountKeys := []string{}
 	for _, ts := range timeStamps {
-		ec := newEvaluationCountkey(eventCountPrefix, fID, vID, environmentNamespace, ts)
+		ec := newEvaluationCountkey(EventCountPrefix, fID, vID, environmentNamespace, ts)
 		eventCountKeys = append(eventCountKeys, ec)
 	}
 	return eventCountKeys
@@ -1603,7 +1603,7 @@ func getEventCountKeys(vID, fID, environmentNamespace string, timeStamps []int64
 func getUserCountKeys(vID, fid, environmentNamespace string, timeStamps []int64) []string {
 	userCountKeys := []string{}
 	for _, ts := range timeStamps {
-		uc := newEvaluationCountkey(userCountPrefix, fid, vID, environmentNamespace, ts)
+		uc := newEvaluationCountkey(UserCountPrefix, fid, vID, environmentNamespace, ts)
 		userCountKeys = append(userCountKeys, uc)
 	}
 	return userCountKeys
@@ -1614,7 +1614,7 @@ func getEventCountKeysV2(vID, fID, environmentNamespace string, timeStamps [][]i
 	for _, day := range timeStamps {
 		hourly := []string{}
 		for _, hour := range day {
-			ec := newEvaluationCountkey(eventCountPrefix, fID, vID, environmentNamespace, hour)
+			ec := newEvaluationCountkey(EventCountPrefix, fID, vID, environmentNamespace, hour)
 			hourly = append(hourly, ec)
 		}
 		eventCountKeys = append(eventCountKeys, hourly)
@@ -1627,7 +1627,7 @@ func getUserCountKeysV2(vID, fID, environmentNamespace string, timeStamps [][]in
 	for _, day := range timeStamps {
 		hourly := []string{}
 		for _, hour := range day {
-			ec := newEvaluationCountkey(userCountPrefix, fID, vID, environmentNamespace, hour)
+			ec := newEvaluationCountkey(UserCountPrefix, fID, vID, environmentNamespace, hour)
 			hourly = append(hourly, ec)
 		}
 		userCountKeys = append(userCountKeys, hourly)

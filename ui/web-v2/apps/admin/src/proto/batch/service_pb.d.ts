@@ -47,6 +47,7 @@ export interface BatchJobMap {
   DATETIMEWATCHER: 4;
   EVENTCOUNTWATCHER: 5;
   DOMAINEVENTINFORMER: 6;
+  REDISCOUNTERDELETER: 7;
 }
 
 export const BatchJob: BatchJobMap;
