@@ -241,17 +241,12 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		return
 	}
 	s.publishUser(req.Context(), envAPIKey.EnvironmentNamespace, reqBody.Tag, reqBody.User, reqBody.SourceID)
-	f, err, _ := s.flightgroup.Do(
-		envAPIKey.EnvironmentNamespace,
-		func() (interface{}, error) {
-			return s.getFeatures(req.Context(), envAPIKey.EnvironmentNamespace)
-		},
-	)
+	f, err := s.getFeatures(req.Context(), envAPIKey.EnvironmentNamespace)
 	if err != nil {
 		rest.ReturnFailureResponse(w, err)
 		return
 	}
-	features := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
+	features := s.filterOutArchivedFeatures(f)
 	if len(features) == 0 {
 		rest.ReturnSuccessResponse(
 			w,
@@ -308,17 +303,12 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		return
 	}
 	s.publishUser(req.Context(), envAPIKey.EnvironmentNamespace, reqBody.Tag, reqBody.User, reqBody.SourceId)
-	f, err, _ := s.flightgroup.Do(
-		envAPIKey.EnvironmentNamespace,
-		func() (interface{}, error) {
-			return s.getFeatures(req.Context(), envAPIKey.EnvironmentNamespace)
-		},
-	)
+	f, err := s.getFeatures(req.Context(), envAPIKey.EnvironmentNamespace)
 	if err != nil {
 		rest.ReturnFailureResponse(w, err)
 		return
 	}
-	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
+	fs := s.filterOutArchivedFeatures(f)
 	features, err := s.getTargetFeatures(fs, reqBody.FeatureID)
 	if err != nil {
 		rest.ReturnFailureResponse(w, err)
@@ -771,7 +761,12 @@ func (s *gatewayService) getFeatures(
 			zap.String("environmentNamespace", environmentNamespace),
 		)...,
 	)
-	features, err := s.listFeatures(ctx, environmentNamespace)
+	f, err, _ := s.flightgroup.Do(
+		environmentNamespace,
+		func() (interface{}, error) {
+			return s.listFeatures(ctx, environmentNamespace)
+		},
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve features from storage",
@@ -782,6 +777,7 @@ func (s *gatewayService) getFeatures(
 		)
 		return nil, errInternal
 	}
+	features := f.([]*featureproto.Feature)
 	if err := s.featuresCache.Put(&featureproto.Features{Features: features}, environmentNamespace); err != nil {
 		s.logger.Error(
 			"Failed to cache features",
