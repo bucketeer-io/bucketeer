@@ -296,11 +296,17 @@ func (s *grpcGatewayService) GetEvaluations(
 		return nil, err
 	}
 	s.publishUser(ctx, environmentNamespace, req.Tag, req.User, req.SourceId)
-	features, err := s.getFeatures(ctx, environmentNamespace)
+	f, err, _ := s.flightgroup.Do(
+		environmentNamespace,
+		func() (interface{}, error) {
+			return s.getFeatures(ctx, environmentNamespace)
+		},
+	)
 	if err != nil {
 		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
 		return nil, err
 	}
+	features := f.([]*featureproto.Feature)
 	activeFeatures := s.filterOutArchivedFeatures(features)
 	filteredByTag := s.filterByTag(activeFeatures, req.Tag)
 	if len(features) == 0 {
@@ -438,11 +444,16 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 	s.publishUser(ctx, envAPIKey.EnvironmentNamespace, req.Tag, req.User, req.SourceId)
-	f, err := s.getFeatures(ctx, envAPIKey.EnvironmentNamespace)
+	f, err, _ := s.flightgroup.Do(
+		envAPIKey.EnvironmentNamespace,
+		func() (interface{}, error) {
+			return s.getFeatures(ctx, envAPIKey.EnvironmentNamespace)
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	fs := s.filterOutArchivedFeatures(f)
+	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	features, err := s.getTargetFeatures(fs, req.FeatureId)
 	if err != nil {
 		return nil, err
@@ -607,12 +618,7 @@ func (s *grpcGatewayService) getFeatures(
 			zap.String("environmentNamespace", environmentNamespace),
 		)...,
 	)
-	f, err, _ := s.flightgroup.Do(
-		environmentNamespace,
-		func() (interface{}, error) {
-			return s.listFeatures(ctx, environmentNamespace)
-		},
-	)
+	features, err := s.listFeatures(ctx, environmentNamespace)
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve features from storage",
@@ -623,7 +629,6 @@ func (s *grpcGatewayService) getFeatures(
 		)
 		return nil, ErrInternal
 	}
-	features := f.([]*featureproto.Feature)
 	if err := s.featuresCache.Put(&featureproto.Features{Features: features}, environmentNamespace); err != nil {
 		s.logger.Error(
 			"Failed to cache features",
