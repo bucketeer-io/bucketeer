@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -78,7 +79,7 @@ func (w *mauCountWatcher) Run(ctx context.Context) (lastErr error) {
 			return err
 		}
 		for _, env := range environments {
-			eventCount, userCount, err := w.getUserCount(ctx, env.Namespace, w.newYearMonth(year, lastMonth))
+			eventCount, userCount, err := w.getUserCount(ctx, env.Id, w.newYearMonth(year, lastMonth))
 			if err != nil {
 				return err
 			}
@@ -130,14 +131,15 @@ func (w *mauCountWatcher) newYearMonth(year, month int32) string {
 func (w *mauCountWatcher) listEnvironments(
 	ctx context.Context,
 	projectID string,
-) ([]*environmentproto.Environment, error) {
-	var environments []*environmentproto.Environment
+) ([]*environmentproto.EnvironmentV2, error) {
+	var environments []*environmentproto.EnvironmentV2
 	cursor := ""
 	for {
-		resp, err := w.environmentClient.ListEnvironments(ctx, &environmentproto.ListEnvironmentsRequest{
+		resp, err := w.environmentClient.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
 			PageSize:  listRequestSize,
 			Cursor:    cursor,
 			ProjectId: projectID,
+			Archived:  wrapperspb.Bool(false),
 		})
 		if err != nil {
 			return nil, err
@@ -170,7 +172,7 @@ func (w *mauCountWatcher) getUserCount(
 
 func (w *mauCountWatcher) sendNotification(
 	ctx context.Context,
-	environment *environmentproto.Environment,
+	environment *environmentproto.EnvironmentV2,
 	eventCount, userCount int64,
 	month int32,
 ) error {
@@ -185,7 +187,7 @@ func (w *mauCountWatcher) sendNotification(
 }
 
 func (w *mauCountWatcher) createNotificationEvent(
-	environment *environmentproto.Environment,
+	environment *environmentproto.EnvironmentV2,
 	eventCount, userCount int64,
 	month int32,
 ) (*senderproto.NotificationEvent, error) {
@@ -195,7 +197,7 @@ func (w *mauCountWatcher) createNotificationEvent(
 	}
 	ne := &senderproto.NotificationEvent{
 		Id:                   id.String(),
-		EnvironmentNamespace: environment.Namespace,
+		EnvironmentNamespace: environment.Id,
 		SourceType:           notificationproto.Subscription_MAU_COUNT,
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_MauCount,
