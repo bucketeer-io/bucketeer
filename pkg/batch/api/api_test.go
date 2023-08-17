@@ -424,12 +424,12 @@ func TestDomainEventInformer(t *testing.T) {
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
-			GetEnvironmentByNamespace(gomock.Any(), gomock.Any()).
+			GetEnvironmentV2(gomock.Any(), gomock.Any()).
 			MinTimes(3).
 			MaxTimes(5).
 			Return(
-				&environmentproto.GetEnvironmentByNamespaceResponse{
-					Environment: &environmentproto.Environment{
+				&environmentproto.GetEnvironmentV2Response{
+					Environment: &environmentproto.EnvironmentV2{
 						Id: "eid0",
 					}},
 				nil,
