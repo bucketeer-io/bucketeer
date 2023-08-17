@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
+	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc"
@@ -182,6 +183,8 @@ func (s *grpcGatewayService) Ping(ctx context.Context, req *gwproto.PingRequest)
 }
 
 func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackRequest) (*gwproto.TrackResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.Track")
+	defer span.End()
 	if err := s.validateTrackRequest(req); err != nil {
 		eventCounter.WithLabelValues(callerGatewayService, typeTrack, codeInvalidURLParams)
 		s.logger.Warn(
@@ -285,6 +288,8 @@ func (s *grpcGatewayService) GetEvaluations(
 	ctx context.Context,
 	req *gwproto.GetEvaluationsRequest,
 ) (*gwproto.GetEvaluationsResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations")
+	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx)
 	if err != nil {
 		return nil, err
@@ -296,6 +301,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		return nil, err
 	}
 	s.publishUser(ctx, environmentNamespace, req.Tag, req.User, req.SourceId)
+	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
 		environmentNamespace,
 		func() (interface{}, error) {
@@ -306,6 +312,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
 		return nil, err
 	}
+	spanGetFeatures.End()
 	features := f.([]*featureproto.Feature)
 	activeFeatures := s.filterOutArchivedFeatures(features)
 	filteredByTag := s.filterByTag(activeFeatures, req.Tag)
@@ -436,6 +443,8 @@ func (s *grpcGatewayService) GetEvaluation(
 	ctx context.Context,
 	req *gwproto.GetEvaluationRequest,
 ) (*gwproto.GetEvaluationResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation")
+	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx)
 	if err != nil {
 		return nil, err
@@ -444,6 +453,7 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 	s.publishUser(ctx, envAPIKey.EnvironmentNamespace, req.Tag, req.User, req.SourceId)
+	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
 		envAPIKey.EnvironmentNamespace,
 		func() (interface{}, error) {
@@ -453,6 +463,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		return nil, err
 	}
+	spanGetFeatures.End()
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	features, err := s.getTargetFeatures(fs, req.FeatureId)
 	if err != nil {
@@ -807,6 +818,8 @@ func (s *grpcGatewayService) RegisterEvents(
 	ctx context.Context,
 	req *gwproto.RegisterEventsRequest,
 ) (*gwproto.RegisterEventsResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.RegisterEvents")
+	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx)
 	if err != nil {
 		return nil, err
