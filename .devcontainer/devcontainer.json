@@ -4,7 +4,8 @@
   "features": {
     "ghcr.io/devcontainers-contrib/features/protoc:1": {
       "version": "23.4"
-    }
+    },
+    "ghcr.io/dhoeric/features/google-cloud-cli:1": {}
   },
   "customizations": {
     "codespaces": {
