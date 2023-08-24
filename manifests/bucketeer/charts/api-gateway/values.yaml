@@ -56,6 +56,10 @@ envoy:
   port: 9000
   adminPort: 8001
   resources: {}
+  circuitBreaker:
+    maxPendingRequests: 3500
+    maxRequests: 3500
+    maxConnections: 3500
 service:
   externalPort: 9000
 ingress:
