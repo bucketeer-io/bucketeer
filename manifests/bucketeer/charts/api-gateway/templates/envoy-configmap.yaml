@@ -29,9 +29,9 @@ data:
             thresholds:
               - priority: DEFAULT
                 max_retries: 3
-                max_pending_requests: 3500
-                max_requests: 3500
-                max_connections: 3500
+                max_pending_requests: {{ .Values.envoy.circuitBreaker.maxPendingRequests }}
+                max_requests: {{ .Values.envoy.circuitBreaker.maxRequests }}
+                max_connections: {{ .Values.envoy.circuitBreaker.maxConnections }}
           load_assignment:
             cluster_name: api-gateway
             endpoints:
@@ -67,9 +67,9 @@ data:
             thresholds:
               - priority: DEFAULT
                 max_retries: 3
-                max_pending_requests: 3500
-                max_requests: 3500
-                max_connections: 3500
+                max_pending_requests: {{ .Values.envoy.circuitBreaker.maxPendingRequests }}
+                max_requests: {{ .Values.envoy.circuitBreaker.maxRequests }}
+                max_connections: {{ .Values.envoy.circuitBreaker.maxConnections }}
           load_assignment:
             cluster_name: api-gateway-rest-v1
             endpoints:
