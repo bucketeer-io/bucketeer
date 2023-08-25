@@ -44,10 +44,10 @@ func TestCreateExperimentRunningNotification(t *testing.T) {
 		{
 			desc: "no experiment",
 			setup: func(t *testing.T, w *experimentRunningWatcher) {
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
+				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsResponse{
-						Environments: []*environmentproto.Environment{{Id: "ns0", Namespace: "ns0"}},
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{{Id: "ns0", Name: "ns0"}},
 						Cursor:       "",
 					}, nil)
 				w.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
@@ -60,10 +60,10 @@ func TestCreateExperimentRunningNotification(t *testing.T) {
 		{
 			desc: "experiments exist",
 			setup: func(t *testing.T, w *experimentRunningWatcher) {
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
+				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsResponse{
-						Environments: []*environmentproto.Environment{{Id: "ns0", Namespace: "ns0"}},
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: []*environmentproto.EnvironmentV2{{Id: "ns0", Name: "ns0"}},
 						Cursor:       "",
 					}, nil)
 				w.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
