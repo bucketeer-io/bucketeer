@@ -20,7 +20,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -72,7 +71,7 @@ func (w *featureStaleWatcher) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	for _, env := range environments {
-		features, err := w.listFeatures(ctx, env.Id)
+		features, err := w.listFeatures(ctx, env.Namespace)
 		if err != nil {
 			return err
 		}
@@ -101,7 +100,7 @@ func (w *featureStaleWatcher) Run(ctx context.Context) (lastErr error) {
 }
 
 func (w *featureStaleWatcher) createNotificationEvent(
-	environment *environmentproto.EnvironmentV2,
+	environment *environmentproto.Environment,
 	features []*featureproto.Feature,
 ) (*senderproto.NotificationEvent, error) {
 	id, err := uuid.NewUUID()
@@ -110,7 +109,7 @@ func (w *featureStaleWatcher) createNotificationEvent(
 	}
 	ne := &senderproto.NotificationEvent{
 		Id:                   id.String(),
-		EnvironmentNamespace: environment.Id,
+		EnvironmentNamespace: environment.Namespace,
 		SourceType:           notificationproto.Subscription_FEATURE_STALE,
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_FeatureStale,
@@ -124,14 +123,13 @@ func (w *featureStaleWatcher) createNotificationEvent(
 	return ne, nil
 }
 
-func (w *featureStaleWatcher) listEnvironments(ctx context.Context) ([]*environmentproto.EnvironmentV2, error) {
-	var environments []*environmentproto.EnvironmentV2
+func (w *featureStaleWatcher) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
+	var environments []*environmentproto.Environment
 	cursor := ""
 	for {
-		resp, err := w.environmentClient.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
+		resp, err := w.environmentClient.ListEnvironments(ctx, &environmentproto.ListEnvironmentsRequest{
 			PageSize: listRequestSize,
 			Cursor:   cursor,
-			Archived: wrapperspb.Bool(false),
 		})
 		if err != nil {
 			return nil, err

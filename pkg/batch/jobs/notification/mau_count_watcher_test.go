@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -74,7 +73,7 @@ func TestCreateMAUNotification(t *testing.T) {
 						Projects: []*environmentproto.Project{{Id: "pj0"}},
 						Cursor:   "cursor",
 					}, nil)
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
+				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
 					nil, errInternal)
 			},
@@ -89,9 +88,9 @@ func TestCreateMAUNotification(t *testing.T) {
 						Projects: []*environmentproto.Project{{Id: "pj0"}},
 						Cursor:   "cursor",
 					}, nil)
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
+				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsV2Response{}, nil)
+					&environmentproto.ListEnvironmentsResponse{}, nil)
 			},
 			expectedErr: nil,
 		},
@@ -104,10 +103,10 @@ func TestCreateMAUNotification(t *testing.T) {
 						Projects: []*environmentproto.Project{{Id: "pj0"}},
 						Cursor:   "cursor",
 					}, nil)
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
+				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsV2Response{
-						Environments: []*environmentproto.EnvironmentV2{{Id: "eID", Name: "eID"}},
+					&environmentproto.ListEnvironmentsResponse{
+						Environments: []*environmentproto.Environment{{Id: "eID", Namespace: "eNamespace"}},
 						Cursor:       "",
 					}, nil)
 				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetMAUCount(
@@ -126,10 +125,10 @@ func TestCreateMAUNotification(t *testing.T) {
 						Projects: []*environmentproto.Project{{Id: "pj0"}},
 						Cursor:   "cursor",
 					}, nil)
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
+				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsV2Response{
-						Environments: []*environmentproto.EnvironmentV2{{Id: "eID", Name: "eID"}},
+					&environmentproto.ListEnvironmentsResponse{
+						Environments: []*environmentproto.Environment{{Id: "eID", Namespace: "eNamespace"}},
 						Cursor:       "",
 					}, nil)
 				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetMAUCount(
@@ -158,17 +157,16 @@ func TestCreateMAUNotification(t *testing.T) {
 						Cursor:   "cursor",
 					}, nil)
 				// list environments
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
+				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(),
-					&environmentproto.ListEnvironmentsV2Request{
+					&environmentproto.ListEnvironmentsRequest{
 						PageSize:  listRequestSize,
 						Cursor:    "",
 						ProjectId: "pj0",
-						Archived:  &wrappers.BoolValue{Value: false},
 					},
 				).Return(
-					&environmentproto.ListEnvironmentsV2Response{
-						Environments: []*environmentproto.EnvironmentV2{{Id: "eID", Name: "eID"}},
+					&environmentproto.ListEnvironmentsResponse{
+						Environments: []*environmentproto.Environment{{Id: "eID", Namespace: "eNamespace"}},
 						Cursor:       "",
 					}, nil)
 				// get user count
@@ -176,7 +174,7 @@ func TestCreateMAUNotification(t *testing.T) {
 				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetMAUCount(
 					gomock.Any(),
 					&ecproto.GetMAUCountRequest{
-						EnvironmentNamespace: "eID",
+						EnvironmentNamespace: "eNamespace",
 						YearMonth:            w.newYearMonth(year, month),
 					},
 				).Return(

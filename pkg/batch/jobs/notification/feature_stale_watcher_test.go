@@ -44,10 +44,10 @@ func TestCreateNotification(t *testing.T) {
 		{
 			desc: "no featres",
 			setup: func(t *testing.T, w *featureStaleWatcher) {
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
+				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsV2Response{
-						Environments: []*environmentproto.EnvironmentV2{{Id: "ns0", Name: "ns0"}},
+					&environmentproto.ListEnvironmentsResponse{
+						Environments: []*environmentproto.Environment{{Id: "ns0", Namespace: "ns0"}},
 						Cursor:       "",
 					}, nil)
 				w.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(
@@ -60,10 +60,10 @@ func TestCreateNotification(t *testing.T) {
 		{
 			desc: "no stale featres",
 			setup: func(t *testing.T, w *featureStaleWatcher) {
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
+				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsV2Response{
-						Environments: []*environmentproto.EnvironmentV2{{Id: "ns0", Name: "ns0"}},
+					&environmentproto.ListEnvironmentsResponse{
+						Environments: []*environmentproto.Environment{{Id: "ns0", Namespace: "ns0"}},
 						Cursor:       "",
 					}, nil)
 				w.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(
@@ -83,10 +83,10 @@ func TestCreateNotification(t *testing.T) {
 		{
 			desc: "stale exists",
 			setup: func(t *testing.T, w *featureStaleWatcher) {
-				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
+				w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironments(
 					gomock.Any(), gomock.Any()).Return(
-					&environmentproto.ListEnvironmentsV2Response{
-						Environments: []*environmentproto.EnvironmentV2{{Id: "ns0", Name: "ns0"}},
+					&environmentproto.ListEnvironmentsResponse{
+						Environments: []*environmentproto.Environment{{Id: "ns0", Namespace: "ns0"}},
 						Cursor:       "",
 					}, nil)
 				w.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(

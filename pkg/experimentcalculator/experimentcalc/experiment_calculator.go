@@ -25,7 +25,6 @@ import (
 
 	"github.com/go-gota/gota/dataframe"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
@@ -115,11 +114,11 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 	}
 	// Step 2: Get all the events for the experiment
 	for _, env := range environments {
-		experiments, experimentErr := e.listExperiments(ctx, env.Id)
+		experiments, experimentErr := e.listExperiments(ctx, env.Namespace)
 		if experimentErr != nil {
 			e.logger.Error("ExperimentCalculator failed to list experiments",
 				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.String("namespace", env.Id),
+					zap.String("namespace", env.Namespace),
 					zap.Error(experimentErr),
 				)...,
 			)
@@ -132,11 +131,11 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 				// we still calculate the results for two days after it stopped.
 				continue
 			}
-			experimentResult, calculationErr := e.createExperimentResult(ctx, env.Id, ex)
+			experimentResult, calculationErr := e.createExperimentResult(ctx, env.Namespace, ex)
 			if calculationErr != nil {
 				e.logger.Error("ExperimentCalculator failed to calculate experiment result",
 					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("namespace", env.Id),
+						zap.String("namespace", env.Namespace),
 						zap.String("experiment_id", ex.Id),
 						zap.Error(calculationErr),
 					)...,
@@ -144,13 +143,13 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 				continue
 			}
 			err := v2es.NewExperimentResultStorage(e.mysqlClient).
-				UpdateExperimentResult(ctx, env.Id, &domain.ExperimentResult{
+				UpdateExperimentResult(ctx, env.Namespace, &domain.ExperimentResult{
 					ExperimentResult: experimentResult,
 				})
 			if err != nil {
 				e.logger.Error("ExperimentCalculator failed to update experiment result",
 					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("namespace", env.Id),
+						zap.String("namespace", env.Namespace),
 						zap.String("experiment_id", ex.Id),
 						zap.Error(err),
 					)...,
@@ -235,13 +234,12 @@ func (e ExperimentCalculator) createExperimentResult(
 
 func (e ExperimentCalculator) listEnvironments(
 	ctx context.Context,
-) ([]*environment.EnvironmentV2, error) {
-	listEnvironmentsRequest := environment.ListEnvironmentsV2Request{
+) ([]*environment.Environment, error) {
+	listEnvironmentsRequest := environment.ListEnvironmentsRequest{
 		PageSize: 0,
 		Cursor:   "",
-		Archived: wrapperspb.Bool(false),
 	}
-	resp, err := e.environmentClient.ListEnvironmentsV2(ctx, &listEnvironmentsRequest)
+	resp, err := e.environmentClient.ListEnvironments(ctx, &listEnvironmentsRequest)
 	if err != nil {
 		return nil, err
 	}

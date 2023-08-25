@@ -109,9 +109,9 @@ func TestExperimentStatusUpdater(t *testing.T) {
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
-			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+			ListEnvironments(gomock.Any(), gomock.Any()).
 			Return(
-				&environmentproto.ListEnvironmentsV2Response{
+				&environmentproto.ListEnvironmentsResponse{
 					Environments: getEnvironments(t),
 				},
 				nil,
@@ -157,10 +157,10 @@ func TestExperimentRunningWatcher(t *testing.T) {
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
-			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+			ListEnvironments(gomock.Any(), gomock.Any()).
 			Times(1).
 			Return(
-				&environmentproto.ListEnvironmentsV2Response{
+				&environmentproto.ListEnvironmentsResponse{
 					Environments: getEnvironments(t),
 				}, nil,
 			)
@@ -195,10 +195,10 @@ func TestFeatureStaleWatcher(t *testing.T) {
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
-			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+			ListEnvironments(gomock.Any(), gomock.Any()).
 			Times(1).
 			Return(
-				&environmentproto.ListEnvironmentsV2Response{
+				&environmentproto.ListEnvironmentsResponse{
 					Environments: getEnvironments(t),
 				}, nil,
 			)
@@ -242,10 +242,10 @@ func TestMAUCountWatcher(t *testing.T) {
 				nil,
 			)
 		environmentMockClient.EXPECT().
-			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
+			ListEnvironments(gomock.Any(), gomock.Any()).
 			Times(1).
 			Return(
-				&environmentproto.ListEnvironmentsV2Response{
+				&environmentproto.ListEnvironmentsResponse{
 					Environments: getEnvironments(t),
 				},
 				nil,
@@ -424,12 +424,12 @@ func TestDomainEventInformer(t *testing.T) {
 		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
-			GetEnvironmentV2(gomock.Any(), gomock.Any()).
+			GetEnvironmentByNamespace(gomock.Any(), gomock.Any()).
 			MinTimes(3).
 			MaxTimes(5).
 			Return(
-				&environmentproto.GetEnvironmentV2Response{
-					Environment: &environmentproto.EnvironmentV2{
+				&environmentproto.GetEnvironmentByNamespaceResponse{
+					Environment: &environmentproto.Environment{
 						Id: "eid0",
 					}},
 				nil,
@@ -542,11 +542,11 @@ func newBatchService(t *testing.T,
 	return service
 }
 
-func getEnvironments(t *testing.T) []*environmentproto.EnvironmentV2 {
+func getEnvironments(t *testing.T) []*environmentproto.Environment {
 	t.Helper()
-	return []*environmentproto.EnvironmentV2{
-		{Id: "ns0", Name: "ns0", ProjectId: "pj0"},
-		{Id: "ns1", Name: "ns1", ProjectId: "pj0"},
+	return []*environmentproto.Environment{
+		{Id: "ns0", Namespace: "ns0", ProjectId: "pj0"},
+		{Id: "ns1", Namespace: "ns1", ProjectId: "pj0"},
 	}
 }
 

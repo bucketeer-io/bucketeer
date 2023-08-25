@@ -217,16 +217,16 @@ func (i *domainEventInformer) createNotificationEvent(
 
 func (i *domainEventInformer) getEnvironment(
 	ctx context.Context,
-	environmentId string,
-) (*environmentproto.EnvironmentV2, error) {
-	resp, err := i.environmentClient.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{
-		Id: environmentId,
+	environmentNamespace string,
+) (*environmentproto.Environment, error) {
+	resp, err := i.environmentClient.GetEnvironmentByNamespace(ctx, &environmentproto.GetEnvironmentByNamespaceRequest{
+		Namespace: environmentNamespace,
 	})
 	if err != nil {
 		i.logger.Error(
 			"Failed to get environment",
 			zap.Error(err),
-			zap.String("environmentId", environmentId),
+			zap.String("environmentNamespace", environmentNamespace),
 		)
 		return nil, err
 	}

@@ -20,7 +20,6 @@ import (
 
 	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -75,7 +74,7 @@ func (w *experimentRunningWatcher) Run(ctx context.Context) (lastErr error) {
 		return err
 	}
 	for _, env := range environments {
-		experiments, err := w.listExperiments(ctx, env.Id)
+		experiments, err := w.listExperiments(ctx, env.Namespace)
 		if err != nil {
 			return err
 		}
@@ -94,7 +93,7 @@ func (w *experimentRunningWatcher) Run(ctx context.Context) (lastErr error) {
 }
 
 func (w *experimentRunningWatcher) createNotificationEvent(
-	environment *environmentproto.EnvironmentV2,
+	environment *environmentproto.Environment,
 	experiments []*experimentproto.Experiment,
 ) (*senderproto.NotificationEvent, error) {
 	id, err := uuid.NewUUID()
@@ -103,7 +102,7 @@ func (w *experimentRunningWatcher) createNotificationEvent(
 	}
 	ne := &senderproto.NotificationEvent{
 		Id:                   id.String(),
-		EnvironmentNamespace: environment.Id,
+		EnvironmentNamespace: environment.Namespace,
 		SourceType:           notificationproto.Subscription_EXPERIMENT_RUNNING,
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_ExperimentRunning,
@@ -117,14 +116,13 @@ func (w *experimentRunningWatcher) createNotificationEvent(
 	return ne, nil
 }
 
-func (w *experimentRunningWatcher) listEnvironments(ctx context.Context) ([]*environmentproto.EnvironmentV2, error) {
-	var environments []*environmentproto.EnvironmentV2
+func (w *experimentRunningWatcher) listEnvironments(ctx context.Context) ([]*environmentproto.Environment, error) {
+	var environments []*environmentproto.Environment
 	cursor := ""
 	for {
-		resp, err := w.environmentClient.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
+		resp, err := w.environmentClient.ListEnvironments(ctx, &environmentproto.ListEnvironmentsRequest{
 			PageSize: listRequestSize,
 			Cursor:   cursor,
-			Archived: wrapperspb.Bool(false),
 		})
 		if err != nil {
 			return nil, err
