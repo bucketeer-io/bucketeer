@@ -10,7 +10,7 @@ nginx:
   config:
 
 env:
-  googleAnalyticsId:
+  googleTagManagerId:
 
 tls:
   secret:

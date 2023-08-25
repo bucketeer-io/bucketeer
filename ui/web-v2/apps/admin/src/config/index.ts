@@ -19,4 +19,4 @@ declare global {
   }
 }
 
-export const GOOGLE_ANALYTICS_ID = window.env?.GOOGLE_ANALYTICS_ID || '';
+export const GOOGLE_TAG_MANAGER_ID = window.env?.GOOGLE_TAG_MANAGER_ID || '';

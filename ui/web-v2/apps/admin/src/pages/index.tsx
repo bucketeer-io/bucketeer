@@ -1,6 +1,6 @@
-import { GOOGLE_ANALYTICS_ID } from '@/config';
+import { GOOGLE_TAG_MANAGER_ID } from '@/config';
 import React, { FC, useEffect, memo, useState, useCallback } from 'react';
-import ReactGA from 'react-ga4';
+import TagManager from 'react-gtm-module';
 import { useDispatch } from 'react-redux';
 import {
   Route,
@@ -55,26 +55,18 @@ import { SettingsIndexPage } from './settings';
 
 export const App: FC = memo(() => {
   const location = useLocation();
-  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     if (
       !window.location.href.includes('localhost') &&
-      GOOGLE_ANALYTICS_ID.trim().length > 0
+      GOOGLE_TAG_MANAGER_ID.trim().length > 0
     ) {
-      ReactGA.initialize(GOOGLE_ANALYTICS_ID);
-      setInitialized(true);
+      const tagManagerArgs = {
+        gtmId: GOOGLE_TAG_MANAGER_ID,
+      };
+      TagManager.initialize(tagManagerArgs);
     }
   }, []);
-
-  useEffect(() => {
-    if (initialized) {
-      ReactGA.send({
-        hitType: 'pageview',
-        page: location.pathname + location.search,
-      });
-    }
-  }, [initialized, location]);
 
   return (
     <Switch>
