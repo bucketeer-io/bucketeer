@@ -13,7 +13,7 @@ dependencies:
   version: "17.7.5"
   repository: "https://charts.bitnami.com/bitnami"
 - name: mysql
-  version: "9.10.1"
+  version: "9.11.0"
   repository: "oci://registry-1.docker.io/bitnamicharts"
 - name: vault
   version: "0.23.0"
