@@ -34,7 +34,7 @@ mysql:
     # existingSecret: "mysql-secrets"
 
 bq:
-  project: "default"
+  project: bucketeer-test
     
 
 

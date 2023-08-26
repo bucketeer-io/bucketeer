@@ -10,9 +10,9 @@ dependencies:
   version: 17.7.5
 - name: mysql
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 9.10.1
+  version: 9.11.0
 - name: vault
   repository: https://helm.releases.hashicorp.com
   version: 0.23.0
-digest: sha256:1c4f2a2ce892b0ff9738e666e8d2ec972ae9555974c741852e19efe0a98b513d
-generated: "2023-07-31T14:49:16.8346126Z"
+digest: sha256:5e332f5ad6f1b29eac80d38bac95ac4e7a547badccfd60121c234976e0f25ea6
+generated: "2023-08-26T16:45:18.931910966Z"
