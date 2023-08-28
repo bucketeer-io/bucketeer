@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"os"
 	"time"
 
 	"cloud.google.com/go/pubsub"
@@ -202,9 +203,10 @@ func (c *Client) CreatePuller(subscription, topic string, opts ...ReceiveOption)
 }
 
 func (c *Client) topic(id string) (*pubsub.Topic, error) {
-	topic := c.Client.Topic(id)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	c.createTopicForEmulator(ctx, id)
+	topic := c.Client.Topic(id)
 	ok, err := topic.Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -216,9 +218,10 @@ func (c *Client) topic(id string) (*pubsub.Topic, error) {
 }
 
 func (c *Client) topicInProject(topicID, projectID string) (*pubsub.Topic, error) {
-	topic := c.Client.TopicInProject(topicID, projectID)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	c.createTopicForEmulator(ctx, topicID)
+	topic := c.Client.TopicInProject(topicID, projectID)
 	ok, err := topic.Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -227,6 +230,13 @@ func (c *Client) topicInProject(topicID, projectID string) (*pubsub.Topic, error
 		return topic, nil
 	}
 	return nil, ErrInvalidTopic
+}
+
+// createTopicForEmulator create topic when using pubsub emulator.
+func (c *Client) createTopicForEmulator(ctx context.Context, id string) {
+	if emulator := os.Getenv("PUBSUB_EMULATOR_HOST"); emulator != "" {
+		_, _ = c.Client.CreateTopic(ctx, id)
+	}
 }
 
 // TODO: add metrics
