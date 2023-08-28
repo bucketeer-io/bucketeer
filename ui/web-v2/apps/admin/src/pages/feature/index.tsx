@@ -2,6 +2,7 @@ import { listTags } from '@/modules/tags';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { unwrapResult } from '@reduxjs/toolkit';
 import React, { useCallback, FC, memo, useEffect, useState } from 'react';
+import TagManager from 'react-gtm-module';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -322,6 +323,22 @@ export const FeatureIndexPage: FC = memo(() => {
         history.push(
           `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${data.id}${PAGE_PATH_FEATURE_TARGETING}`
         );
+        TagManager.dataLayer({
+          dataLayer: {
+            event: 'feature_created',
+            environment: currentEnvironment,
+            feature_name: data.name,
+            feature_tags: data.tags,
+            feature_variation_type: data.variationType,
+            feature_variations: data.variations.map((variation) => {
+              return {
+                value: variation.value,
+                name: variation.name,
+                description: variation.description,
+              };
+            }),
+          },
+        });
       });
     },
     [dispatch]

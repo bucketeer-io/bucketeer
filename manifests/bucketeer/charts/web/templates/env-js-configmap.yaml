@@ -10,4 +10,4 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   env.js: |-
-    window.env = {"GOOGLE_ANALYTICS_ID":"{{ .Values.env.googleAnalyticsId }}"};
+    window.env = {"GOOGLE_TAG_MANAGER_ID":"{{ .Values.env.googleTagManagerId }}"};
