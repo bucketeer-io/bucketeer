@@ -326,9 +326,17 @@ export const FeatureIndexPage: FC = memo(() => {
         TagManager.dataLayer({
           dataLayer: {
             event: 'feature_created',
+            environment: currentEnvironment,
             feature_name: data.name,
             feature_tags: data.tags,
             feature_variation_type: data.variationType,
+            feature_variations: data.variations.map((variation) => {
+              return {
+                value: variation.value,
+                name: variation.name,
+                description: variation.description,
+              };
+            }),
           },
         });
       });
