@@ -350,6 +350,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		),
 		logger,
 		notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
+		notification.WithLogger(logger),
 	)
 
 	healthChecker := health.NewGrpcChecker(

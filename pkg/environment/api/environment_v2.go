@@ -79,16 +79,7 @@ func validateGetEnvironmentV2Request(
 	req *environmentproto.GetEnvironmentV2Request,
 	localizer locale.Localizer,
 ) error {
-	if req.Id == "" {
-		dt, err := statusEnvironmentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
+	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
 	return nil
 }
 
@@ -441,20 +432,11 @@ func getUpdateEnvironmentV2Commands(req *environmentproto.UpdateEnvironmentV2Req
 }
 
 func validateUpdateEnvironmentV2Request(id string, commands []command.Command, localizer locale.Localizer) error {
+	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
 	if len(commands) == 0 {
 		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if id == "" {
-		dt, err := statusEnvironmentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -551,20 +533,11 @@ func validateArchiveEnvironmentV2Request(
 	req *environmentproto.ArchiveEnvironmentV2Request,
 	localizer locale.Localizer,
 ) error {
+	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
 	if req.Command == nil {
 		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Id == "" {
-		dt, err := statusEnvironmentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -646,20 +619,11 @@ func validateUnarchiveEnvironmentV2Request(
 	req *environmentproto.UnarchiveEnvironmentV2Request,
 	localizer locale.Localizer,
 ) error {
+	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
 	if req.Command == nil {
 		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Id == "" {
-		dt, err := statusEnvironmentIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
 		})
 		if err != nil {
 			return statusInternal.Err()
