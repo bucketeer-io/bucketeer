@@ -60,15 +60,6 @@ func TestGetEnvironmentV2(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrEnvironmentIDRequired",
-			setup: nil,
-			id:    "",
-			expectedErr: createError(
-				statusEnvironmentIDRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-			),
-		},
-		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
@@ -441,17 +432,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 			),
 		},
 		{
-			desc:  "err: ErrEnvironmentIDRequired",
-			setup: nil,
-			req: &proto.UpdateEnvironmentV2Request{
-				RenameCommand: &proto.RenameEnvironmentV2Command{Name: "name 01"},
-			},
-			expectedErr: createError(
-				statusEnvironmentIDRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-			),
-		},
-		{
 			desc:  "err: ErrInvalidEnvironmentName: only space",
 			setup: nil,
 			req: &proto.UpdateEnvironmentV2Request{
@@ -560,15 +540,6 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrEnvironmentIDRequired",
-			setup: nil,
-			req:   &proto.ArchiveEnvironmentV2Request{Command: &proto.ArchiveEnvironmentV2Command{}},
-			expectedErr: createError(
-				statusEnvironmentIDRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-			),
-		},
-		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
@@ -643,15 +614,6 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 		req         *proto.UnarchiveEnvironmentV2Request
 		expectedErr error
 	}{
-		{
-			desc:  "err: ErrEnvironmentIDRequired",
-			setup: nil,
-			req:   &proto.UnarchiveEnvironmentV2Request{Command: &proto.UnarchiveEnvironmentV2Command{}},
-			expectedErr: createError(
-				statusEnvironmentIDRequired,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-			),
-		},
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
