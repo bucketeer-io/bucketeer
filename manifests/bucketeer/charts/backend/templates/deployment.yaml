@@ -56,6 +56,16 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
+            - name: BUCKETEER_BACKEND_CLOUD_SERVICE
+              value: "{{ .Values.env.cloudService }}"
+            - name: BIGQUERY_EMULATOR_HOST
+              value: "{{.Values.env.bigqueryEmulatorHost}}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{.Values.env.pubsubEmulatorHost}}"
+            - name: BUCKETEER_BACKEND_PROFILE
+              value: "{{.Values.env.profile}}"
+            - name: BUCKETEER_BACKEND_GCP_TRACE_ENABLED
+              value: "{{.Values.env.gcpTraceEnabled}}"
             - name: BUCKETEER_BACKEND_PROJECT
               value: "{{ .Values.env.project }}"
             - name: BUCKETEER_BACKEND_MYSQL_USER
