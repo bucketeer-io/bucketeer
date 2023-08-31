@@ -172,7 +172,7 @@ func TestCreateMAUNotification(t *testing.T) {
 						Cursor:       "",
 					}, nil)
 				// get user count
-				year, month := w.getLastYearMonth(time.Now())
+				year, month := w.getLastYearMonth(time.Now().In(w.location))
 				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetMAUCount(
 					gomock.Any(),
 					&ecproto.GetMAUCountRequest{
