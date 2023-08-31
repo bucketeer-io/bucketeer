@@ -9,6 +9,11 @@ import {
   deleteAutoOpsRule,
   selectAll as selectAllAutoOpsRules,
 } from '@/modules/autoOpsRules';
+import {
+  listOpsCounts,
+  selectAll as selectAllOpsCounts,
+} from '@/modules/opsCounts';
+import { OpsCount } from '@/proto/autoops/ops_count_pb';
 import { AppDispatch } from '@/store';
 import { Popover } from '@headlessui/react';
 import {
@@ -19,7 +24,7 @@ import {
   InformationCircleIcon,
 } from '@heroicons/react/outline';
 import dayjs from 'dayjs';
-import React, { FC, memo, useCallback, useState } from 'react';
+import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useSelector, shallowEqual, useDispatch } from 'react-redux';
 import { useParams, useHistory } from 'react-router-dom';
@@ -63,6 +68,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
   ({ featureId, refetchAutoOpsRules }) => {
     const { operationId } = useParams<{ operationId: string }>();
     const isNew = operationId === ID_NEW;
+    const dispatch = useDispatch<AppDispatch>();
 
     const [selectedAutoOpsRule, setSelectedAutoOpsRule] =
       useState<AutoOpsRule.AsObject | null>(null);
@@ -95,6 +101,27 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         selected: false,
       },
     ]);
+
+    useEffect(() => {
+      if (autoOpsRules?.length > 0) {
+        const ids = autoOpsRules
+          .filter((rule) => {
+            const { typeUrl } = rule.clausesList[0].clause;
+            const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+            return type === ClauseType.EVENT_RATE && !rule.triggeredAt;
+          })
+          .map((rule) => rule.id);
+
+        if (ids.length > 0) {
+          dispatch(
+            listOpsCounts({
+              environmentNamespace: currentEnvironment.namespace,
+              ids,
+            })
+          );
+        }
+      }
+    }, [autoOpsRules]);
 
     const handleClose = useCallback(() => {
       reset();
@@ -187,8 +214,8 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
 
 interface OperationProps {
   rule: AutoOpsRule.AsObject;
-  isActiveSelected: any;
-  handleOpenUpdate: any;
+  isActiveSelected: boolean;
+  handleOpenUpdate: (arg) => void;
   refetchAutoOpsRules: () => void;
 }
 
@@ -201,30 +228,13 @@ const Operation = ({
   const dispatch = useDispatch<AppDispatch>();
   const currentEnvironment = useCurrentEnvironment();
 
-  const { typeUrl, value } = rule.clausesList[0].clause;
+  const opsCounts = useSelector<AppState, OpsCount.AsObject[]>(
+    (state) => selectAllOpsCounts(state.opsCounts),
+    shallowEqual
+  );
+
+  const { typeUrl } = rule.clausesList[0].clause;
   const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
-
-  let datetime;
-  if (type === ClauseType.DATETIME) {
-    const datetimeClause = DatetimeClause.deserializeBinary(
-      value as Uint8Array
-    ).toObject();
-    datetime = dayjs(new Date(datetimeClause.time * 1000)).format(
-      'YYYY-MM-DD HH:mm'
-    );
-  }
-
-  let goal, minCount, threadsholdRate, operator;
-  if (type === ClauseType.EVENT_RATE) {
-    const opsEventRateClause = OpsEventRateClause.deserializeBinary(
-      value as Uint8Array
-    ).toObject();
-
-    goal = opsEventRateClause.goalId;
-    minCount = opsEventRateClause.minCount;
-    threadsholdRate = opsEventRateClause.threadsholdRate * 100;
-    // operator = opsEventRateClause.operator.toString();
-  }
 
   const handleDelete = (ruleId) => {
     dispatch(
@@ -282,95 +292,147 @@ const Operation = ({
       <div className="mt-4">
         <p className="font-bold text-lg text-gray-600">Progress Information</p>
         {type === ClauseType.DATETIME && (
-          <>
-            <div
-              className={classNames(
-                'mt-6 h-2  flex justify-between relative mx-1',
-                isActiveSelected ? 'bg-gray-200' : 'bg-pink-500'
-              )}
-            >
-              <div className="w-[14px] h-[14px] absolute top-1/2 -translate-y-1/2 rounded-full -left-1 bg-pink-500 border border-pink-100" />
-              <div
-                className={classNames(
-                  'w-[14px] h-[14px] absolute top-1/2 -translate-y-1/2 rounded-full -right-1 bg-gray-300 border',
-                  isActiveSelected ? 'bg-gray-200' : 'bg-pink-500'
-                )}
-              />
-            </div>
-            <div className="flex justify-between mt-2">
-              <span>Off</span>
-              <span>On</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-gray-400">Today</span>
-              <span className="text-xs text-gray-400">{datetime}</span>
-            </div>
-          </>
+          <DateTimeOperation rule={rule} isActiveSelected={isActiveSelected} />
         )}
         {type === ClauseType.EVENT_RATE && (
-          <>
-            <div className="flex items-center space-x-2 mt-3">
-              <span className="text-gray-400">Goal</span>
-              <span className="text-gray-500">{goal}</span>
-              <span className="text-gray-200">/</span>
-              <span className="text-gray-400">Min Count</span>
-              <span className="text-gray-500">{minCount}</span>
-              <span className="text-gray-200">/</span>
-              <span className="text-gray-400">Current Goal Count</span>
-              <span className="text-gray-500">
-                {threadsholdRate}/{minCount} (
-                {Math.round((threadsholdRate / minCount) * 100) / 100}%)
-              </span>
-              <InformationCircleIcon width={18} />
-            </div>
-            <div className="mt-3">
-              <div className="flex">
-                {Array(50)
-                  .fill('')
-                  .map((_, i) => {
-                    const value = 54;
-                    const percentage = i * 2;
-
-                    let bgColor = 'bg-gray-200';
-                    if (percentage <= value) {
-                      bgColor = 'bg-pink-500';
-                    } else if (percentage > 90) {
-                      bgColor = 'bg-white';
-                    } else if (percentage % 10 === 0) {
-                      bgColor = 'bg-gray-400';
-                    }
-
-                    return (
-                      <div
-                        key={i}
-                        className={classNames(
-                          'relative h-[8px] flex-1 rounded-[60px]',
-                          bgColor
-                        )}
-                      >
-                        {i !== 0 && (
-                          <div className="absolute h-[8px] w-1.5 rounded-r-full bg-white" />
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-              <div className="flex mt-2">
-                {Array(10)
-                  .fill('')
-                  .map((_, i) => (
-                    <div key={i} className="flex-1">
-                      {i * 10}%
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </>
+          <EventRateOperation rule={rule} opsCounts={opsCounts} />
         )}
       </div>
     </div>
   );
 };
+
+interface DateTimeOperationProps {
+  rule: AutoOpsRule.AsObject;
+  isActiveSelected: boolean;
+}
+
+const DateTimeOperation = memo(
+  ({ rule, isActiveSelected }: DateTimeOperationProps) => {
+    const { value } = rule.clausesList[0].clause;
+
+    const datetimeClause = DatetimeClause.deserializeBinary(
+      value as Uint8Array
+    ).toObject();
+
+    const datetime = dayjs(new Date(datetimeClause.time * 1000)).format(
+      'YYYY-MM-DD HH:mm'
+    );
+
+    return (
+      <div>
+        <div
+          className={classNames(
+            'mt-6 h-2  flex justify-between relative mx-1',
+            isActiveSelected ? 'bg-gray-200' : 'bg-pink-500'
+          )}
+        >
+          <div className="w-[14px] h-[14px] absolute top-1/2 -translate-y-1/2 rounded-full -left-1 bg-pink-500 border border-pink-100" />
+          <div
+            className={classNames(
+              'w-[14px] h-[14px] absolute top-1/2 -translate-y-1/2 rounded-full -right-1 bg-gray-300 border',
+              isActiveSelected ? 'bg-gray-200' : 'bg-pink-500'
+            )}
+          />
+        </div>
+        <div className="flex justify-between mt-2">
+          <span>Off</span>
+          <span>On</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-xs text-gray-400">Today</span>
+          <span className="text-xs text-gray-400">{datetime}</span>
+        </div>
+      </div>
+    );
+  }
+);
+
+interface EventRateOperationProps {
+  rule: AutoOpsRule.AsObject;
+  opsCounts: OpsCount.AsObject[];
+}
+
+const EventRateOperation = memo(
+  ({ rule, opsCounts }: EventRateOperationProps) => {
+    const { value } = rule.clausesList[0].clause;
+
+    const { goalId, minCount } = OpsEventRateClause.deserializeBinary(
+      value as Uint8Array
+    ).toObject();
+
+    const opsCount = opsCounts.find(
+      (opsCount) => opsCount.autoOpsRuleId === rule.id
+    );
+
+    const currentEventRate = opsCount
+      ? Math.round(
+          (opsCount.opsEventCount / opsCount.evaluationCount) * 100 * 100
+        ) / 100
+      : 0;
+
+    return (
+      <div>
+        <div className="flex items-center space-x-2 mt-3">
+          <span className="text-gray-400">Goal</span>
+          <span className="text-gray-500">{goalId}</span>
+          <span className="text-gray-200">/</span>
+          <span className="text-gray-400">Min Count</span>
+          <span className="text-gray-500">{minCount}</span>
+          <span className="text-gray-200">/</span>
+          <span className="text-gray-400">Current Event Rate</span>
+          <span className="text-gray-500">
+            {opsCount
+              ? `${opsCount.opsEventCount}/${opsCount.opsEventCount}(${currentEventRate}%)`
+              : 0}
+          </span>
+          <InformationCircleIcon width={18} />
+        </div>
+        <div className="mt-3">
+          <div className="flex">
+            {Array(50)
+              .fill('')
+              .map((_, i) => {
+                const percentage = i * 2;
+
+                let bgColor = 'bg-gray-200';
+                if (percentage <= currentEventRate) {
+                  bgColor = 'bg-pink-500';
+                } else if (percentage > 90) {
+                  bgColor = 'bg-white';
+                } else if (percentage % 10 === 0) {
+                  bgColor = 'bg-gray-400';
+                }
+
+                return (
+                  <div
+                    key={i}
+                    className={classNames(
+                      'relative h-[8px] flex-1 rounded-[60px]',
+                      bgColor
+                    )}
+                  >
+                    {i !== 0 && (
+                      <div className="absolute h-[8px] w-1.5 rounded-r-full bg-white" />
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+          <div className="flex mt-2">
+            {Array(10)
+              .fill('')
+              .map((_, i) => (
+                <div key={i} className="flex-1">
+                  {i * 10}%
+                </div>
+              ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
 
 export const opsTypeOptions = [
   {

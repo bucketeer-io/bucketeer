@@ -287,7 +287,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                       id={radio.label}
                       type="radio"
                       value={radio.value}
-                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-[2px]"
+                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
                     />
                     <div className="flex-1">
                       <label htmlFor={radio.label}>{radio.label}</label>
