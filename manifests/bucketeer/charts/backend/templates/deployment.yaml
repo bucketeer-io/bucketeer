@@ -64,6 +64,8 @@ spec:
               value: "{{.Values.env.pubsubEmulatorHost}}"
             - name: BUCKETEER_BACKEND_PROFILE
               value: "{{.Values.env.profile}}"
+            - name: BUCKETEER_TEST_ENABLED
+              value: "{{.Values.env.bucketeerTestEnabled}}"
             - name: BUCKETEER_BACKEND_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpTraceEnabled}}"
             - name: BUCKETEER_BACKEND_PROJECT

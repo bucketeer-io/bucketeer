@@ -9,6 +9,7 @@ namespace: default
 env:
   cloudService:
   profile:
+  bucketeerTestEnabled:
   gcpTraceEnabled:
   bigqueryEmulatorHost:
   pubsubEmulatorHost:
