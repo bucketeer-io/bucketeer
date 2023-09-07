@@ -43,6 +43,7 @@ import { Feature } from '../../proto/feature/feature_pb';
 import { classNames } from '../../utils/css';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
 import { Overlay } from '../Overlay';
+import { HoverPopover } from '../HoverPopover';
 
 enum TabLabel {
   ACTIVE = 'Active',
@@ -348,6 +349,25 @@ const DateTimeOperation = memo(
   }
 );
 
+const getEquallyDividedArray = (maxValue: number) => {
+  const totalNumbers = 9;
+  const resultArray = [];
+  const step = maxValue / totalNumbers;
+
+  for (let i = 0; i < totalNumbers; i++) {
+    // Calculate the next value
+    let nextValue = (i + 1) * step;
+
+    // Round the value to 2 decimal places
+    nextValue = Math.round(nextValue * 100) / 100;
+
+    // Push the rounded value into the result array
+    resultArray.push(nextValue);
+  }
+
+  return [0, ...resultArray];
+};
+
 interface EventRateOperationProps {
   rule: AutoOpsRule.AsObject;
   opsCounts: OpsCount.AsObject[];
@@ -357,36 +377,54 @@ const EventRateOperation = memo(
   ({ rule, opsCounts }: EventRateOperationProps) => {
     const { value } = rule.clausesList[0].clause;
 
-    const { goalId, minCount } = OpsEventRateClause.deserializeBinary(
-      value as Uint8Array
-    ).toObject();
+    const { goalId, minCount, threadsholdRate } =
+      OpsEventRateClause.deserializeBinary(value as Uint8Array).toObject();
 
     const opsCount = opsCounts.find(
       (opsCount) => opsCount.autoOpsRuleId === rule.id
     );
 
-    const currentEventRate = opsCount
-      ? Math.round(
+    const threadsholdPercentageRange = getEquallyDividedArray(
+      threadsholdRate * 100
+    );
+
+    let currentEventRate = 0;
+    if (opsCount && opsCount.opsEventCount >= minCount) {
+      currentEventRate =
+        Math.round(
           (opsCount.opsEventCount / opsCount.evaluationCount) * 100 * 100
-        ) / 100
-      : 0;
+        ) / 100;
+    }
 
     return (
       <div>
         <div className="flex items-center space-x-2 mt-3">
           <span className="text-gray-400">Goal</span>
-          <span className="text-gray-500">{goalId}</span>
+          <span className="text-gray-500 truncate max-w-[120px]">{goalId}</span>
           <span className="text-gray-200">/</span>
           <span className="text-gray-400">Min Count</span>
           <span className="text-gray-500">{minCount}</span>
           <span className="text-gray-200">/</span>
+          <span className="text-gray-400">Total Count Events</span>
+          <span className="text-gray-500">
+            {opsCount ? opsCount.opsEventCount : 0}
+          </span>
+          <span className="text-gray-200">/</span>
           <span className="text-gray-400">Current Event Rate</span>
           <span className="text-gray-500">
-            {opsCount
-              ? `${opsCount.opsEventCount}/${opsCount.opsEventCount}(${currentEventRate}%)`
-              : 0}
+            {opsCount ? `${currentEventRate}%` : 0}
           </span>
-          <InformationCircleIcon width={18} />
+          <HoverPopover
+            render={() => {
+              return (
+                <div className="shadow p-2 rounded bg-white text-sm whitespace-nowrap -ml-28 mt-[-60px]">
+                  Goal count / Evaluation count * 100
+                </div>
+              );
+            }}
+          >
+            <InformationCircleIcon width={18} />
+          </HoverPopover>
         </div>
         <div className="mt-3">
           <div className="flex">
@@ -395,8 +433,15 @@ const EventRateOperation = memo(
               .map((_, i) => {
                 const percentage = i * 2;
 
+                // Calculate percentage contain by one block. There are 46 blocks in the chart.
+                const oneBlockPercentage = (threadsholdRate * 100 * i) / 46;
+
                 let bgColor = 'bg-gray-200';
-                if (percentage <= currentEventRate) {
+
+                if (
+                  oneBlockPercentage <= currentEventRate &&
+                  currentEventRate !== 0
+                ) {
                   bgColor = 'bg-pink-500';
                 } else if (percentage > 90) {
                   bgColor = 'bg-white';
@@ -412,6 +457,11 @@ const EventRateOperation = memo(
                       bgColor
                     )}
                   >
+                    {percentage === 90 && (
+                      <div className="absolute -left-6 text-sm text-pink-500 bottom-5 font-semibold">
+                        Threshold
+                      </div>
+                    )}
                     {i !== 0 && (
                       <div className="absolute h-[8px] w-1.5 rounded-r-full bg-white" />
                     )}
@@ -420,13 +470,11 @@ const EventRateOperation = memo(
               })}
           </div>
           <div className="flex mt-2">
-            {Array(10)
-              .fill('')
-              .map((_, i) => (
-                <div key={i} className="flex-1">
-                  {i * 10}%
-                </div>
-              ))}
+            {threadsholdPercentageRange.map((percentage) => (
+              <div key={percentage} className="flex-1">
+                {percentage}%
+              </div>
+            ))}
           </div>
         </div>
       </div>
