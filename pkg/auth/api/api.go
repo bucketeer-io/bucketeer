@@ -350,7 +350,7 @@ func (s *authService) generateToken(
 	if err := s.maybeCheckEmail(ctx, claims.Email, localizer); err != nil {
 		return nil, err
 	}
-	resp, err := s.accountClient.GetMeByEmail(ctx, &accountproto.GetMeByEmailRequest{
+	resp, err := s.accountClient.GetMeByEmailV2(ctx, &accountproto.GetMeByEmailV2Request{
 		Email: claims.Email,
 	})
 	if err != nil {

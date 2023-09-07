@@ -42,3 +42,10 @@ message EnvironmentRole {
   bool trial_project = 3;
   int64 trial_started_at = 4;  // optional
 }
+
+message EnvironmentRoleV2 {
+  environment.EnvironmentV2 environment = 1;
+  Account.Role role = 2;
+  bool trial_project = 3;
+  int64 trial_started_at = 4;  // optional
+}

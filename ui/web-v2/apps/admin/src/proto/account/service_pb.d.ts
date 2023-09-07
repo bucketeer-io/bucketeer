@@ -23,6 +23,22 @@ export namespace GetMeRequest {
   }
 }
 
+export class GetMeV2Request extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetMeV2Request.AsObject;
+  static toObject(includeInstance: boolean, msg: GetMeV2Request): GetMeV2Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetMeV2Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetMeV2Request;
+  static deserializeBinaryFromReader(message: GetMeV2Request, reader: jspb.BinaryReader): GetMeV2Request;
+}
+
+export namespace GetMeV2Request {
+  export type AsObject = {
+  }
+}
+
 export class GetMeByEmailRequest extends jspb.Message {
   getEmail(): string;
   setEmail(value: string): void;
@@ -38,6 +54,26 @@ export class GetMeByEmailRequest extends jspb.Message {
 }
 
 export namespace GetMeByEmailRequest {
+  export type AsObject = {
+    email: string,
+  }
+}
+
+export class GetMeByEmailV2Request extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetMeByEmailV2Request.AsObject;
+  static toObject(includeInstance: boolean, msg: GetMeByEmailV2Request): GetMeByEmailV2Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetMeByEmailV2Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetMeByEmailV2Request;
+  static deserializeBinaryFromReader(message: GetMeByEmailV2Request, reader: jspb.BinaryReader): GetMeByEmailV2Request;
+}
+
+export namespace GetMeByEmailV2Request {
   export type AsObject = {
     email: string,
   }
@@ -88,6 +124,36 @@ export namespace GetMeResponse {
     disabled: boolean,
     environmentRolesList: Array<proto_account_account_pb.EnvironmentRole.AsObject>,
     deleted: boolean,
+  }
+}
+
+export class GetMeV2Response extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getIsAdmin(): boolean;
+  setIsAdmin(value: boolean): void;
+
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<proto_account_account_pb.EnvironmentRoleV2>;
+  setEnvironmentRolesList(value: Array<proto_account_account_pb.EnvironmentRoleV2>): void;
+  addEnvironmentRoles(value?: proto_account_account_pb.EnvironmentRoleV2, index?: number): proto_account_account_pb.EnvironmentRoleV2;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetMeV2Response.AsObject;
+  static toObject(includeInstance: boolean, msg: GetMeV2Response): GetMeV2Response.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetMeV2Response, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetMeV2Response;
+  static deserializeBinaryFromReader(message: GetMeV2Response, reader: jspb.BinaryReader): GetMeV2Response;
+}
+
+export namespace GetMeV2Response {
+  export type AsObject = {
+    email: string,
+    isAdmin: boolean,
+    environmentRolesList: Array<proto_account_account_pb.EnvironmentRoleV2.AsObject>,
   }
 }
 

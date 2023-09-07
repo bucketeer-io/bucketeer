@@ -27,9 +27,19 @@ import "proto/account/command.proto";
 // it's called from WebUI.
 message GetMeRequest {}
 
+// account is retrieved by IDToken.
+// it's called from WebUI.
+message GetMeV2Request {}
+
 // account is retrieved by email.
 // it's called from another microservice.
 message GetMeByEmailRequest {
+  string email = 1;
+}
+
+// account is retrieved by email.
+// it's called from another microservice.
+message GetMeByEmailV2Request {
   string email = 1;
 }
 
@@ -41,6 +51,12 @@ message GetMeResponse {
   bool disabled = 5 [deprecated = true];
   repeated EnvironmentRole environment_roles = 6;
   bool deleted = 7 [deprecated = true];
+}
+
+message GetMeV2Response {
+  string email = 1;
+  bool is_admin = 2;
+  repeated EnvironmentRoleV2 environment_roles = 3;
 }
 
 message CreateAdminAccountRequest {
@@ -247,8 +263,14 @@ message GetAPIKeyBySearchingAllEnvironmentsResponse {
 }
 
 service AccountService {
-  rpc GetMe(GetMeRequest) returns (GetMeResponse);
-  rpc GetMeByEmail(GetMeByEmailRequest) returns (GetMeResponse);
+  rpc GetMe(GetMeRequest) returns (GetMeResponse) {
+    option deprecated = true;
+  };
+  rpc GetMeV2(GetMeV2Request) returns (GetMeV2Response);
+  rpc GetMeByEmail(GetMeByEmailRequest) returns (GetMeResponse) {
+    option deprecated = true;
+  };
+  rpc GetMeByEmailV2(GetMeByEmailV2Request) returns (GetMeV2Response);
   rpc CreateAdminAccount(CreateAdminAccountRequest)
       returns (CreateAdminAccountResponse);
   rpc EnableAdminAccount(EnableAdminAccountRequest)

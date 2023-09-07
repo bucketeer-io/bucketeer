@@ -95,6 +95,31 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "EnvironmentRoleV2",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment",
+                "type": "environment.EnvironmentV2"
+              },
+              {
+                "id": 2,
+                "name": "role",
+                "type": "Account.Role"
+              },
+              {
+                "id": 3,
+                "name": "trial_project",
+                "type": "bool"
+              },
+              {
+                "id": 4,
+                "name": "trial_started_at",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "imports": [
@@ -417,7 +442,20 @@
             "name": "GetMeRequest"
           },
           {
+            "name": "GetMeV2Request"
+          },
+          {
             "name": "GetMeByEmailRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetMeByEmailV2Request",
             "fields": [
               {
                 "id": 1,
@@ -488,6 +526,27 @@
                     "value": "true"
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "name": "GetMeV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "is_admin",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "environment_roles",
+                "type": "EnvironmentRoleV2",
+                "is_repeated": true
               }
             ]
           },
@@ -1020,12 +1079,34 @@
               {
                 "name": "GetMe",
                 "in_type": "GetMeRequest",
-                "out_type": "GetMeResponse"
+                "out_type": "GetMeResponse",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "GetMeV2",
+                "in_type": "GetMeV2Request",
+                "out_type": "GetMeV2Response"
               },
               {
                 "name": "GetMeByEmail",
                 "in_type": "GetMeByEmailRequest",
-                "out_type": "GetMeResponse"
+                "out_type": "GetMeResponse",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "GetMeByEmailV2",
+                "in_type": "GetMeByEmailV2Request",
+                "out_type": "GetMeV2Response"
               },
               {
                 "name": "CreateAdminAccount",
@@ -2248,12 +2329,14 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause"
+                "type": "ProgressiveRolloutManualScheduleClause",
+                "optional": true
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause"
+                "type": "ProgressiveRolloutTemplateScheduleClause",
+                "optional": true
               }
             ]
           },
@@ -3044,7 +3127,8 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status"
+                "type": "ProgressiveRollout.Status",
+                "optional": true
               },
               {
                 "id": 8,
@@ -3054,7 +3138,8 @@
               {
                 "id": 9,
                 "name": "type",
-                "type": "ProgressiveRollout.Type"
+                "type": "ProgressiveRollout.Type",
+                "optional": true
               }
             ]
           },

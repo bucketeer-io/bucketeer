@@ -13,6 +13,15 @@ type AccountServiceGetMe = {
   readonly responseType: typeof proto_account_service_pb.GetMeResponse;
 };
 
+type AccountServiceGetMeV2 = {
+  readonly methodName: string;
+  readonly service: typeof AccountService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_account_service_pb.GetMeV2Request;
+  readonly responseType: typeof proto_account_service_pb.GetMeV2Response;
+};
+
 type AccountServiceGetMeByEmail = {
   readonly methodName: string;
   readonly service: typeof AccountService;
@@ -20,6 +29,15 @@ type AccountServiceGetMeByEmail = {
   readonly responseStream: false;
   readonly requestType: typeof proto_account_service_pb.GetMeByEmailRequest;
   readonly responseType: typeof proto_account_service_pb.GetMeResponse;
+};
+
+type AccountServiceGetMeByEmailV2 = {
+  readonly methodName: string;
+  readonly service: typeof AccountService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_account_service_pb.GetMeByEmailV2Request;
+  readonly responseType: typeof proto_account_service_pb.GetMeV2Response;
 };
 
 type AccountServiceCreateAdminAccount = {
@@ -196,7 +214,9 @@ type AccountServiceGetAPIKeyBySearchingAllEnvironments = {
 export class AccountService {
   static readonly serviceName: string;
   static readonly GetMe: AccountServiceGetMe;
+  static readonly GetMeV2: AccountServiceGetMeV2;
   static readonly GetMeByEmail: AccountServiceGetMeByEmail;
+  static readonly GetMeByEmailV2: AccountServiceGetMeByEmailV2;
   static readonly CreateAdminAccount: AccountServiceCreateAdminAccount;
   static readonly EnableAdminAccount: AccountServiceEnableAdminAccount;
   static readonly DisableAdminAccount: AccountServiceDisableAdminAccount;
@@ -259,6 +279,15 @@ export class AccountServiceClient {
     requestMessage: proto_account_service_pb.GetMeRequest,
     callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetMeResponse|null) => void
   ): UnaryResponse;
+  getMeV2(
+    requestMessage: proto_account_service_pb.GetMeV2Request,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetMeV2Response|null) => void
+  ): UnaryResponse;
+  getMeV2(
+    requestMessage: proto_account_service_pb.GetMeV2Request,
+    callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetMeV2Response|null) => void
+  ): UnaryResponse;
   getMeByEmail(
     requestMessage: proto_account_service_pb.GetMeByEmailRequest,
     metadata: grpc.Metadata,
@@ -267,6 +296,15 @@ export class AccountServiceClient {
   getMeByEmail(
     requestMessage: proto_account_service_pb.GetMeByEmailRequest,
     callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetMeResponse|null) => void
+  ): UnaryResponse;
+  getMeByEmailV2(
+    requestMessage: proto_account_service_pb.GetMeByEmailV2Request,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetMeV2Response|null) => void
+  ): UnaryResponse;
+  getMeByEmailV2(
+    requestMessage: proto_account_service_pb.GetMeByEmailV2Request,
+    callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetMeV2Response|null) => void
   ): UnaryResponse;
   createAdminAccount(
     requestMessage: proto_account_service_pb.CreateAdminAccountRequest,
