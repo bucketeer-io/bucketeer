@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { shallowEqual, useSelector } from 'react-redux';
 
-import { getMe } from '../grpc/account';
-import { Account, EnvironmentRole } from '../proto/account/account_pb';
-import { GetMeRequest } from '../proto/account/service_pb';
+import { getMeV2 } from '../grpc/account';
+import { Account, EnvironmentRoleV2 } from '../proto/account/account_pb';
+import { GetMeV2Request } from '../proto/account/service_pb';
 import { Environment } from '../proto/environment/environment_pb';
 import {
   getCurrentEnvironmentId,
@@ -16,14 +16,14 @@ const MODULE_NAME = 'me';
 
 export interface Me {
   isAdmin: boolean;
-  environmentRoles: Array<EnvironmentRole.AsObject>;
+  environmentRoles: Array<EnvironmentRoleV2.AsObject>;
   isLogin: boolean;
 }
 
 export type MeState = Me;
 
 export const fetchMe = createAsyncThunk<Me>('me/fetch', async () => {
-  const res = await getMe(new GetMeRequest());
+  const res = await getMeV2(new GetMeV2Request());
   return {
     isAdmin: res.response.getIsAdmin(),
     environmentRoles: res.response.toObject().environmentRolesList,

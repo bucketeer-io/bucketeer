@@ -16,6 +16,8 @@ import {
   GetAccountResponse,
   GetMeRequest,
   GetMeResponse,
+  GetMeV2Request,
+  GetMeV2Response,
   ListAccountsRequest,
   ListAccountsResponse,
 } from '../proto/account/service_pb';
@@ -37,6 +39,25 @@ export interface GetMeResult {
 export function getMe(request: GetMeRequest): Promise<GetMeResult> {
   return new Promise((resolve: (result: GetMeResult) => void, reject): void => {
     client.getMe(request, getMetaData(), (error, response): void => {
+      if (isNotNull(error) || isNull(response)) {
+        reject(
+          new AccountServiceError(extractErrorMessage(error), request, error)
+        );
+      } else {
+        resolve({ request, response });
+      }
+    });
+  });
+}
+
+export interface GetMeV2Result {
+  request: GetMeV2Request;
+  response: GetMeV2Response;
+}
+
+export function getMeV2(request: GetMeV2Request): Promise<GetMeV2Result> {
+  return new Promise((resolve: (result: GetMeV2Result) => void, reject): void => {
+    client.getMeV2(request, getMetaData(), (error, response): void => {
       if (isNotNull(error) || isNull(response)) {
         reject(
           new AccountServiceError(extractErrorMessage(error), request, error)
