@@ -69,6 +69,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     ]);
 
     const [isAddGoalOpen, setIsAddGoalOpen] = useState(false);
+    const [radioList, setRadioList] = useState([]);
 
     const methods = useFormContext();
     const {
@@ -100,24 +101,27 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       },
     ];
 
-    const radioList =
-      opsType === OpsType.ENABLE_FEATURE
-        ? [
-            {
-              label: 'Schedule',
-              value: ClauseType.DATETIME,
-            },
-          ]
-        : [
-            {
-              label: 'Schedule',
-              value: ClauseType.DATETIME,
-            },
-            {
-              label: 'Event Rate',
-              value: ClauseType.EVENT_RATE,
-            },
-          ];
+    const setEnableList = () => {
+      setRadioList([
+        {
+          label: 'Schedule',
+          value: ClauseType.DATETIME,
+        },
+      ]);
+    };
+
+    const setKillSwitchList = () => {
+      setRadioList([
+        {
+          label: 'Schedule',
+          value: ClauseType.DATETIME,
+        },
+        {
+          label: 'Event Rate',
+          value: ClauseType.EVENT_RATE,
+        },
+      ]);
+    };
 
     useEffect(() => {
       if (autoOpsRule) {
@@ -126,6 +130,12 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
 
         setValue('opsType', autoOpsRule.opsType);
         setValue('clauseType', type);
+
+        if (autoOpsRule.opsType === OpsType.ENABLE_FEATURE) {
+          setEnableList();
+        } else {
+          setKillSwitchList();
+        }
 
         if (type === ClauseType.DATETIME) {
           const datetime = DatetimeClause.deserializeBinary(
@@ -150,6 +160,8 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
           );
           setValue('eventRate.minCount', opsEventRateClause.minCount);
         }
+      } else {
+        setEnableList();
       }
     }, [autoOpsRule]);
 
@@ -273,6 +285,12 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                     onClick={() => {
                       setValue('opsType', tab.value);
                       setValue('clauseType', ClauseType.DATETIME);
+
+                      if (tab.value === OpsType.ENABLE_FEATURE) {
+                        setEnableList();
+                      } else {
+                        setKillSwitchList();
+                      }
                     }}
                   >
                     {tab.label}
@@ -377,7 +395,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                 />
                               </div>
                               <div>
-                                <span className="input-label">Percentage</span>
+                                <span className="input-label">Threshold</span>
                                 <div className="flex">
                                   <input
                                     {...register('eventRate.threadsholdRate')}

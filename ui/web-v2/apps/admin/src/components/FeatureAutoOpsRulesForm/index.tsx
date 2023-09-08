@@ -41,9 +41,9 @@ import {
 } from '../../proto/autoops/clause_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { classNames } from '../../utils/css';
+import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
 import { Overlay } from '../Overlay';
-import { HoverPopover } from '../HoverPopover';
 
 enum TabLabel {
   ACTIVE = 'Active',
@@ -155,7 +155,13 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       <div className="px-10 py-6 bg-white">
         <div className="flex justify-between">
           <div />
-          <button onClick={handleOpen} className="btn-submit space-x-2">
+          <button
+            onClick={() => {
+              setSelectedAutoOpsRule(null);
+              handleOpen();
+            }}
+            className="btn-submit space-x-2"
+          >
             <PlusIcon width={18} />
             <span>New Operation</span>
           </button>
@@ -198,16 +204,16 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               />
             ))}
         </div>
-        <Overlay open={open} onClose={handleClose}>
-          {isNew && (
+        {open && (
+          <Overlay open={open} onClose={handleClose}>
             <OperationAddUpdateForm
               onSubmit={handleSubmit(handleOnSubmit)}
               onCancel={handleClose}
               featureId={featureId}
               autoOpsRule={selectedAutoOpsRule}
             />
-          )}
-        </Overlay>
+          </Overlay>
+        )}
       </div>
     );
   }
@@ -358,8 +364,8 @@ const getEquallyDividedArray = (maxValue: number) => {
     // Calculate the next value
     let nextValue = (i + 1) * step;
 
-    // Round the value to 2 decimal places
-    nextValue = Math.round(nextValue * 100) / 100;
+    // Round the value
+    nextValue = Math.round(nextValue);
 
     // Push the rounded value into the result array
     resultArray.push(nextValue);
