@@ -425,7 +425,7 @@ const EventRateOperation = memo(
           <span className="text-gray-200">/</span>
           <span className="text-gray-400">Current Event Rate</span>
           <span className="text-gray-500">
-            {opsCount ? `${currentEventRate}%` : 0}
+            {opsCount ? `${currentEventRate}%` : '0%'}
           </span>
           <HoverPopover
             render={() => {
