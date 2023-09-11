@@ -44,6 +44,7 @@ import { classNames } from '../../utils/css';
 import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
 import { Overlay } from '../Overlay';
+import { useIntl } from 'react-intl';
 
 enum TabLabel {
   ACTIVE = 'Active',
@@ -326,6 +327,11 @@ const DateTimeOperation = memo(
       'YYYY-MM-DD HH:mm'
     );
 
+    const createdAt = dayjs(new Date(rule.createdAt * 1000)).format(
+      'YYYY-MM-DD HH:mm'
+    );
+
+    console.log(rule);
     return (
       <div>
         <div
@@ -346,8 +352,8 @@ const DateTimeOperation = memo(
           <span>Off</span>
           <span>On</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-xs text-gray-400">Today</span>
+        <div className="flex justify-between mt-1">
+          <span className="text-xs text-gray-400">{createdAt}</span>
           <span className="text-xs text-gray-400">{datetime}</span>
         </div>
       </div>
@@ -356,7 +362,7 @@ const DateTimeOperation = memo(
 );
 
 const getEquallyDividedArray = (maxValue: number) => {
-  const totalNumbers = 9;
+  const totalNumbers = 10;
   const resultArray = [];
   const step = maxValue / totalNumbers;
 
@@ -382,6 +388,7 @@ interface EventRateOperationProps {
 const EventRateOperation = memo(
   ({ rule, opsCounts }: EventRateOperationProps) => {
     const { value } = rule.clausesList[0].clause;
+    const { formatMessage: f } = useIntl();
 
     const { goalId, minCount, threadsholdRate } =
       OpsEventRateClause.deserializeBinary(value as Uint8Array).toObject();
@@ -434,13 +441,13 @@ const EventRateOperation = memo(
         </div>
         <div className="mt-3">
           <div className="flex">
-            {Array(50)
+            {Array(56)
               .fill('')
               .map((_, i) => {
                 const percentage = i * 2;
 
-                // Calculate percentage contain by one block. There are 46 blocks in the chart.
-                const oneBlockPercentage = (threadsholdRate * 100 * i) / 46;
+                // Calculate percentage contain by one block. There are 51 blocks in the chart.
+                const oneBlockPercentage = (threadsholdRate * 100 * i) / 51;
 
                 let bgColor = 'bg-gray-200';
 
@@ -449,7 +456,7 @@ const EventRateOperation = memo(
                   currentEventRate !== 0
                 ) {
                   bgColor = 'bg-pink-500';
-                } else if (percentage > 90) {
+                } else if (percentage > 100) {
                   bgColor = 'bg-white';
                 } else if (percentage % 10 === 0) {
                   bgColor = 'bg-gray-400';
@@ -463,9 +470,9 @@ const EventRateOperation = memo(
                       bgColor
                     )}
                   >
-                    {percentage === 90 && (
-                      <div className="absolute -left-6 text-sm text-pink-500 bottom-5 font-semibold">
-                        Threshold
+                    {percentage === 100 && (
+                      <div className="absolute -left-6 text-sm text-pink-500 bottom-5 font-semibold whitespace-nowrap">
+                        {f(messages.autoOps.threshold)}
                       </div>
                     )}
                     {i !== 0 && (
@@ -475,7 +482,7 @@ const EventRateOperation = memo(
                 );
               })}
           </div>
-          <div className="flex mt-2">
+          <div className="flex mt-2 pr-[1%]">
             {threadsholdPercentageRange.map((percentage) => (
               <div key={percentage} className="flex-1">
                 {percentage}%

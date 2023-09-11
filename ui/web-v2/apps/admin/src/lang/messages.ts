@@ -388,6 +388,34 @@ export const messages = {
         defaultMessage: 'Date time',
       }),
     },
+    condition: defineMessage({
+      id: 'autoOps.condition',
+      defaultMessage: 'Condition',
+    }),
+    threshold: defineMessage({
+      id: 'autoOps.threshold',
+      defaultMessage: 'Threshold',
+    }),
+    enable: defineMessage({
+      id: 'autoOps.enable',
+      defaultMessage: 'Enable',
+    }),
+    killSwitch: defineMessage({
+      id: 'autoOps.killSwitch',
+      defaultMessage: 'Kill Switch',
+    }),
+    schedule: defineMessage({
+      id: 'autoOps.schedule',
+      defaultMessage: 'Schedule',
+    }),
+    eventRate: defineMessage({
+      id: 'autoOps.eventRate',
+      defaultMessage: 'Event Rate',
+    }),
+    startDate: defineMessage({
+      id: 'autoOps.startDate',
+      defaultMessage: 'Start Date',
+    }),
   },
   maintainer: defineMessage({
     id: 'maintainer',

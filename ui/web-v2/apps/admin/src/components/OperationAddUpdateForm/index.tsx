@@ -40,6 +40,7 @@ import {
 } from '../../modules/goals';
 import { ClauseType, operatorOptions } from '../FeatureAutoOpsRulesForm';
 import { Option, Select } from '../Select';
+import { intl } from '@/lang';
 
 export interface OperationAddUpdateFormProps {
   featureId: string;
@@ -48,10 +49,10 @@ export interface OperationAddUpdateFormProps {
   autoOpsRule?: AutoOpsRule.AsObject;
 }
 
-enum TabLabel {
-  ENABLE = 'Enable',
-  KILL_SWITCH = 'Kill Switch',
-}
+const TabLabel = {
+  ENABLE: intl.formatMessage(messages.autoOps.enable),
+  KILL_SWITCH: intl.formatMessage(messages.autoOps.killSwitch),
+};
 
 export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
   ({ onSubmit, onCancel, featureId, autoOpsRule }) => {
@@ -104,7 +105,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     const setEnableList = () => {
       setRadioList([
         {
-          label: 'Schedule',
+          label: f(messages.autoOps.schedule),
           value: ClauseType.DATETIME,
         },
       ]);
@@ -113,11 +114,11 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     const setKillSwitchList = () => {
       setRadioList([
         {
-          label: 'Schedule',
+          label: f(messages.autoOps.schedule),
           value: ClauseType.DATETIME,
         },
         {
-          label: 'Event Rate',
+          label: f(messages.autoOps.eventRate),
           value: ClauseType.EVENT_RATE,
         },
       ]);
@@ -312,7 +313,9 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                       {radio.value === ClauseType.DATETIME &&
                         clauseType === ClauseType.DATETIME && (
                           <div className="mt-1">
-                            <span className="input-label">Start Date</span>
+                            <span className="input-label">
+                              {f(messages.autoOps.startDate)}
+                            </span>
                             <DatetimeClauseInput name="datetime.time" />
                             <p className="input-error">
                               {errors.datetime?.time?.message && (
@@ -376,7 +379,9 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                             </div>
                             <div className="grid grid-cols-3 gap-3">
                               <div>
-                                <span className="input-label">Condition</span>
+                                <span className="input-label">
+                                  {f(messages.autoOps.condition)}
+                                </span>
                                 <Controller
                                   name="eventRate.operator"
                                   control={control}
@@ -395,7 +400,9 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                 />
                               </div>
                               <div>
-                                <span className="input-label">Threshold</span>
+                                <span className="input-label">
+                                  {f(messages.autoOps.threshold)}
+                                </span>
                                 <div className="flex">
                                   <input
                                     {...register('eventRate.threadsholdRate')}
@@ -481,7 +488,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             </div>
             <button
               type="button"
-              className="btn-submit"
+              className="btn-submit-gradient"
               disabled={!isValid || isSubmitting}
               onClick={handleSubmit(handleOnSubmit)}
             >
