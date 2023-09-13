@@ -398,7 +398,7 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
 
   useEffect(() => {
     listFeatures({
-      environmentNamespace: currentEnvironment.namespace,
+      environmentNamespace: currentEnvironment.id,
       pageSize: 0,
       cursor: '',
       tags: [],
@@ -551,7 +551,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
     const dispatchListFeatures = () => {
       return dispatch(
         listFeatures({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: 99999,
           cursor: '',
           tags: [],
@@ -951,7 +951,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
           });
           dispatch(
             listSegments({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               cursor: '',
             })
           );

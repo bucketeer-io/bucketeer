@@ -162,7 +162,7 @@ export const ExperimentIndexPage: FC = memo(() => {
         options && options.archived ? options.archived === 'true' : false;
       dispatch(
         listExperiments({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: EXPERIMENT_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -243,7 +243,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createExperiment({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           name: data.name,
           description: data.description,
           featureId: data.featureId,
@@ -275,7 +275,7 @@ export const ExperimentIndexPage: FC = memo(() => {
       }
       dispatch(
         updateExperiment({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: experimentId,
           changeNameCommand: changeExperimentNameCommand,
           changeDescriptionCommand: changeExperimentDescriptionCommand,
@@ -283,7 +283,7 @@ export const ExperimentIndexPage: FC = memo(() => {
       ).then(() => {
         dispatch(
           getExperiment({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: experimentId,
           })
         );
@@ -317,7 +317,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         archiveExperiment({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.experiment.id,
         })
       ).then(() => {
@@ -333,7 +333,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     if (isUpdate) {
       dispatch(
         getExperiment({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: experimentId,
         })
       ).then((e) => {

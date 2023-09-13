@@ -147,7 +147,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
         );
 
         const updateAutoOpsRuleParams = createUpdateAutoOpsRuleParams(
-          currentEnvironment.namespace,
+          currentEnvironment.id,
           defaultValues.autoOpsRules,
           data.autoOpsRules
         );
@@ -159,7 +159,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
             new Promise((resolve) => {
               dispatch(
                 createAutoOpsRule({
-                  environmentNamespace: currentEnvironment.namespace,
+                  environmentNamespace: currentEnvironment.id,
                   command: command,
                 })
               ).then((res) => {
@@ -174,7 +174,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
             new Promise((resolve) => {
               dispatch(
                 deleteAutoOpsRule({
-                  environmentNamespace: currentEnvironment.namespace,
+                  environmentNamespace: currentEnvironment.id,
                   id: id,
                 })
               ).then((res) => {
@@ -198,7 +198,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
           dispatch(
             listAutoOpsRules({
               featureId: featureId,
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
             })
           );
         });
@@ -210,12 +210,12 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       dispatch(
         listAutoOpsRules({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
         })
       );
       dispatch(
         listGoals({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: 99999,
           cursor: '',
           searchKeyword: '',

@@ -109,7 +109,7 @@ export const PushIndexPage: FC = memo(() => {
       const cursor = (page - 1) * PUSH_LIST_PAGE_SIZE;
       dispatch(
         listPushes({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: PUSH_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -171,7 +171,7 @@ export const PushIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createPush({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           name: data.name,
           fcmApiKey: data.fcmApiKey,
           tags: data.tags,
@@ -227,7 +227,7 @@ export const PushIndexPage: FC = memo(() => {
       }
       dispatch(
         updatePush({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: pushId,
           name: name,
           currentTags: push.tagsList,
@@ -276,7 +276,7 @@ export const PushIndexPage: FC = memo(() => {
     (data) => {
       dispatch(
         deletePush({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.push.id,
         })
       ).then(() => {
@@ -308,7 +308,7 @@ export const PushIndexPage: FC = memo(() => {
   useEffect(() => {
     dispatch(
       listTags({
-        environmentNamespace: currentEnvironment.namespace,
+        environmentNamespace: currentEnvironment.id,
         pageSize: 99999,
         cursor: '',
         orderBy: ListTagsRequest.OrderBy.DEFAULT,

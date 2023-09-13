@@ -104,7 +104,7 @@ export const WebhookIndexPage: FC = memo(() => {
       const cursor = (page - 1) * PUSH_LIST_PAGE_SIZE;
       dispatch(
         listWebhooks({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: PUSH_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -165,7 +165,7 @@ export const WebhookIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createWebhook({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           name: data.name,
           description: data.description,
         })
@@ -220,7 +220,7 @@ export const WebhookIndexPage: FC = memo(() => {
       }
       dispatch(
         updateWebhook({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: webhookId,
           name: name,
           description,
@@ -268,7 +268,7 @@ export const WebhookIndexPage: FC = memo(() => {
     (data) => {
       dispatch(
         deleteWebhook({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.webhook.id,
         })
       ).then(() => {

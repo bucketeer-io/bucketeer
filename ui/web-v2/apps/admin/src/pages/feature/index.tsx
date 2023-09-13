@@ -226,7 +226,7 @@ export const FeatureIndexPage: FC = memo(() => {
 
       dispatch(
         listFeatures({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: FEATURE_LIST_PAGE_SIZE,
           cursor: String(cursor),
           tags,
@@ -302,7 +302,7 @@ export const FeatureIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createFeature({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.id,
           name: data.name,
           description: data.description,
@@ -351,9 +351,9 @@ export const FeatureIndexPage: FC = memo(() => {
       );
       dispatch(
         cloneFeature({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: featureId,
-          destinationEnvironmentNamespace: destinationEnvironment.namespace,
+          destinationEnvironmentNamespace: destinationEnvironment.id,
         })
       )
         .then(unwrapResult)
@@ -385,13 +385,13 @@ export const FeatureIndexPage: FC = memo(() => {
         (() => {
           if (data.enabled) {
             return enableFeature({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: data.featureId,
               comment: data.comment,
             });
           }
           return disableFeature({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: data.featureId,
             comment: data.comment,
           });
@@ -401,7 +401,7 @@ export const FeatureIndexPage: FC = memo(() => {
         setIsSwitchEnableConfirmDialogOpen(false);
         dispatch(
           getFeature({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: data.featureId,
           })
         );
@@ -436,12 +436,12 @@ export const FeatureIndexPage: FC = memo(() => {
       dispatch(
         data.feature.archived
           ? unarchiveFeature({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: data.feature.id,
               comment: data.comment,
             })
           : archiveFeature({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: data.feature.id,
               comment: data.comment,
             })
@@ -472,7 +472,7 @@ export const FeatureIndexPage: FC = memo(() => {
     if (isClone) {
       dispatch(
         getFeature({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: featureId,
         })
       ).then((e) => {
@@ -484,7 +484,7 @@ export const FeatureIndexPage: FC = memo(() => {
     }
     dispatch(
       listAccounts({
-        environmentNamespace: currentEnvironment.namespace,
+        environmentNamespace: currentEnvironment.id,
         pageSize: FEATURE_ACCOUNT_PAGE_SIZE,
         cursor: '',
       })
@@ -495,7 +495,7 @@ export const FeatureIndexPage: FC = memo(() => {
     );
     dispatch(
       listTags({
-        environmentNamespace: currentEnvironment.namespace,
+        environmentNamespace: currentEnvironment.id,
         pageSize: 99999,
         cursor: '',
         orderBy: ListTagsRequest.OrderBy.DEFAULT,

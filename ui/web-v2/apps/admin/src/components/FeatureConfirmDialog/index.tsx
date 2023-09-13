@@ -65,7 +65,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   useEffect(() => {
     if (isArchive && open) {
       listFeatures({
-        environmentNamespace: currentEnvironment.namespace,
+        environmentNamespace: currentEnvironment.id,
         pageSize: 0,
         cursor: '',
         tags: [],

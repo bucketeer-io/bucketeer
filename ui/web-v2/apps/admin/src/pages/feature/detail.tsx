@@ -67,7 +67,7 @@ export const FeatureDetailPage: FC = memo(() => {
     if (featureId) {
       dispatch(
         getFeature({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: featureId,
         })
       );

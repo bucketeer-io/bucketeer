@@ -135,7 +135,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         options && options.enabled ? options.enabled === 'false' : null;
       dispatch(
         listAPIKeys({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: APIKEY_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -180,12 +180,12 @@ export const APIKeyIndexPage: FC = memo(() => {
         (() => {
           if (data.enabled) {
             return enableAPIKey({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: data.apiKeyId,
             });
           }
           return disableAPIKey({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: data.apiKeyId,
           });
         })()
@@ -193,7 +193,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         setIsConfirmDialogOpen(false);
         dispatch(
           getAPIKey({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: data.apiKeyId,
           })
         );
@@ -269,7 +269,7 @@ export const APIKeyIndexPage: FC = memo(() => {
     async (data: AddApiKeyFormSchema) => {
       dispatch(
         createAPIKey({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           name: data.name,
         })
       ).then(() => {
@@ -288,14 +288,14 @@ export const APIKeyIndexPage: FC = memo(() => {
     async (data: UpdateApiKeyFormSchema) => {
       dispatch(
         updateAPIKey({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: apiKeyId,
           name: data.name,
         })
       ).then(() => {
         dispatch(
           getAPIKey({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: apiKeyId,
           })
         );

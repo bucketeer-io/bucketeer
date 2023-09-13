@@ -95,7 +95,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
     useEffect(() => {
       dispatch(
         listGoals({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: 99999,
           cursor: '',
           searchKeyword: null,
@@ -106,7 +106,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       );
       dispatch(
         listFeatures({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: 99999,
           cursor: '',
           tags: [],

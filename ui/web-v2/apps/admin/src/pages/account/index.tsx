@@ -132,7 +132,7 @@ export const AccountIndexPage: FC = memo(() => {
         options && options.enabled ? options.enabled === 'false' : null;
       dispatch(
         listAccounts({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: ACCOUNT_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -176,12 +176,12 @@ export const AccountIndexPage: FC = memo(() => {
         (() => {
           if (data.enabled) {
             return enableAccount({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: data.accountId,
             });
           }
           return disableAccount({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: data.accountId,
           });
         })()
@@ -189,7 +189,7 @@ export const AccountIndexPage: FC = memo(() => {
         setIsConfirmDialogOpen(false);
         dispatch(
           getAccount({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             email: data.accountId,
           })
         );
@@ -267,7 +267,7 @@ export const AccountIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createAccount({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           email: data.email,
           role: data.role,
         })
@@ -287,14 +287,14 @@ export const AccountIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         updateAccount({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: accountId,
           role: data.role,
         })
       ).then(() => {
         dispatch(
           getAccount({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             email: accountId,
           })
         );
