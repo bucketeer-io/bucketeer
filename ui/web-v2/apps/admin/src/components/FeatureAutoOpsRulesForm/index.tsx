@@ -1,5 +1,6 @@
 import {
   ID_NEW,
+  PAGE_PATH_DOCUMENTATION,
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_AUTOOPS,
   PAGE_PATH_NEW,
@@ -26,10 +27,16 @@ import {
 import dayjs from 'dayjs';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useIntl } from 'react-intl';
 import { useSelector, shallowEqual, useDispatch } from 'react-redux';
 import { useParams, useHistory } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 
+import { ReactComponent as ArrowTrendingUp } from '../../assets/svg/arrow-trending-up.svg';
+import { ReactComponent as CalendarSvg } from '../../assets/svg/calendar.svg';
+import { ReactComponent as CrossSvg } from '../../assets/svg/cross.svg';
+import { ReactComponent as OpenInNewSvg } from '../../assets/svg/open-new-tab.svg';
+import { ReactComponent as RefreshSvg } from '../../assets/svg/refresh.svg';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -44,7 +51,6 @@ import { classNames } from '../../utils/css';
 import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
 import { Overlay } from '../Overlay';
-import { useIntl } from 'react-intl';
 
 enum TabLabel {
   ACTIVE = 'Active',
@@ -154,8 +160,18 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
 
     return (
       <div className="px-10 py-6 bg-white">
-        <div className="flex justify-between">
-          <div />
+        <div className="flex justify-end">
+          <a
+            className="space-x-2 flex items-center justify-center mr-5 text-primary cursor-pointer"
+            href={PAGE_PATH_DOCUMENTATION}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <OpenInNewSvg className="mt-[2px]" />
+            <span className="underline">
+              {intl.formatMessage(messages.sideMenu.documentation)}
+            </span>
+          </a>
           <button
             onClick={() => {
               setSelectedAutoOpsRule(null);
@@ -189,6 +205,59 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               {tab.label} ({tab.value.length})
             </div>
           ))}
+        </div>
+        <div className="py-6">
+          <p className="text-xl font-bold">
+            Automate your release and reduce risks with auto operations
+          </p>
+          <div className="flex space-x-6 mt-6">
+            {[
+              {
+                id: 1,
+                title: 'Schedule',
+                detail: 'Schedule a flag to turn on or off',
+                bgColor: 'bg-purple-50',
+                icon: <CalendarSvg />,
+              },
+              {
+                id: 2,
+                title: 'Kill Switch',
+                detail: 'Turn off automatically a flag based on KPI events',
+                bgColor: 'bg-pink-50',
+                icon: (
+                  <div className="relative">
+                    <RefreshSvg />
+                    <CrossSvg className="absolute right-[2px] bottom-[1px]" />
+                  </div>
+                ),
+              },
+              {
+                id: 3,
+                title: 'Progressive Rollout',
+                detail: 'Coming soon',
+                bgColor: 'bg-blue-50',
+                icon: <ArrowTrendingUp />,
+              },
+            ].map(({ id, title, detail, bgColor, icon }) => (
+              <div
+                key={id}
+                className="flex flex-1 space-x-4 p-4 rounded-md shadow-md"
+              >
+                <div
+                  className={classNames(
+                    'w-16 h-16 rounded-lg flex justify-center items-center',
+                    bgColor
+                  )}
+                >
+                  {icon}
+                </div>
+                <div>
+                  <p className="text-lg font-bold">{title}</p>
+                  <p className="">{detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="space-y-6 py-6">
           {tabs
