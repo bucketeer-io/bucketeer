@@ -416,6 +416,33 @@ export const messages = {
       id: 'autoOps.startDate',
       defaultMessage: 'Start Date',
     }),
+    infoBlocks: {
+      title: defineMessage({
+        id: 'infoBlocks.title',
+        defaultMessage:
+          'You can safely switch a flag on and off by using auto operations',
+      }),
+      scheduleInfo: defineMessage({
+        id: 'infoBlocks.scheduleInfo',
+        defaultMessage: 'Schedule a flag to turn on or off',
+      }),
+      killSwitch: defineMessage({
+        id: 'infoBlocks.killSwitch',
+        defaultMessage: 'Kill Switch',
+      }),
+      killSwitchInfo: defineMessage({
+        id: 'infoBlocks.killSwitchInfo',
+        defaultMessage: 'Turn off automatically a flag based on KPI events',
+      }),
+      progressiveRollout: defineMessage({
+        id: 'infoBlocks.progressiveRollout',
+        defaultMessage: 'Progressive Rollout',
+      }),
+      progressiveRolloutInfo: defineMessage({
+        id: 'infoBlocks.progressiveRolloutInfo',
+        defaultMessage: 'Coming soon',
+      }),
+    },
   },
   maintainer: defineMessage({
     id: 'maintainer',

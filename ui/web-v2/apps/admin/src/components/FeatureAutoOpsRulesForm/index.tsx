@@ -208,21 +208,27 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         </div>
         <div className="py-6">
           <p className="text-xl font-bold">
-            Automate your release and reduce risks with auto operations
+            {intl.formatMessage(messages.autoOps.infoBlocks.title)}
           </p>
           <div className="flex space-x-6 mt-6">
             {[
               {
                 id: 1,
-                title: 'Schedule',
-                detail: 'Schedule a flag to turn on or off',
+                title: intl.formatMessage(messages.autoOps.schedule),
+                detail: intl.formatMessage(
+                  messages.autoOps.infoBlocks.scheduleInfo
+                ),
                 bgColor: 'bg-purple-50',
                 icon: <CalendarSvg />,
               },
               {
                 id: 2,
-                title: 'Kill Switch',
-                detail: 'Turn off automatically a flag based on KPI events',
+                title: intl.formatMessage(
+                  messages.autoOps.infoBlocks.killSwitch
+                ),
+                detail: intl.formatMessage(
+                  messages.autoOps.infoBlocks.killSwitchInfo
+                ),
                 bgColor: 'bg-pink-50',
                 icon: (
                   <div className="relative">
@@ -233,8 +239,12 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               },
               {
                 id: 3,
-                title: 'Progressive Rollout',
-                detail: 'Coming soon',
+                title: intl.formatMessage(
+                  messages.autoOps.infoBlocks.progressiveRollout
+                ),
+                detail: intl.formatMessage(
+                  messages.autoOps.infoBlocks.progressiveRolloutInfo
+                ),
                 bgColor: 'bg-blue-50',
                 icon: <ArrowTrendingUp />,
               },
