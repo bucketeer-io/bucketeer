@@ -90,6 +90,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     );
 
     const [open, setOpen] = useState(isNew);
+    const [isKillSwitchSelected, setIsKillSwitchSelected] = useState(false);
     const history = useHistory();
     const currentEnvironment = useCurrentEnvironment();
 
@@ -138,6 +139,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         search: location.search,
       });
       setOpen(false);
+      setIsKillSwitchSelected(false);
     }, [setOpen, history, location, reset]);
 
     const handleOpen = useCallback(() => {
@@ -220,6 +222,9 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                 ),
                 bgColor: 'bg-purple-50',
                 icon: <CalendarSvg />,
+                onClick: () => {
+                  handleOpen();
+                },
               },
               {
                 id: 2,
@@ -236,6 +241,10 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                     <CrossSvg className="absolute right-[2px] bottom-[1px]" />
                   </div>
                 ),
+                onClick: () => {
+                  setIsKillSwitchSelected(true);
+                  handleOpen();
+                },
               },
               {
                 id: 3,
@@ -247,11 +256,13 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                 ),
                 bgColor: 'bg-blue-50',
                 icon: <ArrowTrendingUp />,
+                onclick: () => {},
               },
-            ].map(({ id, title, detail, bgColor, icon }) => (
+            ].map(({ id, title, detail, bgColor, icon, onClick }) => (
               <div
                 key={id}
-                className="flex flex-1 space-x-4 p-4 rounded-md shadow-md"
+                className="flex flex-1 space-x-4 p-4 rounded-md shadow-md cursor-pointer"
+                onClick={onClick}
               >
                 <div
                   className={classNames(
@@ -291,6 +302,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               onCancel={handleClose}
               featureId={featureId}
               autoOpsRule={selectedAutoOpsRule}
+              isKillSwitchSelected={isKillSwitchSelected}
             />
           </Overlay>
         )}
@@ -410,7 +422,6 @@ const DateTimeOperation = memo(
       'YYYY-MM-DD HH:mm'
     );
 
-    console.log(rule);
     return (
       <div>
         <div

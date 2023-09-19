@@ -1,3 +1,4 @@
+import { intl } from '@/lang';
 import { AppState } from '@/modules';
 import { useCurrentEnvironment, useIsEditable } from '@/modules/me';
 import { createOpsEventRateClause } from '@/pages/feature/autoops';
@@ -40,13 +41,13 @@ import {
 } from '../../modules/goals';
 import { ClauseType, operatorOptions } from '../FeatureAutoOpsRulesForm';
 import { Option, Select } from '../Select';
-import { intl } from '@/lang';
 
 export interface OperationAddUpdateFormProps {
   featureId: string;
   onSubmit: () => void;
   onCancel: () => void;
   autoOpsRule?: AutoOpsRule.AsObject;
+  isKillSwitchSelected: boolean;
 }
 
 const TabLabel = {
@@ -55,7 +56,7 @@ const TabLabel = {
 };
 
 export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
-  ({ onSubmit, onCancel, featureId, autoOpsRule }) => {
+  ({ onSubmit, onCancel, featureId, autoOpsRule, isKillSwitchSelected }) => {
     const editable = useIsEditable();
     const dispatch = useDispatch<AppDispatch>();
     const currentEnvironment = useCurrentEnvironment();
@@ -161,10 +162,13 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
           );
           setValue('eventRate.minCount', opsEventRateClause.minCount);
         }
+      } else if (isKillSwitchSelected) {
+        setValue('opsType', OpsType.DISABLE_FEATURE);
+        setKillSwitchList();
       } else {
         setEnableList();
       }
-    }, [autoOpsRule]);
+    }, [autoOpsRule, isKillSwitchSelected]);
 
     const handleOnSubmit = useCallback(
       (data) => {
