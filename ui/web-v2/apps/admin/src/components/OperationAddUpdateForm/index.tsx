@@ -20,6 +20,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { XIcon, ExclamationCircleIcon } from '@heroicons/react/outline';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
+import dayjs from 'dayjs';
 import { FC, Fragment, memo, useCallback, useEffect, useState } from 'react';
 import ReactDatePicker from 'react-datepicker';
 import { Controller, useForm, useFormContext, useWatch } from 'react-hook-form';
@@ -48,6 +49,7 @@ export interface OperationAddUpdateFormProps {
   onCancel: () => void;
   autoOpsRule?: AutoOpsRule.AsObject;
   isKillSwitchSelected: boolean;
+  isActiveTabSelected: boolean;
 }
 
 const TabLabel = {
@@ -56,7 +58,14 @@ const TabLabel = {
 };
 
 export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
-  ({ onSubmit, onCancel, featureId, autoOpsRule, isKillSwitchSelected }) => {
+  ({
+    onSubmit,
+    onCancel,
+    featureId,
+    autoOpsRule,
+    isKillSwitchSelected,
+    isActiveTabSelected,
+  }) => {
     const editable = useIsEditable();
     const dispatch = useDispatch<AppDispatch>();
     const currentEnvironment = useCurrentEnvironment();
@@ -80,7 +89,11 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       formState: { errors, isValid, isSubmitting },
       register,
       setValue,
+      getValues,
     } = methods;
+
+    const datetime = getValues('datetime.time');
+    const eventRate = getValues('eventRate');
 
     const opsType = useWatch({
       control,
@@ -102,6 +115,8 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
         value: OpsType.DISABLE_FEATURE,
       },
     ];
+
+    const isSeeDetailsSelected = autoOpsRule && !isActiveTabSelected;
 
     const setEnableList = () => {
       setRadioList([
@@ -262,13 +277,23 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       };
     });
 
+    const title = () => {
+      if (isSeeDetailsSelected) {
+        return f(messages.autoOps.operationDetails);
+      } else {
+        return autoOpsRule
+          ? f(messages.autoOps.updateAnOperation)
+          : f(messages.autoOps.createAnOperation);
+      }
+    };
+
     return (
       <div className="w-[500px] h-full">
         <AddGoalModal open={isAddGoalOpen} setOpen={setIsAddGoalOpen} />
         <form className="flex flex-col h-full">
           <div className="flex-1 h-0">
             <div className="flex items-center justify-between px-4 py-5 border-b">
-              <p className="text-xl font-medium">Create Operation</p>
+              <p className="text-xl font-medium">{title()}</p>
               <XIcon
                 width={20}
                 className="text-gray-400 cursor-pointer"
@@ -282,12 +307,18 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                     {...register('opsType')}
                     key={tab.label}
                     className={classNames(
-                      'py-3 cursor-pointer flex-1 text-center',
+                      'py-3 flex-1 text-center',
                       opsType === tab.value
                         ? 'text-primary border-b-2 border-primary'
-                        : 'text-gray-400'
+                        : 'text-gray-400',
+                      isSeeDetailsSelected
+                        ? 'cursor-not-allowed'
+                        : 'cursor-pointer'
                     )}
                     onClick={() => {
+                      if (isSeeDetailsSelected) {
+                        return;
+                      }
                       setValue('opsType', tab.value);
                       setValue('clauseType', ClauseType.DATETIME);
 
@@ -311,6 +342,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                       type="radio"
                       value={radio.value}
                       className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
+                      disabled={isSeeDetailsSelected}
                     />
                     <div className="flex-1">
                       <label htmlFor={radio.label}>{radio.label}</label>
@@ -320,7 +352,10 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                             <span className="input-label">
                               {f(messages.autoOps.startDate)}
                             </span>
-                            <DatetimeClauseInput name="datetime.time" />
+                            <DatetimeClauseInput
+                              name="datetime.time"
+                              isSeeDetailsSelected={isSeeDetailsSelected}
+                            />
                             <p className="input-error">
                               {errors.datetime?.time?.message && (
                                 <span role="alert">
@@ -349,7 +384,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                       field.onChange(o.value);
                                     }}
                                     options={variationOptions}
-                                    disabled={!editable}
+                                    disabled={!editable || isSeeDetailsSelected}
                                     value={variationOptions.find(
                                       (o) => o.value === field.value
                                     )}
@@ -370,7 +405,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                       field.onChange(o.value)
                                     }
                                     options={goalOptions}
-                                    disabled={!editable}
+                                    disabled={!editable || isSeeDetailsSelected}
                                     value={goalOptions.find(
                                       (o) => o.value === field.value
                                     )}
@@ -395,7 +430,9 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                         field.onChange(o.value)
                                       }
                                       options={operatorOptions}
-                                      disabled={!editable}
+                                      disabled={
+                                        !editable || isSeeDetailsSelected
+                                      }
                                       value={operatorOptions.find(
                                         (o) => o.value === field.value
                                       )}
@@ -421,7 +458,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                     )}
                                     placeholder={''}
                                     required
-                                    disabled={!editable}
+                                    disabled={!editable || isSeeDetailsSelected}
                                   />
                                   <span
                                     className={classNames(
@@ -450,7 +487,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                         ? 'input-text-error'
                                         : 'input-text'
                                     )}
-                                    disabled={!editable}
+                                    disabled={!editable || isSeeDetailsSelected}
                                   />
                                 </div>
                               </div>
@@ -493,10 +530,10 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             <button
               type="button"
               className="btn-submit-gradient"
-              disabled={!isValid || isSubmitting}
+              disabled={!isValid || isSubmitting || isSeeDetailsSelected}
               onClick={handleSubmit(handleOnSubmit)}
             >
-              {autoOpsRule ? 'Update Operation' : 'Create Operation'}
+              {f(messages.button.submit)}
             </button>
           </div>
         </form>
@@ -507,33 +544,37 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
 
 interface DatetimeClauseInputProps {
   name: string;
+  isSeeDetailsSelected: boolean;
 }
 
-const DatetimeClauseInput: FC<DatetimeClauseInputProps> = memo(({ name }) => {
-  const methods = useFormContext();
-  const { control } = methods;
+const DatetimeClauseInput: FC<DatetimeClauseInputProps> = memo(
+  ({ name, isSeeDetailsSelected }) => {
+    const methods = useFormContext();
+    const { control } = methods;
 
-  return (
-    <Controller
-      name={name}
-      control={control}
-      render={({ field: { onChange, value } }) => {
-        return (
-          <ReactDatePicker
-            dateFormat="yyyy-MM-dd HH:mm"
-            showTimeSelect
-            timeIntervals={60}
-            placeholderText=""
-            className={classNames('input-text w-full')}
-            wrapperClassName="w-full"
-            onChange={onChange}
-            selected={value as Date}
-          />
-        );
-      }}
-    />
-  );
-});
+    return (
+      <Controller
+        name={name}
+        control={control}
+        render={({ field: { onChange, value } }) => {
+          return (
+            <ReactDatePicker
+              dateFormat="yyyy-MM-dd HH:mm"
+              showTimeSelect
+              timeIntervals={60}
+              placeholderText=""
+              className={classNames('input-text w-full')}
+              wrapperClassName="w-full"
+              onChange={onChange}
+              selected={value as Date}
+              disabled={isSeeDetailsSelected}
+            />
+          );
+        }}
+      />
+    );
+  }
+);
 
 export interface AddGoalSelectProps {
   options: Option[];

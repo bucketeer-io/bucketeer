@@ -84,6 +84,7 @@ export const FeatureDetailPage: FC = memo(() => {
                 key={idx}
                 className="
                     tab-item
+                    flex items-center
                     border-transparent
                     text-gray-500
                     hover:text-gray-700
@@ -92,6 +93,11 @@ export const FeatureDetailPage: FC = memo(() => {
                 to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${tab.to}`}
               >
                 {tab.message}
+                {tab.isNew && (
+                  <div className="rounded-sm bg-[#F3F9FD] text-[#399CE4] px-2 py-[6px] text-sm inline-block ml-3">
+                    New
+                  </div>
+                )}
               </NavLink>
             ))}
           </nav>
@@ -147,6 +153,7 @@ export const FeatureDetailPage: FC = memo(() => {
 export interface TabItem {
   readonly message: string;
   readonly to: string;
+  readonly isNew: boolean;
 }
 
 const createTabs = (): Array<TabItem> => {
@@ -154,30 +161,37 @@ const createTabs = (): Array<TabItem> => {
     {
       message: intl.formatMessage(messages.feature.tab.targeting),
       to: PAGE_PATH_FEATURE_TARGETING,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.variations),
       to: PAGE_PATH_FEATURE_VARIATION,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.autoOps),
       to: PAGE_PATH_FEATURE_AUTOOPS,
+      isNew: true,
     },
     {
       message: intl.formatMessage(messages.feature.tab.experiments),
       to: PAGE_PATH_FEATURE_EXPERIMENTS,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.evaluation),
       to: PAGE_PATH_FEATURE_EVALUATION,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.history),
       to: PAGE_PATH_FEATURE_HISTORY,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.settings),
       to: PAGE_PATH_FEATURE_SETTING,
+      isNew: false,
     },
   ];
 };

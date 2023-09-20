@@ -1,6 +1,5 @@
 import {
   ID_NEW,
-  PAGE_PATH_DOCUMENTATION,
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_AUTOOPS,
   PAGE_PATH_NEW,
@@ -37,6 +36,7 @@ import { ReactComponent as CalendarSvg } from '../../assets/svg/calendar.svg';
 import { ReactComponent as CrossSvg } from '../../assets/svg/cross.svg';
 import { ReactComponent as OpenInNewSvg } from '../../assets/svg/open-new-tab.svg';
 import { ReactComponent as RefreshSvg } from '../../assets/svg/refresh.svg';
+import { ReactComponent as SeeDetailsSvg } from '../../assets/svg/see-details.svg';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -51,6 +51,8 @@ import { classNames } from '../../utils/css';
 import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
 import { Overlay } from '../Overlay';
+
+const numberOfBlocks = 51;
 
 enum TabLabel {
   ACTIVE = 'Active',
@@ -160,12 +162,15 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       refetchAutoOpsRules();
     }, []);
 
+    const isActiveTabSelected =
+      tabs.find((tab) => tab.selected).label === TabLabel.ACTIVE;
+
     return (
       <div className="px-10 py-6 bg-white">
         <div className="flex justify-end">
           <a
             className="space-x-2 flex items-center justify-center mr-5 text-primary cursor-pointer"
-            href={PAGE_PATH_DOCUMENTATION}
+            href="https://docs.bucketeer.io/feature-flags/creating-feature-flags/auto-operation/"
             target="_blank"
             rel="noreferrer"
           >
@@ -182,7 +187,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
             className="btn-submit space-x-2"
           >
             <PlusIcon width={18} />
-            <span>New Operation</span>
+            <span>{intl.formatMessage(messages.button.add)}</span>
           </button>
         </div>
         <div className="flex border-b border-gray-200 mt-2">
@@ -272,7 +277,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                 >
                   {icon}
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-lg font-bold">{title}</p>
                   <p className="">{detail}</p>
                 </div>
@@ -287,9 +292,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               <Operation
                 key={rule.id}
                 rule={rule}
-                isActiveSelected={
-                  tabs.find((tab) => tab.selected).label === TabLabel.ACTIVE
-                }
+                isActiveTabSelected={isActiveTabSelected}
                 handleOpenUpdate={handleOpenUpdate}
                 refetchAutoOpsRules={refetchAutoOpsRules}
               />
@@ -303,6 +306,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               featureId={featureId}
               autoOpsRule={selectedAutoOpsRule}
               isKillSwitchSelected={isKillSwitchSelected}
+              isActiveTabSelected={isActiveTabSelected}
             />
           </Overlay>
         )}
@@ -313,17 +317,18 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
 
 interface OperationProps {
   rule: AutoOpsRule.AsObject;
-  isActiveSelected: boolean;
+  isActiveTabSelected: boolean;
   handleOpenUpdate: (arg) => void;
   refetchAutoOpsRules: () => void;
 }
 
 const Operation = ({
   rule,
-  isActiveSelected,
+  isActiveTabSelected,
   handleOpenUpdate,
   refetchAutoOpsRules,
 }: OperationProps) => {
+  const { formatMessage: f } = useIntl();
   const dispatch = useDispatch<AppDispatch>();
   const currentEnvironment = useCurrentEnvironment();
 
@@ -369,21 +374,39 @@ const Operation = ({
                 <DotsHorizontalIcon width={20} />
               </div>
             </Popover.Button>
-            <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 w-[166px] shadow-md">
-              <button
-                onClick={() => handleOpenUpdate(rule)}
-                className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
-              >
-                <PencilIcon width={18} />
-                <span className="text-sm">Edit Operation</span>
-              </button>
-              <button
-                onClick={() => handleDelete(rule.id)}
-                className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
-              >
-                <TrashIcon width={18} className="text-red-500" />
-                <span className="text-red-500 text-sm">Delete Operation</span>
-              </button>
+            <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
+              {isActiveTabSelected ? (
+                <>
+                  <button
+                    onClick={() => handleOpenUpdate(rule)}
+                    className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
+                  >
+                    <PencilIcon width={18} />
+                    <span className="text-sm">
+                      {f(messages.autoOps.editOperation)}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(rule.id)}
+                    className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                  >
+                    <TrashIcon width={18} className="text-red-500" />
+                    <span className="text-red-500 text-sm">
+                      {f(messages.autoOps.deleteOperation)}
+                    </span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => handleOpenUpdate(rule)}
+                  className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
+                >
+                  <SeeDetailsSvg />
+                  <span className="text-sm">
+                    {f(messages.autoOps.operationDetails)}
+                  </span>
+                </button>
+              )}
             </Popover.Panel>
           </Popover>
         </div>
@@ -391,7 +414,10 @@ const Operation = ({
       <div className="mt-4">
         <p className="font-bold text-lg text-gray-600">Progress Information</p>
         {type === ClauseType.DATETIME && (
-          <DateTimeOperation rule={rule} isActiveSelected={isActiveSelected} />
+          <DateTimeOperation
+            rule={rule}
+            isActiveTabSelected={isActiveTabSelected}
+          />
         )}
         {type === ClauseType.EVENT_RATE && (
           <EventRateOperation rule={rule} opsCounts={opsCounts} />
@@ -403,11 +429,11 @@ const Operation = ({
 
 interface DateTimeOperationProps {
   rule: AutoOpsRule.AsObject;
-  isActiveSelected: boolean;
+  isActiveTabSelected: boolean;
 }
 
 const DateTimeOperation = memo(
-  ({ rule, isActiveSelected }: DateTimeOperationProps) => {
+  ({ rule, isActiveTabSelected }: DateTimeOperationProps) => {
     const { value } = rule.clausesList[0].clause;
 
     const datetimeClause = DatetimeClause.deserializeBinary(
@@ -427,14 +453,14 @@ const DateTimeOperation = memo(
         <div
           className={classNames(
             'mt-6 h-2  flex justify-between relative mx-1',
-            isActiveSelected ? 'bg-gray-200' : 'bg-pink-500'
+            isActiveTabSelected ? 'bg-gray-200' : 'bg-pink-500'
           )}
         >
           <div className="w-[14px] h-[14px] absolute top-1/2 -translate-y-1/2 rounded-full -left-1 bg-pink-500 border border-pink-100" />
           <div
             className={classNames(
               'w-[14px] h-[14px] absolute top-1/2 -translate-y-1/2 rounded-full -right-1 bg-gray-300 border',
-              isActiveSelected ? 'bg-gray-200' : 'bg-pink-500'
+              isActiveTabSelected ? 'bg-gray-200' : 'bg-pink-500'
             )}
           />
         </div>
@@ -451,25 +477,6 @@ const DateTimeOperation = memo(
   }
 );
 
-const getEquallyDividedArray = (maxValue: number) => {
-  const totalNumbers = 10;
-  const resultArray = [];
-  const step = maxValue / totalNumbers;
-
-  for (let i = 0; i < totalNumbers; i++) {
-    // Calculate the next value
-    let nextValue = (i + 1) * step;
-
-    // Round the value
-    nextValue = Math.round(nextValue);
-
-    // Push the rounded value into the result array
-    resultArray.push(nextValue);
-  }
-
-  return [0, ...resultArray];
-};
-
 interface EventRateOperationProps {
   rule: AutoOpsRule.AsObject;
   opsCounts: OpsCount.AsObject[];
@@ -485,10 +492,6 @@ const EventRateOperation = memo(
 
     const opsCount = opsCounts.find(
       (opsCount) => opsCount.autoOpsRuleId === rule.id
-    );
-
-    const threadsholdPercentageRange = getEquallyDividedArray(
-      threadsholdRate * 100
     );
 
     let currentEventRate = 0;
@@ -529,56 +532,58 @@ const EventRateOperation = memo(
             <InformationCircleIcon width={18} />
           </HoverPopover>
         </div>
-        <div className="mt-3">
-          <div className="flex">
-            {Array(56)
-              .fill('')
-              .map((_, i) => {
-                const percentage = i * 2;
+        <div className="flex pb-7 mt-4">
+          {Array(numberOfBlocks)
+            .fill('')
+            .map((_, i) => {
+              // Calculate percentage contain by one block. There are 51 blocks in the chart.
+              const oneBlockPercentage =
+                (threadsholdRate * 100 * i) / numberOfBlocks;
 
-                // Calculate percentage contain by one block. There are 51 blocks in the chart.
-                const oneBlockPercentage = (threadsholdRate * 100 * i) / 51;
+              let bgColor = 'bg-gray-200';
 
-                let bgColor = 'bg-gray-200';
+              let percentage;
+              if (
+                oneBlockPercentage <= currentEventRate &&
+                currentEventRate !== 0
+              ) {
+                bgColor = 'bg-pink-500';
+              } else if (i % 5 === 0) {
+                bgColor = 'bg-gray-400';
+                const step = (threadsholdRate * 100) / 10;
+                percentage = Math.round((i * step) / 5);
+              }
 
-                if (
-                  oneBlockPercentage <= currentEventRate &&
-                  currentEventRate !== 0
-                ) {
-                  bgColor = 'bg-pink-500';
-                } else if (percentage > 100) {
-                  bgColor = 'bg-white';
-                } else if (percentage % 10 === 0) {
-                  bgColor = 'bg-gray-400';
-                }
-
-                return (
-                  <div
-                    key={i}
-                    className={classNames(
-                      'relative h-[8px] flex-1 rounded-[60px]',
-                      bgColor
-                    )}
-                  >
-                    {percentage === 100 && (
-                      <div className="absolute -left-6 text-sm text-pink-500 bottom-5 font-semibold whitespace-nowrap">
-                        {f(messages.autoOps.threshold)}
-                      </div>
-                    )}
-                    {i !== 0 && (
-                      <div className="absolute h-[8px] w-1.5 rounded-r-full bg-white" />
-                    )}
-                  </div>
-                );
-              })}
-          </div>
-          <div className="flex mt-2 pr-[1%]">
-            {threadsholdPercentageRange.map((percentage) => (
-              <div key={percentage} className="flex-1">
-                {percentage}%
-              </div>
-            ))}
-          </div>
+              return (
+                <div
+                  key={i}
+                  className={classNames(
+                    'relative h-[8px] flex-1 rounded-[60px]',
+                    bgColor
+                  )}
+                >
+                  {i === numberOfBlocks - 1 && (
+                    <div className="absolute right-0 bottom-[26px] text-sm text-pink-500 font-semibold whitespace-nowrap">
+                      {f(messages.autoOps.threshold)}
+                    </div>
+                  )}
+                  {i !== 0 && (
+                    <div className="absolute h-[8px] w-1.5 rounded-r-full bg-white" />
+                  )}
+                  {i % 5 === 0 && (
+                    <div
+                      className={classNames(
+                        'absolute -bottom-8',
+                        i !== 0 && i < numberOfBlocks - 1 && 'left-1',
+                        i === numberOfBlocks - 1 && 'right-0'
+                      )}
+                    >
+                      {percentage}%
+                    </div>
+                  )}
+                </div>
+              );
+            })}
         </div>
       </div>
     );

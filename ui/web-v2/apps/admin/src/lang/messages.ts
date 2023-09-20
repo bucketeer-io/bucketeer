@@ -443,6 +443,26 @@ export const messages = {
         defaultMessage: 'Coming soon',
       }),
     },
+    editOperation: defineMessage({
+      id: 'autoOps.editOperation',
+      defaultMessage: 'Edit Operation',
+    }),
+    operationDetails: defineMessage({
+      id: 'autoOps.operationDetails',
+      defaultMessage: 'Operation Details',
+    }),
+    deleteOperation: defineMessage({
+      id: 'autoOps.deleteOperation',
+      defaultMessage: 'Delete Operation',
+    }),
+    createAnOperation: defineMessage({
+      id: 'autoOps.createAnOperation',
+      defaultMessage: 'Create An Operation',
+    }),
+    updateAnOperation: defineMessage({
+      id: 'autoOps.updateAnOperation',
+      defaultMessage: 'Update An Operation',
+    }),
   },
   maintainer: defineMessage({
     id: 'maintainer',
@@ -1603,7 +1623,7 @@ export const messages = {
     tab: {
       autoOps: defineMessage({
         id: 'feature.tab.autoOps',
-        defaultMessage: 'Auto Ops Rules',
+        defaultMessage: 'Auto Operations',
       }),
       evaluation: defineMessage({
         id: 'feature.tab.evaluation',
