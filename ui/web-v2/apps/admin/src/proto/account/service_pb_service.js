@@ -19,6 +19,15 @@ AccountService.GetMe = {
   responseType: proto_account_service_pb.GetMeResponse
 };
 
+AccountService.GetMeV2 = {
+  methodName: "GetMeV2",
+  service: AccountService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_account_service_pb.GetMeV2Request,
+  responseType: proto_account_service_pb.GetMeV2Response
+};
+
 AccountService.GetMeByEmail = {
   methodName: "GetMeByEmail",
   service: AccountService,
@@ -26,6 +35,15 @@ AccountService.GetMeByEmail = {
   responseStream: false,
   requestType: proto_account_service_pb.GetMeByEmailRequest,
   responseType: proto_account_service_pb.GetMeResponse
+};
+
+AccountService.GetMeByEmailV2 = {
+  methodName: "GetMeByEmailV2",
+  service: AccountService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_account_service_pb.GetMeByEmailV2Request,
+  responseType: proto_account_service_pb.GetMeV2Response
 };
 
 AccountService.CreateAdminAccount = {
@@ -237,11 +255,73 @@ AccountServiceClient.prototype.getMe = function getMe(requestMessage, metadata, 
   };
 };
 
+AccountServiceClient.prototype.getMeV2 = function getMeV2(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AccountService.GetMeV2, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
 AccountServiceClient.prototype.getMeByEmail = function getMeByEmail(requestMessage, metadata, callback) {
   if (arguments.length === 2) {
     callback = arguments[1];
   }
   var client = grpc.unary(AccountService.GetMeByEmail, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+AccountServiceClient.prototype.getMeByEmailV2 = function getMeByEmailV2(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AccountService.GetMeByEmailV2, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,
