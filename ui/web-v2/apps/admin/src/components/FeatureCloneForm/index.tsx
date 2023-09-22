@@ -29,7 +29,7 @@ export const FeatureCloneForm: FC<FeatureCloneFormProps> = memo(
     const environmentOptions = filteredOptions.map((environment) => {
       return {
         value: environment.id,
-        label: environment.id,
+        label: environment.name,
       };
     });
     return (

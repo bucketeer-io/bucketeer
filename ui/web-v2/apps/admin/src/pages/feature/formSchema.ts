@@ -200,7 +200,8 @@ export const archiveFormSchema = yup.object().shape({
 });
 
 export const cloneSchema = yup.object().shape({
-  destinationEnvironmentId: yup.string().required(),
+  // Since some old environments have empty id, so we don't require it
+  // destinationEnvironmentId: yup.string().required(),
 });
 
 export const onVariationSchema = yup.object().shape({
