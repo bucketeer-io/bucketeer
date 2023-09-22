@@ -46,6 +46,7 @@ export const meSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchMe.fulfilled, (_, action) => {
+        // Since some old environments have empty id, so accept empty and reject only null or undefined
         const curEnvId = (getCurrentEnvironmentId() != (null || undefined))
           ? getCurrentEnvironmentId()
           : action.payload.environmentRoles[0].environment.id;
@@ -63,6 +64,7 @@ export const useMe = (): MeState =>
 
 const currentEnvironmentRole = (state: AppState): EnvironmentRoleV2.AsObject => {
   if ('environmentRoles' in state.me) {
+    // Since some old environments have empty id, so accept empty and reject only null or undefined
     const curEnvId = (getCurrentEnvironmentId() != (null || undefined))
       ? getCurrentEnvironmentId()
       : state.me.environmentRoles[0].environment.id;
