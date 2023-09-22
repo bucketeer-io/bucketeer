@@ -151,7 +151,7 @@ export const PushIndexPage: FC = memo(() => {
   const handleOnClickAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -180,7 +180,7 @@ export const PushIndexPage: FC = memo(() => {
         setOpen(false);
         resetAdd();
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`
         );
         updatePushList(null, 1);
       });
@@ -197,7 +197,7 @@ export const PushIndexPage: FC = memo(() => {
         tags: p.tagsList,
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}/${p.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}/${p.id}`,
         search: location.search,
       });
     },
@@ -249,7 +249,7 @@ export const PushIndexPage: FC = memo(() => {
     resetUpdate();
     setOpen(false);
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd]);

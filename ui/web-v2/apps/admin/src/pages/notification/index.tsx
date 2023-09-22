@@ -162,7 +162,7 @@ export const NotificationIndexPage: FC = memo(() => {
   const handleOnClickAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -191,7 +191,7 @@ export const NotificationIndexPage: FC = memo(() => {
         setOpen(false);
         resetAdd();
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}`
         );
         updateNotificationList(null, 1);
       });
@@ -208,7 +208,7 @@ export const NotificationIndexPage: FC = memo(() => {
         sourceTypes: [...s.sourceTypesList].sort(),
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}/${s.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}/${s.id}`,
         search: location.search,
       });
     },
@@ -261,7 +261,7 @@ export const NotificationIndexPage: FC = memo(() => {
     resetAdd();
     setOpen(false);
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd]);

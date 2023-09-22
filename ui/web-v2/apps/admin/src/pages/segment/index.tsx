@@ -228,7 +228,7 @@ export const SegmentIndexPage: FC = memo(() => {
   const handleOnClickAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -248,7 +248,7 @@ export const SegmentIndexPage: FC = memo(() => {
           featureList: s.featuresList,
         });
         history.push({
-          pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}/${s.id}`,
+          pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${s.id}`,
           search: location.search,
         });
       }
@@ -283,7 +283,7 @@ export const SegmentIndexPage: FC = memo(() => {
     resetUpdate();
     setOpen(false);
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
@@ -329,7 +329,7 @@ export const SegmentIndexPage: FC = memo(() => {
     resetAdd();
     setOpen(false);
     history.replace(
-      `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}`
+      `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`
     );
     updateSegmentList(null, 1);
   };

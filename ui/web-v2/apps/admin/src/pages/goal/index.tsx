@@ -123,7 +123,7 @@ export const GoalIndexPage: FC = memo(() => {
         setOpen(false);
         resetAdd();
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_GOALS}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`
         );
         updateGoalList(null, 1);
       });
@@ -230,7 +230,7 @@ export const GoalIndexPage: FC = memo(() => {
   const handleOpen = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_GOALS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -244,7 +244,7 @@ export const GoalIndexPage: FC = memo(() => {
         description: g.description,
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_GOALS}/${g.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}/${g.id}`,
         search: location.search,
       });
     },
@@ -292,7 +292,7 @@ export const GoalIndexPage: FC = memo(() => {
     resetAdd();
     resetUpdate();
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_GOALS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);

@@ -472,7 +472,7 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
                   <li key={flag.id}>
                     <Link
                       className="link text-left"
-                      to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
+                      to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${flag.id}`}
                     >
                       <p className="truncate w-96">{flag.name}</p>
                     </Link>

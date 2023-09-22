@@ -158,7 +158,7 @@ export const FeatureExperimentsPage: FC<FeatureExperimentsPageProps> = memo(
                 disabled={false}
                 onClick={() =>
                   history.push(
-                    `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_EXPERIMENTS}/${experiment.id}`
+                    `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${experiment.id}`
                   )
                 }
               >
@@ -172,7 +172,7 @@ export const FeatureExperimentsPage: FC<FeatureExperimentsPageProps> = memo(
                 disabled={false}
                 onClick={() =>
                   history.push(
-                    `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_EXPERIMENTS}${PAGE_PATH_NEW}?fid=${featureId}`
+                    `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}${PAGE_PATH_NEW}?fid=${featureId}`
                   )
                 }
               >

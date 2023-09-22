@@ -207,7 +207,7 @@ export const ExperimentIndexPage: FC = memo(() => {
   const handleOpenAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_EXPERIMENTS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -221,7 +221,7 @@ export const ExperimentIndexPage: FC = memo(() => {
         maintainer: e.maintainer,
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_EXPERIMENTS}/${e.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${e.id}`,
         search: location.search,
       });
     },
@@ -234,7 +234,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     resetUpdate();
     const { fid, ...opts } = searchParams;
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_EXPERIMENTS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}`,
       search: stringifySearchParams(opts),
     });
   }, [searchParams, setOpen, history, resetAdd, resetUpdate]);

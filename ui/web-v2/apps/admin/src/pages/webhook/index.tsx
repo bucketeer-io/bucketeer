@@ -146,7 +146,7 @@ export const WebhookIndexPage: FC = memo(() => {
   const handleOnClickAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -173,7 +173,7 @@ export const WebhookIndexPage: FC = memo(() => {
         setOpen(false);
         resetAdd();
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}`
         );
         updateWebhookList(null, 1);
       });
@@ -189,7 +189,7 @@ export const WebhookIndexPage: FC = memo(() => {
         description: w.description,
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}/${w.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}/${w.id}`,
         search: location.search,
       });
     },
@@ -241,7 +241,7 @@ export const WebhookIndexPage: FC = memo(() => {
     resetUpdate();
     setOpen(false);
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}`,
       search: location.search,
     });
   }, [setOpen, resetAdd, resetUpdate]);

@@ -236,7 +236,7 @@ export const APIKeyIndexPage: FC = memo(() => {
   const handleOpenAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_APIKEYS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -248,7 +248,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         name: a.name,
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_APIKEYS}/${a.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}/${a.id}`,
         search: location.search,
       });
     },
@@ -260,7 +260,7 @@ export const APIKeyIndexPage: FC = memo(() => {
     resetAdd();
     resetUpdate();
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_APIKEYS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
@@ -276,7 +276,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         setOpen(false);
         resetAdd();
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_APIKEYS}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}`
         );
         updateAPIKeyList(null, 1);
       });

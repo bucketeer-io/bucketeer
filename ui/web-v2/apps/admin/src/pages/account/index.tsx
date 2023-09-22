@@ -217,7 +217,7 @@ export const AccountIndexPage: FC = memo(() => {
   const handleOpenAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_ACCOUNTS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -230,7 +230,7 @@ export const AccountIndexPage: FC = memo(() => {
         role: a.role.toString(),
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_ACCOUNTS}/${a.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}/${a.id}`,
         search: location.search,
       });
     },
@@ -258,7 +258,7 @@ export const AccountIndexPage: FC = memo(() => {
     resetUpdate();
     setOpen(false);
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_ACCOUNTS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
@@ -275,7 +275,7 @@ export const AccountIndexPage: FC = memo(() => {
         resetAdd();
         setOpen(false);
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_ACCOUNTS}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}`
         );
         updateAccountList(null, 1);
       });

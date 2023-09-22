@@ -354,7 +354,7 @@ export const FeatureList: FC<FeatureListProps> = memo(
                     <td className="px-5 py-3 border-b">
                       <div className="flex mb-2">
                         <Link
-                          to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${feature.id}${PAGE_PATH_FEATURE_TARGETING}`}
+                          to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${feature.id}${PAGE_PATH_FEATURE_TARGETING}`}
                           className="link text-left"
                         >
                           {feature.name}

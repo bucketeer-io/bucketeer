@@ -283,7 +283,7 @@ export const FeatureIndexPage: FC = memo(() => {
   const handleOpen = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -293,7 +293,7 @@ export const FeatureIndexPage: FC = memo(() => {
     reset();
     cloneReset();
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`,
       search: location.search,
     });
   }, [setOpen, history, location, reset]);
@@ -321,7 +321,7 @@ export const FeatureIndexPage: FC = memo(() => {
       ).then(() => {
         setOpen(false);
         history.push(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${data.id}${PAGE_PATH_FEATURE_TARGETING}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${data.id}${PAGE_PATH_FEATURE_TARGETING}`
         );
         TagManager.dataLayer({
           dataLayer: {
@@ -360,7 +360,7 @@ export const FeatureIndexPage: FC = memo(() => {
         .then(() => {
           cloneReset();
           history.replace(
-            `${PAGE_PATH_ROOT}${destinationEnvironment.id}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_TARGETING}`
+            `${PAGE_PATH_ROOT}${destinationEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_TARGETING}`
           );
         })
         .catch(() => {
@@ -424,7 +424,7 @@ export const FeatureIndexPage: FC = memo(() => {
       setOpen(true);
       cloneSetValue('feature', feature);
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}${PAGE_PATH_FEATURE_CLONE}/${feature.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}${PAGE_PATH_FEATURE_CLONE}/${feature.id}`,
         search: location.search,
       });
     },
@@ -449,7 +449,7 @@ export const FeatureIndexPage: FC = memo(() => {
         archiveReset();
         setIsArchiveConfirmDialogOpen(false);
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`
         );
         updateFeatureList(null, 1);
       });
