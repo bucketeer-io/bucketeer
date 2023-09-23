@@ -9,7 +9,7 @@ gcp:
 
 image:
   repository: gcr.io/google.com/cloudsdktool/google-cloud-cli
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
   containerPort: 8089

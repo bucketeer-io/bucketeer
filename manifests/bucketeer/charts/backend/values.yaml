@@ -10,8 +10,10 @@ env:
   cloudService:
   profile:
   bucketeerTestEnabled:
-  gcpTraceEnabled:
+  gcpEnabled:
   bigqueryEmulatorHost:
+  mysqlMigrationUser:
+  mysqlMigrationPass:
   pubsubEmulatorHost:
   project:
   mysqlUser:

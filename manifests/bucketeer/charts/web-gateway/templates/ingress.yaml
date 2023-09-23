@@ -9,9 +9,14 @@ metadata:
     release: {{ template "web-gateway.fullname" . }}
     heritage: {{ .Release.Service }}
   annotations:
+    {{- if .Values.env.gcpEnabled }}
     kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.allow-http: "false"
     kubernetes.io/ingress.global-static-ip-name: {{ .Values.ingress.staticIPName }}
+    {{- else }}
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    {{- end }}
 spec:
   tls: {{- toYaml .Values.tls.bucketeerJP.secrets | nindent 4 }}
   rules:

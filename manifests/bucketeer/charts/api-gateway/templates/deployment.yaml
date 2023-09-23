@@ -50,8 +50,14 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
+            - name: BUCKETEER_GATEWAY_PROFILE
+              value: "{{.Values.env.profile}}"
+            - name: BUCKETEER_GATEWAY_GCP_TRACE_ENABLED
+              value: "{{.Values.env.gcpEnabled}}"
             - name: BUCKETEER_GATEWAY_PROJECT
               value: "{{ .Values.env.project }}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{.Values.env.pubsubEmulatorHost}}"
             - name: BUCKETEER_GATEWAY_GOAL_TOPIC
               value: "{{ .Values.env.goalTopic }}"
             - name: BUCKETEER_GATEWAY_EVALUATION_TOPIC
