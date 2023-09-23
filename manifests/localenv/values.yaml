@@ -31,7 +31,6 @@ mysql:
     database: "bucketeer"
     username: "bucketeer"
     password: "bucketeer"
-    # existingSecret: "mysql-secrets"
 
 bq:
   project: bucketeer-test

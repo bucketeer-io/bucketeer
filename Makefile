@@ -255,3 +255,36 @@ e2e:
 .PHONY: update-copyright
 update-copyright:
 	./hack/update-copyright/update-copyright.sh
+
+
+#############################
+# dev container
+#############################
+setup-minikube:
+	make -C tools/dev setup-minikube
+
+
+start-minikube:
+	make -C tools/dev start-minikube
+
+# build go application docker image
+# please set the TAG env, eg: TAG=test make build-docker-images
+build-docker-images:
+	for APP in `ls bin`; do \
+		./tools/build/show-dockerfile.sh bin $$APP > Dockerfile-app-$$APP; \
+		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
+		docker build -f Dockerfile-app-$$APP -t bucketeer-$$IMAGE:${TAG} .; \
+		rm Dockerfile-app-$$APP; \
+	done
+
+
+# copy go application docker image to minikube
+# please keep the same TAG env as used in build-docker-images, eg: TAG=test make minikube-load-images
+minikube-load-images:
+	for APP in `ls bin`; do \
+		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
+		docker save  bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
+		docker cp $$IMAGE.tar minikube:/home/docker; \
+		rm $$IMAGE.tar; \
+		minikube ssh "docker load -i /home/docker/$$IMAGE.tar"; \
+	done

@@ -67,7 +67,7 @@ spec:
             - name: BUCKETEER_TEST_ENABLED
               value: "{{.Values.env.bucketeerTestEnabled}}"
             - name: BUCKETEER_BACKEND_GCP_TRACE_ENABLED
-              value: "{{.Values.env.gcpTraceEnabled}}"
+              value: "{{.Values.env.gcpEnabled}}"
             - name: BUCKETEER_BACKEND_PROJECT
               value: "{{ .Values.env.project }}"
             - name: BUCKETEER_BACKEND_MYSQL_USER

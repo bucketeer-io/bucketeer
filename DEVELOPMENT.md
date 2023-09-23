@@ -141,11 +141,13 @@ steps:
 ```shell
 cd tools/cert
 
-make generate-tls-certificate-backend
-make generate-oauth-backend
+make generate-tls-certificate
+make generate-oauth
 
-make service-cert-secret-backend
-make oauth-key-secret-backend
+make service-cert-secret
+make oauth-key-secret
+
+GITHUB_TOKEN=${enter_your_token} make generate-github-token
 ```
 
 These commands will generate the certificate file for the **backend** service and create the secret in the kubernetes,
@@ -156,13 +158,13 @@ so we can use the certificate file and the secret in the **backend** service cha
 ```shell
 ISSUER=https://accounts.google.com \
 EMAIL=xxx@gmail.com \
-OAUTH_KEY_PATH=/workspaces/bucketeer/tools/cert/backend/oauth-private.pem \
-SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/cert/backend/service-token-backend \
+OAUTH_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/oauth-private.pem \
+SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 make generate-service-token
 ```
 
-This command will generate the service token for the **backend** service in `tools/cert/backend` directory. You can find
-the token in the `service-token-backend` file, and you will use it in the **backend** service chart.
+This command will generate the service token in `tools/dev/cert` directory. You can find
+the token in the `service-token` file, and you will use it in the service chart.
 
 3. Set the environment variables in the helm chart `manifests/bucketeer/charts/backend/values.yaml`
 
