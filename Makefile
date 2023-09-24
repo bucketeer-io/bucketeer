@@ -260,12 +260,43 @@ update-copyright:
 #############################
 # dev container
 #############################
+
+# setup minikube dev environment
 setup-minikube:
 	make -C tools/dev setup-minikube
+	make -C ./ modify-hosts
 
-
-start-minikube:
+# start minikube that already setup
+start-minikube: 
 	make -C tools/dev start-minikube
+	make -C ./ modify-hosts
+
+# modify hosts file to access api-gateway and web-gateway
+modify-hosts:
+	$(eval MINIKUBE_IP := $(shell minikube ip))
+	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.org" | sudo tee -a /etc/hosts
+	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.org" | sudo tee -a /etc/hosts
+
+# generate tls certificate
+generate-tls-certificate:
+	make -C tools/dev generate-tls-certificate
+
+# generate oauth key
+generate-oauth:
+	make -C tools/dev generate-oauth
+
+# create service cert secret in minikube
+service-cert-secret:
+	make -C tools/dev service-cert-secret
+
+# create oauth key secret in minikube
+oauth-key-secret:
+	make -C tools/dev oauth-key-secret
+
+# create github token secret in minikube
+generate-github-token:
+	make -C tools/dev generate-github-token
+
 
 # build go application docker image
 # please set the TAG env, eg: TAG=test make build-docker-images
@@ -273,7 +304,7 @@ build-docker-images:
 	for APP in `ls bin`; do \
 		./tools/build/show-dockerfile.sh bin $$APP > Dockerfile-app-$$APP; \
 		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
-		docker build -f Dockerfile-app-$$APP -t bucketeer-$$IMAGE:${TAG} .; \
+		docker build -f Dockerfile-app-$$APP -t ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} .; \
 		rm Dockerfile-app-$$APP; \
 	done
 
@@ -283,7 +314,7 @@ build-docker-images:
 minikube-load-images:
 	for APP in `ls bin`; do \
 		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
-		docker save  bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
+		docker save  ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
 		docker cp $$IMAGE.tar minikube:/home/docker; \
 		rm $$IMAGE.tar; \
 		minikube ssh "docker load -i /home/docker/$$IMAGE.tar"; \

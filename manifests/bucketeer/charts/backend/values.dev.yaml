@@ -1,0 +1,60 @@
+global:
+  image:
+    tag: test
+    imagePullSecrets:
+
+env:
+  gcpEnabled: false
+  cloudService: hcv
+  profile: false
+  bucketeerTestEnabled: true
+  bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9050
+  pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+  mysqlMigrationUser: bucketeer
+  mysqlMigrationPass: bucketeer
+  project: bucketeer-test
+  mysqlUser: bucketeer
+  mysqlPass: bucketeer
+  mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+  mysqlPort: 3306
+  mysqlDbName: bucketeer
+  persistentRedis:
+    serverName: backend
+    addr: localenv-redis-headless.default.svc.cluster.local:6379
+    poolMaxIdle: 25
+    poolMaxActive: 25
+  nonPersistentRedis:
+    serverName: backend
+    addr: localenv-redis-headless.default.svc.cluster.local:6379
+    poolMaxIdle: 25
+    poolMaxActive: 25
+  bigQueryDataSet: bucketeer
+  bigQueryDataLocation: bucketeer
+  domainTopic: domain
+  bulkSegmentUsersReceivedTopic: bulk-segment-users-received
+  timezone: UTC
+  githubUser: bucketeer
+  githubMigrationSourcePath: /tmp/migration
+  logLevel: info
+tls:
+  service:
+    secret: bucketeer-service-cert
+    cert:
+    key:
+  issuer:
+    secret: bucketeer-service-cert
+    cert:
+serviceToken:
+  secret:
+  token: 
+oauth:
+  key:
+    secret: bucketeer-oauth-key
+    public:
+  clientId: bucketeer
+  clientSecret: oauth-client-secret
+  redirectUrls: https://google.com
+  issuer: https://accounts.google.com
+webhook:
+  baseURL: http://localhost:9000
+  kmsResourceName: vault
