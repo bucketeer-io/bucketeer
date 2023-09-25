@@ -41,6 +41,8 @@ This command will install the Golang packages that Bucketeer depends on.
 make setup-minikube
 ```
 
+> Note: If you setup the minikube cluster for the first time, next time you can just run `make start-minikube` to start the cluster.
+
 This command will setup minikube and services that Bucketeer depends on:
 
 * MySQL
@@ -78,10 +80,10 @@ token will be used to authenticate the gRPC service (we will use this token in H
 ```shell
 # build all go applications
 make build-go
-# build all docker images
-make build-docker-images
-# load the docker images into minikube
-make minikube-load-images
+# build all docker images, make sure to set the TAG environment variable
+TAG=test make build-docker-images
+# load the docker images into minikube, make sure to set the TAG environment variable
+TAG=test make minikube-load-images
 ```
 
 5. Deploy the project:
