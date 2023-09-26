@@ -71,6 +71,9 @@ const currentEnvironmentRole = (state: AppState): EnvironmentRoleV2.AsObject => 
     const envRole = state.me.environmentRoles.find(
       (environmentRole) => environmentRole.environment.id === curEnvId
     );
+    if (!envRole) {
+      return state.me.environmentRoles[0];
+    }
     return envRole;
   }
   return new EnvironmentRoleV2().toObject();
