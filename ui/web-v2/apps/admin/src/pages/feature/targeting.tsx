@@ -224,7 +224,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
 
         dispatch(
           updateFeatureTargeting({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: feature.id,
             comment: data.comment,
             commands: commands,
@@ -233,7 +233,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
           setIsConfirmDialogOpen(false);
           dispatch(
             getFeature({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: featureId,
             })
           ).then(() => {
@@ -247,7 +247,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     useEffect(() => {
       dispatch(
         listSegments({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           cursor: '',
         })
       );
@@ -266,7 +266,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       }
     }, [feature]);
 
-  
+
 
     return (
       <FormProvider {...methods}>

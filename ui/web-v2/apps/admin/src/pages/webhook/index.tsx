@@ -104,7 +104,7 @@ export const WebhookIndexPage: FC = memo(() => {
       const cursor = (page - 1) * PUSH_LIST_PAGE_SIZE;
       dispatch(
         listWebhooks({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: PUSH_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -146,7 +146,7 @@ export const WebhookIndexPage: FC = memo(() => {
   const handleOnClickAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -165,7 +165,7 @@ export const WebhookIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createWebhook({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           name: data.name,
           description: data.description,
         })
@@ -173,7 +173,7 @@ export const WebhookIndexPage: FC = memo(() => {
         setOpen(false);
         resetAdd();
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}`
         );
         updateWebhookList(null, 1);
       });
@@ -189,7 +189,7 @@ export const WebhookIndexPage: FC = memo(() => {
         description: w.description,
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}/${w.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}/${w.id}`,
         search: location.search,
       });
     },
@@ -220,7 +220,7 @@ export const WebhookIndexPage: FC = memo(() => {
       }
       dispatch(
         updateWebhook({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: webhookId,
           name: name,
           description,
@@ -241,7 +241,7 @@ export const WebhookIndexPage: FC = memo(() => {
     resetUpdate();
     setOpen(false);
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_WEBHOOKS}`,
       search: location.search,
     });
   }, [setOpen, resetAdd, resetUpdate]);
@@ -268,7 +268,7 @@ export const WebhookIndexPage: FC = memo(() => {
     (data) => {
       dispatch(
         deleteWebhook({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.webhook.id,
         })
       ).then(() => {

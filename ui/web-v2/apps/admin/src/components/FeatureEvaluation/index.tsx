@@ -128,7 +128,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
       dispatch(
         getEvaluationTimeseriesCount({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           timeRange: o.value,
         })
       );

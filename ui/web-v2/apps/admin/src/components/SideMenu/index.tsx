@@ -52,14 +52,14 @@ interface Divider {
 
 const createMenuItems = (
   isAdmin: boolean,
-  environmentId: string
+  environmentUrlCode: string
 ): Array<MenuItem | Divider> => {
   const items: Array<MenuItem | Divider> = [];
   items.push({
     messageComponent: (
       <span>{intl.formatMessage(messages.sideMenu.featureFlags)}</span>
     ),
-    path: `/${environmentId}${PAGE_PATH_FEATURES}`,
+    path: `/${environmentUrlCode}${PAGE_PATH_FEATURES}`,
     external: null,
     target: null,
     iconElement: <MUToggleOnIcon />,
@@ -68,7 +68,7 @@ const createMenuItems = (
     messageComponent: (
       <span>{intl.formatMessage(messages.sideMenu.goals)}</span>
     ),
-    path: `/${environmentId}${PAGE_PATH_GOALS}`,
+    path: `/${environmentUrlCode}${PAGE_PATH_GOALS}`,
     external: null,
     target: null,
     iconElement: <MUFlagIcon />,
@@ -77,7 +77,7 @@ const createMenuItems = (
     messageComponent: (
       <span>{intl.formatMessage(messages.sideMenu.experiments)}</span>
     ),
-    path: `/${environmentId}${PAGE_PATH_EXPERIMENTS}`,
+    path: `/${environmentUrlCode}${PAGE_PATH_EXPERIMENTS}`,
     external: null,
     target: null,
     iconElement: <MUBarChart />,
@@ -86,14 +86,14 @@ const createMenuItems = (
     messageComponent: (
       <span>{intl.formatMessage(messages.sideMenu.userSegments)}</span>
     ),
-    path: `/${environmentId}${PAGE_PATH_USER_SEGMENTS}`,
+    path: `/${environmentUrlCode}${PAGE_PATH_USER_SEGMENTS}`,
     external: null,
     target: null,
     iconElement: <MUPeopleIcon />,
   });
   // items.push({ TODO: User implementation
   //   messageComponent: <span>{intl.formatMessage(messages.sideMenu.user)}</span>,
-  //   path: `/${environmentId}${PAGE_PATH_USERS}`,
+  //   path: `/${environmentUrlCode}${PAGE_PATH_USERS}`,
   //   external: null,
   //   target: null,
   //   iconElement: <MUPermIdentityIcon />,
@@ -102,7 +102,7 @@ const createMenuItems = (
     messageComponent: (
       <span>{intl.formatMessage(messages.sideMenu.auditLog)}</span>
     ),
-    path: `/${environmentId}${PAGE_PATH_AUDIT_LOGS}`,
+    path: `/${environmentUrlCode}${PAGE_PATH_AUDIT_LOGS}`,
     external: null,
     target: null,
     iconElement: <MUNotificationsIcon />,
@@ -112,7 +112,7 @@ const createMenuItems = (
     messageComponent: (
       <span>{intl.formatMessage(messages.sideMenu.accounts)}</span>
     ),
-    path: `/${environmentId}${PAGE_PATH_ACCOUNTS}`,
+    path: `/${environmentUrlCode}${PAGE_PATH_ACCOUNTS}`,
     external: null,
     target: null,
     iconElement: <MUAccountCircleIcon />,
@@ -121,7 +121,7 @@ const createMenuItems = (
     messageComponent: (
       <span>{intl.formatMessage(messages.sideMenu.apiKeys)}</span>
     ),
-    path: `/${environmentId}${PAGE_PATH_APIKEYS}`,
+    path: `/${environmentUrlCode}${PAGE_PATH_APIKEYS}`,
     external: null,
     target: null,
     iconElement: <MUVpnKeyIcon />,
@@ -142,7 +142,7 @@ const createMenuItems = (
     messageComponent: (
       <span>{intl.formatMessage(messages.sideMenu.settings)}</span>
     ),
-    path: `/${environmentId}${PAGE_PATH_SETTINGS}`,
+    path: `/${environmentUrlCode}${PAGE_PATH_SETTINGS}`,
     external: null,
     target: null,
     iconElement: <MUSettingsIcon />,
@@ -196,7 +196,7 @@ export const SideMenu: FC<Props> = memo(({ onClickNavLink }) => {
         <EnvironmentSelect />
       </div>
       <div className="flex-grow">
-        {createMenuItems(me.isAdmin, currentEnvironment.id).map((item, i) =>
+        {createMenuItems(me.isAdmin, currentEnvironment.urlCode).map((item, i) =>
           isMenuItem(item) ? (
             <div key={i} className="py-1">
               <SideMenuItem item={item} onClick={onClickNavLink} />

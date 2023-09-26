@@ -60,7 +60,7 @@ export const SegmentDeleteDialog: FC<SegmentDeleteDialogProps> = ({
                       <li key={feature.id}>
                         <Link
                           className="link text-left"
-                          to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${feature.id}`}
+                          to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${feature.id}`}
                         >
                           <p className="truncate w-60">{feature.name}</p>
                         </Link>

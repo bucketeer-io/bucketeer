@@ -72,7 +72,7 @@ export const FeatureHeader: FC<FeatureHeaderProps> = memo(({ featureId }) => {
     <div>
       <div className="mb-4">
         <Breadcrumbs
-          pages={createPages(currentEnvironment.id, featureId, detailPath)}
+          pages={createPages(currentEnvironment.urlCode, featureId, detailPath)}
         />
       </div>
       <div className="flex">
@@ -99,16 +99,16 @@ export const FeatureHeader: FC<FeatureHeaderProps> = memo(({ featureId }) => {
   );
 });
 
-const createPages = (envId, featureId, detailPath: string) => {
+const createPages = (envUrlCode, featureId, detailPath: string) => {
   return [
     {
       name: intl.formatMessage(messages.sideMenu.featureFlags),
-      path: `${PAGE_PATH_ROOT}${envId}${PAGE_PATH_FEATURES}`,
+      path: `${PAGE_PATH_ROOT}${envUrlCode}${PAGE_PATH_FEATURES}`,
       current: false,
     },
     {
       name: featureId,
-      path: `${PAGE_PATH_ROOT}${envId}${PAGE_PATH_FEATURES}/${featureId}/${detailPath}`,
+      path: `${PAGE_PATH_ROOT}${envUrlCode}${PAGE_PATH_FEATURES}/${featureId}/${detailPath}`,
       current: true,
     },
   ];

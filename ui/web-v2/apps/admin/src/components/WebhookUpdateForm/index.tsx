@@ -41,7 +41,7 @@ export const WebhookUpdateForm: FC<WebhookUpdateFormProps> = memo(
     useEffect(() => {
       dispatch(
         getWebhook({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: webhookId,
         })
       );

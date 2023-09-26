@@ -133,7 +133,7 @@ export const SegmentIndexPage: FC = memo(() => {
         options && options.inUse != null ? options.inUse === 'true' : null;
       dispatch(
         listSegments({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: SEGMENT_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -174,7 +174,7 @@ export const SegmentIndexPage: FC = memo(() => {
       setIsConfirmDialogOpen(false);
       dispatch(
         deleteSegmentUser({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.segment.id,
         })
       );
@@ -186,7 +186,7 @@ export const SegmentIndexPage: FC = memo(() => {
     (segment: Segment.AsObject) => {
       dispatch(
         bulkDownloadSegmentUsers({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           segmentId: segment.id,
         })
       ).then((data) => {
@@ -197,7 +197,7 @@ export const SegmentIndexPage: FC = memo(() => {
         link.href = url;
         link.setAttribute(
           'download',
-          `${currentEnvironment.namespace}-${segment.name}.csv`
+          `${currentEnvironment.name}-${segment.name}.csv`
         );
         window.document.body.appendChild(link);
         link.click();
@@ -228,7 +228,7 @@ export const SegmentIndexPage: FC = memo(() => {
   const handleOnClickAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -248,7 +248,7 @@ export const SegmentIndexPage: FC = memo(() => {
           featureList: s.featuresList,
         });
         history.push({
-          pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}/${s.id}`,
+          pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${s.id}`,
           search: location.search,
         });
       }
@@ -283,7 +283,7 @@ export const SegmentIndexPage: FC = memo(() => {
     resetUpdate();
     setOpen(false);
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
@@ -292,7 +292,7 @@ export const SegmentIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createSegment({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           name: data.name,
           description: data.description,
         })
@@ -311,7 +311,7 @@ export const SegmentIndexPage: FC = memo(() => {
           convertFileToUint8Array(file, (uint8Array) => {
             dispatch(
               bulkUploadSegmentUsers({
-                environmentNamespace: currentEnvironment.namespace,
+                environmentNamespace: currentEnvironment.id,
                 segmentId: response.payload as string,
                 data: uint8Array,
               })
@@ -329,7 +329,7 @@ export const SegmentIndexPage: FC = memo(() => {
     resetAdd();
     setOpen(false);
     history.replace(
-      `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_USER_SEGMENTS}`
+      `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`
     );
     updateSegmentList(null, 1);
   };
@@ -371,14 +371,14 @@ export const SegmentIndexPage: FC = memo(() => {
         convertFileToUint8Array(file, (uint8Array) => {
           dispatch(
             bulkUploadSegmentUsers({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               segmentId: segmentId,
               data: uint8Array,
             })
           ).then(() => {
             dispatch(
               getSegment({
-                environmentNamespace: currentEnvironment.namespace,
+                environmentNamespace: currentEnvironment.id,
                 id: segmentId,
               })
             ).then(handleOnClose);
@@ -389,7 +389,7 @@ export const SegmentIndexPage: FC = memo(() => {
       // Name, description and file
       dispatch(
         updateSegment({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: segmentId,
           name: name,
           description: description,
@@ -398,7 +398,7 @@ export const SegmentIndexPage: FC = memo(() => {
         if (!file) {
           dispatch(
             getSegment({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: segmentId,
             })
           ).then(handleOnClose);
@@ -407,14 +407,14 @@ export const SegmentIndexPage: FC = memo(() => {
         convertFileToUint8Array(file, (uint8Array) => {
           dispatch(
             bulkUploadSegmentUsers({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               segmentId: segmentId,
               data: uint8Array,
             })
           ).then(() => {
             dispatch(
               getSegment({
-                environmentNamespace: currentEnvironment.namespace,
+                environmentNamespace: currentEnvironment.id,
                 id: segmentId,
               })
             ).then(handleOnClose);

@@ -135,7 +135,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         options && options.enabled ? options.enabled === 'false' : null;
       dispatch(
         listAPIKeys({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: APIKEY_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -180,12 +180,12 @@ export const APIKeyIndexPage: FC = memo(() => {
         (() => {
           if (data.enabled) {
             return enableAPIKey({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: data.apiKeyId,
             });
           }
           return disableAPIKey({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: data.apiKeyId,
           });
         })()
@@ -193,7 +193,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         setIsConfirmDialogOpen(false);
         dispatch(
           getAPIKey({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: data.apiKeyId,
           })
         );
@@ -236,7 +236,7 @@ export const APIKeyIndexPage: FC = memo(() => {
   const handleOpenAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_APIKEYS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -248,7 +248,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         name: a.name,
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_APIKEYS}/${a.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}/${a.id}`,
         search: location.search,
       });
     },
@@ -260,7 +260,7 @@ export const APIKeyIndexPage: FC = memo(() => {
     resetAdd();
     resetUpdate();
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_APIKEYS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
@@ -269,14 +269,14 @@ export const APIKeyIndexPage: FC = memo(() => {
     async (data: AddApiKeyFormSchema) => {
       dispatch(
         createAPIKey({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           name: data.name,
         })
       ).then(() => {
         setOpen(false);
         resetAdd();
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_APIKEYS}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}`
         );
         updateAPIKeyList(null, 1);
       });
@@ -288,14 +288,14 @@ export const APIKeyIndexPage: FC = memo(() => {
     async (data: UpdateApiKeyFormSchema) => {
       dispatch(
         updateAPIKey({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: apiKeyId,
           name: data.name,
         })
       ).then(() => {
         dispatch(
           getAPIKey({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: apiKeyId,
           })
         );
