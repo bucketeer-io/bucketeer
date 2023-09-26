@@ -463,6 +463,46 @@ export const messages = {
       id: 'autoOps.updateAnOperation',
       defaultMessage: 'Update An Operation',
     }),
+    minimumGoalCount: defineMessage({
+      id: 'autoOps.minimumGoalCount',
+      defaultMessage: 'Minimum Goal Count',
+    }),
+    totalGoalCountEvents: defineMessage({
+      id: 'autoOps.totalGoalCountEvents',
+      defaultMessage: 'Total Goal Count Events',
+    }),
+    currentEventRate: defineMessage({
+      id: 'autoOps.currentEventRate',
+      defaultMessage: 'Current Event Rate',
+    }),
+    enableOperation: defineMessage({
+      id: 'autoOps.enableOperation',
+      defaultMessage: 'Enable Operation',
+    }),
+    killSwitchOperation: defineMessage({
+      id: 'autoOps.killSwitchOperation',
+      defaultMessage: 'Kill Switch Operation',
+    }),
+    progressInformation: defineMessage({
+      id: 'autoOps.progressInformation',
+      defaultMessage: 'Progress information',
+    }),
+    active: defineMessage({
+      id: 'autoOps.active',
+      defaultMessage: 'Active',
+    }),
+    completed: defineMessage({
+      id: 'autoOps.completed',
+      defaultMessage: 'Completed',
+    }),
+    goalCount: defineMessage({
+      id: 'autoOps.goalCount',
+      defaultMessage: 'Goal Count',
+    }),
+    evaluationCount: defineMessage({
+      id: 'autoOps.evaluationCount',
+      defaultMessage: 'Evaluation Count',
+    }),
   },
   maintainer: defineMessage({
     id: 'maintainer',

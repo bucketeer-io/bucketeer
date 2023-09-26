@@ -54,10 +54,10 @@ import { Overlay } from '../Overlay';
 
 const numberOfBlocks = 51;
 
-enum TabLabel {
-  ACTIVE = 'Active',
-  COMPLETED = 'Completed',
-}
+const TabLabel = {
+  ACTIVE: intl.formatMessage(messages.autoOps.active),
+  COMPLETED: intl.formatMessage(messages.autoOps.completed),
+};
 
 export interface ClauseTypeMap {
   EVENT_RATE: 'bucketeer.autoops.OpsEventRateClause';
@@ -354,8 +354,8 @@ const Operation = ({
       <div className="flex justify-between py-4 border-b">
         <h3 className="font-bold text-xl text-gray-600">
           {rule.opsType === OpsType.ENABLE_FEATURE
-            ? 'Enable Operation'
-            : 'Kill Switch Operation'}
+            ? f(messages.autoOps.enableOperation)
+            : f(messages.autoOps.killSwitchOperation)}
         </h3>
         <div className="flex space-x-2 items-center">
           <div
@@ -365,8 +365,8 @@ const Operation = ({
               type === ClauseType.EVENT_RATE && 'bg-[#EFECF5] text-primary'
             )}
           >
-            {type === ClauseType.DATETIME && 'Schedule'}
-            {type === ClauseType.EVENT_RATE && 'Event Rate'}
+            {type === ClauseType.DATETIME && f(messages.autoOps.schedule)}
+            {type === ClauseType.EVENT_RATE && f(messages.autoOps.eventRate)}
           </div>
           <Popover className="relative flex">
             <Popover.Button>
@@ -412,7 +412,9 @@ const Operation = ({
         </div>
       </div>
       <div className="mt-4">
-        <p className="font-bold text-lg text-gray-600">Progress Information</p>
+        <p className="font-bold text-lg text-gray-600">
+          {f(messages.autoOps.progressInformation)}
+        </p>
         {type === ClauseType.DATETIME && (
           <DateTimeOperation
             rule={rule}
@@ -420,7 +422,11 @@ const Operation = ({
           />
         )}
         {type === ClauseType.EVENT_RATE && (
-          <EventRateOperation rule={rule} opsCounts={opsCounts} />
+          <EventRateOperation
+            rule={rule}
+            opsCounts={opsCounts}
+            isActiveTabSelected={isActiveTabSelected}
+          />
         )}
       </div>
     </div>
@@ -480,10 +486,11 @@ const DateTimeOperation = memo(
 interface EventRateOperationProps {
   rule: AutoOpsRule.AsObject;
   opsCounts: OpsCount.AsObject[];
+  isActiveTabSelected: boolean;
 }
 
 const EventRateOperation = memo(
-  ({ rule, opsCounts }: EventRateOperationProps) => {
+  ({ rule, opsCounts, isActiveTabSelected }: EventRateOperationProps) => {
     const { value } = rule.clausesList[0].clause;
     const { formatMessage: f } = useIntl();
 
@@ -505,18 +512,26 @@ const EventRateOperation = memo(
     return (
       <div>
         <div className="flex items-center space-x-2 mt-3">
-          <span className="text-gray-400">Goal</span>
+          <span className="text-gray-400">
+            {f(messages.autoOps.opsEventRateClause.goal)}
+          </span>
           <span className="text-gray-500 truncate max-w-[120px]">{goalId}</span>
           <span className="text-gray-200">/</span>
-          <span className="text-gray-400">Min Count</span>
+          <span className="text-gray-400">
+            {f(messages.autoOps.minimumGoalCount)}
+          </span>
           <span className="text-gray-500">{minCount}</span>
           <span className="text-gray-200">/</span>
-          <span className="text-gray-400">Total Count Events</span>
+          <span className="text-gray-400">
+            {f(messages.autoOps.totalGoalCountEvents)}
+          </span>
           <span className="text-gray-500">
             {opsCount ? opsCount.opsEventCount : 0}
           </span>
           <span className="text-gray-200">/</span>
-          <span className="text-gray-400">Current Event Rate</span>
+          <span className="text-gray-400">
+            {f(messages.autoOps.currentEventRate)}
+          </span>
           <span className="text-gray-500">
             {opsCount ? `${currentEventRate}%` : '0%'}
           </span>
@@ -524,7 +539,8 @@ const EventRateOperation = memo(
             render={() => {
               return (
                 <div className="shadow p-2 rounded bg-white text-sm whitespace-nowrap -ml-28 mt-[-60px]">
-                  Goal count / Evaluation count * 100
+                  {f(messages.autoOps.goalCount)} /{' '}
+                  {f(messages.autoOps.evaluationCount)} * 100
                 </div>
               );
             }}
@@ -559,7 +575,7 @@ const EventRateOperation = memo(
                   key={i}
                   className={classNames(
                     'relative h-[8px] flex-1 rounded-[60px]',
-                    bgColor
+                    isActiveTabSelected ? bgColor : 'bg-pink-500'
                   )}
                 >
                   {i === numberOfBlocks - 1 && (
