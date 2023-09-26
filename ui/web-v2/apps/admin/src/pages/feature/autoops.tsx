@@ -73,12 +73,6 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
 
     useEffect(() => {
       dispatch(
-        listAutoOpsRules({
-          featureId: featureId,
-          environmentNamespace: currentEnvironment.id,
-        })
-      );
-      dispatch(
         listGoals({
           environmentNamespace: currentEnvironment.id,
           pageSize: 99999,

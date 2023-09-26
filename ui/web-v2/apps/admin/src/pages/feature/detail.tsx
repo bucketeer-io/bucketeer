@@ -1,3 +1,8 @@
+import {
+  listAutoOpsRules,
+  selectAll as selectAllAutoOpsRules,
+} from '@/modules/autoOpsRules';
+import { AutoOpsRule } from '@/proto/autoops/auto_ops_rule_pb';
 import { SerializedError } from '@reduxjs/toolkit';
 import { FC, memo, useEffect } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -57,6 +62,17 @@ export const FeatureDetailPage: FC = memo(() => {
     ],
     shallowEqual
   );
+  const isAutoOpsRuleLoading = useSelector<AppState, boolean>(
+    (state) => state.autoOpsRules.loading,
+    shallowEqual
+  );
+  const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
+    (state) =>
+      selectAllAutoOpsRules(state.autoOpsRules).filter(
+        (rule) => rule.featureId === featureId
+      ),
+    shallowEqual
+  );
 
   useEffect(() => {
     if (featureId) {
@@ -66,12 +82,22 @@ export const FeatureDetailPage: FC = memo(() => {
           id: featureId,
         })
       );
+      dispatch(
+        listAutoOpsRules({
+          featureId: featureId,
+          environmentNamespace: currentEnvironment.namespace,
+        })
+      );
     }
   }, [featureId, dispatch, currentEnvironment]);
 
-  if (!feature) {
+  if (!feature || isAutoOpsRuleLoading) {
     return <div>loading</div>;
   }
+
+  const activeOperationsLength = autoOpsRules.filter(
+    (rule) => !rule.triggeredAt
+  ).length;
 
   return (
     <div className="bg-white h-full">
@@ -93,11 +119,14 @@ export const FeatureDetailPage: FC = memo(() => {
                 to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${tab.to}`}
               >
                 {tab.message}
-                {tab.isNew && (
-                  <div className="rounded-sm bg-[#F3F9FD] text-[#399CE4] px-2 py-[6px] text-sm inline-block ml-3">
-                    New
-                  </div>
-                )}
+                {tab.isNew &&
+                  (activeOperationsLength === 0 ? (
+                    <div className="rounded-sm bg-[#F3F9FD] text-[#399CE4] px-2 py-[6px] text-sm inline-block ml-3">
+                      New
+                    </div>
+                  ) : (
+                    <span className="ml-1">({activeOperationsLength})</span>
+                  ))}
               </NavLink>
             ))}
           </nav>
