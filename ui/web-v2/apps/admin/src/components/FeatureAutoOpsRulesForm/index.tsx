@@ -631,7 +631,7 @@ export const createInitialOpsEventRateClause = (feature: Feature.AsObject) => {
   return {
     variation: feature.variationsList[0].id,
     goal: null,
-    minCount: 1,
+    minCount: 50,
     threadsholdRate: 50,
     operator: operatorOptions[0].value,
   };
