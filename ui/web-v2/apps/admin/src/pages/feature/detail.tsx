@@ -85,7 +85,7 @@ export const FeatureDetailPage: FC = memo(() => {
       dispatch(
         listAutoOpsRules({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
         })
       );
     }

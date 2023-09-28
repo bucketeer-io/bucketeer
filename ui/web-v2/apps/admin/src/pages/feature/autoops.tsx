@@ -66,7 +66,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       dispatch(
         listAutoOpsRules({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
         })
       );
     }, [dispatch]);

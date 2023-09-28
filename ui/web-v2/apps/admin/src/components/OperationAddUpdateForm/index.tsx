@@ -220,7 +220,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
           }
 
           const param: UpdateAutoOpsRuleParams = {
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: autoOpsRule.id,
             changeDatetimeClauseCommands,
             changeOpsEventRateClauseCommands,
@@ -249,7 +249,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
 
           dispatch(
             createAutoOpsRule({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               command: command,
             })
           ).then(() => onSubmit());
@@ -745,7 +745,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
     async (data) => {
       dispatch(
         createGoal({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.id,
           name: data.name,
           description: data.description,
@@ -755,7 +755,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
         resetAdd();
         dispatch(
           listGoals({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             pageSize: 99999,
             cursor: '',
             searchKeyword: '',

@@ -126,7 +126,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         if (ids.length > 0) {
           dispatch(
             listOpsCounts({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               ids,
             })
           );
@@ -137,7 +137,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const handleClose = useCallback(() => {
       reset();
       history.replace({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}`,
         search: location.search,
       });
       setOpen(false);
@@ -147,7 +147,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const handleOpen = useCallback(() => {
       setOpen(true);
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}${PAGE_PATH_NEW}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}${PAGE_PATH_NEW}`,
         search: location.search,
       });
     }, [setOpen, history, location]);
@@ -343,7 +343,7 @@ const Operation = ({
   const handleDelete = (ruleId) => {
     dispatch(
       deleteAutoOpsRule({
-        environmentNamespace: currentEnvironment.namespace,
+        environmentNamespace: currentEnvironment.id,
         id: ruleId,
       })
     ).then(refetchAutoOpsRules);
