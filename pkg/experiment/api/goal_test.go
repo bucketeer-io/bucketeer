@@ -38,7 +38,7 @@ func TestGetGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithTokenRoleUnassigned()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -95,7 +95,7 @@ func TestGetGoalMySQL(t *testing.T) {
 			p.setup(service)
 		}
 		req := &experimentproto.GetGoalRequest{Id: p.id, EnvironmentNamespace: p.environmentNamespace}
-		_, err := service.GetGoal(createContextWithTokenRoleUnassigned(), req)
+		_, err := service.GetGoal(ctx, req)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -144,8 +144,7 @@ func TestCreateGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
@@ -223,7 +222,6 @@ func TestCreateGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		ctx := createContextWithToken()
 		service := createExperimentService(mockController, nil)
 		if p.setup != nil {
 			p.setup(service)
@@ -238,8 +236,7 @@ func TestUpdateGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
@@ -302,7 +299,6 @@ func TestUpdateGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		ctx := createContextWithToken()
 		service := createExperimentService(mockController, nil)
 		if p.setup != nil {
 			p.setup(service)
@@ -317,8 +313,7 @@ func TestArchiveGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
@@ -381,7 +376,6 @@ func TestArchiveGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		ctx := createContextWithToken()
 		service := createExperimentService(mockController, nil)
 		if p.setup != nil {
 			p.setup(service)
@@ -396,8 +390,7 @@ func TestDeleteGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+	ctx := createContextWithTokenAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
@@ -460,7 +453,6 @@ func TestDeleteGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		ctx := createContextWithToken()
 		service := createExperimentService(mockController, nil)
 		if p.setup != nil {
 			p.setup(service)
