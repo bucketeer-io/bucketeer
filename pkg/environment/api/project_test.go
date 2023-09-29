@@ -43,7 +43,7 @@ func TestGetProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -113,7 +113,7 @@ func TestGetProjectMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			req := &proto.GetProjectRequest{Id: p.id}
-			resp, err := s.GetProject(createContextWithToken(t), req)
+			resp, err := s.GetProject(ctx, req)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
 				assert.NotNil(t, resp)
@@ -126,7 +126,7 @@ func TestListProjectsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -192,7 +192,7 @@ func TestListProjectsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.ListProjects(createContextWithToken(t), p.input)
+			actual, err := s.ListProjects(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -204,7 +204,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -314,7 +314,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -330,7 +329,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -477,7 +476,6 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -493,7 +491,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -583,7 +581,6 @@ func TestUpdateProjectMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -599,7 +596,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -680,7 +677,6 @@ func TestEnableProjectMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -696,7 +692,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -777,7 +773,6 @@ func TestDisableProjectMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -793,7 +788,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -874,7 +869,6 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -889,7 +883,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.TODO()
+	ctx := createContextWithTokenRoleUnassigned(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -951,7 +945,6 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithTokenRoleUnassigned(t)
 			service := newEnvironmentService(t, mockController, nil)
 			actual := p.action(ctx, service)
 			assert.Equal(t, p.expected, actual)

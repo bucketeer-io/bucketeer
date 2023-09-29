@@ -15,7 +15,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -39,7 +38,7 @@ func TestGetEnvironmentV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -103,7 +102,7 @@ func TestGetEnvironmentV2(t *testing.T) {
 				p.setup(s)
 			}
 			req := &proto.GetEnvironmentV2Request{Id: p.id}
-			resp, err := s.GetEnvironmentV2(createContextWithToken(t), req)
+			resp, err := s.GetEnvironmentV2(ctx, req)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
 				assert.NotNil(t, resp)
@@ -117,7 +116,7 @@ func TestListEnvironmentsV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -186,7 +185,7 @@ func TestListEnvironmentsV2(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.ListEnvironmentsV2(createContextWithToken(t), p.input)
+			actual, err := s.ListEnvironmentsV2(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -198,7 +197,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -384,7 +383,6 @@ func TestCreateEnvironmentV2(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -400,7 +398,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -503,7 +501,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -519,7 +516,7 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -578,7 +575,6 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -594,7 +590,7 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -653,7 +649,6 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
