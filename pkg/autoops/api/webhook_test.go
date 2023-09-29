@@ -37,7 +37,7 @@ func TestCreateWebhook(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.TODO()
+	ctx := createContextWithTokenRoleOwner(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -100,7 +100,7 @@ func TestCreateWebhook(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			resp, err := s.CreateWebhook(createContextWithTokenRoleOwner(t), p.req)
+			resp, err := s.CreateWebhook(ctx, p.req)
 			if p.resp != nil {
 				assert.Equal(t, p.resp.Webhook.Name, resp.Webhook.Name)
 				assert.Equal(t, p.resp.Webhook.Description, resp.Webhook.Description)
