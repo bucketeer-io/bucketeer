@@ -9,7 +9,7 @@ backend:
     cloudService: hcv
     profile: false
     bucketeerTestEnabled: true
-    bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9050
+    bigqueryEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
     mysqlMigrationUser: bucketeer
     mysqlMigrationPass: bucketeer

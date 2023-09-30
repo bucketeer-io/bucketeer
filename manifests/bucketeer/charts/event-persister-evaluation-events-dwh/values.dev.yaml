@@ -1,0 +1,43 @@
+global:
+  image:
+    tag: test
+    imagePullSecrets:
+
+env:
+  project: bucketeer-test
+  profile: false
+  gcpEnabled: false
+  bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9060
+  pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+  logLevel: info
+  port: 9090
+  metricsPort: 9002
+  timezone: UTC
+  # egress services
+  experimentService: localhost:9001
+  featureService: localhost:9001
+  # option
+  maxMps: "1000"
+  numWorkers: 5
+  flushSize: 100
+  flushInterval: 2s
+  flushTimeout: 30s
+  # pubsub
+  topic: evaluation
+  subscription: dwh-sub
+  pullerNumGoroutines: 5
+  pullerMaxOutstandingMessages: "1000"
+  pullerMaxOutstandingBytes: "1000000000"
+  # bigquery
+  bigQueryDataSet: bucketeer
+
+
+tls:
+  service:
+    secret: bucketeer-service-cert
+    cert:
+    key:
+
+serviceToken:
+  secret:
+  token: 
