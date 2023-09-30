@@ -37,7 +37,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 	cmd := p.Command("create", "Create table in Big Query Emulator")
 	command := &command{
 		CmdClause:        cmd,
-		bigQueryEmulator: cmd.Flag("bigquery-emulator", "Big Query Emulator Host").Default("localhost:9050").String(),
+		bigQueryEmulator: cmd.Flag("bigquery-emulator", "Big Query Emulator Host").Default("http://localhost:9050").String(),
 		project:          cmd.Flag("project", "Project ID").Default("bucketeer-test").String(),
 		dataset:          cmd.Flag("dataset", "Dataset ID").Default("bucketeer").String(),
 	}
@@ -77,7 +77,12 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		{Name: "tag", Type: bigquery.StringFieldType},
 		{Name: "source_id", Type: bigquery.StringFieldType},
 	}
-	createTable(ctx, client, logger, *c.project, *c.dataset, "evaluation_event", evaluationEventSchema)
+	err = createTable(ctx, client, logger, *c.project, *c.dataset, "evaluation_event", evaluationEventSchema)
+	if err != nil {
+		logger.Error("failed to create evaluation_event table",
+			zap.Error(err),
+		)
+	}
 	goalEventSchema := bigquery.Schema{
 		{Name: "id", Type: bigquery.StringFieldType},
 		{Name: "environment_namespace", Type: bigquery.StringFieldType},
@@ -93,8 +98,12 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		{Name: "variation_id", Type: bigquery.StringFieldType},
 		{Name: "reason", Type: bigquery.StringFieldType},
 	}
-	createTable(ctx, client, logger, *c.project, *c.dataset, "goal_event", goalEventSchema)
-
+	err = createTable(ctx, client, logger, *c.project, *c.dataset, "goal_event", goalEventSchema)
+	if err != nil {
+		logger.Error("failed to create goal_event table",
+			zap.Error(err),
+		)
+	}
 	return nil
 }
 
