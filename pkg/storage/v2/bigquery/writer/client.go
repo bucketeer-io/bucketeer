@@ -16,13 +16,23 @@ package writer
 
 import (
 	"context"
+	"fmt"
+	"os"
 
+	"cloud.google.com/go/bigquery/storage/apiv1/storagepb"
 	"cloud.google.com/go/bigquery/storage/managedwriter"
 	"go.uber.org/zap"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+)
+
+const (
+	bigqueryEmulatorHostEnv = "BIGQUERY_EMULATOR_HOST"
 )
 
 type options struct {
@@ -70,24 +80,54 @@ func NewWriter(
 	if dopts.metrics != nil {
 		registerMetrics(dopts.metrics)
 	}
+	var gcpOpts []option.ClientOption
+	if bigqueryEmulatorEndpoint := os.Getenv(bigqueryEmulatorHostEnv); bigqueryEmulatorEndpoint != "" {
+		conn, err := grpc.Dial(bigqueryEmulatorEndpoint,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
+		if err != nil {
+			return nil, err
+		}
+		gcpOpts = append(gcpOpts, option.WithGRPCConn(conn))
+	}
 	logger := dopts.logger.Named("bigquery")
-	c, err := managedwriter.NewClient(ctx, project)
+	c, err := managedwriter.NewClient(ctx, project, gcpOpts...)
 	if err != nil {
 		logger.Error("Failed to create client", zap.Error(err))
 		return nil, err
 	}
-	managedStream, err := c.NewManagedStream(
-		ctx,
-		managedwriter.WithSchemaDescriptor(protodesc.ToDescriptorProto(desc)),
-		managedwriter.WithDestinationTable(
-			managedwriter.TableParentFromParts(project, dataset, table),
-		),
-		managedwriter.WithType(managedwriter.DefaultStream),
-		managedwriter.EnableWriteRetries(true),
-	)
-	if err != nil {
-		logger.Error("Failed to create the managed stream", zap.Error(err))
-		return nil, err
+	var managedStream *managedwriter.ManagedStream
+	if os.Getenv(bigqueryEmulatorHostEnv) != "" {
+		pendingStream, err := c.CreateWriteStream(ctx, &storagepb.CreateWriteStreamRequest{
+			Parent: fmt.Sprintf("projects/%s/datasets/%s/tables/%s", project, dataset, table),
+			WriteStream: &storagepb.WriteStream{
+				Type: storagepb.WriteStream_PENDING,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		managedStream, err = c.NewManagedStream(
+			ctx,
+			managedwriter.WithStreamName(pendingStream.GetName()),
+			managedwriter.WithSchemaDescriptor(protodesc.ToDescriptorProto(desc)),
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		managedStream, err = c.NewManagedStream(
+			ctx,
+			managedwriter.WithSchemaDescriptor(protodesc.ToDescriptorProto(desc)),
+			managedwriter.WithDestinationTable(
+				managedwriter.TableParentFromParts(project, dataset, table),
+			),
+			managedwriter.WithType(managedwriter.DefaultStream),
+			managedwriter.EnableWriteRetries(true),
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &writer{
 		client: managedStream,
