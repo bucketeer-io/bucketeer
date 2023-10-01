@@ -44,7 +44,7 @@
     "@material-ui/lab": "4.0.0-alpha.56",
     "@material-ui/pickers": "3.2.10",
     "@popperjs/core": "^2.11.3",
-    "@reduxjs/toolkit": "1.5.0",
+    "@reduxjs/toolkit": "1.9.6",
     "@tailwindcss/forms": "0.3.4",
     "@types/react-intl": "3.0.0",
     "babel-plugin-react-intl": "8.2.25",
