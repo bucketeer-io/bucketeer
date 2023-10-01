@@ -3,7 +3,7 @@ module github.com/bucketeer-io/bucketeer
 go 1.20
 
 require (
-	cloud.google.com/go/bigquery v1.53.0
+	cloud.google.com/go/bigquery v1.55.0
 	cloud.google.com/go/kms v1.15.1
 	cloud.google.com/go/profiler v0.3.1
 	cloud.google.com/go/pubsub v1.33.0
