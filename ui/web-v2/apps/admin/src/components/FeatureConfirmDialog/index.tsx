@@ -29,6 +29,7 @@ interface FeatureConfirmDialogProps {
   title: string;
   description: string;
   displayResetSampling?: boolean;
+  isSwitchEnableConfrim?: boolean;
   isArchive?: boolean;
   featureId?: string;
   feature?: Feature.AsObject;
@@ -41,6 +42,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   title,
   description,
   displayResetSampling,
+  isSwitchEnableConfrim,
   isArchive,
   featureId,
   feature,

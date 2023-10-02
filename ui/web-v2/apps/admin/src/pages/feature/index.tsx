@@ -545,6 +545,7 @@ export const FeatureIndexPage: FC = memo(() => {
       </Overlay>
       <FormProvider {...switchEnabledMethod}>
         <FeatureConfirmDialog
+          isSwitchEnableConfrim={true}
           open={isSwitchEnableConfirmDialogOpen}
           handleSubmit={switchEnableHandleSubmit(handleSwitchEnabled)}
           onClose={() => setIsSwitchEnableConfirmDialogOpen(false)}
