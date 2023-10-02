@@ -1,0 +1,38 @@
+global:
+  image:
+    tag: test
+    imagePullSecrets:
+
+env:
+  project: bucketeer-test
+  topic: evaluation
+  subscription: evaluation-count-sub
+  profile: false
+  gcpEnabled: false
+  pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+  logLevel: debug
+  port: 9090
+  metricsPort: 9002
+  maxMps: "1000"
+  numWorkers: 5
+  numWriters: 2
+  flushSize: 100
+  flushInterval: 2s
+  redis:
+    serverName: event-persister
+    addr: localenv-redis-headless.default.svc.cluster.local:6379
+    poolMaxIdle: 25
+    poolMaxActive: 25
+  pullerNumGoroutines: 5
+  pullerMaxOutstandingMessages: "1000"
+  pullerMaxOutstandingBytes: "1000000000"
+
+
+
+tls:
+  service:
+    secret: bucketeer-service-cert
+
+serviceToken:
+  secret:
+  token: 

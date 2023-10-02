@@ -1,0 +1,39 @@
+global:
+  image:
+    tag: test
+    imagePullSecrets:
+
+env:
+  gcpEnabled: false
+  profile: false
+  pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+  project: bucketeer-test
+  mysqlUser: bucketeer
+  mysqlPass: bucketeer
+  mysqlHost: localenv-mysql.default.svc.cluster.local
+  mysqlPort: 3306
+  mysqlDbName: bucketeer
+  bulkSegmentUsersReceivedEventTopic: bulk-segment-users-received
+  bulkSegmentUsersReceivedEventSubscription: bulk-segment-users-received-sub
+  domainEventTopic: domain
+  maxMps: "100"
+  numWorkers: 2
+  flushSize: 2
+  flushInterval: 10s
+  pullerNumGoroutines: 5
+  pullerMaxOutstandingMessages: "1000"
+  pullerMaxOutstandingBytes: "1000000000"
+  redis:
+    serverName: feature-segment-persister
+    poolMaxIdle: 25
+    poolMaxActive: 25
+    addr: localenv-redis-headless.default.svc.cluster.local:6379
+  logLevel: info
+  port: 9090
+  metricsPort: 9002
+
+tls:
+  service:
+    secret: bucketeer-service-cert
+    cert:
+    key:
