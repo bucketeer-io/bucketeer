@@ -47,6 +47,12 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["segment-persister"]
           env:
+            - name: BUCKETEER_FEATURE_PROFILE
+              value: "{{.Values.env.profile}}"
+            - name: BUCKETEER_FEATURE_GCP_TRACE_ENABLED
+              value: "{{.Values.env.gcpEnabled}}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{.Values.env.pubsubEmulatorHost}}"
             - name: BUCKETEER_FEATURE_PROJECT
               value: "{{ .Values.env.project }}"
             - name: BUCKETEER_FEATURE_MYSQL_USER

@@ -45,6 +45,12 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{.Values.env.pubsubEmulatorHost}}"
+            - name: BUCKETEER_EVENT_PERSISTER_OPS_GCP_TRACE_ENABLED
+              value: "{{.Values.env.gcpEnabled}}"
+            - name: BUCKETEER_EVENT_PERSISTER_OPS_PROFILE
+              value: "{{.Values.env.profile}}"
             - name: BUCKETEER_EVENT_PERSISTER_OPS_SERVICE_NAME
               value: "{{ template "event-persister-goal-events-ops.fullname" . }}"
             - name: BUCKETEER_EVENT_PERSISTER_OPS_PROJECT

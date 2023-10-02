@@ -9,6 +9,9 @@ namespace: default
 
 env:
   logLevel: info
+  profile: 
+  gcpEnabled: 
+  pubsubEmulatorHost:
   # egress services
   featureService: localhost:9001
   autoOpsService: localhost:9001
@@ -89,3 +92,6 @@ service:
   type: ClusterIP
   clusterIP: None
   externalPort: 9000
+
+serviceAccount:
+  annotations: {}

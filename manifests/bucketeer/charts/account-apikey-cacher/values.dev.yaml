@@ -1,0 +1,35 @@
+global:
+  image:
+    tag: test
+    imagePullSecrets:
+
+env:
+  gcpEnabled: false
+  profile: false
+  pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+  project: bucketeer-test
+  accountService: localhost:9001
+  environmentService: localhost:9001
+  maxMps: "1000"
+  numWorkers: 2
+  flushSize: 100
+  flushInterval: 2s
+  pullerNumGoroutines: 5
+  pullerMaxOutstandingMessages: "1000"
+  pullerMaxOutstandingBytes: "1000000000"
+  redis:
+    serverName: account-apikey-cacher
+    addr: localenv-redis-headless.default.svc.cluster.local:6379
+  logLevel: info
+  port: 9090
+  metricsPort: 9002
+  topic: domain
+  subscription: account-apikey-cacher
+
+tls:
+  service:
+    secret: bucketeer-service-cert
+
+serviceToken:
+  secret:
+  token:

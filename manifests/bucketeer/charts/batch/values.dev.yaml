@@ -1,0 +1,49 @@
+global:
+  image:
+    tag: test
+    imagePullSecrets:
+
+env:
+  project: bucketeer-test
+  profile: false
+  gcpEnabled: false 
+  mysqlUser: bucketeer
+  mysqlPass: bucketeer
+  mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+  mysqlPort: 3306
+  mysqlDbName: bucketeer
+  pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089 
+  notificationService: localhost:9001
+  environmentService: localhost:9001
+  autoOpsService: localhost:9001
+  experimentService: localhost:9001
+  eventCounterService: localhost:9001
+  featureService: localhost:9001
+  webURL: http://localhost:3000
+  logLevel: debug
+  port: 9090
+  metricsPort: 9002
+  timezone: UTC
+  refreshInterval: 10m
+  domainTopic: domain
+  domainSubscription: domain-subscription
+  pullerNumGoroutines: 5
+  pullerMaxOutstandingMessages: "1000"
+  pullerMaxOutstandingBytes: "1000000000"
+  runningDurationPerBatch: 15s
+  # redis settings
+  redis:
+    serverName: batch-redis
+    addr: localenv-redis-headless.default.svc.cluster.local:6379
+    poolMaxIdle: 25
+    poolMaxActive: 25
+
+tls:
+  service:
+    secret: bucketeer-service-cert
+
+serviceToken:
+  token:
+
+cronjob:
+  experimentStatusUpdaterSchedule: "* * * * *"
