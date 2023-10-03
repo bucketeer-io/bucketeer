@@ -27,12 +27,12 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
             <div className="py-6 px-4 bg-primary">
               <div className="flex items-center justify-between">
                 <Dialog.Title className="text-lg font-medium text-white">
-                  {f(messages.adminEnvironment.add.header.title)}
+                  {f(messages.adminEnvironment.update.header.title)}
                 </Dialog.Title>
               </div>
               <div className="mt-1">
                 <p className="text-sm text-indigo-300">
-                  {f(messages.adminEnvironment.add.header.description)}
+                  {f(messages.adminEnvironment.update.header.description)}
                 </p>
               </div>
             </div>
