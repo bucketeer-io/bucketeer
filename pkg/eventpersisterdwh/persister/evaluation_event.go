@@ -158,7 +158,7 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 	}
 	tag := e.Tag
 	if tag == "" {
-		// For requests with no tag, it will insert "none" instead, until all old SDK clients are updated
+		// Tag is optional, so we insert none when is empty.
 		tag = "none"
 	}
 	return &epproto.EvaluationEvent{
