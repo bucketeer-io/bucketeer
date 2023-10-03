@@ -42,7 +42,8 @@ func TestCreateSegmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -101,8 +102,6 @@ func TestCreateSegmentMySQL(t *testing.T) {
 		if tc.setup != nil {
 			tc.setup(service)
 		}
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 		ctx = setToken(ctx, tc.role)
 		req := &featureproto.CreateSegmentRequest{Command: tc.cmd, EnvironmentNamespace: tc.environmentNamespace}
 		_, err := service.CreateSegment(ctx, req)
@@ -115,7 +114,8 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -209,8 +209,6 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 		if tc.setup != nil {
 			tc.setup(service)
 		}
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 		ctx = setToken(ctx, tc.role)
 		req := &featureproto.DeleteSegmentRequest{
 			Id:                   tc.id,
@@ -227,7 +225,8 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -288,8 +287,6 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 		if tc.setup != nil {
 			tc.setup(service)
 		}
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 		ctx = setToken(ctx, tc.role)
 		req := &featureproto.UpdateSegmentRequest{
 			Id:                   tc.id,
@@ -306,7 +303,8 @@ func TestGetSegmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -369,8 +367,6 @@ func TestGetSegmentMySQL(t *testing.T) {
 		if tc.setup != nil {
 			tc.setup(service)
 		}
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 		ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
 		req := &featureproto.GetSegmentRequest{Id: tc.id, EnvironmentNamespace: tc.environmentNamespace}
 		_, err := service.GetSegment(ctx, req)
@@ -383,7 +379,8 @@ func TestListSegmentsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -434,8 +431,6 @@ func TestListSegmentsMySQL(t *testing.T) {
 		if tc.setup != nil {
 			tc.setup(service)
 		}
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
 		ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
 		req := &featureproto.ListSegmentsRequest{PageSize: tc.pageSize, EnvironmentNamespace: tc.environmentNamespace}
 		_, err := service.ListSegments(ctx, req)

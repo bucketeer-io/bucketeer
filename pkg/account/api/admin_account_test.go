@@ -41,9 +41,10 @@ func TestGetMeMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	lang := "ja"
 	ctx := context.TODO()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
+		"accept-language": []string{lang},
 	})
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
@@ -179,6 +180,9 @@ func TestGetMeMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
+			p.ctx = metadata.NewIncomingContext(p.ctx, metadata.MD{
+				"accept-language": []string{lang},
+			})
 			actual, err := service.GetMe(p.ctx, p.input)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if actual != nil {
@@ -194,9 +198,10 @@ func TestGetMeV2MySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	lang := "ja"
 	ctx := context.TODO()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
+		"accept-language": []string{lang},
 	})
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
@@ -332,6 +337,9 @@ func TestGetMeV2MySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
+			p.ctx = metadata.NewIncomingContext(p.ctx, metadata.MD{
+				"accept-language": []string{lang},
+			})
 			actual, err := service.GetMeV2(p.ctx, p.input)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if actual != nil {
@@ -347,9 +355,10 @@ func TestGetMeByEmailV2MySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	lang := "ja"
 	ctx := context.TODO()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
+		"accept-language": []string{lang},
 	})
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
@@ -427,6 +436,9 @@ func TestGetMeByEmailV2MySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
+			p.ctx = metadata.NewIncomingContext(p.ctx, metadata.MD{
+				"accept-language": []string{lang},
+			})
 			actual, err := service.GetMeByEmailV2(p.ctx, p.input)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if actual != nil {
@@ -442,7 +454,8 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -582,7 +595,7 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithDefaultToken(t, p.ctxRole)
+			ctx = setToken(ctx, p.ctxRole)
 			service := createAccountService(t, mockController, storagemock.NewMockClient(mockController))
 			if p.setup != nil {
 				p.setup(service)
@@ -598,7 +611,8 @@ func TestEnableAdminAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -684,7 +698,7 @@ func TestEnableAdminAccountMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithDefaultToken(t, p.ctxRole)
+			ctx := setToken(ctx, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -700,7 +714,8 @@ func TestDisableAdminAccountMySQL(t *testing.T) {
 	defer mockController.Finish()
 	t.Parallel()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -786,7 +801,7 @@ func TestDisableAdminAccountMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithDefaultToken(t, p.ctxRole)
+			ctx = setToken(ctx, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -802,7 +817,8 @@ func TestConvertAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -879,7 +895,7 @@ func TestConvertAccountMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithDefaultToken(t, p.ctxRole)
+			ctx := setToken(ctx, p.ctxRole)
 			service := createAccountService(t, mockController, storagemock.NewMockClient(mockController))
 			if p.setup != nil {
 				p.setup(service)

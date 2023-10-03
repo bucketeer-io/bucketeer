@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+	md "google.golang.org/grpc/metadata"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
@@ -87,6 +88,10 @@ func createExperimentService(c *gomock.Controller, s storage.Client) *experiment
 }
 
 func createContextWithToken() context.Context {
+	return createContextWithTokenAndMetadata(nil)
+}
+
+func createContextWithTokenAndMetadata(metadata map[string][]string) context.Context {
 	token := &token.IDToken{
 		Issuer:    "issuer",
 		Subject:   "sub",
@@ -97,6 +102,9 @@ func createContextWithToken() context.Context {
 		AdminRole: accountproto.Account_OWNER,
 	}
 	ctx := context.TODO()
+	if metadata != nil {
+		ctx = md.NewIncomingContext(ctx, metadata)
+	}
 	return context.WithValue(ctx, rpc.Key, token)
 }
 

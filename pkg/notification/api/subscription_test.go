@@ -29,6 +29,7 @@ import (
 	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
 
@@ -37,7 +38,8 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -169,7 +171,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t, createAdminToken(t))
+			ctx = setToken(t, ctx, account.Account_OWNER)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -185,7 +187,8 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -326,7 +329,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t, createAdminToken(t))
+			ctx = setToken(t, ctx, account.Account_OWNER)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -341,7 +344,8 @@ func TestEnableSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -393,7 +397,7 @@ func TestEnableSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t, createAdminToken(t))
+			ctx = setToken(t, ctx, account.Account_OWNER)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -408,7 +412,8 @@ func TestDisableSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -460,7 +465,7 @@ func TestDisableSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t, createAdminToken(t))
+			ctx = setToken(t, ctx, account.Account_OWNER)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -475,7 +480,8 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -527,7 +533,7 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t, createAdminToken(t))
+			ctx = setToken(t, ctx, account.Account_OWNER)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -542,7 +548,8 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -586,7 +593,7 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			ctx := createContextWithToken(t, createAdminToken(t))
+			ctx = setToken(t, ctx, account.Account_OWNER)
 			actual, err := service.GetSubscription(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
@@ -600,6 +607,9 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	patterns := []struct {
 		desc        string
@@ -642,7 +652,7 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			ctx := createContextWithToken(t, createAdminToken(t))
+			ctx = setToken(t, ctx, account.Account_OWNER)
 			actual, err := s.ListSubscriptions(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
@@ -654,6 +664,9 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	patterns := []struct {
 		desc        string
@@ -696,7 +709,7 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			ctx := createContextWithToken(t, createAdminToken(t))
+			ctx = setToken(t, ctx, account.Account_OWNER)
 			actual, err := s.ListEnabledSubscriptions(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)

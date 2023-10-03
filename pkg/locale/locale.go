@@ -57,12 +57,11 @@ func GetLocation(timezone string) (*time.Location, error) {
 func getAcceptLang(ctx context.Context) string {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return Ja
+		return En
 	}
 	keys, ok := md["accept-language"]
 	if !ok || len(keys) == 0 || keys[0] == "" {
-		return Ja
+		return En
 	}
-	// TODO: change this part after writing en.yaml
-	return Ja
+	return keys[0]
 }

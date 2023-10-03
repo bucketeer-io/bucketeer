@@ -70,7 +70,7 @@ func TestCreatePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -190,7 +190,6 @@ func TestCreatePushMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newPushServiceWithMock(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -206,7 +205,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -377,7 +376,6 @@ func TestUpdatePushMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newPushServiceWithMock(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -393,7 +391,7 @@ func TestDeletePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -458,7 +456,6 @@ func TestDeletePushMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newPushServiceWithMock(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -474,7 +471,7 @@ func TestListPushesMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -540,7 +537,7 @@ func TestListPushesMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.ListPushes(createContextWithToken(t), p.input)
+			actual, err := s.ListPushes(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})

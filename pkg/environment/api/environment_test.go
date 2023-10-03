@@ -39,7 +39,7 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -109,7 +109,7 @@ func TestGetEnvironmentMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			req := &proto.GetEnvironmentRequest{Id: p.id}
-			resp, err := s.GetEnvironment(createContextWithToken(t), req)
+			resp, err := s.GetEnvironment(ctx, req)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
 				assert.NotNil(t, resp)
@@ -123,7 +123,7 @@ func TestGetEnvironmentByNamespaceMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -187,7 +187,7 @@ func TestGetEnvironmentByNamespaceMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			req := &proto.GetEnvironmentByNamespaceRequest{Namespace: p.namespace}
-			resp, err := s.GetEnvironmentByNamespace(createContextWithToken(t), req)
+			resp, err := s.GetEnvironmentByNamespace(ctx, req)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
 				assert.NotNil(t, resp)
@@ -201,7 +201,7 @@ func TestListEnvironmentsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -267,7 +267,7 @@ func TestListEnvironmentsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.ListEnvironments(createContextWithToken(t), p.input)
+			actual, err := s.ListEnvironments(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -279,7 +279,7 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -406,7 +406,6 @@ func TestCreateEnvironmentMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -422,7 +421,7 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -504,7 +503,6 @@ func TestUpdateEnvironmentMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -520,7 +518,7 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -599,7 +597,6 @@ func TestDeleteEnvironmentMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -614,7 +611,7 @@ func TestEnvironmentPermissionDeniedMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.TODO()
+	ctx := createContextWithTokenRoleUnassigned(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -660,7 +657,6 @@ func TestEnvironmentPermissionDeniedMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithTokenRoleUnassigned(t)
 			service := newEnvironmentService(t, mockController, nil)
 			actual := p.action(ctx, service)
 			assert.Equal(t, p.expected, actual)

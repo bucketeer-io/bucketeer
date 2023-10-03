@@ -56,7 +56,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -113,7 +113,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.ListAuditLogs(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			actual, err := s.ListAuditLogs(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -125,7 +125,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t, accountproto.Account_OWNER)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -182,7 +182,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.ListAdminAuditLogs(createContextWithToken(t, accountproto.Account_OWNER), p.input)
+			actual, err := s.ListAdminAuditLogs(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -194,7 +194,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -253,7 +253,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.ListFeatureHistory(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			actual, err := s.ListFeatureHistory(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})

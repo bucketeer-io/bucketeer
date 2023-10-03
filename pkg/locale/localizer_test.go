@@ -27,36 +27,36 @@ func TestMustLocalizeWithTemplate(t *testing.T) {
 		name     string
 		id       string
 		fields   []string
-		l        string
+		lang     string
 		expected string
 	}{
 		{
 			name:     "succeed",
 			id:       RequiredFieldTemplate,
 			fields:   []string{"field-1"},
-			l:        "",
+			lang:     "",
+			expected: "field-1 is required",
+		},
+		{
+			name:     "succeed",
+			id:       RequiredFieldTemplate,
+			fields:   []string{"field-1"},
+			lang:     Ja,
 			expected: "field-1は必須です",
 		},
 		{
 			name:     "succeed",
 			id:       RequiredFieldTemplate,
 			fields:   []string{"field-1"},
-			l:        Ja,
-			expected: "field-1は必須です",
-		},
-		{
-			name:     "succeed",
-			id:       RequiredFieldTemplate,
-			fields:   []string{"field-1"},
-			l:        En,
-			expected: "field-1は必須です",
+			lang:     En,
+			expected: "field-1 is required",
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.TODO()
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-				"accept-language": []string{c.l},
+				"accept-language": []string{c.lang},
 			})
 			loc := NewLocalizer(ctx)
 			actual := loc.MustLocalizeWithTemplate(c.id, c.fields...)
@@ -69,26 +69,26 @@ func TestMustLocalize(t *testing.T) {
 	cases := []struct {
 		name     string
 		id       string
-		l        string
+		lang     string
 		expected string
 	}{
 		{
 			name:     "succeed",
 			id:       FeatureFlagID,
-			l:        "",
+			lang:     "",
+			expected: "Feature Flag ID",
+		},
+		{
+			name:     "succeed",
+			id:       FeatureFlagID,
+			lang:     Ja,
 			expected: "フィーチャーフラグID",
 		},
 		{
 			name:     "succeed",
 			id:       FeatureFlagID,
-			l:        Ja,
-			expected: "フィーチャーフラグID",
-		},
-		{
-			name:     "succeed",
-			id:       FeatureFlagID,
-			l:        En,
-			expected: "フィーチャーフラグID",
+			lang:     En,
+			expected: "Feature Flag ID",
 		},
 	}
 
@@ -96,7 +96,7 @@ func TestMustLocalize(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.TODO()
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-				"accept-language": []string{c.l},
+				"accept-language": []string{c.lang},
 			})
 			loc := NewLocalizer(ctx)
 			actual := loc.MustLocalize(c.id)

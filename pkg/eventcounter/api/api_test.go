@@ -296,7 +296,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -353,7 +353,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 		if p.setup != nil {
 			p.setup(gs)
 		}
-		actual, err := gs.GetExperimentResult(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+		actual, err := gs.GetExperimentResult(ctx, p.input)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		if err == nil {
 			assert.NotNil(t, actual)
@@ -366,7 +366,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -505,7 +505,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.ListExperimentResults(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			actual, err := s.ListExperimentResults(ctx, p.input)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})

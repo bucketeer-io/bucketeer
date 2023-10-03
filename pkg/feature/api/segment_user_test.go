@@ -39,7 +39,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -171,12 +172,12 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			if tc.setup != nil {
 				tc.setup(service)
 			}
-			ctx := setToken(context.Background(), tc.role)
 			req := &featureproto.BulkUploadSegmentUsersRequest{
 				EnvironmentNamespace: tc.environmentNamespace,
 				SegmentId:            tc.segmentID,
 				Command:              tc.cmd,
 			}
+			ctx = setToken(ctx, tc.role)
 			_, err := service.BulkUploadSegmentUsers(ctx, req)
 			assert.Equal(t, tc.expectedErr, err)
 		})
@@ -188,7 +189,8 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -261,8 +263,6 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			if tc.setup != nil {
 				tc.setup(service)
 			}
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
 			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
 			req := &featureproto.BulkDownloadSegmentUsersRequest{
 				EnvironmentNamespace: tc.environmentNamespace,
