@@ -131,6 +131,17 @@ export const GoalIndexPage: FC = memo(() => {
     [dispatch]
   );
 
+  const updateMethod = useForm({
+    resolver: yupResolver(updateFormSchema),
+    mode: 'onChange',
+  });
+
+  const {
+    handleSubmit: handleUpdateSubmit,
+    formState: { dirtyFields },
+    reset: resetUpdate,
+  } = updateMethod;
+
   const handleUpdate = useCallback(
     async (data) => {
       let name: string;
@@ -158,19 +169,8 @@ export const GoalIndexPage: FC = memo(() => {
         handleClose();
       });
     },
-    [dispatch, goalId]
+    [dispatch, goalId, dirtyFields]
   );
-
-  const updateMethod = useForm({
-    resolver: yupResolver(updateFormSchema),
-    mode: 'onChange',
-  });
-
-  const {
-    handleSubmit: handleUpdateSubmit,
-    formState: { dirtyFields },
-    reset: resetUpdate,
-  } = updateMethod;
 
   const updateURL = useCallback(
     (options: Record<string, string | number | boolean | undefined>) => {
