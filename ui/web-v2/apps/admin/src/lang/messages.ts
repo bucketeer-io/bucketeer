@@ -1640,6 +1640,16 @@ export const messages = {
         defaultMessage:
           "Invalid ID. ID must only contain lowercase letters, numbers or '-', and must start with an alphanumeric.",
       }),
+      invalidName: defineMessage({
+        id: 'input.error.invalidName',
+        defaultMessage:
+          "Invalid name. Name must only contain lowercase letters, numbers or '-', and must start with an alphanumeric.",
+      }),
+      invalidUrlCode: defineMessage({
+        id: 'input.error.invalidUrlCode',
+        defaultMessage:
+          "Invalid URL code. URL code must only contain lowercase letters, numbers or '-', and must start with an alphanumeric.",
+      }),
       required: defineMessage({
         id: 'input.error.required',
         defaultMessage: 'This is required.',
@@ -2492,5 +2502,9 @@ export const messages = {
   type: defineMessage({
     id: 'type',
     defaultMessage: 'Type',
+  }),
+  urlCode: defineMessage({
+    id: 'urlCode',
+    defaultMessage: 'URL code',
   }),
 };

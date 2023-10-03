@@ -6,7 +6,7 @@ import { ENVIRONMENT_LIST_PAGE_SIZE } from '../../constants/environment';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll } from '../../modules/environments';
-import { Environment } from '../../proto/environment/environment_pb';
+import { EnvironmentV2 } from '../../proto/environment/environment_pb';
 import { EnvironmentSearchOptions } from '../../types/environment';
 import { classNames } from '../../utils/css';
 import { EnvironmentSearch } from '../EnvironmentSearch';
@@ -19,13 +19,13 @@ export interface EnvironmentListProps {
   onChangePage: (page: number) => void;
   onChangeSearchOptions: (options: EnvironmentSearchOptions) => void;
   onAdd: () => void;
-  onUpdate: (e: Environment.AsObject) => void;
+  onUpdate: (e: EnvironmentV2.AsObject) => void;
 }
 
 export const EnvironmentList: FC<EnvironmentListProps> = memo(
   ({ searchOptions, onChangePage, onChangeSearchOptions, onAdd, onUpdate }) => {
     const { formatMessage: f } = useIntl();
-    const environments = useSelector<AppState, Environment.AsObject[]>(
+    const environments = useSelector<AppState, EnvironmentV2.AsObject[]>(
       (state) => selectAll(state.environments),
       shallowEqual
     );
@@ -104,7 +104,7 @@ export const EnvironmentList: FC<EnvironmentListProps> = memo(
                             className="link text-left"
                             onClick={() => onUpdate(environment)}
                           >
-                            {environment.id}
+                            {environment.name}
                           </button>
                           <div className="flex items-center ml-2 text-xs text-gray-700 whitespace-nowrap">
                             <span className="mr-1">{f(messages.created)}</span>

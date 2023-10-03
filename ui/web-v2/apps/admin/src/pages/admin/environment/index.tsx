@@ -25,7 +25,7 @@ import {
   OrderDirection,
   updateEnvironment,
 } from '../../../modules/environments';
-import { Environment } from '../../../proto/environment/environment_pb';
+import { EnvironmentV2 } from '../../../proto/environment/environment_pb';
 import { ListProjectsRequest } from '../../../proto/environment/service_pb';
 import { AppDispatch } from '../../../store';
 import {
@@ -43,7 +43,10 @@ import {
   stringifySearchParams,
 } from '../../../utils/search-params';
 
-import { addFormSchema } from './formSchema';
+import {
+  addFormSchema,
+  updateFormSchema,
+} from './formSchema';
 
 interface Sort {
   orderBy: OrderBy;
@@ -151,7 +154,8 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
   const addMethod = useForm({
     resolver: yupResolver(addFormSchema),
     defaultValues: {
-      id: '',
+      name: '',
+      urlCode: '',
       projectId: '',
       description: '',
     },
@@ -160,15 +164,17 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
   const handleOpenUpdate = useCallback(
-    (e: Environment.AsObject) => {
+    (e: EnvironmentV2.AsObject) => {
       setOpen(true);
       resetUpdate({
         id: e.id,
+        name: e.name,
+        urlCode: e.urlCode,
         projectId: e.projectId,
         description: e.description,
       });
       history.push({
-        pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_ENVIRONMENTS}/${e.id}`,
+        pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_ENVIRONMENTS}/${e.urlCode}`,
         search: location.search,
       });
     },
@@ -176,9 +182,14 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
   );
 
   const updateMethod = useForm({
+    resolver: yupResolver(updateFormSchema),
     mode: 'onChange',
   });
-  const { handleSubmit: handleUpdateSubmit, reset: resetUpdate } = updateMethod;
+  const {
+    handleSubmit: handleUpdateSubmit,
+    formState: { dirtyFields },
+    reset: resetUpdate,
+  } = updateMethod;
 
   const handleClose = useCallback(() => {
     resetAdd();
@@ -188,13 +199,14 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
       pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_ENVIRONMENTS}`,
       search: location.search,
     });
-  }, [setOpen, history, location, resetAdd]);
+  }, [setOpen, history, location, resetAdd, resetUpdate]);
 
   const handleAdd = useCallback(
     async (data) => {
       dispatch(
         createEnvironment({
-          id: data.id,
+          name: data.name,
+          urlCode: data.urlCode,
           projectId: data.projectId,
           description: data.description,
         })
@@ -210,21 +222,30 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
 
   const handleUpdate = useCallback(
     async (data) => {
+      let name: string;
+      let description: string;
+      if (dirtyFields.name) {
+        name = data.name;
+      }
+      if (dirtyFields.description) {
+        description = data.description;
+      }
       dispatch(
         updateEnvironment({
-          id: environmentId,
-          description: data.description,
+          id: data.id,
+          name: name,
+          description: description,
         })
       ).then(() => {
         dispatch(
           getEnvironment({
-            id: environmentId,
+            id: data.id,
           })
         );
         handleClose();
       });
     },
-    [dispatch, environmentId]
+    [dispatch, dirtyFields]
   );
 
   useEffect(() => {
