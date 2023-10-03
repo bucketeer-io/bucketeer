@@ -76,7 +76,7 @@ func TestMustLocalize(t *testing.T) {
 			name:     "succeed",
 			id:       FeatureFlagID,
 			lang:     "",
-			expected: "Feature Flag ID",
+			expected: "Feature flag ID",
 		},
 		{
 			name:     "succeed",
@@ -88,7 +88,7 @@ func TestMustLocalize(t *testing.T) {
 			name:     "succeed",
 			id:       FeatureFlagID,
 			lang:     En,
-			expected: "Feature Flag ID",
+			expected: "Feature flag ID",
 		},
 	}
 
