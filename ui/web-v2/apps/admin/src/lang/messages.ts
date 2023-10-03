@@ -304,13 +304,13 @@ export const messages = {
       }),
     },
     sort: {
-      idAz: defineMessage({
-        id: 'adminEnvironment.sort.idAz',
-        defaultMessage: 'ID A-Z',
+      nameAz: defineMessage({
+        id: 'adminEnvironment.sort.nameAz',
+        defaultMessage: 'Name A-Z',
       }),
-      idZa: defineMessage({
-        id: 'adminEnvironment.sort.idZa',
-        defaultMessage: 'ID Z-A',
+      nameZa: defineMessage({
+        id: 'adminEnvironment.sort.nameZa',
+        defaultMessage: 'Name Z-A',
       }),
       newest: defineMessage({
         id: 'adminEnvironment.sort.newest',

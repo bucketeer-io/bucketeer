@@ -26,7 +26,7 @@ import {
   updateEnvironment,
 } from '../../../modules/environments';
 import { EnvironmentV2 } from '../../../proto/environment/environment_pb';
-import { ListProjectsRequest } from '../../../proto/environment/service_pb';
+import { ListEnvironmentsV2Request } from '../../../proto/environment/service_pb';
 import { AppDispatch } from '../../../store';
 import {
   EnvironmentSortOption,
@@ -35,8 +35,8 @@ import {
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
-  SORT_OPTIONS_ID_DESC,
-  SORT_OPTIONS_ID_ASC,
+  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_ASC,
 } from '../../../types/list';
 import {
   useSearchParams,
@@ -57,28 +57,28 @@ const createSort = (sortOption?: EnvironmentSortOption): Sort => {
   switch (sortOption) {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
-        orderBy: ListProjectsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListProjectsRequest.OrderDirection.ASC,
+        orderBy: ListEnvironmentsV2Request.OrderBy.CREATED_AT,
+        orderDirection: ListEnvironmentsV2Request.OrderDirection.ASC,
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
-        orderBy: ListProjectsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListProjectsRequest.OrderDirection.DESC,
+        orderBy: ListEnvironmentsV2Request.OrderBy.CREATED_AT,
+        orderDirection: ListEnvironmentsV2Request.OrderDirection.DESC,
       };
-    case SORT_OPTIONS_ID_ASC:
+    case SORT_OPTIONS_NAME_ASC:
       return {
-        orderBy: ListProjectsRequest.OrderBy.ID,
-        orderDirection: ListProjectsRequest.OrderDirection.ASC,
+        orderBy: ListEnvironmentsV2Request.OrderBy.NAME,
+        orderDirection: ListEnvironmentsV2Request.OrderDirection.ASC,
       };
-    case SORT_OPTIONS_ID_DESC:
+    case SORT_OPTIONS_NAME_DESC:
       return {
-        orderBy: ListProjectsRequest.OrderBy.ID,
-        orderDirection: ListProjectsRequest.OrderDirection.DESC,
+        orderBy: ListEnvironmentsV2Request.OrderBy.NAME,
+        orderDirection: ListEnvironmentsV2Request.OrderDirection.DESC,
       };
     default:
       return {
-        orderBy: ListProjectsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListProjectsRequest.OrderDirection.DESC,
+        orderBy: ListEnvironmentsV2Request.OrderBy.CREATED_AT,
+        orderDirection: ListEnvironmentsV2Request.OrderDirection.DESC,
       };
   }
 };
