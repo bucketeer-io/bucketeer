@@ -173,9 +173,9 @@ func (w *goalEvtWriter) convToGoalEvent(
 			return nil, false, err
 		}
 	}
-	reason := ""
-	if eval.Reason != nil {
-		reason = eval.Reason.Type.String()
+	if tag == "" {
+		// Tag is optional, so we insert none when is empty.
+		tag = "none"
 	}
 	return &epproto.GoalEvent{
 		Id:                   id,
@@ -190,7 +190,7 @@ func (w *goalEvtWriter) convToGoalEvent(
 		FeatureId:            eval.FeatureId,
 		FeatureVersion:       eval.FeatureVersion,
 		VariationId:          eval.VariationId,
-		Reason:               reason,
+		Reason:               eval.Reason.Type.String(),
 	}, false, nil
 }
 

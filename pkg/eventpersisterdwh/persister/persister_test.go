@@ -175,6 +175,19 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			Data: map[string]string{"atr": "av"},
 		},
 	}
+	evaluationEventWithTagEmpty := &eventproto.EvaluationEvent{
+		Tag:            "",
+		Timestamp:      t1.UnixMicro(),
+		FeatureId:      "fid",
+		FeatureVersion: int32(1),
+		UserId:         "uid",
+		VariationId:    "vid",
+		Reason:         &featureproto.Reason{Type: featureproto.Reason_CLIENT},
+		User: &userproto.User{
+			Id:   "uid",
+			Data: map[string]string{"atr": "av"},
+		},
+	}
 	userData, err := json.Marshal(evaluationEvent.User.Data)
 	require.NoError(t, err)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -376,6 +389,50 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				SourceId:             evaluationEvent.SourceId.String(),
 				EnvironmentNamespace: environmentNamespace,
 				Timestamp:            time.Unix(evaluationEvent.Timestamp, 0).UnixMicro(),
+			},
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "success: with empty tag",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      evaluationEventWithTagEmpty.FeatureId,
+							FeatureVersion: evaluation.FeatureVersion,
+							Status:         exproto.Experiment_STOPPED,
+							StopAt:         time.Now().Unix() - 2*day,
+						},
+					},
+				}, nil)
+			},
+			input: evaluationEventWithTagEmpty,
+			expected: &epproto.EvaluationEvent{
+				Id:                   eventID,
+				FeatureId:            evaluationEventWithTagEmpty.FeatureId,
+				FeatureVersion:       evaluationEventWithTagEmpty.FeatureVersion,
+				UserData:             string(userData),
+				UserId:               evaluationEventWithTagEmpty.UserId,
+				VariationId:          evaluationEventWithTagEmpty.VariationId,
+				Reason:               evaluationEventWithTagEmpty.Reason.Type.String(),
+				Tag:                  "none",
+				SourceId:             evaluationEventWithTagEmpty.SourceId.String(),
+				EnvironmentNamespace: environmentNamespace,
+				Timestamp:            time.Unix(evaluationEventWithTagEmpty.Timestamp, 0).UnixMicro(),
 			},
 			expectedErr:        nil,
 			expectedRepeatable: false,
@@ -752,6 +809,145 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 					UserId:               "uid",
 					Value:                1.2,
 					Tag:                  "tag",
+					FeatureId:            "fid-2",
+					FeatureVersion:       int32(1),
+					VariationId:          "variationID-2_A",
+					Reason:               featureproto.Reason_DEFAULT.String(),
+					UserData:             string(userData),
+					EnvironmentNamespace: environmentNamespace,
+					Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
+				},
+			},
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "success: with empty tag",
+			setup: func(ctx context.Context, p *goalEvtWriter) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid",
+							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
+						},
+						{
+							Id:             "experiment-id-2",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid-2",
+							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
+						},
+						// This experiment won't be computed
+						// because the startAt is higher than the goal event timestamp
+						{
+							Id:             "experiment-id-3",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid-2",
+							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(time.Hour).Unix(),
+						},
+					},
+				}, nil)
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
+					ctx,
+					&featureproto.EvaluateFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						FeatureId:            "fid",
+						Tag:                  "",
+						User:                 user,
+					},
+				).Return(&featureproto.EvaluateFeaturesResponse{
+					UserEvaluations: &featureproto.UserEvaluations{
+						Id: "",
+						Evaluations: []*featureproto.Evaluation{
+							{
+								Id:             "eval-id",
+								FeatureId:      "fid",
+								FeatureVersion: int32(1),
+								VariationId:    "variationID_B",
+								Reason: &featureproto.Reason{
+									Type: featureproto.Reason_RULE,
+								},
+								UserId: user.Id,
+							},
+						},
+						CreatedAt: time.Now().Unix(),
+					},
+				}, nil)
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
+					ctx,
+					&featureproto.EvaluateFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						FeatureId:            "fid-2",
+						Tag:                  "",
+						User:                 user,
+					},
+				).Return(&featureproto.EvaluateFeaturesResponse{
+					UserEvaluations: &featureproto.UserEvaluations{
+						Id: "",
+						Evaluations: []*featureproto.Evaluation{
+							{
+								Id:             "eval-id",
+								FeatureId:      "fid-2",
+								FeatureVersion: int32(1),
+								VariationId:    "variationID-2_A",
+								Reason: &featureproto.Reason{
+									Type: featureproto.Reason_DEFAULT,
+								},
+								UserId: user.Id,
+							},
+						},
+						CreatedAt: time.Now().Unix(),
+					},
+				}, nil)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:    eventproto.SourceId_ANDROID,
+				Timestamp:   now.Unix(),
+				GoalId:      "gid",
+				UserId:      "uid",
+				User:        user,
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "",
+			},
+			expected: []*epproto.GoalEvent{
+				{
+					SourceId:             eventproto.SourceId_ANDROID.String(),
+					Id:                   eventID,
+					GoalId:               "gid",
+					UserId:               "uid",
+					Value:                1.2,
+					Tag:                  "none",
+					FeatureId:            "fid",
+					FeatureVersion:       int32(1),
+					VariationId:          "variationID_B",
+					Reason:               featureproto.Reason_RULE.String(),
+					UserData:             string(userData),
+					EnvironmentNamespace: environmentNamespace,
+					Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
+				},
+				{
+					SourceId:             eventproto.SourceId_ANDROID.String(),
+					Id:                   eventID,
+					GoalId:               "gid",
+					UserId:               "uid",
+					Value:                1.2,
+					Tag:                  "none",
 					FeatureId:            "fid-2",
 					FeatureVersion:       int32(1),
 					VariationId:          "variationID-2_A",
