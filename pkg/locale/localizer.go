@@ -50,7 +50,7 @@ const (
 	EventRate                    = "EventRate"
 	Experiment                   = "Experiment"
 	ExperimentStartDate          = "ExperimentStartDate"
-	ExperimentEndDate            = "ExperimentStartDate"
+	ExperimentEndDate            = "ExperimentEndDate"
 	ExperimentPeriod             = "ExperimentPeriod"
 	FeatureFlagID                = "FeatureFlagID"
 	FeatureFlag                  = "FeatureFlag"
