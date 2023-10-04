@@ -1322,7 +1322,7 @@ export const messages = {
     }),
     targetingUsers: defineMessage({
       id: 'feature.targetings',
-      defaultMessage: 'Targetings',
+      defaultMessage: 'Individual targeting',
     }),
     addUser: defineMessage({
       id: 'feature.addUser',

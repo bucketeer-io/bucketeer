@@ -110,6 +110,11 @@ export const createNotification = createAsyncThunk<
   recipient.setSlackChannelRecipient(slackChannelRecipient);
   cmd.setRecipient(recipient);
 
+  // TODO: We need to implement this on the admin console
+  // so the user can choose the language
+  recipient.setLanguage(1); // Japanese
+  cmd.setRecipient(recipient);
+
   const request = new CreateSubscriptionRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setCommand(cmd);

@@ -272,7 +272,7 @@
   "feature.tab.targeting": "ターゲティング",
   "feature.tab.variations": "バリエーション",
   "feature.targetingDescription": "ターゲティングを設定します。 ユーザーターゲティング、複雑なルール設定、デフォルトストラテジー、オフバリエーションを設定できます。",
-  "feature.targetings": "ターゲティング・ユーザー",
+  "feature.targetings": "ターゲティングユーザー",
   "feature.type.boolean": "ブーリアン",
   "feature.type.json": "JSON",
   "feature.type.number": "数値",

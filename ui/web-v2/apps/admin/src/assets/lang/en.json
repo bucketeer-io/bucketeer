@@ -272,7 +272,7 @@
   "feature.tab.targeting": "Targeting",
   "feature.tab.variations": "Variations",
   "feature.targetingDescription": "Enable targeting settings. You can configure targeting users, complex rules, default strategy, and off variation.",
-  "feature.targetings": "Targetings",
+  "feature.targetings": "Individual targeting",
   "feature.type.boolean": "boolean",
   "feature.type.json": "json",
   "feature.type.number": "number",
