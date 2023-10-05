@@ -9,7 +9,7 @@ env:
   gcpEnabled: false
   bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9060
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
-  logLevel: info
+  logLevel: debug
   port: 9090
   metricsPort: 9002
   timezone: UTC
@@ -24,7 +24,7 @@ env:
   flushTimeout: 30s
   # pubsub
   topic: evaluation
-  subscription: dwh-sub
+  subscription: evaluation-dwh-sub
   pullerNumGoroutines: 5
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"

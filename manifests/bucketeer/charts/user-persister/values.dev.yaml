@@ -4,6 +4,9 @@ global:
     imagePullSecrets:
 
 env:
+  gcpEnabled: false
+  profile: false
+  pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
   project: bucketeer-test
   mysqlUser: bucketeer
   mysqlPass: bucketeer
