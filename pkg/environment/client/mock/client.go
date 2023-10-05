@@ -89,26 +89,6 @@ func (mr *MockClientMockRecorder) ConvertTrialProject(ctx, in interface{}, opts 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConvertTrialProject", reflect.TypeOf((*MockClient)(nil).ConvertTrialProject), varargs...)
 }
 
-// CreateEnvironment mocks base method.
-func (m *MockClient) CreateEnvironment(ctx context.Context, in *environment.CreateEnvironmentRequest, opts ...grpc.CallOption) (*environment.CreateEnvironmentResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "CreateEnvironment", varargs...)
-	ret0, _ := ret[0].(*environment.CreateEnvironmentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateEnvironment indicates an expected call of CreateEnvironment.
-func (mr *MockClientMockRecorder) CreateEnvironment(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEnvironment", reflect.TypeOf((*MockClient)(nil).CreateEnvironment), varargs...)
-}
-
 // CreateEnvironmentV2 mocks base method.
 func (m *MockClient) CreateEnvironmentV2(ctx context.Context, in *environment.CreateEnvironmentV2Request, opts ...grpc.CallOption) (*environment.CreateEnvironmentV2Response, error) {
 	m.ctrl.T.Helper()
@@ -169,26 +149,6 @@ func (mr *MockClientMockRecorder) CreateTrialProject(ctx, in interface{}, opts .
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTrialProject", reflect.TypeOf((*MockClient)(nil).CreateTrialProject), varargs...)
 }
 
-// DeleteEnvironment mocks base method.
-func (m *MockClient) DeleteEnvironment(ctx context.Context, in *environment.DeleteEnvironmentRequest, opts ...grpc.CallOption) (*environment.DeleteEnvironmentResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "DeleteEnvironment", varargs...)
-	ret0, _ := ret[0].(*environment.DeleteEnvironmentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DeleteEnvironment indicates an expected call of DeleteEnvironment.
-func (mr *MockClientMockRecorder) DeleteEnvironment(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEnvironment", reflect.TypeOf((*MockClient)(nil).DeleteEnvironment), varargs...)
-}
-
 // DisableProject mocks base method.
 func (m *MockClient) DisableProject(ctx context.Context, in *environment.DisableProjectRequest, opts ...grpc.CallOption) (*environment.DisableProjectResponse, error) {
 	m.ctrl.T.Helper()
@@ -229,46 +189,6 @@ func (mr *MockClientMockRecorder) EnableProject(ctx, in interface{}, opts ...int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableProject", reflect.TypeOf((*MockClient)(nil).EnableProject), varargs...)
 }
 
-// GetEnvironment mocks base method.
-func (m *MockClient) GetEnvironment(ctx context.Context, in *environment.GetEnvironmentRequest, opts ...grpc.CallOption) (*environment.GetEnvironmentResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetEnvironment", varargs...)
-	ret0, _ := ret[0].(*environment.GetEnvironmentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEnvironment indicates an expected call of GetEnvironment.
-func (mr *MockClientMockRecorder) GetEnvironment(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironment", reflect.TypeOf((*MockClient)(nil).GetEnvironment), varargs...)
-}
-
-// GetEnvironmentByNamespace mocks base method.
-func (m *MockClient) GetEnvironmentByNamespace(ctx context.Context, in *environment.GetEnvironmentByNamespaceRequest, opts ...grpc.CallOption) (*environment.GetEnvironmentByNamespaceResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetEnvironmentByNamespace", varargs...)
-	ret0, _ := ret[0].(*environment.GetEnvironmentByNamespaceResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEnvironmentByNamespace indicates an expected call of GetEnvironmentByNamespace.
-func (mr *MockClientMockRecorder) GetEnvironmentByNamespace(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironmentByNamespace", reflect.TypeOf((*MockClient)(nil).GetEnvironmentByNamespace), varargs...)
-}
-
 // GetEnvironmentV2 mocks base method.
 func (m *MockClient) GetEnvironmentV2(ctx context.Context, in *environment.GetEnvironmentV2Request, opts ...grpc.CallOption) (*environment.GetEnvironmentV2Response, error) {
 	m.ctrl.T.Helper()
@@ -307,26 +227,6 @@ func (mr *MockClientMockRecorder) GetProject(ctx, in interface{}, opts ...interf
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProject", reflect.TypeOf((*MockClient)(nil).GetProject), varargs...)
-}
-
-// ListEnvironments mocks base method.
-func (m *MockClient) ListEnvironments(ctx context.Context, in *environment.ListEnvironmentsRequest, opts ...grpc.CallOption) (*environment.ListEnvironmentsResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ListEnvironments", varargs...)
-	ret0, _ := ret[0].(*environment.ListEnvironmentsResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListEnvironments indicates an expected call of ListEnvironments.
-func (mr *MockClientMockRecorder) ListEnvironments(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEnvironments", reflect.TypeOf((*MockClient)(nil).ListEnvironments), varargs...)
 }
 
 // ListEnvironmentsV2 mocks base method.
@@ -387,26 +287,6 @@ func (mr *MockClientMockRecorder) UnarchiveEnvironmentV2(ctx, in interface{}, op
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnarchiveEnvironmentV2", reflect.TypeOf((*MockClient)(nil).UnarchiveEnvironmentV2), varargs...)
-}
-
-// UpdateEnvironment mocks base method.
-func (m *MockClient) UpdateEnvironment(ctx context.Context, in *environment.UpdateEnvironmentRequest, opts ...grpc.CallOption) (*environment.UpdateEnvironmentResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "UpdateEnvironment", varargs...)
-	ret0, _ := ret[0].(*environment.UpdateEnvironmentResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateEnvironment indicates an expected call of UpdateEnvironment.
-func (mr *MockClientMockRecorder) UpdateEnvironment(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEnvironment", reflect.TypeOf((*MockClient)(nil).UpdateEnvironment), varargs...)
 }
 
 // UpdateEnvironmentV2 mocks base method.

@@ -289,6 +289,29 @@ func validateCreateEnvironmentV2Request(
 	return nil
 }
 
+func (s *EnvironmentService) checkProjectExistence(
+	ctx context.Context,
+	projectID string,
+	localizer locale.Localizer,
+) error {
+	// enabled project must exist
+	existingProject, err := s.getProject(ctx, projectID, localizer)
+	if err != nil {
+		return err
+	}
+	if existingProject.Disabled {
+		dt, err := statusProjectDisabled.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.ProjectDisabled),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
 func (s *EnvironmentService) createEnvironmentV2(
 	ctx context.Context,
 	cmd command.Command,

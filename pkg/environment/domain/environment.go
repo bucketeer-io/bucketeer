@@ -15,7 +15,6 @@
 package domain
 
 import (
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -23,40 +22,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
-
-type Environment struct {
-	*proto.Environment
-}
-
-func NewEnvironment(id, description, projectID string) *Environment {
-	now := time.Now().Unix()
-	namespace := strings.Replace(id, "-", "", -1)
-	return &Environment{&proto.Environment{
-		Id:          id,
-		Namespace:   namespace,
-		Name:        id,
-		Description: description,
-		Deleted:     false,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-		ProjectId:   projectID,
-	}}
-}
-
-func (e *Environment) Rename(name string) {
-	e.Environment.Name = name
-	e.Environment.UpdatedAt = time.Now().Unix()
-}
-
-func (e *Environment) ChangeDescription(description string) {
-	e.Environment.Description = description
-	e.Environment.UpdatedAt = time.Now().Unix()
-}
-
-func (e *Environment) SetDeleted() {
-	e.Environment.Deleted = true
-	e.Environment.UpdatedAt = time.Now().Unix()
-}
 
 type EnvironmentV2 struct {
 	*proto.EnvironmentV2
@@ -79,23 +44,6 @@ func NewEnvironmentV2(name, urlCode, description, projectID string, logger *zap.
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}}, nil
-}
-
-// TmpNewEnvironmentV2 sets the id field to the same value as the namespace field in v1.
-// TODO: remove this function after migration
-func TmpNewEnvironmentV2(name, urlCode, description, projectID string) *EnvironmentV2 {
-	now := time.Now().Unix()
-	id := strings.ReplaceAll(name, "-", "")
-	return &EnvironmentV2{&proto.EnvironmentV2{
-		Id:          id,
-		Name:        name,
-		UrlCode:     urlCode,
-		Description: description,
-		ProjectId:   projectID,
-		Archived:    false,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-	}}
 }
 
 func (e *EnvironmentV2) Rename(name string) {

@@ -21,37 +21,6 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestNewEnvironment(t *testing.T) {
-	t.Parallel()
-	env := NewEnvironment("env-id", "env desc", "project-id")
-	expectedNamespace := "envid"
-	assert.IsType(t, &Environment{}, env)
-	assert.Equal(t, expectedNamespace, env.Namespace)
-}
-
-func TestRenameEnvironment(t *testing.T) {
-	t.Parallel()
-	env := NewEnvironment("env-id", "env desc", "project-id")
-	newName := "new-env-name"
-	env.Rename(newName)
-	assert.Equal(t, newName, env.Name)
-}
-
-func TestChangeDescriptionEnvironment(t *testing.T) {
-	t.Parallel()
-	env := NewEnvironment("env-id", "env desc", "project-id")
-	newDesc := "new env desc"
-	env.ChangeDescription(newDesc)
-	assert.Equal(t, newDesc, env.Description)
-}
-
-func TestSetDeletedEnvironment(t *testing.T) {
-	t.Parallel()
-	env := NewEnvironment("env-id", "env desc", "project-id")
-	env.SetDeleted()
-	assert.True(t, env.Deleted)
-}
-
 func TestNewEnvironmentV2(t *testing.T) {
 	t.Parallel()
 	env, err := NewEnvironmentV2("name", "code", "desc", "project-id", zap.NewNop())
