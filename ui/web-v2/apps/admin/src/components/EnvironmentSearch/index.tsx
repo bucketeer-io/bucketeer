@@ -16,8 +16,8 @@ import { EnvironmentSearchOptions } from '../../types/environment';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
-  SORT_OPTIONS_ID_ASC,
-  SORT_OPTIONS_ID_DESC,
+  SORT_OPTIONS_NAME_ASC,
+  SORT_OPTIONS_NAME_DESC,
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { FilterChip } from '../FilterChip';
@@ -36,12 +36,12 @@ const sortItems: SortItem[] = [
     message: intl.formatMessage(messages.adminEnvironment.sort.oldest),
   },
   {
-    key: SORT_OPTIONS_ID_ASC,
-    message: intl.formatMessage(messages.adminEnvironment.sort.idAz),
+    key: SORT_OPTIONS_NAME_ASC,
+    message: intl.formatMessage(messages.adminEnvironment.sort.nameAz),
   },
   {
-    key: SORT_OPTIONS_ID_DESC,
-    message: intl.formatMessage(messages.adminEnvironment.sort.idZa),
+    key: SORT_OPTIONS_NAME_DESC,
+    message: intl.formatMessage(messages.adminEnvironment.sort.nameZa),
   },
 ];
 
