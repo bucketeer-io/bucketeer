@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewGrpcGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil)
+	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &grpcGatewayService{}, g)
 }
 
@@ -152,7 +152,7 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "exists in redis",
+			desc: "exists in cache",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -956,10 +956,12 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			Variations: []*featureproto.Variation{
 				{
 					Id:    vID1,
+					Name:  "variation name true",
 					Value: "true",
 				},
 				{
 					Id:    newUUID(t),
+					Name:  "variation name false",
 					Value: "false",
 				},
 			},
@@ -976,10 +978,12 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			Variations: []*featureproto.Variation{
 				{
 					Id:    newUUID(t),
+					Name:  "variation name true",
 					Value: "true",
 				},
 				{
 					Id:    vID2,
+					Name:  "variation name false",
 					Value: "false",
 				},
 			},
@@ -999,10 +1003,12 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			Variations: []*featureproto.Variation{
 				{
 					Id:    vID3,
+					Name:  "variation name true",
 					Value: "true",
 				},
 				{
 					Id:    newUUID(t),
+					Name:  "variation name false",
 					Value: "false",
 				},
 			},
@@ -1019,10 +1025,12 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			Variations: []*featureproto.Variation{
 				{
 					Id:    newUUID(t),
+					Name:  "variation name true",
 					Value: "true",
 				},
 				{
 					Id:    vID4,
+					Name:  "variation name false",
 					Value: "false",
 				},
 			},
@@ -1307,10 +1315,12 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 								Variations: []*featureproto.Variation{
 									{
 										Id:    vID1,
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    newUUID(t),
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1327,10 +1337,12 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 								Variations: []*featureproto.Variation{
 									{
 										Id:    newUUID(t),
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    vID2,
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1347,10 +1359,12 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 								Variations: []*featureproto.Variation{
 									{
 										Id:    vID3,
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    newUUID(t),
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1367,10 +1381,12 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 								Variations: []*featureproto.Variation{
 									{
 										Id:    newUUID(t),
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    vID4,
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1454,10 +1470,12 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-a",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-b",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1520,13 +1538,17 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 
 						Features: []*featureproto.Feature{
 							{
+								Id:      "feature-id-1",
+								Version: int32(2),
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-a",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-b",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1582,13 +1604,25 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
-			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
+			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "user-id-1"}},
 			expected: &gwproto.GetEvaluationsResponse{
 				State: featureproto.UserEvaluations_FULL,
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							VariationId: "variation-b",
+							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							UserId:         "user-id-1",
+							FeatureId:      "feature-id-1",
+							FeatureVersion: int32(2),
+							VariationId:    "variation-b",
+							VariationName:  "variation name false",
+							VariationValue: "false",
+							Variation: &featureproto.Variation{
+								Id:          "variation-b",
+								Name:        "variation name false",
+								Value:       "false",
+								Description: "",
+							},
 							Reason: &featureproto.Reason{
 								Type: featureproto.Reason_DEFAULT,
 							},
@@ -1614,13 +1648,17 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 					&featureproto.Features{
 						Features: []*featureproto.Feature{
 							{
+								Id:      "feature-id-1",
+								Version: int32(2),
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-a",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-b",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1663,13 +1701,25 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListSegmentUsersResponse{}, nil)
 			},
-			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
+			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "user-id-1"}},
 			expected: &gwproto.GetEvaluationsResponse{
 				State: featureproto.UserEvaluations_FULL,
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							VariationId: "variation-b",
+							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							UserId:         "user-id-1",
+							FeatureId:      "feature-id-1",
+							FeatureVersion: int32(2),
+							VariationId:    "variation-b",
+							VariationName:  "variation name false",
+							VariationValue: "false",
+							Variation: &featureproto.Variation{
+								Id:          "variation-b",
+								Name:        "variation name false",
+								Value:       "false",
+								Description: "",
+							},
 							Reason: &featureproto.Reason{
 								Type: featureproto.Reason_DEFAULT,
 							},
@@ -1695,13 +1745,17 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 					&featureproto.Features{
 						Features: []*featureproto.Feature{
 							{
+								Id:      "feature-id-1",
+								Version: int32(2),
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-a",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-b",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1718,13 +1772,25 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
-			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
+			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "user-id-1"}},
 			expected: &gwproto.GetEvaluationsResponse{
 				State: featureproto.UserEvaluations_FULL,
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							VariationId: "variation-b",
+							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							UserId:         "user-id-1",
+							FeatureId:      "feature-id-1",
+							FeatureVersion: int32(2),
+							VariationId:    "variation-b",
+							VariationName:  "variation name false",
+							VariationValue: "false",
+							Variation: &featureproto.Variation{
+								Id:          "variation-b",
+								Name:        "variation name false",
+								Value:       "false",
+								Description: "",
+							},
 							Reason: &featureproto.Reason{
 								Type: featureproto.Reason_DEFAULT,
 							},
@@ -1750,14 +1816,17 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 					&featureproto.Features{
 						Features: []*featureproto.Feature{
 							{
-								Id: "feature-1",
+								Id:      "feature-id-1",
+								Version: int32(2),
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-a",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-b",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1770,14 +1839,17 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 								Tags: []string{"test"},
 							},
 							{
-								Id: "feature-2",
+								Id:      "feature-id-2",
+								Version: int32(2),
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-c",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-d",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1795,14 +1867,25 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
-			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
+			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "user-id-1"}},
 			expected: &gwproto.GetEvaluationsResponse{
 				State: featureproto.UserEvaluations_FULL,
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							Id:          "feature-1",
-							VariationId: "variation-b",
+							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							UserId:         "user-id-1",
+							FeatureId:      "feature-id-1",
+							FeatureVersion: int32(2),
+							VariationId:    "variation-b",
+							VariationName:  "variation name false",
+							VariationValue: "false",
+							Variation: &featureproto.Variation{
+								Id:          "variation-b",
+								Name:        "variation name false",
+								Value:       "false",
+								Description: "",
+							},
 							Reason: &featureproto.Reason{
 								Type: featureproto.Reason_DEFAULT,
 							},
@@ -1822,16 +1905,493 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 			})
 			actual, err := gs.GetEvaluations(ctx, p.input)
 			if err != nil {
-				assert.Equal(t, p.expected, actual, "%s", p.desc)
-				assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+				assert.Equal(t, p.expected, actual, p.desc)
+				assert.Equal(t, p.expectedErr, err, p.desc)
 			} else {
-				assert.Equal(t, len(actual.Evaluations.Evaluations), 1, "%s", p.desc)
-				assert.Equal(t, p.expected.State, actual.State, "%s", p.desc)
-				assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationId, "variation-b", "%s", p.desc)
+				assert.Equal(t, len(actual.Evaluations.Evaluations), 1, p.desc)
+				assert.Equal(t, p.expected.State, actual.State, p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Id, featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"), p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].UserId, "user-id-1", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].FeatureId, "feature-id-1", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].FeatureVersion, int32(2), p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationId, "variation-b", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationName, "variation name false", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationValue, "false", p.desc)
+				assert.Empty(t, p.expected.Evaluations.Evaluations[0].Variation.Description, p.desc)
 				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Reason, actual.Evaluations.Evaluations[0].Reason, p.desc)
 				assert.ElementsMatch(t, p.expected.Evaluations.ArchivedFeatureIds, actual.Evaluations.ArchivedFeatureIds, p.desc)
 				assert.Equal(t, p.expected.Evaluations.ForceUpdate, actual.Evaluations.ForceUpdate, p.desc)
-				assert.NotEmpty(t, actual.UserEvaluationsId, "%s", p.desc)
+				assert.NotEmpty(t, actual.UserEvaluationsId, p.desc)
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	now := time.Now()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*grpcGatewayService)
+		input       *gwproto.GetEvaluationsRequest
+		expected    *gwproto.GetEvaluationsResponse
+		expectedErr error
+	}{
+		{
+			desc: "success: evaluate only flags that have benn updated since the last evaluation 10min ago",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						EnvironmentNamespace: "ns0",
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-a",
+										Name:  "variation name true",
+										Value: "true",
+									},
+									{
+										Id:    "variation-b",
+										Name:  "variation name false",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-b",
+									},
+								},
+								Tags:      []string{"test"},
+								UpdatedAt: now.Add(-5 * time.Minute).Unix(),
+							},
+							{
+								Id:      "feature-id-2",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-c",
+										Name:  "variation name true",
+										Value: "true",
+									},
+									{
+										Id:    "variation-d",
+										Name:  "variation name false",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-d",
+									},
+								},
+								Archived:  true,
+								Tags:      []string{"test"},
+								UpdatedAt: now.Add(-5 * time.Minute).Unix(),
+							},
+						},
+					}, nil)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+					nil).MaxTimes(1)
+			},
+			input: &gwproto.GetEvaluationsRequest{
+				Tag:               "test",
+				User:              &userproto.User{Id: "user-id-1"},
+				UserEvaluationsId: "user-evaluations-id-1",
+				UserEvaluationCondition: &gwproto.GetEvaluationsRequest_UserEvaluationCondition{
+					EvaluatedAt:           now.Add(-10 * time.Minute).Unix(),
+					UserAttributesUpdated: false,
+				},
+			},
+			expected: &gwproto.GetEvaluationsResponse{
+				State: featureproto.UserEvaluations_FULL,
+				Evaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{
+						{
+							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							UserId:         "user-id-1",
+							FeatureId:      "feature-id-1",
+							FeatureVersion: int32(2),
+							VariationId:    "variation-b",
+							VariationName:  "variation name false",
+							VariationValue: "false",
+							Variation: &featureproto.Variation{
+								Id:          "variation-b",
+								Name:        "variation name false",
+								Value:       "false",
+								Description: "",
+							},
+							Reason: &featureproto.Reason{
+								Type: featureproto.Reason_DEFAULT,
+							},
+						},
+					},
+					ArchivedFeatureIds: []string{"feature-id-2"},
+					ForceUpdate:        false,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: forceUpdate=true because UserEvaluationsId is empty",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						EnvironmentNamespace: "ns0",
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-a",
+										Name:  "variation name true",
+										Value: "true",
+									},
+									{
+										Id:    "variation-b",
+										Name:  "variation name false",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-b",
+									},
+								},
+								Tags:      []string{"test"},
+								UpdatedAt: now.Add(-5 * time.Minute).Unix(),
+							},
+							{
+								Id:      "feature-id-2",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-c",
+										Name:  "variation name true",
+										Value: "true",
+									},
+									{
+										Id:    "variation-d",
+										Name:  "variation name false",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-d",
+									},
+								},
+								Archived:  true,
+								Tags:      []string{"test"},
+								UpdatedAt: now.Add(-5 * time.Minute).Unix(),
+							},
+						},
+					}, nil)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+					nil).MaxTimes(1)
+			},
+			input: &gwproto.GetEvaluationsRequest{
+				Tag:               "test",
+				User:              &userproto.User{Id: "user-id-1"},
+				UserEvaluationsId: "",
+				UserEvaluationCondition: &gwproto.GetEvaluationsRequest_UserEvaluationCondition{
+					EvaluatedAt:           now.Add(-10 * time.Minute).Unix(),
+					UserAttributesUpdated: false,
+				},
+			},
+			expected: &gwproto.GetEvaluationsResponse{
+				State: featureproto.UserEvaluations_FULL,
+				Evaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{
+						{
+							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							UserId:         "user-id-1",
+							FeatureId:      "feature-id-1",
+							FeatureVersion: int32(2),
+							VariationId:    "variation-b",
+							VariationName:  "variation name false",
+							VariationValue: "false",
+							Variation: &featureproto.Variation{
+								Id:          "variation-b",
+								Name:        "variation name false",
+								Value:       "false",
+								Description: "",
+							},
+							Reason: &featureproto.Reason{
+								Type: featureproto.Reason_DEFAULT,
+							},
+						},
+					},
+					ArchivedFeatureIds: []string{"feature-id-2"},
+					ForceUpdate:        true,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: forceUpdate=true because UserEvaluationCondition.EvaluatedAt is 0",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						EnvironmentNamespace: "ns0",
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-a",
+										Name:  "variation name true",
+										Value: "true",
+									},
+									{
+										Id:    "variation-b",
+										Name:  "variation name false",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-b",
+									},
+								},
+								Tags: []string{"test"},
+							},
+							{
+								Id:      "feature-id-2",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-c",
+										Name:  "variation name true",
+										Value: "true",
+									},
+									{
+										Id:    "variation-d",
+										Name:  "variation name false",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-d",
+									},
+								},
+								Archived: true,
+								Tags:     []string{"test"},
+							},
+						},
+					}, nil)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+					nil).MaxTimes(1)
+			},
+			input: &gwproto.GetEvaluationsRequest{
+				Tag:               "test",
+				User:              &userproto.User{Id: "user-id-1"},
+				UserEvaluationsId: "user-evaluations-id-1",
+				UserEvaluationCondition: &gwproto.GetEvaluationsRequest_UserEvaluationCondition{
+					EvaluatedAt:           0,
+					UserAttributesUpdated: false,
+				},
+			},
+			expected: &gwproto.GetEvaluationsResponse{
+				State: featureproto.UserEvaluations_FULL,
+				Evaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{
+						{
+							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							UserId:         "user-id-1",
+							FeatureId:      "feature-id-1",
+							FeatureVersion: int32(2),
+							VariationId:    "variation-b",
+							VariationName:  "variation name false",
+							VariationValue: "false",
+							Variation: &featureproto.Variation{
+								Id:          "variation-b",
+								Name:        "variation name false",
+								Value:       "false",
+								Description: "",
+							},
+							Reason: &featureproto.Reason{
+								Type: featureproto.Reason_DEFAULT,
+							},
+						},
+					},
+					ArchivedFeatureIds: []string{},
+					ForceUpdate:        true,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: forceUpdate=true because UserEvaluationCondition.EvaluatedAt is 30days ago",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						EnvironmentNamespace: "ns0",
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id:      "feature-id-1",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-a",
+										Name:  "variation name true",
+										Value: "true",
+									},
+									{
+										Id:    "variation-b",
+										Name:  "variation name false",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-b",
+									},
+								},
+								Tags: []string{"test"},
+							},
+							{
+								Id:      "feature-id-2",
+								Version: int32(2),
+								Variations: []*featureproto.Variation{
+									{
+										Id:    "variation-c",
+										Name:  "variation name true",
+										Value: "true",
+									},
+									{
+										Id:    "variation-d",
+										Name:  "variation name false",
+										Value: "false",
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: "variation-d",
+									},
+								},
+								Archived: true,
+								Tags:     []string{"test"},
+							},
+						},
+					}, nil)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+					nil).MaxTimes(1)
+			},
+			input: &gwproto.GetEvaluationsRequest{
+				Tag:               "test",
+				User:              &userproto.User{Id: "user-id-1"},
+				UserEvaluationsId: "user-evaluations-id-1",
+				UserEvaluationCondition: &gwproto.GetEvaluationsRequest_UserEvaluationCondition{
+					EvaluatedAt:           now.Add(-31 * 24 * time.Hour).Unix(),
+					UserAttributesUpdated: false,
+				},
+			},
+			expected: &gwproto.GetEvaluationsResponse{
+				State: featureproto.UserEvaluations_FULL,
+				Evaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{
+						{
+							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							UserId:         "user-id-1",
+							FeatureId:      "feature-id-1",
+							FeatureVersion: int32(2),
+							VariationId:    "variation-b",
+							VariationName:  "variation name false",
+							VariationValue: "false",
+							Variation: &featureproto.Variation{
+								Id:          "variation-b",
+								Name:        "variation name false",
+								Value:       "false",
+								Description: "",
+							},
+							Reason: &featureproto.Reason{
+								Type: featureproto.Reason_DEFAULT,
+							},
+						},
+					},
+					ArchivedFeatureIds: []string{},
+					ForceUpdate:        true,
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"authorization": []string{"test-key"},
+			})
+			actual, err := gs.GetEvaluations(ctx, p.input)
+			if err != nil {
+				assert.Equal(t, p.expected, actual, p.desc)
+				assert.Equal(t, p.expectedErr, err, p.desc)
+			} else {
+				assert.Equal(t, len(actual.Evaluations.Evaluations), 1, p.desc)
+				assert.Equal(t, p.expected.State, actual.State, p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Id, featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"), p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].UserId, "user-id-1", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].FeatureId, "feature-id-1", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].FeatureVersion, int32(2), p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationId, "variation-b", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationName, "variation name false", p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].VariationValue, "false", p.desc)
+				assert.Empty(t, p.expected.Evaluations.Evaluations[0].Variation.Description, p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Reason, actual.Evaluations.Evaluations[0].Reason, p.desc)
+				assert.ElementsMatch(t, p.expected.Evaluations.ArchivedFeatureIds, actual.Evaluations.ArchivedFeatureIds, p.desc)
+				assert.Equal(t, p.expected.Evaluations.ForceUpdate, actual.Evaluations.ForceUpdate, p.desc)
+				assert.NotEmpty(t, actual.UserEvaluationsId, p.desc)
 				require.NoError(t, err)
 			}
 		})
@@ -1844,11 +2404,11 @@ func TestGrpcGetEvaluation(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc              string
-		setup             func(*grpcGatewayService)
-		input             *gwproto.GetEvaluationRequest
-		expectedFeatureID string
-		expectedErr       error
+		desc        string
+		setup       func(*grpcGatewayService)
+		input       *gwproto.GetEvaluationRequest
+		expected    *featureproto.Evaluation
+		expectedErr error
 	}{
 		{
 			desc: "errFeatureNotFound",
@@ -1870,10 +2430,12 @@ func TestGrpcGetEvaluation(t *testing.T) {
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-a",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-b",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1890,10 +2452,12 @@ func TestGrpcGetEvaluation(t *testing.T) {
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-c",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-d",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1910,9 +2474,8 @@ func TestGrpcGetEvaluation(t *testing.T) {
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
-			input:             &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "id-0"}, FeatureId: "feature-id-3"},
-			expectedFeatureID: "",
-			expectedErr:       ErrFeatureNotFound,
+			input:       &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "id-0"}, FeatureId: "feature-id-3"},
+			expectedErr: ErrFeatureNotFound,
 		},
 		{
 			desc: "errInternal",
@@ -1934,10 +2497,12 @@ func TestGrpcGetEvaluation(t *testing.T) {
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-a",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-b",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1954,10 +2519,12 @@ func TestGrpcGetEvaluation(t *testing.T) {
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-c",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-d",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -1999,9 +2566,8 @@ func TestGrpcGetEvaluation(t *testing.T) {
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
 					nil, ErrInternal)
 			},
-			input:             &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "id-0"}, FeatureId: "feature-id-2"},
-			expectedFeatureID: "",
-			expectedErr:       ErrInternal,
+			input:       &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "id-0"}, FeatureId: "feature-id-2"},
+			expectedErr: ErrInternal,
 		},
 		{
 			desc: "return evaluation",
@@ -2019,14 +2585,17 @@ func TestGrpcGetEvaluation(t *testing.T) {
 					&featureproto.Features{
 						Features: []*featureproto.Feature{
 							{
-								Id: "feature-id-1",
+								Id:      "feature-id-1",
+								Version: int32(2),
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-a",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-b",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -2039,14 +2608,17 @@ func TestGrpcGetEvaluation(t *testing.T) {
 								Tags: []string{"test"},
 							},
 							{
-								Id: "feature-id-2",
+								Id:      "feature-id-2",
+								Version: int32(2),
 								Variations: []*featureproto.Variation{
 									{
 										Id:    "variation-a",
+										Name:  "variation name true",
 										Value: "true",
 									},
 									{
 										Id:    "variation-b",
+										Name:  "variation name false",
 										Value: "false",
 									},
 								},
@@ -2063,9 +2635,26 @@ func TestGrpcGetEvaluation(t *testing.T) {
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
-			input:             &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "id-0"}, FeatureId: "feature-id-2"},
-			expectedFeatureID: "feature-id-2",
-			expectedErr:       nil,
+			input: &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "user-id-2"}, FeatureId: "feature-id-2"},
+			expected: &featureproto.Evaluation{
+				Id:             featuredomain.EvaluationID("feature-id-2", int32(2), "user-id-2"),
+				UserId:         "user-id-2",
+				FeatureId:      "feature-id-2",
+				FeatureVersion: int32(2),
+				VariationId:    "variation-b",
+				VariationName:  "variation name false",
+				VariationValue: "false",
+				Variation: &featureproto.Variation{
+					Id:          "variation-b",
+					Name:        "variation name false",
+					Value:       "false",
+					Description: "",
+				},
+				Reason: &featureproto.Reason{
+					Type: featureproto.Reason_DEFAULT,
+				},
+			},
+			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
@@ -2078,7 +2667,14 @@ func TestGrpcGetEvaluation(t *testing.T) {
 			actual, err := gs.GetEvaluation(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
-				assert.Equal(t, p.expectedFeatureID, actual.Evaluation.FeatureId)
+				assert.Equal(t, p.expected.Id, actual.Evaluation.Id)
+				assert.Equal(t, p.expected.UserId, actual.Evaluation.UserId)
+				assert.Equal(t, p.expected.FeatureId, actual.Evaluation.FeatureId)
+				assert.Equal(t, p.expected.FeatureVersion, actual.Evaluation.FeatureVersion)
+				assert.Equal(t, p.expected.VariationId, actual.Evaluation.VariationId)
+				assert.Equal(t, p.expected.VariationName, actual.Evaluation.VariationName)
+				assert.Equal(t, p.expected.VariationValue, actual.Evaluation.VariationValue)
+				assert.Empty(t, actual.Evaluation.Variation.Description)
 			}
 		})
 	}

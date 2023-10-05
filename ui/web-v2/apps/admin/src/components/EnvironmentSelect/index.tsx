@@ -20,7 +20,7 @@ import {
   useCurrentEnvironment,
   useEnvironments,
 } from '../../modules/me';
-import { Environment } from '../../proto/environment/environment_pb';
+import { EnvironmentV2 } from '../../proto/environment/environment_pb';
 import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
 
@@ -31,10 +31,10 @@ export const EnvironmentSelect: FC = memo(() => {
   const currenEnvironment = useCurrentEnvironment();
   const environments = useEnvironments();
   const initialEnvironment = unwrapUndefinable(
-    environments.find((env) => env.namespace == currenEnvironment.namespace)
+    environments.find((env) => env.id == currenEnvironment.id)
   );
   const [selected, setSelected] =
-    useState<Environment.AsObject>(initialEnvironment);
+    useState<EnvironmentV2.AsObject>(initialEnvironment);
 
   const handleChange = useCallback(
     (value: string) => {
@@ -75,7 +75,7 @@ export const EnvironmentSelect: FC = memo(() => {
           >
             <span className="block truncate">
               {' '}
-              {`(${selected.projectId}) ${selected.id}`}
+              {`(${selected.projectId}) ${selected.name}`}
             </span>
             <span
               className={classNames(
@@ -126,7 +126,7 @@ export const EnvironmentSelect: FC = memo(() => {
                         </span>
                       ) : null}
                       <span className="block text-sm">
-                        {`(${env.projectId}) ${env.id}`}
+                        {`(${env.projectId}) ${env.name}`}
                       </span>
                     </>
                   )}

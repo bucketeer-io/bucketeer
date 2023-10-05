@@ -65,7 +65,7 @@ export const FeatureHistoryPage: FC<FeatureHistoryPageProps> = memo(
         dispatch(
           listFeatureHistory({
             featureId: featureId,
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             pageSize: AUDITLOG_LIST_PAGE_SIZE,
             cursor: String(cursor),
             searchKeyword: options.q as string,

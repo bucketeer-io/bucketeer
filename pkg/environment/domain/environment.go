@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
@@ -53,4 +56,64 @@ func (e *Environment) ChangeDescription(description string) {
 func (e *Environment) SetDeleted() {
 	e.Environment.Deleted = true
 	e.Environment.UpdatedAt = time.Now().Unix()
+}
+
+type EnvironmentV2 struct {
+	*proto.EnvironmentV2
+}
+
+func NewEnvironmentV2(name, urlCode, description, projectID string, logger *zap.Logger) (*EnvironmentV2, error) {
+	uid, err := uuid.NewUUID()
+	if err != nil {
+		logger.Error("failed to generate uuid", zap.Error(err))
+		return nil, err
+	}
+	now := time.Now().Unix()
+	return &EnvironmentV2{&proto.EnvironmentV2{
+		Id:          uid.String(),
+		Name:        name,
+		UrlCode:     urlCode,
+		Description: description,
+		ProjectId:   projectID,
+		Archived:    false,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}}, nil
+}
+
+// TmpNewEnvironmentV2 sets the id field to the same value as the namespace field in v1.
+// TODO: remove this function after migration
+func TmpNewEnvironmentV2(name, urlCode, description, projectID string) *EnvironmentV2 {
+	now := time.Now().Unix()
+	id := strings.ReplaceAll(name, "-", "")
+	return &EnvironmentV2{&proto.EnvironmentV2{
+		Id:          id,
+		Name:        name,
+		UrlCode:     urlCode,
+		Description: description,
+		ProjectId:   projectID,
+		Archived:    false,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}}
+}
+
+func (e *EnvironmentV2) Rename(name string) {
+	e.EnvironmentV2.Name = name
+	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
+}
+
+func (e *EnvironmentV2) ChangeDescription(description string) {
+	e.EnvironmentV2.Description = description
+	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
+}
+
+func (e *EnvironmentV2) SetArchived() {
+	e.EnvironmentV2.Archived = true
+	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
+}
+
+func (e *EnvironmentV2) SetUnarchived() {
+	e.EnvironmentV2.Archived = false
+	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
 }

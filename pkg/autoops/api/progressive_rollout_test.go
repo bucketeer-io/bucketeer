@@ -15,7 +15,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -41,7 +40,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithTokenRoleOwner(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -901,7 +900,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			_, err := s.CreateProgressiveRollout(createContextWithTokenRoleOwner(t), p.req)
+			_, err := s.CreateProgressiveRollout(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -912,7 +911,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithTokenRoleUnassigned(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -968,7 +967,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			_, err := s.GetProgressiveRollout(createContextWithTokenRoleUnassigned(t), p.req)
+			_, err := s.GetProgressiveRollout(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -979,7 +978,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithTokenRoleOwner(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1074,7 +1073,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			_, err := s.DeleteProgressiveRollout(createContextWithTokenRoleOwner(t), p.req)
+			_, err := s.DeleteProgressiveRollout(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -1085,7 +1084,7 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithTokenRoleUnassigned(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1164,7 +1163,7 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 				OrderBy:              p.orderBy,
 				EnvironmentNamespace: "ns0",
 			}
-			_, err := service.ListProgressiveRollouts(createContextWithTokenRoleUnassigned(t), req)
+			_, err := service.ListProgressiveRollouts(ctx, req)
 			assert.Equal(t, p.expected, err)
 		})
 	}
@@ -1175,7 +1174,7 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithTokenRoleOwner(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1253,7 +1252,7 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			_, err := s.ExecuteProgressiveRollout(createContextWithTokenRoleOwner(t), p.req)
+			_, err := s.ExecuteProgressiveRollout(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

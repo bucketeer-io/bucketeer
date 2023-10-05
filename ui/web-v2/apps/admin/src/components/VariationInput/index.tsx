@@ -297,10 +297,6 @@ export const VariationInput: FC<VariationInputProps> = memo(
                 <div className="mr-2 flex-grow">
                   <label>
                     <span className="input-label">{f(messages.name)}</span>
-                    <span className="input-label-optional">
-                      {' '}
-                      {f(messages.input.optional)}
-                    </span>
                   </label>
                   <div className="w-full mt-1">
                     <input

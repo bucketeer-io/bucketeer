@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,8 +25,11 @@ var (
 	statusInvalidCursor              = gstatus.New(codes.InvalidArgument, "environment: cursor is invalid")
 	statusEnvironmentIDRequired      = gstatus.New(codes.InvalidArgument, "environment: environment id must be specified")
 	statusInvalidEnvironmentID       = gstatus.New(codes.InvalidArgument, "environment: invalid environment id")
+	statusInvalidEnvironmentName     = gstatus.New(codes.InvalidArgument, "environment: invalid environment name")
+	statusInvalidEnvironmentUrlCode  = gstatus.New(codes.InvalidArgument, "environment: invalid environment url code")
 	statusProjectIDRequired          = gstatus.New(codes.InvalidArgument, "environment: project id must be specified")
-	statusInvalidProjectID           = gstatus.New(codes.InvalidArgument, "environment: invalid project id")
+	statusInvalidProjectName         = gstatus.New(codes.InvalidArgument, "environment: invalid project name")
+	statusInvalidProjectUrlCode      = gstatus.New(codes.InvalidArgument, "environment: invalid project url code")
 	statusInvalidProjectCreatorEmail = gstatus.New(codes.InvalidArgument, "environment: invalid project creator email")
 	statusInvalidOrderBy             = gstatus.New(codes.InvalidArgument, "environment: order_by is invalid")
 	statusEnvironmentNotFound        = gstatus.New(codes.NotFound, "environment: environment not found")

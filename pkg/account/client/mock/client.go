@@ -409,6 +409,46 @@ func (mr *MockClientMockRecorder) GetMeByEmail(ctx, in interface{}, opts ...inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMeByEmail", reflect.TypeOf((*MockClient)(nil).GetMeByEmail), varargs...)
 }
 
+// GetMeByEmailV2 mocks base method.
+func (m *MockClient) GetMeByEmailV2(ctx context.Context, in *account.GetMeByEmailV2Request, opts ...grpc.CallOption) (*account.GetMeV2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMeByEmailV2", varargs...)
+	ret0, _ := ret[0].(*account.GetMeV2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMeByEmailV2 indicates an expected call of GetMeByEmailV2.
+func (mr *MockClientMockRecorder) GetMeByEmailV2(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMeByEmailV2", reflect.TypeOf((*MockClient)(nil).GetMeByEmailV2), varargs...)
+}
+
+// GetMeV2 mocks base method.
+func (m *MockClient) GetMeV2(ctx context.Context, in *account.GetMeV2Request, opts ...grpc.CallOption) (*account.GetMeV2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMeV2", varargs...)
+	ret0, _ := ret[0].(*account.GetMeV2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMeV2 indicates an expected call of GetMeV2.
+func (mr *MockClientMockRecorder) GetMeV2(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMeV2", reflect.TypeOf((*MockClient)(nil).GetMeV2), varargs...)
+}
+
 // ListAPIKeys mocks base method.
 func (m *MockClient) ListAPIKeys(ctx context.Context, in *account.ListAPIKeysRequest, opts ...grpc.CallOption) (*account.ListAPIKeysResponse, error) {
 	m.ctrl.T.Helper()

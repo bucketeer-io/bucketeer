@@ -34,6 +34,9 @@ export class Evaluation extends jspb.Message {
   getVariationValue(): string;
   setVariationValue(value: string): void;
 
+  getVariationName(): string;
+  setVariationName(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Evaluation.AsObject;
   static toObject(includeInstance: boolean, msg: Evaluation): Evaluation.AsObject;
@@ -54,6 +57,7 @@ export namespace Evaluation {
     variation?: proto_feature_variation_pb.Variation.AsObject,
     reason?: proto_feature_reason_pb.Reason.AsObject,
     variationValue: string,
+    variationName: string,
   }
 }
 

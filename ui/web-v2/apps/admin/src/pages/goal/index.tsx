@@ -114,7 +114,7 @@ export const GoalIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createGoal({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.id,
           name: data.name,
           description: data.description,
@@ -123,13 +123,24 @@ export const GoalIndexPage: FC = memo(() => {
         setOpen(false);
         resetAdd();
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_GOALS}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`
         );
         updateGoalList(null, 1);
       });
     },
     [dispatch]
   );
+
+  const updateMethod = useForm({
+    resolver: yupResolver(updateFormSchema),
+    mode: 'onChange',
+  });
+
+  const {
+    handleSubmit: handleUpdateSubmit,
+    formState: { dirtyFields },
+    reset: resetUpdate,
+  } = updateMethod;
 
   const handleUpdate = useCallback(
     async (data) => {
@@ -143,7 +154,7 @@ export const GoalIndexPage: FC = memo(() => {
       }
       dispatch(
         updateGoal({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: goalId,
           name: name,
           description: description,
@@ -151,26 +162,15 @@ export const GoalIndexPage: FC = memo(() => {
       ).then(() => {
         dispatch(
           getGoal({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: goalId,
           })
         );
         handleClose();
       });
     },
-    [dispatch, goalId]
+    [dispatch, goalId, dirtyFields]
   );
-
-  const updateMethod = useForm({
-    resolver: yupResolver(updateFormSchema),
-    mode: 'onChange',
-  });
-
-  const {
-    handleSubmit: handleUpdateSubmit,
-    formState: { dirtyFields },
-    reset: resetUpdate,
-  } = updateMethod;
 
   const updateURL = useCallback(
     (options: Record<string, string | number | boolean | undefined>) => {
@@ -197,7 +197,7 @@ export const GoalIndexPage: FC = memo(() => {
           : false;
       dispatch(
         listGoals({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: GOAL_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -230,7 +230,7 @@ export const GoalIndexPage: FC = memo(() => {
   const handleOpen = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_GOALS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -244,7 +244,7 @@ export const GoalIndexPage: FC = memo(() => {
         description: g.description,
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_GOALS}/${g.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}/${g.id}`,
         search: location.search,
       });
     },
@@ -275,7 +275,7 @@ export const GoalIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         archiveGoal({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.goal.id,
         })
       ).then(() => {
@@ -292,7 +292,7 @@ export const GoalIndexPage: FC = memo(() => {
     resetAdd();
     resetUpdate();
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_GOALS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);

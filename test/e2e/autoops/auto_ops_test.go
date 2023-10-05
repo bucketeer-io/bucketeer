@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ const (
 	evaluationEventType
 	metricsEventType
 	prefixTestName   = "e2e-test"
-	retryTimes       = 60
+	retryTimes       = 30
 	timeout          = 10 * time.Second
 	prefixID         = "e2e-test"
 	version          = "/v1"
@@ -291,8 +291,6 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait until trasformer and watcher's targetstores are refreshed.
-	time.Sleep(40 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -301,20 +299,8 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	for _, uid := range userIDs {
 		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, "")
 	}
-	for i := 0; i < retryTimes; i++ {
-		feature = getFeature(t, featureClient, featureID)
-		if !feature.Enabled {
-			autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-			if autoOpsRules[0].TriggeredAt == 0 {
-				t.Fatalf("triggered at must not be zero")
-			}
-			break
-		}
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(time.Second)
-	}
+
+	checkIfAutoOpsRulesAreTriggered(t, featureID)
 }
 
 func TestGrpcOpsEventRateBatch(t *testing.T) {
@@ -338,8 +324,6 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait until trasformer and watcher's targetstores are refreshed.
-	time.Sleep(40 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -348,20 +332,8 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	for _, uid := range userIDs {
 		grpcRegisterEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
 	}
-	for i := 0; i < retryTimes; i++ {
-		feature = getFeature(t, featureClient, featureID)
-		if !feature.Enabled {
-			autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-			if autoOpsRules[0].TriggeredAt == 0 {
-				t.Fatalf("triggered at must not be zero")
-			}
-			break
-		}
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(time.Second)
-	}
+
+	checkIfAutoOpsRulesAreTriggered(t, featureID)
 }
 
 func TestOpsEventRateBatch(t *testing.T) {
@@ -385,8 +357,6 @@ func TestOpsEventRateBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait until trasformer and watcher's targetstores are refreshed.
-	time.Sleep(40 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -395,20 +365,8 @@ func TestOpsEventRateBatch(t *testing.T) {
 	for _, uid := range userIDs {
 		registerEvaluationEvent(t, featureID, feature.Version, uid, feature.Variations[0].Id, feature.Tags[0])
 	}
-	for i := 0; i < retryTimes; i++ {
-		feature = getFeature(t, featureClient, featureID)
-		if !feature.Enabled {
-			autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-			if autoOpsRules[0].TriggeredAt == 0 {
-				t.Fatalf("triggered at must not be zero")
-			}
-			break
-		}
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(time.Second)
-	}
+
+	checkIfAutoOpsRulesAreTriggered(t, featureID)
 }
 
 func TestDatetimeBatch(t *testing.T) {
@@ -428,17 +386,8 @@ func TestDatetimeBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait until watcher's targetstore is refreshed and autoOps is executed.
-	time.Sleep(50 * time.Second)
 
-	feature := getFeature(t, featureClient, featureID)
-	if feature.Enabled {
-		t.Fatalf("feature must be disabled")
-	}
-	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at must not be zero")
-	}
+	checkIfAutoOpsRulesAreTriggered(t, featureID)
 }
 
 func TestCreateAndListWebhook(t *testing.T) {
@@ -633,7 +582,7 @@ func createGoal(ctx context.Context, t *testing.T, client experimentclient.Clien
 	return cmd.Id
 }
 
-func createOpsEventRateClause(t *testing.T, variationID string, goalID string) *autoopsproto.OpsEventRateClause {
+func createOpsEventRateClause(t *testing.T, variationID, goalID string) *autoopsproto.OpsEventRateClause {
 	return &autoopsproto.OpsEventRateClause{
 		VariationId:     variationID,
 		GoalId:          goalID,
@@ -649,14 +598,20 @@ func createDatetimeClause(t *testing.T) *autoopsproto.DatetimeClause {
 	}
 }
 
-func createWebhookClause(webhookID string, condition []*autoopsproto.WebhookClause_Condition) *autoopsproto.WebhookClause {
+func createWebhookClause(
+	webhookID string,
+	condition []*autoopsproto.WebhookClause_Condition,
+) *autoopsproto.WebhookClause {
 	return &autoopsproto.WebhookClause{
 		WebhookId:  webhookID,
 		Conditions: condition,
 	}
 }
 
-func createWebhookClause_Condition(operator autoopsproto.WebhookClause_Condition_Operator, filter, value string) *autoopsproto.WebhookClause_Condition {
+func createWebhookClause_Condition(
+	operator autoopsproto.WebhookClause_Condition_Operator,
+	filter, value string,
+) *autoopsproto.WebhookClause_Condition {
 	return &autoopsproto.WebhookClause_Condition{
 		Filter:   filter,
 		Value:    value,
@@ -664,7 +619,16 @@ func createWebhookClause_Condition(operator autoopsproto.WebhookClause_Condition
 	}
 }
 
-func createAutoOpsRule(ctx context.Context, t *testing.T, client autoopsclient.Client, featureID string, oercs []*autoopsproto.OpsEventRateClause, dcs []*autoopsproto.DatetimeClause, wc []*autoopsproto.WebhookClause) {
+func createAutoOpsRule(
+	ctx context.Context,
+	t *testing.T,
+	client autoopsclient.Client,
+	featureID string,
+	oercs []*autoopsproto.OpsEventRateClause,
+	dcs []*autoopsproto.DatetimeClause,
+	wc []*autoopsproto.WebhookClause,
+) {
+	t.Helper()
 	cmd := &autoopsproto.CreateAutoOpsRuleCommand{
 		FeatureId:           featureID,
 		OpsType:             autoopsproto.OpsType_DISABLE_FEATURE,
@@ -681,7 +645,12 @@ func createAutoOpsRule(ctx context.Context, t *testing.T, client autoopsclient.C
 	}
 }
 
-func createWebhook(ctx context.Context, t *testing.T, client autoopsclient.Client, name, description string) *autoopsproto.CreateWebhookResponse {
+func createWebhook(
+	ctx context.Context,
+	t *testing.T,
+	client autoopsclient.Client,
+	name, description string,
+) *autoopsproto.CreateWebhookResponse {
 	t.Helper()
 	cmd := &autoopsproto.CreateWebhookCommand{
 		Name:        name,
@@ -726,6 +695,7 @@ func newUUID(t *testing.T) string {
 }
 
 func newWebhookName(t *testing.T) string {
+	t.Helper()
 	if *testID != "" {
 		return fmt.Sprintf("%s-%s-webhook-name-%s", prefixID, *testID, newUUID(t))
 	}
@@ -1159,6 +1129,7 @@ func registerEvaluationEvent(
 }
 
 func createUserIDs(t *testing.T, total int) []string {
+	t.Helper()
 	userIDs := make([]string, 0)
 	for i := 0; i < total; i++ {
 		id := newUUID(t)
@@ -1169,6 +1140,7 @@ func createUserIDs(t *testing.T, total int) []string {
 }
 
 func createFeatureID(t *testing.T) string {
+	t.Helper()
 	if *testID != "" {
 		return fmt.Sprintf("%s-%s-feature-id-%s", prefixTestName, *testID, newUUID(t))
 	}
@@ -1176,8 +1148,33 @@ func createFeatureID(t *testing.T) string {
 }
 
 func createGoalID(t *testing.T) string {
+	t.Helper()
 	if *testID != "" {
 		return fmt.Sprintf("%s-%s-goal-id-%s", prefixTestName, *testID, newUUID(t))
 	}
 	return fmt.Sprintf("%s-goal-id-%s", prefixTestName, newUUID(t))
+}
+
+func checkIfAutoOpsRulesAreTriggered(t *testing.T, featureID string) {
+	t.Helper()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout")
+		}
+		time.Sleep(10 * time.Second)
+		feature := getFeature(t, featureClient, featureID)
+		if feature.Enabled {
+			continue
+		}
+		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+		if autoOpsRules[0].TriggeredAt == 0 {
+			t.Fatalf("triggered at must not be zero")
+		}
+		break
+	}
 }

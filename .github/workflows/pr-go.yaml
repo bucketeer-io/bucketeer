@@ -6,7 +6,6 @@ on:
       - main
     paths-ignore:
       - "ui/web-v2/**"
-      - "python/**"
       - "**/**.md"
 
 concurrency:
@@ -14,16 +13,22 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PROTOC_VERSION: 3.18.1
+  PROTOC_VERSION: 23.4
   GO_VERSION: 1.20.4
   GOLANGCI_LINT: v1.51.2
-  PROTOLOCK_VERSION: v0.15.0
+  PROTOLOCK_VERSION: v0.16.0
   PROTOC_GEN_GO_VERSION: v1.5.2
   MOCKGEN_VERSION: v1.6.0
 
 jobs:
   unit-test:
     runs-on: ubuntu-latest
+    services:
+      # setup httpstan container used to run unit test in experiment service
+      httpstan:
+        image: ghcr.io/bucketeer-io/bucketeer-httpstan:0.0.1
+        ports:
+          - 8080:8080
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
@@ -55,6 +60,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Install goimports
         run: go install golang.org/x/tools/cmd/goimports
       - name: Check Go formatting
@@ -64,10 +70,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
       - name: Install protolock
         run: go install github.com/nilslice/protolock/cmd/protolock@${{ env.PROTOLOCK_VERSION }}
       - name: Install Protoc
-        uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # v1.1.2
+        uses: arduino/setup-protoc@a8b67ba40b37d35169e222f3bb352603327985b6 # v2.1.0
         with:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -81,8 +88,9 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Install Protoc
-        uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # v1.1.2
+        uses: arduino/setup-protoc@a8b67ba40b37d35169e222f3bb352603327985b6 # v2.1.0
         with:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -100,8 +108,9 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Install Protoc
-        uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # v1.1.2
+        uses: arduino/setup-protoc@a8b67ba40b37d35169e222f3bb352603327985b6 # v2.1.0
         with:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -117,6 +126,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Check repository updates
         run: make update-repos-check
 
@@ -127,6 +137,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
       - name: Install golangci-lint
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@${{ env.GOLANGCI_LINT }}
       - name: Lint

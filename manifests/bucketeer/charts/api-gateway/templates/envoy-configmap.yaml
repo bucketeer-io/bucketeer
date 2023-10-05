@@ -25,21 +25,13 @@ data:
         - name: api-gateway
           connect_timeout: 5s
           ignore_health_on_host_removal: true
-          health_checks:
-            - grpc_health_check: {}
-              healthy_threshold: 1
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              timeout: 1s
-              unhealthy_threshold: 2
           circuit_breakers:
             thresholds:
               - priority: DEFAULT
                 max_retries: 3
-                max_pending_requests: 3500
-                max_requests: 3500
-                max_connections: 3500
+                max_pending_requests: {{ .Values.envoy.circuitBreaker.maxPendingRequests }}
+                max_requests: {{ .Values.envoy.circuitBreaker.maxRequests }}
+                max_connections: {{ .Values.envoy.circuitBreaker.maxConnections }}
           load_assignment:
             cluster_name: api-gateway
             endpoints:
@@ -71,23 +63,13 @@ data:
         - name: api-gateway-rest-v1
           connect_timeout: 5s
           ignore_health_on_host_removal: true
-          health_checks:
-            - http_health_check:
-                path: /v1/gateway/health
-                codec_client_type: 1 # http2.0
-              healthy_threshold: 1
-              interval: 10s
-              interval_jitter: 1s
-              no_traffic_interval: 2s
-              timeout: 1s
-              unhealthy_threshold: 2
           circuit_breakers:
             thresholds:
               - priority: DEFAULT
                 max_retries: 3
-                max_pending_requests: 3500
-                max_requests: 3500
-                max_connections: 3500
+                max_pending_requests: {{ .Values.envoy.circuitBreaker.maxPendingRequests }}
+                max_requests: {{ .Values.envoy.circuitBreaker.maxRequests }}
+                max_connections: {{ .Values.envoy.circuitBreaker.maxConnections }}
           load_assignment:
             cluster_name: api-gateway-rest-v1
             endpoints:
@@ -176,19 +158,12 @@ data:
                     # set longer timeout than lb session timeout (600s)
                     idle_timeout: 620s
                   http_filters:
-                    - name: envoy.filters.http.health_check
-                      typed_config:
-                        "@type": type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
-                        cluster_min_healthy_percentages:
-                          api-gateway:
-                            value: 25
-                        pass_through_mode: false
-                        headers:
-                          - name: :path
-                            string_match:
-                              exact: /health
                     - name: envoy.filters.http.cors
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
                     - name: envoy.filters.http.grpc_web
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
                     - name: envoy.filters.http.grpc_json_transcoder
                       typed_config:
                         "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
@@ -198,6 +173,8 @@ data:
                         print_options:
                           always_print_primitive_fields: true
                     - name: envoy.filters.http.router
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                   route_config:
                     virtual_hosts:
                       - name: ingress_services
@@ -262,6 +239,8 @@ data:
                   codec_type: auto
                   http_filters:
                     - name: envoy.filters.http.router
+                      typed_config:
+                        "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                   route_config:
                     virtual_hosts:
                       - name: egress_services

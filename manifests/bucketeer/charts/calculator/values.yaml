@@ -2,6 +2,7 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/bucketeer-io/bucketeer-calculator
+  tag: v0.2.0-235-g0789029
   pullPolicy: IfNotPresent
 
 fullnameOverride: "calculator"
@@ -42,8 +43,8 @@ hpa:
 
 envoy:
   image:
-    repository: envoyproxy/envoy-alpine
-    tag: v1.21.1
+    repository: ghcr.io/bucketeer-io/bucketeer-envoy
+    tag: v1.26.2
     pullPolicy: IfNotPresent
   config:
   port: 9000
@@ -66,12 +67,17 @@ service:
   externalPort: 9000
 
 health:
-  periodSeconds: 10
-  failureThreshold: 10
   # It is necessary to wait for the model compilation to be done.
   # The duration is up to resources.
   # cf. CPU: 500m, MEM: 3Gi -> 280sec
-  initialDelaySeconds:
+  livenessProbe:
+    initialDelaySeconds: 300
+    periodSeconds: 3
+    failureThreshold: 5
+  readinessProbe:
+    initialDelaySeconds: 300
+    periodSeconds: 3
+    failureThreshold: 2
 
 resources: {}
 

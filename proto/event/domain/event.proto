@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -137,6 +137,11 @@ message Event {
     ENVIRONMENT_RENAMED = 601;
     ENVIRONMENT_DESCRIPTION_CHANGED = 602;
     ENVIRONMENT_DELETED = 603;
+    ENVIRONMENT_V2_CREATED = 604;
+    ENVIRONMENT_V2_RENAMED = 605;
+    ENVIRONMENT_V2_DESCRIPTION_CHANGED = 606;
+    ENVIRONMENT_V2_ARCHIVED = 607;
+    ENVIRONMENT_V2_UNARCHIVED = 608;
     ADMIN_ACCOUNT_CREATED = 700;
     ADMIN_ACCOUNT_ENABLED = 702;
     ADMIN_ACCOUNT_DISABLED = 703;
@@ -174,6 +179,7 @@ message Event {
     PROJECT_DISABLED = 1203;
     PROJECT_TRIAL_CREATED = 1204;
     PROJECT_TRIAL_CONVERTED = 1205;
+    PROJECT_RENAMED = 1206;
     WEBHOOK_CREATED = 1300;
     WEBHOOK_DELETED = 1301;
     WEBHOOK_NAME_CHANGED = 1302;
@@ -671,6 +677,44 @@ message EnvironmentDeletedEvent {
   string namespace = 2;
 }
 
+message EnvironmentV2CreatedEvent {
+  string id = 1;
+  string name = 2;
+  string url_code = 3;
+  string description = 4;
+  string project_id = 5;
+  bool archived = 6;
+  int64 created_at = 7;
+  int64 updated_at = 8;
+}
+
+message EnvironmentV2RenamedEvent {
+  string id = 1;
+  string project_id = 2;
+  string old_name = 3;
+  string new_name = 4;
+}
+
+message EnvironmentV2DescriptionChangedEvent {
+  string id = 1;
+  string name = 2;
+  string project_id = 3;
+  string old_description = 4;
+  string new_description = 5;
+}
+
+message EnvironmentV2ArchivedEvent {
+  string id = 1;
+  string name = 2;
+  string project_id = 3;
+}
+
+message EnvironmentV2UnarchivedEvent {
+  string id = 1;
+  string name = 2;
+  string project_id = 3;
+}
+
 message AdminAccountCreatedEvent {
   string id = 1;
   string email = 2;
@@ -810,11 +854,18 @@ message ProjectCreatedEvent {
   string creator_email = 5;
   int64 created_at = 6;
   int64 updated_at = 7;
+  string name = 8;
+  string url_code = 9;
 }
 
 message ProjectDescriptionChangedEvent {
   string id = 1;
   string description = 2;
+}
+
+message ProjectRenamedEvent {
+  string id = 1;
+  string name = 2;
 }
 
 message ProjectEnabledEvent {
@@ -833,6 +884,8 @@ message ProjectTrialCreatedEvent {
   string creator_email = 5;
   int64 created_at = 6;
   int64 updated_at = 7;
+  string name = 8;
+  string url_code = 9;
 }
 
 message ProjectTrialConvertedEvent {

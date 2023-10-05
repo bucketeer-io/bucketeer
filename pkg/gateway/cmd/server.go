@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -238,6 +238,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
+	inMemoryCache := cachev3.NewInMemoryCache(cachev3.WithEvictionInterval(cachev3.EnvironmentAPIKeyEvictionInterval))
+
 	service := api.NewGrpcGatewayService(
 		featureClient,
 		accountClient,
@@ -245,6 +247,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		evaluationPublisher,
 		userPublisher,
 		redisV3Cache,
+		inMemoryCache,
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -283,6 +286,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		userPublisher,
 		metricsPublisher,
 		redisV3Cache,
+		inMemoryCache,
 		api.WithOldestEventTimestamp(*s.oldestEventTimestamp),
 		api.WithFurthestEventTimestamp(*s.furthestEventTimestamp),
 		api.WithMetrics(registerer),
@@ -298,6 +302,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer httpServer.Stop(10 * time.Second)
 	go httpServer.Run()
+
+	// Ensure to stop the health check before stopping the application
+	// so the Kubernetes Readiness can detect it faster and remove the pod
+	// from the service load balancer.
+	defer healthChecker.Stop()
+	defer restHealthChecker.Stop()
 
 	<-ctx.Done()
 	return nil

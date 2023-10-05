@@ -18,7 +18,7 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
     const {
       register,
       getValues,
-      formState: { errors, isDirty, isSubmitted },
+      formState: { errors, isDirty, dirtyFields, isSubmitted, isValid },
     } = methods;
     return (
       <div className="w-[500px]">
@@ -27,12 +27,12 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
             <div className="py-6 px-4 bg-primary">
               <div className="flex items-center justify-between">
                 <Dialog.Title className="text-lg font-medium text-white">
-                  {f(messages.adminEnvironment.add.header.title)}
+                  {f(messages.adminEnvironment.update.header.title)}
                 </Dialog.Title>
               </div>
               <div className="mt-1">
                 <p className="text-sm text-indigo-300">
-                  {f(messages.adminEnvironment.add.header.description)}
+                  {f(messages.adminEnvironment.update.header.description)}
                 </p>
               </div>
             </div>
@@ -54,6 +54,46 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
                     <p className="input-error">
                       {errors.id && (
                         <span role="alert">{errors.id.message}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="">
+                  <label htmlFor="name">
+                    <span className="input-label">{f(messages.name)}</span>
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      {...register('name')}
+                      type="text"
+                      name="name"
+                      id="name"
+                      className="input-text w-full"
+                      disabled={isSubmitted}
+                    />
+                    <p className="input-error">
+                      {errors.name && (
+                        <span role="alert">{errors.name.message}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="">
+                  <label htmlFor="urlCode">
+                    <span className="input-label">{f(messages.urlCode)}</span>
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      {...register('urlCode')}
+                      type="text"
+                      name="urlCode"
+                      id="urlCode"
+                      className="input-text w-full"
+                      disabled={true}
+                    />
+                    <p className="input-error">
+                      {errors.urlCode && (
+                        <span role="alert">{errors.urlCode.message}</span>
                       )}
                     </p>
                   </div>
@@ -121,7 +161,7 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
             <button
               type="button"
               className="btn-submit"
-              disabled={!isDirty || isSubmitted}
+              disabled={!isDirty || !isValid || isSubmitted}
               onClick={onSubmit}
             >
               {f(messages.button.submit)}

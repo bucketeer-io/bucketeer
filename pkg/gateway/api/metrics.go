@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ const (
 	typeUnknown       = "Unknown"
 	typeTrack         = "Track"
 
+	cacheLayerInMemory = "InMemory"
 	cacheLayerExternal = "External"
 
 	codeHit  = "Hit"

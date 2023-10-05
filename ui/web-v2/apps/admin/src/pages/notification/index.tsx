@@ -119,7 +119,7 @@ export const NotificationIndexPage: FC = memo(() => {
         options && options.enabled ? options.enabled === 'false' : null;
       dispatch(
         listNotification({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: NOTIFICATION_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -162,7 +162,7 @@ export const NotificationIndexPage: FC = memo(() => {
   const handleOnClickAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -182,7 +182,7 @@ export const NotificationIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createNotification({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           name: data.name,
           sourceTypes: data.sourceTypes,
           webhookUrl: data.webhookUrl,
@@ -191,7 +191,7 @@ export const NotificationIndexPage: FC = memo(() => {
         setOpen(false);
         resetAdd();
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}`
         );
         updateNotificationList(null, 1);
       });
@@ -208,7 +208,7 @@ export const NotificationIndexPage: FC = memo(() => {
         sourceTypes: [...s.sourceTypesList].sort(),
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}/${s.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}/${s.id}`,
         search: location.search,
       });
     },
@@ -240,7 +240,7 @@ export const NotificationIndexPage: FC = memo(() => {
       }
       dispatch(
         updateNotification({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: notificationId,
           name: name,
           currentSourceTypes: notification.sourceTypesList,
@@ -261,7 +261,7 @@ export const NotificationIndexPage: FC = memo(() => {
     resetAdd();
     setOpen(false);
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd]);
@@ -289,11 +289,11 @@ export const NotificationIndexPage: FC = memo(() => {
       dispatch(
         data.notification.disabled
           ? enableNotification({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: data.notification.id,
             })
           : disableNotification({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: data.notification.id,
             })
       ).then(() => {
@@ -329,7 +329,7 @@ export const NotificationIndexPage: FC = memo(() => {
     (data) => {
       dispatch(
         deleteNotification({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.notification.id,
         })
       ).then(() => {

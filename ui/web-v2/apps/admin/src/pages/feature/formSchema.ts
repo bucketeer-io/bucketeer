@@ -115,7 +115,7 @@ const variationsSchema = yup.array().of(
             return !unChangedList.find((val) => val.value === value);
           }
         ),
-      name: yup.string().max(VARIATION_NAME_MAX_LENGTH),
+      name: yup.string().required().max(VARIATION_NAME_MAX_LENGTH),
       description: yup.string().max(VARIATION_DESCRIPTION_MAX_LENGTH),
     })
     .required()
@@ -200,7 +200,8 @@ export const archiveFormSchema = yup.object().shape({
 });
 
 export const cloneSchema = yup.object().shape({
-  destinationEnvironmentId: yup.string().required(),
+  // Since some old environments have empty id, so we don't require it
+  // destinationEnvironmentId: yup.string().required(),
 });
 
 export const onVariationSchema = yup.object().shape({

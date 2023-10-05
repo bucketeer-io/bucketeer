@@ -7,16 +7,17 @@ import {
 
 import * as grpc from '../grpc/environment';
 import {
-  ChangeDescriptionEnvironmentCommand,
-  CreateEnvironmentCommand,
+  ChangeDescriptionEnvironmentV2Command,
+  CreateEnvironmentV2Command,
+  RenameEnvironmentV2Command
 } from '../proto/environment/command_pb';
-import { Environment } from '../proto/environment/environment_pb';
+import { EnvironmentV2 } from '../proto/environment/environment_pb';
 import {
-  CreateEnvironmentRequest,
-  GetEnvironmentRequest,
-  ListEnvironmentsRequest,
-  ListEnvironmentsResponse,
-  UpdateEnvironmentRequest,
+  CreateEnvironmentV2Request,
+  GetEnvironmentV2Request,
+  ListEnvironmentsV2Request,
+  ListEnvironmentsV2Response,
+  UpdateEnvironmentV2Request,
 } from '../proto/environment/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -25,7 +26,7 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'environments';
 
-export const environmentAdapter = createEntityAdapter<Environment.AsObject>({
+export const environmentAdapter = createEntityAdapter<EnvironmentV2.AsObject>({
   selectId: (e) => e.id,
 });
 
@@ -42,9 +43,9 @@ const initialState = environmentAdapter.getInitialState<{
 });
 
 export type OrderBy =
-  ListEnvironmentsRequest.OrderByMap[keyof ListEnvironmentsRequest.OrderByMap];
+  ListEnvironmentsV2Request.OrderByMap[keyof ListEnvironmentsV2Request.OrderByMap];
 export type OrderDirection =
-  ListEnvironmentsRequest.OrderDirectionMap[keyof ListEnvironmentsRequest.OrderDirectionMap];
+  ListEnvironmentsV2Request.OrderDirectionMap[keyof ListEnvironmentsV2Request.OrderDirectionMap];
 
 interface ListEnvironmentsRequestParams {
   pageSize: number;
@@ -56,11 +57,11 @@ interface ListEnvironmentsRequestParams {
 }
 
 export const listEnvironments = createAsyncThunk<
-  ListEnvironmentsResponse.AsObject,
+  ListEnvironmentsV2Response.AsObject,
   ListEnvironmentsRequestParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
-  const request = new ListEnvironmentsRequest();
+  const request = new ListEnvironmentsV2Request();
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
   request.setOrderBy(params.orderBy);
@@ -77,11 +78,11 @@ export interface GetEnvironmentParams {
 }
 
 export const getEnvironment = createAsyncThunk<
-  Environment.AsObject,
+  EnvironmentV2.AsObject,
   GetEnvironmentParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/get`, async (params) => {
-  const request = new GetEnvironmentRequest();
+  const request = new GetEnvironmentV2Request();
   request.setId(params.id);
   await setupAuthToken();
   const result = await grpc.getEnvironment(request);
@@ -89,7 +90,8 @@ export const getEnvironment = createAsyncThunk<
 });
 
 export interface CreateEnvironmentParams {
-  id: string;
+  name: string;
+  urlCode: string;
   projectId: string;
   description: string;
 }
@@ -99,9 +101,10 @@ export const createEnvironment = createAsyncThunk<
   CreateEnvironmentParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/create`, async (params) => {
-  const request = new CreateEnvironmentRequest();
-  const command = new CreateEnvironmentCommand();
-  command.setId(params.id);
+  const request = new CreateEnvironmentV2Request();
+  const command = new CreateEnvironmentV2Command();
+  command.setName(params.name);
+  command.setUrlCode(params.urlCode);
   command.setDescription(params.description);
   command.setProjectId(params.projectId);
   request.setCommand(command);
@@ -111,6 +114,7 @@ export const createEnvironment = createAsyncThunk<
 
 export interface UpdateEnvironmentParams {
   id: string;
+  name?: string
   description?: string;
 }
 
@@ -118,12 +122,19 @@ export const updateEnvironment = createAsyncThunk<
   void,
   UpdateEnvironmentParams | undefined,
   { state: AppState }
->(`${MODULE_NAME}/update`, async (params) => {
-  const request = new UpdateEnvironmentRequest();
+>(`${MODULE_NAME}/update`, async (params: UpdateEnvironmentParams) => {
+  const request = new UpdateEnvironmentV2Request();
   request.setId(params.id);
-  const command = new ChangeDescriptionEnvironmentCommand();
-  command.setDescription(params.description);
-  request.setChangeDescriptionCommand(command);
+  if (params.name) {
+    const renameCommand = new RenameEnvironmentV2Command();
+    renameCommand.setName(params.name);
+    request.setRenameCommand(renameCommand);
+  }
+  if (params.description) {
+    const changeDescCommand = new ChangeDescriptionEnvironmentV2Command();
+    changeDescCommand.setDescription(params.description);
+    request.setChangeDescriptionCommand(changeDescCommand);
+  }
   await setupAuthToken();
   await grpc.updateEnvironment(request);
 });

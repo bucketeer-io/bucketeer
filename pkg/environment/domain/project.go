@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package domain
 import (
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
@@ -24,21 +25,32 @@ type Project struct {
 	*proto.Project
 }
 
-func NewProject(id, description, creatorEmail string, trial bool) *Project {
+func NewProject(name, urlCode, description, creatorEmail string, trial bool) (*Project, error) {
 	now := time.Now().Unix()
+	uid, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
 	return &Project{&proto.Project{
-		Id:           id,
+		Id:           uid.String(),
+		Name:         name,
+		UrlCode:      urlCode,
 		Description:  description,
 		Disabled:     false,
 		Trial:        trial,
 		CreatorEmail: creatorEmail,
 		CreatedAt:    now,
 		UpdatedAt:    now,
-	}}
+	}}, nil
 }
 
 func (p *Project) ChangeDescription(description string) {
 	p.Project.Description = description
+	p.Project.UpdatedAt = time.Now().Unix()
+}
+
+func (p *Project) Rename(name string) {
+	p.Project.Name = name
 	p.Project.UpdatedAt = time.Now().Unix()
 }
 

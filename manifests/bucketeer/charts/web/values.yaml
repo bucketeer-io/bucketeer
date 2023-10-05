@@ -9,6 +9,9 @@ namespace: default
 nginx:
   config:
 
+env:
+  googleTagManagerId:
+
 tls:
   secret:
   cert:
@@ -20,9 +23,14 @@ service:
   port: 443
 
 health:
-  initialDelaySeconds: 10
-  periodSeconds: 10
-  failureThreshold: 10
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 5
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 2
 
 resources:
   {}

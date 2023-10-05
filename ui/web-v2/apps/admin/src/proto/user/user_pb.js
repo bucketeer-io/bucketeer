@@ -13,7 +13,13 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = Function('return this')();
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 goog.exportSymbol('proto.bucketeer.user.User', null, global);
 goog.exportSymbol('proto.bucketeer.user.User.Data', null, global);
@@ -347,7 +353,8 @@ proto.bucketeer.user.User.Data.prototype.getValueMap = function(opt_noLazyCreate
  */
 proto.bucketeer.user.User.Data.prototype.clearValueMap = function() {
   this.getValueMap().clear();
-  return this;};
+  return this;
+};
 
 
 /**
@@ -387,7 +394,8 @@ proto.bucketeer.user.User.prototype.getDataMap = function(opt_noLazyCreate) {
  */
 proto.bucketeer.user.User.prototype.clearDataMap = function() {
   this.getDataMap().clear();
-  return this;};
+  return this;
+};
 
 
 /**
@@ -409,7 +417,8 @@ proto.bucketeer.user.User.prototype.getTaggedDataMap = function(opt_noLazyCreate
  */
 proto.bucketeer.user.User.prototype.clearTaggedDataMap = function() {
   this.getTaggedDataMap().clear();
-  return this;};
+  return this;
+};
 
 
 /**

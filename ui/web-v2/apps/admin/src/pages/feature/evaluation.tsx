@@ -31,7 +31,7 @@ export const FeatureEvaluationPage: FC<FeatureEvaluationPageProps> = memo(
       dispatch(
         getEvaluationTimeseriesCount({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           timeRange: TimeRange.LAST_THIRTY_DAYS,
         })
       );

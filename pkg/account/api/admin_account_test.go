@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,9 +41,10 @@ func TestGetMeMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	lang := "ja"
 	ctx := context.TODO()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
+		"accept-language": []string{lang},
 	})
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
@@ -126,11 +127,11 @@ func TestGetMeMySQL(t *testing.T) {
 					},
 					nil,
 				)
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
 					gomock.Any(),
 				).Return(
-					&environmentproto.ListEnvironmentsResponse{},
+					&environmentproto.ListEnvironmentsV2Response{},
 					nil,
 				)
 			},
@@ -152,11 +153,11 @@ func TestGetMeMySQL(t *testing.T) {
 					},
 					nil,
 				)
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
 					gomock.Any(),
 				).Return(
-					&environmentproto.ListEnvironmentsResponse{
+					&environmentproto.ListEnvironmentsV2Response{
 						Environments: getEnvironments(t),
 						Cursor:       "",
 					},
@@ -179,7 +180,266 @@ func TestGetMeMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
+			p.ctx = metadata.NewIncomingContext(p.ctx, metadata.MD{
+				"accept-language": []string{lang},
+			})
 			actual, err := service.GetMe(p.ctx, p.input)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+			if actual != nil {
+				assert.Equal(t, p.expected, actual.Email, p.desc)
+				assert.Equal(t, p.expectedIsAdmin, actual.IsAdmin, p.desc)
+			}
+		})
+	}
+}
+
+func TestGetMeV2MySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	lang := "ja"
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{lang},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc            string
+		ctx             context.Context
+		setup           func(*AccountService)
+		input           *accountproto.GetMeV2Request
+		expected        string
+		expectedIsAdmin bool
+		expectedErr     error
+	}{
+		{
+			desc:        "errUnauthenticated",
+			ctx:         context.Background(),
+			setup:       nil,
+			input:       &accountproto.GetMeV2Request{},
+			expected:    "",
+			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+		},
+		{
+			desc:        "errInvalidEmail",
+			ctx:         createContextWithInvalidEmailToken(t, accountproto.Account_OWNER),
+			setup:       nil,
+			input:       &accountproto.GetMeV2Request{},
+			expected:    "",
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+		},
+		{
+			desc: "errInternal",
+			ctx:  createContextWithDefaultToken(t, accountproto.Account_OWNER),
+			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					nil,
+					createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+				)
+			},
+			input:       &accountproto.GetMeV2Request{},
+			expected:    "",
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "errInternal_no_projects",
+			ctx:  createContextWithDefaultToken(t, accountproto.Account_OWNER),
+			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&environmentproto.ListProjectsResponse{},
+					nil,
+				)
+			},
+			input:       &accountproto.GetMeV2Request{},
+			expected:    "",
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "errInternal_no_environments",
+			ctx:  createContextWithDefaultToken(t, accountproto.Account_OWNER),
+			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&environmentproto.ListProjectsResponse{
+						Projects: getProjects(t),
+						Cursor:   "",
+					},
+					nil,
+				)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{},
+					nil,
+				)
+			},
+			input:       &accountproto.GetMeV2Request{},
+			expected:    "",
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "errNotFound",
+			ctx:  createContextWithDefaultToken(t, accountproto.Account_EDITOR),
+			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&environmentproto.ListProjectsResponse{
+						Projects: getProjects(t),
+						Cursor:   "",
+					},
+					nil,
+				)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: getEnvironments(t),
+						Cursor:       "",
+					},
+					nil,
+				)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows).Times(3)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row).Times(3)
+			},
+			input:       &accountproto.GetMeV2Request{},
+			expected:    "",
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			p.ctx = metadata.NewIncomingContext(p.ctx, metadata.MD{
+				"accept-language": []string{lang},
+			})
+			actual, err := service.GetMeV2(p.ctx, p.input)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+			if actual != nil {
+				assert.Equal(t, p.expected, actual.Email, p.desc)
+				assert.Equal(t, p.expectedIsAdmin, actual.IsAdmin, p.desc)
+			}
+		})
+	}
+}
+
+func TestGetMeByEmailV2MySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	lang := "ja"
+	ctx := context.TODO()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{lang},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc            string
+		ctx             context.Context
+		setup           func(*AccountService)
+		input           *accountproto.GetMeByEmailV2Request
+		expected        string
+		expectedIsAdmin bool
+		expectedErr     error
+	}{
+		{
+			desc:  "errInvalidEmail",
+			ctx:   createContextWithDefaultToken(t, accountproto.Account_OWNER),
+			setup: nil,
+			input: &accountproto.GetMeByEmailV2Request{
+				Email: "bucketeer@",
+			},
+			expected: "",
+			expectedErr: createError(
+				statusInvalidEmail,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+			),
+		},
+		{
+			desc: "errNotFound",
+			ctx:  createContextWithDefaultToken(t, accountproto.Account_EDITOR),
+			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&environmentproto.ListProjectsResponse{
+						Projects: getProjects(t),
+						Cursor:   "",
+					},
+					nil,
+				)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: getEnvironments(t),
+						Cursor:       "",
+					},
+					nil,
+				)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows).Times(3)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row).Times(3)
+			},
+			input: &accountproto.GetMeByEmailV2Request{
+				Email: "bucketeer@example.com",
+			},
+			expected:    "",
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			p.ctx = metadata.NewIncomingContext(p.ctx, metadata.MD{
+				"accept-language": []string{lang},
+			})
+			actual, err := service.GetMeByEmailV2(p.ctx, p.input)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if actual != nil {
 				assert.Equal(t, p.expected, actual.Email, p.desc)
@@ -194,7 +454,8 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -242,7 +503,7 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)))
 			},
@@ -257,9 +518,9 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errAlreadyExists_EnvironmentAccount",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any(),
-				).Return(&environmentproto.ListEnvironmentsResponse{
+				).Return(&environmentproto.ListEnvironmentsV2Response{
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
@@ -280,9 +541,9 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errAlreadyExists_AdminAccount",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any(),
-				).Return(&environmentproto.ListEnvironmentsResponse{
+				).Return(&environmentproto.ListEnvironmentsV2Response{
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
@@ -307,9 +568,9 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any(),
-				).Return(&environmentproto.ListEnvironmentsResponse{
+				).Return(&environmentproto.ListEnvironmentsV2Response{
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
@@ -334,7 +595,7 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithDefaultToken(t, p.ctxRole)
+			ctx = setToken(ctx, p.ctxRole)
 			service := createAccountService(t, mockController, storagemock.NewMockClient(mockController))
 			if p.setup != nil {
 				p.setup(service)
@@ -350,7 +611,8 @@ func TestEnableAdminAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -436,7 +698,7 @@ func TestEnableAdminAccountMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithDefaultToken(t, p.ctxRole)
+			ctx := setToken(ctx, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -452,7 +714,8 @@ func TestDisableAdminAccountMySQL(t *testing.T) {
 	defer mockController.Finish()
 	t.Parallel()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -538,7 +801,7 @@ func TestDisableAdminAccountMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithDefaultToken(t, p.ctxRole)
+			ctx = setToken(ctx, p.ctxRole)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -554,7 +817,8 @@ func TestConvertAccountMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -587,10 +851,10 @@ func TestConvertAccountMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
 					gomock.Any(),
-				).Return(&environmentproto.ListEnvironmentsResponse{
+				).Return(&environmentproto.ListEnvironmentsV2Response{
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
@@ -609,10 +873,10 @@ func TestConvertAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironments(
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
 					gomock.Any(),
-				).Return(&environmentproto.ListEnvironmentsResponse{
+				).Return(&environmentproto.ListEnvironmentsV2Response{
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
@@ -631,7 +895,7 @@ func TestConvertAccountMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithDefaultToken(t, p.ctxRole)
+			ctx := setToken(ctx, p.ctxRole)
 			service := createAccountService(t, mockController, storagemock.NewMockClient(mockController))
 			if p.setup != nil {
 				p.setup(service)
@@ -810,10 +1074,10 @@ func getProjects(t *testing.T) []*environmentproto.Project {
 	}
 }
 
-func getEnvironments(t *testing.T) []*environmentproto.Environment {
+func getEnvironments(t *testing.T) []*environmentproto.EnvironmentV2 {
 	t.Helper()
-	return []*environmentproto.Environment{
-		{Id: "ns0", Namespace: "ns0", ProjectId: "pj0"},
-		{Id: "ns1", Namespace: "ns1", ProjectId: "pj0"},
+	return []*environmentproto.EnvironmentV2{
+		{Id: "ns0", Name: "ns0", ProjectId: "pj0"},
+		{Id: "ns1", Name: "ns1", ProjectId: "pj0"},
 	}
 }

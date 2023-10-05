@@ -65,7 +65,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   useEffect(() => {
     if (isArchive && open) {
       listFeatures({
-        environmentNamespace: currentEnvironment.namespace,
+        environmentNamespace: currentEnvironment.id,
         pageSize: 0,
         cursor: '',
         tags: [],
@@ -141,7 +141,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
                     <li key={flag.id}>
                       <Link
                         className="link text-left"
-                        to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${flag.id}`}
+                        to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${flag.id}`}
                       >
                         <p className="truncate w-60">{flag.name}</p>
                       </Link>

@@ -67,7 +67,7 @@ export const FeatureDetailPage: FC = memo(() => {
     if (featureId) {
       dispatch(
         getFeature({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: featureId,
         })
       );
@@ -94,7 +94,7 @@ export const FeatureDetailPage: FC = memo(() => {
                     hover:text-gray-700
                     whitespace-nowrap py-4 px-1 border-b-2
                     font-medium text-sm"
-                to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${featureId}${tab.to}`}
+                to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${tab.to}`}
               >
                 {tab.message}
               </NavLink>

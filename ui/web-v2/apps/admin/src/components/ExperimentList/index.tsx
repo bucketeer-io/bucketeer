@@ -187,7 +187,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
                           disabled={false}
                           onClick={() =>
                             history.push(
-                              `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}/${experiment.featureId}${PAGE_PATH_EXPERIMENTS}?experimentId=${experiment.id}`
+                              `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${experiment.featureId}${PAGE_PATH_EXPERIMENTS}?experimentId=${experiment.id}`
                             )
                           }
                         >

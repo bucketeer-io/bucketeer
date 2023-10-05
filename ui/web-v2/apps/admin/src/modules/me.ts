@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { shallowEqual, useSelector } from 'react-redux';
 
-import { getMe } from '../grpc/account';
-import { Account, EnvironmentRole } from '../proto/account/account_pb';
-import { GetMeRequest } from '../proto/account/service_pb';
-import { Environment } from '../proto/environment/environment_pb';
+import { getMeV2 } from '../grpc/account';
+import { Account, EnvironmentRoleV2 } from '../proto/account/account_pb';
+import { GetMeV2Request } from '../proto/account/service_pb';
+import { EnvironmentV2 } from '../proto/environment/environment_pb';
 import {
   getCurrentEnvironmentId,
   setCurrentEnvironmentId,
@@ -16,14 +16,14 @@ const MODULE_NAME = 'me';
 
 export interface Me {
   isAdmin: boolean;
-  environmentRoles: Array<EnvironmentRole.AsObject>;
+  environmentRoles: Array<EnvironmentRoleV2.AsObject>;
   isLogin: boolean;
 }
 
 export type MeState = Me;
 
 export const fetchMe = createAsyncThunk<Me>('me/fetch', async () => {
-  const res = await getMe(new GetMeRequest());
+  const res = await getMeV2(new GetMeV2Request());
   return {
     isAdmin: res.response.getIsAdmin(),
     environmentRoles: res.response.toObject().environmentRolesList,
@@ -46,7 +46,8 @@ export const meSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchMe.fulfilled, (_, action) => {
-        const curEnvId = getCurrentEnvironmentId()
+        // Since some old environments have empty id, so accept empty and reject only null or undefined
+        const curEnvId = (getCurrentEnvironmentId() != (null || undefined))
           ? getCurrentEnvironmentId()
           : action.payload.environmentRoles[0].environment.id;
         setCurrentEnvironmentId(curEnvId);
@@ -61,34 +62,38 @@ export const meSlice = createSlice({
 export const useMe = (): MeState =>
   useSelector<AppState, MeState>((state) => state.me);
 
-const currentEnvironmentRole = (state: AppState): EnvironmentRole.AsObject => {
+const currentEnvironmentRole = (state: AppState): EnvironmentRoleV2.AsObject => {
   if ('environmentRoles' in state.me) {
-    const curEnvId = getCurrentEnvironmentId()
+    // Since some old environments have empty id, so accept empty and reject only null or undefined
+    const curEnvId = (getCurrentEnvironmentId() != (null || undefined))
       ? getCurrentEnvironmentId()
       : state.me.environmentRoles[0].environment.id;
     const envRole = state.me.environmentRoles.find(
       (environmentRole) => environmentRole.environment.id === curEnvId
     );
+    if (!envRole) {
+      return state.me.environmentRoles[0];
+    }
     return envRole;
   }
-  return new EnvironmentRole().toObject();
+  return new EnvironmentRoleV2().toObject();
 };
 
-export const useCurrentEnvironmentRole = (): EnvironmentRole.AsObject => {
-  return useSelector<AppState, EnvironmentRole.AsObject>(
+export const useCurrentEnvironmentRole = (): EnvironmentRoleV2.AsObject => {
+  return useSelector<AppState, EnvironmentRoleV2.AsObject>(
     currentEnvironmentRole,
     shallowEqual
   );
 };
 
-export const useCurrentEnvironment = (): Environment.AsObject => {
-  return useSelector<AppState, Environment.AsObject>((state: AppState) => {
+export const useCurrentEnvironment = (): EnvironmentV2.AsObject => {
+  return useSelector<AppState, EnvironmentV2.AsObject>((state: AppState) => {
     return currentEnvironmentRole(state).environment;
   }, shallowEqual);
 };
 
-export const useEnvironments = (): Array<Environment.AsObject> => {
-  return useSelector<AppState, Array<Environment.AsObject>>((state) => {
+export const useEnvironments = (): Array<EnvironmentV2.AsObject> => {
+  return useSelector<AppState, Array<EnvironmentV2.AsObject>>((state) => {
     if ('environmentRoles' in state.me) {
       return state.me.environmentRoles.map(
         (environmentRole) => environmentRole.environment
