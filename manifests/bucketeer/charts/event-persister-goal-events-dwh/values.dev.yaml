@@ -24,7 +24,7 @@ env:
   flushTimeout: 30s
   # pubsub
   topic: goal
-  subscription: dwh-sub
+  subscription: goal-dwh-sub
   pullerNumGoroutines: 5
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
