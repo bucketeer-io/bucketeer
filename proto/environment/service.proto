@@ -23,68 +23,6 @@ import "proto/environment/environment.proto";
 import "proto/environment/project.proto";
 import "proto/environment/command.proto";
 
-message GetEnvironmentRequest {
-  string id = 1;
-}
-
-message GetEnvironmentResponse {
-  Environment environment = 1;
-}
-
-message GetEnvironmentByNamespaceRequest {
-  string namespace = 1;
-}
-
-message GetEnvironmentByNamespaceResponse {
-  Environment environment = 1;
-}
-
-message ListEnvironmentsRequest {
-  enum OrderBy {
-    DEFAULT = 0;
-    ID = 1;
-    CREATED_AT = 2;
-    UPDATED_AT = 3;
-  }
-  enum OrderDirection {
-    ASC = 0;
-    DESC = 1;
-  }
-  int64 page_size = 1;
-  string cursor = 2;
-  string project_id = 3;
-  OrderBy order_by = 4;
-  OrderDirection order_direction = 5;
-  string search_keyword = 6;
-}
-
-message ListEnvironmentsResponse {
-  repeated Environment environments = 1;
-  string cursor = 2;
-  int64 total_count = 3;
-}
-
-message CreateEnvironmentRequest {
-  CreateEnvironmentCommand command = 1;
-}
-
-message CreateEnvironmentResponse {}
-
-message UpdateEnvironmentRequest {
-  string id = 1;
-  RenameEnvironmentCommand rename_command = 2 [deprecated = true];
-  ChangeDescriptionEnvironmentCommand change_description_command = 3;
-}
-
-message UpdateEnvironmentResponse {}
-
-message DeleteEnvironmentRequest {
-  string id = 1;
-  DeleteEnvironmentCommand command = 2;
-}
-
-message DeleteEnvironmentResponse {}
-
 message GetEnvironmentV2Request {
   string id = 1;
 }
@@ -225,30 +163,6 @@ message ConvertTrialProjectRequest {
 message ConvertTrialProjectResponse {}
 
 service EnvironmentService {
-  rpc GetEnvironment(GetEnvironmentRequest) returns (GetEnvironmentResponse) {
-    option deprecated = true;
-  }
-  rpc GetEnvironmentByNamespace(GetEnvironmentByNamespaceRequest)
-      returns (GetEnvironmentByNamespaceResponse) {
-    option deprecated = true;
-  }
-  rpc ListEnvironments(ListEnvironmentsRequest)
-      returns (ListEnvironmentsResponse) {
-    option deprecated = true;
-  }
-  rpc CreateEnvironment(CreateEnvironmentRequest)
-      returns (CreateEnvironmentResponse) {
-    option deprecated = true;
-  }
-  rpc UpdateEnvironment(UpdateEnvironmentRequest)
-      returns (UpdateEnvironmentResponse) {
-    option deprecated = true;
-  }
-  rpc DeleteEnvironment(DeleteEnvironmentRequest)
-      returns (DeleteEnvironmentResponse) {
-    option deprecated = true;
-  }
-
   rpc GetEnvironmentV2(GetEnvironmentV2Request)
       returns (GetEnvironmentV2Response) {}
   rpc ListEnvironmentsV2(ListEnvironmentsV2Request)
