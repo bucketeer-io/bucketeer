@@ -655,6 +655,18 @@ export const messages = {
       id: 'button.submit',
       defaultMessage: 'Submit',
     }),
+    enable: defineMessage({
+      id: 'button.enable',
+      defaultMessage: 'Enable',
+    }),
+    disable: defineMessage({
+      id: 'button.disable',
+      defaultMessage: 'Disable',
+    }),
+    schedule: defineMessage({
+      id: 'button.schedule',
+      defaultMessage: 'Schedule',
+    }),
   },
   account: {
     confirm: {
@@ -1576,6 +1588,22 @@ export const messages = {
       flagIsActive: defineMessage({
         id: 'feature.confirm.flagIsActive',
         defaultMessage: 'It is receiving one more requests in the last 7 days.',
+      }),
+      enableNow: defineMessage({
+        id: 'feature.confirm.enableNow',
+        defaultMessage: 'Enable now',
+      }),
+      disableNow: defineMessage({
+        id: 'feature.confirm.disableNow',
+        defaultMessage: 'Disable now',
+      }),
+      schedule: defineMessage({
+        id: 'feature.confirm.schedule',
+        defaultMessage: 'Schedule',
+      }),
+      selectDate: defineMessage({
+        id: 'feature.confirm.selectDate',
+        defaultMessage: 'Select date',
       }),
     },
     list: {

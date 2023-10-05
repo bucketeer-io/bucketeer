@@ -20,9 +20,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { XIcon, ExclamationCircleIcon } from '@heroicons/react/outline';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
-import dayjs from 'dayjs';
 import { FC, Fragment, memo, useCallback, useEffect, useState } from 'react';
-import ReactDatePicker from 'react-datepicker';
 import { Controller, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -40,6 +38,7 @@ import {
   listGoals,
   selectAll as selectAllGoals,
 } from '../../modules/goals';
+import { DatetimePicker } from '../DatetimePicker';
 import { ClauseType, operatorOptions } from '../FeatureAutoOpsRulesForm';
 import { Option, Select } from '../Select';
 
@@ -352,9 +351,9 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                             <span className="input-label">
                               {f(messages.autoOps.startDate)}
                             </span>
-                            <DatetimeClauseInput
+                            <DatetimePicker
                               name="datetime.time"
-                              isSeeDetailsSelected={isSeeDetailsSelected}
+                              disabled={isSeeDetailsSelected}
                             />
                             <p className="input-error">
                               {errors.datetime?.time?.message && (
@@ -538,40 +537,6 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
           </div>
         </form>
       </div>
-    );
-  }
-);
-
-interface DatetimeClauseInputProps {
-  name: string;
-  isSeeDetailsSelected: boolean;
-}
-
-const DatetimeClauseInput: FC<DatetimeClauseInputProps> = memo(
-  ({ name, isSeeDetailsSelected }) => {
-    const methods = useFormContext();
-    const { control } = methods;
-
-    return (
-      <Controller
-        name={name}
-        control={control}
-        render={({ field: { onChange, value } }) => {
-          return (
-            <ReactDatePicker
-              dateFormat="yyyy-MM-dd HH:mm"
-              showTimeSelect
-              timeIntervals={60}
-              placeholderText=""
-              className={classNames('input-text w-full')}
-              wrapperClassName="w-full"
-              onChange={onChange}
-              selected={value as Date}
-              disabled={isSeeDetailsSelected}
-            />
-          );
-        }}
-      />
     );
   }
 );

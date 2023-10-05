@@ -6,9 +6,15 @@ import { classNames } from '../../utils/css';
 interface ModalProps {
   open: boolean;
   onClose: () => void;
+  overflowVisible?: boolean;
 }
 
-export const Modal: FC<ModalProps> = ({ open, onClose, children }) => {
+export const Modal: FC<ModalProps> = ({
+  open,
+  onClose,
+  children,
+  overflowVisible,
+}) => {
   const handleClose = useCallback((): void => {
     onClose();
   }, [onClose]);
@@ -56,9 +62,10 @@ export const Modal: FC<ModalProps> = ({ open, onClose, children }) => {
             <div
               className={classNames(
                 'inline-block w-full max-w-md p-6 my-8',
-                'overflow-hidden text-left align-middle',
+                'text-left align-middle',
                 'transition-all transform',
-                'bg-white shadow-xl rounded-2xl'
+                'bg-white shadow-xl rounded-2xl',
+                overflowVisible ? 'overflow-visible' : 'overflow-hidden'
               )}
             >
               {children}
