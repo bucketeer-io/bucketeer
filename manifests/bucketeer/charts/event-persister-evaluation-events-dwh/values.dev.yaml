@@ -18,14 +18,14 @@ env:
   featureService: localhost:9001
   # option
   maxMps: "1000"
-  numWorkers: 5
+  numWorkers: 1
   flushSize: 100
   flushInterval: 2s
   flushTimeout: 30s
   # pubsub
   topic: evaluation
   subscription: evaluation-dwh-sub
-  pullerNumGoroutines: 5
+  pullerNumGoroutines: 1
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
   # bigquery
