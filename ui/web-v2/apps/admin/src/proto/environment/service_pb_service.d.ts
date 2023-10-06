@@ -4,60 +4,6 @@
 import * as proto_environment_service_pb from "../../proto/environment/service_pb";
 import {grpc} from "@improbable-eng/grpc-web";
 
-type EnvironmentServiceGetEnvironment = {
-  readonly methodName: string;
-  readonly service: typeof EnvironmentService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_environment_service_pb.GetEnvironmentRequest;
-  readonly responseType: typeof proto_environment_service_pb.GetEnvironmentResponse;
-};
-
-type EnvironmentServiceGetEnvironmentByNamespace = {
-  readonly methodName: string;
-  readonly service: typeof EnvironmentService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_environment_service_pb.GetEnvironmentByNamespaceRequest;
-  readonly responseType: typeof proto_environment_service_pb.GetEnvironmentByNamespaceResponse;
-};
-
-type EnvironmentServiceListEnvironments = {
-  readonly methodName: string;
-  readonly service: typeof EnvironmentService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_environment_service_pb.ListEnvironmentsRequest;
-  readonly responseType: typeof proto_environment_service_pb.ListEnvironmentsResponse;
-};
-
-type EnvironmentServiceCreateEnvironment = {
-  readonly methodName: string;
-  readonly service: typeof EnvironmentService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_environment_service_pb.CreateEnvironmentRequest;
-  readonly responseType: typeof proto_environment_service_pb.CreateEnvironmentResponse;
-};
-
-type EnvironmentServiceUpdateEnvironment = {
-  readonly methodName: string;
-  readonly service: typeof EnvironmentService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_environment_service_pb.UpdateEnvironmentRequest;
-  readonly responseType: typeof proto_environment_service_pb.UpdateEnvironmentResponse;
-};
-
-type EnvironmentServiceDeleteEnvironment = {
-  readonly methodName: string;
-  readonly service: typeof EnvironmentService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_environment_service_pb.DeleteEnvironmentRequest;
-  readonly responseType: typeof proto_environment_service_pb.DeleteEnvironmentResponse;
-};
-
 type EnvironmentServiceGetEnvironmentV2 = {
   readonly methodName: string;
   readonly service: typeof EnvironmentService;
@@ -186,12 +132,6 @@ type EnvironmentServiceConvertTrialProject = {
 
 export class EnvironmentService {
   static readonly serviceName: string;
-  static readonly GetEnvironment: EnvironmentServiceGetEnvironment;
-  static readonly GetEnvironmentByNamespace: EnvironmentServiceGetEnvironmentByNamespace;
-  static readonly ListEnvironments: EnvironmentServiceListEnvironments;
-  static readonly CreateEnvironment: EnvironmentServiceCreateEnvironment;
-  static readonly UpdateEnvironment: EnvironmentServiceUpdateEnvironment;
-  static readonly DeleteEnvironment: EnvironmentServiceDeleteEnvironment;
   static readonly GetEnvironmentV2: EnvironmentServiceGetEnvironmentV2;
   static readonly ListEnvironmentsV2: EnvironmentServiceListEnvironmentsV2;
   static readonly CreateEnvironmentV2: EnvironmentServiceCreateEnvironmentV2;
@@ -240,60 +180,6 @@ export class EnvironmentServiceClient {
   readonly serviceHost: string;
 
   constructor(serviceHost: string, options?: grpc.RpcOptions);
-  getEnvironment(
-    requestMessage: proto_environment_service_pb.GetEnvironmentRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetEnvironmentResponse|null) => void
-  ): UnaryResponse;
-  getEnvironment(
-    requestMessage: proto_environment_service_pb.GetEnvironmentRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetEnvironmentResponse|null) => void
-  ): UnaryResponse;
-  getEnvironmentByNamespace(
-    requestMessage: proto_environment_service_pb.GetEnvironmentByNamespaceRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetEnvironmentByNamespaceResponse|null) => void
-  ): UnaryResponse;
-  getEnvironmentByNamespace(
-    requestMessage: proto_environment_service_pb.GetEnvironmentByNamespaceRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetEnvironmentByNamespaceResponse|null) => void
-  ): UnaryResponse;
-  listEnvironments(
-    requestMessage: proto_environment_service_pb.ListEnvironmentsRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ListEnvironmentsResponse|null) => void
-  ): UnaryResponse;
-  listEnvironments(
-    requestMessage: proto_environment_service_pb.ListEnvironmentsRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ListEnvironmentsResponse|null) => void
-  ): UnaryResponse;
-  createEnvironment(
-    requestMessage: proto_environment_service_pb.CreateEnvironmentRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateEnvironmentResponse|null) => void
-  ): UnaryResponse;
-  createEnvironment(
-    requestMessage: proto_environment_service_pb.CreateEnvironmentRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateEnvironmentResponse|null) => void
-  ): UnaryResponse;
-  updateEnvironment(
-    requestMessage: proto_environment_service_pb.UpdateEnvironmentRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UpdateEnvironmentResponse|null) => void
-  ): UnaryResponse;
-  updateEnvironment(
-    requestMessage: proto_environment_service_pb.UpdateEnvironmentRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UpdateEnvironmentResponse|null) => void
-  ): UnaryResponse;
-  deleteEnvironment(
-    requestMessage: proto_environment_service_pb.DeleteEnvironmentRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.DeleteEnvironmentResponse|null) => void
-  ): UnaryResponse;
-  deleteEnvironment(
-    requestMessage: proto_environment_service_pb.DeleteEnvironmentRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.DeleteEnvironmentResponse|null) => void
-  ): UnaryResponse;
   getEnvironmentV2(
     requestMessage: proto_environment_service_pb.GetEnvironmentV2Request,
     metadata: grpc.Metadata,
