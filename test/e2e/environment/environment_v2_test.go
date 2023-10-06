@@ -18,10 +18,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"testing"
 	"time"
+
+	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
