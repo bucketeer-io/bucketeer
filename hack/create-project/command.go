@@ -89,13 +89,14 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 				return err
 			}
 			uid := strings.ReplaceAll(id.String(), "-", "")
-			req := &environmentproto.CreateEnvironmentRequest{
-				Command: &environmentproto.CreateEnvironmentCommand{
-					Id:        envID,
+			req := &environmentproto.CreateEnvironmentV2Request{
+				Command: &environmentproto.CreateEnvironmentV2Command{
+					Name:      envID,
+					UrlCode:   envID,
 					ProjectId: uid,
 				},
 			}
-			if _, err = client.CreateEnvironment(ctx, req); err != nil {
+			if _, err = client.CreateEnvironmentV2(ctx, req); err != nil {
 				logger.Error("Failed to create environment", zap.Error(err))
 				return err
 			}

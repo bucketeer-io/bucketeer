@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	name    = "delete-environment"
+	name    = "archive-environment"
 	version = ""
 	build   = ""
 )

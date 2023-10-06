@@ -33,7 +33,7 @@ type command struct {
 	certPath          *string
 	serviceTokenPath  *string
 	webGatewayAddress *string
-	id                *string
+	name              *string
 	description       *string
 	projectID         *string
 }
@@ -45,7 +45,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		certPath:          cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		serviceTokenPath:  cmd.Flag("service-token", "Path to service token file.").Required().String(),
 		webGatewayAddress: cmd.Flag("web-gateway", "Address of web-gateway.").Required().String(),
-		id:                cmd.Flag("id", "Id of an environment.").Required().String(),
+		name:              cmd.Flag("name", "name of an environment.").Required().String(),
 		description:       cmd.Flag("description", "(optional) Description of an environment.").String(),
 		projectID:         cmd.Flag("project-id", "Project Id of an environment.").Required().String(),
 	}
@@ -60,14 +60,15 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		return err
 	}
 	defer client.Close()
-	req := &environmentproto.CreateEnvironmentRequest{
-		Command: &environmentproto.CreateEnvironmentCommand{
-			Id:          *c.id,
+	req := &environmentproto.CreateEnvironmentV2Request{
+		Command: &environmentproto.CreateEnvironmentV2Command{
+			Name:        *c.name,
+			UrlCode:     *c.name,
 			Description: *c.description,
 			ProjectId:   *c.projectID,
 		},
 	}
-	if _, err = client.CreateEnvironment(ctx, req); err != nil {
+	if _, err = client.CreateEnvironmentV2(ctx, req); err != nil {
 		logger.Error("Failed to create environment", zap.Error(err))
 		return err
 	}
