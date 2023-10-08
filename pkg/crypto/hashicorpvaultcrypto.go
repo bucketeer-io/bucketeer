@@ -18,6 +18,7 @@ package crypto
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"log"
 
 	"github.com/hashicorp/vault/api"
@@ -42,16 +43,44 @@ func NewHashicorpvaultCrypto(
 	config.Address = vaulthost
 	hcvClient, err := api.NewClient(config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// authentication with token
 	hcvClient.SetToken(vaulttoken)
 
+	// check and create key
+	err = checkAndCreateKey(hcvClient, keyName)
+	if err != nil {
+		return nil, err
+	}
+
 	return hashicorpvaultCrypto{
 		client:  hcvClient,
 		keyName: keyName,
 	}, nil
+}
+
+func checkAndCreateKey(client *api.Client, keyName string) error {
+	logical := client.Logical()
+
+	// check if key exists
+	path := "transit/keys/" + keyName
+	_, err := logical.Read(path)
+	if err != nil {
+		var respErr *api.ResponseError
+		if errors.As(err, &respErr) && respErr.StatusCode == 404 {
+			// create key
+			data := map[string]interface{}{
+				"type": "aes256-gcm96",
+			}
+			_, err := logical.Write(path, data)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (c hashicorpvaultCrypto) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
@@ -61,17 +90,17 @@ func (c hashicorpvaultCrypto) Encrypt(ctx context.Context, data []byte) ([]byte,
 		"plaintext": encPlaintext,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// extract its ciphertext
 	ct := secret.Data["ciphertext"]
 	if ct == nil {
-		log.Fatal("after encrypt operation ciphertext was not found in data returned from vault")
+		return nil, errors.New("after encrypt operation ciphertext in data returned from vault is nil")
 	}
 	ctStr, ok := ct.(string)
 	if !ok {
-		log.Fatal("after encrypt operation ciphertext in data returned from vault is not a string")
+		return nil, errors.New("after encrypt operation ciphertext in data returned from vault is not a string")
 	}
 
 	return []byte(ctStr), nil
@@ -83,14 +112,14 @@ func (c hashicorpvaultCrypto) Decrypt(ctx context.Context, data []byte) ([]byte,
 		"ciphertext": string(data),
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// extract the plaintext value
 	pt := desecret.Data["plaintext"]
 	ptStr, ok := pt.(string)
 	if !ok {
-		log.Fatal("after decrypt operation plaintext in data returned from vault is not a string")
+		return nil, errors.New("after decrypt operation plaintext in data returned from vault is not a string")
 	}
 
 	deplaintext, base64Err := base64.StdEncoding.DecodeString(ptStr)
