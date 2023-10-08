@@ -319,3 +319,8 @@ minikube-load-images:
 		rm $$IMAGE.tar; \
 		minikube ssh "docker load -i /home/docker/$$IMAGE.tar"; \
 	done
+
+# Deploy Bucketeer to minikube
+deploy-service-to-minikube:
+	helm install ${SERVICE} manifests/bucketeer/charts/${SERVICE}/ --values manifests/bucketeer/charts/${SERVICE}/values.dev.yaml \
+	--set serviceToken.token=${SERVICE_TOKEN} 

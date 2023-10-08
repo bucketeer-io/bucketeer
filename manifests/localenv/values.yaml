@@ -35,5 +35,6 @@ mysql:
 bq:
   project: bucketeer-test
     
-
-
+pubsub: 
+  image: 
+    tag: "449.0.0"
