@@ -78,12 +78,18 @@ func NewExperimentCalculator(
 	logger *zap.Logger,
 ) *ExperimentCalculator {
 	registerMetrics(metrics)
-	compiledModel, err := httpStan.CompileModel(context.TODO(), stan.ModelCode())
-	if err != nil {
-		logger.Error("Failed to compile model",
-			zap.Error(err),
-		)
-		return nil
+	var compiledModel stan.ModelCompileResp
+	for {
+		resp, err := httpStan.CompileModel(context.TODO(), stan.ModelCode())
+		if err != nil {
+			logger.Error("Failed to compile model",
+				zap.Error(err),
+			)
+			return nil
+		} else {
+			compiledModel = resp
+			break
+		}
 	}
 	modelID := compiledModel.Name[len("models/"):]
 	return &ExperimentCalculator{
@@ -427,47 +433,47 @@ func (e ExperimentCalculator) appendVariationResult(
 
 		goalResult.VariationResults[i].EvaluationUserCountTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(srcVrs[i].EvaluationCount.UserCount)},
+			Values:     []float64{float64(goalResult.VariationResults[i].EvaluationCount.UserCount)},
 		}
 		goalResult.VariationResults[i].EvaluationEventCountTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(srcVrs[i].EvaluationCount.EventCount)},
+			Values:     []float64{float64(goalResult.VariationResults[i].EvaluationCount.EventCount)},
 		}
 		goalResult.VariationResults[i].GoalUserCountTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(srcVrs[i].ExperimentCount.UserCount)},
+			Values:     []float64{float64(goalResult.VariationResults[i].ExperimentCount.UserCount)},
 		}
 		goalResult.VariationResults[i].GoalEventCountTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(srcVrs[i].ExperimentCount.EventCount)},
+			Values:     []float64{float64(goalResult.VariationResults[i].ExperimentCount.EventCount)},
 		}
 		goalResult.VariationResults[i].GoalValueSumTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].ExperimentCount.ValueSum},
+			Values:     []float64{goalResult.VariationResults[i].ExperimentCount.ValueSum},
 		}
 		goalResult.VariationResults[i].CvrMedianTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].CvrProb.Median},
+			Values:     []float64{goalResult.VariationResults[i].CvrProb.Median},
 		}
 		goalResult.VariationResults[i].CvrPercentile025Timeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].CvrProb.Percentile025},
+			Values:     []float64{goalResult.VariationResults[i].CvrProb.Percentile025},
 		}
 		goalResult.VariationResults[i].CvrPercentile975Timeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].CvrProb.Percentile975},
+			Values:     []float64{goalResult.VariationResults[i].CvrProb.Percentile975},
 		}
 		cvr := 0.0
-		if srcVrs[i].EvaluationCount.UserCount != 0 {
-			cvr = float64(srcVrs[i].ExperimentCount.UserCount) / float64(srcVrs[i].EvaluationCount.UserCount)
+		if goalResult.VariationResults[i].EvaluationCount.UserCount != 0 {
+			cvr = float64(goalResult.VariationResults[i].ExperimentCount.UserCount) / float64(goalResult.VariationResults[i].EvaluationCount.UserCount)
 		}
 		goalResult.VariationResults[i].CvrTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
 			Values:     []float64{cvr},
 		}
 		valuePerUser := 0.0
-		if srcVrs[i].ExperimentCount.UserCount != 0 {
-			valuePerUser = srcVrs[i].ExperimentCount.ValueSum / float64(srcVrs[i].ExperimentCount.UserCount)
+		if goalResult.VariationResults[i].ExperimentCount.UserCount != 0 {
+			valuePerUser = goalResult.VariationResults[i].ExperimentCount.ValueSum / float64(goalResult.VariationResults[i].ExperimentCount.UserCount)
 		}
 		goalResult.VariationResults[i].GoalValueSumPerUserTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
@@ -475,15 +481,15 @@ func (e ExperimentCalculator) appendVariationResult(
 		}
 		goalResult.VariationResults[i].GoalValueSumPerUserMedianTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].GoalValueSumPerUserProb.Median},
+			Values:     []float64{goalResult.VariationResults[i].GoalValueSumPerUserProb.Median},
 		}
 		goalResult.VariationResults[i].GoalValueSumPerUserPercentile025Timeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].GoalValueSumPerUserProb.Percentile025},
+			Values:     []float64{goalResult.VariationResults[i].GoalValueSumPerUserProb.Percentile025},
 		}
 		goalResult.VariationResults[i].GoalValueSumPerUserPercentile975Timeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].GoalValueSumPerUserProb.Percentile975},
+			Values:     []float64{goalResult.VariationResults[i].GoalValueSumPerUserProb.Percentile975},
 		}
 	}
 }
@@ -612,22 +618,28 @@ func copyVariationCount(from *eventcounter.VariationCount) *eventcounter.Variati
 }
 
 func copyDistributionSummary(from *eventcounter.DistributionSummary) *eventcounter.DistributionSummary {
-	hist := make([]int64, 0, len(from.Histogram.Hist))
-	bins := make([]float64, 0, len(from.Histogram.Bins))
-	copy(hist, from.Histogram.Hist)
-	copy(bins, from.Histogram.Bins)
-	return &eventcounter.DistributionSummary{
-		Mean: from.Mean,
-		Sd:   from.Sd,
-		Rhat: from.Rhat,
-		Histogram: &eventcounter.Histogram{
-			Hist: hist,
-			Bins: bins,
-		},
+	if from == nil {
+		return &eventcounter.DistributionSummary{}
+	}
+	e := &eventcounter.DistributionSummary{
+		Mean:          from.Mean,
+		Sd:            from.Sd,
+		Rhat:          from.Rhat,
 		Median:        from.Median,
 		Percentile025: from.Percentile025,
 		Percentile975: from.Percentile975,
 	}
+	if from.Histogram != nil {
+		hist := make([]int64, 0, len(from.Histogram.Hist))
+		bins := make([]float64, 0, len(from.Histogram.Bins))
+		copy(hist, from.Histogram.Hist)
+		copy(bins, from.Histogram.Bins)
+		e.Histogram = &eventcounter.Histogram{
+			Hist: hist,
+			Bins: bins,
+		}
+	}
+	return e
 }
 
 func convertFitSamples(
