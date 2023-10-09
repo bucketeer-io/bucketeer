@@ -465,7 +465,8 @@ func (e ExperimentCalculator) appendVariationResult(
 		}
 		cvr := 0.0
 		if goalResult.VariationResults[i].EvaluationCount.UserCount != 0 {
-			cvr = float64(goalResult.VariationResults[i].ExperimentCount.UserCount) / float64(goalResult.VariationResults[i].EvaluationCount.UserCount)
+			cvr = float64(goalResult.VariationResults[i].ExperimentCount.UserCount) /
+				float64(goalResult.VariationResults[i].EvaluationCount.UserCount)
 		}
 		goalResult.VariationResults[i].CvrTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
@@ -473,7 +474,8 @@ func (e ExperimentCalculator) appendVariationResult(
 		}
 		valuePerUser := 0.0
 		if goalResult.VariationResults[i].ExperimentCount.UserCount != 0 {
-			valuePerUser = goalResult.VariationResults[i].ExperimentCount.ValueSum / float64(goalResult.VariationResults[i].ExperimentCount.UserCount)
+			valuePerUser = goalResult.VariationResults[i].ExperimentCount.ValueSum /
+				float64(goalResult.VariationResults[i].ExperimentCount.UserCount)
 		}
 		goalResult.VariationResults[i].GoalValueSumPerUserTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
