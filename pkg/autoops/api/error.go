@@ -95,8 +95,116 @@ var (
 		codes.InvalidArgument,
 		"autoops: webhook clause condition oerator is invalid",
 	)
-	statusAlreadyExists    = gstatus.New(codes.AlreadyExists, "autoops: already exists")
-	statusUnauthenticated  = gstatus.New(codes.Unauthenticated, "autoops: unauthenticated")
-	statusPermissionDenied = gstatus.New(codes.PermissionDenied, "autoops: permission denied")
-	statusInvalidRequest   = gstatus.New(codes.InvalidArgument, "autoops: invalid request")
+	statusAlreadyExists               = gstatus.New(codes.AlreadyExists, "autoops: already exists")
+	statusUnauthenticated             = gstatus.New(codes.Unauthenticated, "autoops: unauthenticated")
+	statusPermissionDenied            = gstatus.New(codes.PermissionDenied, "autoops: permission denied")
+	statusInvalidRequest              = gstatus.New(codes.InvalidArgument, "autoops: invalid request")
+	statusProgressiveRolloutNoCommand = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: no command for a progressive rollout",
+	)
+	statusProgressiveRolloutFeatureIDRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: feature id must be specified for a progressive rollout",
+	)
+	statusProgressiveRolloutClauseRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: at least one clause must be specified for a progressive rollout",
+	)
+	statusIncorrectProgressiveRolloutClause = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: only one clause must be specified for a progressive rollout",
+	)
+	statusProgressiveRolloutInternal = gstatus.New(
+		codes.Internal,
+		"autoops: internal error occurs for a progressive rollout",
+	)
+	statusProgressiveRolloutClauseVariationIDRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: clause variation id must be specified for a progressive rollout",
+	)
+	statusProgressiveRolloutClauseInvalidVariationID = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: the clause variation id set in the progressive rollout is invalid for a progressive rollout",
+	)
+	statusProgressiveRolloutClauseSchedulesRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: at least one clause schedule must be specified for a progressive rollout",
+	)
+	statusProgressiveRolloutClauseInvalidIncrements = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: increments is invalid for a progressive rollout",
+	)
+	statusProgressiveRolloutClauseUnknownInterval = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: interval is unknown for a progressive rollout",
+	)
+	statusProgressiveRolloutFeatureDisabled = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops: can not create a progressive rollout when the feature is disabled",
+	)
+	statusProgressiveRolloutFeatureHasPrerequisitess = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops: can not create a progressive rollout when the feature has prerequisites",
+	)
+	statusProgressiveRolloutFeatureHasIndividualTargeting = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops: can not create a progressive rollout when the feature has targets",
+	)
+	statusProgressiveRolloutFeatureHasRules = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops: can not create a progressive rollout when the feature flag has targeting rules set",
+	)
+	statusProgressiveRolloutAutoOpsHasDatetime = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops: can not create a progressive rollout when a schedule is set in the auto ops",
+	)
+	statusProgressiveRolloutAutoOpsHasWebhook = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops: can not create a progressive rollout when a webhook is set",
+	)
+	statusProgressiveRolloutInvalidVariationSize = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops progressive rollout: the number of variations must be equal to 2 when creating a progressive rollout",
+	)
+	statusProgressiveRolloutInvalidScheduleSpans = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops: the span of time for each scheduled time must be at least 5 minutes for a progressive rollout",
+	)
+	statusProgressiveRolloutScheduleExecutedAtRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: schedule executed_at must be specified for a progressive rollout",
+	)
+	statusProgressiveRolloutScheduleInvalidWeight = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: schedule weight is invalid for a progressive rollout",
+	)
+	statusProgressiveRolloutAlreadyExists = gstatus.New(
+		codes.AlreadyExists,
+		"autoops: progressive rollout already exists",
+	)
+	statusProgressiveRolloutIDRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: id must be specified for a progressive rollout",
+	)
+	statusProgressiveRolloutNotFound = gstatus.New(
+		codes.NotFound,
+		"autoops: progressive rollout not found",
+	)
+	statusProgressiveRolloutInvalidCursor = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: cursor is invalid for a progressive rollout",
+	)
+	statusProgressiveRolloutInvalidOrderBy = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: order_by is invalid for a progressive rollout",
+	)
+	statusProgressiveRolloutScheduleIDRequired = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: schedule id must be specified for a progressive rollout",
+	)
+	statusWaitingOrRunningProgressiveRolloutExists = gstatus.New(
+		codes.FailedPrecondition,
+		"autoops: progressive rollout in waiting or running status exists",
+	)
 )

@@ -44,6 +44,7 @@ var (
 		{table: "goal", targetField: "id"},
 		{table: "experiment", targetField: "feature_id"},
 		{table: "tag", targetField: ""},
+		{table: "ops_progressive_rollout", targetField: "feature_id"},
 		{table: "feature", targetField: "id"},
 		{table: "webhook", targetField: "name"},
 	}

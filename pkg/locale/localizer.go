@@ -100,12 +100,23 @@ const (
 	// environment
 	ProjectDisabled = "ProjectDisabled"
 	// feature
-	SegmentInUse                  = "SegmentInUse"
-	SegmentUsersAlreadyUploading  = "SegmentUsersAlreadyUploading"
-	SegmentStatusNotSucceeded     = "SegmentStatusNotSucceeded"
-	HasWaitingOrRunningExperiment = "HasWaitingOrRunningExperiment"
-	NothingToChange               = "NothingToChange"
-	DifferentVariationsSize       = "DifferentVariationsSize"
+	SegmentInUse                             = "SegmentInUse"
+	SegmentUsersAlreadyUploading             = "SegmentUsersAlreadyUploading"
+	SegmentStatusNotSucceeded                = "SegmentStatusNotSucceeded"
+	HasWaitingOrRunningExperiment            = "HasWaitingOrRunningExperiment"
+	NothingToChange                          = "NothingToChange"
+	DifferentVariationsSize                  = "DifferentVariationsSize"
+	WaitingOrRunningProgressiveRolloutExists = "WaitingOrRunningProgressiveRolloutExists"
+	// auto ops
+	AutoOpsFeatureDisabled                  = "AutoOpsFeatureDisabled"
+	AutoOpsFeatureHasIndividualTargeting    = "AutoOpsFeatureHasIndividualTargeting"
+	AutoOpsFeatureHasPrerequisites          = "AutoOpsFeatureHasPrerequisites"
+	AutoOpsFeatureHasRules                  = "AutoOpsFeatureHasRules"
+	AutoOpsHasDatetime                      = "AutoOpsHasDatetime"
+	AutoOpsHasWebhook                       = "AutoOpsHasWebhook"
+	AutoOpsInvalidScheduleSpans             = "AutoOpsInvalidScheduleSpans"
+	AutoOpsInvalidVariationSize             = "AutoOpsInvalidVariationSize"
+	AutoOpsWaitingOrRunningExperimentExists = "AutoOpsWaitingOrRunningExperimentExists"
 )
 
 // domain events

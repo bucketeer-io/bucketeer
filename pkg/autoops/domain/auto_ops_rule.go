@@ -30,9 +30,9 @@ var (
 	errClauseNotFound = errors.New("autoOpsRule: clause not found")
 	errClauseEmpty    = errors.New("autoOpsRule: clause cannot be empty")
 
-	opsEventRateClause = &proto.OpsEventRateClause{}
-	datetimeClause     = &proto.DatetimeClause{}
-	webhookClause      = &proto.WebhookClause{}
+	OpsEventRateClause = &proto.OpsEventRateClause{}
+	DatetimeClause     = &proto.DatetimeClause{}
+	WebhookClause      = &proto.WebhookClause{}
 )
 
 type AutoOpsRule struct {
@@ -205,7 +205,7 @@ func (a *AutoOpsRule) ExtractOpsEventRateClauses() (map[string]*proto.OpsEventRa
 }
 
 func (a *AutoOpsRule) unmarshalOpsEventRateClause(clause *proto.Clause) (*proto.OpsEventRateClause, error) {
-	if ptypes.Is(clause.Clause, opsEventRateClause) {
+	if ptypes.Is(clause.Clause, OpsEventRateClause) {
 		c := &proto.OpsEventRateClause{}
 		if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
 			return nil, err
@@ -231,7 +231,7 @@ func (a *AutoOpsRule) ExtractDatetimeClauses() ([]*proto.DatetimeClause, error) 
 }
 
 func (a *AutoOpsRule) unmarshalDatetimeClause(clause *proto.Clause) (*proto.DatetimeClause, error) {
-	if ptypes.Is(clause.Clause, datetimeClause) {
+	if ptypes.Is(clause.Clause, DatetimeClause) {
 		c := &proto.DatetimeClause{}
 		if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
 			return nil, err
@@ -257,7 +257,7 @@ func (a *AutoOpsRule) ExtractWebhookClauses() ([]*proto.WebhookClause, error) {
 }
 
 func (a *AutoOpsRule) unmarshalWebhookClause(clause *proto.Clause) (*proto.WebhookClause, error) {
-	if ptypes.Is(clause.Clause, webhookClause) {
+	if ptypes.Is(clause.Clause, WebhookClause) {
 		c := &proto.WebhookClause{}
 		if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
 			return nil, err

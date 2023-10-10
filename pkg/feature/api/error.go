@@ -123,5 +123,9 @@ var (
 		codes.FailedPrecondition,
 		"feature: can't change or remove this variation because it is used as a prerequsite",
 	)
-	statusInvalidPrerequisite = gstatus.New(codes.FailedPrecondition, "feature: invalid prerequisite")
+	statusInvalidPrerequisite                      = gstatus.New(codes.FailedPrecondition, "feature: invalid prerequisite")
+	statusWaitingOrRunningProgressiveRolloutExists = gstatus.New(
+		codes.FailedPrecondition,
+		"feature: progressive rollout in waiting or running status exists",
+	)
 )

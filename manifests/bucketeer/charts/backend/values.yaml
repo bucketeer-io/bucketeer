@@ -32,6 +32,7 @@ env:
   environmentService: localhost:9001
   experimentService: localhost:9001
   featureService: localhost:9001
+  autoOpsService: localhost:9001
   healthCheckServicePort: 8000
   accountServicePort: 9091
   authServicePort: 9092

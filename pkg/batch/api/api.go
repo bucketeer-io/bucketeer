@@ -36,24 +36,25 @@ var (
 )
 
 type batchService struct {
-	experimentStatusUpdater  jobs.Job
-	experimentRunningWatcher jobs.Job
-	featureStaleWatcher      jobs.Job
-	mauCountWatcher          jobs.Job
-	datetimeWatcher          jobs.Job
-	countWatcher             jobs.Job
-	redisCounterDeleter      jobs.Job
-	environmentClient        envclient.Client
-	domainEventPuller        puller.Puller
-	notificationSender       notificationsender.Sender
-	notificationOpts         []notification.Option
-	logger                   *zap.Logger
+	experimentStatusUpdater   jobs.Job
+	experimentRunningWatcher  jobs.Job
+	featureStaleWatcher       jobs.Job
+	mauCountWatcher           jobs.Job
+	datetimeWatcher           jobs.Job
+	countWatcher              jobs.Job
+	progressiveRolloutWatcher jobs.Job
+	redisCounterDeleter       jobs.Job
+	environmentClient         envclient.Client
+	domainEventPuller         puller.Puller
+	notificationSender        notificationsender.Sender
+	notificationOpts          []notification.Option
+	logger                    *zap.Logger
 }
 
 func NewBatchService(
 	experimentStatusUpdater, experimentRunningWatcher,
 	featureStaleWatcher, mauCountWatcher, datetimeWatcher,
-	eventCountWatcher jobs.Job,
+	eventCountWatcher, progressiveRolloutWatcher jobs.Job,
 	environmentClient envclient.Client,
 	domainEventPuller puller.Puller,
 	notificationSender notificationsender.Sender,
@@ -62,18 +63,19 @@ func NewBatchService(
 	options ...notification.Option,
 ) *batchService {
 	return &batchService{
-		experimentStatusUpdater:  experimentStatusUpdater,
-		experimentRunningWatcher: experimentRunningWatcher,
-		featureStaleWatcher:      featureStaleWatcher,
-		mauCountWatcher:          mauCountWatcher,
-		datetimeWatcher:          datetimeWatcher,
-		countWatcher:             eventCountWatcher,
-		redisCounterDeleter:      redisCounterDeleter,
-		environmentClient:        environmentClient,
-		domainEventPuller:        domainEventPuller,
-		notificationSender:       notificationSender,
-		notificationOpts:         options,
-		logger:                   logger.Named("batch-service"),
+		experimentStatusUpdater:   experimentStatusUpdater,
+		experimentRunningWatcher:  experimentRunningWatcher,
+		featureStaleWatcher:       featureStaleWatcher,
+		mauCountWatcher:           mauCountWatcher,
+		datetimeWatcher:           datetimeWatcher,
+		countWatcher:              eventCountWatcher,
+		progressiveRolloutWatcher: progressiveRolloutWatcher,
+		redisCounterDeleter:       redisCounterDeleter,
+		environmentClient:         environmentClient,
+		domainEventPuller:         domainEventPuller,
+		notificationSender:        notificationSender,
+		notificationOpts:          options,
+		logger:                    logger.Named("batch-service"),
 	}
 }
 
@@ -103,6 +105,8 @@ func (s *batchService) ExecuteBatchJob(
 		err = domainEventInformer.Run(ctx)
 	case batch.BatchJob_RedisCounterDeleter:
 		err = s.redisCounterDeleter.Run(ctx)
+	case batch.BatchJob_ProgressiveRolloutWatcher:
+		err = s.progressiveRolloutWatcher.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromImcomingContext(ctx).AddFields(

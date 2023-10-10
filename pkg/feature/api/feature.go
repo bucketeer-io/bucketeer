@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	experimentdomain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -36,6 +37,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -677,26 +679,8 @@ func (s *FeatureService) UpdateFeatureDetails(
 		}
 		return nil, dt.Err()
 	}
-	runningExperimentExists, err := s.existsRunningExperiment(ctx, req.Id, req.EnvironmentNamespace)
-	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if runningExperimentExists {
-		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.HasWaitingOrRunningExperiment),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+		return nil, err
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -887,6 +871,64 @@ func containsRunningExperiment(experiments []*experimentproto.Experiment) bool {
 	return false
 }
 
+func (s *FeatureService) existsRunningProgressiveRollout(
+	ctx context.Context,
+	featureID, environmentNamespace string,
+) (bool, error) {
+	progressiveRollouts, err := s.listProgressiveRollouts(ctx, environmentNamespace, featureID)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list progressiveRollouts",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+			)...,
+		)
+		return false, err
+	}
+	return containsRunningProgressiveRollout(progressiveRollouts), nil
+}
+
+func containsRunningProgressiveRollout(progressiveRollouts []*autoopsproto.ProgressiveRollout) bool {
+	for _, p := range progressiveRollouts {
+		dp := &autoopsdomain.ProgressiveRollout{
+			ProgressiveRollout: p,
+		}
+		if !dp.IsFinished() {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *FeatureService) listProgressiveRollouts(
+	ctx context.Context,
+	featureID, environmentNamespace string,
+) ([]*autoopsproto.ProgressiveRollout, error) {
+	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0)
+	cursor := ""
+	for {
+		resp, err := s.autoOpsClient.ListProgressiveRollouts(
+			ctx,
+			&autoopsproto.ListProgressiveRolloutsRequest{
+				EnvironmentNamespace: environmentNamespace,
+				PageSize:             listRequestSize,
+				Cursor:               cursor,
+				FeatureIds:           []string{featureID},
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		progressiveRollouts = append(progressiveRollouts, resp.ProgressiveRollouts...)
+		size := len(progressiveRollouts)
+		if size == 0 || size < listRequestSize {
+			return progressiveRollouts, nil
+		}
+		cursor = resp.Cursor
+	}
+}
+
 // FIXME: remove this API after the new console is released
 // Deprecated
 func (s *FeatureService) EnableFeature(
@@ -1059,26 +1101,8 @@ func (s *FeatureService) updateFeature(
 		}
 		return dt.Err()
 	}
-	runningExperimentExists, err := s.existsRunningExperiment(ctx, id, environmentNamespace)
-	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if runningExperimentExists {
-		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.HasWaitingOrRunningExperiment),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+	if err := s.validateFeatureStatus(ctx, id, environmentNamespace, localizer); err != nil {
+		return err
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -1248,26 +1272,8 @@ func (s *FeatureService) UpdateFeatureVariations(
 		}
 		return nil, dt.Err()
 	}
-	runningExperimentExists, err := s.existsRunningExperiment(ctx, req.Id, req.EnvironmentNamespace)
-	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if runningExperimentExists {
-		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.HasWaitingOrRunningExperiment),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+		return nil, err
 	}
 	commands := make([]command.Command, 0, len(req.Commands))
 	for _, c := range req.Commands {
@@ -1471,26 +1477,8 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		}
 		commands = append(commands, cmd)
 	}
-	runningExperimentExists, err := s.existsRunningExperiment(ctx, req.Id, req.EnvironmentNamespace)
-	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if runningExperimentExists {
-		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.HasWaitingOrRunningExperiment),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+		return nil, err
 	}
 	// TODO: clean this up.
 	// Problem: Changes in the UI should be atomic meaning either all or no changes will be made.

@@ -15,6 +15,7 @@
 package api
 
 import (
+	"context"
 	"regexp"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -1367,4 +1368,54 @@ func validateVariationID(fs []*featureproto.Feature, p *featureproto.Prerequisit
 		return statusInternal.Err()
 	}
 	return dt.Err()
+}
+
+func (s *FeatureService) validateFeatureStatus(
+	ctx context.Context,
+	id, environmentNameSpace string,
+	localizer locale.Localizer,
+) error {
+	runningExperimentExists, err := s.existsRunningExperiment(ctx, id, environmentNameSpace)
+	if err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if runningExperimentExists {
+		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.HasWaitingOrRunningExperiment),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	runningProgressiveRolloutExists, err := s.existsRunningProgressiveRollout(ctx, id, environmentNameSpace)
+	if err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if runningProgressiveRolloutExists {
+		dt, err := statusWaitingOrRunningProgressiveRolloutExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.AutoOpsWaitingOrRunningExperimentExists),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }

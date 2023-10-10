@@ -1054,6 +1054,21 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.WebhookRule),
 			),
 		}
+	case proto.Event_PROGRESSIVE_ROLLOUT_CREATED:
+		return &proto.LocalizedMessage{
+			Locale:  locale.Ja,
+			Message: "Progressive Rolloutを作成しました",
+		}
+	case proto.Event_PROGRESSIVE_ROLLOUT_DELETED:
+		return &proto.LocalizedMessage{
+			Locale:  locale.Ja,
+			Message: "Progressive Rolloutを削除しました",
+		}
+	case proto.Event_PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale:  locale.Ja,
+			Message: "Progressive Rolloutの実行時間が変更されました",
+		}
 	}
 	return &proto.LocalizedMessage{
 		Locale:  localizer.GetLocale(),

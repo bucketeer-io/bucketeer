@@ -75,9 +75,18 @@ SegmentInUse: "Segment cannot be deleted because it is used in the feature flag"
 HasWaitingOrRunningExperiment: "There is an Experiment scheduled to start or running. Please stop the Experiment before updating it"
 InvalidArchive: "You cannot archive a flag that is registered as a precondition flag."
 InvalidChangingVariation: "You cannot change or delete a variation of a flag registered as a precondition flag"
+WaitingOrRunningProgressiveRolloutExists: "There is a progressive rollout scheduled to start or running. Please stop the progressive rollout before updating it"
 
 # Auto Ops errors
-IncompatibleOpsType: "There is an auto ops rule that does not support the target operation type"
+AutoOpsFeatureDisabled: "The feature flag is not enabled. Please enable it before using the progressive rollout"
+AutoFeatureHasIndividualTargeting: "There is an individual targeting configured in the feature flag. Please delete it before using the progressive rollout"
+AutoFeatureHasPrerequisites: "There is a prerequisite configured in the feature flag. Please delete it before using the progressive rollout"
+AutoFeatureHasRules: "There is a rule configured in the feature flag. Please delete it before using the progressive rollout"
+AutoOpsHasDatetime: "There is a schedule configured in the auto operations. Please delete it before using the progressive rollout"
+AutoOpsHasWebhook: "There is a webhook configured in the auto operations. Please delete it before using the progressive rollout"
+AutoOpsInvalidScheduleSpans: "Scheduled time intervals must be at least 5 minutes apart"
+AutoOpsInvalidVariationSize: "Invalid number of variations for feature"
+AutoOpsWaitingOrRunningExperimentExists: "There is a scheduled to start or running experiment. Please stop it before updating the progressive rollout"
 
 # Event Counter errors
 StartAtIsAfterEndAt: "Start at must be before end at"

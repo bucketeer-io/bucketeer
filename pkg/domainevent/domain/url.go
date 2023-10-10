@@ -59,7 +59,7 @@ func URL(entityType proto.Event_EntityType, url, environmentID, id string) (stri
 		return fmt.Sprintf(urlTemplateAPIKey, url, environmentID, id), nil
 	case proto.Event_SEGMENT:
 		return fmt.Sprintf(urlTemplateSegment, url, environmentID, id), nil
-	case proto.Event_AUTOOPS_RULE:
+	case proto.Event_AUTOOPS_RULE, proto.Event_PROGRESSIVE_ROLLOUT:
 		return fmt.Sprintf(urlTemplateAutoOpsRule, url, environmentID, id), nil
 	case proto.Event_PUSH:
 		return fmt.Sprintf(urlTemplatePush, url, environmentID, id), nil

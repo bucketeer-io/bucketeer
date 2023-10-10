@@ -18,6 +18,7 @@ import * as proto_autoops_clause_pb from "../../../proto/autoops/clause_pb";
 import * as proto_notification_subscription_pb from "../../../proto/notification/subscription_pb";
 import * as proto_notification_recipient_pb from "../../../proto/notification/recipient_pb";
 import * as proto_feature_prerequisite_pb from "../../../proto/feature/prerequisite_pb";
+import * as proto_autoops_progressive_rollout_pb from "../../../proto/autoops/progressive_rollout_pb";
 
 export class Event extends jspb.Message {
   getId(): string;
@@ -95,6 +96,7 @@ export namespace Event {
     ADMIN_SUBSCRIPTION: 11;
     PROJECT: 12;
     WEBHOOK: 13;
+    PROGRESSIVE_ROLLOUT: 14;
   }
 
   export const EntityType: EntityTypeMap;
@@ -231,6 +233,9 @@ export namespace Event {
     WEBHOOK_DESCRIPTION_CHANGED: 1303;
     WEBHOOK_CLAUSE_ADDED: 1304;
     WEBHOOK_CLAUSE_CHANGED: 1305;
+    PROGRESSIVE_ROLLOUT_CREATED: 1400;
+    PROGRESSIVE_ROLLOUT_DELETED: 1401;
+    PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED: 1402;
   }
 
   export const Type: TypeMap;
@@ -3841,6 +3846,88 @@ export namespace WebhookClauseChangedEvent {
   export type AsObject = {
     clauseId: string,
     webhookClause?: proto_autoops_clause_pb.WebhookClause.AsObject,
+  }
+}
+
+export class ProgressiveRolloutCreatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  hasClause(): boolean;
+  clearClause(): void;
+  getClause(): google_protobuf_any_pb.Any | undefined;
+  setClause(value?: google_protobuf_any_pb.Any): void;
+
+  getCreatedAt(): number;
+  setCreatedAt(value: number): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  getType(): proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap];
+  setType(value: proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap]): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ProgressiveRolloutCreatedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: ProgressiveRolloutCreatedEvent): ProgressiveRolloutCreatedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ProgressiveRolloutCreatedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ProgressiveRolloutCreatedEvent;
+  static deserializeBinaryFromReader(message: ProgressiveRolloutCreatedEvent, reader: jspb.BinaryReader): ProgressiveRolloutCreatedEvent;
+}
+
+export namespace ProgressiveRolloutCreatedEvent {
+  export type AsObject = {
+    id: string,
+    featureId: string,
+    clause?: google_protobuf_any_pb.Any.AsObject,
+    createdAt: number,
+    updatedAt: number,
+    type: proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap],
+  }
+}
+
+export class ProgressiveRolloutDeletedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ProgressiveRolloutDeletedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: ProgressiveRolloutDeletedEvent): ProgressiveRolloutDeletedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ProgressiveRolloutDeletedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ProgressiveRolloutDeletedEvent;
+  static deserializeBinaryFromReader(message: ProgressiveRolloutDeletedEvent, reader: jspb.BinaryReader): ProgressiveRolloutDeletedEvent;
+}
+
+export namespace ProgressiveRolloutDeletedEvent {
+  export type AsObject = {
+    id: string,
+  }
+}
+
+export class ProgressiveRolloutScheduleTriggeredAtChangedEvent extends jspb.Message {
+  getScheduleId(): string;
+  setScheduleId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ProgressiveRolloutScheduleTriggeredAtChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: ProgressiveRolloutScheduleTriggeredAtChangedEvent): ProgressiveRolloutScheduleTriggeredAtChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ProgressiveRolloutScheduleTriggeredAtChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ProgressiveRolloutScheduleTriggeredAtChangedEvent;
+  static deserializeBinaryFromReader(message: ProgressiveRolloutScheduleTriggeredAtChangedEvent, reader: jspb.BinaryReader): ProgressiveRolloutScheduleTriggeredAtChangedEvent;
+}
+
+export namespace ProgressiveRolloutScheduleTriggeredAtChangedEvent {
+  export type AsObject = {
+    scheduleId: string,
   }
 }
 

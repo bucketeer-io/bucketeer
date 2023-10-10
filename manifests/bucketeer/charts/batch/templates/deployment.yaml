@@ -62,6 +62,14 @@ spec:
               value: "{{ .Values.env.eventCounterService }}"
             - name: BUCKETEER_BATCH_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
+            - name: BUCKETEER_OPS_EVENT_SCHEDULE_COUNT_WATCHER
+              value: "{{ .Values.env.scheduleCountWatcher }}"
+            - name: BUCKETEER_OPS_EVENT_SCHEDULE_DATETIME_WATCHER
+              value: "{{ .Values.env.scheduleDatetimeWatcher }}"
+            - name: BUCKETEER_OPS_EVENT_SCHEDULE_PROGRESSIVE_ROLLOUT_WATCHER
+              value: "{{ .Values.env.scheduleProgressiveRolloutWatcher }}"
+            - name: BUCKETEER_OPS_EVENT_REFRESH_INTERVAL
+              value: "{{ .Values.env.refreshInterval }}"
             - name: BUCKETEER_BATCH_DOMAIN_TOPIC
               value: "{{ .Values.env.domainTopic }}"
             - name: BUCKETEER_BATCH_DOMAIN_SUBSCRIPTION

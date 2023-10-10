@@ -98,4 +98,5 @@ cronjob:
   mauCountWatcherSchedule: "0 1 1 * *"
   opsDatetimeWatcherSchedule: "* * * * *"
   opsEventCountWatcherSchedule: "* * * * *"
+  opsProgressiveRolloutWatcherSchedule: "* * * * *"
   redisCounterDeleterSchedule: "0 0 * * *"

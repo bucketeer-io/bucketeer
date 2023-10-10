@@ -302,7 +302,8 @@ proto.bucketeer.batch.BatchJob = {
   DATETIMEWATCHER: 4,
   EVENTCOUNTWATCHER: 5,
   DOMAINEVENTINFORMER: 6,
-  REDISCOUNTERDELETER: 7
+  REDISCOUNTERDELETER: 7,
+  PROGRESSIVEROLLOUTWATCHER: 8
 };
 
 goog.object.extend(exports, proto.bucketeer.batch);

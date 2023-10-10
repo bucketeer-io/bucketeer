@@ -29,45 +29,29 @@ import (
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
 
-func TestNewAutoOpsExecutor(t *testing.T) {
-	t.Parallel()
-	e := NewAutoOpsExecutor(nil)
-	assert.IsType(t, &autoOpsExecutor{}, e)
-}
-
-func TestExecute(t *testing.T) {
+func TestExecuteProgressiveRollout(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
 	patterns := []struct {
 		desc        string
-		setup       func(*autoOpsExecutor)
+		setup       func(*progressiveRolloutExecutor)
 		expectedErr error
 	}{
 		{
-			desc: "error: ExecuteAutoOps fails",
-			setup: func(e *autoOpsExecutor) {
-				e.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ExecuteAutoOps(gomock.Any(), gomock.Any()).Return(
+			desc: "error: ExecuteProgressiveRollout fails",
+			setup: func(e *progressiveRolloutExecutor) {
+				e.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ExecuteProgressiveRollout(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.Internal, "internal error"))
 			},
 			expectedErr: status.Errorf(codes.Internal, "internal error"),
 		},
 		{
-			desc: "success: AlreadyTriggered: true",
-			setup: func(e *autoOpsExecutor) {
-				e.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ExecuteAutoOps(gomock.Any(), gomock.Any()).Return(
-					&autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true},
-					nil,
-				)
-			},
-			expectedErr: nil,
-		},
-		{
-			desc: "success: AlreadyTriggered: false",
-			setup: func(e *autoOpsExecutor) {
-				e.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ExecuteAutoOps(gomock.Any(), gomock.Any()).Return(
-					&autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: false},
+			desc: "success",
+			setup: func(e *progressiveRolloutExecutor) {
+				e.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ExecuteProgressiveRollout(gomock.Any(), gomock.Any()).Return(
+					&autoopsproto.ExecuteProgressiveRolloutResponse{},
 					nil,
 				)
 			},
@@ -76,20 +60,20 @@ func TestExecute(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			e := newNewAutoOpsExecutor(t, mockController)
+			e := newProgressiveRolloutExecutor(t, mockController)
 			if p.setup != nil {
 				p.setup(e)
 			}
-			err := e.Execute(context.Background(), "ns0", "rid1")
+			err := e.ExecuteProgressiveRollout(context.Background(), "ns0", "rid1", "sid1")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
 
-func newNewAutoOpsExecutor(t *testing.T, mockController *gomock.Controller) *autoOpsExecutor {
+func newProgressiveRolloutExecutor(t *testing.T, mockController *gomock.Controller) *progressiveRolloutExecutor {
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	return &autoOpsExecutor{
+	return &progressiveRolloutExecutor{
 		autoOpsClient: autoopsclientmock.NewMockClient(mockController),
 		logger:        logger,
 	}

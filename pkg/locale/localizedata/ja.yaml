@@ -75,9 +75,18 @@ SegmentInUse: "セグメントがフィーチャーフラグで使用されて�
 HasWaitingOrRunningExperiment: "開始予定、もしくは実行中のエクスペリメントが存在します更新する場合はエクスペリメントを停止してください"
 InvalidArchive: "前提条件のフラグとして登録されているフラグをアーカイブすることはできません"
 InvalidChangingVariation: "前提条件のフラグとして登録されているフラグのバリエーションを変更または削除することはできません"
+WaitingOrRunningProgressiveRolloutExists: "開始予定、もしくは実行中のプログレッシブロールアウトが存在します。更新する場合はプログレッシブロールアウトを停止してください"
 
 # Auto Ops errors
-IncompatibleOpsType: "対象のオペレーションタイプに対応していない自動オペレーションルールがあります"
+AutoOpsFeatureDisabled: "フィーチャーフラグにが有効でありません。更新する場合はフィーチャーフラグにを有効にしてください"
+AutoOpsFeatureHasIndividualTargeting: "フィーチャーフラグににターゲティングがあります。更新する場合はターゲティングを削除してください"
+AutoOpsFeatureHasPrerequisites: "フィーチャーフラグにに前提条件があります。更新する場合は前提条件を削除してください"
+AutoOpsFeatureHasRules: "フィーチャーフラグにルールがあります。更新する場合はルールを削除してください"
+AutoOpsHasDatetime: "オートオペレーションにスケジュールが設定されています。更新する場合はスケジュールを削除してください"
+AutoOpsHasWebhook: "オートオペレーションにWebhookが設定されています。更新する場合はWebhookを削除してください"
+AutoOpsInvalidScheduleSpans: "スケジュールされた時間の間隔は少なくとも5分以上必要です"
+AutoOpsInvalidVariationSize: "フィーチャーフラグのバリエーションの数が不正です"
+AutoOpsWaitingOrRunningExperimentExists: "開始予定、もしくは実行中のエクスペリメントが存在します。更新する場合はプログレッシブロールアウトを停止してください"
 
 # Event Counter errors
 StartAtIsAfterEndAt: "開始時間は終了時間以前を指定してください"

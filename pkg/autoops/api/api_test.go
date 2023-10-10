@@ -323,6 +323,54 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusWebhookClauseConditionFilterRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition_filter")),
 		},
 		{
+			desc: "err: internal error",
+			setup: func(s *AutoOpsService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId: "fid",
+					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+						{
+							VariationId:     "vid",
+							GoalId:          "gid",
+							MinCount:        10,
+							ThreadsholdRate: 0.5,
+							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						},
+					},
+					DatetimeClauses: []*autoopsproto.DatetimeClause{
+						{Time: time.Now().AddDate(0, 0, 1).Unix()},
+					},
+					WebhookClauses: []*autoopsproto.WebhookClause{
+						{
+							WebhookId: "foo-id",
+							Conditions: []*autoopsproto.WebhookClause_Condition{
+								{
+									Filter:   ".foo.bar",
+									Value:    "foobaz",
+									Operator: autoopsproto.WebhookClause_Condition_EQUAL,
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
@@ -332,6 +380,18 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
 			},
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{

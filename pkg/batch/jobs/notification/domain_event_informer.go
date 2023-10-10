@@ -275,6 +275,8 @@ func (i *domainEventInformer) convSourceType(
 		return notificationproto.Subscription_DOMAIN_EVENT_PROJECT, nil
 	case domaineventproto.Event_WEBHOOK:
 		return notificationproto.Subscription_DOMAIN_EVENT_WEBHOOK, nil
+	case domaineventproto.Event_PROGRESSIVE_ROLLOUT:
+		return notificationproto.Subscription_DOMAIN_EVENT_PROGRESSIVE_ROLLOUT, nil
 	}
 	return notificationproto.Subscription_SourceType(0), ErrUnknownSourceType
 }

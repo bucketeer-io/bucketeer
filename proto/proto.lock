@@ -2329,14 +2329,12 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutManualScheduleClause"
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ]
           },
@@ -2577,7 +2575,7 @@
             ]
           },
           {
-            "name": "ListProgressiveRolloutRequest.OrderBy",
+            "name": "ListProgressiveRolloutsRequest.OrderBy",
             "enum_fields": [
               {
                 "name": "DEFAULT"
@@ -2593,7 +2591,7 @@
             ]
           },
           {
-            "name": "ListProgressiveRolloutRequest.OrderDirection",
+            "name": "ListProgressiveRolloutsRequest.OrderDirection",
             "enum_fields": [
               {
                 "name": "ASC"
@@ -3091,7 +3089,7 @@
             "name": "DeleteProgressiveRolloutResponse"
           },
           {
-            "name": "ListProgressiveRolloutRequest",
+            "name": "ListProgressiveRolloutsRequest",
             "fields": [
               {
                 "id": 1,
@@ -3127,24 +3125,17 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status",
-                "optional": true
+                "type": "ProgressiveRollout.Status"
               },
               {
                 "id": 8,
-                "name": "search_keyword",
-                "type": "string"
-              },
-              {
-                "id": 9,
                 "name": "type",
-                "type": "ProgressiveRollout.Type",
-                "optional": true
+                "type": "ProgressiveRollout.Type"
               }
             ]
           },
           {
-            "name": "ListProgressiveRolloutResponse",
+            "name": "ListProgressiveRolloutsResponse",
             "fields": [
               {
                 "id": 1,
@@ -3251,6 +3242,31 @@
                 "name": "ListWebhooks",
                 "in_type": "ListWebhooksRequest",
                 "out_type": "ListWebhooksResponse"
+              },
+              {
+                "name": "CreateProgressiveRollout",
+                "in_type": "CreateProgressiveRolloutRequest",
+                "out_type": "CreateProgressiveRolloutResponse"
+              },
+              {
+                "name": "GetProgressiveRollout",
+                "in_type": "GetProgressiveRolloutRequest",
+                "out_type": "GetProgressiveRolloutResponse"
+              },
+              {
+                "name": "DeleteProgressiveRollout",
+                "in_type": "DeleteProgressiveRolloutRequest",
+                "out_type": "DeleteProgressiveRolloutResponse"
+              },
+              {
+                "name": "ListProgressiveRollouts",
+                "in_type": "ListProgressiveRolloutsRequest",
+                "out_type": "ListProgressiveRolloutsResponse"
+              },
+              {
+                "name": "ExecuteProgressiveRollout",
+                "in_type": "ExecuteProgressiveRolloutRequest",
+                "out_type": "ExecuteProgressiveRolloutResponse"
               }
             ]
           }
@@ -3366,6 +3382,10 @@
               {
                 "name": "RedisCounterDeleter",
                 "integer": 7
+              },
+              {
+                "name": "ProgressiveRolloutWatcher",
+                "integer": 8
               }
             ]
           }
@@ -5368,6 +5388,10 @@
               {
                 "name": "WEBHOOK",
                 "integer": 13
+              },
+              {
+                "name": "PROGRESSIVE_ROLLOUT",
+                "integer": 14
               }
             ]
           },
@@ -5896,6 +5920,18 @@
               {
                 "name": "WEBHOOK_CLAUSE_CHANGED",
                 "integer": 1305
+              },
+              {
+                "name": "PROGRESSIVE_ROLLOUT_CREATED",
+                "integer": 1400
+              },
+              {
+                "name": "PROGRESSIVE_ROLLOUT_DELETED",
+                "integer": 1401
+              },
+              {
+                "name": "PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED",
+                "integer": 1402
               }
             ]
           }
@@ -8333,6 +8369,61 @@
                 "type": "bucketeer.autoops.WebhookClause"
               }
             ]
+          },
+          {
+            "name": "ProgressiveRolloutCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "clause",
+                "type": "google.protobuf.Any"
+              },
+              {
+                "id": 4,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "updated_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "type",
+                "type": "bucketeer.autoops.ProgressiveRollout.Type"
+              }
+            ]
+          },
+          {
+            "name": "ProgressiveRolloutDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ProgressiveRolloutScheduleTriggeredAtChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "schedule_id",
+                "type": "string"
+              }
+            ]
           }
         ],
         "imports": [
@@ -8383,6 +8474,9 @@
           },
           {
             "path": "proto/feature/prerequisite.proto"
+          },
+          {
+            "path": "proto/autoops/progressive_rollout.proto"
           }
         ],
         "package": {
@@ -15324,6 +15418,10 @@
               {
                 "name": "DOMAIN_EVENT_WEBHOOK",
                 "integer": 13
+              },
+              {
+                "name": "DOMAIN_EVENT_PROGRESSIVE_ROLLOUT",
+                "integer": 14
               },
               {
                 "name": "FEATURE_STALE",

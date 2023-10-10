@@ -34,6 +34,7 @@ import "proto/autoops/clause.proto";
 import "proto/notification/subscription.proto";
 import "proto/notification/recipient.proto";
 import "proto/feature/prerequisite.proto";
+import "proto/autoops/progressive_rollout.proto";
 
 message Event {
   enum EntityType {
@@ -51,6 +52,7 @@ message Event {
     ADMIN_SUBSCRIPTION = 11;
     PROJECT = 12;
     WEBHOOK = 13;
+    PROGRESSIVE_ROLLOUT = 14;
   }
   enum Type {
     UNKNOWN = 0;
@@ -184,6 +186,9 @@ message Event {
     WEBHOOK_DESCRIPTION_CHANGED = 1303;
     WEBHOOK_CLAUSE_ADDED = 1304;
     WEBHOOK_CLAUSE_CHANGED = 1305;
+    PROGRESSIVE_ROLLOUT_CREATED = 1400;
+    PROGRESSIVE_ROLLOUT_DELETED = 1401;
+    PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED = 1402;
   }
   string id = 1;
   int64 timestamp = 2;
@@ -929,4 +934,21 @@ message WebhookClauseAddedEvent {
 message WebhookClauseChangedEvent {
   string clause_id = 1;
   bucketeer.autoops.WebhookClause webhook_clause = 2;
+}
+
+message ProgressiveRolloutCreatedEvent {
+  string id = 1;
+  string feature_id = 2;
+  google.protobuf.Any clause = 3;
+  int64 created_at = 4;
+  int64 updated_at = 5;
+  bucketeer.autoops.ProgressiveRollout.Type type = 6;
+}
+
+message ProgressiveRolloutDeletedEvent {
+  string id = 1;
+}
+
+message ProgressiveRolloutScheduleTriggeredAtChangedEvent {
+  string schedule_id = 1;
 }
