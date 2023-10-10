@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import (
 const (
 	segmentUsersKind    = "segment_users"
 	segmentUsersMaxSize = int64(100)
-	segmentUsersTTL     = 1 * time.Hour
+	segmentUsersTTL     = time.Duration(0)
 )
 
 type SegmentUsersCache interface {

@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ package command
 
 import (
 	"context"
+	"strings"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 
@@ -52,6 +53,8 @@ func (h *projectCommandHandler) Handle(ctx context.Context, cmd Command) error {
 		return h.createTrial(ctx, c)
 	case *proto.ChangeDescriptionProjectCommand:
 		return h.changeDescription(ctx, c)
+	case *proto.RenameProjectCommand:
+		return h.rename(ctx, c)
 	case *proto.EnableProjectCommand:
 		return h.enable(ctx, c)
 	case *proto.DisableProjectCommand:
@@ -66,6 +69,8 @@ func (h *projectCommandHandler) Handle(ctx context.Context, cmd Command) error {
 func (h *projectCommandHandler) create(ctx context.Context, cmd *proto.CreateProjectCommand) error {
 	return h.send(ctx, eventproto.Event_PROJECT_CREATED, &eventproto.ProjectCreatedEvent{
 		Id:           h.project.Id,
+		Name:         h.project.Name,
+		UrlCode:      h.project.UrlCode,
 		Description:  h.project.Description,
 		Disabled:     h.project.Disabled,
 		Trial:        h.project.Trial,
@@ -78,6 +83,8 @@ func (h *projectCommandHandler) create(ctx context.Context, cmd *proto.CreatePro
 func (h *projectCommandHandler) createTrial(ctx context.Context, cmd *proto.CreateTrialProjectCommand) error {
 	return h.send(ctx, eventproto.Event_PROJECT_TRIAL_CREATED, &eventproto.ProjectTrialCreatedEvent{
 		Id:           h.project.Id,
+		Name:         h.project.Name,
+		UrlCode:      h.project.UrlCode,
 		Description:  h.project.Description,
 		Disabled:     h.project.Disabled,
 		Trial:        h.project.Trial,
@@ -95,6 +102,15 @@ func (h *projectCommandHandler) changeDescription(
 	return h.send(ctx, eventproto.Event_PROJECT_DESCRIPTION_CHANGED, &eventproto.ProjectDescriptionChangedEvent{
 		Id:          h.project.Id,
 		Description: cmd.Description,
+	})
+}
+
+func (h *projectCommandHandler) rename(ctx context.Context, cmd *proto.RenameProjectCommand) error {
+	newName := strings.TrimSpace(cmd.Name)
+	h.project.Rename(newName)
+	return h.send(ctx, eventproto.Event_PROJECT_RENAMED, &eventproto.ProjectRenamedEvent{
+		Id:   h.project.Id,
+		Name: newName,
 	})
 }
 

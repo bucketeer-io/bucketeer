@@ -50,7 +50,7 @@ export const SettingsIndexPage: FC = memo(() => {
                     hover:text-gray-700
                     whitespace-nowrap py-4 px-5 border-b-2
                     font-medium text-sm"
-                to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${tab.to}`}
+                to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${tab.to}`}
               >
                 {tab.message}
               </NavLink>

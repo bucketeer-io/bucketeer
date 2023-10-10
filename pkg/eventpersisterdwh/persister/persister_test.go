@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import (
 )
 
 var (
+	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
+
 	feature = &featureproto.Feature{
 		Id:      "fid",
 		Version: int32(1),
@@ -173,6 +175,19 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			Data: map[string]string{"atr": "av"},
 		},
 	}
+	evaluationEventWithTagEmpty := &eventproto.EvaluationEvent{
+		Tag:            "",
+		Timestamp:      t1.UnixMicro(),
+		FeatureId:      "fid",
+		FeatureVersion: int32(1),
+		UserId:         "uid",
+		VariationId:    "vid",
+		Reason:         &featureproto.Reason{Type: featureproto.Reason_CLIENT},
+		User: &userproto.User{
+			Id:   "uid",
+			Data: map[string]string{"atr": "av"},
+		},
+	}
 	userData, err := json.Marshal(evaluationEvent.User.Data)
 	require.NoError(t, err)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -198,6 +213,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(nil, errors.New("internal"))
@@ -218,6 +234,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(nil, ErrNoExperiments)
@@ -226,6 +243,38 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expected:           nil,
 			expectedErr:        ErrNoExperiments,
 			expectedRepeatable: true,
+		},
+		{
+			desc: "error: stop_at is older than 3 days",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      evaluationEvent.FeatureId,
+							FeatureVersion: evaluation.FeatureVersion,
+							Status:         exproto.Experiment_STOPPED,
+							StopAt:         time.Now().Unix() - 3*day,
+						},
+					},
+				}, nil)
+			},
+			input:              evaluationEvent,
+			expected:           nil,
+			expectedErr:        ErrNoExperiments,
+			expectedRepeatable: false,
 		},
 		{
 			desc: "error: experiment not found",
@@ -238,6 +287,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -257,7 +307,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "success: evaluation event",
+			desc: "success: evaluation event with running status",
 			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
@@ -267,6 +317,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -276,6 +327,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 							GoalIds:        []string{"goal-id"},
 							FeatureId:      evaluationEvent.FeatureId,
 							FeatureVersion: evaluation.FeatureVersion,
+							Status:         exproto.Experiment_RUNNING,
 						},
 					},
 				}, nil)
@@ -293,6 +345,94 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				SourceId:             evaluationEvent.SourceId.String(),
 				EnvironmentNamespace: environmentNamespace,
 				Timestamp:            time.Unix(evaluationEvent.Timestamp, 0).UnixMicro(),
+			},
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "success: evaluation event with stopped status",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      evaluationEvent.FeatureId,
+							FeatureVersion: evaluation.FeatureVersion,
+							Status:         exproto.Experiment_STOPPED,
+							StopAt:         time.Now().Unix() - 2*day,
+						},
+					},
+				}, nil)
+			},
+			input: evaluationEvent,
+			expected: &epproto.EvaluationEvent{
+				Id:                   eventID,
+				FeatureId:            evaluationEvent.FeatureId,
+				FeatureVersion:       evaluationEvent.FeatureVersion,
+				UserData:             string(userData),
+				UserId:               evaluationEvent.UserId,
+				VariationId:          evaluationEvent.VariationId,
+				Reason:               evaluationEvent.Reason.Type.String(),
+				Tag:                  evaluationEvent.Tag,
+				SourceId:             evaluationEvent.SourceId.String(),
+				EnvironmentNamespace: environmentNamespace,
+				Timestamp:            time.Unix(evaluationEvent.Timestamp, 0).UnixMicro(),
+			},
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "success: with empty tag",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      evaluationEventWithTagEmpty.FeatureId,
+							FeatureVersion: evaluation.FeatureVersion,
+							Status:         exproto.Experiment_STOPPED,
+							StopAt:         time.Now().Unix() - 2*day,
+						},
+					},
+				}, nil)
+			},
+			input: evaluationEventWithTagEmpty,
+			expected: &epproto.EvaluationEvent{
+				Id:                   eventID,
+				FeatureId:            evaluationEventWithTagEmpty.FeatureId,
+				FeatureVersion:       evaluationEventWithTagEmpty.FeatureVersion,
+				UserData:             string(userData),
+				UserId:               evaluationEventWithTagEmpty.UserId,
+				VariationId:          evaluationEventWithTagEmpty.VariationId,
+				Reason:               evaluationEventWithTagEmpty.Reason.Type.String(),
+				Tag:                  "none",
+				SourceId:             evaluationEventWithTagEmpty.SourceId.String(),
+				EnvironmentNamespace: environmentNamespace,
+				Timestamp:            time.Unix(evaluationEventWithTagEmpty.Timestamp, 0).UnixMicro(),
 			},
 			expectedErr:        nil,
 			expectedRepeatable: false,
@@ -351,6 +491,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(nil, errors.New("internal"))
@@ -383,6 +524,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{}, nil)
@@ -415,6 +557,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -454,6 +597,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -500,6 +644,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -548,6 +693,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						Statuses: []exproto.Experiment_Status{
 							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
 						},
 					},
 				).Return(&exproto.ListExperimentsResponse{
@@ -675,6 +821,145 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			expectedErr:        nil,
 			expectedRepeatable: false,
 		},
+		{
+			desc: "success: with empty tag",
+			setup: func(ctx context.Context, p *goalEvtWriter) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid",
+							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
+						},
+						{
+							Id:             "experiment-id-2",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid-2",
+							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour).Unix(),
+						},
+						// This experiment won't be computed
+						// because the startAt is higher than the goal event timestamp
+						{
+							Id:             "experiment-id-3",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid-2",
+							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(time.Hour).Unix(),
+						},
+					},
+				}, nil)
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
+					ctx,
+					&featureproto.EvaluateFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						FeatureId:            "fid",
+						Tag:                  "",
+						User:                 user,
+					},
+				).Return(&featureproto.EvaluateFeaturesResponse{
+					UserEvaluations: &featureproto.UserEvaluations{
+						Id: "",
+						Evaluations: []*featureproto.Evaluation{
+							{
+								Id:             "eval-id",
+								FeatureId:      "fid",
+								FeatureVersion: int32(1),
+								VariationId:    "variationID_B",
+								Reason: &featureproto.Reason{
+									Type: featureproto.Reason_RULE,
+								},
+								UserId: user.Id,
+							},
+						},
+						CreatedAt: time.Now().Unix(),
+					},
+				}, nil)
+				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
+					ctx,
+					&featureproto.EvaluateFeaturesRequest{
+						EnvironmentNamespace: environmentNamespace,
+						FeatureId:            "fid-2",
+						Tag:                  "",
+						User:                 user,
+					},
+				).Return(&featureproto.EvaluateFeaturesResponse{
+					UserEvaluations: &featureproto.UserEvaluations{
+						Id: "",
+						Evaluations: []*featureproto.Evaluation{
+							{
+								Id:             "eval-id",
+								FeatureId:      "fid-2",
+								FeatureVersion: int32(1),
+								VariationId:    "variationID-2_A",
+								Reason: &featureproto.Reason{
+									Type: featureproto.Reason_DEFAULT,
+								},
+								UserId: user.Id,
+							},
+						},
+						CreatedAt: time.Now().Unix(),
+					},
+				}, nil)
+			},
+			input: &eventproto.GoalEvent{
+				SourceId:    eventproto.SourceId_ANDROID,
+				Timestamp:   now.Unix(),
+				GoalId:      "gid",
+				UserId:      "uid",
+				User:        user,
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "",
+			},
+			expected: []*epproto.GoalEvent{
+				{
+					SourceId:             eventproto.SourceId_ANDROID.String(),
+					Id:                   eventID,
+					GoalId:               "gid",
+					UserId:               "uid",
+					Value:                1.2,
+					Tag:                  "none",
+					FeatureId:            "fid",
+					FeatureVersion:       int32(1),
+					VariationId:          "variationID_B",
+					Reason:               featureproto.Reason_RULE.String(),
+					UserData:             string(userData),
+					EnvironmentNamespace: environmentNamespace,
+					Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
+				},
+				{
+					SourceId:             eventproto.SourceId_ANDROID.String(),
+					Id:                   eventID,
+					GoalId:               "gid",
+					UserId:               "uid",
+					Value:                1.2,
+					Tag:                  "none",
+					FeatureId:            "fid-2",
+					FeatureVersion:       int32(1),
+					VariationId:          "variationID-2_A",
+					Reason:               featureproto.Reason_DEFAULT.String(),
+					UserData:             string(userData),
+					EnvironmentNamespace: environmentNamespace,
+					Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
+				},
+			},
+			expectedErr:        nil,
+			expectedRepeatable: false,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -698,6 +983,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 func newEvalEventWriter(c *gomock.Controller) *evalEvtWriter {
 	return &evalEvtWriter{
 		experimentClient: ecmock.NewMockClient(c),
+		location:         jpLocation,
 		logger:           defaultOptions.logger,
 	}
 }
@@ -706,6 +992,7 @@ func newGoalEventWriter(c *gomock.Controller) *goalEvtWriter {
 	return &goalEvtWriter{
 		experimentClient: ecmock.NewMockClient(c),
 		featureClient:    ftmock.NewMockClient(c),
+		location:         jpLocation,
 		logger:           defaultOptions.logger,
 	}
 }

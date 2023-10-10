@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,6 +60,8 @@ func (s *projectStorage) CreateProject(ctx context.Context, p *domain.Project) e
 	query := `
 		INSERT INTO project (
 			id,
+			name,
+			url_code,
 			description,
 			disabled,
 			trial,
@@ -67,13 +69,15 @@ func (s *projectStorage) CreateProject(ctx context.Context, p *domain.Project) e
 			created_at,
 			updated_at
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
 	_, err := s.qe.ExecContext(
 		ctx,
 		query,
 		p.Id,
+		p.Name,
+		p.UrlCode,
 		p.Description,
 		p.Disabled,
 		p.Trial,
@@ -95,6 +99,7 @@ func (s *projectStorage) UpdateProject(ctx context.Context, p *domain.Project) e
 		UPDATE 
 			project
 		SET
+			name = ?,
 			description = ?,
 			disabled = ?,
 			trial = ?,
@@ -107,6 +112,7 @@ func (s *projectStorage) UpdateProject(ctx context.Context, p *domain.Project) e
 	result, err := s.qe.ExecContext(
 		ctx,
 		query,
+		p.Name,
 		p.Description,
 		p.Disabled,
 		p.Trial,
@@ -133,6 +139,8 @@ func (s *projectStorage) GetProject(ctx context.Context, id string) (*domain.Pro
 	query := `
 		SELECT
 			id,
+			name,
+			url_code,
 			description,
 			disabled,
 			trial,
@@ -150,6 +158,8 @@ func (s *projectStorage) GetProject(ctx context.Context, id string) (*domain.Pro
 		id,
 	).Scan(
 		&project.Id,
+		&project.Name,
+		&project.UrlCode,
 		&project.Description,
 		&project.Disabled,
 		&project.Trial,
@@ -175,6 +185,8 @@ func (s *projectStorage) GetTrialProjectByEmail(
 	query := `
 		SELECT
 			id,
+			name,
+			url_code,
 			description,
 			disabled,
 			trial,
@@ -196,6 +208,8 @@ func (s *projectStorage) GetTrialProjectByEmail(
 		trial,
 	).Scan(
 		&project.Id,
+		&project.Name,
+		&project.UrlCode,
 		&project.Description,
 		&project.Disabled,
 		&project.Trial,
@@ -225,6 +239,8 @@ func (s *projectStorage) ListProjects(
 	query := fmt.Sprintf(`
 		SELECT
 			id,
+			name,
+			url_code,
 			description,
 			disabled,
 			trial,
@@ -246,6 +262,8 @@ func (s *projectStorage) ListProjects(
 		project := proto.Project{}
 		err := rows.Scan(
 			&project.Id,
+			&project.Name,
+			&project.UrlCode,
 			&project.Description,
 			&project.Disabled,
 			&project.Trial,

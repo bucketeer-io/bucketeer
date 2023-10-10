@@ -156,7 +156,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidVariationSize, localizer.MustLocalizeWithTemplate(locale.InvalidVariationSize)),
+			expectedErr: createError(statusProgressiveRolloutInvalidVariationSize, localizer.MustLocalizeWithTemplate(locale.AutoOpsInvalidVariationSize)),
 		},
 		{
 			desc: "err: ErrFeatureDisabled",
@@ -180,7 +180,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutFeatureDisabled, localizer.MustLocalize(locale.FeatureDisabled)),
+			expectedErr: createError(statusProgressiveRolloutFeatureDisabled, localizer.MustLocalize(locale.AutoOpsFeatureDisabled)),
 		},
 		{
 			desc: "err: ErrFeatureHasPrerequisites",
@@ -209,7 +209,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutFeatureHasPrerequisitess, localizer.MustLocalize(locale.FeatureHasPrerequisites)),
+			expectedErr: createError(statusProgressiveRolloutFeatureHasPrerequisitess, localizer.MustLocalize(locale.AutoOpsFeatureHasPrerequisites)),
 		},
 		{
 			desc: "err: ErrFeatureHasIndividualTargeting",
@@ -238,7 +238,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutFeatureHasIndividualTargeting, localizer.MustLocalize(locale.FeatureHasIndividualTargeting)),
+			expectedErr: createError(statusProgressiveRolloutFeatureHasIndividualTargeting, localizer.MustLocalize(locale.AutoOpsFeatureHasIndividualTargeting)),
 		},
 		{
 			desc: "err: ErrFeatureHasRules",
@@ -267,7 +267,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					FeatureId: "fid",
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutFeatureHasRules, localizer.MustLocalize(locale.FeatureHasRules)),
+			expectedErr: createError(statusProgressiveRolloutFeatureHasRules, localizer.MustLocalize(locale.AutoOpsFeatureHasRules)),
 		},
 		{
 			desc: "err: ErrClauseRequired",
@@ -663,7 +663,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidScheduleSpans, localizer.MustLocalize(locale.InvalidScheduleSpans)),
+			expectedErr: createError(statusProgressiveRolloutInvalidScheduleSpans, localizer.MustLocalize(locale.AutoOpsInvalidScheduleSpans)),
 		},
 		{
 			desc: "err: manual ErrInvalidScheduleSpans",
@@ -691,7 +691,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutInvalidScheduleSpans, localizer.MustLocalize(locale.InvalidScheduleSpans)),
+			expectedErr: createError(statusProgressiveRolloutInvalidScheduleSpans, localizer.MustLocalize(locale.AutoOpsInvalidScheduleSpans)),
 		},
 		{
 			desc: "err: begin transaction error",

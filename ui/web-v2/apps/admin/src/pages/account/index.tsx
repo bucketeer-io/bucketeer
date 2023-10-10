@@ -132,7 +132,7 @@ export const AccountIndexPage: FC = memo(() => {
         options && options.enabled ? options.enabled === 'false' : null;
       dispatch(
         listAccounts({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: ACCOUNT_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -176,12 +176,12 @@ export const AccountIndexPage: FC = memo(() => {
         (() => {
           if (data.enabled) {
             return enableAccount({
-              environmentNamespace: currentEnvironment.namespace,
+              environmentNamespace: currentEnvironment.id,
               id: data.accountId,
             });
           }
           return disableAccount({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             id: data.accountId,
           });
         })()
@@ -189,7 +189,7 @@ export const AccountIndexPage: FC = memo(() => {
         setIsConfirmDialogOpen(false);
         dispatch(
           getAccount({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             email: data.accountId,
           })
         );
@@ -217,7 +217,7 @@ export const AccountIndexPage: FC = memo(() => {
   const handleOpenAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_ACCOUNTS}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -230,7 +230,7 @@ export const AccountIndexPage: FC = memo(() => {
         role: a.role.toString(),
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_ACCOUNTS}/${a.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}/${a.id}`,
         search: location.search,
       });
     },
@@ -258,7 +258,7 @@ export const AccountIndexPage: FC = memo(() => {
     resetUpdate();
     setOpen(false);
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_ACCOUNTS}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
@@ -267,7 +267,7 @@ export const AccountIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createAccount({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           email: data.email,
           role: data.role,
         })
@@ -275,7 +275,7 @@ export const AccountIndexPage: FC = memo(() => {
         resetAdd();
         setOpen(false);
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_ACCOUNTS}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}`
         );
         updateAccountList(null, 1);
       });
@@ -287,14 +287,14 @@ export const AccountIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         updateAccount({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: accountId,
           role: data.role,
         })
       ).then(() => {
         dispatch(
           getAccount({
-            environmentNamespace: currentEnvironment.namespace,
+            environmentNamespace: currentEnvironment.id,
             email: accountId,
           })
         );

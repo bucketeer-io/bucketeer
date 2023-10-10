@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package v3
 
 import (
+	"time"
+
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -24,8 +26,9 @@ import (
 )
 
 const (
-	environmentAPIKeyKind = "environment_apikey"
-	environmentAPIKeyTTL  = 0
+	environmentAPIKeyKind             = "environment_apikey"
+	environmentAPIKeyTTL              = 1 * time.Minute
+	EnvironmentAPIKeyEvictionInterval = 10 * time.Second
 )
 
 type EnvironmentAPIKeyCache interface {

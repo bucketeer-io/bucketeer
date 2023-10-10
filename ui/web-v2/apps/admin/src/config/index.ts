@@ -10,3 +10,13 @@ export const urls = {
 };
 
 export const ENABLE_SETTINGS = true;
+
+declare global {
+  interface Window {
+    env: {
+      [key: string]: any;
+    };
+  }
+}
+
+export const GOOGLE_TAG_MANAGER_ID = window.env?.GOOGLE_TAG_MANAGER_ID || '';

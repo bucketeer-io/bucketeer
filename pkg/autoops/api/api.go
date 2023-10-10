@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -383,7 +383,7 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 	if runningProgressiveRolloutExists && (len(req.Command.DatetimeClauses) == 0 || len(req.Command.WebhookClauses) == 0) {
 		dt, err := statusWaitingOrRunningProgressiveRolloutExists.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+			Message: localizer.MustLocalize(locale.AutoOpsWaitingOrRunningExperimentExists),
 		})
 		if err != nil {
 			return statusInternal.Err()

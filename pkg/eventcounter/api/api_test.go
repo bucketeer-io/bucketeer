@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -296,7 +296,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -353,7 +353,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 		if p.setup != nil {
 			p.setup(gs)
 		}
-		actual, err := gs.GetExperimentResult(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+		actual, err := gs.GetExperimentResult(ctx, p.input)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		if err == nil {
 			assert.NotNil(t, actual)
@@ -366,7 +366,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -505,7 +505,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.ListExperimentResults(createContextWithToken(t, accountproto.Account_UNASSIGNED), p.input)
+			actual, err := s.ListExperimentResults(ctx, p.input)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -1218,7 +1218,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 						val, nil)
 					uc := getUserCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
 					pfMergeKey := newPFMergeKey(
-						userCountPrefix,
+						UserCountPrefix,
 						fID,
 						environmentNamespace,
 					)
@@ -1594,7 +1594,7 @@ func getRandomNumbers() []float64 {
 func getEventCountKeys(vID, fID, environmentNamespace string, timeStamps []int64) []string {
 	eventCountKeys := []string{}
 	for _, ts := range timeStamps {
-		ec := newEvaluationCountkey(eventCountPrefix, fID, vID, environmentNamespace, ts)
+		ec := newEvaluationCountkey(EventCountPrefix, fID, vID, environmentNamespace, ts)
 		eventCountKeys = append(eventCountKeys, ec)
 	}
 	return eventCountKeys
@@ -1603,7 +1603,7 @@ func getEventCountKeys(vID, fID, environmentNamespace string, timeStamps []int64
 func getUserCountKeys(vID, fid, environmentNamespace string, timeStamps []int64) []string {
 	userCountKeys := []string{}
 	for _, ts := range timeStamps {
-		uc := newEvaluationCountkey(userCountPrefix, fid, vID, environmentNamespace, ts)
+		uc := newEvaluationCountkey(UserCountPrefix, fid, vID, environmentNamespace, ts)
 		userCountKeys = append(userCountKeys, uc)
 	}
 	return userCountKeys
@@ -1614,7 +1614,7 @@ func getEventCountKeysV2(vID, fID, environmentNamespace string, timeStamps [][]i
 	for _, day := range timeStamps {
 		hourly := []string{}
 		for _, hour := range day {
-			ec := newEvaluationCountkey(eventCountPrefix, fID, vID, environmentNamespace, hour)
+			ec := newEvaluationCountkey(EventCountPrefix, fID, vID, environmentNamespace, hour)
 			hourly = append(hourly, ec)
 		}
 		eventCountKeys = append(eventCountKeys, hourly)
@@ -1627,7 +1627,7 @@ func getUserCountKeysV2(vID, fID, environmentNamespace string, timeStamps [][]in
 	for _, day := range timeStamps {
 		hourly := []string{}
 		for _, hour := range day {
-			ec := newEvaluationCountkey(userCountPrefix, fID, vID, environmentNamespace, hour)
+			ec := newEvaluationCountkey(UserCountPrefix, fID, vID, environmentNamespace, hour)
 			hourly = append(hourly, ec)
 		}
 		userCountKeys = append(userCountKeys, hourly)

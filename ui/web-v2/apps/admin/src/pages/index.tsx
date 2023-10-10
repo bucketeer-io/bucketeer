@@ -1,4 +1,6 @@
+import { GOOGLE_TAG_MANAGER_ID } from '@/config';
 import React, { FC, useEffect, memo, useState, useCallback } from 'react';
+import TagManager from 'react-gtm-module';
 import { useDispatch } from 'react-redux';
 import {
   Route,
@@ -6,6 +8,7 @@ import {
   Redirect,
   useRouteMatch,
   useParams,
+  useLocation,
 } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 
@@ -51,6 +54,20 @@ import { SegmentIndexPage } from './segment';
 import { SettingsIndexPage } from './settings';
 
 export const App: FC = memo(() => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (
+      !window.location.href.includes('localhost') &&
+      GOOGLE_TAG_MANAGER_ID.trim().length > 0
+    ) {
+      const tagManagerArgs = {
+        gtmId: GOOGLE_TAG_MANAGER_ID,
+      };
+      TagManager.initialize(tagManagerArgs);
+    }
+  }, []);
+
   return (
     <Switch>
       <Route
@@ -95,7 +112,7 @@ export const Root: FC = memo(() => {
           <Route path={PAGE_PATH_ADMIN} component={AdminRoot} />
           <Route
             key={pageKey}
-            path={'/:environmentId?'}
+            path={'/:environmentUrlCode?'}
             component={EnvironmentRoot}
           />
           <Route path="*">
@@ -133,12 +150,12 @@ export const EnvironmentRoot: FC = memo(() => {
   const me = useMe();
   const currentEnvironment = useCurrentEnvironment();
   const { url } = useRouteMatch();
-  const { environmentId } = useParams<{ environmentId: string }>();
+  const { environmentUrlCode } = useParams<{ environmentUrlCode: string }>();
 
-  if (environmentId == undefined) {
+  if (environmentUrlCode == undefined) {
     return (
       <Redirect
-        to={`${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_FEATURES}`}
+        to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`}
       />
     );
   }
@@ -146,12 +163,12 @@ export const EnvironmentRoot: FC = memo(() => {
     return null;
   }
   const environment = me.environmentRoles.find(
-    (environmentRole) => environmentRole.environment.id === environmentId
+    (environmentRole) => environmentRole.environment.urlCode === environmentUrlCode
   );
   if (!environment) {
     return <NotFound />;
   }
-  dispatch(setCurrentEnvironment(environmentId));
+  dispatch(setCurrentEnvironment(environment.environment.id));
 
   return (
     <>

@@ -109,7 +109,7 @@ export const PushIndexPage: FC = memo(() => {
       const cursor = (page - 1) * PUSH_LIST_PAGE_SIZE;
       dispatch(
         listPushes({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           pageSize: PUSH_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -151,7 +151,7 @@ export const PushIndexPage: FC = memo(() => {
   const handleOnClickAdd = useCallback(() => {
     setOpen(true);
     history.push({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}${PAGE_PATH_NEW}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}${PAGE_PATH_NEW}`,
       search: location.search,
     });
   }, [setOpen, history, location]);
@@ -171,7 +171,7 @@ export const PushIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createPush({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           name: data.name,
           fcmApiKey: data.fcmApiKey,
           tags: data.tags,
@@ -180,7 +180,7 @@ export const PushIndexPage: FC = memo(() => {
         setOpen(false);
         resetAdd();
         history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`
         );
         updatePushList(null, 1);
       });
@@ -197,7 +197,7 @@ export const PushIndexPage: FC = memo(() => {
         tags: p.tagsList,
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}/${p.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}/${p.id}`,
         search: location.search,
       });
     },
@@ -227,7 +227,7 @@ export const PushIndexPage: FC = memo(() => {
       }
       dispatch(
         updatePush({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: pushId,
           name: name,
           currentTags: push.tagsList,
@@ -249,7 +249,7 @@ export const PushIndexPage: FC = memo(() => {
     resetUpdate();
     setOpen(false);
     history.replace({
-      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.id}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`,
+      pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`,
       search: location.search,
     });
   }, [setOpen, history, location, resetAdd]);
@@ -276,7 +276,7 @@ export const PushIndexPage: FC = memo(() => {
     (data) => {
       dispatch(
         deletePush({
-          environmentNamespace: currentEnvironment.namespace,
+          environmentNamespace: currentEnvironment.id,
           id: data.push.id,
         })
       ).then(() => {
@@ -308,7 +308,7 @@ export const PushIndexPage: FC = memo(() => {
   useEffect(() => {
     dispatch(
       listTags({
-        environmentNamespace: currentEnvironment.namespace,
+        environmentNamespace: currentEnvironment.id,
         pageSize: 99999,
         cursor: '',
         orderBy: ListTagsRequest.OrderBy.DEFAULT,

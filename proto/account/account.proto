@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,6 +38,13 @@ message Account {
 
 message EnvironmentRole {
   environment.Environment environment = 1;
+  Account.Role role = 2;
+  bool trial_project = 3;
+  int64 trial_started_at = 4;  // optional
+}
+
+message EnvironmentRoleV2 {
+  environment.EnvironmentV2 environment = 1;
   Account.Role role = 2;
   bool trial_project = 3;
   int64 trial_started_at = 4;  // optional

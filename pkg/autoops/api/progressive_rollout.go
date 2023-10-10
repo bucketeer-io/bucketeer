@@ -764,7 +764,7 @@ func (s *AutoOpsService) validateTargetFeature(
 	if !f.Enabled {
 		dt, err := statusProgressiveRolloutFeatureDisabled.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.FeatureDisabled),
+			Message: localizer.MustLocalize(locale.AutoOpsFeatureDisabled),
 		})
 		if err != nil {
 			return statusProgressiveRolloutInternal.Err()
@@ -774,7 +774,7 @@ func (s *AutoOpsService) validateTargetFeature(
 	if len(f.Variations) != 2 {
 		dt, err := statusProgressiveRolloutInvalidVariationSize.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidVariationSize),
+			Message: localizer.MustLocalize(locale.AutoOpsInvalidVariationSize),
 		})
 		if err != nil {
 			return statusProgressiveRolloutInternal.Err()
@@ -784,7 +784,7 @@ func (s *AutoOpsService) validateTargetFeature(
 	if len(f.Prerequisites) > 0 {
 		dt, err := statusProgressiveRolloutFeatureHasPrerequisitess.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.FeatureHasPrerequisites),
+			Message: localizer.MustLocalize(locale.AutoOpsFeatureHasPrerequisites),
 		})
 		if err != nil {
 			return statusProgressiveRolloutInternal.Err()
@@ -795,7 +795,7 @@ func (s *AutoOpsService) validateTargetFeature(
 		if len(t.Users) > 0 {
 			dt, err := statusProgressiveRolloutFeatureHasIndividualTargeting.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.FeatureHasIndividualTargeting),
+				Message: localizer.MustLocalize(locale.AutoOpsFeatureHasIndividualTargeting),
 			})
 			if err != nil {
 				return statusProgressiveRolloutInternal.Err()
@@ -806,7 +806,7 @@ func (s *AutoOpsService) validateTargetFeature(
 	if len(f.Rules) > 0 {
 		dt, err := statusProgressiveRolloutFeatureHasRules.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.FeatureHasRules),
+			Message: localizer.MustLocalize(locale.AutoOpsFeatureHasRules),
 		})
 		if err != nil {
 			return statusProgressiveRolloutInternal.Err()
@@ -1001,7 +1001,7 @@ func (*AutoOpsService) validateProgressiveRolloutClauseScheduleSpans(
 				dt, err := statusProgressiveRolloutInvalidScheduleSpans.WithDetails(
 					&errdetails.LocalizedMessage{
 						Locale:  localizer.GetLocale(),
-						Message: localizer.MustLocalize(locale.InvalidScheduleSpans),
+						Message: localizer.MustLocalize(locale.AutoOpsInvalidScheduleSpans),
 					},
 				)
 				if err != nil {

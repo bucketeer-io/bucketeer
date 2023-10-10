@@ -29,7 +29,7 @@ export const FeatureCloneForm: FC<FeatureCloneFormProps> = memo(
     const environmentOptions = filteredOptions.map((environment) => {
       return {
         value: environment.id,
-        label: environment.id,
+        label: environment.name,
       };
     });
     return (
@@ -89,10 +89,10 @@ export const FeatureCloneForm: FC<FeatureCloneFormProps> = memo(
                   <div className="mt-1">
                     <input
                       type="text"
-                      name="originEnvironmentId"
-                      id="originEnvironmentId"
+                      name="originEnvironmentName"
+                      id="originEnvironmentName"
                       className="input-text w-full"
-                      defaultValue={currenEnvironment.id}
+                      defaultValue={currenEnvironment.name}
                       disabled={true}
                     />
                   </div>

@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -135,4 +135,8 @@ func (hc *checker) getStatus() Status {
 
 func (hc *checker) setStatus(s Status) {
 	atomic.StoreUint32(&hc.status, uint32(s))
+}
+
+func (hc *checker) Stop() {
+	hc.setStatus(Unhealthy)
 }

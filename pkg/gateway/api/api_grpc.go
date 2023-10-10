@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
+	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc"
@@ -148,7 +149,8 @@ func NewGrpcGatewayService(
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
-	v3Cache cache.MultiGetCache,
+	redisV3Cache cache.MultiGetCache,
+	inMemoryCache cache.Cache,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -164,9 +166,9 @@ func NewGrpcGatewayService(
 		goalPublisher:          gp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,
-		featuresCache:          cachev3.NewFeaturesCache(v3Cache),
-		segmentUsersCache:      cachev3.NewSegmentUsersCache(v3Cache),
-		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(v3Cache),
+		featuresCache:          cachev3.NewFeaturesCache(redisV3Cache),
+		segmentUsersCache:      cachev3.NewSegmentUsersCache(redisV3Cache),
+		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(inMemoryCache),
 		opts:                   &options,
 		logger:                 options.logger.Named("api_grpc"),
 	}
@@ -181,6 +183,8 @@ func (s *grpcGatewayService) Ping(ctx context.Context, req *gwproto.PingRequest)
 }
 
 func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackRequest) (*gwproto.TrackResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.Track")
+	defer span.End()
 	if err := s.validateTrackRequest(req); err != nil {
 		eventCounter.WithLabelValues(callerGatewayService, typeTrack, codeInvalidURLParams)
 		s.logger.Warn(
@@ -284,6 +288,8 @@ func (s *grpcGatewayService) GetEvaluations(
 	ctx context.Context,
 	req *gwproto.GetEvaluationsRequest,
 ) (*gwproto.GetEvaluationsResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations")
+	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx)
 	if err != nil {
 		return nil, err
@@ -295,6 +301,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		return nil, err
 	}
 	s.publishUser(ctx, environmentNamespace, req.Tag, req.User, req.SourceId)
+	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
 		environmentNamespace,
 		func() (interface{}, error) {
@@ -305,6 +312,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
 		return nil, err
 	}
+	spanGetFeatures.End()
 	features := f.([]*featureproto.Feature)
 	activeFeatures := s.filterOutArchivedFeatures(features)
 	filteredByTag := s.filterByTag(activeFeatures, req.Tag)
@@ -347,10 +355,11 @@ func (s *grpcGatewayService) GetEvaluations(
 		)
 		return nil, err
 	}
-
 	var evaluations *featureproto.UserEvaluations
-	// FIXME Remove s.getEvaluations once all SDKs use evaluatedAt.
-	if req.EvaluatedAt == 0 && !req.UserAttributesUpdated {
+	// FIXME Remove s.getEvaluations once all SDKs use UserEvaluationCondition.
+	// New SDKs always use UserEvaluationCondition.
+	if req.UserEvaluationCondition == nil {
+		// Old evaluation requires tag to be set.
 		if req.Tag == "" {
 			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationBadRequest).Inc()
 			return nil, ErrTagRequired
@@ -380,8 +389,8 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.User,
 			segmentUsersMap,
 			req.UserEvaluationsId,
-			req.EvaluatedAt,
-			req.UserAttributesUpdated,
+			req.UserEvaluationCondition.EvaluatedAt,
+			req.UserEvaluationCondition.UserAttributesUpdated,
 			req.Tag,
 		)
 		if err != nil {
@@ -434,6 +443,8 @@ func (s *grpcGatewayService) GetEvaluation(
 	ctx context.Context,
 	req *gwproto.GetEvaluationRequest,
 ) (*gwproto.GetEvaluationResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation")
+	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx)
 	if err != nil {
 		return nil, err
@@ -442,6 +453,7 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 	s.publishUser(ctx, envAPIKey.EnvironmentNamespace, req.Tag, req.User, req.SourceId)
+	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
 		envAPIKey.EnvironmentNamespace,
 		func() (interface{}, error) {
@@ -451,6 +463,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		return nil, err
 	}
+	spanGetFeatures.End()
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	features, err := s.getTargetFeatures(fs, req.FeatureId)
 	if err != nil {
@@ -805,6 +818,8 @@ func (s *grpcGatewayService) RegisterEvents(
 	ctx context.Context,
 	req *gwproto.RegisterEventsRequest,
 ) (*gwproto.RegisterEventsResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.RegisterEvents")
+	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx)
 	if err != nil {
 		return nil, err
@@ -1002,6 +1017,16 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 	ctx context.Context,
 	apiKey string,
 ) (*accountproto.EnvironmentAPIKey, error) {
+	envAPIKey, err := getEnvironmentAPIKeyFromCache(
+		ctx,
+		apiKey,
+		s.environmentAPIKeyCache,
+		callerGatewayService,
+		cacheLayerInMemory,
+	)
+	if err == nil {
+		return envAPIKey, nil
+	}
 	k, err, _ := s.flightgroup.Do(
 		environmentAPIKeyFlightID(apiKey),
 		func() (interface{}, error) {
@@ -1010,7 +1035,6 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 				apiKey,
 				s.accountClient,
 				s.environmentAPIKeyCache,
-				callerGatewayService,
 				s.logger,
 			)
 		},
@@ -1018,7 +1042,7 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 	if err != nil {
 		return nil, err
 	}
-	envAPIKey := k.(*accountproto.EnvironmentAPIKey)
+	envAPIKey = k.(*accountproto.EnvironmentAPIKey)
 	return envAPIKey, nil
 }
 
@@ -1043,13 +1067,8 @@ func getEnvironmentAPIKey(
 	id string,
 	accountClient accountclient.Client,
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
-	caller string,
 	logger *zap.Logger,
 ) (*accountproto.EnvironmentAPIKey, error) {
-	envAPIKey, err := getEnvironmentAPIKeyFromCache(ctx, id, environmentAPIKeyCache, caller, cacheLayerExternal)
-	if err == nil {
-		return envAPIKey, nil
-	}
 	resp, err := accountClient.GetAPIKeyBySearchingAllEnvironments(
 		ctx,
 		&accountproto.GetAPIKeyBySearchingAllEnvironmentsRequest{Id: id},
@@ -1064,7 +1083,7 @@ func getEnvironmentAPIKey(
 		)
 		return nil, ErrInternal
 	}
-	envAPIKey = resp.EnvironmentApiKey
+	envAPIKey := resp.EnvironmentApiKey
 	if err := environmentAPIKeyCache.Put(envAPIKey); err != nil {
 		logger.Error(
 			"Failed to cache environment APIKey",

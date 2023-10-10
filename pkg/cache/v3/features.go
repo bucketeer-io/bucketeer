@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import (
 
 const (
 	featuresKind = "features"
-	featuresTTL  = 1 * time.Hour
+	featuresTTL  = time.Duration(0)
 )
 
 type FeaturesCache interface {

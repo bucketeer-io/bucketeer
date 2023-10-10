@@ -2,16 +2,18 @@ import { Nullable, isNotNull, isNull } from 'option-t/lib/Nullable/Nullable';
 
 import { urls } from '../config';
 import {
-  CreateEnvironmentRequest,
-  CreateEnvironmentResponse,
-  DeleteEnvironmentRequest,
-  DeleteEnvironmentResponse,
-  GetEnvironmentRequest,
-  GetEnvironmentResponse,
-  ListEnvironmentsRequest,
-  ListEnvironmentsResponse,
-  UpdateEnvironmentRequest,
-  UpdateEnvironmentResponse,
+  ArchiveEnvironmentV2Request,
+  ArchiveEnvironmentV2Response,
+  CreateEnvironmentV2Request,
+  CreateEnvironmentV2Response,
+  GetEnvironmentV2Request,
+  GetEnvironmentV2Response,
+  ListEnvironmentsV2Request,
+  ListEnvironmentsV2Response,
+  UnarchiveEnvironmentV2Request,
+  UnarchiveEnvironmentV2Response,
+  UpdateEnvironmentV2Request,
+  UpdateEnvironmentV2Response,
 } from '../proto/environment/service_pb';
 import {
   EnvironmentServiceClient,
@@ -44,16 +46,16 @@ export class EnvironmentServiceError<Request> extends Error {
 const client = new EnvironmentServiceClient(urls.GRPC);
 
 export interface GetEnvironmentResult {
-  request: GetEnvironmentRequest;
-  response: GetEnvironmentResponse;
+  request: GetEnvironmentV2Request;
+  response: GetEnvironmentV2Response;
 }
 
 export function getEnvironment(
-  request: GetEnvironmentRequest
+  request: GetEnvironmentV2Request
 ): Promise<GetEnvironmentResult> {
   return new Promise(
     (resolve: (result: GetEnvironmentResult) => void, reject): void => {
-      client.getEnvironment(request, getMetaData(), (error, response): void => {
+      client.getEnvironmentV2(request, getMetaData(), (error, response): void => {
         if (isNotNull(error) || isNull(response)) {
           reject(
             new EnvironmentServiceError(
@@ -71,16 +73,16 @@ export function getEnvironment(
 }
 
 export interface ListEnvironmentsResult {
-  request: ListEnvironmentsRequest;
-  response: ListEnvironmentsResponse;
+  request: ListEnvironmentsV2Request;
+  response: ListEnvironmentsV2Response;
 }
 
 export function listEnvironments(
-  request: ListEnvironmentsRequest
+  request: ListEnvironmentsV2Request
 ): Promise<ListEnvironmentsResult> {
   return new Promise(
     (resolve: (result: ListEnvironmentsResult) => void, reject): void => {
-      client.listEnvironments(
+      client.listEnvironmentsV2(
         request,
         getMetaData(),
         (error, response): void => {
@@ -102,16 +104,16 @@ export function listEnvironments(
 }
 
 export interface CreateEnvironmentResult {
-  request: CreateEnvironmentRequest;
-  response: CreateEnvironmentResponse;
+  request: CreateEnvironmentV2Request;
+  response: CreateEnvironmentV2Response;
 }
 
 export function createEnvironment(
-  request: CreateEnvironmentRequest
+  request: CreateEnvironmentV2Request
 ): Promise<CreateEnvironmentResult> {
   return new Promise(
     (resolve: (result: CreateEnvironmentResult) => void, reject): void => {
-      client.createEnvironment(
+      client.createEnvironmentV2(
         request,
         getMetaData(),
         (error, response): void => {
@@ -132,17 +134,48 @@ export function createEnvironment(
   );
 }
 
-export interface DeleteEnvironmentResult {
-  request: DeleteEnvironmentRequest;
-  response: DeleteEnvironmentResponse;
+export interface ArchiveEnvironmentResult {
+  request: ArchiveEnvironmentV2Request;
+  response: ArchiveEnvironmentV2Response;
 }
 
-export function deleteEnvironment(
-  request: DeleteEnvironmentRequest
-): Promise<DeleteEnvironmentResult> {
+export function archiveEnvironment(
+  request: ArchiveEnvironmentV2Request
+): Promise<ArchiveEnvironmentResult> {
   return new Promise(
-    (resolve: (result: DeleteEnvironmentResult) => void, reject): void => {
-      client.deleteEnvironment(
+    (resolve: (result: ArchiveEnvironmentResult) => void, reject): void => {
+      client.archiveEnvironmentV2(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new EnvironmentServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
+    }
+  );
+}
+
+export interface UnarchiveEnvironmentResult {
+  request: UnarchiveEnvironmentV2Request;
+  response: UnarchiveEnvironmentV2Response;
+}
+
+export function unarchiveEnvironment(
+  request: UnarchiveEnvironmentV2Request
+): Promise<UnarchiveEnvironmentResult> {
+  return new Promise(
+    (resolve: (result: UnarchiveEnvironmentResult) => void, reject): void => {
+      client.unarchiveEnvironmentV2(
         request,
         getMetaData(),
         (error, response): void => {
@@ -164,16 +197,16 @@ export function deleteEnvironment(
 }
 
 export interface UpdateEnvironmentResult {
-  request: UpdateEnvironmentRequest;
-  response: UpdateEnvironmentResponse;
+  request: UpdateEnvironmentV2Request;
+  response: UpdateEnvironmentV2Response;
 }
 
 export function updateEnvironment(
-  request: UpdateEnvironmentRequest
+  request: UpdateEnvironmentV2Request
 ): Promise<UpdateEnvironmentResult> {
   return new Promise(
     (resolve: (result: UpdateEnvironmentResult) => void, reject): void => {
-      client.updateEnvironment(
+      client.updateEnvironmentV2(
         request,
         getMetaData(),
         (error, response): void => {

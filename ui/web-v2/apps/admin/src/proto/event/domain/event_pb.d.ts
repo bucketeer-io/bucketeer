@@ -184,6 +184,11 @@ export namespace Event {
     ENVIRONMENT_RENAMED: 601;
     ENVIRONMENT_DESCRIPTION_CHANGED: 602;
     ENVIRONMENT_DELETED: 603;
+    ENVIRONMENT_V2_CREATED: 604;
+    ENVIRONMENT_V2_RENAMED: 605;
+    ENVIRONMENT_V2_DESCRIPTION_CHANGED: 606;
+    ENVIRONMENT_V2_ARCHIVED: 607;
+    ENVIRONMENT_V2_UNARCHIVED: 608;
     ADMIN_ACCOUNT_CREATED: 700;
     ADMIN_ACCOUNT_ENABLED: 702;
     ADMIN_ACCOUNT_DISABLED: 703;
@@ -221,6 +226,7 @@ export namespace Event {
     PROJECT_DISABLED: 1203;
     PROJECT_TRIAL_CREATED: 1204;
     PROJECT_TRIAL_CONVERTED: 1205;
+    PROJECT_RENAMED: 1206;
     WEBHOOK_CREATED: 1300;
     WEBHOOK_DELETED: 1301;
     WEBHOOK_NAME_CHANGED: 1302;
@@ -2519,6 +2525,178 @@ export namespace EnvironmentDeletedEvent {
   }
 }
 
+export class EnvironmentV2CreatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getProjectId(): string;
+  setProjectId(value: string): void;
+
+  getArchived(): boolean;
+  setArchived(value: boolean): void;
+
+  getCreatedAt(): number;
+  setCreatedAt(value: number): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnvironmentV2CreatedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: EnvironmentV2CreatedEvent): EnvironmentV2CreatedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnvironmentV2CreatedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnvironmentV2CreatedEvent;
+  static deserializeBinaryFromReader(message: EnvironmentV2CreatedEvent, reader: jspb.BinaryReader): EnvironmentV2CreatedEvent;
+}
+
+export namespace EnvironmentV2CreatedEvent {
+  export type AsObject = {
+    id: string,
+    name: string,
+    urlCode: string,
+    description: string,
+    projectId: string,
+    archived: boolean,
+    createdAt: number,
+    updatedAt: number,
+  }
+}
+
+export class EnvironmentV2RenamedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getProjectId(): string;
+  setProjectId(value: string): void;
+
+  getOldName(): string;
+  setOldName(value: string): void;
+
+  getNewName(): string;
+  setNewName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnvironmentV2RenamedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: EnvironmentV2RenamedEvent): EnvironmentV2RenamedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnvironmentV2RenamedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnvironmentV2RenamedEvent;
+  static deserializeBinaryFromReader(message: EnvironmentV2RenamedEvent, reader: jspb.BinaryReader): EnvironmentV2RenamedEvent;
+}
+
+export namespace EnvironmentV2RenamedEvent {
+  export type AsObject = {
+    id: string,
+    projectId: string,
+    oldName: string,
+    newName: string,
+  }
+}
+
+export class EnvironmentV2DescriptionChangedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getProjectId(): string;
+  setProjectId(value: string): void;
+
+  getOldDescription(): string;
+  setOldDescription(value: string): void;
+
+  getNewDescription(): string;
+  setNewDescription(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnvironmentV2DescriptionChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: EnvironmentV2DescriptionChangedEvent): EnvironmentV2DescriptionChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnvironmentV2DescriptionChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnvironmentV2DescriptionChangedEvent;
+  static deserializeBinaryFromReader(message: EnvironmentV2DescriptionChangedEvent, reader: jspb.BinaryReader): EnvironmentV2DescriptionChangedEvent;
+}
+
+export namespace EnvironmentV2DescriptionChangedEvent {
+  export type AsObject = {
+    id: string,
+    name: string,
+    projectId: string,
+    oldDescription: string,
+    newDescription: string,
+  }
+}
+
+export class EnvironmentV2ArchivedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getProjectId(): string;
+  setProjectId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnvironmentV2ArchivedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: EnvironmentV2ArchivedEvent): EnvironmentV2ArchivedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnvironmentV2ArchivedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnvironmentV2ArchivedEvent;
+  static deserializeBinaryFromReader(message: EnvironmentV2ArchivedEvent, reader: jspb.BinaryReader): EnvironmentV2ArchivedEvent;
+}
+
+export namespace EnvironmentV2ArchivedEvent {
+  export type AsObject = {
+    id: string,
+    name: string,
+    projectId: string,
+  }
+}
+
+export class EnvironmentV2UnarchivedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getProjectId(): string;
+  setProjectId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnvironmentV2UnarchivedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: EnvironmentV2UnarchivedEvent): EnvironmentV2UnarchivedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnvironmentV2UnarchivedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnvironmentV2UnarchivedEvent;
+  static deserializeBinaryFromReader(message: EnvironmentV2UnarchivedEvent, reader: jspb.BinaryReader): EnvironmentV2UnarchivedEvent;
+}
+
+export namespace EnvironmentV2UnarchivedEvent {
+  export type AsObject = {
+    id: string,
+    name: string,
+    projectId: string,
+  }
+}
+
 export class AdminAccountCreatedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
@@ -3261,6 +3439,12 @@ export class ProjectCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ProjectCreatedEvent.AsObject;
   static toObject(includeInstance: boolean, msg: ProjectCreatedEvent): ProjectCreatedEvent.AsObject;
@@ -3280,6 +3464,8 @@ export namespace ProjectCreatedEvent {
     creatorEmail: string,
     createdAt: number,
     updatedAt: number,
+    name: string,
+    urlCode: string,
   }
 }
 
@@ -3304,6 +3490,30 @@ export namespace ProjectDescriptionChangedEvent {
   export type AsObject = {
     id: string,
     description: string,
+  }
+}
+
+export class ProjectRenamedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ProjectRenamedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: ProjectRenamedEvent): ProjectRenamedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ProjectRenamedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ProjectRenamedEvent;
+  static deserializeBinaryFromReader(message: ProjectRenamedEvent, reader: jspb.BinaryReader): ProjectRenamedEvent;
+}
+
+export namespace ProjectRenamedEvent {
+  export type AsObject = {
+    id: string,
+    name: string,
   }
 }
 
@@ -3369,6 +3579,12 @@ export class ProjectTrialCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ProjectTrialCreatedEvent.AsObject;
   static toObject(includeInstance: boolean, msg: ProjectTrialCreatedEvent): ProjectTrialCreatedEvent.AsObject;
@@ -3388,6 +3604,8 @@ export namespace ProjectTrialCreatedEvent {
     creatorEmail: string,
     createdAt: number,
     updatedAt: number,
+    name: string,
+    urlCode: string,
   }
 }
 

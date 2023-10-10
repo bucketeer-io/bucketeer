@@ -1,4 +1,4 @@
-// Copyright 2022 The Bucketeer Authors.
+// Copyright 2023 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ func TestGetProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -113,7 +113,7 @@ func TestGetProjectMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			req := &proto.GetProjectRequest{Id: p.id}
-			resp, err := s.GetProject(createContextWithToken(t), req)
+			resp, err := s.GetProject(ctx, req)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
 				assert.NotNil(t, resp)
@@ -126,7 +126,7 @@ func TestListProjectsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -192,7 +192,7 @@ func TestListProjectsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			actual, err := s.ListProjects(createContextWithToken(t), p.input)
+			actual, err := s.ListProjects(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -204,7 +204,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -233,28 +233,44 @@ func TestCreateProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: empty id",
+			desc:  "err: ErrInvalidProjectName: empty name",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: ""},
+				Command: &proto.CreateProjectCommand{Name: ""},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: can't use uppercase",
+			desc:  "err: ErrInvalidProjectName: only space",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: "ID-1"},
+				Command: &proto.CreateProjectCommand{Name: "    "},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: max id length exceeded",
+			desc:  "err: ErrInvalidProjectName: max name length exceeded",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: strings.Repeat("a", 51)},
+				Command: &proto.CreateProjectCommand{Name: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: can't use uppercase",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: "CODE"},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: max id length exceeded",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
 		},
 		{
 			desc: "err: ErrProjectAlreadyExists: duplicate id",
@@ -265,7 +281,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(v2es.ErrProjectAlreadyExists)
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: "id-0"},
+				Command: &proto.CreateProjectCommand{Name: "id-0"},
 			},
 			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -278,7 +294,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(errors.New("error"))
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: "id-1"},
+				Command: &proto.CreateProjectCommand{Name: "id-1"},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -291,14 +307,13 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Id: "id-2"},
+				Command: &proto.CreateProjectCommand{Name: "Project Name-001"},
 			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -314,7 +329,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -343,34 +358,50 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: empty id",
+			desc:  "err: ErrInvalidProjectName: empty name",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: ""},
+				Command: &proto.CreateTrialProjectCommand{Name: ""},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: can't use uppercase",
+			desc:  "err: ErrInvalidProjectName: only space",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "ID-1"},
+				Command: &proto.CreateTrialProjectCommand{Name: "   "},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:  "err: ErrInvalidProjectID: max id length exceeded",
+			desc:  "err: ErrInvalidProjectName: max id length exceeded",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: strings.Repeat("a", 51)},
+				Command: &proto.CreateTrialProjectCommand{Name: strings.Repeat("a", 51)},
 			},
-			expectedErr: createError(statusInvalidProjectID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: can't use uppercase",
+			setup: nil,
+			req: &proto.CreateTrialProjectRequest{
+				Command: &proto.CreateTrialProjectCommand{Name: "id-1", UrlCode: "CODE"},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectUrlCode: max id length exceeded",
+			setup: nil,
+			req: &proto.CreateTrialProjectRequest{
+				Command: &proto.CreateTrialProjectCommand{Name: "id-1", UrlCode: strings.Repeat("a", 51)},
+			},
+			expectedErr: createError(statusInvalidProjectUrlCode, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code")),
 		},
 		{
 			desc:  "err: ErrInvalidProjectCreatorEmail",
 			setup: nil,
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "id-0", Email: "email"},
+				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "email"},
 			},
 			expectedErr: createError(statusInvalidProjectCreatorEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
@@ -384,7 +415,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "id-0", Email: "test@example.com"},
+				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "test@example.com"},
 			},
 			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -402,7 +433,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				).Return(v2es.ErrProjectAlreadyExists)
 			},
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "id-0", Email: "test@example.com"},
+				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "test@example.com"},
 			},
 			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -416,7 +447,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "id-1", Email: "test@example.com"},
+				Command: &proto.CreateTrialProjectCommand{Name: "id-1", Email: "test@example.com"},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -428,24 +459,23 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(4)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(7)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil).Times(4)
+				).Return(nil).Times(7)
 				s.accountClient.(*acmock.MockClient).EXPECT().GetAdminAccount(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.NotFound, "not found"))
 				s.accountClient.(*acmock.MockClient).EXPECT().CreateAccount(gomock.Any(), gomock.Any()).Return(
 					&accountproto.CreateAccountResponse{}, nil).Times(3)
 			},
 			req: &proto.CreateTrialProjectRequest{
-				Command: &proto.CreateTrialProjectCommand{Id: "id-2", Email: "test@example.com"},
+				Command: &proto.CreateTrialProjectCommand{Name: "Project Name_001", Email: "test@example.com"},
 			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -461,7 +491,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -496,6 +526,15 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				ChangeDescriptionCommand: &proto.ChangeDescriptionProjectCommand{Description: "desc"},
 			},
 			expectedErr: createError(statusProjectIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc:  "err: ErrInvalidProjectName",
+			setup: nil,
+			req: &proto.UpdateProjectRequest{
+				Id:            "id-0",
+				RenameCommand: &proto.RenameProjectCommand{Name: strings.Repeat("a", 51)},
+			},
+			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
 			desc: "err: ErrProjectNotFound",
@@ -542,7 +581,6 @@ func TestUpdateProjectMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -558,7 +596,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -639,7 +677,6 @@ func TestEnableProjectMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -655,7 +692,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -736,7 +773,6 @@ func TestDisableProjectMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -752,7 +788,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := context.TODO()
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -833,7 +869,6 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t)
 			service := newEnvironmentService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -848,7 +883,7 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := context.TODO()
+	ctx := createContextWithTokenRoleUnassigned(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -910,7 +945,6 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithTokenRoleUnassigned(t)
 			service := newEnvironmentService(t, mockController, nil)
 			actual := p.action(ctx, service)
 			assert.Equal(t, p.expected, actual)

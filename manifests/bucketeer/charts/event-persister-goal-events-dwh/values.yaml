@@ -12,6 +12,7 @@ env:
   logLevel: info
   port: 9090
   metricsPort: 9002
+  timezone: UTC
   # egress services
   experimentService: localhost:9001
   featureService: localhost:9001
@@ -44,8 +45,8 @@ hpa:
 
 envoy:
   image:
-    repository: envoyproxy/envoy-alpine
-    tag: v1.21.1
+    repository: ghcr.io/bucketeer-io/bucketeer-envoy
+    tag: v1.26.2
     pullPolicy: IfNotPresent
   config:
   port: 9000
@@ -63,9 +64,14 @@ serviceToken:
   token:
 
 health:
-  initialDelaySeconds: 10
-  periodSeconds: 10
-  failureThreshold: 10
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 5
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 2
 
 resources: {}
 
