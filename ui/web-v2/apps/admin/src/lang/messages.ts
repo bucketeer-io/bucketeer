@@ -1750,6 +1750,20 @@ export const messages = {
         }),
       },
     },
+    successMessages: {
+      schedule: defineMessage({
+        id: 'successMessages.schedule',
+        defaultMessage: 'Schedule has been configured',
+      }),
+      flagEnabled: defineMessage({
+        id: 'successMessages.flagEnabled',
+        defaultMessage: 'Flag has been enabled',
+      }),
+      flagDisabled: defineMessage({
+        id: 'successMessages.flagDisabled',
+        defaultMessage: 'Flag has been disabled',
+      }),
+    },
   },
   input: {
     originEnvironment: defineMessage({

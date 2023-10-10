@@ -1,4 +1,5 @@
 import { listTags } from '@/modules/tags';
+import { addToast } from '@/modules/toasts';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { unwrapResult } from '@reduxjs/toolkit';
 import React, { useCallback, FC, memo, useEffect, useState } from 'react';
@@ -402,6 +403,21 @@ export const FeatureIndexPage: FC = memo(() => {
           });
         })()
       ).then(() => {
+        if (data.enabled) {
+          dispatch(
+            addToast({
+              message: f(messages.feature.successMessages.flagEnabled),
+              severity: 'success',
+            })
+          );
+        } else {
+          dispatch(
+            addToast({
+              message: f(messages.feature.successMessages.flagDisabled),
+              severity: 'success',
+            })
+          );
+        }
         switchEnabledReset();
         setIsSwitchEnableConfirmDialogOpen(false);
         dispatch(

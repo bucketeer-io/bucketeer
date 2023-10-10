@@ -6,6 +6,7 @@ import {
   selectAll as selectAllFeatures,
 } from '@/modules/features';
 import { useCurrentEnvironment } from '@/modules/me';
+import { addToast } from '@/modules/toasts';
 import { OpsType } from '@/proto/autoops/auto_ops_rule_pb';
 import { DatetimeClause } from '@/proto/autoops/clause_pb';
 import { CreateAutoOpsRuleCommand } from '@/proto/autoops/command_pb';
@@ -165,7 +166,15 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
         environmentNamespace: currentEnvironment.id,
         command: command,
       })
-    ).then(() => onClose());
+    ).then(() => {
+      dispatch(
+        addToast({
+          message: f(messages.feature.successMessages.schedule),
+          severity: 'success',
+        })
+      );
+      onClose();
+    });
   };
 
   const checkSubmitBtnDisabled = () => {
@@ -390,8 +399,9 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
                 selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE
               ) {
                 handleScheduleSubmit();
+              } else {
+                handleSubmit();
               }
-              handleSubmit();
             }}
           >
             {getSubmitBtnLabel()}
