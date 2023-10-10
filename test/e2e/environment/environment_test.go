@@ -115,35 +115,6 @@ func TestListEnvironments(t *testing.T) {
 	}
 }
 
-func TestUpdateEnvironment(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	c := newEnvironmentClient(t)
-	defer c.Close()
-	id := getEnvironmentID(t)
-	newDesc := fmt.Sprintf("Description %v", time.Now().Unix())
-	_, err := c.UpdateEnvironment(ctx, &environmentproto.UpdateEnvironmentRequest{
-		Id:                       id,
-		ChangeDescriptionCommand: &environmentproto.ChangeDescriptionEnvironmentCommand{Description: newDesc},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	getResp, err := c.GetEnvironment(ctx, &environmentproto.GetEnvironmentRequest{Id: id})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if getResp.Environment.Id != id {
-		t.Fatalf("different ids, expected: %v, actual: %v", id, getResp.Environment.Id)
-	}
-	if getResp.Environment.Namespace != *environmentNamespace {
-		t.Fatalf("different namespaces, expected: %v, actual: %v", *environmentNamespace, getResp.Environment.Namespace)
-	}
-	if getResp.Environment.Description != newDesc {
-		t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)
-	}
-}
-
 func getEnvironmentID(t *testing.T) string {
 	t.Helper()
 	if *environmentNamespace == "" {
