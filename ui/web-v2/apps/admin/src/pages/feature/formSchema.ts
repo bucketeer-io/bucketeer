@@ -121,70 +121,55 @@ const variationsSchema = yup.array().of(
     .required()
 );
 
-const autoOpsRulesSchema = yup.array().of(
-  yup.object().shape({
-    id: yup.string(),
-    featureId: yup.string().required(),
-    triggeredAt: yup.number(),
-    opsType: yup.string(),
-    clauses: yup
-      .array()
-      .min(1)
-      .of(
-        yup.object().shape({
-          id: yup.string(),
-          clauseType: yup.string(),
-          opsEventRateClause: yup.object().shape({
-            variation: yup.string(),
-            goal: yup
-              .string()
-              .nullable()
-              .test(
-                'required',
-                intl.formatMessage(messages.input.error.required),
-                function (value) {
-                  const { from } = this as any;
-                  if (from[1].value.clauseType == ClauseType.EVENT_RATE) {
-                    return value != null;
-                  }
-                  return true;
-                }
-              ),
-            minCount: yup
-              .number()
-              .transform((value) => (isNaN(value) ? undefined : value))
-              .required()
-              .min(1)
-              .max(AUTOOPS_MAX_MIN_COUNT),
-            threadsholdRate: yup
-              .number()
-              .transform((value) => (isNaN(value) ? undefined : value))
-              .required()
-              .moreThan(0)
-              .max(100),
-            operator: yup.string(),
-          }),
-          datetimeClause: yup.object().shape({
-            time: yup
-              .date()
-              .test(
-                'isLaterThanNow',
-                intl.formatMessage(
-                  messages.input.error.notLaterThanCurrentTime
-                ),
-                function (value) {
-                  const { from } = this as any;
-                  if (from[1].value.clauseType === ClauseType.DATETIME) {
-                    return value.getTime() > new Date().getTime();
-                  }
-                  return true;
-                }
-              ),
-          }),
-        })
+export const operationFormSchema = yup.object().shape({
+  opsType: yup.string().required(),
+  clauseType: yup.string().required(),
+  datetime: yup.object().shape({
+    time: yup
+      .date()
+      .test(
+        'isLaterThanNow',
+        intl.formatMessage(messages.input.error.notLaterThanCurrentTime),
+        function (value) {
+          const { from } = this as any;
+          if (from[1].value.clauseType === ClauseType.DATETIME) {
+            return value.getTime() > new Date().getTime();
+          }
+          return true;
+        }
       ),
-  })
-);
+  }),
+  eventRate: yup.object().shape({
+    variation: yup.string(),
+    goal: yup
+      .string()
+      .nullable()
+      .test(
+        'required',
+        intl.formatMessage(messages.input.error.required),
+        function (value) {
+          const { from } = this as any;
+          if (from[1].value.clauseType == ClauseType.EVENT_RATE) {
+            return value != null;
+          }
+          return true;
+        }
+      ),
+    minCount: yup
+      .number()
+      .transform((value) => (isNaN(value) ? undefined : value))
+      .required()
+      .min(1)
+      .max(AUTOOPS_MAX_MIN_COUNT),
+    threadsholdRate: yup
+      .number()
+      .transform((value) => (isNaN(value) ? undefined : value))
+      .required()
+      .moreThan(0)
+      .max(100),
+    operator: yup.string(),
+  }),
+});
 
 const tagsSchema = yup.array().min(FEATURE_TAG_MIN_SIZE).of(yup.string());
 
@@ -239,10 +224,6 @@ export const settingsFormSchema = yup.object().shape({
   description: descriptionSchema,
   tags: tagsSchema,
   comment: commentSchema,
-});
-
-export const autoOpsRulesFormSchema = yup.object().shape({
-  autoOpsRules: autoOpsRulesSchema,
 });
 
 export const strategySchema = yup.object().shape({

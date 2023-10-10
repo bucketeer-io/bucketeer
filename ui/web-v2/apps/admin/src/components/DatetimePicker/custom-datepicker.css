@@ -1,0 +1,9 @@
+.react-datepicker__day--selected {
+    background-color: #5d3597;
+}
+.react-datepicker__day--selected:hover {
+    background-color: #5d3597;
+}
+.react-datepicker__time-list-item--selected {
+    background-color: #5d3597 !important;
+}

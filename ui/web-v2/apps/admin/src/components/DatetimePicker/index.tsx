@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { classNames } from '../../utils/css';
 import 'react-datepicker/dist/react-datepicker.css';
+import './custom-datepicker.css';
 
 export interface DatetimePickerProps {
   name: string;

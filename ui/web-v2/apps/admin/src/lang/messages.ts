@@ -388,6 +388,121 @@ export const messages = {
         defaultMessage: 'Date time',
       }),
     },
+    condition: defineMessage({
+      id: 'autoOps.condition',
+      defaultMessage: 'Condition',
+    }),
+    threshold: defineMessage({
+      id: 'autoOps.threshold',
+      defaultMessage: 'Threshold',
+    }),
+    enable: defineMessage({
+      id: 'autoOps.enable',
+      defaultMessage: 'Enable',
+    }),
+    killSwitch: defineMessage({
+      id: 'autoOps.killSwitch',
+      defaultMessage: 'Kill Switch',
+    }),
+    schedule: defineMessage({
+      id: 'autoOps.schedule',
+      defaultMessage: 'Schedule',
+    }),
+    eventRate: defineMessage({
+      id: 'autoOps.eventRate',
+      defaultMessage: 'Event Rate',
+    }),
+    startDate: defineMessage({
+      id: 'autoOps.startDate',
+      defaultMessage: 'Start Date',
+    }),
+    infoBlocks: {
+      title: defineMessage({
+        id: 'infoBlocks.title',
+        defaultMessage:
+          'You can safely switch a flag on and off by using auto operations',
+      }),
+      scheduleInfo: defineMessage({
+        id: 'infoBlocks.scheduleInfo',
+        defaultMessage: 'Schedule a flag to turn on or off',
+      }),
+      killSwitch: defineMessage({
+        id: 'infoBlocks.killSwitch',
+        defaultMessage: 'Kill Switch',
+      }),
+      killSwitchInfo: defineMessage({
+        id: 'infoBlocks.killSwitchInfo',
+        defaultMessage: 'Turn off automatically a flag based on KPI events',
+      }),
+      progressiveRollout: defineMessage({
+        id: 'infoBlocks.progressiveRollout',
+        defaultMessage: 'Progressive Rollout',
+      }),
+      progressiveRolloutInfo: defineMessage({
+        id: 'infoBlocks.progressiveRolloutInfo',
+        defaultMessage: 'Coming soon',
+      }),
+    },
+    editOperation: defineMessage({
+      id: 'autoOps.editOperation',
+      defaultMessage: 'Edit Operation',
+    }),
+    operationDetails: defineMessage({
+      id: 'autoOps.operationDetails',
+      defaultMessage: 'Operation Details',
+    }),
+    deleteOperation: defineMessage({
+      id: 'autoOps.deleteOperation',
+      defaultMessage: 'Delete Operation',
+    }),
+    createAnOperation: defineMessage({
+      id: 'autoOps.createAnOperation',
+      defaultMessage: 'Create An Operation',
+    }),
+    updateAnOperation: defineMessage({
+      id: 'autoOps.updateAnOperation',
+      defaultMessage: 'Update An Operation',
+    }),
+    minimumGoalCount: defineMessage({
+      id: 'autoOps.minimumGoalCount',
+      defaultMessage: 'Minimum Goal Count',
+    }),
+    totalGoalCountEvents: defineMessage({
+      id: 'autoOps.totalGoalCountEvents',
+      defaultMessage: 'Total Goal Count Events',
+    }),
+    currentEventRate: defineMessage({
+      id: 'autoOps.currentEventRate',
+      defaultMessage: 'Current Event Rate',
+    }),
+    enableOperation: defineMessage({
+      id: 'autoOps.enableOperation',
+      defaultMessage: 'Enable Operation',
+    }),
+    killSwitchOperation: defineMessage({
+      id: 'autoOps.killSwitchOperation',
+      defaultMessage: 'Kill Switch Operation',
+    }),
+    progressInformation: defineMessage({
+      id: 'autoOps.progressInformation',
+      defaultMessage: 'Progress information',
+    }),
+    active: defineMessage({
+      id: 'autoOps.active',
+      defaultMessage: 'Active',
+    }),
+    completed: defineMessage({
+      id: 'autoOps.completed',
+      defaultMessage: 'Completed',
+    }),
+    goalCount: defineMessage({
+      id: 'autoOps.goalCount',
+      defaultMessage: 'Goal Count',
+    }),
+    evaluationCount: defineMessage({
+      id: 'autoOps.evaluationCount',
+      defaultMessage: 'Evaluation Count',
+    }),
   },
   maintainer: defineMessage({
     id: 'maintainer',
@@ -539,6 +654,18 @@ export const messages = {
     submit: defineMessage({
       id: 'button.submit',
       defaultMessage: 'Submit',
+    }),
+    enable: defineMessage({
+      id: 'button.enable',
+      defaultMessage: 'Enable',
+    }),
+    disable: defineMessage({
+      id: 'button.disable',
+      defaultMessage: 'Disable',
+    }),
+    schedule: defineMessage({
+      id: 'button.schedule',
+      defaultMessage: 'Schedule',
     }),
   },
   account: {
@@ -1462,6 +1589,22 @@ export const messages = {
         id: 'feature.confirm.flagIsActive',
         defaultMessage: 'It is receiving one more requests in the last 7 days.',
       }),
+      enableNow: defineMessage({
+        id: 'feature.confirm.enableNow',
+        defaultMessage: 'Enable now',
+      }),
+      disableNow: defineMessage({
+        id: 'feature.confirm.disableNow',
+        defaultMessage: 'Disable now',
+      }),
+      schedule: defineMessage({
+        id: 'feature.confirm.schedule',
+        defaultMessage: 'Schedule',
+      }),
+      selectDate: defineMessage({
+        id: 'feature.confirm.selectDate',
+        defaultMessage: 'Select date',
+      }),
     },
     list: {
       header: {
@@ -1548,7 +1691,7 @@ export const messages = {
     tab: {
       autoOps: defineMessage({
         id: 'feature.tab.autoOps',
-        defaultMessage: 'Auto Ops Rules',
+        defaultMessage: 'Auto Operations',
       }),
       evaluation: defineMessage({
         id: 'feature.tab.evaluation',

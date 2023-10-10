@@ -1,3 +1,8 @@
+import {
+  listAutoOpsRules,
+  selectAll as selectAllAutoOpsRules,
+} from '@/modules/autoOpsRules';
+import { AutoOpsRule } from '@/proto/autoops/auto_ops_rule_pb';
 import { SerializedError } from '@reduxjs/toolkit';
 import { FC, memo, useEffect } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -57,9 +62,15 @@ export const FeatureDetailPage: FC = memo(() => {
     ],
     shallowEqual
   );
-
-  const isLoading = useSelector<AppState, boolean>(
-    (state) => state.features.loading,
+  const isAutoOpsRuleLoading = useSelector<AppState, boolean>(
+    (state) => state.autoOpsRules.loading,
+    shallowEqual
+  );
+  const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
+    (state) =>
+      selectAllAutoOpsRules(state.autoOpsRules).filter(
+        (rule) => rule.featureId === featureId
+      ),
     shallowEqual
   );
 
@@ -71,15 +82,25 @@ export const FeatureDetailPage: FC = memo(() => {
           id: featureId,
         })
       );
+      dispatch(
+        listAutoOpsRules({
+          featureId: featureId,
+          environmentNamespace: currentEnvironment.id,
+        })
+      );
     }
   }, [featureId, dispatch, currentEnvironment]);
 
-  if (!feature) {
+  if (!feature || isAutoOpsRuleLoading) {
     return <div>loading</div>;
   }
 
+  const activeOperationsLength = autoOpsRules.filter(
+    (rule) => !rule.triggeredAt
+  ).length;
+
   return (
-    <div className="bg-white">
+    <div className="bg-white h-full">
       <div className="pt-5 px-10">
         <FeatureHeader featureId={featureId} />
         <div className="hidden sm:block">
@@ -89,6 +110,7 @@ export const FeatureDetailPage: FC = memo(() => {
                 key={idx}
                 className="
                     tab-item
+                    flex items-center
                     border-transparent
                     text-gray-500
                     hover:text-gray-700
@@ -97,6 +119,14 @@ export const FeatureDetailPage: FC = memo(() => {
                 to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${tab.to}`}
               >
                 {tab.message}
+                {tab.isNew &&
+                  (activeOperationsLength === 0 ? (
+                    <div className="rounded-sm bg-[#F3F9FD] text-[#399CE4] px-2 py-[6px] text-sm inline-block ml-3">
+                      New
+                    </div>
+                  ) : (
+                    <span className="ml-1">({activeOperationsLength})</span>
+                  ))}
               </NavLink>
             ))}
           </nav>
@@ -132,7 +162,13 @@ export const FeatureDetailPage: FC = memo(() => {
         <Route exact path={`${url}${PAGE_PATH_FEATURE_VARIATION}`}>
           <FeatureVariationsPage featureId={featureId} />
         </Route>
-        <Route exact path={`${url}${PAGE_PATH_FEATURE_AUTOOPS}`}>
+        <Route
+          exact
+          path={[
+            `${url}${PAGE_PATH_FEATURE_AUTOOPS}`,
+            `${url}${PAGE_PATH_FEATURE_AUTOOPS}/:operationId`,
+          ]}
+        >
           <FeatureAutoOpsPage featureId={featureId} />
         </Route>
         <Route exact path={`${url}${PAGE_PATH_FEATURE_HISTORY}`}>
@@ -146,6 +182,7 @@ export const FeatureDetailPage: FC = memo(() => {
 export interface TabItem {
   readonly message: string;
   readonly to: string;
+  readonly isNew: boolean;
 }
 
 const createTabs = (): Array<TabItem> => {
@@ -153,30 +190,37 @@ const createTabs = (): Array<TabItem> => {
     {
       message: intl.formatMessage(messages.feature.tab.targeting),
       to: PAGE_PATH_FEATURE_TARGETING,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.variations),
       to: PAGE_PATH_FEATURE_VARIATION,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.autoOps),
       to: PAGE_PATH_FEATURE_AUTOOPS,
+      isNew: true,
     },
     {
       message: intl.formatMessage(messages.feature.tab.experiments),
       to: PAGE_PATH_FEATURE_EXPERIMENTS,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.evaluation),
       to: PAGE_PATH_FEATURE_EVALUATION,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.history),
       to: PAGE_PATH_FEATURE_HISTORY,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.settings),
       to: PAGE_PATH_FEATURE_SETTING,
+      isNew: false,
     },
   ];
 };

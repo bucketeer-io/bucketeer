@@ -149,18 +149,23 @@ export const FeatureIndexPage: FC = memo(() => {
     mode: 'onChange',
   });
   const { handleSubmit: handleAddSubmit, reset } = addMethod;
+
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+
   const switchEnabledMethod = useForm({
     resolver: yupResolver(switchEnabledFormSchema),
     defaultValues: {
       featureId: '',
-      enabled: false,
       comment: '',
+      enabled: false,
     },
     mode: 'onChange',
   });
   const {
     handleSubmit: switchEnableHandleSubmit,
     setValue: switchEnabledSetValue,
+    getValues: switchEnabledGetValues,
     reset: switchEnabledReset,
   } = switchEnabledMethod;
   const archiveMethod = useForm({
@@ -543,45 +548,52 @@ export const FeatureIndexPage: FC = memo(() => {
           </FormProvider>
         )}
       </Overlay>
-      <FormProvider {...switchEnabledMethod}>
-        <FeatureConfirmDialog
-          open={isSwitchEnableConfirmDialogOpen}
-          handleSubmit={switchEnableHandleSubmit(handleSwitchEnabled)}
-          onClose={() => setIsSwitchEnableConfirmDialogOpen(false)}
-          title={f(messages.feature.confirm.title)}
-          description={f(messages.feature.confirm.description)}
-        />
-      </FormProvider>
-      <FormProvider {...archiveMethod}>
-        <FeatureConfirmDialog
-          isArchive={true}
-          featureId={archiveMethod.getValues().feature?.id}
-          feature={archiveMethod.getValues().feature}
-          open={isArchiveConfirmDialogOpen}
-          handleSubmit={archiveHandleSubmit(handleArchive)}
-          onClose={() => setIsArchiveConfirmDialogOpen(false)}
-          title={
-            archiveMethod.getValues().feature &&
-            archiveMethod.getValues().feature.archived
-              ? f(messages.feature.confirm.unarchiveTitle)
-              : f(messages.feature.confirm.archiveTitle)
-          }
-          description={
-            archiveMethod.getValues().feature &&
-            archiveMethod.getValues().feature.archived
-              ? f(messages.feature.confirm.unarchiveDescription, {
-                  featureId:
-                    archiveMethod.getValues().feature &&
-                    archiveMethod.getValues().feature.id,
-                })
-              : f(messages.feature.confirm.archiveDescription, {
-                  featureId:
-                    archiveMethod.getValues().feature &&
-                    archiveMethod.getValues().feature.id,
-                })
-          }
-        />
-      </FormProvider>
+      {isSwitchEnableConfirmDialogOpen && (
+        <FormProvider {...switchEnabledMethod}>
+          <FeatureConfirmDialog
+            featureId={switchEnabledGetValues('featureId')}
+            isSwitchEnabledConfirm={true}
+            isEnabled={!switchEnabledGetValues('enabled')}
+            open={isSwitchEnableConfirmDialogOpen}
+            handleSubmit={switchEnableHandleSubmit(handleSwitchEnabled)}
+            onClose={() => setIsSwitchEnableConfirmDialogOpen(false)}
+            title={f(messages.feature.confirm.title)}
+            description={f(messages.feature.confirm.description)}
+          />
+        </FormProvider>
+      )}
+      {isArchiveConfirmDialogOpen && (
+        <FormProvider {...archiveMethod}>
+          <FeatureConfirmDialog
+            isArchive={true}
+            featureId={archiveMethod.getValues().feature?.id}
+            feature={archiveMethod.getValues().feature}
+            open={isArchiveConfirmDialogOpen}
+            handleSubmit={archiveHandleSubmit(handleArchive)}
+            onClose={() => setIsArchiveConfirmDialogOpen(false)}
+            title={
+              archiveMethod.getValues().feature &&
+              archiveMethod.getValues().feature.archived
+                ? f(messages.feature.confirm.unarchiveTitle)
+                : f(messages.feature.confirm.archiveTitle)
+            }
+            description={
+              archiveMethod.getValues().feature &&
+              archiveMethod.getValues().feature.archived
+                ? f(messages.feature.confirm.unarchiveDescription, {
+                    featureId:
+                      archiveMethod.getValues().feature &&
+                      archiveMethod.getValues().feature.id,
+                  })
+                : f(messages.feature.confirm.archiveDescription, {
+                    featureId:
+                      archiveMethod.getValues().feature &&
+                      archiveMethod.getValues().feature.id,
+                  })
+            }
+          />
+        </FormProvider>
+      )}
     </>
   );
 });

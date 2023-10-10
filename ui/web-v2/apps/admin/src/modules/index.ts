@@ -15,6 +15,7 @@ import { featuresSlice } from './features';
 import { goalsSlice } from './goals';
 import { meSlice } from './me';
 import { notificationSlice } from './notifications';
+import { opsCountsSlice } from './opsCounts';
 import { projectsSlice } from './projects';
 import { pushSlice } from './pushes';
 import { segmentsSlice } from './segments';
@@ -29,6 +30,7 @@ export const reducers = combineReducers({
   apiKeys: apiKeySlice.reducer,
   auth: authSlice.reducer,
   autoOpsRules: autoOpsRulesSlice.reducer,
+  opsCounts: opsCountsSlice.reducer,
   environments: environmentsSlice.reducer,
   evaluationTimeseriesCount: evaluationTimeseriesCountSlice.reducer,
   experiments: experimentsSlice.reducer,

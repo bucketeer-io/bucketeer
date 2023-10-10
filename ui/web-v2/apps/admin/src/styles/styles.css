@@ -31,6 +31,9 @@ h1 {
 .input-text {
   @apply disabled:bg-gray-100 disabled:text-gray-500 text-sm min-h-[2.5rem] m-0 px-2 py-1 focus:border-indigo-500 border-gray-300 text-gray-700 rounded;
 }
+.input-text-error {
+  @apply disabled:bg-gray-100 disabled:text-gray-500 text-sm min-h-[2.5rem] m-0 px-2 py-1  text-gray-700 rounded border-red-500 focus:ring-red-500 focus:border-red-500;
+}
 
 .input-file {
   @apply disabled:cursor-auto disabled:pointer-events-none cursor-pointer opacity-0 w-full h-full;
@@ -72,8 +75,12 @@ h1 {
   @apply disabled:opacity-50 disabled:cursor-auto disabled:pointer-events-none inline-flex justify-center py-2 px-4 border border-transparent shadow-md text-sm font-medium rounded-md text-white bg-primary hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-600;
 }
 
+.btn-submit-gradient {
+  @apply disabled:opacity-50 disabled:cursor-auto disabled:pointer-events-none inline-flex justify-center py-2 px-6 min-w-[118px] border border-transparent shadow-md text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-600 bg-gradient-to-b from-[#573792] to-[#301266];
+}
+
 .btn-cancel {
-  @apply disabled:opacity-50 disabled:cursor-auto disabled:pointer-events-none inline-flex justify-center py-2 px-4 border border-gray-300 shadow-md text-sm font-medium rounded-md text-gray-500 bg-white hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
+  @apply disabled:opacity-50 disabled:cursor-auto disabled:pointer-events-none inline-flex justify-center py-2 px-6 min-w-[118px] border border-gray-300 shadow-md text-sm font-medium rounded-md text-gray-500 bg-white hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
 }
 
 .sidemenu-item.active {
