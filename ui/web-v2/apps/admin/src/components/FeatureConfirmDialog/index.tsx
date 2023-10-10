@@ -329,7 +329,12 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
                   setSelectedSwitchEnabledType(SwitchEnabledType.SCHEDULE);
                 }}
               />
-              <label htmlFor="schedule">{SwitchEnabledType.SCHEDULE}</label>
+              <label htmlFor="schedule">
+                {SwitchEnabledType.SCHEDULE}
+                <div className="rounded-sm bg-[#F3F9FD] text-[#399CE4] px-2 py-[6px] text-sm ml-3 inline-block">
+                  New
+                </div>
+              </label>
             </div>
             {selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE && (
               <div className="my-3">
