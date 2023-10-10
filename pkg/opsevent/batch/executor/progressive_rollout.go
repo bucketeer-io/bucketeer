@@ -51,11 +51,11 @@ func NewProgressiveRolloutExecutor(autoOpsClient autoopsclient.Client, opts ...O
 
 func (e *progressiveRolloutExecutor) ExecuteProgressiveRollout(
 	ctx context.Context,
-	environmentNamespace, ruleID, scheduleID string,
+	environmentNamespace, progressiveRolloutID, scheduleID string,
 ) error {
 	_, err := e.autoOpsClient.ExecuteProgressiveRollout(ctx, &autoopsproto.ExecuteProgressiveRolloutRequest{
 		EnvironmentNamespace: environmentNamespace,
-		Id:                   ruleID,
+		Id:                   progressiveRolloutID,
 		ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{
 			ScheduleId: scheduleID,
 		},
@@ -63,7 +63,7 @@ func (e *progressiveRolloutExecutor) ExecuteProgressiveRollout(
 	if err != nil {
 		e.logger.Error("Failed to execute ProgressiveRollout", zap.Error(err),
 			zap.String("environmentNamespace", environmentNamespace),
-			zap.String("ruleID", ruleID),
+			zap.String("progressiveRolloutID", progressiveRolloutID),
 		)
 		return err
 	}

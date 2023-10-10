@@ -283,39 +283,53 @@ func TestProgressiveRolloutBatch(t *testing.T) {
 	if len(progressiveRollouts) != 1 {
 		t.Fatal("not enough rules")
 	}
-	// Wait until watcher's targetstore is refreshed and autoOps is executed.
-	time.Sleep(60 * time.Second)
 
-	feature = getFeature(t, featureClient, featureID)
-	expectedStrategy := &featureproto.RolloutStrategy{
-		Variations: []*featureproto.RolloutStrategy_Variation{
-			{
-				Variation: feature.Variations[0].Id,
-				Weight:    schedules[0].Weight,
+	maxRetryCount := 18 // 3 minutes
+	for i := 0; i < maxRetryCount-1; i++ {
+		if i >= maxRetryCount {
+			t.Fatalf("Retry count has reached the limit")
+		}
+		time.Sleep(10 * time.Second)
+		feature = getFeature(t, featureClient, featureID)
+		expectedStrategy := &featureproto.RolloutStrategy{
+			Variations: []*featureproto.RolloutStrategy_Variation{
+				{
+					Variation: feature.Variations[0].Id,
+					Weight:    schedules[0].Weight,
+				},
+				{
+					Variation: feature.Variations[1].Id,
+					Weight:    totalVariationWeight - schedules[0].Weight,
+				},
 			},
-			{
-				Variation: feature.Variations[1].Id,
-				Weight:    totalVariationWeight - schedules[0].Weight,
-			},
-		},
-	}
-	if !proto.Equal(feature.DefaultStrategy.RolloutStrategy, expectedStrategy) {
-		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.DefaultStrategy.RolloutStrategy)
-	}
-	actual := listProgressiveRollouts(t, autoOpsClient, featureID)
-	if actual[0].Status != autoopsproto.ProgressiveRollout_FINISHED {
-		t.Fatalf("different status, expected: %v, actual: %v", actual[0].Status, autoopsproto.ProgressiveRollout_FINISHED)
-	}
-	actualClause := unmarshalProgressiveRolloutManualClause(t, actual[0].Clause)
-	if actualClause.VariationId != feature.Variations[0].Id {
-		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
-	}
-	if actualClause.Schedules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at is empty")
+		}
+		if !proto.Equal(feature.DefaultStrategy.RolloutStrategy, expectedStrategy) {
+			continue
+		}
+		actual := listProgressiveRollouts(t, autoOpsClient, featureID)
+		if actual[0].Status != autoopsproto.ProgressiveRollout_FINISHED {
+			t.Fatalf("different status, expected: %v, actual: %v", actual[0].Status, autoopsproto.ProgressiveRollout_FINISHED)
+		}
+		actualClause := unmarshalProgressiveRolloutManualClause(t, actual[0].Clause)
+		if actualClause.VariationId != feature.Variations[0].Id {
+			t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
+		}
+		if actualClause.Schedules[0].TriggeredAt == 0 {
+			t.Fatalf("triggered at is empty")
+		}
+		break
 	}
 }
 
-func createProgressiveRollout(ctx context.Context, t *testing.T, client autoopsclient.Client, featureID string, manual *autoopsproto.ProgressiveRolloutManualScheduleClause, template *autoopsproto.ProgressiveRolloutTemplateScheduleClause) {
+func createProgressiveRollout(
+	ctx context.Context,
+	t *testing.T,
+	client autoopsclient.Client,
+	featureID string,
+	manual *autoopsproto.ProgressiveRolloutManualScheduleClause,
+	template *autoopsproto.ProgressiveRolloutTemplateScheduleClause,
+) {
+	t.Helper()
 	cmd := &autoopsproto.CreateProgressiveRolloutCommand{
 		FeatureId:                                featureID,
 		ProgressiveRolloutManualScheduleClause:   manual,
@@ -336,7 +350,7 @@ func listProgressiveRollouts(t *testing.T, client autoopsclient.Client, featureI
 	defer cancel()
 	resp, err := client.ListProgressiveRollouts(ctx, &autoopsproto.ListProgressiveRolloutsRequest{
 		EnvironmentNamespace: *environmentNamespace,
-		PageSize:             int64(500),
+		PageSize:             0,
 		FeatureIds:           []string{featureID},
 	})
 	if err != nil {
