@@ -1410,7 +1410,7 @@ func (s *FeatureService) validateFeatureStatus(
 	if runningProgressiveRolloutExists {
 		dt, err := statusWaitingOrRunningProgressiveRolloutExists.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.WaitingOrRunningExperimentExists),
+			Message: localizer.MustLocalize(locale.AutoOpsWaitingOrRunningExperimentExists),
 		})
 		if err != nil {
 			return statusInternal.Err()
