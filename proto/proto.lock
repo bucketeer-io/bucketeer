@@ -3382,6 +3382,10 @@
               {
                 "name": "RedisCounterDeleter",
                 "integer": 7
+              },
+              {
+                "name": "ProgressiveRolloutWatcher",
+                "integer": 8
               }
             ]
           }

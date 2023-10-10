@@ -41,6 +41,7 @@ import (
 	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
 	notificationsender "github.com/bucketeer-io/bucketeer/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
+	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -261,6 +262,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		opsexecutor.WithLogger(logger),
 	)
 
+	progressiveRolloutExecutor := opsexecutor.NewProgressiveRolloutExecutor(
+		autoOpsClient,
+		executor.WithLogger(logger),
+	)
+
 	slackNotifier := notifier.NewSlackNotifier(*s.webURL)
 
 	notificationSender := notificationsender.NewSender(
@@ -336,6 +342,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			eventCounterClient,
 			featureClient,
 			autoOpsExecutor,
+			jobs.WithTimeout(5*time.Minute),
+			jobs.WithLogger(logger),
+		),
+		opsevent.NewProgressiveRolloutWacher(
+			environmentClient,
+			autoOpsClient,
+			progressiveRolloutExecutor,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
