@@ -6,6 +6,7 @@ import {
   selectAll as selectAllFeatures,
 } from '@/modules/features';
 import { useCurrentEnvironment } from '@/modules/me';
+import { addToast } from '@/modules/toasts';
 import { OpsType } from '@/proto/autoops/auto_ops_rule_pb';
 import { DatetimeClause } from '@/proto/autoops/clause_pb';
 import { CreateAutoOpsRuleCommand } from '@/proto/autoops/command_pb';
@@ -13,7 +14,11 @@ import { Feature } from '@/proto/feature/feature_pb';
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import { AppDispatch } from '@/store';
 import { Dialog } from '@headlessui/react';
-import { XCircleIcon, ExclamationIcon } from '@heroicons/react/solid';
+import {
+  XCircleIcon,
+  ExclamationIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/solid';
 import { FC, useEffect, useState } from 'react';
 import ReactDatePicker from 'react-datepicker';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -165,7 +170,15 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
         environmentNamespace: currentEnvironment.id,
         command: command,
       })
-    ).then(() => onClose());
+    ).then(() => {
+      dispatch(
+        addToast({
+          message: f(messages.feature.successMessages.schedule),
+          severity: 'success',
+        })
+      );
+      onClose();
+    });
   };
 
   const checkSubmitBtnDisabled = () => {
@@ -329,37 +342,59 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
                   setSelectedSwitchEnabledType(SwitchEnabledType.SCHEDULE);
                 }}
               />
-              <label htmlFor="schedule">{SwitchEnabledType.SCHEDULE}</label>
+              <label htmlFor="schedule">
+                {SwitchEnabledType.SCHEDULE}
+                <div className="rounded-sm bg-[#F3F9FD] text-[#399CE4] px-2 py-[6px] text-sm ml-3 inline-block">
+                  New
+                </div>
+              </label>
             </div>
             {selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE && (
               <div className="my-3">
-                <span className="input-label">
-                  {f(messages.autoOps.startDate)}
-                </span>
-                <ReactDatePicker
-                  dateFormat="yyyy-MM-dd HH:mm"
-                  showTimeSelect
-                  timeIntervals={60}
-                  placeholderText=""
-                  className={classNames('input-text w-full')}
-                  wrapperClassName="w-full"
-                  selected={datetime}
-                  onChange={(d) => {
-                    setDatetime(d);
-                    if (d.getTime() < new Date().getTime()) {
-                      setScheduleErrorMessage(
-                        f(messages.input.error.notLaterThanCurrentTime)
-                      );
-                    } else {
-                      setScheduleErrorMessage('');
-                    }
-                  }}
-                />
-                <p className="input-error">
-                  {scheduleErrorMessage && (
-                    <span role="alert">{scheduleErrorMessage}</span>
-                  )}
-                </p>
+                <div className="bg-blue-50 p-4 border-l-4 border-blue-400">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <InformationCircleIcon
+                        className="h-5 w-5 text-blue-400"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <p className="text-sm text-blue-700">
+                        {f(messages.feature.confirm.scheduleInfo)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <span className="input-label">
+                    {f(messages.autoOps.startDate)}
+                  </span>
+                  <ReactDatePicker
+                    dateFormat="yyyy-MM-dd HH:mm"
+                    showTimeSelect
+                    timeIntervals={60}
+                    placeholderText=""
+                    className={classNames('input-text w-full')}
+                    wrapperClassName="w-full"
+                    selected={datetime}
+                    onChange={(d) => {
+                      setDatetime(d);
+                      if (d.getTime() < new Date().getTime()) {
+                        setScheduleErrorMessage(
+                          f(messages.input.error.notLaterThanCurrentTime)
+                        );
+                      } else {
+                        setScheduleErrorMessage('');
+                      }
+                    }}
+                  />
+                  <p className="input-error">
+                    {scheduleErrorMessage && (
+                      <span role="alert">{scheduleErrorMessage}</span>
+                    )}
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -385,8 +420,9 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
                 selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE
               ) {
                 handleScheduleSubmit();
+              } else {
+                handleSubmit();
               }
-              handleSubmit();
             }}
           >
             {getSubmitBtnLabel()}

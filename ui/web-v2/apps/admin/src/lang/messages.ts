@@ -1605,6 +1605,11 @@ export const messages = {
         id: 'feature.confirm.selectDate',
         defaultMessage: 'Select date',
       }),
+      scheduleInfo: defineMessage({
+        id: 'feature.confirm.scheduleInfo',
+        defaultMessage:
+          'You can update or delete the schedule on the Auto Operations tab on the Feature Flag details page.',
+      }),
     },
     list: {
       header: {
@@ -1749,6 +1754,20 @@ export const messages = {
             'It will copy the full targeting configuration, including on/off variation from the original flag to the new flag.',
         }),
       },
+    },
+    successMessages: {
+      schedule: defineMessage({
+        id: 'successMessages.schedule',
+        defaultMessage: 'Schedule has been configured',
+      }),
+      flagEnabled: defineMessage({
+        id: 'successMessages.flagEnabled',
+        defaultMessage: 'Flag has been enabled',
+      }),
+      flagDisabled: defineMessage({
+        id: 'successMessages.flagDisabled',
+        defaultMessage: 'Flag has been disabled',
+      }),
     },
   },
   input: {
