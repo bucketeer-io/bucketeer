@@ -1605,6 +1605,11 @@ export const messages = {
         id: 'feature.confirm.selectDate',
         defaultMessage: 'Select date',
       }),
+      scheduleInfo: defineMessage({
+        id: 'feature.confirm.scheduleInfo',
+        defaultMessage:
+          'You can update or delete the schedule on the Auto Operations tab on the Feature Flag details page.',
+      }),
     },
     list: {
       header: {

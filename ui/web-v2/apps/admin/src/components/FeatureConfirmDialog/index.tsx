@@ -14,7 +14,11 @@ import { Feature } from '@/proto/feature/feature_pb';
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import { AppDispatch } from '@/store';
 import { Dialog } from '@headlessui/react';
-import { XCircleIcon, ExclamationIcon } from '@heroicons/react/solid';
+import {
+  XCircleIcon,
+  ExclamationIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/solid';
 import { FC, useEffect, useState } from 'react';
 import ReactDatePicker from 'react-datepicker';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -347,33 +351,50 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
             </div>
             {selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE && (
               <div className="my-3">
-                <span className="input-label">
-                  {f(messages.autoOps.startDate)}
-                </span>
-                <ReactDatePicker
-                  dateFormat="yyyy-MM-dd HH:mm"
-                  showTimeSelect
-                  timeIntervals={60}
-                  placeholderText=""
-                  className={classNames('input-text w-full')}
-                  wrapperClassName="w-full"
-                  selected={datetime}
-                  onChange={(d) => {
-                    setDatetime(d);
-                    if (d.getTime() < new Date().getTime()) {
-                      setScheduleErrorMessage(
-                        f(messages.input.error.notLaterThanCurrentTime)
-                      );
-                    } else {
-                      setScheduleErrorMessage('');
-                    }
-                  }}
-                />
-                <p className="input-error">
-                  {scheduleErrorMessage && (
-                    <span role="alert">{scheduleErrorMessage}</span>
-                  )}
-                </p>
+                <div className="bg-blue-50 p-4 border-l-4 border-blue-400">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <InformationCircleIcon
+                        className="h-5 w-5 text-blue-400"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <p className="text-sm text-blue-700">
+                        {f(messages.feature.confirm.scheduleInfo)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <span className="input-label">
+                    {f(messages.autoOps.startDate)}
+                  </span>
+                  <ReactDatePicker
+                    dateFormat="yyyy-MM-dd HH:mm"
+                    showTimeSelect
+                    timeIntervals={60}
+                    placeholderText=""
+                    className={classNames('input-text w-full')}
+                    wrapperClassName="w-full"
+                    selected={datetime}
+                    onChange={(d) => {
+                      setDatetime(d);
+                      if (d.getTime() < new Date().getTime()) {
+                        setScheduleErrorMessage(
+                          f(messages.input.error.notLaterThanCurrentTime)
+                        );
+                      } else {
+                        setScheduleErrorMessage('');
+                      }
+                    }}
+                  />
+                  <p className="input-error">
+                    {scheduleErrorMessage && (
+                      <span role="alert">{scheduleErrorMessage}</span>
+                    )}
+                  </p>
+                </div>
               </div>
             )}
           </div>
