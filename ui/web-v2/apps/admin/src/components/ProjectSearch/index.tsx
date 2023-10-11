@@ -11,8 +11,8 @@ import { Project } from '../../proto/environment/project_pb';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
-  SORT_OPTIONS_ID_ASC,
-  SORT_OPTIONS_ID_DESC,
+  SORT_OPTIONS_NAME_ASC,
+  SORT_OPTIONS_NAME_DESC,
 } from '../../types/list';
 import { ProjectSearchOptions } from '../../types/project';
 import { classNames } from '../../utils/css';
@@ -32,11 +32,11 @@ const sortItems: SortItem[] = [
     message: intl.formatMessage(messages.adminProject.sort.oldest),
   },
   {
-    key: SORT_OPTIONS_ID_ASC,
-    message: intl.formatMessage(messages.adminProject.sort.idAz),
+    key: SORT_OPTIONS_NAME_ASC,
+    message: intl.formatMessage(messages.adminProject.sort.nameAz),
   },
   {
-    key: SORT_OPTIONS_ID_DESC,
+    key: SORT_OPTIONS_NAME_DESC,
     message: intl.formatMessage(messages.adminProject.sort.idZa),
   },
 ];

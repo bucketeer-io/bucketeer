@@ -176,13 +176,13 @@ export const messages = {
       }),
     },
     sort: {
-      idAz: defineMessage({
-        id: 'adminProject.sort.idAz',
-        defaultMessage: 'ID A-Z',
+      nameAz: defineMessage({
+        id: 'adminProject.sort.nameAz',
+        defaultMessage: 'Name A-Z',
       }),
       idZa: defineMessage({
-        id: 'adminProject.sort.idZa',
-        defaultMessage: 'ID Z-A',
+        id: 'adminProject.sort.nameZa',
+        defaultMessage: 'Name Z-A',
       }),
       newest: defineMessage({
         id: 'adminProject.sort.newest',

@@ -35,8 +35,8 @@ import { AppDispatch } from '../../../store';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
-  SORT_OPTIONS_ID_DESC,
-  SORT_OPTIONS_ID_ASC,
+  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_ASC,
 } from '../../../types/list';
 import { ProjectSortOption, isProjectSortOption } from '../../../types/project';
 import {
@@ -63,14 +63,14 @@ const createSort = (sortOption?: ProjectSortOption): Sort => {
         orderBy: ListProjectsRequest.OrderBy.CREATED_AT,
         orderDirection: ListProjectsRequest.OrderDirection.DESC,
       };
-    case SORT_OPTIONS_ID_ASC:
+    case SORT_OPTIONS_NAME_ASC:
       return {
-        orderBy: ListProjectsRequest.OrderBy.ID,
+        orderBy: ListProjectsRequest.OrderBy.NAME,
         orderDirection: ListProjectsRequest.OrderDirection.ASC,
       };
-    case SORT_OPTIONS_ID_DESC:
+    case SORT_OPTIONS_NAME_DESC:
       return {
-        orderBy: ListProjectsRequest.OrderBy.ID,
+        orderBy: ListProjectsRequest.OrderBy.NAME,
         orderDirection: ListProjectsRequest.OrderDirection.DESC,
       };
     default:
