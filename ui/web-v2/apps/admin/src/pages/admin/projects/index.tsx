@@ -44,7 +44,10 @@ import {
   stringifySearchParams,
 } from '../../../utils/search-params';
 
-import { addFormSchema } from './formSchema';
+import {
+  addFormSchema,
+  updateFormSchema,
+} from './formSchema';
 
 interface Sort {
   orderBy: OrderBy;
@@ -157,7 +160,8 @@ export const AdminProjectIndexPage: FC = memo(() => {
   const addMethod = useForm({
     resolver: yupResolver(addFormSchema),
     defaultValues: {
-      id: '',
+      name: '',
+      urlCode: '',
       description: '',
     },
     mode: 'onChange',
@@ -169,11 +173,13 @@ export const AdminProjectIndexPage: FC = memo(() => {
       setOpen(true);
       resetUpdate({
         id: p.id,
+        name: p.name,
+        urlCode: p.urlCode,
         description: p.description,
         creatorEmail: p.creatorEmail,
       });
       history.push({
-        pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_PROJECTS}/${p.id}`,
+        pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_PROJECTS}/${p.urlCode}`,
         search: location.search,
       });
     },
@@ -181,9 +187,14 @@ export const AdminProjectIndexPage: FC = memo(() => {
   );
 
   const updateMethod = useForm({
+    resolver: yupResolver(updateFormSchema),
     mode: 'onChange',
   });
-  const { handleSubmit: handleUpdateSubmit, reset: resetUpdate } = updateMethod;
+  const {
+    handleSubmit: handleUpdateSubmit,
+    formState: { dirtyFields },
+    reset: resetUpdate,
+  } = updateMethod;
 
   const handleClose = useCallback(() => {
     resetAdd();
@@ -199,7 +210,8 @@ export const AdminProjectIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createProject({
-          id: data.id,
+          name: data.name,
+          urlCode: data.urlCode,
           description: data.description,
         })
       ).then(() => {
@@ -214,21 +226,30 @@ export const AdminProjectIndexPage: FC = memo(() => {
 
   const handleUpdate = useCallback(
     async (data) => {
+      let name: string;
+      let description: string;
+      if (dirtyFields.name) {
+        name = data.name;
+      }
+      if (dirtyFields.description) {
+        description = data.description;
+      }
       dispatch(
         updateProject({
-          id: projectId,
-          description: data.description,
+          id: data.id,
+          name: name,
+          description: description,
         })
       ).then(() => {
         dispatch(
           getProject({
-            id: projectId,
+            id: data.id,
           })
         );
         handleClose();
       });
     },
-    [dispatch, projectId]
+    [dispatch, dirtyFields]
   );
 
   const switchEnabledMethod = useForm({

@@ -235,16 +235,8 @@ func (s *EnvironmentService) CreateProject(
 	if err := validateCreateProjectRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	// TODO Once we support new create project API requiring name instead of id, we should remove this process.
 	name := strings.TrimSpace(req.Command.Name)
-	if req.Command.Name == "" {
-		name = req.Command.Id
-	}
-	// TODO Once we support new create project API requiring urlCode instead of id, we should remove this process.
-	urlCode := name
-	if req.Command.UrlCode != "" {
-		urlCode = req.Command.UrlCode
-	}
+	urlCode := strings.TrimSpace(req.Command.UrlCode)
 	project, err := domain.NewProject(name, urlCode, req.Command.Description, editor.Email, false)
 	if err != nil {
 		s.logger.Error(
@@ -272,9 +264,8 @@ func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, lo
 		}
 		return dt.Err()
 	}
-	// TODO Once we support new create project API requiring name instead of id, we should validate name only.
 	name := strings.TrimSpace(req.Command.Name)
-	if !projectNameRegex.MatchString(name) && !projectIDRegex.MatchString(req.Command.Id) {
+	if !projectNameRegex.MatchString(name) {
 		dt, err := statusInvalidProjectName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
@@ -284,7 +275,8 @@ func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, lo
 		}
 		return dt.Err()
 	}
-	if req.Command.UrlCode != "" && !projectUrlCodeRegex.MatchString(req.Command.UrlCode) {
+	urlCode := strings.TrimSpace(req.Command.UrlCode)
+	if !projectUrlCodeRegex.MatchString(urlCode) {
 		dt, err := statusInvalidProjectUrlCode.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),

@@ -281,7 +281,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(v2es.ErrProjectAlreadyExists)
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "id-0"},
+				Command: &proto.CreateProjectCommand{Name: "id-0", UrlCode: "id-0"},
 			},
 			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -294,7 +294,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(errors.New("error"))
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "id-1"},
+				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: "id-1"},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -307,7 +307,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "Project Name-001"},
+				Command: &proto.CreateProjectCommand{Name: "Project Name-001", UrlCode: "project-name-001"},
 			},
 			expectedErr: nil,
 		},

@@ -13,6 +13,7 @@ import {
   CreateProjectCommand,
   EnableProjectCommand,
   DisableProjectCommand,
+  RenameProjectCommand,
 } from '../proto/environment/command_pb';
 import { Project } from '../proto/environment/project_pb';
 import {
@@ -145,7 +146,8 @@ export const disableProject = createAsyncThunk<
 });
 
 export interface CreateProjectParams {
-  id: string;
+  name: string;
+  urlCode: string;
   description: string;
 }
 
@@ -156,7 +158,8 @@ export const createProject = createAsyncThunk<
 >(`${MODULE_NAME}/create`, async (params) => {
   const request = new CreateProjectRequest();
   const command = new CreateProjectCommand();
-  command.setId(params.id);
+  command.setName(params.name);
+  command.setUrlCode(params.urlCode);
   command.setDescription(params.description);
   request.setCommand(command);
   await setupAuthToken();
@@ -165,6 +168,7 @@ export const createProject = createAsyncThunk<
 
 export interface UpdateProjectParams {
   id: string;
+  name: string;
   description?: string;
 }
 
@@ -175,9 +179,16 @@ export const updateProject = createAsyncThunk<
 >(`${MODULE_NAME}/update`, async (params) => {
   const request = new UpdateProjectRequest();
   request.setId(params.id);
-  const command = new ChangeDescriptionProjectCommand();
-  command.setDescription(params.description);
-  request.setChangeDescriptionCommand(command);
+  if (params.name) {
+    const renameCommand = new RenameProjectCommand();
+    renameCommand.setName(params.name);
+    request.setRenameCommand(renameCommand);
+  }
+  if (params.description) {
+    const changeDescCommand = new ChangeDescriptionProjectCommand();
+    changeDescCommand.setDescription(params.description);
+    request.setChangeDescriptionCommand(changeDescCommand);
+  }
   await setupAuthToken();
   await grpc.updateProject(request);
 });
