@@ -65,6 +65,46 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = memo(
                   </div>
                 </div>
                 <div className="">
+                  <label htmlFor="name">
+                    <span className="input-label">{f(messages.name)}</span>
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      {...register('name')}
+                      type="text"
+                      name="name"
+                      id="name"
+                      className="input-text w-full"
+                      disabled={isSubmitted}
+                    />
+                    <p className="input-error">
+                      {errors.name && (
+                        <span role="alert">{errors.name.message}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="">
+                  <label htmlFor="urlCode">
+                    <span className="input-label">{f(messages.urlCode)}</span>
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      {...register('urlCode')}
+                      type="text"
+                      name="urlCode"
+                      id="urlCode"
+                      className="input-text w-full"
+                      disabled={true}
+                    />
+                    <p className="input-error">
+                      {errors.urlCode && (
+                        <span role="alert">{errors.name.urlCode}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="">
                   <label htmlFor="description" className="block">
                     <span className="input-label">
                       {f(messages.description)}

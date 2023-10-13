@@ -134,7 +134,7 @@ export const ProjectList: FC<ProjectListProps> = memo(
                             className="link text-left"
                             onClick={() => onUpdate(project)}
                           >
-                            {project.id}
+                            {project.name}
                           </button>
                           <div className="flex items-center ml-2 text-xs text-gray-700 whitespace-nowrap">
                             <span className="mr-1">{f(messages.created)}</span>

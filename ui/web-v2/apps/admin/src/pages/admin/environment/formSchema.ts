@@ -10,25 +10,15 @@ import { messages } from '../../../lang/messages';
 
 yup.setLocale(yupLocale);
 
-const regex = new RegExp('^[a-zA-Z0-9-]+$');
-const nameSchema = yup
-  .string()
-  .required()
-  .matches(regex, intl.formatMessage(messages.input.error.invalidName))
-  .test(
-    'maxLength',
-    intl.formatMessage(messages.input.error.maxLength, {
-      max: `${ENVIRONMENT_NAME_MAX_LENGTH}`,
-    }),
-    function (value) {
-      return value.length <= ENVIRONMENT_NAME_MAX_LENGTH;
-    }
-  );
+const nameRegex = /^[a-zA-Z0-9][a-zA-Z0-9\s-]*$/;
+const urlCodeRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
+
+const nameSchema = yup.string().max(ENVIRONMENT_NAME_MAX_LENGTH).required();
 
 const urlCodeSchema = yup
   .string()
   .required()
-  .matches(regex, intl.formatMessage(messages.input.error.invalidUrlCode))
+  .matches(urlCodeRegex, intl.formatMessage(messages.input.error.invalidUrlCode))
   .test(
     'maxLength',
     intl.formatMessage(messages.input.error.maxLength, {

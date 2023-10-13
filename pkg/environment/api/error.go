@@ -25,9 +25,11 @@ var (
 	statusInvalidCursor              = gstatus.New(codes.InvalidArgument, "environment: cursor is invalid")
 	statusEnvironmentIDRequired      = gstatus.New(codes.InvalidArgument, "environment: environment id must be specified")
 	statusInvalidEnvironmentID       = gstatus.New(codes.InvalidArgument, "environment: invalid environment id")
+	statusEnvironmentNameRequired    = gstatus.New(codes.InvalidArgument, "environment: environment name must be specified") // nolint:lll
 	statusInvalidEnvironmentName     = gstatus.New(codes.InvalidArgument, "environment: invalid environment name")
 	statusInvalidEnvironmentUrlCode  = gstatus.New(codes.InvalidArgument, "environment: invalid environment url code")
 	statusProjectIDRequired          = gstatus.New(codes.InvalidArgument, "environment: project id must be specified")
+	statusProjectNameRequired        = gstatus.New(codes.InvalidArgument, "environment: project name must be specified")
 	statusInvalidProjectName         = gstatus.New(codes.InvalidArgument, "environment: invalid project name")
 	statusInvalidProjectUrlCode      = gstatus.New(codes.InvalidArgument, "environment: invalid project url code")
 	statusInvalidProjectCreatorEmail = gstatus.New(codes.InvalidArgument, "environment: invalid project creator email")

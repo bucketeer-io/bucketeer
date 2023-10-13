@@ -38,21 +38,41 @@ export const ProjectAddForm: FC<ProjectAddFormProps> = memo(
             <div className="flex-1 flex flex-col justify-between">
               <div className="space-y-6 px-5 pt-6 pb-5 flex flex-col">
                 <div className="">
-                  <label htmlFor="id">
-                    <span className="input-label">{f(messages.id)}</span>
+                  <label htmlFor="name">
+                    <span className="input-label">{f(messages.name)}</span>
                   </label>
                   <div className="mt-1">
                     <input
-                      {...register('id')}
+                      {...register('name')}
                       type="text"
-                      name="id"
-                      id="id"
+                      name="name"
+                      id="name"
                       className="input-text w-full"
                       disabled={isSubmitted}
                     />
                     <p className="input-error">
-                      {errors.id && (
-                        <span role="alert">{errors.id.message}</span>
+                      {errors.name && (
+                        <span role="alert">{errors.name.message}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="">
+                  <label htmlFor="urlCode">
+                    <span className="input-label">{f(messages.urlCode)}</span>
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      {...register('urlCode')}
+                      type="text"
+                      name="urlCode"
+                      id="urlCode"
+                      className="input-text w-full"
+                      disabled={isSubmitted}
+                    />
+                    <p className="input-error">
+                      {errors.urlCode && (
+                        <span role="alert">{errors.urlCode.message}</span>
                       )}
                     </p>
                   </div>
