@@ -238,7 +238,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{Name: ""},
 			},
-			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: createError(statusProjectNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
 			desc:  "err: ErrInvalidProjectName: only space",
@@ -246,7 +246,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{Name: "    "},
 			},
-			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: createError(statusProjectNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
 			desc:  "err: ErrInvalidProjectName: max name length exceeded",
@@ -363,7 +363,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: ""},
 			},
-			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: createError(statusProjectNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
 			desc:  "err: ErrInvalidProjectName: only space",
@@ -371,7 +371,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "   "},
 			},
-			expectedErr: createError(statusInvalidProjectName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: createError(statusProjectNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
 			desc:  "err: ErrInvalidProjectName: max id length exceeded",

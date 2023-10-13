@@ -33,8 +33,10 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
-var environmentNameRegex = regexp.MustCompile("^[A-Za-z0-9-_ ]{1,50}$")
-var environmentUrlCodeRegex = regexp.MustCompile("^[a-z0-9-_.]{1,50}$")
+var (
+	maxEnvironmentNameLength = 50
+	environmentUrlCodeRegex  = regexp.MustCompile("^[a-z0-9-_.]{1,50}$")
+)
 
 func (s *EnvironmentService) GetEnvironmentV2(
 	ctx context.Context,
@@ -244,7 +246,17 @@ func validateCreateEnvironmentV2Request(
 		return dt.Err()
 	}
 	name := strings.TrimSpace(req.Command.Name)
-	if !environmentNameRegex.MatchString(name) {
+	if name == "" {
+		dt, err := statusEnvironmentNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(name) > maxEnvironmentNameLength {
 		dt, err := statusInvalidEnvironmentName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
@@ -446,7 +458,17 @@ func validateUpdateEnvironmentV2Request(id string, commands []command.Command, l
 	for _, cmd := range commands {
 		if c, ok := cmd.(*environmentproto.RenameEnvironmentV2Command); ok {
 			newName := strings.TrimSpace(c.Name)
-			if !environmentNameRegex.MatchString(newName) {
+			if newName == "" {
+				dt, err := statusEnvironmentNameRequired.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+			if len(newName) > maxEnvironmentNameLength {
 				dt, err := statusInvalidEnvironmentName.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
 					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),

@@ -235,8 +235,8 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				Command: &proto.CreateEnvironmentV2Command{Name: ""},
 			},
 			expectedErr: createError(
-				statusInvalidEnvironmentName,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+				statusEnvironmentNameRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
 			),
 		},
 		{
@@ -246,8 +246,8 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				Command: &proto.CreateEnvironmentV2Command{Name: "    "},
 			},
 			expectedErr: createError(
-				statusInvalidEnvironmentName,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+				statusEnvironmentNameRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
 			),
 		},
 		{
@@ -438,8 +438,8 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 				ChangeDescriptionCommand: &proto.ChangeDescriptionEnvironmentV2Command{Description: "desc-1"},
 			},
 			expectedErr: createError(
-				statusInvalidEnvironmentName,
-				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+				statusEnvironmentNameRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
 			),
 		},
 		{
