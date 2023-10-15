@@ -62,6 +62,8 @@ spec:
               value: "{{ .Values.env.eventCounterService }}"
             - name: BUCKETEER_BATCH_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
+            - name: BUCKETEER_BATCH_EXPERIMENT_CALCULATOR_SERVICE
+              value: "{{ .Values.env.experimentCalculatorService }}"
             - name: BUCKETEER_OPS_EVENT_SCHEDULE_COUNT_WATCHER
               value: "{{ .Values.env.scheduleCountWatcher }}"
             - name: BUCKETEER_OPS_EVENT_SCHEDULE_DATETIME_WATCHER

@@ -17,7 +17,12 @@ syntax = "proto3";
 package bucketeer.experimentcalculator;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/experimentcalculator";
 
-message BatchCalcRequest {}
+import "proto/experiment/experiment.proto";
+
+message BatchCalcRequest {
+  string environment_id = 1;
+  bucketeer.experiment.Experiment experiment = 2;
+}
 
 message BatchCalcResponse {}
 
