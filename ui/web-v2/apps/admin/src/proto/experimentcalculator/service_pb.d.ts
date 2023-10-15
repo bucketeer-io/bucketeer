@@ -2,8 +2,17 @@
 // file: proto/experimentcalculator/service.proto
 
 import * as jspb from "google-protobuf";
+import * as proto_experiment_experiment_pb from "../../proto/experiment/experiment_pb";
 
 export class BatchCalcRequest extends jspb.Message {
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  hasExperiment(): boolean;
+  clearExperiment(): void;
+  getExperiment(): proto_experiment_experiment_pb.Experiment | undefined;
+  setExperiment(value?: proto_experiment_experiment_pb.Experiment): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BatchCalcRequest.AsObject;
   static toObject(includeInstance: boolean, msg: BatchCalcRequest): BatchCalcRequest.AsObject;
@@ -16,6 +25,8 @@ export class BatchCalcRequest extends jspb.Message {
 
 export namespace BatchCalcRequest {
   export type AsObject = {
+    environmentId: string,
+    experiment?: proto_experiment_experiment_pb.Experiment.AsObject,
   }
 }
 
