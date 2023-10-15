@@ -80,7 +80,7 @@ func NewExperimentCalculator(
 	for {
 		resp, err := httpStan.CompileModel(context.TODO(), stan.ModelCode())
 		if err != nil {
-			logger.Error("Failed to compile model",
+			logger.Warn("ExperimentCalculator failed to compile model, retrying...",
 				zap.Error(err),
 			)
 			return nil
