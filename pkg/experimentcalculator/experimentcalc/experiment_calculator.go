@@ -106,30 +106,38 @@ func NewExperimentCalculator(
 }
 
 func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.BatchCalcRequest) {
+	startTime := time.Now()
 	experimentResult, calculationErr := e.createExperimentResult(ctx, request.EnvironmentId, request.Experiment)
 	if calculationErr != nil {
 		e.logger.Error("ExperimentCalculator failed to calculate experiment result",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("namespace", request.EnvironmentId),
+				zap.String("environmentNamespace", request.EnvironmentId),
 				zap.String("experiment_id", request.Experiment.Id),
 				zap.Error(calculationErr),
 			)...,
 		)
 		return
 	}
-	err := v2es.NewExperimentResultStorage(e.mysqlClient).
+	if err := v2es.NewExperimentResultStorage(e.mysqlClient).
 		UpdateExperimentResult(ctx, request.EnvironmentId, &domain.ExperimentResult{
 			ExperimentResult: experimentResult,
-		})
-	if err != nil {
+		}); err != nil {
 		e.logger.Error("ExperimentCalculator failed to update experiment result",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("namespace", request.EnvironmentId),
+				zap.String("environmentNamespace", request.EnvironmentId),
 				zap.String("experiment_id", request.Experiment.Id),
 				zap.Error(err),
 			)...,
 		)
+		return
 	}
+	e.logger.Info("ExperimentCalculator calculated successfully",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.String("environmentNamespace", request.EnvironmentId),
+			zap.String("experiment_id", request.Experiment.Id),
+			zap.Duration("elapsedTime", time.Since(startTime)),
+		)...,
+	)
 }
 
 func (e ExperimentCalculator) createExperimentResult(

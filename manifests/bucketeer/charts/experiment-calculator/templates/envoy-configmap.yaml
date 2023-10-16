@@ -125,7 +125,7 @@ data:
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
-                                timeout: 15s
+                                timeout: 1800s
                     stat_prefix: ingress_http
                     stream_idle_timeout: 300s
               transport_socket:
@@ -178,7 +178,7 @@ data:
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
-                                timeout: 15s
+                                timeout: 60s
                             - match:
                                 headers:
                                   - name: content-type
@@ -190,7 +190,7 @@ data:
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
-                                timeout: 15s
+                                timeout: 60s
                             - match:
                                 headers:
                                   - name: content-type
@@ -202,7 +202,7 @@ data:
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
-                                timeout: 15s
+                                timeout: 1800s
                     stat_prefix: egress_http
                     stream_idle_timeout: 300s
               transport_socket:

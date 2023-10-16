@@ -100,9 +100,16 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 			}
 			calculateErr := e.calculateExperiment(ctx, env, ex)
 			if calculateErr != nil {
-				return calculateErr
+				e.logger.Error("Failed to calculate experiment",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(calculateErr),
+						zap.String("environmentNamespace", env.Id),
+						zap.String("experimentId", ex.Id),
+					)...,
+				)
+				continue
 			}
-			e.logger.Debug("ExperimentCalculator calculated",
+			e.logger.Debug("Experiment calculated successfully",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.String("environmentNamespace", env.Id),
 					zap.String("experimentId", ex.Id),
