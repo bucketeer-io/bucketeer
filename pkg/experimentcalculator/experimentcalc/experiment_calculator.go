@@ -77,13 +77,13 @@ func NewExperimentCalculator(
 ) *ExperimentCalculator {
 	registerMetrics(metrics)
 	var compiledModel stan.ModelCompileResp
-	for {
+	for i := 0; i < 3; i++ {
 		resp, err := httpStan.CompileModel(context.TODO(), stan.ModelCode())
 		if err != nil {
 			logger.Warn("ExperimentCalculator failed to compile model, retrying...",
 				zap.Error(err),
 			)
-			return nil
+			time.Sleep(1 * time.Second)
 		} else {
 			compiledModel = resp
 			break

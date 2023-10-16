@@ -416,6 +416,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		eventCounterClient.Close()
 		featureClient.Close()
 		autoOpsClient.Close()
+		experimentCalculatorClient.Close()
 		mysqlClient.Close()
 	}()
 
