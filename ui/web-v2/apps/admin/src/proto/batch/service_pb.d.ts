@@ -49,6 +49,7 @@ export interface BatchJobMap {
   DOMAINEVENTINFORMER: 6;
   REDISCOUNTERDELETER: 7;
   PROGRESSIVEROLLOUTWATCHER: 8;
+  EXPERIMENTCALCULATOR: 9;
 }
 
 export const BatchJob: BatchJobMap;

@@ -413,7 +413,7 @@ data:
                               prefix: /bucketeer.eventcounter.EventCounterService
                             route:
                               cluster: backend
-                              timeout: 10800s
+                              timeout: 1800s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 3
@@ -421,7 +421,7 @@ data:
                               prefix: /bucketeer.experimentcalculator.ExperimentCalculatorService
                             route:
                               cluster: experiment-calculator
-                              timeout: 15s
+                              timeout: 1800s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 3
@@ -429,7 +429,7 @@ data:
                               prefix: /bucketeer.experiment.ExperimentService
                             route:
                               cluster: backend
-                              timeout: 15s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 3

@@ -25,7 +25,6 @@ import (
 
 	"github.com/go-gota/gota/dataframe"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
@@ -36,7 +35,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/proto/environment"
 	"github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	"github.com/bucketeer-io/bucketeer/proto/experiment"
 	calculator "github.com/bucketeer-io/bucketeer/proto/experimentcalculator"
@@ -78,12 +76,18 @@ func NewExperimentCalculator(
 	logger *zap.Logger,
 ) *ExperimentCalculator {
 	registerMetrics(metrics)
-	compiledModel, err := httpStan.CompileModel(context.TODO(), stan.ModelCode())
-	if err != nil {
-		logger.Error("Failed to compile model",
-			zap.Error(err),
-		)
-		return nil
+	var compiledModel stan.ModelCompileResp
+	for i := 0; i < 3; i++ {
+		resp, err := httpStan.CompileModel(context.TODO(), stan.ModelCode())
+		if err != nil {
+			logger.Warn("ExperimentCalculator failed to compile model, retrying...",
+				zap.Error(err),
+			)
+			time.Sleep(1 * time.Second)
+		} else {
+			compiledModel = resp
+			break
+		}
 	}
 	modelID := compiledModel.Name[len("models/"):]
 	return &ExperimentCalculator{
@@ -102,63 +106,38 @@ func NewExperimentCalculator(
 }
 
 func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.BatchCalcRequest) {
-	now := time.Now().In(e.location)
-	// Step 1: Get all the environments
-	environments, environmentErr := e.listEnvironments(ctx)
-	if environmentErr != nil {
-		e.logger.Error("ExperimentCalculator failed to list environments",
+	startTime := time.Now()
+	experimentResult, calculationErr := e.createExperimentResult(ctx, request.EnvironmentId, request.Experiment)
+	if calculationErr != nil {
+		e.logger.Error("ExperimentCalculator failed to calculate experiment result",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(environmentErr),
+				zap.String("environmentNamespace", request.EnvironmentId),
+				zap.String("experiment_id", request.Experiment.Id),
+				zap.Error(calculationErr),
 			)...,
 		)
 		return
 	}
-	// Step 2: Get all the events for the experiment
-	for _, env := range environments {
-		experiments, experimentErr := e.listExperiments(ctx, env.Id)
-		if experimentErr != nil {
-			e.logger.Error("ExperimentCalculator failed to list experiments",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.String("namespace", env.Id),
-					zap.Error(experimentErr),
-				)...,
-			)
-			return
-		}
-		for _, ex := range experiments {
-			if ex.Status == experiment.Experiment_STOPPED &&
-				now.Unix()-ex.StopAt > 2*day {
-				// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
-				// we still calculate the results for two days after it stopped.
-				continue
-			}
-			experimentResult, calculationErr := e.createExperimentResult(ctx, env.Id, ex)
-			if calculationErr != nil {
-				e.logger.Error("ExperimentCalculator failed to calculate experiment result",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("namespace", env.Id),
-						zap.String("experiment_id", ex.Id),
-						zap.Error(calculationErr),
-					)...,
-				)
-				continue
-			}
-			err := v2es.NewExperimentResultStorage(e.mysqlClient).
-				UpdateExperimentResult(ctx, env.Id, &domain.ExperimentResult{
-					ExperimentResult: experimentResult,
-				})
-			if err != nil {
-				e.logger.Error("ExperimentCalculator failed to update experiment result",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("namespace", env.Id),
-						zap.String("experiment_id", ex.Id),
-						zap.Error(err),
-					)...,
-				)
-				continue
-			}
-		}
+	if err := v2es.NewExperimentResultStorage(e.mysqlClient).
+		UpdateExperimentResult(ctx, request.EnvironmentId, &domain.ExperimentResult{
+			ExperimentResult: experimentResult,
+		}); err != nil {
+		e.logger.Error("ExperimentCalculator failed to update experiment result",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("environmentNamespace", request.EnvironmentId),
+				zap.String("experiment_id", request.Experiment.Id),
+				zap.Error(err),
+			)...,
+		)
+		return
 	}
+	e.logger.Info("ExperimentCalculator calculated successfully",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.String("environmentNamespace", request.EnvironmentId),
+			zap.String("experiment_id", request.Experiment.Id),
+			zap.Duration("elapsedTime", time.Since(startTime)),
+		)...,
+	)
 }
 
 func (e ExperimentCalculator) createExperimentResult(
@@ -231,42 +210,6 @@ func (e ExperimentCalculator) createExperimentResult(
 	}
 
 	return experimentResult, nil
-}
-
-func (e ExperimentCalculator) listEnvironments(
-	ctx context.Context,
-) ([]*environment.EnvironmentV2, error) {
-	listEnvironmentsRequest := environment.ListEnvironmentsV2Request{
-		PageSize: 0,
-		Cursor:   "",
-		Archived: wrapperspb.Bool(false),
-	}
-	resp, err := e.environmentClient.ListEnvironmentsV2(ctx, &listEnvironmentsRequest)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Environments, err
-}
-
-func (e ExperimentCalculator) listExperiments(
-	ctx context.Context,
-	namespace string,
-) ([]*experiment.Experiment, error) {
-	req := &experiment.ListExperimentsRequest{
-		From:                 time.Now().In(e.location).Add(-2 * 24 * time.Hour).Unix(),
-		PageSize:             0,
-		Cursor:               "",
-		EnvironmentNamespace: namespace,
-		Statuses: []experiment.Experiment_Status{
-			experiment.Experiment_RUNNING,
-			experiment.Experiment_STOPPED,
-		},
-	}
-	resp, err := e.experimentClient.ListExperiments(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Experiments, nil
 }
 
 func (e ExperimentCalculator) getEvaluationCount(
@@ -377,7 +320,7 @@ func (e ExperimentCalculator) calcGoalResult(
 	for i := 0; i < len(vids); i++ {
 		if goalUc[i] == 0 || valueMeans[i] == 0 || valueVars[i] == 0 {
 			calculationExceptionCounter.WithLabelValues(valuesAreZero).Inc()
-			e.logger.Error("Values are zero",
+			e.logger.Warn("Values are zero",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.String("variation_id", vids[i]),
 					zap.Int64("goal_uc", goalUc[i]),
@@ -427,47 +370,49 @@ func (e ExperimentCalculator) appendVariationResult(
 
 		goalResult.VariationResults[i].EvaluationUserCountTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(srcVrs[i].EvaluationCount.UserCount)},
+			Values:     []float64{float64(goalResult.VariationResults[i].EvaluationCount.UserCount)},
 		}
 		goalResult.VariationResults[i].EvaluationEventCountTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(srcVrs[i].EvaluationCount.EventCount)},
+			Values:     []float64{float64(goalResult.VariationResults[i].EvaluationCount.EventCount)},
 		}
 		goalResult.VariationResults[i].GoalUserCountTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(srcVrs[i].ExperimentCount.UserCount)},
+			Values:     []float64{float64(goalResult.VariationResults[i].ExperimentCount.UserCount)},
 		}
 		goalResult.VariationResults[i].GoalEventCountTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(srcVrs[i].ExperimentCount.EventCount)},
+			Values:     []float64{float64(goalResult.VariationResults[i].ExperimentCount.EventCount)},
 		}
 		goalResult.VariationResults[i].GoalValueSumTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].ExperimentCount.ValueSum},
+			Values:     []float64{goalResult.VariationResults[i].ExperimentCount.ValueSum},
 		}
 		goalResult.VariationResults[i].CvrMedianTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].CvrProb.Median},
+			Values:     []float64{goalResult.VariationResults[i].CvrProb.Median},
 		}
 		goalResult.VariationResults[i].CvrPercentile025Timeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].CvrProb.Percentile025},
+			Values:     []float64{goalResult.VariationResults[i].CvrProb.Percentile025},
 		}
 		goalResult.VariationResults[i].CvrPercentile975Timeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].CvrProb.Percentile975},
+			Values:     []float64{goalResult.VariationResults[i].CvrProb.Percentile975},
 		}
 		cvr := 0.0
-		if srcVrs[i].EvaluationCount.UserCount != 0 {
-			cvr = float64(srcVrs[i].ExperimentCount.UserCount) / float64(srcVrs[i].EvaluationCount.UserCount)
+		if goalResult.VariationResults[i].EvaluationCount.UserCount != 0 {
+			cvr = float64(goalResult.VariationResults[i].ExperimentCount.UserCount) /
+				float64(goalResult.VariationResults[i].EvaluationCount.UserCount)
 		}
 		goalResult.VariationResults[i].CvrTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
 			Values:     []float64{cvr},
 		}
 		valuePerUser := 0.0
-		if srcVrs[i].ExperimentCount.UserCount != 0 {
-			valuePerUser = srcVrs[i].ExperimentCount.ValueSum / float64(srcVrs[i].ExperimentCount.UserCount)
+		if goalResult.VariationResults[i].ExperimentCount.UserCount != 0 {
+			valuePerUser = goalResult.VariationResults[i].ExperimentCount.ValueSum /
+				float64(goalResult.VariationResults[i].ExperimentCount.UserCount)
 		}
 		goalResult.VariationResults[i].GoalValueSumPerUserTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
@@ -475,15 +420,15 @@ func (e ExperimentCalculator) appendVariationResult(
 		}
 		goalResult.VariationResults[i].GoalValueSumPerUserMedianTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].GoalValueSumPerUserProb.Median},
+			Values:     []float64{goalResult.VariationResults[i].GoalValueSumPerUserProb.Median},
 		}
 		goalResult.VariationResults[i].GoalValueSumPerUserPercentile025Timeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].GoalValueSumPerUserProb.Percentile025},
+			Values:     []float64{goalResult.VariationResults[i].GoalValueSumPerUserProb.Percentile025},
 		}
 		goalResult.VariationResults[i].GoalValueSumPerUserPercentile975Timeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
-			Values:     []float64{srcVrs[i].GoalValueSumPerUserProb.Percentile975},
+			Values:     []float64{goalResult.VariationResults[i].GoalValueSumPerUserProb.Percentile975},
 		}
 	}
 }
@@ -612,22 +557,28 @@ func copyVariationCount(from *eventcounter.VariationCount) *eventcounter.Variati
 }
 
 func copyDistributionSummary(from *eventcounter.DistributionSummary) *eventcounter.DistributionSummary {
-	hist := make([]int64, 0, len(from.Histogram.Hist))
-	bins := make([]float64, 0, len(from.Histogram.Bins))
-	copy(hist, from.Histogram.Hist)
-	copy(bins, from.Histogram.Bins)
-	return &eventcounter.DistributionSummary{
-		Mean: from.Mean,
-		Sd:   from.Sd,
-		Rhat: from.Rhat,
-		Histogram: &eventcounter.Histogram{
-			Hist: hist,
-			Bins: bins,
-		},
+	if from == nil {
+		return &eventcounter.DistributionSummary{}
+	}
+	e := &eventcounter.DistributionSummary{
+		Mean:          from.Mean,
+		Sd:            from.Sd,
+		Rhat:          from.Rhat,
 		Median:        from.Median,
 		Percentile025: from.Percentile025,
 		Percentile975: from.Percentile975,
 	}
+	if from.Histogram != nil {
+		hist := make([]int64, 0, len(from.Histogram.Hist))
+		bins := make([]float64, 0, len(from.Histogram.Bins))
+		copy(hist, from.Histogram.Hist)
+		copy(bins, from.Histogram.Bins)
+		e.Histogram = &eventcounter.Histogram{
+			Hist: hist,
+			Bins: bins,
+		}
+	}
+	return e
 }
 
 func convertFitSamples(

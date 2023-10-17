@@ -3386,6 +3386,10 @@
               {
                 "name": "ProgressiveRolloutWatcher",
                 "integer": 8
+              },
+              {
+                "name": "ExperimentCalculator",
+                "integer": 9
               }
             ]
           }
@@ -11003,7 +11007,19 @@
       "def": {
         "messages": [
           {
-            "name": "BatchCalcRequest"
+            "name": "BatchCalcRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "experiment",
+                "type": "bucketeer.experiment.Experiment"
+              }
+            ]
           },
           {
             "name": "BatchCalcResponse"
@@ -11019,6 +11035,11 @@
                 "out_type": "BatchCalcResponse"
               }
             ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/experiment/experiment.proto"
           }
         ],
         "package": {

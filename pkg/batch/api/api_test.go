@@ -29,6 +29,7 @@ import (
 	aoclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/calculator"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
@@ -37,6 +38,7 @@ import (
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client/mock"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
+	experimentcalculatorclient "github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -541,6 +543,7 @@ func newBatchService(t *testing.T,
 	domainMockEventPuller := &domainEventPullerMock{}
 	cacheMock := cachemock.NewMockMultiGetDeleteCountCache(mockController)
 	mysqlMockClient := mysqlmock.NewMockClient(mockController)
+	experimentCalculatorClient := experimentcalculatorclient.NewMockClient(mockController)
 
 	setupMock(
 		environmentMockClient,
@@ -613,6 +616,14 @@ func newBatchService(t *testing.T,
 		rediscounter.NewRedisCounterDeleter(
 			cacheMock,
 			environmentMockClient,
+			jobs.WithTimeout(5*time.Minute),
+			jobs.WithLogger(logger),
+		),
+		calculator.NewExperimentCalculate(
+			environmentMockClient,
+			experimentMockClient,
+			experimentCalculatorClient,
+			jpLocation,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),

@@ -80,11 +80,11 @@ health:
   # The duration is up to resources.
   # cf. CPU: 500m, MEM: 3Gi -> 280sec
   livenessProbe:
-    initialDelaySeconds: 300
+    initialDelaySeconds: 10
     periodSeconds: 3
     failureThreshold: 5
   readinessProbe:
-    initialDelaySeconds: 300
+    initialDelaySeconds: 10
     periodSeconds: 3
     failureThreshold: 2
 
