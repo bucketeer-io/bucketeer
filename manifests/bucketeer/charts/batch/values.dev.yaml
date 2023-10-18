@@ -47,3 +47,4 @@ serviceToken:
 
 cronjob:
   experimentStatusUpdaterSchedule: "* * * * *"
+  experimentCalculatorSchedule: "* * * * *"
