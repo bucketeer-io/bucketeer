@@ -56,5 +56,5 @@ oauth:
   redirectUrls: https://google.com
   issuer: https://accounts.google.com
 webhook:
-  baseURL: http://localhost:9000
+  baseURL: https://web-gateway.bucketeer.org
   kmsResourceName: vault
