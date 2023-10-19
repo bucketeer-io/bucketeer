@@ -13,7 +13,13 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 var proto_event_client_event_pb = require('../../../proto/event/client/event_pb.js');
 goog.object.extend(proto, proto_event_client_event_pb);
@@ -331,7 +337,8 @@ proto.bucketeer.event.service.UserEvent.prototype.getDataMap = function(opt_noLa
  */
 proto.bucketeer.event.service.UserEvent.prototype.clearDataMap = function() {
   this.getDataMap().clear();
-  return this;};
+  return this;
+};
 
 
 /**
