@@ -92,6 +92,7 @@ func (w *evalEvtWriter) Write(
 							zap.Error(err),
 							zap.String("id", id),
 							zap.String("environmentNamespace", environmentNamespace),
+							zap.Any("evalEvent", evt),
 						)
 						continue
 					}
@@ -101,6 +102,7 @@ func (w *evalEvtWriter) Write(
 							zap.Error(err),
 							zap.String("id", id),
 							zap.String("environmentNamespace", environmentNamespace),
+							zap.Any("evalEvent", evt),
 						)
 					}
 					fails[id] = retriable
@@ -113,6 +115,7 @@ func (w *evalEvtWriter) Write(
 					"The event is an unexpected message type",
 					zap.String("id", id),
 					zap.String("environmentNamespace", environmentNamespace),
+					zap.Any("evalEvent", evt),
 				)
 				fails[id] = false
 			}
@@ -126,8 +129,22 @@ func (w *evalEvtWriter) Write(
 			zap.Error(err),
 		)
 	}
+	failedToAppendMap := make(map[string]*epproto.EvaluationEvent)
 	for id, f := range fs {
+		// To log which event has failed to append in the BigQuery, we need to find the event
+		for _, ee := range evalEvents {
+			if id == ee.Id {
+				failedToAppendMap[id] = ee
+			}
+		}
+		// Update the fails map
 		fails[id] = f
+	}
+	if len(failedToAppendMap) > 0 {
+		w.logger.Error(
+			"failed to append rows in the bigquery",
+			zap.Any("goalEvents", failedToAppendMap),
+		)
 	}
 	return fails
 }
@@ -139,6 +156,11 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 ) (*epproto.EvaluationEvent, bool, error) {
 	experiments, err := w.listExperiments(ctx, environmentNamespace)
 	if err != nil {
+		w.logger.Error("failed to list experiments",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.Any("evalEvent", e),
+		)
 		return nil, true, err
 	}
 	if len(experiments) == 0 {

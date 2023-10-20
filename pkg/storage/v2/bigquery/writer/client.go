@@ -52,6 +52,7 @@ type Writer interface {
 type writer struct {
 	client *managedwriter.ManagedStream
 	opts   *options
+	logger *zap.Logger
 }
 
 func NewWriter(
@@ -69,8 +70,10 @@ func NewWriter(
 	if dopts.metrics != nil {
 		registerMetrics(dopts.metrics)
 	}
+	logger := dopts.logger.Named("bigquery")
 	c, err := managedwriter.NewClient(ctx, project)
 	if err != nil {
+		logger.Error("Failed to create client", zap.Error(err))
 		return nil, err
 	}
 	managedStream, err := c.NewManagedStream(
@@ -83,11 +86,13 @@ func NewWriter(
 		managedwriter.EnableWriteRetries(true),
 	)
 	if err != nil {
+		logger.Error("Failed to create the managed stream", zap.Error(err))
 		return nil, err
 	}
 	return &writer{
 		client: managedStream,
 		opts:   dopts,
+		logger: logger,
 	}, nil
 }
 
@@ -102,7 +107,11 @@ func (w *writer) AppendRows(
 	for idx, b := range batches {
 		r, err := w.client.AppendRows(ctx, b)
 		if err != nil {
-			// We can't use `continue` because index will be shifted in next for loop
+			w.logger.Error("failed to append rows",
+				zap.Error(err),
+				zap.Int("index", idx),
+			)
+			// We can't use `continue` because the index will be shifted in next for loop
 			fails = append(fails, idx)
 		}
 		results = append(results, r)
@@ -110,6 +119,10 @@ func (w *writer) AppendRows(
 	for idx, r := range results {
 		_, err := r.GetResult(ctx)
 		if err != nil {
+			w.logger.Error("failed to get result of appending",
+				zap.Error(err),
+				zap.Int("index", idx),
+			)
 			fails = append(fails, idx)
 		}
 	}
