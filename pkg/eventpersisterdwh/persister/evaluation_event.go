@@ -151,7 +151,11 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 	var ud []byte
 	if e.User != nil {
 		var err error
-		ud, err = json.Marshal(e.User.Data)
+		userData := make(map[string]string)
+		if e.User.Data != nil {
+			userData = e.User.Data
+		}
+		ud, err = json.Marshal(userData)
 		if err != nil {
 			return nil, false, err
 		}
