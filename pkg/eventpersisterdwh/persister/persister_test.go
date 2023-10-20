@@ -185,7 +185,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 		Reason:         &featureproto.Reason{Type: featureproto.Reason_CLIENT},
 		User: &userproto.User{
 			Id:   "uid",
-			Data: map[string]string{"atr": "av"},
+			Data: nil,
 		},
 	}
 	userData, err := json.Marshal(evaluationEvent.User.Data)
@@ -394,7 +394,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "success: with empty tag",
+			desc: "success: with empty tag and user data is nil",
 			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
@@ -425,7 +425,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				Id:                   eventID,
 				FeatureId:            evaluationEventWithTagEmpty.FeatureId,
 				FeatureVersion:       evaluationEventWithTagEmpty.FeatureVersion,
-				UserData:             string(userData),
+				UserData:             "{}",
 				UserId:               evaluationEventWithTagEmpty.UserId,
 				VariationId:          evaluationEventWithTagEmpty.VariationId,
 				Reason:               evaluationEventWithTagEmpty.Reason.Type.String(),
@@ -822,7 +822,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "success: with empty tag",
+			desc: "success: with empty tag and user data is nil",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
@@ -868,7 +868,10 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						FeatureId:            "fid",
 						Tag:                  "",
-						User:                 user,
+						User: &userproto.User{
+							Id:   "uid",
+							Data: nil,
+						},
 					},
 				).Return(&featureproto.EvaluateFeaturesResponse{
 					UserEvaluations: &featureproto.UserEvaluations{
@@ -894,7 +897,10 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 						EnvironmentNamespace: environmentNamespace,
 						FeatureId:            "fid-2",
 						Tag:                  "",
-						User:                 user,
+						User: &userproto.User{
+							Id:   "uid",
+							Data: nil,
+						},
 					},
 				).Return(&featureproto.EvaluateFeaturesResponse{
 					UserEvaluations: &featureproto.UserEvaluations{
@@ -916,11 +922,14 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				}, nil)
 			},
 			input: &eventproto.GoalEvent{
-				SourceId:    eventproto.SourceId_ANDROID,
-				Timestamp:   now.Unix(),
-				GoalId:      "gid",
-				UserId:      "uid",
-				User:        user,
+				SourceId:  eventproto.SourceId_ANDROID,
+				Timestamp: now.Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: nil,
+				},
 				Value:       float64(1.2),
 				Evaluations: nil,
 				Tag:         "",
@@ -937,7 +946,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 					FeatureVersion:       int32(1),
 					VariationId:          "variationID_B",
 					Reason:               featureproto.Reason_RULE.String(),
-					UserData:             string(userData),
+					UserData:             "{}",
 					EnvironmentNamespace: environmentNamespace,
 					Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
 				},
@@ -952,7 +961,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 					FeatureVersion:       int32(1),
 					VariationId:          "variationID-2_A",
 					Reason:               featureproto.Reason_DEFAULT.String(),
-					UserData:             string(userData),
+					UserData:             "{}",
 					EnvironmentNamespace: environmentNamespace,
 					Timestamp:            time.Unix(now.Unix(), 0).UnixMicro(),
 				},
