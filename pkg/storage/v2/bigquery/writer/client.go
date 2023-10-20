@@ -69,7 +69,7 @@ type writer struct {
 	desc          protoreflect.MessageDescriptor
 	emulator      bool
 	opts          *options
-	logger *zap.Logger
+	logger        *zap.Logger
 }
 
 func NewWriter(
@@ -127,7 +127,7 @@ func NewWriter(
 		desc:          desc,
 		emulator:      os.Getenv(bigqueryEmulatorHostEnv) != "",
 		opts:          dopts,
-		logger: logger,
+		logger:        logger,
 	}, nil
 }
 
