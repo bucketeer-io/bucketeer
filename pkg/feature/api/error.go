@@ -59,7 +59,6 @@ var (
 		codes.InvalidArgument,
 		"feature: feature must contain one or more tags",
 	)
-	statusMissingFeatureTag               = gstatus.New(codes.InvalidArgument, "feature: missing feature tag")
 	statusUnknownCommand                  = gstatus.New(codes.InvalidArgument, "feature: unknown command")
 	statusMissingRule                     = gstatus.New(codes.InvalidArgument, "feature: missing rule")
 	statusMissingRuleID                   = gstatus.New(codes.InvalidArgument, "feature: missing rule id")
