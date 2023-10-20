@@ -1252,6 +1252,23 @@ func TestEvaluateFeatures(t *testing.T) {
 	}
 }
 
+func TestEvaluateFeaturesWithEmptyTag(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	featureID1 := newFeatureID(t)
+	cmd1 := newCreateFeatureCommand(featureID1)
+	createFeature(t, client, cmd1)
+	featureID2 := newFeatureID(t)
+	cmd2 := newCreateFeatureCommand(featureID2)
+	createFeature(t, client, cmd2)
+	enableFeature(t, cmd2.Id, client)
+	userID := "user-id-01"
+	res := evaluateFeatures(t, client, userID, "")
+	if len(res.UserEvaluations.Evaluations) < 2 {
+		t.Fatalf("length of user evaluations is not enough. Expected: >=%d, Actual: %d", 2, len(res.UserEvaluations.Evaluations))
+	}
+}
+
 // TODO: implement the process to delete new environments so that we can run "TestCloneFeature"
 /*
 func TestCloneFeature(t *testing.T) {

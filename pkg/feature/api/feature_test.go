@@ -620,13 +620,6 @@ func TestEvaluateFeatures(t *testing.T) {
 			expectedErr: createError(statusMissingUserID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id")),
 		},
 		{
-			desc:        "fail: ErrMissingFeatureTag",
-			setup:       nil,
-			input:       &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0"},
-			expected:    nil,
-			expectedErr: createError(statusMissingFeatureTag, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
-		},
-		{
 			desc: "fail: return errInternal when getting features",
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(

@@ -788,16 +788,6 @@ func validateEvaluateFeatures(req *featureproto.EvaluateFeaturesRequest, localiz
 		}
 		return dt.Err()
 	}
-	if req.Tag == "" {
-		dt, err := statusMissingFeatureTag.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 
