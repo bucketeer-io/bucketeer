@@ -203,7 +203,7 @@ func (e ExperimentCalculator) createExperimentResult(
 				return nil, errFailedToGetGoalEventCount
 			}
 			gr := e.calcGoalResult(ctx, evalVc, goalVc, experiment.BaseVariationId)
-			gr.GoalId = experiment.GoalId
+			gr.GoalId = goalID
 			e.appendVariationResult(ctx, timestamp, goalResult, gr.VariationResults)
 		}
 		experimentResult.GoalResults = append(experimentResult.GoalResults, goalResult)
