@@ -112,7 +112,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 		e.logger.Error("ExperimentCalculator failed to calculate experiment result",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("environmentNamespace", request.EnvironmentId),
-				zap.String("experiment_id", request.Experiment.Id),
+				zap.Any("experiment", request.Experiment),
 				zap.Error(calculationErr),
 			)...,
 		)
@@ -125,7 +125,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 		e.logger.Error("ExperimentCalculator failed to update experiment result",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("environmentNamespace", request.EnvironmentId),
-				zap.String("experiment_id", request.Experiment.Id),
+				zap.Any("experiment", request.Experiment),
 				zap.Error(err),
 			)...,
 		)
@@ -134,7 +134,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 	e.logger.Info("ExperimentCalculator calculated successfully",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.String("environmentNamespace", request.EnvironmentId),
-			zap.String("experiment_id", request.Experiment.Id),
+			zap.Any("experiment", request.Experiment),
 			zap.Duration("elapsedTime", time.Since(startTime)),
 		)...,
 	)
@@ -177,7 +177,7 @@ func (e ExperimentCalculator) createExperimentResult(
 				e.logger.Error("ExperimentCalculator failed to get evaluation count",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.String("namespace", envNamespace),
-						zap.String("experiment_id", experiment.Id),
+						zap.Any("experiment", experiment),
 						zap.Error(evalErr),
 					)...,
 				)
@@ -196,7 +196,7 @@ func (e ExperimentCalculator) createExperimentResult(
 				e.logger.Error("ExperimentCalculator failed to get goal count",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.String("namespace", envNamespace),
-						zap.String("experiment_id", experiment.Id),
+						zap.Any("experiment", experiment),
 						zap.Error(goalErr),
 					)...,
 				)

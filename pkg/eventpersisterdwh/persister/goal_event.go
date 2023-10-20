@@ -98,6 +98,7 @@ func (w *goalEvtWriter) Write(
 							zap.Error(err),
 							zap.String("id", id),
 							zap.String("environmentNamespace", environmentNamespace),
+							zap.Any("goalEvent", evt),
 						)
 						continue
 					}
@@ -107,6 +108,7 @@ func (w *goalEvtWriter) Write(
 							zap.Error(err),
 							zap.String("id", id),
 							zap.String("environmentNamespace", environmentNamespace),
+							zap.Any("goalEvent", evt),
 						)
 					}
 					fails[id] = retriable
@@ -119,6 +121,7 @@ func (w *goalEvtWriter) Write(
 					"The event is an unexpected message type",
 					zap.String("id", id),
 					zap.String("environmentNamespace", environmentNamespace),
+					zap.Any("goalEvent", evt),
 				)
 				fails[id] = false
 			}
@@ -132,8 +135,22 @@ func (w *goalEvtWriter) Write(
 			zap.Error(err),
 		)
 	}
+	failedToAppendMap := make(map[string]*epproto.GoalEvent)
 	for id, f := range fs {
+		// To log which event has failed to append in the BigQuery, we need to find the event
+		for _, ge := range goalEvents {
+			if id == ge.Id {
+				failedToAppendMap[id] = ge
+			}
+		}
+		// Update the fails map
 		fails[id] = f
+	}
+	if len(failedToAppendMap) > 0 {
+		w.logger.Error(
+			"failed to append rows in the bigquery",
+			zap.Any("goalEvents", failedToAppendMap),
+		)
 	}
 	return fails
 }
@@ -219,6 +236,11 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 	// List experiments
 	experiments, err := w.listExperiments(ctx, environmentNamespace)
 	if err != nil {
+		w.logger.Error("failed to list experiments",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.Any("goalEvent", event),
+		)
 		return nil, true, err
 	}
 	if len(experiments) == 0 {
@@ -256,8 +278,18 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 		)
 		if err != nil {
 			if err == ErrEvaluationsAreEmpty {
+				w.logger.Error("evaluations are empty",
+					zap.Error(err),
+					zap.String("environmentNamespace", environmentNamespace),
+					zap.Any("goalEvent", event),
+				)
 				return nil, false, err
 			}
+			w.logger.Error("failed to get user evaluation",
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+				zap.Any("goalEvent", event),
+			)
 			return nil, true, err
 		}
 		evals = append(evals, ev)
