@@ -3,7 +3,7 @@ WITH grouped_by_user_evaluation AS (
         user_id,
         variation_id,
         COUNT(id) as event_count,
-        SUM(value) as value_sum
+        IFNULL(SUM(value), 0) as value_sum
     FROM
         `%s`
     WHERE
