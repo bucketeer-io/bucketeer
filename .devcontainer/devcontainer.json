@@ -11,6 +11,7 @@
     "codespaces": {
       "openFiles": [
         "README.md",
+        "DEVELOPMENT.md",
         "Makefile"
       ]
     }

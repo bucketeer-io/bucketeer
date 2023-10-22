@@ -277,6 +277,10 @@ modify-hosts:
 	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.org" | sudo tee -a /etc/hosts
 	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.org" | sudo tee -a /etc/hosts
 
+# enable vault transit secret engine
+enable-vault-transit:
+	kubectl exec localenv-vault-0 -- vault secrets enable transit
+
 # generate tls certificate
 generate-tls-certificate:
 	make -C tools/dev generate-tls-certificate
@@ -323,4 +327,4 @@ minikube-load-images:
 # Deploy Bucketeer to minikube
 deploy-service-to-minikube:
 	helm install ${SERVICE} manifests/bucketeer/charts/${SERVICE}/ --values manifests/bucketeer/charts/${SERVICE}/values.dev.yaml \
-	--set serviceToken.token=${SERVICE_TOKEN} 
+	--set serviceToken.token=$$(cat tools/dev/cert/service-token)
