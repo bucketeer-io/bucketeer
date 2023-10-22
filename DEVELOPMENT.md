@@ -107,3 +107,12 @@ helm install backend manifests/bucketeer/charts/backend/ --values manifests/buck
 As you can see, we use the `values.dev.yaml` file to override the default values in `values.yaml` file. And we use the
 service token (`/workspaces/bucketeer/tools/dev/cert/service-token`) that we generated in step 3 to authenticate the
 gRPC service.
+
+
+> Pro tip: You can use `make deploy-service-to-minikube` to deploy services.
+> For example, we will deploy the `backend` service:
+> ```shell
+> SERVICE=backend make deploy-service-to-minikube
+> ```
+> This command will deploy the `backend` service to minikube. And it will use the service token that we generated in *step 3* to authenticate the gRPC service. \
+> But make sure you are in the project root directory when you run this command.
