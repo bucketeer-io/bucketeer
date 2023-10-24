@@ -38,20 +38,6 @@ func (m *MockEnvironmentStorage) EXPECT() *MockEnvironmentStorageMockRecorder {
 	return m.recorder
 }
 
-// CreateEnvironment mocks base method.
-func (m *MockEnvironmentStorage) CreateEnvironment(ctx context.Context, e *domain.Environment) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateEnvironment", ctx, e)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateEnvironment indicates an expected call of CreateEnvironment.
-func (mr *MockEnvironmentStorageMockRecorder) CreateEnvironment(ctx, e interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEnvironment", reflect.TypeOf((*MockEnvironmentStorage)(nil).CreateEnvironment), ctx, e)
-}
-
 // CreateEnvironmentV2 mocks base method.
 func (m *MockEnvironmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
 	m.ctrl.T.Helper()
@@ -64,36 +50,6 @@ func (m *MockEnvironmentStorage) CreateEnvironmentV2(ctx context.Context, e *dom
 func (mr *MockEnvironmentStorageMockRecorder) CreateEnvironmentV2(ctx, e interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEnvironmentV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).CreateEnvironmentV2), ctx, e)
-}
-
-// GetEnvironment mocks base method.
-func (m *MockEnvironmentStorage) GetEnvironment(ctx context.Context, id string) (*domain.Environment, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEnvironment", ctx, id)
-	ret0, _ := ret[0].(*domain.Environment)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEnvironment indicates an expected call of GetEnvironment.
-func (mr *MockEnvironmentStorageMockRecorder) GetEnvironment(ctx, id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironment", reflect.TypeOf((*MockEnvironmentStorage)(nil).GetEnvironment), ctx, id)
-}
-
-// GetEnvironmentByNamespace mocks base method.
-func (m *MockEnvironmentStorage) GetEnvironmentByNamespace(ctx context.Context, namespace string, deleted bool) (*domain.Environment, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEnvironmentByNamespace", ctx, namespace, deleted)
-	ret0, _ := ret[0].(*domain.Environment)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEnvironmentByNamespace indicates an expected call of GetEnvironmentByNamespace.
-func (mr *MockEnvironmentStorageMockRecorder) GetEnvironmentByNamespace(ctx, namespace, deleted interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironmentByNamespace", reflect.TypeOf((*MockEnvironmentStorage)(nil).GetEnvironmentByNamespace), ctx, namespace, deleted)
 }
 
 // GetEnvironmentV2 mocks base method.
@@ -111,23 +67,6 @@ func (mr *MockEnvironmentStorageMockRecorder) GetEnvironmentV2(ctx, id interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironmentV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).GetEnvironmentV2), ctx, id)
 }
 
-// ListEnvironments mocks base method.
-func (m *MockEnvironmentStorage) ListEnvironments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*environment.Environment, int, int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListEnvironments", ctx, whereParts, orders, limit, offset)
-	ret0, _ := ret[0].([]*environment.Environment)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(int64)
-	ret3, _ := ret[3].(error)
-	return ret0, ret1, ret2, ret3
-}
-
-// ListEnvironments indicates an expected call of ListEnvironments.
-func (mr *MockEnvironmentStorageMockRecorder) ListEnvironments(ctx, whereParts, orders, limit, offset interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEnvironments", reflect.TypeOf((*MockEnvironmentStorage)(nil).ListEnvironments), ctx, whereParts, orders, limit, offset)
-}
-
 // ListEnvironmentsV2 mocks base method.
 func (m *MockEnvironmentStorage) ListEnvironmentsV2(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*environment.EnvironmentV2, int, int64, error) {
 	m.ctrl.T.Helper()
@@ -143,20 +82,6 @@ func (m *MockEnvironmentStorage) ListEnvironmentsV2(ctx context.Context, wherePa
 func (mr *MockEnvironmentStorageMockRecorder) ListEnvironmentsV2(ctx, whereParts, orders, limit, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEnvironmentsV2", reflect.TypeOf((*MockEnvironmentStorage)(nil).ListEnvironmentsV2), ctx, whereParts, orders, limit, offset)
-}
-
-// UpdateEnvironment mocks base method.
-func (m *MockEnvironmentStorage) UpdateEnvironment(ctx context.Context, e *domain.Environment) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateEnvironment", ctx, e)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateEnvironment indicates an expected call of UpdateEnvironment.
-func (mr *MockEnvironmentStorageMockRecorder) UpdateEnvironment(ctx, e interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEnvironment", reflect.TypeOf((*MockEnvironmentStorage)(nil).UpdateEnvironment), ctx, e)
 }
 
 // UpdateEnvironmentV2 mocks base method.

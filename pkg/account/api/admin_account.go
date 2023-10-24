@@ -35,40 +35,6 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
-// TODO remove this method after WebUI supports environment V2
-func (s *AccountService) GetMe(
-	ctx context.Context,
-	req *accountproto.GetMeRequest,
-) (*accountproto.GetMeResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	t, ok := rpc.GetIDToken(ctx)
-	if !ok {
-		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if !verifyEmailFormat(t.Email) {
-		s.logger.Error(
-			"Email inside IDToken has an invalid format",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", t.Email))...,
-		)
-		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	return s.getMe(ctx, t.Email, localizer)
-}
-
 func (s *AccountService) GetMeV2(
 	ctx context.Context,
 	req *accountproto.GetMeV2Request,
@@ -102,33 +68,6 @@ func (s *AccountService) GetMeV2(
 	return s.getMeV2(ctx, t.Email, localizer)
 }
 
-// TODO remove this method after WebUI supports environment V2
-func (s *AccountService) GetMeByEmail(
-	ctx context.Context,
-	req *accountproto.GetMeByEmailRequest,
-) (*accountproto.GetMeResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
-	if err != nil {
-		return nil, err
-	}
-	if !verifyEmailFormat(req.Email) {
-		s.logger.Error(
-			"Email inside request has an invalid format",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", req.Email))...,
-		)
-		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	return s.getMe(ctx, req.Email, localizer)
-}
-
 func (s *AccountService) GetMeByEmailV2(
 	ctx context.Context,
 	req *accountproto.GetMeByEmailV2Request,
@@ -153,106 +92,6 @@ func (s *AccountService) GetMeByEmailV2(
 		return nil, dt.Err()
 	}
 	return s.getMeV2(ctx, req.Email, localizer)
-}
-
-// TODO remove this method after WebUI supports environment V2
-func (s *AccountService) getMe(
-	ctx context.Context,
-	email string,
-	localizer locale.Localizer,
-) (*accountproto.GetMeResponse, error) {
-	projects, err := s.listProjects(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to get project list",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if len(projects) == 0 {
-		s.logger.Error(
-			"Could not find any projects",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	environments, err := s.listEnvironments(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to get environment list",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if len(environments) == 0 {
-		s.logger.Error(
-			"Could not find any environments",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	// admin account response
-	adminAccount, err := s.getAdminAccount(ctx, email, localizer)
-	if err != nil && status.Code(err) != codes.NotFound {
-		return nil, err
-	}
-	if adminAccount != nil && !adminAccount.Disabled && !adminAccount.Deleted {
-		environmentRoles, err := s.makeAdminEnvironmentRoles(projects, environments, accountproto.Account_OWNER, localizer)
-		if err != nil {
-			return nil, err
-		}
-		return &accountproto.GetMeResponse{
-			Account:          adminAccount.Account,
-			Email:            adminAccount.Email,
-			IsAdmin:          true,
-			AdminRole:        accountproto.Account_OWNER,
-			Disabled:         false,
-			EnvironmentRoles: environmentRoles,
-			Deleted:          false,
-		}, nil
-	}
-	// environment account response
-	environmentRoles, account, err := s.makeEnvironmentRoles(ctx, email, projects, environments, localizer)
-	if err != nil {
-		return nil, err
-	}
-	return &accountproto.GetMeResponse{
-		Account:          account,
-		Email:            email,
-		IsAdmin:          false,
-		AdminRole:        accountproto.Account_UNASSIGNED,
-		Disabled:         false,
-		EnvironmentRoles: environmentRoles,
-		Deleted:          false,
-	}, nil
 }
 
 func (s *AccountService) getMeV2(
@@ -351,40 +190,6 @@ func (s *AccountService) getMeV2(
 	}, nil
 }
 
-// TODO remove this method after WebUI supports environment V2
-func (s *AccountService) makeAdminEnvironmentRoles(
-	projects []*environmentproto.Project,
-	environments []*environmentproto.EnvironmentV2,
-	adminRole accountproto.Account_Role,
-	localizer locale.Localizer,
-) ([]*accountproto.EnvironmentRole, error) {
-	projectSet := s.makeProjectSet(projects)
-	environmentRoles := make([]*accountproto.EnvironmentRole, 0)
-	for _, e := range environments {
-		p, ok := projectSet[e.ProjectId]
-		if !ok || p.Disabled {
-			continue
-		}
-		er := &accountproto.EnvironmentRole{Environment: convertEnvironmentV2ToV1(e), Role: adminRole}
-		if p.Trial {
-			er.TrialProject = true
-			er.TrialStartedAt = p.CreatedAt
-		}
-		environmentRoles = append(environmentRoles, er)
-	}
-	if len(environmentRoles) == 0 {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	return environmentRoles, nil
-}
-
 func (s *AccountService) makeAdminEnvironmentRolesV2(
 	projects []*environmentproto.Project,
 	environments []*environmentproto.EnvironmentV2,
@@ -416,51 +221,6 @@ func (s *AccountService) makeAdminEnvironmentRolesV2(
 		return nil, dt.Err()
 	}
 	return environmentRoles, nil
-}
-
-// TODO remove this method after WebUI supports environment V2
-// FIXME: remove *accountproto.Account response after WebUI supports environment feature and removes the dependency
-func (s *AccountService) makeEnvironmentRoles(
-	ctx context.Context,
-	email string,
-	projects []*environmentproto.Project,
-	environments []*environmentproto.EnvironmentV2,
-	localizer locale.Localizer,
-) ([]*accountproto.EnvironmentRole, *accountproto.Account, error) {
-	projectSet := s.makeProjectSet(projects)
-	var lastAccount *accountproto.Account
-	environmentRoles := make([]*accountproto.EnvironmentRole, 0, len(environments))
-	for _, e := range environments {
-		p, ok := projectSet[e.ProjectId]
-		if !ok || p.Disabled {
-			continue
-		}
-		account, err := s.getAccount(ctx, email, e.Id, localizer)
-		if err != nil && status.Code(err) != codes.NotFound {
-			return nil, nil, err
-		}
-		if account == nil || account.Disabled || account.Deleted {
-			continue
-		}
-		lastAccount = account.Account
-		er := &accountproto.EnvironmentRole{Environment: convertEnvironmentV2ToV1(e), Role: account.Role}
-		if p.Trial {
-			er.TrialProject = true
-			er.TrialStartedAt = p.CreatedAt
-		}
-		environmentRoles = append(environmentRoles, er)
-	}
-	if len(environmentRoles) == 0 {
-		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NotFoundError),
-		})
-		if err != nil {
-			return nil, nil, statusInternal.Err()
-		}
-		return nil, nil, dt.Err()
-	}
-	return environmentRoles, lastAccount, nil
 }
 
 func (s *AccountService) makeEnvironmentRolesV2(
@@ -1026,17 +786,4 @@ func (s *AccountService) newAdminAccountListOrders(
 		direction = mysql.OrderDirectionDesc
 	}
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
-}
-
-func convertEnvironmentV2ToV1(v2 *environmentproto.EnvironmentV2) *environmentproto.Environment {
-	return &environmentproto.Environment{
-		Id:          v2.UrlCode,
-		Namespace:   v2.Id,
-		Name:        v2.Name,
-		Description: v2.Description,
-		Deleted:     v2.Archived,
-		UpdatedAt:   v2.UpdatedAt,
-		CreatedAt:   v2.CreatedAt,
-		ProjectId:   v2.ProjectId,
-	}
 }

@@ -37,7 +37,7 @@ type command struct {
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
-	cmd := p.Command("delete", "Delete a environment")
+	cmd := p.Command("archive", "Archive a environment")
 	command := &command{
 		CmdClause:         cmd,
 		certPath:          cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -56,11 +56,11 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		return err
 	}
 	defer client.Close()
-	req := &environmentproto.DeleteEnvironmentRequest{
+	req := &environmentproto.ArchiveEnvironmentV2Request{
 		Id:      *c.id,
-		Command: &environmentproto.DeleteEnvironmentCommand{},
+		Command: &environmentproto.ArchiveEnvironmentV2Command{},
 	}
-	if _, err = client.DeleteEnvironment(ctx, req); err != nil {
+	if _, err = client.ArchiveEnvironmentV2(ctx, req); err != nil {
 		logger.Error("Failed to delete environment", zap.Error(err))
 		return err
 	}

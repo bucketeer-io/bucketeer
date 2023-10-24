@@ -459,10 +459,10 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(7)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(4)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil).Times(7)
+				).Return(nil).Times(4)
 				s.accountClient.(*acmock.MockClient).EXPECT().GetAdminAccount(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.NotFound, "not found"))
 				s.accountClient.(*acmock.MockClient).EXPECT().CreateAccount(gomock.Any(), gomock.Any()).Return(

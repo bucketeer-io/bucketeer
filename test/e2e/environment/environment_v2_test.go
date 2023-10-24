@@ -16,11 +16,33 @@ package environment
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"testing"
 	"time"
 
+	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+)
+
+const (
+	timeout = 10 * time.Second
+)
+
+var (
+	// FIXME: To avoid compiling the test many times, webGatewayAddr, webGatewayPort & apiKey has been also added here to prevent from getting: "flag provided but not defined" error during the test. These 3 are being use in the Gateway test
+	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert       = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath           = flag.String("api-key", "", "Api key path for web gateway")
+	gatewayAddr          = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort          = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
+	serviceTokenPath     = flag.String("service-token", "", "Service token path")
+	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
+	testID               = flag.String("test-id", "", "test ID")
 )
 
 func TestGetEnvironmentV2(t *testing.T) {
@@ -105,4 +127,31 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	if getResp.Environment.Description != newDesc {
 		t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)
 	}
+}
+
+func getEnvironmentID(t *testing.T) string {
+	t.Helper()
+	if *environmentNamespace == "" {
+		return "production"
+	}
+	return *environmentNamespace
+}
+
+func newEnvironmentClient(t *testing.T) environmentclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := environmentclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create environment client:", err)
+	}
+	return client
 }

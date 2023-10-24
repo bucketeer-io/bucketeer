@@ -72,31 +72,6 @@
             ]
           },
           {
-            "name": "EnvironmentRole",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment",
-                "type": "environment.Environment"
-              },
-              {
-                "id": 2,
-                "name": "role",
-                "type": "Account.Role"
-              },
-              {
-                "id": 3,
-                "name": "trial_project",
-                "type": "bool"
-              },
-              {
-                "id": 4,
-                "name": "trial_started_at",
-                "type": "int64"
-              }
-            ]
-          },
-          {
             "name": "EnvironmentRoleV2",
             "fields": [
               {
@@ -439,20 +414,7 @@
         ],
         "messages": [
           {
-            "name": "GetMeRequest"
-          },
-          {
             "name": "GetMeV2Request"
-          },
-          {
-            "name": "GetMeByEmailRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              }
-            ]
           },
           {
             "name": "GetMeByEmailV2Request",
@@ -461,71 +423,6 @@
                 "id": 1,
                 "name": "email",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetMeResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "account",
-                "type": "Account",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "is_admin",
-                "type": "bool"
-              },
-              {
-                "id": 4,
-                "name": "admin_role",
-                "type": "Account.Role",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "disabled",
-                "type": "bool",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 6,
-                "name": "environment_roles",
-                "type": "EnvironmentRole",
-                "is_repeated": true
-              },
-              {
-                "id": 7,
-                "name": "deleted",
-                "type": "bool",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
               }
             ]
           },
@@ -1077,31 +974,9 @@
             "name": "AccountService",
             "rpcs": [
               {
-                "name": "GetMe",
-                "in_type": "GetMeRequest",
-                "out_type": "GetMeResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "name": "GetMeV2",
                 "in_type": "GetMeV2Request",
                 "out_type": "GetMeV2Response"
-              },
-              {
-                "name": "GetMeByEmail",
-                "in_type": "GetMeByEmailRequest",
-                "out_type": "GetMeResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
               },
               {
                 "name": "GetMeByEmailV2",
@@ -2329,12 +2204,14 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause"
+                "type": "ProgressiveRolloutManualScheduleClause",
+                "optional": true
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause"
+                "type": "ProgressiveRolloutTemplateScheduleClause",
+                "optional": true
               }
             ]
           },
@@ -3125,12 +3002,14 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status"
+                "type": "ProgressiveRollout.Status",
+                "optional": true
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type"
+                "type": "ProgressiveRollout.Type",
+                "optional": true
               }
             ]
           },
@@ -3437,71 +3316,6 @@
       "def": {
         "messages": [
           {
-            "name": "CreateEnvironmentCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "namespace",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "project_id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "RenameEnvironmentCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeDescriptionEnvironmentCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "description",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "DeleteEnvironmentCommand"
-          },
-          {
             "name": "CreateEnvironmentV2Command",
             "fields": [
               {
@@ -3660,57 +3474,6 @@
       "def": {
         "messages": [
           {
-            "name": "Environment",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "namespace",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "name",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "deleted",
-                "type": "bool"
-              },
-              {
-                "id": 6,
-                "name": "created_at",
-                "type": "int64"
-              },
-              {
-                "id": 7,
-                "name": "updated_at",
-                "type": "int64"
-              },
-              {
-                "id": 8,
-                "name": "project_id",
-                "type": "string"
-              }
-            ]
-          },
-          {
             "name": "EnvironmentV2",
             "fields": [
               {
@@ -3838,38 +3601,6 @@
       "def": {
         "enums": [
           {
-            "name": "ListEnvironmentsRequest.OrderBy",
-            "enum_fields": [
-              {
-                "name": "DEFAULT"
-              },
-              {
-                "name": "ID",
-                "integer": 1
-              },
-              {
-                "name": "CREATED_AT",
-                "integer": 2
-              },
-              {
-                "name": "UPDATED_AT",
-                "integer": 3
-              }
-            ]
-          },
-          {
-            "name": "ListEnvironmentsRequest.OrderDirection",
-            "enum_fields": [
-              {
-                "name": "ASC"
-              },
-              {
-                "name": "DESC",
-                "integer": 1
-              }
-            ]
-          },
-          {
             "name": "ListEnvironmentsV2Request.OrderBy",
             "enum_fields": [
               {
@@ -3951,162 +3682,6 @@
           }
         ],
         "messages": [
-          {
-            "name": "GetEnvironmentRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetEnvironmentResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment",
-                "type": "Environment"
-              }
-            ]
-          },
-          {
-            "name": "GetEnvironmentByNamespaceRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "namespace",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetEnvironmentByNamespaceResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment",
-                "type": "Environment"
-              }
-            ]
-          },
-          {
-            "name": "ListEnvironmentsRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "project_id",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "order_by",
-                "type": "OrderBy"
-              },
-              {
-                "id": 5,
-                "name": "order_direction",
-                "type": "OrderDirection"
-              },
-              {
-                "id": 6,
-                "name": "search_keyword",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ListEnvironmentsResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environments",
-                "type": "Environment",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "total_count",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "CreateEnvironmentRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "command",
-                "type": "CreateEnvironmentCommand"
-              }
-            ]
-          },
-          {
-            "name": "CreateEnvironmentResponse"
-          },
-          {
-            "name": "UpdateEnvironmentRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "rename_command",
-                "type": "RenameEnvironmentCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "change_description_command",
-                "type": "ChangeDescriptionEnvironmentCommand"
-              }
-            ]
-          },
-          {
-            "name": "UpdateEnvironmentResponse"
-          },
-          {
-            "name": "DeleteEnvironmentRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "DeleteEnvironmentCommand"
-              }
-            ]
-          },
-          {
-            "name": "DeleteEnvironmentResponse"
-          },
           {
             "name": "GetEnvironmentV2Request",
             "fields": [
@@ -4444,72 +4019,6 @@
           {
             "name": "EnvironmentService",
             "rpcs": [
-              {
-                "name": "GetEnvironment",
-                "in_type": "GetEnvironmentRequest",
-                "out_type": "GetEnvironmentResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "name": "GetEnvironmentByNamespace",
-                "in_type": "GetEnvironmentByNamespaceRequest",
-                "out_type": "GetEnvironmentByNamespaceResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "name": "ListEnvironments",
-                "in_type": "ListEnvironmentsRequest",
-                "out_type": "ListEnvironmentsResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "name": "CreateEnvironment",
-                "in_type": "CreateEnvironmentRequest",
-                "out_type": "CreateEnvironmentResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "name": "UpdateEnvironment",
-                "in_type": "UpdateEnvironmentRequest",
-                "out_type": "UpdateEnvironmentResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "name": "DeleteEnvironment",
-                "in_type": "DeleteEnvironmentRequest",
-                "out_type": "DeleteEnvironmentResponse",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
               {
                 "name": "GetEnvironmentV2",
                 "in_type": "GetEnvironmentV2Request",

@@ -61,40 +61,6 @@ export namespace Account {
   export const Role: RoleMap;
 }
 
-export class EnvironmentRole extends jspb.Message {
-  hasEnvironment(): boolean;
-  clearEnvironment(): void;
-  getEnvironment(): proto_environment_environment_pb.Environment | undefined;
-  setEnvironment(value?: proto_environment_environment_pb.Environment): void;
-
-  getRole(): Account.RoleMap[keyof Account.RoleMap];
-  setRole(value: Account.RoleMap[keyof Account.RoleMap]): void;
-
-  getTrialProject(): boolean;
-  setTrialProject(value: boolean): void;
-
-  getTrialStartedAt(): number;
-  setTrialStartedAt(value: number): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): EnvironmentRole.AsObject;
-  static toObject(includeInstance: boolean, msg: EnvironmentRole): EnvironmentRole.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: EnvironmentRole, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): EnvironmentRole;
-  static deserializeBinaryFromReader(message: EnvironmentRole, reader: jspb.BinaryReader): EnvironmentRole;
-}
-
-export namespace EnvironmentRole {
-  export type AsObject = {
-    environment?: proto_environment_environment_pb.Environment.AsObject,
-    role: Account.RoleMap[keyof Account.RoleMap],
-    trialProject: boolean,
-    trialStartedAt: number,
-  }
-}
-
 export class EnvironmentRoleV2 extends jspb.Message {
   hasEnvironment(): boolean;
   clearEnvironment(): void;

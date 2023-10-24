@@ -17,17 +17,6 @@ syntax = "proto3";
 package bucketeer.environment;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/environment";
 
-message Environment {
-  string id = 1;
-  string namespace = 2;
-  string name = 3 [deprecated = true];
-  string description = 4;  // optional
-  bool deleted = 5;
-  int64 created_at = 6;
-  int64 updated_at = 7;
-  string project_id = 8;
-}
-
 message EnvironmentV2 {
   string id = 1;
   string name = 2;
