@@ -37,15 +37,16 @@ const (
 )
 
 var (
-	ErrUnexpectedMessageType = errors.New("eventpersister: unexpected message type")
-	ErrAutoOpsRulesNotFound  = errors.New("eventpersister: auto ops rules not found")
-	ErrEvaluationsAreEmpty   = errors.New("eventpersister: evaluations are empty")
-	ErrExperimentNotFound    = errors.New("eventpersister: experiment not found")
-	ErrFailedToEvaluateUser  = errors.New("eventpersister: failed to evaluate user")
-	ErrNoAutoOpsRules        = errors.New("eventpersister: no auto ops rules")
-	ErrNoExperiments         = errors.New("eventpersister: no experiments")
-	ErrNothingToLink         = errors.New("eventpersister: nothing to link")
-	ErrInvalidEventTimestamp = errors.New("eventpersister: invalid event timestamp")
+	ErrUnexpectedMessageType               = errors.New("eventpersister: unexpected message type")
+	ErrAutoOpsRulesNotFound                = errors.New("eventpersister: auto ops rules not found")
+	ErrEvaluationsAreEmpty                 = errors.New("eventpersister: evaluations are empty")
+	ErrExperimentNotFound                  = errors.New("eventpersister: experiment not found")
+	ErrGoalEventIssuedAfterExperimentEnded = errors.New("eventpersister: goal event issued after experiment ended")
+	ErrFailedToEvaluateUser                = errors.New("eventpersister: failed to evaluate user")
+	ErrNoAutoOpsRules                      = errors.New("eventpersister: no auto ops rules")
+	ErrNoExperiments                       = errors.New("eventpersister: no experiments")
+	ErrNothingToLink                       = errors.New("eventpersister: nothing to link")
+	ErrInvalidEventTimestamp               = errors.New("eventpersister: invalid event timestamp")
 )
 
 type PersisterDWH struct {
