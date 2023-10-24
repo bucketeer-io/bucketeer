@@ -164,7 +164,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 	}
 	evaluationEvent := &eventproto.EvaluationEvent{
 		Tag:            "tag",
-		Timestamp:      t1.UnixMicro(),
+		Timestamp:      t1.Add(-time.Hour).Unix(),
 		FeatureId:      "fid",
 		FeatureVersion: int32(1),
 		UserId:         "uid",
@@ -177,7 +177,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 	}
 	evaluationEventWithTagEmpty := &eventproto.EvaluationEvent{
 		Tag:            "",
-		Timestamp:      t1.UnixMicro(),
+		Timestamp:      t1.Add(-time.Hour).Unix(),
 		FeatureId:      "fid",
 		FeatureVersion: int32(1),
 		UserId:         "uid",
@@ -307,6 +307,39 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
+			desc: "error: goal event was issued after the experiment ended",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      evaluationEvent.FeatureId,
+							FeatureVersion: evaluation.FeatureVersion,
+							Status:         exproto.Experiment_STOPPED,
+							StartAt:        t1.Add(-time.Hour * 3).Unix(),
+							StopAt:         t1.Add(-time.Hour * 2).Unix(),
+						},
+					},
+				}, nil)
+			},
+			input:              evaluationEvent,
+			expected:           nil,
+			expectedErr:        ErrGoalEventIssuedAfterExperimentEnded,
+			expectedRepeatable: false,
+		},
+		{
 			desc: "success: evaluation event with running status",
 			setup: func(ctx context.Context, p *evalEvtWriter) {
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
@@ -328,6 +361,8 @@ func TestConvToEvaluationEvent(t *testing.T) {
 							FeatureId:      evaluationEvent.FeatureId,
 							FeatureVersion: evaluation.FeatureVersion,
 							Status:         exproto.Experiment_RUNNING,
+							StartAt:        t1.Add(-time.Hour).Unix(),
+							StopAt:         t1.Add(time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -371,7 +406,8 @@ func TestConvToEvaluationEvent(t *testing.T) {
 							FeatureId:      evaluationEvent.FeatureId,
 							FeatureVersion: evaluation.FeatureVersion,
 							Status:         exproto.Experiment_STOPPED,
-							StopAt:         time.Now().Unix() - 2*day,
+							StartAt:        t1.Add(-time.Hour * 2).Unix(),
+							StopAt:         t1.Add(-time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -415,7 +451,8 @@ func TestConvToEvaluationEvent(t *testing.T) {
 							FeatureId:      evaluationEventWithTagEmpty.FeatureId,
 							FeatureVersion: evaluation.FeatureVersion,
 							Status:         exproto.Experiment_STOPPED,
-							StopAt:         time.Now().Unix() - 2*day,
+							StartAt:        t1.Add(-time.Hour * 2).Unix(),
+							StopAt:         t1.Add(-time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -608,6 +645,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
 							StartAt:        time.Now().Add(-time.Hour).Unix(),
+							StopAt:         time.Now().Add(time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -655,6 +693,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
 							StartAt:        time.Now().Add(-time.Hour).Unix(),
+							StopAt:         time.Now().Add(time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -704,6 +743,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
 							StartAt:        time.Now().Add(-time.Hour).Unix(),
+							StopAt:         time.Now().Add(time.Hour).Unix(),
 						},
 						{
 							Id:             "experiment-id-2",
@@ -711,6 +751,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							FeatureId:      "fid-2",
 							FeatureVersion: int32(1),
 							StartAt:        time.Now().Add(-time.Hour).Unix(),
+							StopAt:         time.Now().Add(time.Hour).Unix(),
 						},
 						// This experiment won't be computed
 						// because the startAt is higher than the goal event timestamp
@@ -720,6 +761,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							FeatureId:      "fid-2",
 							FeatureVersion: int32(1),
 							StartAt:        time.Now().Add(time.Hour).Unix(),
+							StopAt:         time.Now().Add(time.Hour).Unix(),
 						},
 					},
 				}, nil)
@@ -843,6 +885,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							FeatureId:      "fid",
 							FeatureVersion: int32(1),
 							StartAt:        time.Now().Add(-time.Hour).Unix(),
+							StopAt:         time.Now().Add(time.Hour).Unix(),
 						},
 						{
 							Id:             "experiment-id-2",
@@ -850,6 +893,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							FeatureId:      "fid-2",
 							FeatureVersion: int32(1),
 							StartAt:        time.Now().Add(-time.Hour).Unix(),
+							StopAt:         time.Now().Add(time.Hour).Unix(),
 						},
 						// This experiment won't be computed
 						// because the startAt is higher than the goal event timestamp
@@ -859,6 +903,17 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 							FeatureId:      "fid-2",
 							FeatureVersion: int32(1),
 							StartAt:        time.Now().Add(time.Hour).Unix(),
+							StopAt:         time.Now().Add(time.Hour).Unix(),
+						},
+						// This experiment won't be computed
+						// because the goal event was issued after the experiment ended
+						{
+							Id:             "experiment-id-3",
+							GoalIds:        []string{"gid"},
+							FeatureId:      "fid-2",
+							FeatureVersion: int32(1),
+							StartAt:        time.Now().Add(-time.Hour * 3).Unix(),
+							StopAt:         time.Now().Add(-time.Hour * 2).Unix(),
 						},
 					},
 				}, nil)

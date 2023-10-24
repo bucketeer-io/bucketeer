@@ -86,7 +86,9 @@ func (w *evalEvtWriter) Write(
 				if err != nil {
 					// If there is nothing to link, we don't report it as an error
 					handledCounter.WithLabelValues(codeNoLink).Inc()
-					if err == ErrNoExperiments || err == ErrExperimentNotFound {
+					if err == ErrNoExperiments ||
+						err == ErrExperimentNotFound ||
+						err == ErrGoalEventIssuedAfterExperimentEnded {
 						w.logger.Debug(
 							"There is no experiment to link",
 							zap.Error(err),
@@ -166,9 +168,13 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 	if len(experiments) == 0 {
 		return nil, false, ErrNoExperiments
 	}
-	exist := w.existExperiment(experiments, e.FeatureId, e.FeatureVersion)
-	if !exist {
+	exp := w.existExperiment(experiments, e.FeatureId, e.FeatureVersion)
+	if exp == nil {
 		return nil, false, ErrExperimentNotFound
+	}
+	if exp.StopAt < e.Timestamp {
+		handledCounter.WithLabelValues(codeEventIssuedAfterExperimentEnded).Inc()
+		return nil, false, ErrGoalEventIssuedAfterExperimentEnded
 	}
 	var ud []byte
 	if e.User != nil {
@@ -206,13 +212,13 @@ func (w *evalEvtWriter) existExperiment(
 	es []*exproto.Experiment,
 	fID string,
 	fVersion int32,
-) bool {
+) *exproto.Experiment {
 	for _, e := range es {
 		if e.FeatureId == fID && e.FeatureVersion == fVersion {
-			return true
+			return e
 		}
 	}
-	return false
+	return nil
 }
 
 func (w *evalEvtWriter) listExperiments(

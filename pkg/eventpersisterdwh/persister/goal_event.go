@@ -256,7 +256,13 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			// If the goal event was issued before the experiment started running,
 			// we ignore those events to avoid issues in the conversion rate
 			if exp.StartAt > event.Timestamp {
-				handledCounter.WithLabelValues(codeGoalEventOlderThanExperiment).Inc()
+				handledCounter.WithLabelValues(codeEventOlderThanExperiment).Inc()
+				continue
+			}
+			// If the goal event was issued after the experiment ended,
+			// we ignore those events to avoid issues in the conversion rate
+			if exp.StopAt < event.Timestamp {
+				handledCounter.WithLabelValues(codeGoalEventIssuedAfterExperimentEnded).Inc()
 				continue
 			}
 			exps = append(exps, exp)

@@ -21,14 +21,16 @@ import (
 )
 
 const (
-	codeEvaluationsAreEmpty            = "EvaluationsAreEmpty"
-	codeGoalEventOlderThanExperiment   = "GoalEventOlderThanExperiment"
-	codeFailedToEvaluateUser           = "FailedToEvaluateUser"
-	codeFailedToListExperiments        = "FailedToListExperiments"
-	codeFailedToAppendEvaluationEvents = "FailedToAppendEvaluationEvents"
-	codeFailedToAppendGoalEvents       = "FailedToAppendGoalEvents"
-	codeLinked                         = "Linked"
-	codeNoLink                         = "NoLink"
+	codeEvaluationsAreEmpty                 = "EvaluationsAreEmpty"
+	codeEventIssuedAfterExperimentEnded     = "EventIssuedAfterExperimentEnded"
+	codeEventOlderThanExperiment            = "EventOlderThanExperiment"
+	codeGoalEventIssuedAfterExperimentEnded = "GoalEventIssuedAfterExperimentEnded"
+	codeFailedToEvaluateUser                = "FailedToEvaluateUser"
+	codeFailedToListExperiments             = "FailedToListExperiments"
+	codeFailedToAppendEvaluationEvents      = "FailedToAppendEvaluationEvents"
+	codeFailedToAppendGoalEvents            = "FailedToAppendGoalEvents"
+	codeLinked                              = "Linked"
+	codeNoLink                              = "NoLink"
 )
 
 var (
