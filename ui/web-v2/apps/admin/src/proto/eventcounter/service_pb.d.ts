@@ -500,8 +500,8 @@ export class SummarizeMAUCountsRequest extends jspb.Message {
   getYearMonth(): string;
   setYearMonth(value: string): void;
 
-  getIsFinishDay(): boolean;
-  setIsFinishDay(value: boolean): void;
+  getIsFinished(): boolean;
+  setIsFinished(value: boolean): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SummarizeMAUCountsRequest.AsObject;
@@ -516,7 +516,7 @@ export class SummarizeMAUCountsRequest extends jspb.Message {
 export namespace SummarizeMAUCountsRequest {
   export type AsObject = {
     yearMonth: string,
-    isFinishDay: boolean,
+    isFinished: boolean,
   }
 }
 

@@ -132,7 +132,7 @@ message GetMAUCountResponse {
 
 message SummarizeMAUCountsRequest {
   string year_month = 1;
-  bool is_finish_day = 2;
+  bool is_finished = 2;
 }
 
 message SummarizeMAUCountsResponse {}

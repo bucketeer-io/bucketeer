@@ -9042,7 +9042,7 @@
               },
               {
                 "id": 2,
-                "name": "is_finish_day",
+                "name": "is_finished",
                 "type": "bool"
               }
             ]

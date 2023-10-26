@@ -50,8 +50,8 @@ func (s *mauSummarizer) Run(ctx context.Context) error {
 	_, err := s.eventCounterClient.SummarizeMAUCounts(
 		ctx,
 		&eventcounter.SummarizeMAUCountsRequest{
-			YearMonth:   s.newYearMonth(int32(yesterday.Year()), int32(yesterday.Month())),
-			IsFinishDay: s.isEndDateOfMonth(yesterday),
+			YearMonth:  s.newYearMonth(int32(yesterday.Year()), int32(yesterday.Month())),
+			IsFinished: s.isEndDateOfMonth(yesterday),
 		},
 	)
 	if err != nil {

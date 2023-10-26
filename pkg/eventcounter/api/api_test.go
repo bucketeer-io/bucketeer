@@ -804,12 +804,8 @@ func TestSummarizeMAUCounts(t *testing.T) {
 		return st.Err()
 	}
 	input := &ecproto.SummarizeMAUCountsRequest{
-		YearMonth:   "201212",
-		IsFinishDay: false,
-	}
-	inputForGrouping := &ecproto.SummarizeMAUCountsRequest{
-		YearMonth:   "201212",
-		IsFinishDay: true,
+		YearMonth:  "201212",
+		IsFinished: false,
 	}
 	patterns := []struct {
 		desc        string
@@ -868,7 +864,7 @@ func TestSummarizeMAUCounts(t *testing.T) {
 					ctx, gomock.Any(),
 				).Return(nil)
 			},
-			input:       inputForGrouping,
+			input:       input,
 			expected:    &ecproto.SummarizeMAUCountsResponse{},
 			expectedErr: nil,
 		},

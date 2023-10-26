@@ -1115,7 +1115,7 @@ func (s *eventCounterService) SummarizeMAUCounts(
 	summaries = append(summaries, groupByEnvID...)
 	s.logger.Debug("SummarizeMAUCounts result", zap.Any("summaries", summaries))
 	for _, summary := range summaries {
-		summary.IsFinished = req.IsFinishDay
+		summary.IsFinished = req.IsFinished
 		summary.CreatedAt = time.Now().Unix()
 		summary.UpdatedAt = time.Now().Unix()
 		err := s.mysqlMAUSummaryStorage.UpsertMAUSummary(ctx, summary)

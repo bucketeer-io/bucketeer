@@ -3841,7 +3841,7 @@ proto.bucketeer.eventcounter.SummarizeMAUCountsRequest.prototype.toObject = func
 proto.bucketeer.eventcounter.SummarizeMAUCountsRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     yearMonth: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    isFinishDay: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
+    isFinished: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -3884,7 +3884,7 @@ proto.bucketeer.eventcounter.SummarizeMAUCountsRequest.deserializeBinaryFromRead
       break;
     case 2:
       var value = /** @type {boolean} */ (reader.readBool());
-      msg.setIsFinishDay(value);
+      msg.setIsFinished(value);
       break;
     default:
       reader.skipField();
@@ -3922,7 +3922,7 @@ proto.bucketeer.eventcounter.SummarizeMAUCountsRequest.serializeBinaryToWriter =
       f
     );
   }
-  f = message.getIsFinishDay();
+  f = message.getIsFinished();
   if (f) {
     writer.writeBool(
       2,
@@ -3951,10 +3951,10 @@ proto.bucketeer.eventcounter.SummarizeMAUCountsRequest.prototype.setYearMonth = 
 
 
 /**
- * optional bool is_finish_day = 2;
+ * optional bool is_finished = 2;
  * @return {boolean}
  */
-proto.bucketeer.eventcounter.SummarizeMAUCountsRequest.prototype.getIsFinishDay = function() {
+proto.bucketeer.eventcounter.SummarizeMAUCountsRequest.prototype.getIsFinished = function() {
   return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
 };
 
@@ -3963,7 +3963,7 @@ proto.bucketeer.eventcounter.SummarizeMAUCountsRequest.prototype.getIsFinishDay 
  * @param {boolean} value
  * @return {!proto.bucketeer.eventcounter.SummarizeMAUCountsRequest} returns this
  */
-proto.bucketeer.eventcounter.SummarizeMAUCountsRequest.prototype.setIsFinishDay = function(value) {
+proto.bucketeer.eventcounter.SummarizeMAUCountsRequest.prototype.setIsFinished = function(value) {
   return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
