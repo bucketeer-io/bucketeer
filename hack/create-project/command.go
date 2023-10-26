@@ -58,11 +58,6 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 }
 
 func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
-	logger.Info("Yeah babe",
-		zap.String("webGatewayAddress", *c.webGatewayAddress),
-		zap.String("serviceTokenPath", *c.serviceTokenPath),
-		zap.String("certPath", *c.certPath),
-	)
 	client, err := createEnvironmentClient(*c.webGatewayAddress, *c.certPath, *c.serviceTokenPath, logger)
 	if err != nil {
 		logger.Error("Failed to create environment client", zap.Error(err))
