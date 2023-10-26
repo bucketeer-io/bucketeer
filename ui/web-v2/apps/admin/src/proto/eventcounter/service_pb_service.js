@@ -64,6 +64,15 @@ EventCounterService.GetMAUCount = {
   responseType: proto_eventcounter_service_pb.GetMAUCountResponse
 };
 
+EventCounterService.SummarizeMAUCounts = {
+  methodName: "SummarizeMAUCounts",
+  service: EventCounterService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_eventcounter_service_pb.SummarizeMAUCountsRequest,
+  responseType: proto_eventcounter_service_pb.SummarizeMAUCountsResponse
+};
+
 EventCounterService.GetOpsEvaluationUserCount = {
   methodName: "GetOpsEvaluationUserCount",
   service: EventCounterService,
@@ -249,6 +258,37 @@ EventCounterServiceClient.prototype.getMAUCount = function getMAUCount(requestMe
     callback = arguments[1];
   }
   var client = grpc.unary(EventCounterService.GetMAUCount, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+EventCounterServiceClient.prototype.summarizeMAUCounts = function summarizeMAUCounts(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(EventCounterService.SummarizeMAUCounts, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

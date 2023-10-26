@@ -496,3 +496,43 @@ export namespace GetMAUCountResponse {
   }
 }
 
+export class SummarizeMAUCountsRequest extends jspb.Message {
+  getYearMonth(): string;
+  setYearMonth(value: string): void;
+
+  getIsFinished(): boolean;
+  setIsFinished(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SummarizeMAUCountsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: SummarizeMAUCountsRequest): SummarizeMAUCountsRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SummarizeMAUCountsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SummarizeMAUCountsRequest;
+  static deserializeBinaryFromReader(message: SummarizeMAUCountsRequest, reader: jspb.BinaryReader): SummarizeMAUCountsRequest;
+}
+
+export namespace SummarizeMAUCountsRequest {
+  export type AsObject = {
+    yearMonth: string,
+    isFinished: boolean,
+  }
+}
+
+export class SummarizeMAUCountsResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SummarizeMAUCountsResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: SummarizeMAUCountsResponse): SummarizeMAUCountsResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SummarizeMAUCountsResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SummarizeMAUCountsResponse;
+  static deserializeBinaryFromReader(message: SummarizeMAUCountsResponse, reader: jspb.BinaryReader): SummarizeMAUCountsResponse;
+}
+
+export namespace SummarizeMAUCountsResponse {
+  export type AsObject = {
+  }
+}
+

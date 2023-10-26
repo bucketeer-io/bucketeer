@@ -14,29 +14,21 @@
 
 syntax = "proto3";
 
-package bucketeer.batch;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/batch";
+package bucketeer.eventcounter;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/eventcounter";
 
-enum BatchJob {
-  ExperimentStatusUpdater = 0;
-  ExperimentRunningWatcher = 1;
-  FeatureStaleWatcher = 2;
-  MauCountWatcher = 3;
-  DatetimeWatcher = 4;
-  EventCountWatcher = 5;
-  DomainEventInformer = 6;
-  RedisCounterDeleter = 7;
-  ProgressiveRolloutWatcher = 8;
-  ExperimentCalculator = 9;
-  MauSummarizer = 10;
-}
+import "proto/event/client/event.proto";
 
-message BatchJobRequest {
-  BatchJob job = 1;
-}
-
-message BatchJobResponse {}
-
-service BatchService {
-  rpc ExecuteBatchJob(BatchJobRequest) returns (BatchJobResponse) {}
+message MAUSummary {
+  string yearmonth = 1;
+  string environment_id = 2;
+  bucketeer.event.client.SourceId source_id = 3;
+  int64 user_count = 4;
+  int64 request_count = 5;
+  int64 evaluation_count = 6;
+  int64 goal_count = 7;
+  bool is_all = 8;
+  bool is_finished = 9;
+  int64 created_at = 10;
+  int64 updated_at = 11;
 }

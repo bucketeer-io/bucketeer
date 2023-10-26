@@ -102,3 +102,4 @@ cronjob:
   opsProgressiveRolloutWatcherSchedule: "* * * * *"
   redisCounterDeleterSchedule: "0 0 * * *"
   experimentCalculatorSchedule: "*/30 * * * *"
+  mauSummarizerSchedule: "30 0 * * *"

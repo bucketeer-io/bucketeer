@@ -786,6 +786,102 @@ func TestGetMAUCount(t *testing.T) {
 	}
 }
 
+func TestSummarizeMAUCounts(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithToken(t, accountproto.Account_VIEWER)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	input := &ecproto.SummarizeMAUCountsRequest{
+		YearMonth:  "201212",
+		IsFinished: false,
+	}
+	patterns := []struct {
+		desc        string
+		setup       func(*eventCounterService)
+		input       *ecproto.SummarizeMAUCountsRequest
+		expected    *ecproto.SummarizeMAUCountsResponse
+		expectedErr error
+	}{
+		{
+			desc:     "error: mau year month is required",
+			input:    &ecproto.SummarizeMAUCountsRequest{},
+			expected: nil,
+			expectedErr: createError(
+				statusMAUYearMonthRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "year_month"),
+			),
+		},
+		{
+			desc: "err: internal",
+			setup: func(s *eventCounterService) {
+				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCountsGroupBySourceID(
+					ctx, input.YearMonth,
+				).Return([]*ecproto.MAUSummary{}, nil)
+				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCounts(
+					ctx, input.YearMonth,
+				).Return(nil, errors.New("internal"))
+			},
+			input:       input,
+			expected:    nil,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success get mau counts",
+			setup: func(s *eventCounterService) {
+				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCountsGroupBySourceID(
+					ctx, input.YearMonth,
+				).Return([]*ecproto.MAUSummary{}, nil)
+				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCounts(
+					ctx, input.YearMonth,
+				).Return([]*ecproto.MAUSummary{}, nil)
+			},
+			input:       input,
+			expected:    &ecproto.SummarizeMAUCountsResponse{},
+			expectedErr: nil,
+		},
+		{
+			desc: "success upsert mau summary",
+			setup: func(s *eventCounterService) {
+				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCountsGroupBySourceID(
+					ctx, input.YearMonth,
+				).Return([]*ecproto.MAUSummary{{Yearmonth: input.YearMonth}}, nil)
+				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCounts(
+					ctx, input.YearMonth,
+				).Return([]*ecproto.MAUSummary{}, nil)
+				s.mysqlMAUSummaryStorage.(*v2ecsmock.MockMAUSummaryStorage).EXPECT().UpsertMAUSummary(
+					ctx, gomock.Any(),
+				).Return(nil)
+			},
+			input:       input,
+			expected:    &ecproto.SummarizeMAUCountsResponse{},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newEventCounterService(t, mockController)
+			if p.setup != nil {
+				p.setup(gs)
+			}
+			actual, err := gs.SummarizeMAUCounts(ctx, p.input)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
 func TestGetStartTime(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
@@ -1660,6 +1756,7 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller) *ev
 		featureClient:                featureclientmock.NewMockClient(mockController),
 		accountClient:                accountClientMock,
 		mysqlExperimentResultStorage: v2ecsmock.NewMockExperimentResultStorage(mockController),
+		mysqlMAUSummaryStorage:       v2ecsmock.NewMockMAUSummaryStorage(mockController),
 		userCountStorage:             v2ecsmock.NewMockUserCountStorage(mockController),
 		evaluationCountCacher:        eccachemock.NewMockEventCounterCache(mockController),
 		eventStorage:                 v2ecsmock.NewMockEventStorage(mockController),
@@ -1783,6 +1880,53 @@ func TestGetUserCounts(t *testing.T) {
 			}
 			actual, _ := gs.getUserCounts(p.keys, featureID, environmentNamespace, p.unit)
 			assert.Len(t, actual, p.expectedLen)
+		})
+	}
+}
+
+func TestCheckAdminRole(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := context.Background()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	patterns := []struct {
+		desc        string
+		inputCtx    context.Context
+		expectedErr error
+	}{
+		{
+			desc:        "error: Unauthenticated",
+			inputCtx:    context.Background(),
+			expectedErr: createError(statusUnauthenticated, localizer.MustLocalizeWithTemplate(locale.UnauthenticatedError)),
+		},
+		{
+			desc:        "error: PermissionDenied",
+			inputCtx:    createContextWithToken(t, accountproto.Account_UNASSIGNED),
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.PermissionDenied)),
+		},
+		{
+			desc:        "success",
+			inputCtx:    createContextWithToken(t, accountproto.Account_EDITOR),
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newEventCounterService(t, mockController)
+			_, actualErr := gs.checkAdminRole(p.inputCtx, localizer)
+			assert.Equal(t, actualErr, p.expectedErr)
 		})
 	}
 }

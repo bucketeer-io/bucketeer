@@ -72,6 +72,7 @@ type eventCounterService struct {
 	accountClient                accountclient.Client
 	eventStorage                 v2ecstorage.EventStorage
 	mysqlExperimentResultStorage v2ecstorage.ExperimentResultStorage
+	mysqlMAUSummaryStorage       v2ecstorage.MAUSummaryStorage
 	userCountStorage             v2ecstorage.UserCountStorage
 	metrics                      metrics.Registerer
 	evaluationCountCacher        cachev3.EventCounterCache
@@ -98,6 +99,7 @@ func NewEventCounterService(
 		accountClient:                a,
 		eventStorage:                 v2ecstorage.NewEventStorage(b, bigQueryDataSet, l),
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
+		mysqlMAUSummaryStorage:       v2ecstorage.NewMAUSummaryStorage(mc),
 		userCountStorage:             v2ecstorage.NewUserCountStorage(mc),
 		metrics:                      r,
 		evaluationCountCacher:        cachev3.NewEventCountCache(redis),
@@ -1051,6 +1053,86 @@ func (s *eventCounterService) GetMAUCount(
 	}, nil
 }
 
+func (s *eventCounterService) SummarizeMAUCounts(
+	ctx context.Context,
+	req *ecproto.SummarizeMAUCountsRequest,
+) (*ecproto.SummarizeMAUCountsResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkAdminRole(ctx, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if req.YearMonth == "" {
+		dt, err := statusMAUYearMonthRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "year_month"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	summaries := make([]*ecproto.MAUSummary, 0)
+	// Get the mau counts grouped by sourceID and environmentID.
+	groupBySourceID, err := s.userCountStorage.GetMAUCountsGroupBySourceID(ctx, req.YearMonth)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get the mau counts by sourceID",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("yearMonth", req.YearMonth),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	summaries = append(summaries, groupBySourceID...)
+	// Get the mau counts grouped by environmentID.
+	groupByEnvID, err := s.userCountStorage.GetMAUCounts(ctx, req.YearMonth)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get the mau counts",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("yearMonth", req.YearMonth),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	summaries = append(summaries, groupByEnvID...)
+	s.logger.Debug("SummarizeMAUCounts result", zap.Any("summaries", summaries))
+	for _, summary := range summaries {
+		summary.IsFinished = req.IsFinished
+		summary.CreatedAt = time.Now().Unix()
+		summary.UpdatedAt = time.Now().Unix()
+		err := s.mysqlMAUSummaryStorage.UpsertMAUSummary(ctx, summary)
+		if err != nil {
+			s.logger.Error(
+				"Failed to upsert the mau summary",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.Any("summary", summary),
+				)...,
+			)
+			return nil, err
+		}
+	}
+	return &ecproto.SummarizeMAUCountsResponse{}, nil
+}
+
 func (s *eventCounterService) getExperimentResultMySQL(
 	ctx context.Context,
 	id, environmentNamespace string,
@@ -1365,6 +1447,57 @@ func (s *eventCounterService) checkRole(
 					zap.Error(err),
 					zap.String("environmentNamespace", environmentNamespace),
 				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
+	return editor, nil
+}
+
+func (s *eventCounterService) checkAdminRole(
+	ctx context.Context,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
+	editor, err := role.CheckAdminRole(ctx)
+	if err != nil {
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			s.logger.Info(
+				"Unauthenticated",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		case codes.PermissionDenied:
+			s.logger.Info(
+				"Permission denied",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		default:
+			s.logger.Error(
+				"Failed to check role",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),

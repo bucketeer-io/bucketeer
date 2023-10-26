@@ -3269,6 +3269,10 @@
               {
                 "name": "ExperimentCalculator",
                 "integer": 9
+              },
+              {
+                "name": "MauSummarizer",
+                "integer": 10
               }
             ]
           }
@@ -8569,6 +8573,87 @@
       }
     },
     {
+      "protopath": "eventcounter:/:mau_summary.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "MAUSummary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "yearmonth",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "source_id",
+                "type": "bucketeer.event.client.SourceId"
+              },
+              {
+                "id": 4,
+                "name": "user_count",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "request_count",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "evaluation_count",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "goal_count",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "is_all",
+                "type": "bool"
+              },
+              {
+                "id": 9,
+                "name": "is_finished",
+                "type": "bool"
+              },
+              {
+                "id": 10,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 11,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/event/client/event.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.eventcounter"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "eventcounter:/:service.proto",
       "def": {
         "enums": [
@@ -8946,6 +9031,24 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "SummarizeMAUCountsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "year_month",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "is_finished",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "SummarizeMAUCountsResponse"
           }
         ],
         "services": [
@@ -8981,6 +9084,11 @@
                 "name": "GetMAUCount",
                 "in_type": "GetMAUCountRequest",
                 "out_type": "GetMAUCountResponse"
+              },
+              {
+                "name": "SummarizeMAUCounts",
+                "in_type": "SummarizeMAUCountsRequest",
+                "out_type": "SummarizeMAUCountsResponse"
               },
               {
                 "name": "GetOpsEvaluationUserCount",
