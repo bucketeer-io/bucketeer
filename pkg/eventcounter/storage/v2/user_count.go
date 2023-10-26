@@ -18,6 +18,8 @@ package v2
 import (
 	"context"
 
+	proto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
@@ -26,6 +28,14 @@ type UserCountStorage interface {
 		ctx context.Context,
 		environmentNamespace, yearMonth string,
 	) (int64, int64, error)
+	GetMAUCounts(
+		ctx context.Context,
+		yearMonth string,
+	) ([]*proto.MAUSummary, error)
+	GetMAUCountsGroupBySourceID(
+		ctx context.Context,
+		yearMonth string,
+	) ([]*proto.MAUSummary, error)
 }
 
 type userCountStorage struct {
@@ -64,4 +74,99 @@ func (s *userCountStorage) GetMAUCount(
 		return 0, 0, err
 	}
 	return userCount, eventCount, nil
+}
+
+func (s *userCountStorage) GetMAUCounts(
+	ctx context.Context,
+	yearMonth string,
+) ([]*proto.MAUSummary, error) {
+	summaries := make([]*proto.MAUSummary, 0)
+	query := `
+		SELECT
+			environment_namespace as environment_id,
+			count(*) as user_count,
+			IFNULL(SUM(event_count), 0) as request_count
+		FROM
+			mau
+		WHERE
+			yearmonth = ?
+		GROUP BY
+			environment_namespace
+	`
+	rows, err := s.qe.QueryContext(
+		ctx,
+		query,
+		yearMonth,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		summary := proto.MAUSummary{}
+		err := rows.Scan(
+			&summary.EnvironmentId,
+			&summary.UserCount,
+			&summary.RequestCount,
+		)
+		if err != nil {
+			return nil, err
+		}
+		summary.Yearmonth = yearMonth
+		summary.IsAll = true
+		summaries = append(summaries, &summary)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	return summaries, nil
+}
+
+func (s *userCountStorage) GetMAUCountsGroupBySourceID(
+	ctx context.Context,
+	yearMonth string,
+) ([]*proto.MAUSummary, error) {
+	summaries := make([]*proto.MAUSummary, 0)
+	query := `
+		SELECT
+			environment_namespace as environment_id,
+			source_id,
+			count(*) as user_count,
+			IFNULL(SUM(event_count), 0) as request_count
+		FROM
+			mau
+		WHERE
+			yearmonth = ?
+		GROUP BY
+			environment_namespace,
+			source_id
+	`
+	rows, err := s.qe.QueryContext(
+		ctx,
+		query,
+		yearMonth,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		summary := proto.MAUSummary{}
+		err := rows.Scan(
+			&summary.EnvironmentId,
+			&summary.SourceId,
+			&summary.UserCount,
+			&summary.RequestCount,
+		)
+		if err != nil {
+			return nil, err
+		}
+		summary.Yearmonth = yearMonth
+		summary.IsAll = false
+		summaries = append(summaries, &summary)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	return summaries, nil
 }

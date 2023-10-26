@@ -9,6 +9,8 @@ import (
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
+
+	eventcounter "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 )
 
 // MockUserCountStorage is a mock of UserCountStorage interface.
@@ -48,4 +50,34 @@ func (m *MockUserCountStorage) GetMAUCount(ctx context.Context, environmentNames
 func (mr *MockUserCountStorageMockRecorder) GetMAUCount(ctx, environmentNamespace, yearMonth interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMAUCount", reflect.TypeOf((*MockUserCountStorage)(nil).GetMAUCount), ctx, environmentNamespace, yearMonth)
+}
+
+// GetMAUCounts mocks base method.
+func (m *MockUserCountStorage) GetMAUCounts(ctx context.Context, yearMonth string) ([]*eventcounter.MAUSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMAUCounts", ctx, yearMonth)
+	ret0, _ := ret[0].([]*eventcounter.MAUSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMAUCounts indicates an expected call of GetMAUCounts.
+func (mr *MockUserCountStorageMockRecorder) GetMAUCounts(ctx, yearMonth interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMAUCounts", reflect.TypeOf((*MockUserCountStorage)(nil).GetMAUCounts), ctx, yearMonth)
+}
+
+// GetMAUCountsGroupBySourceID mocks base method.
+func (m *MockUserCountStorage) GetMAUCountsGroupBySourceID(ctx context.Context, yearMonth string) ([]*eventcounter.MAUSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMAUCountsGroupBySourceID", ctx, yearMonth)
+	ret0, _ := ret[0].([]*eventcounter.MAUSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMAUCountsGroupBySourceID indicates an expected call of GetMAUCountsGroupBySourceID.
+func (mr *MockUserCountStorageMockRecorder) GetMAUCountsGroupBySourceID(ctx, yearMonth interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMAUCountsGroupBySourceID", reflect.TypeOf((*MockUserCountStorage)(nil).GetMAUCountsGroupBySourceID), ctx, yearMonth)
 }
