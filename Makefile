@@ -322,9 +322,30 @@ minikube-load-images:
 		docker cp $$IMAGE.tar minikube:/home/docker; \
 		rm $$IMAGE.tar; \
 		minikube ssh "docker load -i /home/docker/$$IMAGE.tar"; \
+		minikube ssh "rm /home/docker/$$IMAGE.tar"; \
 	done
 
 # Deploy Bucketeer to minikube
 deploy-service-to-minikube:
 	helm install ${SERVICE} manifests/bucketeer/charts/${SERVICE}/ --values manifests/bucketeer/charts/${SERVICE}/values.dev.yaml \
 	--set serviceToken.token=$$(cat tools/dev/cert/service-token)
+
+# Deploy All services to minikube
+deploy-all-services-to-minikube:
+	SERVICE=backend make deploy-service-to-minikube
+	SERVICE=api-gateway make deploy-service-to-minikube
+	SERVICE=web-gateway make deploy-service-to-minikube
+	SERVICE=account-apikey-cacher make deploy-service-to-minikube
+	SERVICE=auditlog-persister make deploy-service-to-minikube
+	SERVICE=event-persister-evaluation-events-dwh make deploy-service-to-minikube
+	SERVICE=event-persister-evaluation-events-evaluation-count make deploy-service-to-minikube
+	SERVICE=event-persister-evaluation-events-ops make deploy-service-to-minikube
+	SERVICE=event-persister-goal-events-dwh make deploy-service-to-minikube
+	SERVICE=event-persister-goal-events-ops make deploy-service-to-minikube
+	SERVICE=experiment-calculator make deploy-service-to-minikube
+	SERVICE=feature-recorder make deploy-service-to-minikube
+	SERVICE=feature-segment-persister make deploy-service-to-minikube
+	SERVICE=metrics-event-persister make deploy-service-to-minikube
+	SERVICE=push-sender make deploy-service-to-minikube
+	SERVICE=user-persister make deploy-service-to-minikube
+	SERVICE=batch make deploy-service-to-minikube
