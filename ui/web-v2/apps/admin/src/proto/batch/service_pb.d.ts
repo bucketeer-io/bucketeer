@@ -50,6 +50,7 @@ export interface BatchJobMap {
   REDISCOUNTERDELETER: 7;
   PROGRESSIVEROLLOUTWATCHER: 8;
   EXPERIMENTCALCULATOR: 9;
+  MAUSUMMARIZER: 10;
 }
 
 export const BatchJob: BatchJobMap;

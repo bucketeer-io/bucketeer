@@ -58,6 +58,15 @@ type EventCounterServiceGetMAUCount = {
   readonly responseType: typeof proto_eventcounter_service_pb.GetMAUCountResponse;
 };
 
+type EventCounterServiceSummarizeMAUCounts = {
+  readonly methodName: string;
+  readonly service: typeof EventCounterService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_eventcounter_service_pb.SummarizeMAUCountsRequest;
+  readonly responseType: typeof proto_eventcounter_service_pb.SummarizeMAUCountsResponse;
+};
+
 type EventCounterServiceGetOpsEvaluationUserCount = {
   readonly methodName: string;
   readonly service: typeof EventCounterService;
@@ -84,6 +93,7 @@ export class EventCounterService {
   static readonly ListExperimentResults: EventCounterServiceListExperimentResults;
   static readonly GetExperimentGoalCount: EventCounterServiceGetExperimentGoalCount;
   static readonly GetMAUCount: EventCounterServiceGetMAUCount;
+  static readonly SummarizeMAUCounts: EventCounterServiceSummarizeMAUCounts;
   static readonly GetOpsEvaluationUserCount: EventCounterServiceGetOpsEvaluationUserCount;
   static readonly GetOpsGoalUserCount: EventCounterServiceGetOpsGoalUserCount;
 }
@@ -173,6 +183,15 @@ export class EventCounterServiceClient {
   getMAUCount(
     requestMessage: proto_eventcounter_service_pb.GetMAUCountRequest,
     callback: (error: ServiceError|null, responseMessage: proto_eventcounter_service_pb.GetMAUCountResponse|null) => void
+  ): UnaryResponse;
+  summarizeMAUCounts(
+    requestMessage: proto_eventcounter_service_pb.SummarizeMAUCountsRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_eventcounter_service_pb.SummarizeMAUCountsResponse|null) => void
+  ): UnaryResponse;
+  summarizeMAUCounts(
+    requestMessage: proto_eventcounter_service_pb.SummarizeMAUCountsRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_eventcounter_service_pb.SummarizeMAUCountsResponse|null) => void
   ): UnaryResponse;
   getOpsEvaluationUserCount(
     requestMessage: proto_eventcounter_service_pb.GetOpsEvaluationUserCountRequest,

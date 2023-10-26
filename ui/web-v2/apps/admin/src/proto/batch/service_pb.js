@@ -310,7 +310,8 @@ proto.bucketeer.batch.BatchJob = {
   DOMAINEVENTINFORMER: 6,
   REDISCOUNTERDELETER: 7,
   PROGRESSIVEROLLOUTWATCHER: 8,
-  EXPERIMENTCALCULATOR: 9
+  EXPERIMENTCALCULATOR: 9,
+  MAUSUMMARIZER: 10
 };
 
 goog.object.extend(exports, proto.bucketeer.batch);
