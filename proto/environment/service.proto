@@ -63,7 +63,9 @@ message CreateEnvironmentV2Request {
   CreateEnvironmentV2Command command = 1;
 }
 
-message CreateEnvironmentV2Response {}
+message CreateEnvironmentV2Response {
+  EnvironmentV2 environment = 1;
+}
 
 message UpdateEnvironmentV2Request {
   string id = 1;
@@ -125,7 +127,9 @@ message CreateProjectRequest {
   CreateProjectCommand command = 1;
 }
 
-message CreateProjectResponse {}
+message CreateProjectResponse {
+  Project project = 1;
+}
 
 message CreateTrialProjectRequest {
   CreateTrialProjectCommand command = 1;

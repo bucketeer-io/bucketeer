@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -211,10 +212,21 @@ func TestCreateEnvironmentV2(t *testing.T) {
 		return st.Err()
 	}
 
+	envExpected, err := domain.NewEnvironmentV2(
+		"Env Name-dev01",
+		"url-code_.01",
+		"description",
+		"project-id01",
+		nil,
+	)
+	envExpected.Archived = false
+	require.NoError(t, err)
+
 	patterns := []struct {
 		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.CreateEnvironmentV2Request
+		expected    *proto.EnvironmentV2
 		expectedErr error
 	}{
 		{
@@ -376,9 +388,14 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				).Return(nil)
 			},
 			req: &proto.CreateEnvironmentV2Request{
-				Command: &proto.CreateEnvironmentV2Command{Name: "Env Name-dev01", UrlCode: "url-code_.01", ProjectId: "project-id01"},
+				Command: &proto.CreateEnvironmentV2Command{
+					Name:        envExpected.Name,
+					UrlCode:     envExpected.UrlCode,
+					Description: envExpected.Description,
+					ProjectId:   envExpected.ProjectId,
+				},
 			},
-			expectedErr: nil,
+			expected: envExpected.EnvironmentV2,
 		},
 	}
 	for _, p := range patterns {
@@ -387,7 +404,17 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			_, err := service.CreateEnvironmentV2(ctx, p.req)
+			resp, err := service.CreateEnvironmentV2(ctx, p.req)
+			if resp != nil {
+				assert.True(t, len(resp.Environment.Id) > 0)
+				assert.Equal(t, p.expected.Name, resp.Environment.Name)
+				assert.Equal(t, p.expected.UrlCode, resp.Environment.UrlCode)
+				assert.Equal(t, p.expected.Description, resp.Environment.Description)
+				assert.Equal(t, p.expected.ProjectId, resp.Environment.ProjectId)
+				assert.Equal(t, p.expected.Archived, resp.Environment.Archived)
+				assert.True(t, resp.Environment.CreatedAt > 0)
+				assert.True(t, resp.Environment.UpdatedAt > 0)
+			}
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

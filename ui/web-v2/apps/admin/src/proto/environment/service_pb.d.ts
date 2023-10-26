@@ -166,6 +166,11 @@ export namespace CreateEnvironmentV2Request {
 }
 
 export class CreateEnvironmentV2Response extends jspb.Message {
+  hasEnvironment(): boolean;
+  clearEnvironment(): void;
+  getEnvironment(): proto_environment_environment_pb.EnvironmentV2 | undefined;
+  setEnvironment(value?: proto_environment_environment_pb.EnvironmentV2): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateEnvironmentV2Response.AsObject;
   static toObject(includeInstance: boolean, msg: CreateEnvironmentV2Response): CreateEnvironmentV2Response.AsObject;
@@ -178,6 +183,7 @@ export class CreateEnvironmentV2Response extends jspb.Message {
 
 export namespace CreateEnvironmentV2Response {
   export type AsObject = {
+    environment?: proto_environment_environment_pb.EnvironmentV2.AsObject,
   }
 }
 
@@ -468,6 +474,11 @@ export namespace CreateProjectRequest {
 }
 
 export class CreateProjectResponse extends jspb.Message {
+  hasProject(): boolean;
+  clearProject(): void;
+  getProject(): proto_environment_project_pb.Project | undefined;
+  setProject(value?: proto_environment_project_pb.Project): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateProjectResponse.AsObject;
   static toObject(includeInstance: boolean, msg: CreateProjectResponse): CreateProjectResponse.AsObject;
@@ -480,6 +491,7 @@ export class CreateProjectResponse extends jspb.Message {
 
 export namespace CreateProjectResponse {
   export type AsObject = {
+    project?: proto_environment_project_pb.Project.AsObject,
   }
 }
 

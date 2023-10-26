@@ -228,7 +228,9 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 	if err := s.createEnvironmentV2(ctx, req.Command, newEnvironment, editor, localizer); err != nil {
 		return nil, err
 	}
-	return &environmentproto.CreateEnvironmentV2Response{}, nil
+	return &environmentproto.CreateEnvironmentV2Response{
+		Environment: newEnvironment.EnvironmentV2,
+	}, nil
 }
 
 func validateCreateEnvironmentV2Request(
