@@ -95,20 +95,20 @@ export const ValuePerUserTable: FC<ValuePerUserTableProps> = ({
                     .value
                 }{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {Number.isNaN(valuePerUser)
                   ? 'n/a'
                   : valuePerUser.toFixed(2)}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {baseVariationId === variationResult.variationId
                   ? 'Baseline'
                   : Number.isNaN(valuePerUser - baseValuePerUser)
                   ? 'n/a'
                   : (valuePerUser - baseValuePerUser).toFixed(1)}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {baseVariationId === variationResult.variationId
                   ? 'Baseline'
@@ -120,7 +120,7 @@ export const ValuePerUserTable: FC<ValuePerUserTableProps> = ({
                     ).toFixed(1) + ' %'
                   : '-'}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {probBest
                   ? (

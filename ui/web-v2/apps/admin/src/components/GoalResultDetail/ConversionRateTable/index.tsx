@@ -96,13 +96,13 @@ export const ConversionRateTable: FC<ConversionRateTableProps> = ({
                     .value
                 }{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {Number.isNaN(conversionRate)
                   ? 'n/a'
                   : conversionRate.toFixed(1) + ' %'}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {baseVariationId === variationResult.variationId
                   ? 'Baseline'
                   : Number.isNaN(conversionRate - baseConversionRate)
@@ -110,7 +110,7 @@ export const ConversionRateTable: FC<ConversionRateTableProps> = ({
                   : (conversionRate - baseConversionRate).toFixed(1) +
                     ' %'}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {baseVariationId === variationResult.variationId
                   ? 'Baseline'
@@ -121,7 +121,7 @@ export const ConversionRateTable: FC<ConversionRateTableProps> = ({
                     ).toFixed(1) + ' %'
                   : '-'}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {cvrProbBest
                   ? (
