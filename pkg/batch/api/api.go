@@ -45,6 +45,7 @@ type batchService struct {
 	progressiveRolloutWatcher jobs.Job
 	redisCounterDeleter       jobs.Job
 	experimentCalculator      jobs.Job
+	mauSummarizer             jobs.Job
 	environmentClient         envclient.Client
 	domainEventPuller         puller.Puller
 	notificationSender        notificationsender.Sender
@@ -61,6 +62,7 @@ func NewBatchService(
 	notificationSender notificationsender.Sender,
 	redisCounterDeleter jobs.Job,
 	experimentCalculator jobs.Job,
+	mauSummarizer jobs.Job,
 	logger *zap.Logger,
 	options ...notification.Option,
 ) *batchService {
@@ -74,6 +76,7 @@ func NewBatchService(
 		progressiveRolloutWatcher: progressiveRolloutWatcher,
 		redisCounterDeleter:       redisCounterDeleter,
 		experimentCalculator:      experimentCalculator,
+		mauSummarizer:             mauSummarizer,
 		environmentClient:         environmentClient,
 		domainEventPuller:         domainEventPuller,
 		notificationSender:        notificationSender,
@@ -112,6 +115,8 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.progressiveRolloutWatcher.Run(ctx)
 	case batch.BatchJob_ExperimentCalculator:
 		err = s.experimentCalculator.Run(ctx)
+	case batch.BatchJob_MauSummarizer:
+		err = s.mauSummarizer.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromImcomingContext(ctx).AddFields(

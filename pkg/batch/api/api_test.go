@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/calculator"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/mau"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/rediscounter"
@@ -625,6 +626,13 @@ func newBatchService(t *testing.T,
 			experimentCalculatorClient,
 			jpLocation,
 			jobs.WithTimeout(5*time.Minute),
+			jobs.WithLogger(logger),
+		),
+		mau.NewMAUSummarizer(
+			mysqlMockClient,
+			eventCounterMockClient,
+			jpLocation,
+			jobs.WithTimeout(30*time.Minute),
 			jobs.WithLogger(logger),
 		),
 		logger,

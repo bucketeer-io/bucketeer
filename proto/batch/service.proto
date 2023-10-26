@@ -28,6 +28,7 @@ enum BatchJob {
   RedisCounterDeleter = 7;
   ProgressiveRolloutWatcher = 8;
   ExperimentCalculator = 9;
+  MauSummarizer = 10;
 }
 
 message BatchJobRequest {
