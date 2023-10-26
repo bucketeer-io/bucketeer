@@ -30,6 +30,7 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -218,10 +219,20 @@ func TestCreateProjectMySQL(t *testing.T) {
 		return st.Err()
 	}
 
+	projExpected, err := domain.NewProject(
+		"name",
+		"url-code",
+		"description",
+		"email",
+		false,
+	)
+	require.NoError(t, err)
+
 	patterns := []struct {
 		desc        string
 		setup       func(*EnvironmentService)
 		req         *proto.CreateProjectRequest
+		expected    *proto.Project
 		expectedErr error
 	}{
 		{
@@ -307,8 +318,13 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "Project Name-001", UrlCode: "project-name-001"},
+				Command: &proto.CreateProjectCommand{
+					Name:        projExpected.Name,
+					UrlCode:     projExpected.UrlCode,
+					Description: projExpected.Description,
+				},
 			},
+			expected:    projExpected.Project,
 			expectedErr: nil,
 		},
 	}
@@ -318,7 +334,18 @@ func TestCreateProjectMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			_, err := service.CreateProject(ctx, p.req)
+			resp, err := service.CreateProject(ctx, p.req)
+			if resp != nil {
+				assert.True(t, len(resp.Project.Name) > 0)
+				assert.Equal(t, p.expected.Name, resp.Project.Name)
+				assert.Equal(t, p.expected.UrlCode, resp.Project.UrlCode)
+				assert.Equal(t, p.expected.Description, resp.Project.Description)
+				assert.Equal(t, p.expected.CreatorEmail, resp.Project.CreatorEmail)
+				assert.True(t, resp.Project.CreatedAt > 0)
+				assert.True(t, resp.Project.UpdatedAt > 0)
+				assert.Equal(t, p.expected.Disabled, resp.Project.Disabled)
+				assert.Equal(t, p.expected.Trial, resp.Project.Trial)
+			}
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

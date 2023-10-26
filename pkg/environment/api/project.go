@@ -249,7 +249,7 @@ func (s *EnvironmentService) CreateProject(
 	if err := s.createProject(ctx, req.Command, project, editor, localizer); err != nil {
 		return nil, err
 	}
-	return &environmentproto.CreateProjectResponse{}, nil
+	return &environmentproto.CreateProjectResponse{Project: project.Project}, nil
 }
 
 func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, localizer locale.Localizer) error {

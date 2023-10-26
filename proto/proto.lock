@@ -2204,14 +2204,12 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutManualScheduleClause"
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ]
           },
@@ -3002,14 +3000,12 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status",
-                "optional": true
+                "type": "ProgressiveRollout.Status"
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type",
-                "optional": true
+                "type": "ProgressiveRollout.Type"
               }
             ]
           },
@@ -3778,7 +3774,14 @@
             ]
           },
           {
-            "name": "CreateEnvironmentV2Response"
+            "name": "CreateEnvironmentV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment",
+                "type": "EnvironmentV2"
+              }
+            ]
           },
           {
             "name": "UpdateEnvironmentV2Request",
@@ -3926,7 +3929,14 @@
             ]
           },
           {
-            "name": "CreateProjectResponse"
+            "name": "CreateProjectResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "Project"
+              }
+            ]
           },
           {
             "name": "CreateTrialProjectRequest",

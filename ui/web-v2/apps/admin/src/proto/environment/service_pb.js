@@ -1684,7 +1684,7 @@ proto.bucketeer.environment.CreateEnvironmentV2Response.prototype.toObject = fun
  */
 proto.bucketeer.environment.CreateEnvironmentV2Response.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+    environment: (f = msg.getEnvironment()) && proto_environment_environment_pb.EnvironmentV2.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -1721,6 +1721,11 @@ proto.bucketeer.environment.CreateEnvironmentV2Response.deserializeBinaryFromRea
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new proto_environment_environment_pb.EnvironmentV2;
+      reader.readMessage(value,proto_environment_environment_pb.EnvironmentV2.deserializeBinaryFromReader);
+      msg.setEnvironment(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1750,6 +1755,51 @@ proto.bucketeer.environment.CreateEnvironmentV2Response.prototype.serializeBinar
  */
 proto.bucketeer.environment.CreateEnvironmentV2Response.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getEnvironment();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto_environment_environment_pb.EnvironmentV2.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional EnvironmentV2 environment = 1;
+ * @return {?proto.bucketeer.environment.EnvironmentV2}
+ */
+proto.bucketeer.environment.CreateEnvironmentV2Response.prototype.getEnvironment = function() {
+  return /** @type{?proto.bucketeer.environment.EnvironmentV2} */ (
+    jspb.Message.getWrapperField(this, proto_environment_environment_pb.EnvironmentV2, 1));
+};
+
+
+/**
+ * @param {?proto.bucketeer.environment.EnvironmentV2|undefined} value
+ * @return {!proto.bucketeer.environment.CreateEnvironmentV2Response} returns this
+*/
+proto.bucketeer.environment.CreateEnvironmentV2Response.prototype.setEnvironment = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.CreateEnvironmentV2Response} returns this
+ */
+proto.bucketeer.environment.CreateEnvironmentV2Response.prototype.clearEnvironment = function() {
+  return this.setEnvironment(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.CreateEnvironmentV2Response.prototype.hasEnvironment = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -3655,7 +3705,7 @@ proto.bucketeer.environment.CreateProjectResponse.prototype.toObject = function(
  */
 proto.bucketeer.environment.CreateProjectResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+    project: (f = msg.getProject()) && proto_environment_project_pb.Project.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -3692,6 +3742,11 @@ proto.bucketeer.environment.CreateProjectResponse.deserializeBinaryFromReader = 
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new proto_environment_project_pb.Project;
+      reader.readMessage(value,proto_environment_project_pb.Project.deserializeBinaryFromReader);
+      msg.setProject(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -3721,6 +3776,51 @@ proto.bucketeer.environment.CreateProjectResponse.prototype.serializeBinary = fu
  */
 proto.bucketeer.environment.CreateProjectResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getProject();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto_environment_project_pb.Project.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional Project project = 1;
+ * @return {?proto.bucketeer.environment.Project}
+ */
+proto.bucketeer.environment.CreateProjectResponse.prototype.getProject = function() {
+  return /** @type{?proto.bucketeer.environment.Project} */ (
+    jspb.Message.getWrapperField(this, proto_environment_project_pb.Project, 1));
+};
+
+
+/**
+ * @param {?proto.bucketeer.environment.Project|undefined} value
+ * @return {!proto.bucketeer.environment.CreateProjectResponse} returns this
+*/
+proto.bucketeer.environment.CreateProjectResponse.prototype.setProject = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.CreateProjectResponse} returns this
+ */
+proto.bucketeer.environment.CreateProjectResponse.prototype.clearProject = function() {
+  return this.setProject(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.CreateProjectResponse.prototype.hasProject = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
