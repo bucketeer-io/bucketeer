@@ -1883,3 +1883,50 @@ func TestGetUserCounts(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckAdminRole(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := context.Background()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	patterns := []struct {
+		desc        string
+		inputCtx    context.Context
+		expectedErr error
+	}{
+		{
+			desc:        "error: Unauthenticated",
+			inputCtx:    context.Background(),
+			expectedErr: createError(statusUnauthenticated, localizer.MustLocalizeWithTemplate(locale.UnauthenticatedError)),
+		},
+		{
+			desc:        "error: PermissionDenied",
+			inputCtx:    createContextWithToken(t, accountproto.Account_UNASSIGNED),
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.PermissionDenied)),
+		},
+		{
+			desc:        "success",
+			inputCtx:    createContextWithToken(t, accountproto.Account_EDITOR),
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newEventCounterService(t, mockController)
+			_, actualErr := gs.checkAdminRole(p.inputCtx, localizer)
+			assert.Equal(t, actualErr, p.expectedErr)
+		})
+	}
+}
