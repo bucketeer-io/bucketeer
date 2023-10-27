@@ -89,37 +89,37 @@ export const GoalResultTable: FC<GoalResultTableProps> = ({
                     .value
                 }{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {unwrapUndefinable(
                   variationResult.evaluationCount
                 ).userCount.toLocaleString()}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {unwrapUndefinable(
                   variationResult.experimentCount
                 ).eventCount.toLocaleString()}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {unwrapUndefinable(
                   variationResult.experimentCount
                 ).userCount.toLocaleString()}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {Number.isNaN(conversionRate)
                   ? 'n/a'
                   : conversionRate.toFixed(1) + ' %'}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {unwrapUndefinable(
                   variationResult.experimentCount
                 ).valueSum.toLocaleString()}{' '}
               </TableCell>
-              <TableCell>
+              <TableCell textLeft={true}>
                 {' '}
                 {Number.isNaN(valuePerUser)
                   ? 'n/a'
