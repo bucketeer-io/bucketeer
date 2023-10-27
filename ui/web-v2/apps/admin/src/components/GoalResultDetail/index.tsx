@@ -171,7 +171,7 @@ export const GoalResultDetailChart: FC<GoalResultDetailChartProps> = ({
       <Select
         options={chartOptions}
         className={classNames('text-sm w-[300px]')}
-        value={chartOptions[0]}
+        value={chartOptions.find((c) => c.value === chart)}
         isSearchable={false}
         onChange={(e) => {
           setChart(e.value);
@@ -237,7 +237,7 @@ export const GoalResultDetailAnalysis: FC<GoalResultDetailAnalysisProps> = ({
       <Select
         options={analysisOptions}
         className={classNames('text-sm w-[300px] mb-6')}
-        value={analysisOptions[0]}
+        value={analysisOptions.find((a) => a.value === analysis)}
         isSearchable={false}
         onChange={(e) => {
           setAnalysis(e.value);
