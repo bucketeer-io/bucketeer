@@ -1,3 +1,4 @@
+import { listProgressiveRollout } from '@/modules/porgressiveRollout';
 import { Feature } from '@/proto/feature/feature_pb';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
@@ -18,11 +19,11 @@ import { selectById as selectFeatureById } from '../../modules/features';
 import { listGoals } from '../../modules/goals';
 import { useCurrentEnvironment } from '../../modules/me';
 import { OpsType } from '../../proto/autoops/auto_ops_rule_pb';
-import { OpsEventRateClause } from '../../proto/autoops/clause_pb';
 import { ListGoalsRequest } from '../../proto/experiment/service_pb';
 import { AppDispatch } from '../../store';
 
 import { operationFormSchema } from './formSchema';
+import dayjs from 'dayjs';
 
 interface FeatureAutoOpsPageProps {
   featureId: string;
@@ -47,13 +48,28 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       (state) => state.autoOpsRules.loading,
       shallowEqual
     );
-    const isLoading = isFeatureLoading || isAutoOpsRuleLoading;
+    const isProgressiveRolloutsLoading = useSelector<AppState, boolean>(
+      (state) => state.progressiveRollout.loading,
+      shallowEqual
+    );
+
+    const isLoading =
+      isFeatureLoading || isAutoOpsRuleLoading || isProgressiveRolloutsLoading;
 
     const defaultValues = {
       opsType: OpsType.ENABLE_FEATURE,
       clauseType: ClauseType.DATETIME,
       datetime: createInitialDatetimeClause(),
       eventRate: createInitialOpsEventRateClause(feature),
+      progressiveRollout: {
+        template: {
+          datetime: createInitialDatetimeClause(),
+          interval: '1',
+          increments: 20,
+          variationId: '',
+          schedulesList: [],
+        },
+      },
     };
 
     const methods = useForm({
@@ -70,6 +86,19 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
         })
       );
     }, [dispatch]);
+
+    const handleRefetchProgressiveRollouts = useCallback(() => {
+      dispatch(
+        listProgressiveRollout({
+          featureId: featureId,
+          environmentNamespace: currentEnvironment.id,
+        })
+      );
+    }, [dispatch]);
+
+    useEffect(() => {
+      handleRefetchProgressiveRollouts();
+    }, []);
 
     useEffect(() => {
       dispatch(
@@ -98,37 +127,9 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
         <FeatureAutoOpsRulesForm
           featureId={featureId}
           refetchAutoOpsRules={handleRefetchAutoOpsRules}
+          refetchProgressiveRollouts={handleRefetchProgressiveRollouts}
         />
       </FormProvider>
     );
   }
 );
-
-interface OpsEventRateClauseSchema {
-  variation: string;
-  goal: string;
-  minCount: number;
-  threadsholdRate: number;
-  operator: string;
-}
-
-export function createOpsEventRateClause(
-  oerc: OpsEventRateClauseSchema
-): OpsEventRateClause {
-  const clause = new OpsEventRateClause();
-  clause.setVariationId(oerc.variation);
-  clause.setGoalId(oerc.goal);
-  clause.setMinCount(oerc.minCount);
-  clause.setThreadsholdRate(oerc.threadsholdRate / 100);
-  clause.setOperator(createOpsEventRateOperator(oerc.operator));
-  return clause;
-}
-
-export function createOpsEventRateOperator(
-  value: string
-): OpsEventRateClause.OperatorMap[keyof OpsEventRateClause.OperatorMap] {
-  if (value === OpsEventRateClause.Operator.GREATER_OR_EQUAL.toString()) {
-    return OpsEventRateClause.Operator.GREATER_OR_EQUAL;
-  }
-  return OpsEventRateClause.Operator.LESS_OR_EQUAL;
-}

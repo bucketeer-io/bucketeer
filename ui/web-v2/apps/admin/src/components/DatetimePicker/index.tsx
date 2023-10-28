@@ -1,5 +1,5 @@
 import React, { FC, memo } from 'react';
-import ReactDatePicker from 'react-datepicker';
+import RDatePicker from 'react-datepicker';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { classNames } from '../../utils/css';
@@ -21,7 +21,7 @@ export const DatetimePicker: FC<DatetimePickerProps> = memo(
         control={control}
         name={name}
         render={({ field: { onChange, value } }) => (
-          <ReactDatePicker
+          <RDatePicker
             dateFormat="yyyy-MM-dd HH:mm"
             showTimeSelect
             timeIntervals={60}
@@ -33,6 +33,28 @@ export const DatetimePicker: FC<DatetimePickerProps> = memo(
             disabled={disabled}
           />
         )}
+      />
+    );
+  }
+);
+
+export interface ReactDatetimePickerProps {
+  value: Date;
+  disabled?: boolean;
+}
+
+export const ReactDatePicker: FC<ReactDatetimePickerProps> = memo(
+  ({ value, disabled }) => {
+    return (
+      <RDatePicker
+        selected={value as Date}
+        dateFormat="yyyy-MM-dd HH:mm"
+        showTimeSelect
+        timeIntervals={60}
+        placeholderText=""
+        className={classNames('input-text w-full')}
+        wrapperClassName="w-full"
+        disabled={disabled}
       />
     );
   }

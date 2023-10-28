@@ -1,15 +1,21 @@
 import { intl } from '@/lang';
 import { AppState } from '@/modules';
 import { useCurrentEnvironment, useIsEditable } from '@/modules/me';
-import { createOpsEventRateClause } from '@/pages/feature/autoops';
 import { addFormSchema } from '@/pages/goal/formSchema';
 import { AutoOpsRule, OpsType } from '@/proto/autoops/auto_ops_rule_pb';
-import { DatetimeClause, OpsEventRateClause } from '@/proto/autoops/clause_pb';
+import {
+  DatetimeClause,
+  OpsEventRateClause,
+  ProgressiveRolloutManualScheduleClause,
+  ProgressiveRolloutTemplateScheduleClause,
+  ProgressiveRolloutSchedule,
+} from '@/proto/autoops/clause_pb';
 import {
   ChangeAutoOpsRuleOpsTypeCommand,
   ChangeDatetimeClauseCommand,
   ChangeOpsEventRateClauseCommand,
   CreateAutoOpsRuleCommand,
+  CreateProgressiveRolloutCommand,
 } from '@/proto/autoops/command_pb';
 import { Goal } from '@/proto/experiment/goal_pb';
 import { ListGoalsRequest } from '@/proto/experiment/service_pb';
@@ -20,7 +26,15 @@ import { Dialog, Transition } from '@headlessui/react';
 import { XIcon, ExclamationCircleIcon } from '@heroicons/react/outline';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
-import { FC, Fragment, memo, useCallback, useEffect, useState } from 'react';
+import dayjs from 'dayjs';
+import React, {
+  FC,
+  Fragment,
+  memo,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { Controller, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -38,13 +52,19 @@ import {
   listGoals,
   selectAll as selectAllGoals,
 } from '../../modules/goals';
-import { DatetimePicker } from '../DatetimePicker';
-import { ClauseType, operatorOptions } from '../FeatureAutoOpsRulesForm';
+import { createProgressiveRollout } from '../../modules/porgressiveRollout';
+import { DatetimePicker, ReactDatePicker } from '../DatetimePicker';
+import {
+  ClauseType,
+  operatorOptions,
+  ProgressiveRolloutClauseType,
+} from '../FeatureAutoOpsRulesForm';
 import { Option, Select } from '../Select';
 
 export interface OperationAddUpdateFormProps {
   featureId: string;
   onSubmit: () => void;
+  onSubmitProgressiveRollout: () => void;
   onCancel: () => void;
   autoOpsRule?: AutoOpsRule.AsObject;
   isKillSwitchSelected: boolean;
@@ -59,6 +79,7 @@ const TabLabel = {
 export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
   ({
     onSubmit,
+    onSubmitProgressiveRollout,
     onCancel,
     featureId,
     autoOpsRule,
@@ -81,6 +102,22 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     const [isAddGoalOpen, setIsAddGoalOpen] = useState(false);
     const [radioList, setRadioList] = useState([]);
 
+    const [progressiveRolloutTypeList, setProgressiveRolloutTypeList] =
+      useState([
+        {
+          label: 'Template',
+          value:
+            ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE,
+          selected: true,
+        },
+        {
+          label: 'Manual',
+          value:
+            ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE,
+          selected: false,
+        },
+      ]);
+
     const methods = useFormContext();
     const {
       handleSubmit,
@@ -91,9 +128,6 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       getValues,
     } = methods;
 
-    const datetime = getValues('datetime.time');
-    const eventRate = getValues('eventRate');
-
     const opsType = useWatch({
       control,
       name: 'opsType',
@@ -102,6 +136,21 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     const clauseType = useWatch({
       control,
       name: 'clauseType',
+    });
+
+    const templateSchedulesList = useWatch({
+      control,
+      name: 'progressiveRollout.template.schedulesList',
+    });
+
+    const templateInterval = useWatch({
+      control,
+      name: 'progressiveRollout.template.interval',
+    });
+
+    const progressiveRolloutTemplateDatetimeTime = useWatch({
+      control,
+      name: 'progressiveRollout.template.datetime.time',
     });
 
     const tabs = [
@@ -123,6 +172,10 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
           label: f(messages.autoOps.schedule),
           value: ClauseType.DATETIME,
         },
+        {
+          label: 'Progressive Rollout',
+          value: ClauseType.PROGRESSIVE_ROLLOUT,
+        },
       ]);
     };
 
@@ -138,6 +191,44 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
         },
       ]);
     };
+
+    const getInterval = (
+      interval: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap]
+    ) => {
+      if (Number(interval) === 1) {
+        return 'hour';
+      } else if (Number(interval) === 2) {
+        return 'day';
+      } else if (Number(interval) === 3) {
+        return 'week';
+      }
+    };
+
+    useEffect(() => {
+      console.log(1, templateInterval, progressiveRolloutTemplateDatetimeTime);
+      const increments = 20;
+
+      const scheduleList = Array(Math.ceil(100 / increments))
+        .fill('')
+        .map((_, index) => {
+          // increment each schedule by {templateInterval}
+          const datetime = dayjs(progressiveRolloutTemplateDatetimeTime)
+            .add(index, getInterval(templateInterval))
+            .toDate();
+
+          // The weight is the amount to be changed in the rollout.
+          // 10% = 10000
+          // 20% = 20000
+
+          return {
+            scheduleId: index,
+            triggeredAt: 0,
+            executeAt: datetime,
+            weight: (index + 1) * increments * 1000,
+          };
+        });
+      setValue('progressiveRollout.template.schedulesList', scheduleList);
+    }, [progressiveRolloutTemplateDatetimeTime, templateInterval]);
 
     useEffect(() => {
       if (autoOpsRule) {
@@ -228,30 +319,93 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
 
           dispatch(updateAutoOpsRule(param)).then(() => onSubmit());
         } else {
-          const command = new CreateAutoOpsRuleCommand();
-          command.setFeatureId(featureId);
+          if (
+            data.clauseType === ClauseType.DATETIME ||
+            data.clauseType === ClauseType.EVENT_RATE
+          ) {
+            const command = new CreateAutoOpsRuleCommand();
+            command.setFeatureId(featureId);
 
-          data.opsType === OpsType.ENABLE_FEATURE.toString()
-            ? command.setOpsType(OpsType.ENABLE_FEATURE)
-            : command.setOpsType(OpsType.DISABLE_FEATURE);
+            data.opsType === OpsType.ENABLE_FEATURE.toString()
+              ? command.setOpsType(OpsType.ENABLE_FEATURE)
+              : command.setOpsType(OpsType.DISABLE_FEATURE);
 
-          if (data.clauseType === ClauseType.DATETIME) {
-            const clause = new DatetimeClause();
-            clause.setTime(Math.round(data.datetime.time.getTime() / 1000));
-            command.setDatetimeClausesList([clause]);
+            if (data.clauseType === ClauseType.DATETIME) {
+              const clause = new DatetimeClause();
+              clause.setTime(Math.round(data.datetime.time.getTime() / 1000));
+              command.setDatetimeClausesList([clause]);
+            }
+            if (data.clauseType === ClauseType.EVENT_RATE) {
+              command.setOpsEventRateClausesList([
+                createOpsEventRateClause(data.eventRate),
+              ]);
+            }
+
+            dispatch(
+              createAutoOpsRule({
+                environmentNamespace: currentEnvironment.id,
+                command: command,
+              })
+            ).then(() => onSubmit());
           }
-          if (data.clauseType === ClauseType.EVENT_RATE) {
-            command.setOpsEventRateClausesList([
-              createOpsEventRateClause(data.eventRate),
-            ]);
-          }
 
-          dispatch(
-            createAutoOpsRule({
-              environmentNamespace: currentEnvironment.id,
-              command: command,
-            })
-          ).then(() => onSubmit());
+          if (data.clauseType === ClauseType.PROGRESSIVE_ROLLOUT) {
+            const command = new CreateProgressiveRolloutCommand();
+            command.setFeatureId(featureId);
+
+            const selectedProgressiveRolloutType =
+              progressiveRolloutTypeList.find((p) => p.selected).value;
+
+            if (
+              selectedProgressiveRolloutType ===
+              ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE
+            ) {
+              const {
+                progressiveRollout: {
+                  template: {
+                    increments,
+                    interval,
+                    schedulesList,
+                    variationId,
+                  },
+                },
+              } = data;
+
+              const clause = new ProgressiveRolloutTemplateScheduleClause();
+
+              clause.setIncrements(increments);
+              clause.setInterval(interval);
+
+              // const clause = new ProgressiveRolloutManualScheduleClause();
+              clause.setVariationId(variationId);
+
+              const scheduleList = schedulesList.map((schedule) => {
+                const c = new ProgressiveRolloutSchedule();
+
+                c.setExecuteAt(Math.round(schedule.executeAt.getTime() / 1000));
+                c.setWeight(schedule.weight);
+                return c;
+              });
+
+              // const c2 = new ProgressiveRolloutSchedule();
+              // c2.setExecuteAt(Math.round(data.datetime.time.getTime() / 1000));
+              // c2.setWeight(40000);
+
+              clause.setSchedulesList(scheduleList);
+
+              command.setProgressiveRolloutTemplateScheduleClause(clause);
+              // command.setProgressiveRolloutManualScheduleClause(clause);
+            }
+
+            dispatch(
+              createProgressiveRollout({
+                environmentNamespace: currentEnvironment.id,
+                command: command,
+              })
+            ).then(() => {
+              onSubmitProgressiveRollout();
+            });
+          }
         }
       },
       [autoOpsRule]
@@ -275,6 +429,21 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
         label: goal.id,
       };
     });
+
+    const intervalOptions = [
+      {
+        label: 'Hourly',
+        value: '1',
+      },
+      {
+        label: 'Daily',
+        value: '2',
+      },
+      {
+        label: 'Weekly',
+        value: '3',
+      },
+    ];
 
     const title = () => {
       if (isSeeDetailsSelected) {
@@ -507,6 +676,227 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                 </p>
                               )}
                             </div>
+                          </div>
+                        )}
+                      {radio.value === ClauseType.PROGRESSIVE_ROLLOUT &&
+                        clauseType === ClauseType.PROGRESSIVE_ROLLOUT && (
+                          <div className="mt-4 space-y-4">
+                            <div className="flex">
+                              {progressiveRolloutTypeList.map(
+                                ({ label, selected }, index) => (
+                                  <div
+                                    key={label}
+                                    className={classNames(
+                                      'flex-1 border py-2 text-center cursor-pointer',
+                                      index === 0
+                                        ? 'rounded-l-lg'
+                                        : 'rounded-r-lg',
+                                      selected
+                                        ? 'bg-pink-50 border-pink-500'
+                                        : ''
+                                    )}
+                                    onClick={() => {
+                                      setProgressiveRolloutTypeList(
+                                        progressiveRolloutTypeList.map((p) => ({
+                                          ...p,
+                                          selected: p.label === label,
+                                        }))
+                                      );
+                                    }}
+                                  >
+                                    {label}
+                                  </div>
+                                )
+                              )}
+                            </div>
+                            {progressiveRolloutTypeList.find((p) => p.selected)
+                              .value ===
+                            ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE ? (
+                              <Fragment>
+                                <div className="flex-1">
+                                  <span className="input-label">
+                                    {f(messages.feature.variation)}
+                                  </span>
+                                  <Controller
+                                    name="progressiveRollout.template.variationId"
+                                    control={control}
+                                    render={({ field }) => (
+                                      <Select
+                                        onChange={(o: Option) =>
+                                          field.onChange(o.value)
+                                        }
+                                        options={variationOptions}
+                                        disabled={
+                                          !editable || isSeeDetailsSelected
+                                        }
+                                        value={variationOptions.find(
+                                          (o) => o.value === field.value
+                                        )}
+                                      />
+                                    )}
+                                  />
+                                </div>
+                                <div className="">
+                                  <span className="input-label">
+                                    {f(messages.autoOps.startDate)}
+                                  </span>
+                                  <DatetimePicker
+                                    name="progressiveRollout.template.datetime.time"
+                                    disabled={isSeeDetailsSelected}
+                                  />
+                                  <p className="input-error">
+                                    {errors.datetime?.time?.message && (
+                                      <span role="alert">
+                                        {errors.datetime?.time?.message}
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                                <div className="flex space-x-4">
+                                  <div className="flex-1">
+                                    <span className="input-label">
+                                      Increment
+                                    </span>
+                                    <div className="flex">
+                                      <input
+                                        {...register(
+                                          'progressiveRollout.template.increments'
+                                        )}
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        className={classNames(
+                                          'w-full',
+                                          errors.eventRate?.threadsholdRate
+                                            ? 'input-text-error'
+                                            : 'input-text'
+                                        )}
+                                        placeholder={''}
+                                        required
+                                        disabled={
+                                          !editable || isSeeDetailsSelected
+                                        }
+                                      />
+                                      <span
+                                        className={classNames(
+                                          'px-1 py-1 inline-flex items-center bg-gray-100',
+                                          'rounded-r border border-l-0 border-gray-300 text-gray-600'
+                                        )}
+                                      >
+                                        {'%'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex-1">
+                                    <span className="input-label">
+                                      Frequency
+                                    </span>
+                                    <Controller
+                                      name="progressiveRollout.template.interval"
+                                      control={control}
+                                      render={({ field }) => (
+                                        <Select
+                                          onChange={(o: Option) =>
+                                            field.onChange(o.value)
+                                          }
+                                          options={intervalOptions}
+                                          disabled={
+                                            !editable || isSeeDetailsSelected
+                                          }
+                                          value={intervalOptions.find(
+                                            (o) => o.value === field.value
+                                          )}
+                                        />
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="flex space-x-4">
+                                    <div className="flex-1">Weight</div>
+                                    <div className="flex-1">Execute at</div>
+                                  </div>
+                                  <div className="space-y-2 mt-2">
+                                    {templateSchedulesList.map((schedule) => (
+                                      <div
+                                        key={schedule.scheduleId}
+                                        className="flex space-x-4"
+                                      >
+                                        <input
+                                          type="number"
+                                          className={classNames(
+                                            'w-full',
+                                            'input-text'
+                                          )}
+                                          value={schedule.weight}
+                                          placeholder={''}
+                                          disabled={true}
+                                        />
+                                        <ReactDatePicker
+                                          value={schedule.executeAt}
+                                          disabled
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </Fragment>
+                            ) : (
+                              <Fragment>
+                                <div className="flex space-x-4">
+                                  <div className="flex-1">
+                                    <span className="input-label">
+                                      Increment
+                                    </span>
+                                    <div className="flex">
+                                      <input
+                                        {...register(
+                                          'eventRate.threadsholdRate'
+                                        )}
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        className={classNames(
+                                          'w-full',
+                                          errors.eventRate?.threadsholdRate
+                                            ? 'input-text-error'
+                                            : 'input-text'
+                                        )}
+                                        placeholder={''}
+                                        required
+                                        disabled={
+                                          !editable || isSeeDetailsSelected
+                                        }
+                                      />
+                                      <span
+                                        className={classNames(
+                                          'px-1 py-1 inline-flex items-center bg-gray-100',
+                                          'rounded-r border border-l-0 border-gray-300 text-gray-600'
+                                        )}
+                                      >
+                                        {'%'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex-1">
+                                    <span className="input-label">
+                                      {f(messages.autoOps.startDate)}
+                                    </span>
+                                    <DatetimePicker
+                                      name="datetime.time"
+                                      disabled={isSeeDetailsSelected}
+                                    />
+                                    <p className="input-error">
+                                      {errors.datetime?.time?.message && (
+                                        <span role="alert">
+                                          {errors.datetime?.time?.message}
+                                        </span>
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                              </Fragment>
+                            )}
                           </div>
                         )}
                     </div>
@@ -863,3 +1253,32 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
     </Transition.Root>
   );
 };
+
+interface OpsEventRateClauseSchema {
+  variation: string;
+  goal: string;
+  minCount: number;
+  threadsholdRate: number;
+  operator: string;
+}
+
+export function createOpsEventRateClause(
+  oerc: OpsEventRateClauseSchema
+): OpsEventRateClause {
+  const clause = new OpsEventRateClause();
+  clause.setVariationId(oerc.variation);
+  clause.setGoalId(oerc.goal);
+  clause.setMinCount(oerc.minCount);
+  clause.setThreadsholdRate(oerc.threadsholdRate / 100);
+  clause.setOperator(createOpsEventRateOperator(oerc.operator));
+  return clause;
+}
+
+export function createOpsEventRateOperator(
+  value: string
+): OpsEventRateClause.OperatorMap[keyof OpsEventRateClause.OperatorMap] {
+  if (value === OpsEventRateClause.Operator.GREATER_OR_EQUAL.toString()) {
+    return OpsEventRateClause.Operator.GREATER_OR_EQUAL;
+  }
+  return OpsEventRateClause.Operator.LESS_OR_EQUAL;
+}
