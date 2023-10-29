@@ -6,19 +6,19 @@ The dev container is also configured to use the latest version of the project.
 
 There are two ways to setup the development environment by using dev container:
 
-1. Use the dev container directly from Github Codespaces
+1. Use the dev container directly from GitHub Codespaces
 2. Build the dev container locally using VSCode Remote - Containers extension
 
-### Use the dev container directly from Github
+### Use the dev container directly from GitHub
 
 Using the dev container directly from Github is the easiest way to setup the development environment. There are
 configuration file for dev container in the project. Github will automatically build the dev container and run it in the
 cloud.
 But it may need to make a billing of the dev container if you use it frequently. \
-You can find more detail about the billing of Github dev
+You can find more detail about the billing of GitHub dev
 container [here](https://docs.github.com/en/github/developing-online-with-codespaces/about-billing-for-codespaces).
 
-1. Open the [bucketeer project](https://github.com/bucketeer-io/bucketeer) in Github
+1. Open the [bucketeer project](https://github.com/bucketeer-io/bucketeer) in GitHub
 2. Click the `Code` button and select `Open with Codespaces`
 3. Select `New codespace` and click `Create codespace` (We set a minimal machine type `Basic (4 vCPU, 8 GB RAM)` for the
    dev container)
@@ -41,9 +41,10 @@ This command will install the Golang packages that Bucketeer depends on.
 make setup-minikube
 ```
 
-> Note: If you setup the minikube cluster for the first time, next time you can just run `make start-minikube` to start the cluster.
+> Note: after you set up the minikube cluster for the first time by using `make setup-minikube`, next time when you
+> restart the minikube cluster, you will need to use `make start-minikube` to start the cluster.
 
-This command will setup minikube and services that Bucketeer depends on:
+This command will set up minikube and services that Bucketeer depends on:
 
 * MySQL
 * Redis
@@ -51,11 +52,32 @@ This command will setup minikube and services that Bucketeer depends on:
 * Google Big Query (Emulator)
 * Hashicorp Vault
 
-Also it will add 2 hosts to `/etc/hosts` that point to the minikube IP address:
+Also, it will add 2 hosts to `/etc/hosts` that point to the minikube IP address:
 
 * `api-gateway.bucketeer.org` for API Gateway Service
 * `web-gateway.bucketeer.org` for Web Gateway Service
 
+And we need to initialize the Hashicorp Vault Transit Engine:
+
+```shell
+make enable-vault-transit
+```
+
+Then create tables for Google Big Query (Emulator)
+
+* Open a new terminal in the dev container
+
+```shell
+kubectl port-forward svc/localenv-bq 9050:9050
+``` 
+
+* Open another new terminal in the dev container
+
+```shell
+go run ./hack/create-big-query-table create --no-gcp-trace-enabled --no-profile
+```
+
+This command will create tables for Google Big Query (Emulator).
 
 3. Generate the certificates for local development:
 
@@ -72,7 +94,7 @@ SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 make generate-service-token
 ```
 
-The commands above will generate TLS certificate, OAuth key, Github token and service token in minikube. And the service
+The commands above will generate TLS certificate, OAuth key, GitHub token and service token in minikube. And the service
 token will be used to authenticate the gRPC service (we will use this token in Helm Charts `values.dev.yaml` later).
 
 4. Build the project:
@@ -101,7 +123,7 @@ For example, we will deploy the `backend` service:
 
 ```shell
 # deploy the backend service (in project root directory)
-helm install backend manifests/bucketeer/charts/backend/ --values manifests/bucketeer/charts/backend/****values.dev.yaml
+helm install backend manifests/bucketeer/charts/backend/ --values manifests/bucketeer/charts/backend/values.dev.yaml
 ```
 
 As you can see, we use the `values.dev.yaml` file to override the default values in `values.yaml` file. And we use the
@@ -109,10 +131,36 @@ service token (`/workspaces/bucketeer/tools/dev/cert/service-token`) that we gen
 gRPC service.
 
 
-> Pro tip: You can use `make deploy-service-to-minikube` to deploy services.
+> Pro-tip: You can use `make deploy-service-to-minikube` to deploy services.
 > For example, we will deploy the `backend` service:
 > ```shell
 > SERVICE=backend make deploy-service-to-minikube
 > ```
-> This command will deploy the `backend` service to minikube. And it will use the service token that we generated in *step 3* to authenticate the gRPC service. \
+> This command will deploy the `backend` service to minikube. And it will use the service token that we generated in
+*step 3* to authenticate the gRPC service. \
 > But make sure you are in the project root directory when you run this command.
+>
+> Also, you can use `make deploy-all-services-to-minikube` to deploy all services to minikube, if you don't want to
+> deploy services one by one.
+
+### Run the project e2e tests
+
+* Create api key for e2e tests
+
+```shell
+WEB_GATEWAY_URL=web-gateway.bucketeer.org \
+WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
+SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
+API_KEY_PATH=/workspaces/bucketeer/apitoken ENVIRONMENT_NAMESPACE=e2e \
+make create-api-key 
+```
+
+* Run e2e tests
+
+```shell
+WEB_GATEWAY_URL=web-gateway.bucketeer.org \
+WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
+SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
+API_KEY_PATH=/workspaces/bucketeer/apitoken ENVIRONMENT_NAMESPACE=e2e \
+make e2e
+```
