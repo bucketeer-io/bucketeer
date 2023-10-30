@@ -261,15 +261,14 @@ update-copyright:
 # dev container
 #############################
 
-# setup minikube dev environment
-setup-minikube:
-	make -C tools/dev setup-minikube
-	make -C ./ modify-hosts
-	make -C ./ setup-bigquery-vault
-
-# start minikube that already setup
+# start minikube
 start-minikube: 
-	make -C tools/dev start-minikube
+	if [ $$(minikube status | grep -c "minikube start") -eq 1 ]; then \
+		make -C tools/dev setup-minikube; \
+	elif [ $$(minikube status | grep -c "Stopped") -gt 1 ]; then \
+		make -C tools/dev start-minikube; \
+	fi
+	sleep 5
 	make -C ./ modify-hosts
 	make -C ./ setup-bigquery-vault
 
