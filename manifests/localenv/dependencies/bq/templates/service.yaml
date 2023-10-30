@@ -12,6 +12,7 @@ spec:
       targetPort: {{ .Values.service.portgrpc }}
       protocol: TCP
     - name: "json"
+      nodePort: {{ .Values.service.httpNodePort }}
       port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.port }}
       protocol: TCP

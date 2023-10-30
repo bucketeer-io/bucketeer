@@ -149,7 +149,9 @@ gRPC service.
 
 ```shell
 WEB_GATEWAY_URL=web-gateway.bucketeer.org \
+GATEWAY_URL=api-gateway.bucketeer.org \
 WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
+GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 API_KEY_PATH=/workspaces/bucketeer/apitoken ENVIRONMENT_NAMESPACE=e2e \
 make create-api-key 
@@ -159,7 +161,9 @@ make create-api-key
 
 ```shell
 WEB_GATEWAY_URL=web-gateway.bucketeer.org \
+GATEWAY_URL=api-gateway.bucketeer.org \
 WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
+GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 API_KEY_PATH=/workspaces/bucketeer/apitoken ENVIRONMENT_NAMESPACE=e2e \
 make e2e

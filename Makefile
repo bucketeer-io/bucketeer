@@ -265,11 +265,13 @@ update-copyright:
 setup-minikube:
 	make -C tools/dev setup-minikube
 	make -C ./ modify-hosts
+	make -C ./ setup-bigquery-vault
 
 # start minikube that already setup
 start-minikube: 
 	make -C tools/dev start-minikube
 	make -C ./ modify-hosts
+	make -C ./ setup-bigquery-vault
 
 # modify hosts file to access api-gateway and web-gateway
 modify-hosts:
@@ -280,6 +282,21 @@ modify-hosts:
 # enable vault transit secret engine
 enable-vault-transit:
 	kubectl exec localenv-vault-0 -- vault secrets enable transit
+
+# create bigquery-emulator tables
+create-bigquery-emulator-tables:
+	go run ./hack/create-big-query-table create \
+		--bigquery-emulator=http://$$(minikube ip):31000 \
+		--no-gcp-trace-enabled \
+		--no-profile
+
+setup-bigquery-vault:
+	while [ "$$(kubectl get pods | grep localenv-bq | awk '{print $$3}')" != "Running" ] || [ "$$(kubectl get pods | grep localenv-vault-0 | awk '{print $$3}')" != "Running" ]; \
+	do \
+		sleep 5; \
+	done; \
+	make create-bigquery-emulator-tables
+	make enable-vault-transit
 
 # generate tls certificate
 generate-tls-certificate:
