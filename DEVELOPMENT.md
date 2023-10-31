@@ -38,11 +38,11 @@ This command will install the Golang packages that Bucketeer depends on.
 2. Setup minikube and services that Bucketeer depends on:
 
 ```shell
-make setup-minikube
+make start-minikube
 ```
 
-> Note: after you set up the minikube cluster for the first time by using `make setup-minikube`, next time when you
-> restart the minikube cluster, you will need to use `make start-minikube` to start the cluster.
+> Note: When you restart the minikube cluster, you will need to use `make start-minikube` to start the
+> cluster, do not use `minikube start` directly.
 
 This command will set up minikube and services that Bucketeer depends on:
 
@@ -52,32 +52,16 @@ This command will set up minikube and services that Bucketeer depends on:
 * Google Big Query (Emulator)
 * Hashicorp Vault
 
-Also, it will add 2 hosts to `/etc/hosts` that point to the minikube IP address:
+It will add 2 hosts to `/etc/hosts` that point to the minikube IP address:
 
 * `api-gateway.bucketeer.org` for API Gateway Service
 * `web-gateway.bucketeer.org` for Web Gateway Service
 
-And we need to initialize the Hashicorp Vault Transit Engine:
+Additionally, this command will:
 
-```shell
-make enable-vault-transit
-```
+* Initialize the Hashicorp Vault Transit Engine
 
-Then create tables for Google Big Query (Emulator)
-
-* Open a new terminal in the dev container
-
-```shell
-kubectl port-forward svc/localenv-bq 9050:9050
-``` 
-
-* Open another new terminal in the dev container
-
-```shell
-go run ./hack/create-big-query-table create --no-gcp-trace-enabled --no-profile
-```
-
-This command will create tables for Google Big Query (Emulator).
+* Create tables for Google Big Query (Emulator)
 
 3. Generate the certificates for local development:
 
