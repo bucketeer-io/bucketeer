@@ -1,0 +1,27 @@
+replicaCount: 1
+
+tls:
+  secret: bucketeer-service-cert
+  cert: 
+  key: 
+
+config:
+  issuer: http://localhost:8000/dex
+  client:
+    id: bucketeer
+    name: Bucketeer
+    secret: secret
+    redirectURIs:
+      - http://localhost:8000/auth/callback
+  google:
+    enabled: false
+    clientID: dummy
+    clientSecret: dummy
+    redirectURIs:
+  enablePasswordDB: true
+  staticPasswords:
+    - email: "demo@bucketeer.io"
+      # bcrypt hash of the string "demo": $(echo demo | htpasswd -BinC 10 demo@bucketeer.io | cut -d: -f2)
+      hash: "$2y$10$VRsM9euKVuQ6.9IVXg7DsuiinDV9UtK4I2PXl5tK3yj5583YeMA3u"
+      username: "demo"
+      userID: "demo@bucketeer.io"

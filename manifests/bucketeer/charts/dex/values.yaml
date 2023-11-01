@@ -26,6 +26,7 @@ service:
   dexPort: 5556
 
 tls:
+  secret:
   cert:
   key:
 
@@ -70,6 +71,7 @@ config:
     secret:
     redirectURIs:
   google:
+    enabled: true
     clientID:
     clientSecret:
     redirectURIs:
