@@ -7,7 +7,7 @@ The dev container is also configured to use the latest version of the project.
 There are two ways to setup the development environment by using dev container:
 
 1. Use the dev container directly from GitHub Codespaces
-2. Build the dev container locally using VSCode Remote - Containers extension
+2. Build the dev container locally using VSCode `Dev Containers` extension
 
 ### Use the dev container directly from GitHub
 
@@ -30,7 +30,7 @@ container [here](https://docs.github.com/en/github/developing-online-with-codesp
    dependencies:
 
 ```shell
-make tidy-deps local-deps
+make update-repos local-deps 
 ```
 
 This command will install the Golang packages that Bucketeer depends on.
@@ -126,6 +126,16 @@ gRPC service.
 >
 > Also, you can use `make deploy-all-services-to-minikube` to deploy all services to minikube, if you don't want to
 > deploy services one by one.
+
+### Deploy Bucketeer in one command
+As you can see, there are many steps to setup the development environment after start minukube. You can use the following command to complete all the steps above in one command:
+
+```shell
+EMAIL="your email" \ 
+ISSUER=https://accounts.google.com \
+TAG=test \ 
+make deploy-bucketeer
+```
 
 ### Run the project e2e tests
 

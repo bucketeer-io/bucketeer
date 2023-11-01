@@ -341,27 +341,34 @@ minikube-load-images:
 		minikube ssh "rm /home/docker/$$IMAGE.tar"; \
 	done
 
+SERVICES := account-apikey-cacher api-gateway auditlog-persister backend batch event-persister-evaluation-events-dwh event-persister-evaluation-events-evaluation-count event-persister-evaluation-events-ops event-persister-goal-events-dwh event-persister-goal-events-ops experiment-calculator feature-recorder feature-segment-persister metrics-event-persister push-sender user-persister web-gateway
+
 # Deploy Bucketeer to minikube
 deploy-service-to-minikube:
 	helm install ${SERVICE} manifests/bucketeer/charts/${SERVICE}/ --values manifests/bucketeer/charts/${SERVICE}/values.dev.yaml \
 	--set serviceToken.token=$$(cat tools/dev/cert/service-token)
 
-# Deploy All services to minikube
+# Delete all the services from Minikube
+delete-all-services-from-minikube:
+	$(foreach var,$(SERVICES),helm uninstall $(var);)
+
+# Deploy All the services to minikube
 deploy-all-services-to-minikube:
-	SERVICE=backend make deploy-service-to-minikube
-	SERVICE=api-gateway make deploy-service-to-minikube
-	SERVICE=web-gateway make deploy-service-to-minikube
-	SERVICE=account-apikey-cacher make deploy-service-to-minikube
-	SERVICE=auditlog-persister make deploy-service-to-minikube
-	SERVICE=event-persister-evaluation-events-dwh make deploy-service-to-minikube
-	SERVICE=event-persister-evaluation-events-evaluation-count make deploy-service-to-minikube
-	SERVICE=event-persister-evaluation-events-ops make deploy-service-to-minikube
-	SERVICE=event-persister-goal-events-dwh make deploy-service-to-minikube
-	SERVICE=event-persister-goal-events-ops make deploy-service-to-minikube
-	SERVICE=experiment-calculator make deploy-service-to-minikube
-	SERVICE=feature-recorder make deploy-service-to-minikube
-	SERVICE=feature-segment-persister make deploy-service-to-minikube
-	SERVICE=metrics-event-persister make deploy-service-to-minikube
-	SERVICE=push-sender make deploy-service-to-minikube
-	SERVICE=user-persister make deploy-service-to-minikube
-	SERVICE=batch make deploy-service-to-minikube
+	$(foreach var,$(SERVICES),SERVICE=$(var) make deploy-service-to-minikube;)
+
+# bucketeer deploy
+deploy-bucketeer:
+	make -C ./ generate-tls-certificate
+	make -C ./ generate-oauth
+	make -C ./ service-cert-secret
+	make -C ./ oauth-key-secret
+	GITHUB_TOKEN=$(GITHUB_TOKEN) make -C ./ generate-github-token
+	ISSUER=$(ISSUER) \
+	EMAIL=$(EMAIL) \
+	OAUTH_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/oauth-private.pem \
+	SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
+	make generate-service-token
+	make -C ./ build-go
+	TAG=$(TAG) make -C ./ build-docker-images
+	TAG=$(TAG) make -C ./ minikube-load-images
+	make -C ./ deploy-all-services-to-minikube
