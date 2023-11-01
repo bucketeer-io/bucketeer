@@ -43,6 +43,7 @@ func NewMAUSummarizer(
 }
 
 func (s *mauSummarizer) Run(ctx context.Context) error {
+	s.logger.Info("MAUSummarizer start running")
 	ctx, cancel := context.WithTimeout(ctx, s.opts.Timeout)
 	defer cancel()
 	now := time.Now().In(s.location)
@@ -62,6 +63,7 @@ func (s *mauSummarizer) Run(ctx context.Context) error {
 		)
 		return err
 	}
+	s.logger.Info("MAUSummarizer start stopping")
 	return nil
 }
 
