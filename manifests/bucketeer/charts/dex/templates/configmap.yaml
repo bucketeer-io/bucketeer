@@ -19,6 +19,7 @@ data:
       https: 0.0.0.0:{{ .Values.service.dexPort }}
       tlsCert: /etc/dex/tls/tls.crt
       tlsKey: /etc/dex/tls/tls.key
+    {{- if .Values.config.google.enabled }}
     connectors:
       - type: google
         id: google
@@ -27,6 +28,7 @@ data:
           clientID: $GOOGLE_CLIENT_ID
           clientSecret: $GOOGLE_CLIENT_SECRET
           redirectURI: {{ .Values.config.google.redirectURI }}
+    {{- end }}
     staticClients:
       - id: {{ .Values.config.client.id }}
         name: {{ .Values.config.client.name }}
