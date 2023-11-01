@@ -658,8 +658,69 @@ spec:
                   echo "Start mau-summarizer job."
                   ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST --cacert /usr/local/certs/service/tls.crt -d '{"job": "MauSummarizer"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  RES=`curl -X POST -m 3600 --cacert /usr/local/certs/service/tls.crt -d '{"job": "MauSummarizer"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
                   echo "mau-summarizer job result: ${RES}"
+                  if [ "$RES" == 200 ]
+                  then
+                    exit 0
+                  else
+                    exit 1
+                  fi
+          restartPolicy: Never
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "batch-server.fullname" . }}-mau-partition-deleter
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "batch-server.name" . }}
+    chart: {{ template "batch-server.chart" . }}
+    release: {{ template "batch-server.fullname" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  concurrencyPolicy: Forbid
+  timeZone: {{ .Values.env.timezone }}
+  schedule: "{{ .Values.cronjob.mauPartitionDeleterSchedule }}"
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          volumes:
+            - name: service-cert-secret
+              secret:
+                secretName: {{ template "service-cert-secret" . }}
+            - name: service-token-secret
+              secret:
+                secretName: {{ template "service-token-secret" . }}
+          containers:
+            - name: experiment-calculator
+              image: curlimages/curl:8.1.2
+              imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - name: service-cert-secret
+                  mountPath: /usr/local/certs/service
+                  readOnly: true
+                - name: service-token-secret
+                  mountPath: /usr/local/service-token
+                  readOnly: true
+              env:
+                - name: WEB_GATEWAY_ADDRESS
+                  value: "{{ .Values.cronjob.webGatewayAddress }}"
+              command:
+                - /bin/sh
+              args:
+                - -c
+                - |
+                  echo "Start mau-partition-deleter job."
+                  ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
+                  TOKEN=`cat /usr/local/service-token/token`
+                  RES=`curl -X POST -m 3600 --cacert /usr/local/certs/service/tls.crt -d '{"job": "MauPartitionDeleter"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
+                  echo "mau-partition-deleter job result: ${RES}"
                   if [ "$RES" == 200 ]
                   then
                     exit 0

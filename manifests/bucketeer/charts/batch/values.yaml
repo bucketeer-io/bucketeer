@@ -103,3 +103,4 @@ cronjob:
   redisCounterDeleterSchedule: "0 0 * * *"
   experimentCalculatorSchedule: "*/30 * * * *"
   mauSummarizerSchedule: "30 0 * * *"
+  mauPartitionDeleterSchedule: "0 2 1 * *"

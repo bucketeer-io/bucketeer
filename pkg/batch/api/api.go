@@ -46,6 +46,7 @@ type batchService struct {
 	redisCounterDeleter       jobs.Job
 	experimentCalculator      jobs.Job
 	mauSummarizer             jobs.Job
+	mauPartitionDeleter       jobs.Job
 	environmentClient         envclient.Client
 	domainEventPuller         puller.Puller
 	notificationSender        notificationsender.Sender
@@ -63,6 +64,7 @@ func NewBatchService(
 	redisCounterDeleter jobs.Job,
 	experimentCalculator jobs.Job,
 	mauSummarizer jobs.Job,
+	mauPartitionDeleter jobs.Job,
 	logger *zap.Logger,
 	options ...notification.Option,
 ) *batchService {
@@ -77,6 +79,7 @@ func NewBatchService(
 		redisCounterDeleter:       redisCounterDeleter,
 		experimentCalculator:      experimentCalculator,
 		mauSummarizer:             mauSummarizer,
+		mauPartitionDeleter:       mauPartitionDeleter,
 		environmentClient:         environmentClient,
 		domainEventPuller:         domainEventPuller,
 		notificationSender:        notificationSender,
@@ -117,6 +120,8 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.experimentCalculator.Run(ctx)
 	case batch.BatchJob_MauSummarizer:
 		err = s.mauSummarizer.Run(ctx)
+	case batch.BatchJob_MauPartitionDeleter:
+		err = s.mauPartitionDeleter.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromImcomingContext(ctx).AddFields(
