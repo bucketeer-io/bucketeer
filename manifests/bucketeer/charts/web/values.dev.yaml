@@ -1,0 +1,11 @@
+global:
+  image:
+    tag: v0.3.0-97-gef8aa28
+    imagePullSecrets:
+
+tls:
+  secret: bucketeer-service-cert
+
+
+env:
+  googleTagManagerId: 
