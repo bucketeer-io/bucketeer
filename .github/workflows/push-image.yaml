@@ -44,7 +44,7 @@ jobs:
       IMAGE_TAG: ${{ steps.tag.outputs.value }}
       REF: ${{ steps.ref.outputs.value }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Store git tag value to output
@@ -61,7 +61,7 @@ jobs:
       contents: "read"
       id-token: "write"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v4
@@ -170,7 +170,7 @@ jobs:
       run:
         working-directory: ${{ env.WEB_PATH }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -229,7 +229,7 @@ jobs:
     needs: [setup, go, web-v2]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Workflow Dispatch
         uses: benc-uk/workflow-dispatch@798e70c97009500150087d30d9f11c5444830385 # v1.2.2
         with:
