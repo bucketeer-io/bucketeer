@@ -5,10 +5,14 @@
     "context": "."
   },
   "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "codespace",
+      "userUid": "1000",
+      "userGid": "1000"
+    },
     "ghcr.io/devcontainers-contrib/features/protoc:1": {
       "version": "23.4"
     },
-    "ghcr.io/dhoeric/features/google-cloud-cli:1": {},
     "ghcr.io/devcontainers/features/sshd:1": {
       "version": "latest"
     },
@@ -31,34 +35,18 @@
     "ghcr.io/devcontainers/features/go:1": {
       "version": "latest"
     },
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.10.8",
-      "additionalVersions": "3.9.16",
-      "installJupyterlab": "true",
-      "configureJupyterlabAllowOrigin": "*",
-      "useOryxIfAvailable": "false"
-    },
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "20",
-      "additionalVersions": "18"
-    },
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "username": "codespace",
-      "userUid": "1000",
-      "userGid": "1000"
-    },
+    "./local-features/setup-user": "latest"
   },
   "overrideFeatureInstallOrder": [
     "ghcr.io/devcontainers/features/common-utils",
     "ghcr.io/devcontainers/features/git",
-    "ghcr.io/devcontainers/features/node",
-    "ghcr.io/devcontainers/features/python",
     "ghcr.io/devcontainers/features/sshd",
     "ghcr.io/devcontainers/features/git-lfs",
     "ghcr.io/devcontainers/features/github-cli",
     "ghcr.io/devcontainers/features/docker-in-docker",
     "ghcr.io/devcontainers/features/kubectl-helm-minikube",
     "ghcr.io/devcontainers/features/go",
+    "./local-features/setup-user"
   ],
   "remoteUser": "codespace",
   "containerUser": "codespace",
