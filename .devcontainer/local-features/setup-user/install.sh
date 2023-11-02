@@ -29,6 +29,11 @@ sudo_if() {
   fi
 }
 
+HOME_DIR="/home/${USERNAME}/"
+chown -R ${USERNAME}:${USERNAME} ${HOME_DIR}
+chmod -R g+r+w "${HOME_DIR}"
+find "${HOME_DIR}" -type d | xargs -n 1 chmod g+s
+
 echo "Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin:/usr/local/share:/home/${USERNAME}/.local/bin:${PATH}\"" >>/etc/sudoers.d/$USERNAME
 
 echo "Done!"
