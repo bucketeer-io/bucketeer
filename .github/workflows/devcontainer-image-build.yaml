@@ -1,0 +1,25 @@
+name: Bucketeer Dev Container Build and Push Image
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v3
+      - name: Set up QEMU for multi-architecture builds
+        uses: docker/setup-qemu-action@v2
+      - name: Setup Docker buildx for multi-architecture builds
+        uses: docker/setup-buildx-action@v2
+        with:
+          use: true
+      - name: Build and release devcontainer Multi-Platform
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ghcr.io/bucketeer-io/bucketeer-devcontainer
+          platform: linux/amd64,linux/arm64
+          subFolder: .github
+          push: never
+
