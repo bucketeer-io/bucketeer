@@ -4,6 +4,8 @@
     "dockerfile": "./Dockerfile",
     "context": "."
   },
+  "remoteUser": "codespace",
+  "containerUser": "codespace",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "username": "codespace",
