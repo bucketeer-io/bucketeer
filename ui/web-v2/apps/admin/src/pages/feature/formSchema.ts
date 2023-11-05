@@ -35,6 +35,15 @@ const descriptionSchema = yup.string().max(FEATURE_DESCRIPTION_MAX_LENGTH);
 const commentSchema = yup.string().required();
 const variationTypeSchema = yup.string();
 
+function isAscending(arr) {
+  for (let i = 0; i < arr.length - 1; i++) {
+    if (Number(arr[i]) > Number(arr[i + 1])) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const variationsSchema = yup.array().of(
   yup
     .object()
@@ -168,6 +177,92 @@ export const operationFormSchema = yup.object().shape({
       .moreThan(0)
       .max(100),
     operator: yup.string(),
+  }),
+  progressiveRollout: yup.object().shape({
+    template: yup.object().shape({
+      increments: yup
+        .number()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .required()
+        .min(1)
+        .max(100),
+    }),
+    manual: yup.object().shape({
+      schedulesList: yup
+        .array()
+        .of(
+          yup.object().shape({
+            weight: yup
+              .number()
+              .transform((value) => (isNaN(value) ? undefined : value))
+              .required()
+              .min(1)
+              .max(100)
+              .test(
+                'isAscending',
+                'The weights need to be in increasing order.',
+                function (value) {
+                  const {
+                    options: { originalValue, from, index },
+                  } = this as any;
+
+                  if (
+                    from[3].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
+                  ) {
+                    return isAscending(
+                      from[3].value.progressiveRollout.manual.schedulesList.map(
+                        (d) => Number(d.weight)
+                      )
+                    );
+                  }
+                  return true;
+                }
+              ),
+            executeAt: yup.object().shape({
+              time: yup
+                .date()
+                .test(
+                  'isLaterThanNow',
+                  intl.formatMessage(
+                    messages.input.error.notLaterThanCurrentTime
+                  ),
+                  function (value) {
+                    const { from } = this as any;
+                    if (
+                      from[4].value.clauseType ===
+                      ClauseType.PROGRESSIVE_ROLLOUT
+                    ) {
+                      return value.getTime() > new Date().getTime();
+                    }
+                    return true;
+                  }
+                )
+                .test(
+                  'isAscending',
+                  'The date need to be in increasing order.',
+                  function () {
+                    const {
+                      options: { originalValue, from, index },
+                    } = this as any;
+
+                    if (
+                      from[4].value.clauseType ===
+                      ClauseType.PROGRESSIVE_ROLLOUT
+                    ) {
+                      return isAscending(
+                        from[4].value.progressiveRollout.manual.schedulesList.map(
+                          (d) => d.executeAt.time.getTime()
+                        )
+                      );
+                    }
+                    return true;
+                  }
+                ),
+            }),
+          })
+        )
+        .min(1),
+    }),
   }),
 });
 

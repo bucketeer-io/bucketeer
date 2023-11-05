@@ -23,7 +23,6 @@ import { ListGoalsRequest } from '../../proto/experiment/service_pb';
 import { AppDispatch } from '../../store';
 
 import { operationFormSchema } from './formSchema';
-import dayjs from 'dayjs';
 
 interface FeatureAutoOpsPageProps {
   featureId: string;
@@ -66,7 +65,11 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
           datetime: createInitialDatetimeClause(),
           interval: '1',
           increments: 20,
-          variationId: '',
+          variationId: feature.variationsList[0].id,
+          schedulesList: [],
+        },
+        manual: {
+          variationId: feature.variationsList[0].id,
           schedulesList: [],
         },
       },

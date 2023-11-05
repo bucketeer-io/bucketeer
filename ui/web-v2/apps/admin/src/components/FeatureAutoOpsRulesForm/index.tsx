@@ -880,8 +880,6 @@ const ProgressiveRolloutManualSchedule = memo(
       value as Uint8Array
     ).toObject();
 
-    console.log('Manual', x);
-
     return (
       <div className="rounded-xl shadow px-6 py-4 bg-white">
         <pre>{JSON.stringify(x, undefined, 2)}</pre>

@@ -23,7 +23,12 @@ import { Feature } from '@/proto/feature/feature_pb';
 import { AppDispatch } from '@/store';
 import { classNames } from '@/utils/css';
 import { Dialog, Transition } from '@headlessui/react';
-import { XIcon, ExclamationCircleIcon } from '@heroicons/react/outline';
+import {
+  XIcon,
+  ExclamationCircleIcon,
+  PlusIcon,
+  MinusCircleIcon,
+} from '@heroicons/react/outline';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
@@ -35,10 +40,17 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { Controller, useForm, useFormContext, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import ReactSelect, { components } from 'react-select';
+import { v4 as uuid } from 'uuid';
 
 import { messages } from '../../lang/messages';
 import {
@@ -56,10 +68,19 @@ import { createProgressiveRollout } from '../../modules/porgressiveRollout';
 import { DatetimePicker, ReactDatePicker } from '../DatetimePicker';
 import {
   ClauseType,
+  createInitialDatetimeClause,
   operatorOptions,
   ProgressiveRolloutClauseType,
 } from '../FeatureAutoOpsRulesForm';
 import { Option, Select } from '../Select';
+
+interface ExecuteAt {
+  time: Date;
+}
+interface FormValues {
+  executeAt: ExecuteAt;
+  weight: number;
+}
 
 export interface OperationAddUpdateFormProps {
   featureId: string;
@@ -118,16 +139,16 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
         },
       ]);
 
-    const methods = useFormContext();
+    const methods = useFormContext<any>();
     const {
       handleSubmit,
       control,
       formState: { errors, isValid, isSubmitting },
       register,
       setValue,
-      getValues,
     } = methods;
 
+    console.log('errors', errors);
     const opsType = useWatch({
       control,
       name: 'opsType',
@@ -143,12 +164,32 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       name: 'progressiveRollout.template.schedulesList',
     });
 
-    const templateInterval = useWatch({
+    const incrementsWatch = useWatch({
+      control,
+      name: 'progressiveRollout.template.increments',
+    });
+
+    const manualSchedulesListWatch = useWatch({
+      control,
+      name: 'progressiveRollout.manual.schedulesList',
+    });
+
+    const {
+      fields: manualSchedulesList,
+      remove: removeTrigger,
+      append,
+    } = useFieldArray({
+      control,
+      name: 'progressiveRollout.manual.schedulesList',
+    });
+
+    console.log('manualSchedulesList', manualSchedulesList);
+    const templateIntervalWatch = useWatch({
       control,
       name: 'progressiveRollout.template.interval',
     });
 
-    const progressiveRolloutTemplateDatetimeTime = useWatch({
+    const progressiveRolloutTemplateDatetimeTimeWatch = useWatch({
       control,
       name: 'progressiveRollout.template.datetime.time',
     });
@@ -205,30 +246,35 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     };
 
     useEffect(() => {
-      console.log(1, templateInterval, progressiveRolloutTemplateDatetimeTime);
-      const increments = 20;
+      if (
+        progressiveRolloutTypeList.find((p) => p.selected).value ===
+          ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE &&
+        Number(incrementsWatch) > 0
+      ) {
+        const scheduleList = Array(Math.ceil(100 / incrementsWatch))
+          .fill('')
+          .map((_, index) => {
+            // increment each schedule by {templateIntervalWatch}
+            const datetime = dayjs(progressiveRolloutTemplateDatetimeTimeWatch)
+              .add(index, getInterval(templateIntervalWatch))
+              .toDate();
 
-      const scheduleList = Array(Math.ceil(100 / increments))
-        .fill('')
-        .map((_, index) => {
-          // increment each schedule by {templateInterval}
-          const datetime = dayjs(progressiveRolloutTemplateDatetimeTime)
-            .add(index, getInterval(templateInterval))
-            .toDate();
+            const weight = (index + 1) * incrementsWatch;
 
-          // The weight is the amount to be changed in the rollout.
-          // 10% = 10000
-          // 20% = 20000
-
-          return {
-            scheduleId: index,
-            triggeredAt: 0,
-            executeAt: datetime,
-            weight: (index + 1) * increments * 1000,
-          };
-        });
-      setValue('progressiveRollout.template.schedulesList', scheduleList);
-    }, [progressiveRolloutTemplateDatetimeTime, templateInterval]);
+            return {
+              executeAt: {
+                time: datetime,
+              },
+              weight: weight > 100 ? 100 : Math.round(weight * 100) / 100,
+            };
+          });
+        setValue('progressiveRollout.template.schedulesList', scheduleList);
+      }
+    }, [
+      progressiveRolloutTemplateDatetimeTimeWatch,
+      templateIntervalWatch,
+      incrementsWatch,
+    ]);
 
     useEffect(() => {
       if (autoOpsRule) {
@@ -277,6 +323,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
 
     const handleOnSubmit = useCallback(
       (data) => {
+        console.log('data', data);
         if (autoOpsRule) {
           const changeAutoOpsRuleOpsTypeCommand =
             new ChangeAutoOpsRuleOpsTypeCommand();
@@ -376,25 +423,47 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
               clause.setIncrements(increments);
               clause.setInterval(interval);
 
-              // const clause = new ProgressiveRolloutManualScheduleClause();
               clause.setVariationId(variationId);
 
               const scheduleList = schedulesList.map((schedule) => {
                 const c = new ProgressiveRolloutSchedule();
 
-                c.setExecuteAt(Math.round(schedule.executeAt.getTime() / 1000));
-                c.setWeight(schedule.weight);
+                c.setExecuteAt(
+                  Math.round(schedule.executeAt.time.getTime() / 1000)
+                );
+                c.setWeight(schedule.weight * 1000);
                 return c;
               });
-
-              // const c2 = new ProgressiveRolloutSchedule();
-              // c2.setExecuteAt(Math.round(data.datetime.time.getTime() / 1000));
-              // c2.setWeight(40000);
 
               clause.setSchedulesList(scheduleList);
 
               command.setProgressiveRolloutTemplateScheduleClause(clause);
-              // command.setProgressiveRolloutManualScheduleClause(clause);
+            } else if (
+              selectedProgressiveRolloutType ===
+              ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE
+            ) {
+              const {
+                progressiveRollout: {
+                  manual: { schedulesList, variationId },
+                },
+              } = data;
+
+              const clause = new ProgressiveRolloutManualScheduleClause();
+
+              clause.setVariationId(variationId);
+
+              const scheduleList = schedulesList.map((schedule) => {
+                const c = new ProgressiveRolloutSchedule();
+
+                c.setExecuteAt(
+                  Math.round(schedule.executeAt.time.getTime() / 1000)
+                );
+                c.setWeight(schedule.weight * 1000);
+                return c;
+              });
+
+              clause.setSchedulesList(scheduleList);
+              command.setProgressiveRolloutManualScheduleClause(clause);
             }
 
             dispatch(
@@ -408,7 +477,36 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
           }
         }
       },
-      [autoOpsRule]
+      [autoOpsRule, progressiveRolloutTypeList]
+    );
+
+    const handleAddOperation = (e) => {
+      e.preventDefault();
+
+      const lastSchedule: any =
+        manualSchedulesListWatch[manualSchedulesListWatch.length - 1];
+
+      const time = dayjs(lastSchedule?.executeAt.time)
+        .add(5, 'minute')
+        .toDate();
+
+      const weight = lastSchedule ? Number(lastSchedule.weight) : 0;
+
+      if (weight < 100) {
+        append({
+          executeAt: {
+            time,
+          },
+          weight: weight > 80 ? 100 : weight + 20,
+        });
+      }
+    };
+
+    const handleRemoveTrigger = useCallback(
+      (idx) => {
+        removeTrigger(idx);
+      },
+      [removeTrigger]
     );
 
     const variationOptions = feature.variationsList.map((v) => {
@@ -759,17 +857,20 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                     </span>
                                     <div className="flex">
                                       <input
+                                        type="number"
                                         {...register(
                                           'progressiveRollout.template.increments'
                                         )}
-                                        type="number"
                                         min="0"
                                         max="100"
+                                        onKeyDown={(evt: any) => {
+                                          if (evt.key === '.') {
+                                            evt.preventDefault();
+                                          }
+                                        }}
                                         className={classNames(
                                           'w-full',
-                                          errors.eventRate?.threadsholdRate
-                                            ? 'input-text-error'
-                                            : 'input-text'
+                                          'input-text'
                                         )}
                                         placeholder={''}
                                         required
@@ -786,6 +887,17 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                         {'%'}
                                       </span>
                                     </div>
+                                    <p className="input-error">
+                                      {errors.progressiveRollout?.template
+                                        ?.increments?.message && (
+                                        <span role="alert">
+                                          {
+                                            errors.progressiveRollout?.template
+                                              ?.increments?.message
+                                          }
+                                        </span>
+                                      )}
+                                    </p>
                                   </div>
                                   <div className="flex-1">
                                     <span className="input-label">
@@ -813,29 +925,59 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                 </div>
                                 <div>
                                   <div className="flex space-x-4">
-                                    <div className="flex-1">Weight</div>
-                                    <div className="flex-1">Execute at</div>
+                                    <div className="flex-1 input-label">
+                                      Weight
+                                    </div>
+                                    <div className="flex-1 input-label">
+                                      Execute at
+                                    </div>
                                   </div>
-                                  <div className="space-y-2 mt-2">
-                                    {templateSchedulesList.map((schedule) => (
+                                  <div
+                                    className={classNames(
+                                      'space-y-2 mt-2',
+                                      templateSchedulesList.length > 5 &&
+                                        'max-h-[232px] overflow-y-scroll'
+                                    )}
+                                  >
+                                    {templateSchedulesList?.map((_, index) => (
                                       <div
-                                        key={schedule.scheduleId}
+                                        key={index}
                                         className="flex space-x-4"
                                       >
-                                        <input
-                                          type="number"
-                                          className={classNames(
-                                            'w-full',
-                                            'input-text'
-                                          )}
-                                          value={schedule.weight}
-                                          placeholder={''}
-                                          disabled={true}
-                                        />
-                                        <ReactDatePicker
-                                          value={schedule.executeAt}
-                                          disabled
-                                        />
+                                        <div className="flex w-1/2">
+                                          <input
+                                            {...register(
+                                              `progressiveRollout.template.schedulesList.${index}.weight`
+                                            )}
+                                            onKeyDown={(evt: any) => {
+                                              if (evt.key === '.') {
+                                                evt.preventDefault();
+                                              }
+                                            }}
+                                            type="number"
+                                            className={classNames(
+                                              'w-full',
+                                              'input-text'
+                                            )}
+                                            disabled={true}
+                                          />
+                                          <span
+                                            className={classNames(
+                                              'px-1 py-1 inline-flex items-center bg-gray-100',
+                                              'rounded-r border border-l-0 border-gray-300 text-gray-600'
+                                            )}
+                                          >
+                                            {'%'}
+                                          </span>
+                                        </div>
+                                        <div className="w-1/2">
+                                          <div>
+                                            <DatetimePicker
+                                              name={`progressiveRollout.template.schedulesList.${index}.executeAt.time`}
+                                              disabled={true}
+                                            />
+                                          </div>
+                                        </div>
                                       </div>
                                     ))}
                                   </div>
@@ -843,57 +985,151 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                               </Fragment>
                             ) : (
                               <Fragment>
-                                <div className="flex space-x-4">
-                                  <div className="flex-1">
-                                    <span className="input-label">
-                                      Increment
-                                    </span>
-                                    <div className="flex">
-                                      <input
-                                        {...register(
-                                          'eventRate.threadsholdRate'
-                                        )}
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        className={classNames(
-                                          'w-full',
-                                          errors.eventRate?.threadsholdRate
-                                            ? 'input-text-error'
-                                            : 'input-text'
-                                        )}
-                                        placeholder={''}
-                                        required
+                                <div className="flex-1">
+                                  <span className="input-label">
+                                    {f(messages.feature.variation)}
+                                  </span>
+                                  <Controller
+                                    name="progressiveRollout.manual.variationId"
+                                    control={control}
+                                    render={({ field }) => (
+                                      <Select
+                                        onChange={(o: Option) =>
+                                          field.onChange(o.value)
+                                        }
+                                        options={variationOptions}
                                         disabled={
                                           !editable || isSeeDetailsSelected
                                         }
-                                      />
-                                      <span
-                                        className={classNames(
-                                          'px-1 py-1 inline-flex items-center bg-gray-100',
-                                          'rounded-r border border-l-0 border-gray-300 text-gray-600'
+                                        value={variationOptions.find(
+                                          (o) => o.value === field.value
                                         )}
+                                      />
+                                    )}
+                                  />
+                                </div>
+                                <button
+                                  onClick={handleAddOperation}
+                                  className="text-primary space-x-2 flex items-center"
+                                  // disabled={(function () {
+                                  //   const lastSchedule: any =
+                                  //     manualSchedulesList[
+                                  //       manualSchedulesList.length - 1
+                                  //     ];
+                                  //   return Number(lastSchedule.weight) === 100;
+                                  // })()}
+                                >
+                                  <PlusIcon width={16} />
+                                  <span className="text-sm font-medium">
+                                    Add Operation
+                                  </span>
+                                </button>
+                                <div className="space-y-2">
+                                  {manualSchedulesList.map(
+                                    (schedule, index) => (
+                                      <div
+                                        key={index}
+                                        className="flex space-x-4"
                                       >
-                                        {'%'}
+                                        <div className="w-full">
+                                          <div className="flex">
+                                            <input
+                                              {...register(
+                                                `progressiveRollout.manual.schedulesList.${index}.weight`
+                                              )}
+                                              type="number"
+                                              min="0"
+                                              max="100"
+                                              className={classNames(
+                                                'w-full',
+                                                errors.progressiveRollout
+                                                  ?.manual?.schedulesList[index]
+                                                  ?.weight?.message
+                                                  ? 'input-text-error'
+                                                  : 'input-text'
+                                              )}
+                                              placeholder={''}
+                                              required
+                                              disabled={
+                                                !editable ||
+                                                isSeeDetailsSelected
+                                              }
+                                            />
+                                            <span
+                                              className={classNames(
+                                                'px-1 py-1 inline-flex items-center bg-gray-100',
+                                                'rounded-r border border-l-0 border-gray-300 text-gray-600'
+                                              )}
+                                            >
+                                              {'%'}
+                                            </span>
+                                          </div>
+                                          <p className="input-error">
+                                            {errors.progressiveRollout?.manual
+                                              ?.schedulesList[index]?.weight
+                                              ?.message && (
+                                              <span role="alert">
+                                                {
+                                                  errors.progressiveRollout
+                                                    ?.manual?.schedulesList[
+                                                    index
+                                                  ]?.weight?.message
+                                                }
+                                              </span>
+                                            )}
+                                          </p>
+                                        </div>
+                                        <div className="w-full">
+                                          <DatetimePicker
+                                            name={`progressiveRollout.manual.schedulesList.${index}.executeAt.time`}
+                                          />
+                                          <p className="input-error">
+                                            {errors.progressiveRollout?.manual
+                                              ?.schedulesList[index]?.executeAt
+                                              ?.time?.message && (
+                                              <span role="alert">
+                                                {
+                                                  errors.progressiveRollout
+                                                    ?.manual?.schedulesList[
+                                                    index
+                                                  ]?.executeAt?.time?.message
+                                                }
+                                              </span>
+                                            )}
+                                          </p>
+                                        </div>
+                                        {editable && (
+                                          <div className="flex items-center">
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                handleRemoveTrigger(index)
+                                              }
+                                              className="minus-circle-icon"
+                                              // disabled={
+                                              //   index <
+                                              //   manualSchedulesList.length - 1
+                                              // }
+                                            >
+                                              <MinusCircleIcon aria-hidden="true" />
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )
+                                  )}
+                                  {/* <p className="input-error">
+                                    {errors.progressiveRollout?.manual
+                                      ?.schedulesList?.length > 0 && (
+                                      <span role="alert">
+                                        {
+                                          errors.progressiveRollout.manual.schedulesList.find(
+                                            (s) => s?.weight
+                                          )?.weight?.message
+                                        }
                                       </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex-1">
-                                    <span className="input-label">
-                                      {f(messages.autoOps.startDate)}
-                                    </span>
-                                    <DatetimePicker
-                                      name="datetime.time"
-                                      disabled={isSeeDetailsSelected}
-                                    />
-                                    <p className="input-error">
-                                      {errors.datetime?.time?.message && (
-                                        <span role="alert">
-                                          {errors.datetime?.time?.message}
-                                        </span>
-                                      )}
-                                    </p>
-                                  </div>
+                                    )}
+                                  </p> */}
                                 </div>
                               </Fragment>
                             )}
