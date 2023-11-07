@@ -17,6 +17,7 @@ import {
   CreateAutoOpsRuleCommand,
   CreateProgressiveRolloutCommand,
 } from '@/proto/autoops/command_pb';
+import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { Goal } from '@/proto/experiment/goal_pb';
 import { ListGoalsRequest } from '@/proto/experiment/service_pb';
 import { Feature } from '@/proto/feature/feature_pb';
@@ -69,6 +70,7 @@ import { DatetimePicker, ReactDatePicker } from '../DatetimePicker';
 import {
   ClauseType,
   createInitialDatetimeClause,
+  getInterval,
   operatorOptions,
   ProgressiveRolloutClauseType,
 } from '../FeatureAutoOpsRulesForm';
@@ -88,6 +90,7 @@ export interface OperationAddUpdateFormProps {
   onSubmitProgressiveRollout: () => void;
   onCancel: () => void;
   autoOpsRule?: AutoOpsRule.AsObject;
+  // progressiveRollout?: ProgressiveRollout.AsObject;
   isKillSwitchSelected: boolean;
   isActiveTabSelected: boolean;
 }
@@ -104,6 +107,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     onCancel,
     featureId,
     autoOpsRule,
+    // progressiveRollout,
     isKillSwitchSelected,
     isActiveTabSelected,
   }) => {
@@ -148,7 +152,6 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       setValue,
     } = methods;
 
-    console.log('errors', errors);
     const opsType = useWatch({
       control,
       name: 'opsType',
@@ -183,7 +186,6 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       name: 'progressiveRollout.manual.schedulesList',
     });
 
-    console.log('manualSchedulesList', manualSchedulesList);
     const templateIntervalWatch = useWatch({
       control,
       name: 'progressiveRollout.template.interval',
@@ -208,16 +210,25 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     const isSeeDetailsSelected = autoOpsRule && !isActiveTabSelected;
 
     const setEnableList = () => {
-      setRadioList([
-        {
-          label: f(messages.autoOps.schedule),
-          value: ClauseType.DATETIME,
-        },
-        {
-          label: 'Progressive Rollout',
-          value: ClauseType.PROGRESSIVE_ROLLOUT,
-        },
-      ]);
+      if (autoOpsRule) {
+        setRadioList([
+          {
+            label: f(messages.autoOps.schedule),
+            value: ClauseType.DATETIME,
+          },
+        ]);
+      } else {
+        setRadioList([
+          {
+            label: f(messages.autoOps.schedule),
+            value: ClauseType.DATETIME,
+          },
+          {
+            label: 'Progressive Rollout',
+            value: ClauseType.PROGRESSIVE_ROLLOUT,
+          },
+        ]);
+      }
     };
 
     const setKillSwitchList = () => {
@@ -231,18 +242,6 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
           value: ClauseType.EVENT_RATE,
         },
       ]);
-    };
-
-    const getInterval = (
-      interval: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap]
-    ) => {
-      if (Number(interval) === 1) {
-        return 'hour';
-      } else if (Number(interval) === 2) {
-        return 'day';
-      } else if (Number(interval) === 3) {
-        return 'week';
-      }
     };
 
     useEffect(() => {
@@ -843,9 +842,13 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                                     disabled={isSeeDetailsSelected}
                                   />
                                   <p className="input-error">
-                                    {errors.datetime?.time?.message && (
+                                    {errors.progressiveRollout?.template
+                                      ?.datetime?.time?.message && (
                                       <span role="alert">
-                                        {errors.datetime?.time?.message}
+                                        {
+                                          errors.progressiveRollout?.template
+                                            ?.datetime?.time?.message
+                                        }
                                       </span>
                                     )}
                                   </p>

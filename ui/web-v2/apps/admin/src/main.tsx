@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { render } from 'react-dom';
 import { RawIntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
@@ -9,6 +11,8 @@ import { intl } from './lang';
 import { getSelectedLanguage } from './lang/getSelectedLanguage';
 import { App } from './pages/index';
 import { store } from './store';
+
+dayjs.extend(isSameOrBefore);
 
 document.documentElement.setAttribute('lang', getSelectedLanguage());
 
