@@ -635,6 +635,12 @@ func newBatchService(t *testing.T,
 			jobs.WithTimeout(30*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		mau.NewMAUPartitionDeleter(
+			mysqlMockClient,
+			jpLocation,
+			jobs.WithTimeout(60*time.Minute),
+			jobs.WithLogger(logger),
+		),
 		logger,
 		notification.WithRunningDurationPerBatch(pullerRunningDuration),
 	)

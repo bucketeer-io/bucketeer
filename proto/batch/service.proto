@@ -29,6 +29,7 @@ enum BatchJob {
   ProgressiveRolloutWatcher = 8;
   ExperimentCalculator = 9;
   MauSummarizer = 10;
+  MauPartitionDeleter = 11;
 }
 
 message BatchJobRequest {

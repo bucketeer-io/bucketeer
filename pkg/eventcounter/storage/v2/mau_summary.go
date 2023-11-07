@@ -61,6 +61,7 @@ func (s *mauSummaryStorage) UpsertMAUSummary(
 			request_count = VALUES(request_count),
 			evaluation_count = VALUES(evaluation_count),
 			goal_count = VALUES(goal_count),
+			is_finished = VALUES(is_finished),
 			updated_at = VALUES(updated_at)
 	`
 	_, err := s.qe.ExecContext(

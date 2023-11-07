@@ -51,6 +51,7 @@ export interface BatchJobMap {
   PROGRESSIVEROLLOUTWATCHER: 8;
   EXPERIMENTCALCULATOR: 9;
   MAUSUMMARIZER: 10;
+  MAUPARTITIONDELETER: 11;
 }
 
 export const BatchJob: BatchJobMap;

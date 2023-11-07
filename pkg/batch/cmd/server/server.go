@@ -395,6 +395,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(30*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		mau.NewMAUPartitionDeleter(
+			mysqlClient,
+			location,
+			jobs.WithTimeout(60*time.Minute),
+			jobs.WithLogger(logger),
+		),
 		logger,
 		notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
 		notification.WithLogger(logger),
