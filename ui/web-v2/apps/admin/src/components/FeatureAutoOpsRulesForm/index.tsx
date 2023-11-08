@@ -143,7 +143,7 @@ interface FeatureAutoOpsRulesFormProps {
   refetchProgressiveRollouts: () => void;
 }
 
-export const getInterval = (
+export const getIntervalForDayjs = (
   interval: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap]
 ) => {
   if (Number(interval) === 1) {
@@ -163,10 +163,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const [selectedAutoOpsRule, setSelectedAutoOpsRule] =
       useState<AutoOpsRule.AsObject | null>(null);
 
-    // const [selectedProgressiveRollout, setSelectedProgressiveRollout] =
-    //   useState<ProgressiveRollout.AsObject | null>(null);
-
-    const [feature, getFeatureError] = useSelector<
+    const [feature] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [
@@ -264,14 +261,6 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       setSelectedAutoOpsRule(rule);
       handleOpen();
     }, []);
-
-    // const handleOpenUpdateRollout = useCallback(
-    //   (rule: ProgressiveRollout.AsObject) => {
-    //     setSelectedProgressiveRollout(rule);
-    //     handleOpen();
-    //   },
-    //   []
-    // );
 
     const handleRolloutDelete = (ruleId) => {
       dispatch(
@@ -429,7 +418,6 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                   key={rule.id}
                   rule={rule}
                   feature={feature}
-                  // handleOpenUpdate={() => handleOpenUpdateRollout(rule)}
                   deleteRule={() => handleRolloutDelete(rule.id)}
                 />
               );
@@ -442,7 +430,6 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                   key={rule.id}
                   rule={rule}
                   feature={feature}
-                  // handleOpenUpdate={() => handleOpenUpdateRollout(rule)}
                   deleteRule={() => handleRolloutDelete(rule.id)}
                 />
               );
@@ -468,7 +455,6 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               onCancel={handleClose}
               featureId={featureId}
               autoOpsRule={selectedAutoOpsRule}
-              // progressiveRollout={selectedProgressiveRollout}
               isKillSwitchSelected={isKillSwitchSelected}
               isActiveTabSelected={isActiveTabSelected}
             />
@@ -770,56 +756,18 @@ const EventRateOperation = memo(
   }
 );
 
-const getEqualRangeSchedules = (schedulesList, interval) => {
-  if (schedulesList.length > 10) {
-    const rangeValues = [];
-    const timeStampIntervalMultiplier = schedulesList.length / 10;
-    const endDate = schedulesList[schedulesList.length - 1].executeAt * 1000;
-
-    for (let i = 0; i <= 10; i++) {
-      const timestamp = dayjs(endDate)
-        .subtract(timeStampIntervalMultiplier * i, getInterval(interval))
-        .toDate();
-      rangeValues.push({
-        weight: 100 - i * 10,
-        timestamp,
-      });
-    }
-    return rangeValues.reverse();
-  }
-
-  return [
-    {
-      timestamp: dayjs(schedulesList[0].executeAt * 1000)
-        .subtract(1, getInterval(interval))
-        .toDate(),
-      weight: 0,
-    },
-    ...schedulesList.map((schedule) => ({
-      timestamp: new Date(schedule.executeAt * 1000),
-      weight: schedule.weight / 1000,
-    })),
-  ];
-};
-
 interface ProgressiveRolloutTemplateScheduleProps {
   feature: Feature.AsObject;
   rule: ProgressiveRollout.AsObject;
   deleteRule: (ruleId) => void;
-  // handleOpenUpdate: (arg) => void;
 }
 
 const ProgressiveRolloutTemplateSchedule = memo(
-  ({
-    feature,
-    rule,
-    deleteRule,
-  }: // handleOpenUpdate,
-  ProgressiveRolloutTemplateScheduleProps) => {
+  ({ feature, rule, deleteRule }: ProgressiveRolloutTemplateScheduleProps) => {
     const { formatMessage: f } = useIntl();
+    const [selectedPagination, setSelectedPagination] = useState(0);
 
-    const { typeUrl, value } = rule.clause;
-    const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+    const { value } = rule.clause;
 
     const data = ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
       value as Uint8Array
@@ -852,11 +800,31 @@ const ProgressiveRolloutTemplateSchedule = memo(
       .reverse()
       .find((s) => s.triggeredAt);
 
-    const lastItemWithWeight = lastItemWithTriggeredAt
-      ? Number(lastItemWithTriggeredAt.weight) / 1000
-      : 0;
+    const isSameOrBeforeOfLastTriggerAt = (executeAt) => {
+      if (lastItemWithTriggeredAt) {
+        return dayjs(executeAt).isSameOrBefore(
+          lastItemWithTriggeredAt.executeAt * 1000
+        );
+      }
+      return false;
+    };
 
-    const equalRangeSchedules = getEqualRangeSchedules(schedulesList, interval);
+    const totalNumberOfPages = Math.ceil(schedulesList.length / 10);
+
+    const paginatedScheduleList = schedulesList.slice(
+      selectedPagination * 10,
+      (selectedPagination + 1) * 10
+    );
+
+    const firstSchedule = {
+      weight:
+        selectedPagination === 0
+          ? 0
+          : schedulesList[selectedPagination * 10 - 1].weight / 1000,
+      executeAt: dayjs(paginatedScheduleList[0].executeAt * 1000)
+        .subtract(1, getIntervalForDayjs(interval))
+        .toDate(),
+    };
 
     return (
       <div className="rounded-xl shadow px-6 py-4 bg-white">
@@ -873,15 +841,6 @@ const ProgressiveRolloutTemplateSchedule = memo(
                 </div>
               </Popover.Button>
               <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 w-[166px]">
-                {/* <button
-                  className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
-                  onClick={handleOpenUpdate}
-                >
-                  <PencilIcon width={18} />
-                  <span className="text-sm">
-                    {f(messages.autoOps.editOperation)}
-                  </span>
-                </button> */}
                 <button
                   onClick={deleteRule}
                   className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
@@ -925,49 +884,103 @@ const ProgressiveRolloutTemplateSchedule = memo(
           </div>
           <div className="bg-gray-50 pt-14 pb-16 px-12 rounded mt-2">
             <div className="flex h-[4px] bg-gray-200 relative">
-              <div
-                className="bg-pink-500"
-                style={{
-                  width: `${lastItemWithWeight}%`,
-                }}
-              />
-              <div className="flex absolute w-full top-[-2.5px]">
-                {equalRangeSchedules.map((schedule, i) => (
+              <div className="h-[4px] flex items-center">
+                <div
+                  className={classNames(
+                    'w-[9px] h-[9px] rounded-full relative',
+                    isSameOrBeforeOfLastTriggerAt(firstSchedule.executeAt)
+                      ? 'bg-pink-500'
+                      : 'border border-gray-400 bg-gray-50'
+                  )}
+                >
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2">
+                    {firstSchedule.weight}%
+                  </span>
+                  <div className="absolute top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center">
+                    <p className="text-gray-400 text-xs">
+                      {dayjs(firstSchedule.executeAt).format('hh:mm')}
+                    </p>
+                    <p className="text-gray-400 text-xs">
+                      {dayjs(firstSchedule.executeAt).format('YYYY-MM-DD')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {paginatedScheduleList.map((schedule, i) => (
+                <div
+                  key={i}
+                  className={classNames(
+                    'flex justify-end flex-1 items-center h-[4px]',
+                    isSameOrBeforeOfLastTriggerAt(schedule.executeAt * 1000) &&
+                      'bg-pink-500'
+                  )}
+                >
                   <div
-                    key={i}
                     className={classNames(
-                      'flex justify-end',
-                      i > 0 && 'flex-1'
+                      'w-[9px] h-[9px] rounded-full relative',
+                      isSameOrBeforeOfLastTriggerAt(schedule.executeAt * 1000)
+                        ? 'bg-pink-500'
+                        : 'border border-gray-400 bg-gray-50'
                     )}
                   >
-                    <div
-                      className={classNames(
-                        'w-[9px] h-[9px] rounded-full relative',
-                        lastItemWithTriggeredAt &&
-                          dayjs(schedule.timestamp).isSameOrBefore(
-                            lastItemWithTriggeredAt.executeAt * 1000
-                          )
-                          ? 'bg-pink-500'
-                          : 'border border-gray-400 bg-gray-50'
-                      )}
-                    >
-                      <span className="absolute -top-8 left-1/2 -translate-x-1/2">
-                        {schedule.weight}%
-                      </span>
-                      <div className="absolute top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center">
-                        <p className="text-gray-400 text-xs">
-                          {dayjs(schedule.timestamp).format('hh:mm')}
-                        </p>
-                        <p className="text-gray-400 text-xs">
-                          {dayjs(schedule.timestamp).format('YYYY-MM-DD')}
-                        </p>
-                      </div>
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2">
+                      {schedule.weight / 1000}%
+                    </span>
+                    <div className="absolute top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center">
+                      <p className="text-gray-400 text-xs">
+                        {dayjs(schedule.executeAt * 1000).format('hh:mm')}
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        {dayjs(schedule.executeAt * 1000).format('YYYY-MM-DD')}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
+          {totalNumberOfPages > 1 && (
+            <div className="mt-4 flex justify-between items-center">
+              <button
+                className={classNames(
+                  'p-1.5 rounded border',
+                  selectedPagination === 0 && 'opacity-50 cursor-not-allowed'
+                )}
+                disabled={selectedPagination === 0}
+                onClick={() => setSelectedPagination(selectedPagination - 1)}
+              >
+                <ArrowNarrowLeftIcon width={16} className="text-gray-400" />
+              </button>
+              <div className="flex space-x-2">
+                {Array(totalNumberOfPages)
+                  .fill('')
+                  .map((_, i) =>
+                    selectedPagination === i ? (
+                      <div
+                        key={i}
+                        className="w-[24px] h-[8px] rounded-full bg-gray-400"
+                      />
+                    ) : (
+                      <div
+                        key={i}
+                        className="w-[8px] h-[8px] rounded-full bg-gray-200"
+                      />
+                    )
+                  )}
+              </div>
+              <button
+                className={classNames(
+                  'p-1.5 rounded border',
+                  selectedPagination === totalNumberOfPages - 1 &&
+                    'opacity-50 cursor-not-allowed'
+                )}
+                disabled={selectedPagination === totalNumberOfPages - 1}
+                onClick={() => setSelectedPagination(selectedPagination + 1)}
+              >
+                <ArrowNarrowRightIcon width={16} className="text-gray-400" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -978,15 +991,10 @@ interface ProgressiveRolloutManualScheduleProps {
   rule: ProgressiveRollout.AsObject;
   deleteRule: (ruleId) => void;
   feature: Feature.AsObject;
-  // handleOpenUpdate: (arg) => void;
 }
 
 const ProgressiveRolloutManualSchedule = memo(
-  ({
-    rule,
-    deleteRule,
-  }: // handleOpenUpdate,
-  ProgressiveRolloutManualScheduleProps) => {
+  ({ rule, deleteRule }: ProgressiveRolloutManualScheduleProps) => {
     const { formatMessage: f } = useIntl();
 
     const [selectedPagination, setSelectedPagination] = useState(0);
@@ -1014,15 +1022,6 @@ const ProgressiveRolloutManualSchedule = memo(
                 </div>
               </Popover.Button>
               <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 w-[166px]">
-                {/* <button
-                  className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
-                  onClick={handleOpenUpdate}
-                >
-                  <PencilIcon width={18} />
-                  <span className="text-sm">
-                    {f(messages.autoOps.editOperation)}
-                  </span>
-                </button> */}
                 <button
                   onClick={deleteRule}
                   className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"

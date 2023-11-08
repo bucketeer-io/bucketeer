@@ -36,7 +36,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       (state) => state.features.loading,
       shallowEqual
     );
-    const [feature, getFeatureError] = useSelector<
+    const [feature] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [
@@ -70,7 +70,12 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
         },
         manual: {
           variationId: feature.variationsList[0].id,
-          schedulesList: [],
+          schedulesList: [
+            {
+              executeAt: createInitialDatetimeClause(),
+              weight: 20,
+            },
+          ],
         },
       },
     };
