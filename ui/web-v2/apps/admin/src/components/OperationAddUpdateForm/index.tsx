@@ -24,7 +24,7 @@ import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useIntl } from 'react-intl';
-import { useDispatch, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { messages } from '../../lang/messages';
 import {
@@ -44,6 +44,12 @@ import {
   ClauseType,
   ProgressiveRolloutClauseType,
 } from '../FeatureAutoOpsRulesForm';
+
+export interface ProgressiveRolloutTypeTab {
+  label: 'Template' | 'Manual';
+  value: string;
+  selected: boolean;
+}
 
 export interface OperationAddUpdateFormProps {
   featureId: string;
@@ -116,7 +122,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     ];
 
     const [progressiveRolloutTypeList, setProgressiveRolloutTypeList] =
-      useState([
+      useState<ProgressiveRolloutTypeTab[]>([
         {
           label: 'Template',
           value:
