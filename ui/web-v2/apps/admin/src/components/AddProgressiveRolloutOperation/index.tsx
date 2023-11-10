@@ -1,5 +1,10 @@
 import { messages } from '@/lang/messages';
+import { AppState } from '@/modules';
+import { selectAll as selectAllAutoOpsRules } from '@/modules/autoOpsRules';
 import { useIsEditable } from '@/modules/me';
+import { selectAll as selectAllProgressiveRollouts } from '@/modules/porgressiveRollout';
+import { AutoOpsRule } from '@/proto/autoops/auto_ops_rule_pb';
+import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { classNames } from '@/utils/css';
 import { MinusCircleIcon, PlusIcon } from '@heroicons/react/outline';
 import dayjs from 'dayjs';
@@ -11,16 +16,20 @@ import {
   useWatch,
 } from 'react-hook-form';
 import { useIntl } from 'react-intl';
+import { shallowEqual, useSelector } from 'react-redux';
 
 import { DatetimePicker } from '../DatetimePicker';
 import {
+  ClauseType,
   ProgressiveRolloutClauseType,
   getIntervalForDayjs,
 } from '../FeatureAutoOpsRulesForm';
 import { ProgressiveRolloutTypeTab } from '../OperationAddUpdateForm';
 import { Option, Select } from '../Select';
+import { v4 as uuid } from 'uuid';
 
 interface AddProgressiveRolloutOperationProps {
+  featureId: string;
   variationOptions: Option[];
   isSeeDetailsSelected: boolean;
   progressiveRolloutTypeList: ProgressiveRolloutTypeTab[];
@@ -30,6 +39,7 @@ interface AddProgressiveRolloutOperationProps {
 export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationProps> =
   memo(
     ({
+      featureId,
       variationOptions,
       isSeeDetailsSelected,
       progressiveRolloutTypeList,
@@ -41,23 +51,52 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
       const methods = useFormContext<any>();
       const { control } = methods;
 
+      const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
+        (state) =>
+          selectAllAutoOpsRules(state.autoOpsRules).filter(
+            (rule) => rule.featureId === featureId
+          ),
+        shallowEqual
+      );
+
+      const progressiveRolloutList = useSelector<
+        AppState,
+        ProgressiveRollout.AsObject[]
+      >(
+        (state) =>
+          selectAllProgressiveRollouts(state.progressiveRollout).filter(
+            (rule) => rule.featureId === featureId
+          ),
+        shallowEqual
+      );
+
       const isTemplateSelected =
         progressiveRolloutTypeList.find((p) => p.selected).value ===
         ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE;
 
-      // return (
-      //   <p className="input-error mt-2">
-      //     There is a schedule configured in the auto operations. Please delete
-      //     it before using the progressive rollout
-      //   </p>
-      // );
+      const findScheduleOperation = autoOpsRules.find((rule) => {
+        const { typeUrl } = rule.clausesList[0].clause;
+        const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+        return type === ClauseType.DATETIME;
+      });
 
-      // return (
-      //   <p className="input-error mt-2">
-      //     There is already progressive rollout configured in the auto
-      //     operations.
-      //   </p>
-      // );
+      if (findScheduleOperation) {
+        return (
+          <p className="input-error mt-2">
+            There is a schedule configured in the auto operations. Please delete
+            it before using the progressive rollout.
+          </p>
+        );
+      }
+
+      if (progressiveRolloutList.length > 0) {
+        return (
+          <p className="input-error mt-2">
+            There is already progressive rollout configured in the auto
+            operations.
+          </p>
+        );
+      }
 
       return (
         <div className="mt-4 space-y-4">
@@ -112,7 +151,6 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
             />
           ) : (
             <ManualProgressiveRollout
-              variationOptions={variationOptions}
               isSeeDetailsSelected={isSeeDetailsSelected}
             />
           )}
@@ -309,12 +347,11 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
 );
 
 interface ManualProgressiveRolloutProps {
-  variationOptions: Option[];
   isSeeDetailsSelected: boolean;
 }
 
 const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
-  ({ variationOptions, isSeeDetailsSelected }) => {
+  ({ isSeeDetailsSelected }) => {
     const { formatMessage: f } = useIntl();
     const methods = useFormContext<any>();
     const {
@@ -323,11 +360,6 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
       register,
     } = methods;
     const editable = useIsEditable();
-
-    const manualSchedulesListWatch = useWatch({
-      control,
-      name: 'progressiveRollout.manual.schedulesList',
-    });
 
     const {
       fields: manualSchedulesList,
@@ -342,22 +374,19 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
       e.preventDefault();
 
       const lastSchedule: any =
-        manualSchedulesListWatch[manualSchedulesListWatch.length - 1];
-
+        manualSchedulesList[manualSchedulesList.length - 1];
       const time = dayjs(lastSchedule?.executeAt.time)
         .add(5, 'minute')
         .toDate();
 
       const weight = lastSchedule ? Number(lastSchedule.weight) : 0;
 
-      if (weight < 100) {
-        append({
-          executeAt: {
-            time,
-          },
-          weight: weight > 80 ? 100 : weight + 20,
-        });
-      }
+      append({
+        executeAt: {
+          time,
+        },
+        weight: weight + 20,
+      });
     };
 
     const handleRemoveTrigger = useCallback(
@@ -369,24 +398,6 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
 
     return (
       <Fragment>
-        <div className="flex-1">
-          <span className="input-label">{f(messages.feature.variation)}</span>
-          <Controller
-            name="progressiveRollout.manual.variationId"
-            control={control}
-            render={({ field }) => (
-              <Select
-                onChange={(o: Option) => {
-                  console.log('manual');
-                  field.onChange(o.value);
-                }}
-                options={variationOptions}
-                disabled={!editable || isSeeDetailsSelected}
-                value={variationOptions.find((o) => o.value === field.value)}
-              />
-            )}
-          />
-        </div>
         <button
           onClick={handleAddOperation}
           className="text-primary space-x-2 flex items-center"

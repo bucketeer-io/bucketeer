@@ -210,27 +210,27 @@ export const operationFormSchema = yup.object().shape({
             .transform((value) => (isNaN(value) ? undefined : value))
             .required()
             .min(1)
-            .max(100)
-            .test(
-              'isAscending',
-              'The weights need to be in increasing order.',
-              function (value) {
-                const {
-                  options: { originalValue, from, index },
-                } = this as any;
+            .max(100),
+          // .test(
+          //   'isAscending',
+          //   'The weights need to be in increasing order.',
+          //   function (value) {
+          //     const {
+          //       options: { originalValue, from, index },
+          //     } = this as any;
 
-                if (
-                  from[3].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
-                ) {
-                  return isAscending(
-                    from[3].value.progressiveRollout.manual.schedulesList.map(
-                      (d) => Number(d.weight)
-                    )
-                  );
-                }
-                return true;
-              }
-            ),
+          //     if (
+          //       from[3].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
+          //     ) {
+          //       return isAscending(
+          //         from[3].value.progressiveRollout.manual.schedulesList.map(
+          //           (d) => Number(d.weight)
+          //         )
+          //       );
+          //     }
+          //     return true;
+          //   }
+          // ),
           executeAt: yup.object().shape({
             time: yup
               .date()
@@ -248,27 +248,27 @@ export const operationFormSchema = yup.object().shape({
                   }
                   return true;
                 }
-              )
-              .test(
-                'isAscending',
-                'The date need to be in increasing order.',
-                function () {
-                  const {
-                    options: { originalValue, from, index },
-                  } = this as any;
-
-                  if (
-                    from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
-                  ) {
-                    return isAscending(
-                      from[4].value.progressiveRollout.manual.schedulesList.map(
-                        (d) => d.executeAt.time.getTime()
-                      )
-                    );
-                  }
-                  return true;
-                }
               ),
+            // .test(
+            //   'isAscending',
+            //   'The date need to be in increasing order.',
+            //   function () {
+            //     const {
+            //       options: { originalValue, from, index },
+            //     } = this as any;
+
+            //     if (
+            //       from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
+            //     ) {
+            //       return isAscending(
+            //         from[4].value.progressiveRollout.manual.schedulesList.map(
+            //           (d) => d.executeAt.time.getTime()
+            //         )
+            //       );
+            //     }
+            //     return true;
+            //   }
+            // ),
           }),
         })
       ),

@@ -86,6 +86,8 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       mode: 'onChange',
     });
 
+    const { reset, setValue } = methods;
+
     const handleRefetchAutoOpsRules = useCallback(() => {
       dispatch(
         listAutoOpsRules({
@@ -103,6 +105,14 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
         })
       );
     }, [dispatch]);
+
+    const handleReset = () => {
+      reset(defaultValues);
+      setValue(
+        'progressiveRollout.manual.schedulesList',
+        defaultValues.progressiveRollout.manual.schedulesList
+      );
+    };
 
     useEffect(() => {
       handleRefetchProgressiveRollouts();
@@ -136,6 +146,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
           featureId={featureId}
           refetchAutoOpsRules={handleRefetchAutoOpsRules}
           refetchProgressiveRollouts={handleRefetchProgressiveRollouts}
+          reset={handleReset}
         />
       </FormProvider>
     );

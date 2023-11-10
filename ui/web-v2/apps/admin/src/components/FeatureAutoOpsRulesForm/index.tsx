@@ -54,6 +54,7 @@ import {
   DatetimeClause,
   OpsEventRateClause,
   ProgressiveRolloutManualScheduleClause,
+  ProgressiveRolloutSchedule,
   ProgressiveRolloutTemplateScheduleClause,
 } from '../../proto/autoops/clause_pb';
 import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
@@ -62,6 +63,7 @@ import { classNames } from '../../utils/css';
 import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
 import { Overlay } from '../Overlay';
+import { Option } from '../Select';
 
 const numberOfBlocks = 51;
 
@@ -141,6 +143,7 @@ interface FeatureAutoOpsRulesFormProps {
   featureId: string;
   refetchAutoOpsRules: () => void;
   refetchProgressiveRollouts: () => void;
+  reset: () => void;
 }
 
 export const getIntervalForDayjs = (
@@ -155,7 +158,7 @@ export const getIntervalForDayjs = (
   }
 };
 export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
-  ({ featureId, refetchAutoOpsRules, refetchProgressiveRollouts }) => {
+  ({ featureId, refetchAutoOpsRules, refetchProgressiveRollouts, reset }) => {
     const { operationId } = useParams<{ operationId: string }>();
     const isNew = operationId === ID_NEW;
     const dispatch = useDispatch<AppDispatch>();
@@ -197,7 +200,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
 
     const methods = useFormContext();
 
-    const { handleSubmit, reset } = methods;
+    const { handleSubmit } = methods;
 
     const [tabs, setTabs] = useState([
       {
@@ -280,6 +283,13 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       handleClose();
       refetchProgressiveRollouts();
     }, []);
+
+    const variationOptions = feature.variationsList.map((v) => {
+      return {
+        value: v.id,
+        label: v.value,
+      };
+    });
 
     const isActiveTabSelected =
       tabs.find((tab) => tab.selected).label === TabLabel.ACTIVE;
@@ -416,8 +426,8 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               return (
                 <ProgressiveRolloutTemplateSchedule
                   key={rule.id}
+                  variationOptions={variationOptions}
                   rule={rule}
-                  feature={feature}
                   deleteRule={() => handleRolloutDelete(rule.id)}
                 />
               );
@@ -427,9 +437,9 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
             ) {
               return (
                 <ProgressiveRolloutManualSchedule
+                  variationOptions={variationOptions}
                   key={rule.id}
                   rule={rule}
-                  feature={feature}
                   deleteRule={() => handleRolloutDelete(rule.id)}
                 />
               );
@@ -757,23 +767,27 @@ const EventRateOperation = memo(
 );
 
 interface ProgressiveRolloutTemplateScheduleProps {
-  feature: Feature.AsObject;
+  variationOptions: Option[];
   rule: ProgressiveRollout.AsObject;
   deleteRule: (ruleId) => void;
 }
 
 const ProgressiveRolloutTemplateSchedule = memo(
-  ({ feature, rule, deleteRule }: ProgressiveRolloutTemplateScheduleProps) => {
+  ({
+    variationOptions,
+    rule,
+    deleteRule,
+  }: ProgressiveRolloutTemplateScheduleProps) => {
     const { formatMessage: f } = useIntl();
-    const [selectedPagination, setSelectedPagination] = useState(0);
 
-    const { value } = rule.clause;
+    const { typeUrl, value } = rule.clause;
 
     const data = ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
       value as Uint8Array
     ).toObject();
 
     const { schedulesList, increments, interval, variationId } = data;
+    const [selectedPagination, setSelectedPagination] = useState(0);
 
     const getFrequency = (
       frequency: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap]
@@ -789,13 +803,6 @@ const ProgressiveRolloutTemplateSchedule = memo(
       }
     };
 
-    const variationOptions = feature.variationsList.map((v) => {
-      return {
-        value: v.id,
-        label: v.value,
-      };
-    });
-
     const lastItemWithTriggeredAt = [...schedulesList]
       .reverse()
       .find((s) => s.triggeredAt);
@@ -808,7 +815,6 @@ const ProgressiveRolloutTemplateSchedule = memo(
       }
       return false;
     };
-
     const totalNumberOfPages = Math.ceil(schedulesList.length / 10);
 
     const paginatedScheduleList = schedulesList.slice(
@@ -828,6 +834,7 @@ const ProgressiveRolloutTemplateSchedule = memo(
 
     return (
       <div className="rounded-xl shadow px-6 py-4 bg-white">
+        <pre>{JSON.stringify(data, undefined, 2)}</pre>
         <div className="flex justify-between py-4 border-b">
           <h3 className="font-bold text-xl">Enable Operation</h3>
           <div className="flex space-x-2 items-center">
@@ -882,6 +889,7 @@ const ProgressiveRolloutTemplateSchedule = memo(
               </span>
             </div>
           </div>
+          {/* <ProgressiveRolloutGraph schedulesList={schedulesList} interval={interval} data={data} /> */}
           <div className="bg-gray-50 pt-14 pb-16 px-12 rounded mt-2">
             <div className="flex h-[4px] bg-gray-200 relative">
               <div className="h-[4px] flex items-center">
@@ -988,27 +996,32 @@ const ProgressiveRolloutTemplateSchedule = memo(
 );
 
 interface ProgressiveRolloutManualScheduleProps {
+  variationOptions: Option[];
   rule: ProgressiveRollout.AsObject;
   deleteRule: (ruleId) => void;
-  feature: Feature.AsObject;
 }
 
 const ProgressiveRolloutManualSchedule = memo(
-  ({ rule, deleteRule }: ProgressiveRolloutManualScheduleProps) => {
+  ({
+    variationOptions,
+    rule,
+    deleteRule,
+  }: ProgressiveRolloutManualScheduleProps) => {
     const { formatMessage: f } = useIntl();
 
     const [selectedPagination, setSelectedPagination] = useState(0);
 
     const { typeUrl, value } = rule.clause;
-    const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
 
-    const x = ProgressiveRolloutManualScheduleClause.deserializeBinary(
+    const data = ProgressiveRolloutManualScheduleClause.deserializeBinary(
       value as Uint8Array
     ).toObject();
 
+    const { schedulesList, variationId } = data;
+
     return (
       <div className="rounded-xl shadow px-6 py-4 bg-white">
-        <pre>{JSON.stringify(x, undefined, 2)}</pre>
+        <pre>{JSON.stringify(data, undefined, 2)}</pre>
         <div className="flex justify-between py-4 border-b">
           <h3 className="font-bold text-xl">Enable Operation</h3>
           <div className="flex space-x-2 items-center">
@@ -1037,102 +1050,169 @@ const ProgressiveRolloutManualSchedule = memo(
         </div>
         <div className="mt-4">
           <p className="font-bold text-lg">Progress Information</p>
-          <div className="text-gray-400 flex items-center py-2 space-x-2">
-            <div className="space-x-1 items-center flex">
-              <span className="">Increment {}%</span>
-              <InformationCircleIcon width={16} />
+          <div className="flex items-center py-3 space-x-2">
+            <div className="flex space-x-1">
+              <span className="text-gray-400">Start Date</span>
+              <span className="text-gray-500">
+                {dayjs(schedulesList[0].executeAt * 1000).format('YYYY-MM-DD')}
+              </span>
             </div>
             <span className="text-gray-200">/</span>
-            <span>Start Date 2023-02-11</span>
-            <span className="text-gray-200">/</span>
-            <span>Frequency Hour</span>
-          </div>
-          <div className="mt-2">
-            <div className="flex">
-              {Array(50)
-                .fill('')
-                .map((_, i) => {
-                  const value = 54;
-                  const percentage = i * 2;
-
-                  let bgColor = 'bg-gray-200';
-                  if (percentage <= value) {
-                    bgColor = 'bg-pink-500';
-                  } else if (percentage > 90) {
-                    bgColor = 'bg-white';
-                  } else if (percentage % 10 === 0) {
-                    bgColor = 'bg-gray-400';
-                  }
-
-                  return (
-                    <div
-                      key={i}
-                      className={classNames(
-                        'relative h-[8px] flex-1 rounded-[60px]',
-                        bgColor
-                      )}
-                    >
-                      {i !== 0 && (
-                        <div className="absolute h-[8px] w-1.5 rounded-r-full bg-white" />
-                      )}
-                    </div>
-                  );
-                })}
+            <div className="flex space-x-1">
+              <span className="text-gray-400">Variation</span>
+              <span className="text-gray-500">
+                {variationOptions.find((v) => v.value === variationId)?.label}
+              </span>
             </div>
-            <div className="flex mt-2">
-              {Array(10)
-                .fill('')
-                .map((_, i) => (
-                  <div key={i} className="flex-1">
-                    <p>{i * 10}%</p>
-                    <p className="text-gray-400 text-xs">07:00</p>
-                    <p className="text-gray-400 text-xs">2023-23-11</p>
-                  </div>
-                ))}
-            </div>
-          </div>
-          <div className="mt-4 flex justify-between items-center">
-            <button
-              className="p-1.5 rounded border"
-              onClick={() =>
-                selectedPagination > 0 &&
-                setSelectedPagination(selectedPagination - 1)
-              }
-            >
-              <ArrowNarrowLeftIcon width={16} className="text-gray-400" />
-            </button>
-            <div className="flex space-x-2">
-              {Array(8)
-                .fill('')
-                .map((_, i) =>
-                  selectedPagination === i ? (
-                    <div
-                      key={i}
-                      className="w-[24px] h-[8px] rounded-full bg-gray-400"
-                    />
-                  ) : (
-                    <div
-                      key={i}
-                      className="w-[8px] h-[8px] rounded-full bg-gray-200"
-                    />
-                  )
-                )}
-            </div>
-            <button
-              className="p-1.5 rounded border"
-              onClick={() =>
-                selectedPagination < 8 &&
-                setSelectedPagination(selectedPagination + 1)
-              }
-            >
-              <ArrowNarrowRightIcon width={16} className="text-gray-400" />
-            </button>
           </div>
         </div>
       </div>
     );
   }
 );
+
+// interface ProgressiveRolloutGraphProps {
+//   schedulesList: ProgressiveRolloutSchedule.AsObject[];
+// }
+
+// const ProgressiveRolloutGraph: FC<ProgressiveRolloutGraphProps> = memo(
+//   ({ schedulesList }) => {
+//     const [selectedPagination, setSelectedPagination] = useState(0);
+
+//     const lastItemWithTriggeredAt = [...schedulesList]
+//       .reverse()
+//       .find((s) => s.triggeredAt);
+
+//     const isSameOrBeforeOfLastTriggerAt = (executeAt) => {
+//       if (lastItemWithTriggeredAt) {
+//         return dayjs(executeAt).isSameOrBefore(
+//           lastItemWithTriggeredAt.executeAt * 1000
+//         );
+//       }
+//       return false;
+//     };
+//     const totalNumberOfPages = Math.ceil(schedulesList.length / 10);
+
+//     const paginatedScheduleList = schedulesList.slice(
+//       selectedPagination * 10,
+//       (selectedPagination + 1) * 10
+//     );
+
+//     const firstSchedule = {
+//       weight:
+//         selectedPagination === 0
+//           ? 0
+//           : schedulesList[selectedPagination * 10 - 1].weight / 1000,
+//       executeAt: dayjs(paginatedScheduleList[0].executeAt * 1000)
+//         .subtract(1, getIntervalForDayjs(interval))
+//         .toDate(),
+//     };
+
+//     return (
+//       <div>
+//         <div className="bg-gray-50 pt-14 pb-16 px-12 rounded mt-2">
+//           <div className="flex h-[4px] bg-gray-200 relative">
+//             <div className="h-[4px] flex items-center">
+//               <div
+//                 className={classNames(
+//                   'w-[9px] h-[9px] rounded-full relative',
+//                   isSameOrBeforeOfLastTriggerAt(firstSchedule.executeAt)
+//                     ? 'bg-pink-500'
+//                     : 'border border-gray-400 bg-gray-50'
+//                 )}
+//               >
+//                 <span className="absolute -top-8 left-1/2 -translate-x-1/2">
+//                   {firstSchedule.weight}%
+//                 </span>
+//                 <div className="absolute top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center">
+//                   <p className="text-gray-400 text-xs">
+//                     {dayjs(firstSchedule.executeAt).format('hh:mm')}
+//                   </p>
+//                   <p className="text-gray-400 text-xs">
+//                     {dayjs(firstSchedule.executeAt).format('YYYY-MM-DD')}
+//                   </p>
+//                 </div>
+//               </div>
+//             </div>
+//             {paginatedScheduleList.map((schedule, i) => (
+//               <div
+//                 key={i}
+//                 className={classNames(
+//                   'flex justify-end flex-1 items-center h-[4px]',
+//                   isSameOrBeforeOfLastTriggerAt(schedule.executeAt * 1000) &&
+//                     'bg-pink-500'
+//                 )}
+//               >
+//                 <div
+//                   className={classNames(
+//                     'w-[9px] h-[9px] rounded-full relative',
+//                     isSameOrBeforeOfLastTriggerAt(schedule.executeAt * 1000)
+//                       ? 'bg-pink-500'
+//                       : 'border border-gray-400 bg-gray-50'
+//                   )}
+//                 >
+//                   <span className="absolute -top-8 left-1/2 -translate-x-1/2">
+//                     {schedule.weight / 1000}%
+//                   </span>
+//                   <div className="absolute top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center">
+//                     <p className="text-gray-400 text-xs">
+//                       {dayjs(schedule.executeAt * 1000).format('hh:mm')}
+//                     </p>
+//                     <p className="text-gray-400 text-xs">
+//                       {dayjs(schedule.executeAt * 1000).format('YYYY-MM-DD')}
+//                     </p>
+//                   </div>
+//                 </div>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+//         {totalNumberOfPages > 1 && (
+//           <div className="mt-4 flex justify-between items-center">
+//             <button
+//               className={classNames(
+//                 'p-1.5 rounded border',
+//                 selectedPagination === 0 && 'opacity-50 cursor-not-allowed'
+//               )}
+//               disabled={selectedPagination === 0}
+//               onClick={() => setSelectedPagination(selectedPagination - 1)}
+//             >
+//               <ArrowNarrowLeftIcon width={16} className="text-gray-400" />
+//             </button>
+//             <div className="flex space-x-2">
+//               {Array(totalNumberOfPages)
+//                 .fill('')
+//                 .map((_, i) =>
+//                   selectedPagination === i ? (
+//                     <div
+//                       key={i}
+//                       className="w-[24px] h-[8px] rounded-full bg-gray-400"
+//                     />
+//                   ) : (
+//                     <div
+//                       key={i}
+//                       className="w-[8px] h-[8px] rounded-full bg-gray-200"
+//                     />
+//                   )
+//                 )}
+//             </div>
+//             <button
+//               className={classNames(
+//                 'p-1.5 rounded border',
+//                 selectedPagination === totalNumberOfPages - 1 &&
+//                   'opacity-50 cursor-not-allowed'
+//               )}
+//               disabled={selectedPagination === totalNumberOfPages - 1}
+//               onClick={() => setSelectedPagination(selectedPagination + 1)}
+//             >
+//               <ArrowNarrowRightIcon width={16} className="text-gray-400" />
+//             </button>
+//           </div>
+//         )}
+//       </div>
+//     );
+//   }
+// );
 
 export const opsTypeOptions = [
   {

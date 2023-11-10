@@ -1,6 +1,7 @@
 import { intl } from '@/lang';
 import { AppState } from '@/modules';
 import { useCurrentEnvironment } from '@/modules/me';
+import { selectAll as selectAllProgressiveRollouts } from '@/modules/porgressiveRollout';
 import { AutoOpsRule, OpsType } from '@/proto/autoops/auto_ops_rule_pb';
 import {
   DatetimeClause,
@@ -16,6 +17,7 @@ import {
   CreateAutoOpsRuleCommand,
   CreateProgressiveRolloutCommand,
 } from '@/proto/autoops/command_pb';
+import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { Feature } from '@/proto/feature/feature_pb';
 import { AppDispatch } from '@/store';
 import { classNames } from '@/utils/css';
@@ -89,13 +91,24 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       state.features.getFeatureError,
     ]);
 
+    const progressiveRolloutList = useSelector<
+      AppState,
+      ProgressiveRollout.AsObject[]
+    >(
+      (state) =>
+        selectAllProgressiveRollouts(state.progressiveRollout).filter(
+          (rule) => rule.featureId === featureId
+        ),
+      shallowEqual
+    );
+
     const [radioList, setRadioList] = useState([]);
 
     const methods = useFormContext<any>();
     const {
       handleSubmit,
       control,
-      formState: { isValid, isSubmitting },
+      formState: { isValid, isSubmitting, errors },
       register,
       setValue,
     } = methods;
@@ -467,6 +480,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                       {radio.value === ClauseType.PROGRESSIVE_ROLLOUT &&
                         clauseType === ClauseType.PROGRESSIVE_ROLLOUT && (
                           <AddProgressiveRolloutOperation
+                            featureId={featureId}
                             variationOptions={variationOptions}
                             isSeeDetailsSelected={isSeeDetailsSelected}
                             progressiveRolloutTypeList={
@@ -497,7 +511,11 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             <button
               type="button"
               className="btn-submit-gradient"
-              disabled={!isValid || isSubmitting || isSeeDetailsSelected}
+              disabled={
+                !isValid || isSubmitting || isSeeDetailsSelected
+                // (clauseType === ClauseType.PROGRESSIVE_ROLLOUT &&
+                //   progressiveRolloutList.length > 0)
+              }
               onClick={handleSubmit(handleOnSubmit)}
             >
               {f(messages.button.submit)}
