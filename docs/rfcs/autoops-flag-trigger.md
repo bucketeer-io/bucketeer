@@ -40,7 +40,7 @@ Table explanation:\
 `description`: The description of the flag trigger.\
 `trigger_times`: The times of the flag trigger has been triggered. \
 `last_triggered_at`: The last time of the flag trigger has been triggered.\
-`url`: The URL of the flag trigger. \
+`uuid`: The uuid of the flag trigger. It will be used to create and reset the trigger url.\
 `disabled`: The flag trigger is disabled or not.\
 `deleted`: The flag trigger is deleted or not.
 
@@ -74,6 +74,9 @@ message CreateFlagTriggerRequest {
 
 - Update a flag trigger
 
+This update API may not be provided to the user. Because the real use case is create a new flag trigger and then reset
+the trigger url or just delete the flag trigger.
+
 ```Grpc
 rpc UpdateFlagTrigger(UpdateFlagTriggerRequest) returns (UpdateFlagTriggerResponse) {}
 ```
@@ -87,6 +90,30 @@ message UpdateFlagTriggerRequest {
     int32 type = 5;
     int32 action = 6;
     string description = 7;
+}
+```
+
+- Reset a flag trigger
+
+```Grpc
+rpc ResetFlagTrigger(ResetFlagTriggerRequest) returns (ResetFlagTriggerResponse) {}
+```
+
+```proto
+message ResetFlagTriggerRequest {
+    string id = 1;
+}
+```
+
+- Disable a flag trigger
+
+```Grpc
+rpc DisableFlagTrigger(DisableFlagTriggerRequest) returns (DisableFlagTriggerResponse) {}
+```
+
+```proto
+message DisableFlagTriggerRequest {
+    string id = 1;
 }
 ```
 
@@ -181,9 +208,9 @@ Then check the decrypted trigger url secret is valid or not by the following ste
 3. If the above conditions are all true, then call the `feature` API to turn on/off the feature flag base on
    the `flagTriggerSecret.Action`.
 
-* How to re-generate the trigger url?
+* How to reset the trigger url?
 
-When re-generate the trigger url, we need to generate a new `uuid`, then update the `flag_trigger`.`uuid` field by the
+When reset the trigger url, we need to generate a new `uuid`, then update the `flag_trigger`.`uuid` field by the
 new `uuid`, and then encrypt the new `flagTriggerSecret` by the following code:
 
 ```
@@ -191,3 +218,11 @@ trigger_url_secret = crypto.EncrypterDecrypter.Encrypt(FlagTriggerSecret)
 ```
 
 Then return the new trigger url to the user.
+
+* Only show the trigger url to the user for the first time.
+
+    - When the user creates a new flag trigger, we will generate a new `uuid` and encrypt the `flagTriggerSecret` as the
+      above steps, and then return the trigger url to the user.
+    - When the user reset the trigger url, we will generate a new `uuid` and encrypt the `flagTriggerSecret` as the
+      above steps, and then return the trigger url to the user.
+    - In the `ListFlagTrigger` and `GetFlagTrigger` API response, we will return partial masked trigger url to the user.
