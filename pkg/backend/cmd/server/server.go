@@ -45,6 +45,7 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureapi "github.com/bucketeer-io/bucketeer/pkg/feature/api"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/pkg/feature/flagtrigger/webhook"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
@@ -64,13 +65,14 @@ import (
 )
 
 const (
-	command               = "server"
-	gcp                   = "gcp"
-	aws                   = "aws"
-	autoOpsWebhookPath    = "hook"
-	healthCheckTimeout    = 1 * time.Second
-	clientDialTimeout     = 30 * time.Second
-	serverShutDownTimeout = 10 * time.Second
+	command                       = "server"
+	gcp                           = "gcp"
+	aws                           = "aws"
+	autoOpsWebhookPath            = "hook"
+	featureFlagTriggerWebhookPath = "webhook"
+	healthCheckTimeout            = 1 * time.Second
+	clientDialTimeout             = 30 * time.Second
+	serverShutDownTimeout         = 10 * time.Second
 )
 
 type server struct {
@@ -591,12 +593,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		domainTopicPublisher,
 		featureapi.WithLogger(logger),
 	)
+	featureFlagTriggerHandler, err := s.createFeatureFlagTriggerHandler(ctx, featureClient, mysqlClient, logger)
+	if err != nil {
+		return err
+	}
 	featureServer := rpc.NewServer(featureService, *s.certPath, *s.keyPath,
 		"feature-server",
 		rpc.WithPort(*s.featureServicePort),
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithHandler(fmt.Sprintf("/%s", featureFlagTriggerWebhookPath), featureFlagTriggerHandler),
 	)
 	go featureServer.Run()
 	// migrateMySQLService
@@ -827,4 +834,36 @@ func (s *server) createAutoOpsService(
 		return nil, nil, err
 	}
 	return autoOpsService, autoOpsWebhookHandler, nil
+}
+
+func (s *server) createFeatureFlagTriggerHandler(
+	ctx context.Context,
+	featureClient featureclient.Client,
+	mysqlClient mysql.Client,
+	logger *zap.Logger,
+) (http.Handler, error) {
+	var (
+		triggerCryptoUtil crypto.EncrypterDecrypter
+		err               error
+	)
+	switch *s.cloudService {
+	case gcp:
+		triggerCryptoUtil, err = crypto.NewCloudKMSCrypto(ctx, *s.webhookKMSResourceName)
+		if err != nil {
+			return nil, err
+		}
+	case aws:
+		// TODO: Get region from command-line flags
+		triggerCryptoUtil, err = crypto.NewAwsKMSCrypto(ctx, *s.webhookKMSResourceName, "ap-northeast-1")
+		if err != nil {
+			return nil, err
+		}
+	}
+	handler := webhook.NewHandler(
+		mysqlClient,
+		featureClient,
+		triggerCryptoUtil,
+		webhook.WithLogger(logger),
+	)
+	return handler, nil
 }
