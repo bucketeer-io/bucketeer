@@ -6,6 +6,7 @@ import { selectAll as selectAllProgressiveRollouts } from '@/modules/porgressive
 import { AutoOpsRule } from '@/proto/autoops/auto_ops_rule_pb';
 import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { classNames } from '@/utils/css';
+import { isArraySorted } from '@/utils/isArraySorted';
 import { MinusCircleIcon, PlusIcon } from '@heroicons/react/outline';
 import dayjs from 'dayjs';
 import React, { memo, FC, useEffect, useCallback, Fragment } from 'react';
@@ -26,7 +27,6 @@ import {
 } from '../FeatureAutoOpsRulesForm';
 import { ProgressiveRolloutTypeTab } from '../OperationAddUpdateForm';
 import { Option, Select } from '../Select';
-import { v4 as uuid } from 'uuid';
 
 interface AddProgressiveRolloutOperationProps {
   featureId: string;
@@ -361,6 +361,11 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
     } = methods;
     const editable = useIsEditable();
 
+    const watchManualSchedulesList = useWatch({
+      control,
+      name: 'progressiveRollout.manual.schedulesList',
+    });
+
     const {
       fields: manualSchedulesList,
       remove: removeTrigger,
@@ -374,18 +379,24 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
       e.preventDefault();
 
       const lastSchedule: any =
-        manualSchedulesList[manualSchedulesList.length - 1];
+        watchManualSchedulesList[watchManualSchedulesList.length - 1];
       const time = dayjs(lastSchedule?.executeAt.time)
         .add(5, 'minute')
         .toDate();
 
-      const weight = lastSchedule ? Number(lastSchedule.weight) : 0;
+      let weight = lastSchedule ? Number(lastSchedule.weight) : 0;
+
+      if (weight >= 80) {
+        weight = 100;
+      } else {
+        weight = weight + 20;
+      }
 
       append({
         executeAt: {
           time,
         },
-        weight: weight + 20,
+        weight,
       });
     };
 
@@ -396,11 +407,30 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
       [removeTrigger]
     );
 
+    const isLastScheduleWeight100 =
+      Number(
+        watchManualSchedulesList[watchManualSchedulesList.length - 1]?.weight
+      ) === 100;
+
+    const isWeightsSorted = isArraySorted(
+      watchManualSchedulesList.map((d) => Number(d.weight))
+    );
+    const isDatesSorted = isArraySorted(
+      watchManualSchedulesList.map((d) => d.executeAt.time.getTime())
+    );
+
     return (
       <Fragment>
         <button
           onClick={handleAddOperation}
-          className="text-primary space-x-2 flex items-center"
+          className={classNames(
+            'text-primary space-x-2 flex items-center',
+            (isLastScheduleWeight100 || !isWeightsSorted || !isDatesSorted) &&
+              'opacity-50 cursor-not-allowed'
+          )}
+          disabled={
+            isLastScheduleWeight100 || !isWeightsSorted || !isDatesSorted
+          }
         >
           <PlusIcon width={16} />
           <span className="text-sm font-medium">Add Operation</span>
@@ -479,6 +509,26 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
               )}
             </div>
           ))}
+        </div>
+        <div className="flex">
+          <div className="flex-1">
+            {!isWeightsSorted && (
+              <p className="input-error">
+                <span role="alert">
+                  The weights need to be in increasing order.
+                </span>
+              </p>
+            )}
+          </div>
+          <div className="flex-1">
+            {!isDatesSorted && (
+              <p className="input-error">
+                <span role="alert">
+                  The dates need to be in increasing order.
+                </span>
+              </p>
+            )}
+          </div>
         </div>
       </Fragment>
     );

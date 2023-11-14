@@ -827,9 +827,12 @@ const ProgressiveRolloutTemplateSchedule = memo(
         selectedPagination === 0
           ? 0
           : schedulesList[selectedPagination * 10 - 1].weight / 1000,
-      executeAt: dayjs(paginatedScheduleList[0].executeAt * 1000)
-        .subtract(1, getIntervalForDayjs(interval))
-        .toDate(),
+      executeAt:
+        selectedPagination === 0
+          ? dayjs(rule.createdAt * 1000).toDate()
+          : dayjs(paginatedScheduleList[0].executeAt * 1000)
+              .subtract(1, getIntervalForDayjs(interval))
+              .toDate(),
     };
 
     return (
