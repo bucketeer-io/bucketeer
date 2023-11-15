@@ -8,8 +8,6 @@ import {
   DeleteProgressiveRolloutResponse,
   ListProgressiveRolloutsRequest,
   ListProgressiveRolloutsResponse,
-  // ExecuteProgressiveRolloutRequest,
-  // ExecuteProgressiveRolloutResponse,
 } from '../proto/autoops/service_pb';
 import {
   AutoOpsServiceClient,
@@ -109,37 +107,6 @@ export function listProgressiveRollouts(
   );
 }
 
-// export interface UpdateAutoOpsRuleResult {
-//   request: UpdateAutoOpsRuleRequest;
-//   response: UpdateAutoOpsRuleResponse;
-// }
-
-// export function updateAutoOpsRule(
-//   request: UpdateAutoOpsRuleRequest
-// ): Promise<UpdateAutoOpsRuleResult> {
-//   return new Promise(
-//     (resolve: (result: UpdateAutoOpsRuleResult) => void, reject): void => {
-//       client.updateAutoOpsRule(
-//         request,
-//         getMetaData(),
-//         (error, response): void => {
-//           if (isNotNull(error) || isNull(response)) {
-//             reject(
-//               new ProgressiveRolloutServiceError(
-//                 extractErrorMessage(error),
-//                 request,
-//                 error
-//               )
-//             );
-//           } else {
-//             resolve({ request, response });
-//           }
-//         }
-//       );
-//     }
-//   );
-// }
-
 export interface DeleteProgressiveRolloutResult {
   request: DeleteProgressiveRolloutRequest;
   response: DeleteProgressiveRolloutResponse;
@@ -173,26 +140,3 @@ export function deleteProgressiveRollout(
     }
   );
 }
-
-// export interface ListOpsCountsResult {
-//   request: ListOpsCountsRequest;
-//   response: ListOpsCountsResponse;
-// }
-
-// export function listOpsCounts(
-//   request: ListOpsCountsRequest
-// ): Promise<ListOpsCountsResult> {
-//   return new Promise(
-//     (resolve: (result: ListOpsCountsResult) => void, reject): void => {
-//       client.listOpsCounts(request, getMetaData(), (error, response): void => {
-//         if (isNotNull(error) || isNull(response)) {
-//           reject(
-//             new ProgressiveRolloutServiceError(extractErrorMessage(error), request, error)
-//           );
-//         } else {
-//           resolve({ request, response });
-//         }
-//       });
-//     }
-//   );
-// }

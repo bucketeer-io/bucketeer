@@ -511,11 +511,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             <button
               type="button"
               className="btn-submit-gradient"
-              disabled={
-                !isValid || isSubmitting || isSeeDetailsSelected
-                // (clauseType === ClauseType.PROGRESSIVE_ROLLOUT &&
-                //   progressiveRolloutList.length > 0)
-              }
+              disabled={!isValid || isSubmitting || isSeeDetailsSelected}
               onClick={handleSubmit(handleOnSubmit)}
             >
               {f(messages.button.submit)}

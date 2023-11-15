@@ -18,6 +18,7 @@ import {
   deleteProgressiveRollout,
 } from '@/modules/porgressiveRollout';
 import { OpsCount } from '@/proto/autoops/ops_count_pb';
+import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { AppDispatch } from '@/store';
 import { Popover } from '@headlessui/react';
 import {
@@ -57,7 +58,6 @@ import {
   ProgressiveRolloutSchedule,
   ProgressiveRolloutTemplateScheduleClause,
 } from '../../proto/autoops/clause_pb';
-import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { classNames } from '../../utils/css';
 import { HoverPopover } from '../HoverPopover';
@@ -166,28 +166,9 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const [selectedAutoOpsRule, setSelectedAutoOpsRule] =
       useState<AutoOpsRule.AsObject | null>(null);
 
-    const [feature] = useSelector<
-      AppState,
-      [Feature.AsObject | undefined, SerializedError | null]
-    >((state) => [
-      selectFeatureById(state.features, featureId),
-      state.features.getFeatureError,
-    ]);
-
     const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
       (state) =>
         selectAllAutoOpsRules(state.autoOpsRules).filter(
-          (rule) => rule.featureId === featureId
-        ),
-      shallowEqual
-    );
-
-    const progressiveRolloutList = useSelector<
-      AppState,
-      ProgressiveRollout.AsObject[]
-    >(
-      (state) =>
-        selectAllProgressiveRollouts(state.progressiveRollout).filter(
           (rule) => rule.featureId === featureId
         ),
       shallowEqual
@@ -265,15 +246,6 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       handleOpen();
     }, []);
 
-    const handleRolloutDelete = (ruleId) => {
-      dispatch(
-        deleteProgressiveRollout({
-          environmentNamespace: currentEnvironment.id,
-          id: ruleId,
-        })
-      ).then(refetchProgressiveRollouts);
-    };
-
     const handleOnSubmit = useCallback(() => {
       handleClose();
       refetchAutoOpsRules();
@@ -283,13 +255,6 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       handleClose();
       refetchProgressiveRollouts();
     }, []);
-
-    const variationOptions = feature.variationsList.map((v) => {
-      return {
-        value: v.id,
-        label: v.value,
-      };
-    });
 
     const isActiveTabSelected =
       tabs.find((tab) => tab.selected).label === TabLabel.ACTIVE;
@@ -415,36 +380,10 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           </div>
         </div>
         <div className="space-y-6 py-6">
-          {progressiveRolloutList?.map((rule) => {
-            const { typeUrl } = rule.clause;
-            const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
-
-            if (
-              type ===
-              ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE
-            ) {
-              return (
-                <ProgressiveRolloutTemplateSchedule
-                  key={rule.id}
-                  variationOptions={variationOptions}
-                  rule={rule}
-                  deleteRule={() => handleRolloutDelete(rule.id)}
-                />
-              );
-            } else if (
-              type ===
-              ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE
-            ) {
-              return (
-                <ProgressiveRolloutManualSchedule
-                  variationOptions={variationOptions}
-                  key={rule.id}
-                  rule={rule}
-                  deleteRule={() => handleRolloutDelete(rule.id)}
-                />
-              );
-            }
-          })}
+          <ProgressiveRolloutOperation
+            featureId={featureId}
+            refetchProgressiveRollouts={refetchProgressiveRollouts}
+          />
           {tabs
             .find((tab) => tab.selected)
             .value.map((rule) => (
@@ -475,6 +414,108 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
   }
 );
 
+interface ProgressiveRolloutProps {
+  featureId: string;
+  refetchProgressiveRollouts: () => void;
+}
+
+const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
+  ({ featureId, refetchProgressiveRollouts }) => {
+    const currentEnvironment = useCurrentEnvironment();
+    const dispatch = useDispatch<AppDispatch>();
+
+    const [feature] = useSelector<
+      AppState,
+      [Feature.AsObject | undefined, SerializedError | null]
+    >((state) => [
+      selectFeatureById(state.features, featureId),
+      state.features.getFeatureError,
+    ]);
+
+    const variationOptions = feature.variationsList.map((v) => {
+      return {
+        value: v.id,
+        label: v.value,
+      };
+    });
+
+    const handleRolloutDelete = (ruleId) => {
+      dispatch(
+        deleteProgressiveRollout({
+          environmentNamespace: currentEnvironment.id,
+          id: ruleId,
+        })
+      ).then(refetchProgressiveRollouts);
+    };
+
+    const progressiveRollout = useSelector<
+      AppState,
+      ProgressiveRollout.AsObject[]
+    >(
+      (state) =>
+        selectAllProgressiveRollouts(state.progressiveRollout).filter(
+          (rule) => rule.featureId === featureId
+        ),
+      shallowEqual
+    );
+
+    return (
+      <div>
+        {progressiveRollout?.map((rule) => {
+          const { typeUrl, value } = rule.clause;
+          const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+
+          if (
+            type ===
+            ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE
+          ) {
+            const data =
+              ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
+                value as Uint8Array
+              ).toObject();
+
+            const { schedulesList, increments, interval, variationId } = data;
+
+            return (
+              <ProgressiveRolloutComponent
+                key={rule.id}
+                variationOptions={variationOptions}
+                rule={rule}
+                deleteRule={() => handleRolloutDelete(rule.id)}
+                schedulesList={schedulesList}
+                increments={increments}
+                interval={interval}
+                variationId={variationId}
+              />
+            );
+          } else if (
+            type ===
+            ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE
+          ) {
+            const data =
+              ProgressiveRolloutManualScheduleClause.deserializeBinary(
+                value as Uint8Array
+              ).toObject();
+
+            const { schedulesList, variationId } = data;
+
+            return (
+              <ProgressiveRolloutComponent
+                key={rule.id}
+                variationOptions={variationOptions}
+                rule={rule}
+                deleteRule={() => handleRolloutDelete(rule.id)}
+                schedulesList={schedulesList}
+                variationId={variationId}
+              />
+            );
+          }
+        })}
+      </div>
+    );
+  }
+);
+
 interface OperationProps {
   rule: AutoOpsRule.AsObject;
   isActiveTabSelected: boolean;
@@ -482,116 +523,113 @@ interface OperationProps {
   refetchAutoOpsRules: () => void;
 }
 
-const Operation = ({
-  rule,
-  isActiveTabSelected,
-  handleOpenUpdate,
-  refetchAutoOpsRules,
-}: OperationProps) => {
-  const { formatMessage: f } = useIntl();
-  const dispatch = useDispatch<AppDispatch>();
-  const currentEnvironment = useCurrentEnvironment();
+const Operation: FC<OperationProps> = memo(
+  ({ rule, isActiveTabSelected, handleOpenUpdate, refetchAutoOpsRules }) => {
+    const { formatMessage: f } = useIntl();
+    const dispatch = useDispatch<AppDispatch>();
+    const currentEnvironment = useCurrentEnvironment();
 
-  const opsCounts = useSelector<AppState, OpsCount.AsObject[]>(
-    (state) => selectAllOpsCounts(state.opsCounts),
-    shallowEqual
-  );
+    const opsCounts = useSelector<AppState, OpsCount.AsObject[]>(
+      (state) => selectAllOpsCounts(state.opsCounts),
+      shallowEqual
+    );
 
-  const { typeUrl } = rule.clausesList[0].clause;
-  const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+    const { typeUrl } = rule.clausesList[0].clause;
+    const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
 
-  const handleDelete = (ruleId) => {
-    dispatch(
-      deleteAutoOpsRule({
-        environmentNamespace: currentEnvironment.id,
-        id: ruleId,
-      })
-    ).then(refetchAutoOpsRules);
-  };
+    const handleDelete = (ruleId) => {
+      dispatch(
+        deleteAutoOpsRule({
+          environmentNamespace: currentEnvironment.id,
+          id: ruleId,
+        })
+      ).then(refetchAutoOpsRules);
+    };
 
-  return (
-    <div className="rounded-xl shadow px-6 py-4 bg-white">
-      <div className="flex justify-between py-4 border-b">
-        <h3 className="font-bold text-xl text-gray-600">
-          {rule.opsType === OpsType.ENABLE_FEATURE
-            ? f(messages.autoOps.enableOperation)
-            : f(messages.autoOps.killSwitchOperation)}
-        </h3>
-        <div className="flex space-x-2 items-center">
-          <div
-            className={classNames(
-              'py-[2px] px-2 rounded text-sm',
-              type === ClauseType.DATETIME && 'bg-[#EBF9ED] text-green-700',
-              type === ClauseType.EVENT_RATE && 'bg-[#EFECF5] text-primary'
-            )}
-          >
-            {type === ClauseType.DATETIME && f(messages.autoOps.schedule)}
-            {type === ClauseType.EVENT_RATE && f(messages.autoOps.eventRate)}
-          </div>
-          <Popover className="relative flex">
-            <Popover.Button>
-              <div className="pl-2 flex items-center cursor-pointer">
-                <DotsHorizontalIcon width={20} />
-              </div>
-            </Popover.Button>
-            <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
-              {isActiveTabSelected ? (
-                <>
+    return (
+      <div className="rounded-xl shadow px-6 py-4 bg-white">
+        <div className="flex justify-between py-4 border-b">
+          <h3 className="font-bold text-xl text-gray-600">
+            {rule.opsType === OpsType.ENABLE_FEATURE
+              ? f(messages.autoOps.enableOperation)
+              : f(messages.autoOps.killSwitchOperation)}
+          </h3>
+          <div className="flex space-x-2 items-center">
+            <div
+              className={classNames(
+                'py-[2px] px-2 rounded text-sm',
+                type === ClauseType.DATETIME && 'bg-[#EBF9ED] text-green-700',
+                type === ClauseType.EVENT_RATE && 'bg-[#EFECF5] text-primary'
+              )}
+            >
+              {type === ClauseType.DATETIME && f(messages.autoOps.schedule)}
+              {type === ClauseType.EVENT_RATE && f(messages.autoOps.eventRate)}
+            </div>
+            <Popover className="relative flex">
+              <Popover.Button>
+                <div className="pl-2 flex items-center cursor-pointer">
+                  <DotsHorizontalIcon width={20} />
+                </div>
+              </Popover.Button>
+              <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
+                {isActiveTabSelected ? (
+                  <>
+                    <button
+                      onClick={() => handleOpenUpdate(rule)}
+                      className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
+                    >
+                      <PencilIcon width={18} />
+                      <span className="text-sm">
+                        {f(messages.autoOps.editOperation)}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(rule.id)}
+                      className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                    >
+                      <TrashIcon width={18} className="text-red-500" />
+                      <span className="text-red-500 text-sm">
+                        {f(messages.autoOps.deleteOperation)}
+                      </span>
+                    </button>
+                  </>
+                ) : (
                   <button
                     onClick={() => handleOpenUpdate(rule)}
                     className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
                   >
-                    <PencilIcon width={18} />
+                    <SeeDetailsSvg />
                     <span className="text-sm">
-                      {f(messages.autoOps.editOperation)}
+                      {f(messages.autoOps.operationDetails)}
                     </span>
                   </button>
-                  <button
-                    onClick={() => handleDelete(rule.id)}
-                    className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
-                  >
-                    <TrashIcon width={18} className="text-red-500" />
-                    <span className="text-red-500 text-sm">
-                      {f(messages.autoOps.deleteOperation)}
-                    </span>
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => handleOpenUpdate(rule)}
-                  className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
-                >
-                  <SeeDetailsSvg />
-                  <span className="text-sm">
-                    {f(messages.autoOps.operationDetails)}
-                  </span>
-                </button>
-              )}
-            </Popover.Panel>
-          </Popover>
+                )}
+              </Popover.Panel>
+            </Popover>
+          </div>
+        </div>
+        <div className="mt-4">
+          <p className="font-bold text-lg text-gray-600">
+            {f(messages.autoOps.progressInformation)}
+          </p>
+          {type === ClauseType.DATETIME && (
+            <DateTimeOperation
+              rule={rule}
+              isActiveTabSelected={isActiveTabSelected}
+            />
+          )}
+          {type === ClauseType.EVENT_RATE && (
+            <EventRateOperation
+              rule={rule}
+              opsCounts={opsCounts}
+              isActiveTabSelected={isActiveTabSelected}
+            />
+          )}
         </div>
       </div>
-      <div className="mt-4">
-        <p className="font-bold text-lg text-gray-600">
-          {f(messages.autoOps.progressInformation)}
-        </p>
-        {type === ClauseType.DATETIME && (
-          <DateTimeOperation
-            rule={rule}
-            isActiveTabSelected={isActiveTabSelected}
-          />
-        )}
-        {type === ClauseType.EVENT_RATE && (
-          <EventRateOperation
-            rule={rule}
-            opsCounts={opsCounts}
-            isActiveTabSelected={isActiveTabSelected}
-          />
-        )}
-      </div>
-    </div>
-  );
-};
+    );
+  }
+);
 
 interface DateTimeOperationProps {
   rule: AutoOpsRule.AsObject;
@@ -770,28 +808,27 @@ interface ProgressiveRolloutTemplateScheduleProps {
   variationOptions: Option[];
   rule: ProgressiveRollout.AsObject;
   deleteRule: (ruleId) => void;
+  schedulesList: ProgressiveRolloutSchedule.AsObject[];
+  increments?: number;
+  interval?: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap];
+  variationId: string;
 }
 
-const ProgressiveRolloutTemplateSchedule = memo(
+const ProgressiveRolloutComponent = memo(
   ({
     variationOptions,
     rule,
     deleteRule,
+    schedulesList,
+    increments,
+    interval,
+    variationId,
   }: ProgressiveRolloutTemplateScheduleProps) => {
     const { formatMessage: f } = useIntl();
 
-    const { typeUrl, value } = rule.clause;
-
-    const data = ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
-      value as Uint8Array
-    ).toObject();
-
-    const { schedulesList, increments, interval, variationId } = data;
     const [selectedPagination, setSelectedPagination] = useState(0);
 
-    const getFrequency = (
-      frequency: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap]
-    ) => {
+    const getFrequency = (frequency) => {
       if (frequency === 1) {
         return 'Hourly';
       } else if (frequency === 2) {
@@ -829,15 +866,12 @@ const ProgressiveRolloutTemplateSchedule = memo(
           : schedulesList[selectedPagination * 10 - 1].weight / 1000,
       executeAt:
         selectedPagination === 0
-          ? dayjs(rule.createdAt * 1000).toDate()
-          : dayjs(paginatedScheduleList[0].executeAt * 1000)
-              .subtract(1, getIntervalForDayjs(interval))
-              .toDate(),
+          ? rule.createdAt
+          : schedulesList[selectedPagination * 10 - 1].executeAt,
     };
 
     return (
       <div className="rounded-xl shadow px-6 py-4 bg-white">
-        <pre>{JSON.stringify(data, undefined, 2)}</pre>
         <div className="flex justify-between py-4 border-b">
           <h3 className="font-bold text-xl">Enable Operation</h3>
           <div className="flex space-x-2 items-center">
@@ -867,12 +901,16 @@ const ProgressiveRolloutTemplateSchedule = memo(
         <div className="mt-4">
           <p className="font-bold text-lg">Progress Information</p>
           <div className="flex items-center py-3 space-x-2">
-            <div className="space-x-1 items-center flex">
-              <span className="text-gray-400">Increment</span>
-              <span className="text-gray-500">{increments}%</span>
-              <InformationCircleIcon width={18} className="text-gray-400" />
-            </div>
-            <span className="text-gray-200">/</span>
+            {increments && (
+              <>
+                <div className="space-x-1 items-center flex">
+                  <span className="text-gray-400">Increment</span>
+                  <span className="text-gray-500">{increments}%</span>
+                  <InformationCircleIcon width={18} className="text-gray-400" />
+                </div>
+                <span className="text-gray-200">/</span>
+              </>
+            )}
             <div className="flex space-x-1">
               <span className="text-gray-400">Start Date</span>
               <span className="text-gray-500">
@@ -880,11 +918,17 @@ const ProgressiveRolloutTemplateSchedule = memo(
               </span>
             </div>
             <span className="text-gray-200">/</span>
-            <div className="flex space-x-1">
-              <span className="text-gray-400">Frequency</span>
-              <span className="text-gray-500">{getFrequency(interval)}</span>
-            </div>
-            <span className="text-gray-200">/</span>
+            {interval && (
+              <>
+                <div className="flex space-x-1">
+                  <span className="text-gray-400">Frequency</span>
+                  <span className="text-gray-500">
+                    {getFrequency(interval)}
+                  </span>
+                </div>
+                <span className="text-gray-200">/</span>
+              </>
+            )}
             <div className="flex space-x-1">
               <span className="text-gray-400">Variation</span>
               <span className="text-gray-500">
@@ -892,7 +936,6 @@ const ProgressiveRolloutTemplateSchedule = memo(
               </span>
             </div>
           </div>
-          {/* <ProgressiveRolloutGraph schedulesList={schedulesList} interval={interval} data={data} /> */}
           <div className="bg-gray-50 pt-14 pb-16 px-12 rounded mt-2">
             <div className="flex h-[4px] bg-gray-200 relative">
               <div className="h-[4px] flex items-center">
@@ -909,10 +952,12 @@ const ProgressiveRolloutTemplateSchedule = memo(
                   </span>
                   <div className="absolute top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center">
                     <p className="text-gray-400 text-xs">
-                      {dayjs(firstSchedule.executeAt).format('hh:mm')}
+                      {dayjs(firstSchedule.executeAt * 1000).format('HH:mm')}
                     </p>
                     <p className="text-gray-400 text-xs">
-                      {dayjs(firstSchedule.executeAt).format('YYYY-MM-DD')}
+                      {dayjs(firstSchedule.executeAt * 1000).format(
+                        'YYYY-MM-DD'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -939,7 +984,7 @@ const ProgressiveRolloutTemplateSchedule = memo(
                     </span>
                     <div className="absolute top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center">
                       <p className="text-gray-400 text-xs">
-                        {dayjs(schedule.executeAt * 1000).format('hh:mm')}
+                        {dayjs(schedule.executeAt * 1000).format('HH:mm')}
                       </p>
                       <p className="text-gray-400 text-xs">
                         {dayjs(schedule.executeAt * 1000).format('YYYY-MM-DD')}
@@ -997,225 +1042,6 @@ const ProgressiveRolloutTemplateSchedule = memo(
     );
   }
 );
-
-interface ProgressiveRolloutManualScheduleProps {
-  variationOptions: Option[];
-  rule: ProgressiveRollout.AsObject;
-  deleteRule: (ruleId) => void;
-}
-
-const ProgressiveRolloutManualSchedule = memo(
-  ({
-    variationOptions,
-    rule,
-    deleteRule,
-  }: ProgressiveRolloutManualScheduleProps) => {
-    const { formatMessage: f } = useIntl();
-
-    const [selectedPagination, setSelectedPagination] = useState(0);
-
-    const { typeUrl, value } = rule.clause;
-
-    const data = ProgressiveRolloutManualScheduleClause.deserializeBinary(
-      value as Uint8Array
-    ).toObject();
-
-    const { schedulesList, variationId } = data;
-
-    return (
-      <div className="rounded-xl shadow px-6 py-4 bg-white">
-        <pre>{JSON.stringify(data, undefined, 2)}</pre>
-        <div className="flex justify-between py-4 border-b">
-          <h3 className="font-bold text-xl">Enable Operation</h3>
-          <div className="flex space-x-2 items-center">
-            <div className="py-[2px] px-2 bg-[#FFF7EE] rounded text-[#CE844A] text-sm">
-              Progressive Rollout
-            </div>
-            <Popover className="relative flex">
-              <Popover.Button>
-                <div className="pl-2 flex items-center cursor-pointer">
-                  <DotsHorizontalIcon width={20} />
-                </div>
-              </Popover.Button>
-              <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 w-[166px]">
-                <button
-                  onClick={deleteRule}
-                  className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
-                >
-                  <TrashIcon width={18} className="text-red-500" />
-                  <span className="text-red-500 text-sm">
-                    {f(messages.autoOps.deleteOperation)}
-                  </span>
-                </button>
-              </Popover.Panel>
-            </Popover>
-          </div>
-        </div>
-        <div className="mt-4">
-          <p className="font-bold text-lg">Progress Information</p>
-          <div className="flex items-center py-3 space-x-2">
-            <div className="flex space-x-1">
-              <span className="text-gray-400">Start Date</span>
-              <span className="text-gray-500">
-                {dayjs(schedulesList[0].executeAt * 1000).format('YYYY-MM-DD')}
-              </span>
-            </div>
-            <span className="text-gray-200">/</span>
-            <div className="flex space-x-1">
-              <span className="text-gray-400">Variation</span>
-              <span className="text-gray-500">
-                {variationOptions.find((v) => v.value === variationId)?.label}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-);
-
-// interface ProgressiveRolloutGraphProps {
-//   schedulesList: ProgressiveRolloutSchedule.AsObject[];
-// }
-
-// const ProgressiveRolloutGraph: FC<ProgressiveRolloutGraphProps> = memo(
-//   ({ schedulesList }) => {
-//     const [selectedPagination, setSelectedPagination] = useState(0);
-
-//     const lastItemWithTriggeredAt = [...schedulesList]
-//       .reverse()
-//       .find((s) => s.triggeredAt);
-
-//     const isSameOrBeforeOfLastTriggerAt = (executeAt) => {
-//       if (lastItemWithTriggeredAt) {
-//         return dayjs(executeAt).isSameOrBefore(
-//           lastItemWithTriggeredAt.executeAt * 1000
-//         );
-//       }
-//       return false;
-//     };
-//     const totalNumberOfPages = Math.ceil(schedulesList.length / 10);
-
-//     const paginatedScheduleList = schedulesList.slice(
-//       selectedPagination * 10,
-//       (selectedPagination + 1) * 10
-//     );
-
-//     const firstSchedule = {
-//       weight:
-//         selectedPagination === 0
-//           ? 0
-//           : schedulesList[selectedPagination * 10 - 1].weight / 1000,
-//       executeAt: dayjs(paginatedScheduleList[0].executeAt * 1000)
-//         .subtract(1, getIntervalForDayjs(interval))
-//         .toDate(),
-//     };
-
-//     return (
-//       <div>
-//         <div className="bg-gray-50 pt-14 pb-16 px-12 rounded mt-2">
-//           <div className="flex h-[4px] bg-gray-200 relative">
-//             <div className="h-[4px] flex items-center">
-//               <div
-//                 className={classNames(
-//                   'w-[9px] h-[9px] rounded-full relative',
-//                   isSameOrBeforeOfLastTriggerAt(firstSchedule.executeAt)
-//                     ? 'bg-pink-500'
-//                     : 'border border-gray-400 bg-gray-50'
-//                 )}
-//               >
-//                 <span className="absolute -top-8 left-1/2 -translate-x-1/2">
-//                   {firstSchedule.weight}%
-//                 </span>
-//                 <div className="absolute top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center">
-//                   <p className="text-gray-400 text-xs">
-//                     {dayjs(firstSchedule.executeAt).format('hh:mm')}
-//                   </p>
-//                   <p className="text-gray-400 text-xs">
-//                     {dayjs(firstSchedule.executeAt).format('YYYY-MM-DD')}
-//                   </p>
-//                 </div>
-//               </div>
-//             </div>
-//             {paginatedScheduleList.map((schedule, i) => (
-//               <div
-//                 key={i}
-//                 className={classNames(
-//                   'flex justify-end flex-1 items-center h-[4px]',
-//                   isSameOrBeforeOfLastTriggerAt(schedule.executeAt * 1000) &&
-//                     'bg-pink-500'
-//                 )}
-//               >
-//                 <div
-//                   className={classNames(
-//                     'w-[9px] h-[9px] rounded-full relative',
-//                     isSameOrBeforeOfLastTriggerAt(schedule.executeAt * 1000)
-//                       ? 'bg-pink-500'
-//                       : 'border border-gray-400 bg-gray-50'
-//                   )}
-//                 >
-//                   <span className="absolute -top-8 left-1/2 -translate-x-1/2">
-//                     {schedule.weight / 1000}%
-//                   </span>
-//                   <div className="absolute top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center">
-//                     <p className="text-gray-400 text-xs">
-//                       {dayjs(schedule.executeAt * 1000).format('hh:mm')}
-//                     </p>
-//                     <p className="text-gray-400 text-xs">
-//                       {dayjs(schedule.executeAt * 1000).format('YYYY-MM-DD')}
-//                     </p>
-//                   </div>
-//                 </div>
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-//         {totalNumberOfPages > 1 && (
-//           <div className="mt-4 flex justify-between items-center">
-//             <button
-//               className={classNames(
-//                 'p-1.5 rounded border',
-//                 selectedPagination === 0 && 'opacity-50 cursor-not-allowed'
-//               )}
-//               disabled={selectedPagination === 0}
-//               onClick={() => setSelectedPagination(selectedPagination - 1)}
-//             >
-//               <ArrowNarrowLeftIcon width={16} className="text-gray-400" />
-//             </button>
-//             <div className="flex space-x-2">
-//               {Array(totalNumberOfPages)
-//                 .fill('')
-//                 .map((_, i) =>
-//                   selectedPagination === i ? (
-//                     <div
-//                       key={i}
-//                       className="w-[24px] h-[8px] rounded-full bg-gray-400"
-//                     />
-//                   ) : (
-//                     <div
-//                       key={i}
-//                       className="w-[8px] h-[8px] rounded-full bg-gray-200"
-//                     />
-//                   )
-//                 )}
-//             </div>
-//             <button
-//               className={classNames(
-//                 'p-1.5 rounded border',
-//                 selectedPagination === totalNumberOfPages - 1 &&
-//                   'opacity-50 cursor-not-allowed'
-//               )}
-//               disabled={selectedPagination === totalNumberOfPages - 1}
-//               onClick={() => setSelectedPagination(selectedPagination + 1)}
-//             >
-//               <ArrowNarrowRightIcon width={16} className="text-gray-400" />
-//             </button>
-//           </div>
-//         )}
-//       </div>
-//     );
-//   }
-// );
 
 export const opsTypeOptions = [
   {
