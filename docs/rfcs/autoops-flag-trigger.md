@@ -26,7 +26,8 @@ CREATE TABLE `flag_triggers`
     `deleted`               tinyint(1) NOT NULL DEFAULT '0',
     `created_at`            bigint       NOT NULL,
     `updated_at`            bigint       NOT NULL,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`, `environment_namespace`),
+    CONSTRAINT `foreign_flag_triggers_feature_id_environment_namespace` FOREIGN KEY (`feature_id`, `environment_namespace`) REFERENCES `feature` (`id`, `environment_namespace`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 ```
 
