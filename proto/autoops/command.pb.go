@@ -1018,6 +1018,234 @@ func (x *ChangeProgressiveRolloutScheduleTriggeredAtCommand) GetScheduleId() str
 	return ""
 }
 
+type CreateFlagTriggerCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	FeatureId   string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
+	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Type        int32  `protobuf:"varint,3,opt,name=type,proto3" json:"type,omitempty"`
+	Action      int32  `protobuf:"varint,4,opt,name=action,proto3" json:"action,omitempty"`
+	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+}
+
+func (x *CreateFlagTriggerCommand) Reset() {
+	*x = CreateFlagTriggerCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_autoops_command_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateFlagTriggerCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateFlagTriggerCommand) ProtoMessage() {}
+
+func (x *CreateFlagTriggerCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_autoops_command_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateFlagTriggerCommand.ProtoReflect.Descriptor instead.
+func (*CreateFlagTriggerCommand) Descriptor() ([]byte, []int) {
+	return file_proto_autoops_command_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *CreateFlagTriggerCommand) GetFeatureId() string {
+	if x != nil {
+		return x.FeatureId
+	}
+	return ""
+}
+
+func (x *CreateFlagTriggerCommand) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateFlagTriggerCommand) GetType() int32 {
+	if x != nil {
+		return x.Type
+	}
+	return 0
+}
+
+func (x *CreateFlagTriggerCommand) GetAction() int32 {
+	if x != nil {
+		return x.Action
+	}
+	return 0
+}
+
+func (x *CreateFlagTriggerCommand) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+type ResetFlagTriggerCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *ResetFlagTriggerCommand) Reset() {
+	*x = ResetFlagTriggerCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_autoops_command_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ResetFlagTriggerCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResetFlagTriggerCommand) ProtoMessage() {}
+
+func (x *ResetFlagTriggerCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_autoops_command_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResetFlagTriggerCommand.ProtoReflect.Descriptor instead.
+func (*ResetFlagTriggerCommand) Descriptor() ([]byte, []int) {
+	return file_proto_autoops_command_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ResetFlagTriggerCommand) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type ControlFlagTriggerCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id       string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Disabled bool   `protobuf:"varint,2,opt,name=disabled,proto3" json:"disabled,omitempty"`
+}
+
+func (x *ControlFlagTriggerCommand) Reset() {
+	*x = ControlFlagTriggerCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_autoops_command_proto_msgTypes[22]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ControlFlagTriggerCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ControlFlagTriggerCommand) ProtoMessage() {}
+
+func (x *ControlFlagTriggerCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_autoops_command_proto_msgTypes[22]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ControlFlagTriggerCommand.ProtoReflect.Descriptor instead.
+func (*ControlFlagTriggerCommand) Descriptor() ([]byte, []int) {
+	return file_proto_autoops_command_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ControlFlagTriggerCommand) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ControlFlagTriggerCommand) GetDisabled() bool {
+	if x != nil {
+		return x.Disabled
+	}
+	return false
+}
+
+type DeleteFlagTriggerCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *DeleteFlagTriggerCommand) Reset() {
+	*x = DeleteFlagTriggerCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_autoops_command_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteFlagTriggerCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFlagTriggerCommand) ProtoMessage() {}
+
+func (x *DeleteFlagTriggerCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_autoops_command_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFlagTriggerCommand.ProtoReflect.Descriptor instead.
+func (*DeleteFlagTriggerCommand) Descriptor() ([]byte, []int) {
+	return file_proto_autoops_command_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *DeleteFlagTriggerCommand) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
 var File_proto_autoops_command_proto protoreflect.FileDescriptor
 
 var file_proto_autoops_command_proto_rawDesc = []byte{
@@ -1175,11 +1403,31 @@ var file_proto_autoops_command_proto_rawDesc = []byte{
 	0x75, 0x74, 0x53, 0x63, 0x68, 0x65, 0x64, 0x75, 0x6c, 0x65, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65,
 	0x72, 0x65, 0x64, 0x41, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x1f, 0x0a, 0x0b,
 	0x73, 0x63, 0x68, 0x65, 0x64, 0x75, 0x6c, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x0a, 0x73, 0x63, 0x68, 0x65, 0x64, 0x75, 0x6c, 0x65, 0x49, 0x64, 0x42, 0x31, 0x5a,
-	0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b,
-	0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
-	0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x09, 0x52, 0x0a, 0x73, 0x63, 0x68, 0x65, 0x64, 0x75, 0x6c, 0x65, 0x49, 0x64, 0x22, 0x9b, 0x01,
+	0x0a, 0x18, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67,
+	0x67, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x1d, 0x0a, 0x0a, 0x66, 0x65,
+	0x61, 0x74, 0x75, 0x72, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09,
+	0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x12, 0x0a,
+	0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x74, 0x79, 0x70,
+	0x65, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73,
+	0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b,
+	0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x29, 0x0a, 0x17, 0x52,
+	0x65, 0x73, 0x65, 0x74, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x43,
+	0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x47, 0x0a, 0x19, 0x43, 0x6f, 0x6e, 0x74, 0x72, 0x6f,
+	0x6c, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d,
+	0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x02, 0x69, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x22,
+	0x2a, 0x0a, 0x18, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69,
+	0x67, 0x67, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x42, 0x31, 0x5a, 0x2f, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
+	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1194,7 +1442,7 @@ func file_proto_autoops_command_proto_rawDescGZIP() []byte {
 	return file_proto_autoops_command_proto_rawDescData
 }
 
-var file_proto_autoops_command_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_proto_autoops_command_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_proto_autoops_command_proto_goTypes = []interface{}{
 	(*CreateAutoOpsRuleCommand)(nil),                           // 0: bucketeer.autoops.CreateAutoOpsRuleCommand
 	(*ChangeAutoOpsRuleOpsTypeCommand)(nil),                    // 1: bucketeer.autoops.ChangeAutoOpsRuleOpsTypeCommand
@@ -1216,29 +1464,33 @@ var file_proto_autoops_command_proto_goTypes = []interface{}{
 	(*AddProgressiveRolloutManualScheduleClauseCommand)(nil),   // 17: bucketeer.autoops.AddProgressiveRolloutManualScheduleClauseCommand
 	(*AddProgressiveRolloutTemplateScheduleClauseCommand)(nil), // 18: bucketeer.autoops.AddProgressiveRolloutTemplateScheduleClauseCommand
 	(*ChangeProgressiveRolloutScheduleTriggeredAtCommand)(nil), // 19: bucketeer.autoops.ChangeProgressiveRolloutScheduleTriggeredAtCommand
-	(OpsType)(0),                                     // 20: bucketeer.autoops.OpsType
-	(*OpsEventRateClause)(nil),                       // 21: bucketeer.autoops.OpsEventRateClause
-	(*DatetimeClause)(nil),                           // 22: bucketeer.autoops.DatetimeClause
-	(*WebhookClause)(nil),                            // 23: bucketeer.autoops.WebhookClause
-	(*ProgressiveRolloutManualScheduleClause)(nil),   // 24: bucketeer.autoops.ProgressiveRolloutManualScheduleClause
-	(*ProgressiveRolloutTemplateScheduleClause)(nil), // 25: bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause
+	(*CreateFlagTriggerCommand)(nil),                           // 20: bucketeer.autoops.CreateFlagTriggerCommand
+	(*ResetFlagTriggerCommand)(nil),                            // 21: bucketeer.autoops.ResetFlagTriggerCommand
+	(*ControlFlagTriggerCommand)(nil),                          // 22: bucketeer.autoops.ControlFlagTriggerCommand
+	(*DeleteFlagTriggerCommand)(nil),                           // 23: bucketeer.autoops.DeleteFlagTriggerCommand
+	(OpsType)(0),                                               // 24: bucketeer.autoops.OpsType
+	(*OpsEventRateClause)(nil),                                 // 25: bucketeer.autoops.OpsEventRateClause
+	(*DatetimeClause)(nil),                                     // 26: bucketeer.autoops.DatetimeClause
+	(*WebhookClause)(nil),                                      // 27: bucketeer.autoops.WebhookClause
+	(*ProgressiveRolloutManualScheduleClause)(nil),             // 28: bucketeer.autoops.ProgressiveRolloutManualScheduleClause
+	(*ProgressiveRolloutTemplateScheduleClause)(nil),           // 29: bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause
 }
 var file_proto_autoops_command_proto_depIdxs = []int32{
-	20, // 0: bucketeer.autoops.CreateAutoOpsRuleCommand.ops_type:type_name -> bucketeer.autoops.OpsType
-	21, // 1: bucketeer.autoops.CreateAutoOpsRuleCommand.ops_event_rate_clauses:type_name -> bucketeer.autoops.OpsEventRateClause
-	22, // 2: bucketeer.autoops.CreateAutoOpsRuleCommand.datetime_clauses:type_name -> bucketeer.autoops.DatetimeClause
-	23, // 3: bucketeer.autoops.CreateAutoOpsRuleCommand.webhook_clauses:type_name -> bucketeer.autoops.WebhookClause
-	20, // 4: bucketeer.autoops.ChangeAutoOpsRuleOpsTypeCommand.ops_type:type_name -> bucketeer.autoops.OpsType
-	21, // 5: bucketeer.autoops.AddOpsEventRateClauseCommand.ops_event_rate_clause:type_name -> bucketeer.autoops.OpsEventRateClause
-	21, // 6: bucketeer.autoops.ChangeOpsEventRateClauseCommand.ops_event_rate_clause:type_name -> bucketeer.autoops.OpsEventRateClause
-	22, // 7: bucketeer.autoops.AddDatetimeClauseCommand.datetime_clause:type_name -> bucketeer.autoops.DatetimeClause
-	22, // 8: bucketeer.autoops.ChangeDatetimeClauseCommand.datetime_clause:type_name -> bucketeer.autoops.DatetimeClause
-	23, // 9: bucketeer.autoops.AddWebhookClauseCommand.webhook_clause:type_name -> bucketeer.autoops.WebhookClause
-	23, // 10: bucketeer.autoops.ChangeWebhookClauseCommand.webhook_clause:type_name -> bucketeer.autoops.WebhookClause
-	24, // 11: bucketeer.autoops.CreateProgressiveRolloutCommand.progressive_rollout_manual_schedule_clause:type_name -> bucketeer.autoops.ProgressiveRolloutManualScheduleClause
-	25, // 12: bucketeer.autoops.CreateProgressiveRolloutCommand.progressive_rollout_template_schedule_clause:type_name -> bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause
-	24, // 13: bucketeer.autoops.AddProgressiveRolloutManualScheduleClauseCommand.clause:type_name -> bucketeer.autoops.ProgressiveRolloutManualScheduleClause
-	25, // 14: bucketeer.autoops.AddProgressiveRolloutTemplateScheduleClauseCommand.clause:type_name -> bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause
+	24, // 0: bucketeer.autoops.CreateAutoOpsRuleCommand.ops_type:type_name -> bucketeer.autoops.OpsType
+	25, // 1: bucketeer.autoops.CreateAutoOpsRuleCommand.ops_event_rate_clauses:type_name -> bucketeer.autoops.OpsEventRateClause
+	26, // 2: bucketeer.autoops.CreateAutoOpsRuleCommand.datetime_clauses:type_name -> bucketeer.autoops.DatetimeClause
+	27, // 3: bucketeer.autoops.CreateAutoOpsRuleCommand.webhook_clauses:type_name -> bucketeer.autoops.WebhookClause
+	24, // 4: bucketeer.autoops.ChangeAutoOpsRuleOpsTypeCommand.ops_type:type_name -> bucketeer.autoops.OpsType
+	25, // 5: bucketeer.autoops.AddOpsEventRateClauseCommand.ops_event_rate_clause:type_name -> bucketeer.autoops.OpsEventRateClause
+	25, // 6: bucketeer.autoops.ChangeOpsEventRateClauseCommand.ops_event_rate_clause:type_name -> bucketeer.autoops.OpsEventRateClause
+	26, // 7: bucketeer.autoops.AddDatetimeClauseCommand.datetime_clause:type_name -> bucketeer.autoops.DatetimeClause
+	26, // 8: bucketeer.autoops.ChangeDatetimeClauseCommand.datetime_clause:type_name -> bucketeer.autoops.DatetimeClause
+	27, // 9: bucketeer.autoops.AddWebhookClauseCommand.webhook_clause:type_name -> bucketeer.autoops.WebhookClause
+	27, // 10: bucketeer.autoops.ChangeWebhookClauseCommand.webhook_clause:type_name -> bucketeer.autoops.WebhookClause
+	28, // 11: bucketeer.autoops.CreateProgressiveRolloutCommand.progressive_rollout_manual_schedule_clause:type_name -> bucketeer.autoops.ProgressiveRolloutManualScheduleClause
+	29, // 12: bucketeer.autoops.CreateProgressiveRolloutCommand.progressive_rollout_template_schedule_clause:type_name -> bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause
+	28, // 13: bucketeer.autoops.AddProgressiveRolloutManualScheduleClauseCommand.clause:type_name -> bucketeer.autoops.ProgressiveRolloutManualScheduleClause
+	29, // 14: bucketeer.autoops.AddProgressiveRolloutTemplateScheduleClauseCommand.clause:type_name -> bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause
 	15, // [15:15] is the sub-list for method output_type
 	15, // [15:15] is the sub-list for method input_type
 	15, // [15:15] is the sub-list for extension type_name
@@ -1494,6 +1746,54 @@ func file_proto_autoops_command_proto_init() {
 				return nil
 			}
 		}
+		file_proto_autoops_command_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateFlagTriggerCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_autoops_command_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ResetFlagTriggerCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_autoops_command_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ControlFlagTriggerCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_autoops_command_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteFlagTriggerCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_proto_autoops_command_proto_msgTypes[15].OneofWrappers = []interface{}{}
 	type x struct{}
@@ -1502,7 +1802,7 @@ func file_proto_autoops_command_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_autoops_command_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -103,3 +103,24 @@ message AddProgressiveRolloutTemplateScheduleClauseCommand {
 message ChangeProgressiveRolloutScheduleTriggeredAtCommand {
   string schedule_id = 1;
 }
+
+message CreateFlagTriggerCommand {
+  string feature_id = 1;
+  string name = 2;
+  int32 type = 3;
+  int32 action = 4;
+  string description = 5;
+}
+
+message ResetFlagTriggerCommand {
+  string id = 1;
+}
+
+message ControlFlagTriggerCommand {
+  string id = 1;
+  bool disabled = 2;
+}
+
+message DeleteFlagTriggerCommand {
+  string id = 1;
+}

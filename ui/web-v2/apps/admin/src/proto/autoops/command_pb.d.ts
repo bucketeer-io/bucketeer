@@ -455,3 +455,103 @@ export namespace ChangeProgressiveRolloutScheduleTriggeredAtCommand {
   }
 }
 
+export class CreateFlagTriggerCommand extends jspb.Message {
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getType(): number;
+  setType(value: number): void;
+
+  getAction(): number;
+  setAction(value: number): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateFlagTriggerCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateFlagTriggerCommand): CreateFlagTriggerCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: CreateFlagTriggerCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateFlagTriggerCommand;
+  static deserializeBinaryFromReader(message: CreateFlagTriggerCommand, reader: jspb.BinaryReader): CreateFlagTriggerCommand;
+}
+
+export namespace CreateFlagTriggerCommand {
+  export type AsObject = {
+    featureId: string,
+    name: string,
+    type: number,
+    action: number,
+    description: string,
+  }
+}
+
+export class ResetFlagTriggerCommand extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ResetFlagTriggerCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: ResetFlagTriggerCommand): ResetFlagTriggerCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ResetFlagTriggerCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ResetFlagTriggerCommand;
+  static deserializeBinaryFromReader(message: ResetFlagTriggerCommand, reader: jspb.BinaryReader): ResetFlagTriggerCommand;
+}
+
+export namespace ResetFlagTriggerCommand {
+  export type AsObject = {
+    id: string,
+  }
+}
+
+export class ControlFlagTriggerCommand extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getDisabled(): boolean;
+  setDisabled(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ControlFlagTriggerCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: ControlFlagTriggerCommand): ControlFlagTriggerCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ControlFlagTriggerCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ControlFlagTriggerCommand;
+  static deserializeBinaryFromReader(message: ControlFlagTriggerCommand, reader: jspb.BinaryReader): ControlFlagTriggerCommand;
+}
+
+export namespace ControlFlagTriggerCommand {
+  export type AsObject = {
+    id: string,
+    disabled: boolean,
+  }
+}
+
+export class DeleteFlagTriggerCommand extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteFlagTriggerCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteFlagTriggerCommand): DeleteFlagTriggerCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DeleteFlagTriggerCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteFlagTriggerCommand;
+  static deserializeBinaryFromReader(message: DeleteFlagTriggerCommand, reader: jspb.BinaryReader): DeleteFlagTriggerCommand;
+}
+
+export namespace DeleteFlagTriggerCommand {
+  export type AsObject = {
+    id: string,
+  }
+}
+
