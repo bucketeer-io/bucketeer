@@ -314,6 +314,10 @@ export const messages = {
       id: 'autoOps.schedule',
       defaultMessage: 'Schedule',
     }),
+    progressiveRollout: defineMessage({
+      id: 'autoOps.progressiveRollout',
+      defaultMessage: 'Progressive Rollout',
+    }),
     eventRate: defineMessage({
       id: 'autoOps.eventRate',
       defaultMessage: 'Event Rate',
@@ -332,17 +336,9 @@ export const messages = {
         id: 'infoBlocks.scheduleInfo',
         defaultMessage: 'Schedule a flag to turn on or off',
       }),
-      killSwitch: defineMessage({
-        id: 'infoBlocks.killSwitch',
-        defaultMessage: 'Kill Switch',
-      }),
       killSwitchInfo: defineMessage({
         id: 'infoBlocks.killSwitchInfo',
         defaultMessage: 'Turn off automatically a flag based on KPI events',
-      }),
-      progressiveRollout: defineMessage({
-        id: 'infoBlocks.progressiveRollout',
-        defaultMessage: 'Progressive Rollout',
       }),
       progressiveRolloutInfo: defineMessage({
         id: 'infoBlocks.progressiveRolloutInfo',

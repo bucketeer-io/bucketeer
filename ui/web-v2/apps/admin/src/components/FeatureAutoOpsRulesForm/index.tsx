@@ -327,9 +327,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               },
               {
                 id: 2,
-                title: intl.formatMessage(
-                  messages.autoOps.infoBlocks.killSwitch
-                ),
+                title: intl.formatMessage(messages.autoOps.killSwitch),
                 detail: intl.formatMessage(
                   messages.autoOps.infoBlocks.killSwitchInfo
                 ),
@@ -347,9 +345,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               },
               {
                 id: 3,
-                title: intl.formatMessage(
-                  messages.autoOps.infoBlocks.progressiveRollout
-                ),
+                title: intl.formatMessage(messages.autoOps.progressiveRollout),
                 detail: intl.formatMessage(
                   messages.autoOps.infoBlocks.progressiveRolloutInfo
                 ),
@@ -873,10 +869,12 @@ const ProgressiveRolloutComponent = memo(
     return (
       <div className="rounded-xl shadow px-6 py-4 bg-white">
         <div className="flex justify-between py-4 border-b">
-          <h3 className="font-bold text-xl">Enable Operation</h3>
+          <h3 className="font-bold text-xl">
+            {f(messages.autoOps.enableOperation)}
+          </h3>
           <div className="flex space-x-2 items-center">
             <div className="py-[2px] px-2 bg-[#FFF7EE] rounded text-[#CE844A] text-sm">
-              Progressive Rollout
+              {f(messages.autoOps.progressiveRollout)}
             </div>
             <Popover className="relative flex">
               <Popover.Button>
@@ -884,7 +882,7 @@ const ProgressiveRolloutComponent = memo(
                   <DotsHorizontalIcon width={20} />
                 </div>
               </Popover.Button>
-              <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 w-[166px]">
+              <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
                 <button
                   onClick={deleteRule}
                   className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
@@ -899,7 +897,9 @@ const ProgressiveRolloutComponent = memo(
           </div>
         </div>
         <div className="mt-4">
-          <p className="font-bold text-lg">Progress Information</p>
+          <p className="font-bold text-lg">
+            {f(messages.autoOps.progressInformation)}
+          </p>
           <div className="flex items-center py-3 space-x-2">
             {increments && (
               <>
@@ -912,7 +912,9 @@ const ProgressiveRolloutComponent = memo(
               </>
             )}
             <div className="flex space-x-1">
-              <span className="text-gray-400">Start Date</span>
+              <span className="text-gray-400">
+                {f(messages.autoOps.startDate)}
+              </span>
               <span className="text-gray-500">
                 {dayjs(schedulesList[0].executeAt * 1000).format('YYYY-MM-DD')}
               </span>
@@ -930,7 +932,9 @@ const ProgressiveRolloutComponent = memo(
               </>
             )}
             <div className="flex space-x-1">
-              <span className="text-gray-400">Variation</span>
+              <span className="text-gray-400">
+                {f(messages.feature.variation)}
+              </span>
               <span className="text-gray-500">
                 {variationOptions.find((v) => v.value === variationId)?.label}
               </span>

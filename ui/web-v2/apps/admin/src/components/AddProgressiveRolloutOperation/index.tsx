@@ -433,7 +433,9 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
           }
         >
           <PlusIcon width={16} />
-          <span className="text-sm font-medium">Add Operation</span>
+          <span className="text-sm font-medium">
+            {f(messages.button.addOperation)}
+          </span>
         </button>
         <div className="space-y-2">
           {manualSchedulesList.map((_, index) => (

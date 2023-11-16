@@ -167,7 +167,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             value: ClauseType.DATETIME,
           },
           {
-            label: 'Progressive Rollout',
+            label: f(messages.autoOps.progressiveRollout),
             value: ClauseType.PROGRESSIVE_ROLLOUT,
           },
         ]);
