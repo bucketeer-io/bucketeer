@@ -106,10 +106,9 @@ message ChangeProgressiveRolloutScheduleTriggeredAtCommand {
 
 message CreateFlagTriggerCommand {
   string feature_id = 1;
-  string name = 2;
-  int32 type = 3;
-  int32 action = 4;
-  string description = 5;
+  int32 type = 2;
+  int32 action = 3;
+  string description = 4;
 }
 
 message ResetFlagTriggerCommand {

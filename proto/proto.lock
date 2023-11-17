@@ -2256,21 +2256,16 @@
               },
               {
                 "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
                 "name": "type",
                 "type": "int32"
               },
               {
-                "id": 4,
+                "id": 3,
                 "name": "action",
                 "type": "int32"
               },
               {
-                "id": 5,
+                "id": 4,
                 "name": "description",
                 "type": "string"
               }
@@ -2356,25 +2351,29 @@
       "def": {
         "enums": [
           {
+            "name": "TriggerAction",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "ON",
+                "integer": 1
+              },
+              {
+                "name": "OFF",
+                "integer": 2
+              }
+            ]
+          },
+          {
             "name": "FlagTrigger.TiggerType",
             "enum_fields": [
               {
                 "name": "UNKNOWN"
               },
               {
-                "name": "Webhook",
-                "integer": 1
-              }
-            ]
-          },
-          {
-            "name": "FlagTrigger.TriggerAction",
-            "enum_fields": [
-              {
-                "name": "On"
-              },
-              {
-                "name": "Off",
+                "name": "WEBHOOK",
                 "integer": 1
               }
             ]

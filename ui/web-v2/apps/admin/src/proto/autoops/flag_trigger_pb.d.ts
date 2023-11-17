@@ -16,8 +16,8 @@ export class FlagTrigger extends jspb.Message {
   getType(): FlagTrigger.TiggerTypeMap[keyof FlagTrigger.TiggerTypeMap];
   setType(value: FlagTrigger.TiggerTypeMap[keyof FlagTrigger.TiggerTypeMap]): void;
 
-  getAction(): FlagTrigger.TriggerActionMap[keyof FlagTrigger.TriggerActionMap];
-  setAction(value: FlagTrigger.TriggerActionMap[keyof FlagTrigger.TriggerActionMap]): void;
+  getAction(): TriggerActionMap[keyof TriggerActionMap];
+  setAction(value: TriggerActionMap[keyof TriggerActionMap]): void;
 
   getDescription(): string;
   setDescription(value: string): void;
@@ -59,7 +59,7 @@ export namespace FlagTrigger {
     featureId: string,
     environmentNamespace: string,
     type: FlagTrigger.TiggerTypeMap[keyof FlagTrigger.TiggerTypeMap],
-    action: FlagTrigger.TriggerActionMap[keyof FlagTrigger.TriggerActionMap],
+    action: TriggerActionMap[keyof TriggerActionMap],
     description: string,
     triggerTimes: number,
     lastTriggeredAt: number,
@@ -76,12 +76,13 @@ export namespace FlagTrigger {
   }
 
   export const TiggerType: TiggerTypeMap;
-
-  export interface TriggerActionMap {
-    ON: 0;
-    OFF: 1;
-  }
-
-  export const TriggerAction: TriggerActionMap;
 }
+
+export interface TriggerActionMap {
+  UNKNOWN: 0;
+  ON: 1;
+  OFF: 2;
+}
+
+export const TriggerAction: TriggerActionMap;
 

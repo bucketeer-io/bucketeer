@@ -459,9 +459,6 @@ export class CreateFlagTriggerCommand extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getName(): string;
-  setName(value: string): void;
-
   getType(): number;
   setType(value: number): void;
 
@@ -484,7 +481,6 @@ export class CreateFlagTriggerCommand extends jspb.Message {
 export namespace CreateFlagTriggerCommand {
   export type AsObject = {
     featureId: string,
-    name: string,
     type: number,
     action: number,
     description: string,

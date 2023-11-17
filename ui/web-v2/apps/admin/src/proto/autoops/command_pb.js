@@ -3700,10 +3700,9 @@ proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.toObject = function(o
 proto.bucketeer.autoops.CreateFlagTriggerCommand.toObject = function(includeInstance, msg) {
   var f, obj = {
     featureId: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    name: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    type: jspb.Message.getFieldWithDefault(msg, 3, 0),
-    action: jspb.Message.getFieldWithDefault(msg, 4, 0),
-    description: jspb.Message.getFieldWithDefault(msg, 5, "")
+    type: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    action: jspb.Message.getFieldWithDefault(msg, 3, 0),
+    description: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -3745,18 +3744,14 @@ proto.bucketeer.autoops.CreateFlagTriggerCommand.deserializeBinaryFromReader = f
       msg.setFeatureId(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setName(value);
-      break;
-    case 3:
       var value = /** @type {number} */ (reader.readInt32());
       msg.setType(value);
       break;
-    case 4:
+    case 3:
       var value = /** @type {number} */ (reader.readInt32());
       msg.setAction(value);
       break;
-    case 5:
+    case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
@@ -3796,31 +3791,24 @@ proto.bucketeer.autoops.CreateFlagTriggerCommand.serializeBinaryToWriter = funct
       f
     );
   }
-  f = message.getName();
-  if (f.length > 0) {
-    writer.writeString(
-      2,
-      f
-    );
-  }
   f = message.getType();
   if (f !== 0) {
     writer.writeInt32(
-      3,
+      2,
       f
     );
   }
   f = message.getAction();
   if (f !== 0) {
     writer.writeInt32(
-      4,
+      3,
       f
     );
   }
   f = message.getDescription();
   if (f.length > 0) {
     writer.writeString(
-      5,
+      4,
       f
     );
   }
@@ -3846,29 +3834,11 @@ proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.setFeatureId = functi
 
 
 /**
- * optional string name = 2;
- * @return {string}
- */
-proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.getName = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.CreateFlagTriggerCommand} returns this
- */
-proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.setName = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
-};
-
-
-/**
- * optional int32 type = 3;
+ * optional int32 type = 2;
  * @return {number}
  */
 proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.getType = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
 
@@ -3877,16 +3847,16 @@ proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.getType = function() 
  * @return {!proto.bucketeer.autoops.CreateFlagTriggerCommand} returns this
  */
 proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.setType = function(value) {
-  return jspb.Message.setProto3IntField(this, 3, value);
+  return jspb.Message.setProto3IntField(this, 2, value);
 };
 
 
 /**
- * optional int32 action = 4;
+ * optional int32 action = 3;
  * @return {number}
  */
 proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.getAction = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
 };
 
 
@@ -3895,16 +3865,16 @@ proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.getAction = function(
  * @return {!proto.bucketeer.autoops.CreateFlagTriggerCommand} returns this
  */
 proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.setAction = function(value) {
-  return jspb.Message.setProto3IntField(this, 4, value);
+  return jspb.Message.setProto3IntField(this, 3, value);
 };
 
 
 /**
- * optional string description = 5;
+ * optional string description = 4;
  * @return {string}
  */
 proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.getDescription = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
 };
 
 
@@ -3913,7 +3883,7 @@ proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.getDescription = func
  * @return {!proto.bucketeer.autoops.CreateFlagTriggerCommand} returns this
  */
 proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.setDescription = function(value) {
-  return jspb.Message.setProto3StringField(this, 5, value);
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 
