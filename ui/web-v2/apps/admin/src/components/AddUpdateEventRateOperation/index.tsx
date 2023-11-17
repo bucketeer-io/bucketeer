@@ -56,7 +56,7 @@ export const AddUpdateEventRateOperation: FC<AddUpdateEventRateOperationProps> =
     });
 
     return (
-      <div className="mt-4 space-y-2">
+      <div className="mt-4 space-y-2 pl-1">
         <AddGoalModal open={isAddGoalOpen} setOpen={setIsAddGoalOpen} />
         <div className="px-4 py-1 text-pink-500 bg-pink-50 inline-block">
           If

@@ -407,9 +407,9 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     };
 
     return (
-      <div className="w-[500px] h-full">
-        <form className="flex flex-col h-full">
-          <div className="flex-1 h-0">
+      <div className="w-[500px] h-full overflow-hidden">
+        <form className="flex flex-col h-full overflow-hidden">
+          <div className="h-full flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-4 py-5 border-b">
               <p className="text-xl font-medium">{title()}</p>
               <XIcon
@@ -418,7 +418,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                 onClick={onCancel}
               />
             </div>
-            <div className="px-4 flex-1">
+            <div className="px-4 h-full flex flex-col overflow-hidden">
               <div className="flex border-b border-gray-100">
                 {tabs.map((tab) => (
                   <div
@@ -451,9 +451,17 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                   </div>
                 ))}
               </div>
-              <div className="mt-6">
+              <div className="py-6 h-full flex flex-col overflow-hidden space-y-4">
                 {radioList.map((radio) => (
-                  <div key={radio.label} className="mb-4 flex space-x-4">
+                  <div
+                    key={radio.label}
+                    className={classNames(
+                      'flex space-x-4 overflow-hidden pl-1 flex-shrink-0',
+                      (radio.value === ClauseType.PROGRESSIVE_ROLLOUT ||
+                        radio.value === ClauseType.EVENT_RATE) &&
+                        'h-full'
+                    )}
+                  >
                     <input
                       {...register('clauseType')}
                       id={radio.label}
@@ -462,7 +470,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                       className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
                       disabled={isSeeDetailsSelected}
                     />
-                    <div className="flex-1">
+                    <div className="flex-1 flex flex-col overflow-hidden">
                       <label htmlFor={radio.label}>{radio.label}</label>
                       {radio.value === ClauseType.DATETIME &&
                         clauseType === ClauseType.DATETIME && (

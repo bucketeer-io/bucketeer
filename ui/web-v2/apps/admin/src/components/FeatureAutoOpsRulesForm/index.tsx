@@ -157,6 +157,7 @@ export const getIntervalForDayjs = (
     return 'week';
   }
 };
+
 export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
   ({ featureId, refetchAutoOpsRules, refetchProgressiveRollouts, reset }) => {
     const { operationId } = useParams<{ operationId: string }>();

@@ -99,7 +99,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
       }
 
       return (
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 h-full flex flex-col overflow-hidden">
           <div className="flex">
             {progressiveRolloutTypeList.map(({ label, selected }, index) => (
               <div
@@ -122,7 +122,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
               </div>
             ))}
           </div>
-          <div className="flex-1">
+          <div className="mt-4">
             <span className="input-label">{f(messages.feature.variation)}</span>
             <Controller
               key={
@@ -226,7 +226,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
     ];
 
     return (
-      <Fragment>
+      <div className="mt-4 h-full flex flex-col overflow-hidden">
         <div>
           <span className="input-label">{f(messages.autoOps.startDate)}</span>
           <DatetimePicker
@@ -241,7 +241,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
             )}
           </p>
         </div>
-        <div className="flex space-x-4">
+        <div className="flex space-x-4 mt-4">
           <div className="flex-1">
             <span className="input-label">Increment</span>
             <div className="flex">
@@ -293,17 +293,12 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
             />
           </div>
         </div>
-        <div>
-          <div className="flex space-x-4">
+        <div className="mt-4 flex flex-col h-full overflow-hidden">
+          <div className="flex">
             <div className="flex-1 input-label">Weight</div>
             <div className="flex-1 input-label">Execute at</div>
           </div>
-          <div
-            className={classNames(
-              'space-y-2 mt-2',
-              schedulesList.length > 5 && 'max-h-[232px] overflow-y-scroll'
-            )}
-          >
+          <div className="space-y-2 mt-2 overflow-y-scroll flex flex-col h-full pb-6">
             {schedulesList?.map((_, index) => (
               <div key={index} className="flex space-x-4">
                 <div className="flex w-1/2">
@@ -341,7 +336,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
             ))}
           </div>
         </div>
-      </Fragment>
+      </div>
     );
   }
 );
@@ -420,7 +415,7 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
     );
 
     return (
-      <Fragment>
+      <div className="mt-4 h-full flex flex-col overflow-hidden">
         <button
           onClick={handleAddOperation}
           className={classNames(
@@ -437,10 +432,14 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
             {f(messages.button.addOperation)}
           </span>
         </button>
-        <div className="space-y-2">
+        <div className="flex mt-3">
+          <div className="flex-1 input-label">Weight</div>
+          <div className="flex-1 input-label">Execute at</div>
+        </div>
+        <div className="space-y-2 flex flex-col overflow-y-scroll h-full mt-2">
           {manualSchedulesList.map((_, index) => (
-            <div key={index} className="flex space-x-4">
-              <div className="w-full">
+            <div key={index} className="flex space-x-4 pr-1">
+              <div className="w-1/2">
                 <div className="flex">
                   <input
                     {...register(
@@ -481,58 +480,81 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
                   )}
                 </p>
               </div>
-              <div className="w-full">
-                <DatetimePicker
-                  name={`progressiveRollout.manual.schedulesList.${index}.executeAt.time`}
-                />
-                <p className="input-error">
-                  {errors.progressiveRollout?.manual?.schedulesList[index]
-                    ?.executeAt?.time?.message && (
-                    <span role="alert">
-                      {
-                        errors.progressiveRollout?.manual?.schedulesList[index]
-                          ?.executeAt?.time?.message
-                      }
-                    </span>
-                  )}
-                </p>
-              </div>
-              {editable && (
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTrigger(index)}
-                    className="minus-circle-icon"
-                    disabled={manualSchedulesList.length === 1}
-                  >
-                    <MinusCircleIcon aria-hidden="true" />
-                  </button>
+              <div className="w-1/2 flex">
+                <div>
+                  <DatetimePicker
+                    name={`progressiveRollout.manual.schedulesList.${index}.executeAt.time`}
+                  />
+                  <p className="input-error">
+                    {errors.progressiveRollout?.manual?.schedulesList[index]
+                      ?.executeAt?.time?.message && (
+                      <span role="alert">
+                        {
+                          errors.progressiveRollout?.manual?.schedulesList[
+                            index
+                          ]?.executeAt?.time?.message
+                        }
+                      </span>
+                    )}
+                  </p>
                 </div>
-              )}
+                {editable && (
+                  <div className="flex items-center ml-2">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTrigger(index)}
+                      className="minus-circle-icon"
+                      disabled={manualSchedulesList.length === 1}
+                    >
+                      <MinusCircleIcon aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
+          {watchManualSchedulesList.length <= 10 && (
+            <ErrorMessage
+              isWeightsSorted={isWeightsSorted}
+              isDatesSorted={isDatesSorted}
+            />
+          )}
         </div>
-        <div className="flex">
-          <div className="flex-1">
-            {!isWeightsSorted && (
-              <p className="input-error">
-                <span role="alert">
-                  The weights need to be in increasing order.
-                </span>
-              </p>
-            )}
-          </div>
-          <div className="flex-1">
-            {!isDatesSorted && (
-              <p className="input-error">
-                <span role="alert">
-                  The dates need to be in increasing order.
-                </span>
-              </p>
-            )}
-          </div>
-        </div>
-      </Fragment>
+        {watchManualSchedulesList.length > 10 && (
+          <ErrorMessage
+            isWeightsSorted={isWeightsSorted}
+            isDatesSorted={isDatesSorted}
+          />
+        )}
+      </div>
     );
   }
+);
+
+interface ErrorMessageProps {
+  isWeightsSorted: boolean;
+  isDatesSorted: boolean;
+}
+
+const ErrorMessage: FC<ErrorMessageProps> = memo(
+  ({ isWeightsSorted, isDatesSorted }) => (
+    <div className="flex pb-6 pt-2 space-x-2 pr-6">
+      <div className="flex-1">
+        {!isWeightsSorted && (
+          <p className="input-error">
+            <span role="alert">
+              The weights need to be in increasing order.
+            </span>
+          </p>
+        )}
+      </div>
+      <div className="flex-1">
+        {!isDatesSorted && (
+          <p className="input-error">
+            <span role="alert">The dates need to be in increasing order.</span>
+          </p>
+        )}
+      </div>
+    </div>
+  )
 );
