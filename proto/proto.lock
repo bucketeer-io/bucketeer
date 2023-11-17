@@ -2287,7 +2287,7 @@
             ]
           },
           {
-            "name": "ControlFlagTriggerCommand",
+            "name": "ChangeFlagTriggerDescriptionCommand",
             "fields": [
               {
                 "id": 1,
@@ -2296,8 +2296,28 @@
               },
               {
                 "id": 2,
-                "name": "disabled",
-                "type": "bool"
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EnableFlagTriggerCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DisableFlagTriggerCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
               }
             ]
           },
@@ -2339,7 +2359,11 @@
             "name": "FlagTrigger.TiggerType",
             "enum_fields": [
               {
-                "name": "Webhook"
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "Webhook",
+                "integer": 1
               }
             ]
           },
@@ -2377,56 +2401,51 @@
               },
               {
                 "id": 4,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 5,
                 "name": "type",
                 "type": "TiggerType"
               },
               {
-                "id": 6,
+                "id": 5,
                 "name": "action",
                 "type": "TriggerAction"
               },
               {
-                "id": 7,
+                "id": 6,
                 "name": "description",
                 "type": "string"
               },
               {
-                "id": 8,
+                "id": 7,
                 "name": "trigger_times",
                 "type": "int32"
               },
               {
-                "id": 9,
+                "id": 8,
                 "name": "last_triggered_at",
                 "type": "int64"
               },
               {
-                "id": 10,
+                "id": 9,
                 "name": "uuid",
                 "type": "string"
               },
               {
-                "id": 11,
+                "id": 10,
                 "name": "disabled",
                 "type": "bool"
               },
               {
-                "id": 12,
+                "id": 11,
                 "name": "deleted",
                 "type": "bool"
               },
               {
-                "id": 13,
+                "id": 12,
                 "name": "created_at",
                 "type": "int64"
               },
               {
-                "id": 14,
+                "id": 13,
                 "name": "updated_at",
                 "type": "int64"
               }
@@ -3308,7 +3327,7 @@
             "name": "DeleteFlagTriggerResponse"
           },
           {
-            "name": "ControlFlagTriggerRequest",
+            "name": "UpdateFlagTriggerRequest",
             "fields": [
               {
                 "id": 1,
@@ -3317,13 +3336,49 @@
               },
               {
                 "id": 2,
-                "name": "control_flag_trigger_command",
-                "type": "ControlFlagTriggerCommand"
+                "name": "change_flag_trigger_description_command",
+                "type": "ChangeFlagTriggerDescriptionCommand"
               }
             ]
           },
           {
-            "name": "ControlFlagTriggerResponse"
+            "name": "UpdateFlagTriggerResponse"
+          },
+          {
+            "name": "EnableFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "enable_flag_trigger_command",
+                "type": "EnableFlagTriggerCommand"
+              }
+            ]
+          },
+          {
+            "name": "EnableFlagTriggerResponse"
+          },
+          {
+            "name": "DisableFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "disable_flag_trigger_command",
+                "type": "DisableFlagTriggerCommand"
+              }
+            ]
+          },
+          {
+            "name": "DisableFlagTriggerResponse"
           },
           {
             "name": "ResetFlagTriggerRequest",
@@ -3554,9 +3609,19 @@
                 "out_type": "CreateFlagTriggerResponse"
               },
               {
-                "name": "ControlFlagTrigger",
-                "in_type": "ControlFlagTriggerRequest",
-                "out_type": "ControlFlagTriggerResponse"
+                "name": "UpdateFlagTrigger",
+                "in_type": "UpdateFlagTriggerRequest",
+                "out_type": "UpdateFlagTriggerResponse"
+              },
+              {
+                "name": "EnableFlagTrigger",
+                "in_type": "EnableFlagTriggerRequest",
+                "out_type": "EnableFlagTriggerResponse"
+              },
+              {
+                "name": "DisableFlagTrigger",
+                "in_type": "DisableFlagTriggerRequest",
+                "out_type": "DisableFlagTriggerResponse"
               },
               {
                 "name": "ResetFlagTrigger",
