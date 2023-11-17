@@ -20,7 +20,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
 message FlagTrigger {
   enum TiggerType {
     UNKNOWN = 0;
-    Webhook = 1;
+    WEBHOOK = 1;
   }
   enum TriggerAction {
     On = 0;
