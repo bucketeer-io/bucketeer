@@ -23,7 +23,9 @@ message FlagTrigger {
     WEBHOOK = 1;
   }
   enum TriggerAction {
-    On = 0;
+    UNKNOWN = 0;
+    ON = 1;
+    OFF = 2;
     Off = 1;
   }
   string id = 1;
