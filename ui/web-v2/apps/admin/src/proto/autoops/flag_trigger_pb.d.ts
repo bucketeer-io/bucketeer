@@ -13,11 +13,11 @@ export class FlagTrigger extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
-  getType(): FlagTrigger.TiggerTypeMap[keyof FlagTrigger.TiggerTypeMap];
-  setType(value: FlagTrigger.TiggerTypeMap[keyof FlagTrigger.TiggerTypeMap]): void;
+  getType(): FlagTrigger.TypeMap[keyof FlagTrigger.TypeMap];
+  setType(value: FlagTrigger.TypeMap[keyof FlagTrigger.TypeMap]): void;
 
-  getAction(): TriggerActionMap[keyof TriggerActionMap];
-  setAction(value: TriggerActionMap[keyof TriggerActionMap]): void;
+  getAction(): FlagTrigger.ActionMap[keyof FlagTrigger.ActionMap];
+  setAction(value: FlagTrigger.ActionMap[keyof FlagTrigger.ActionMap]): void;
 
   getDescription(): string;
   setDescription(value: string): void;
@@ -58,8 +58,8 @@ export namespace FlagTrigger {
     id: string,
     featureId: string,
     environmentNamespace: string,
-    type: FlagTrigger.TiggerTypeMap[keyof FlagTrigger.TiggerTypeMap],
-    action: TriggerActionMap[keyof TriggerActionMap],
+    type: FlagTrigger.TypeMap[keyof FlagTrigger.TypeMap],
+    action: FlagTrigger.ActionMap[keyof FlagTrigger.ActionMap],
     description: string,
     triggerTimes: number,
     lastTriggeredAt: number,
@@ -70,19 +70,19 @@ export namespace FlagTrigger {
     updatedAt: number,
   }
 
-  export interface TiggerTypeMap {
-    UNKNOWN: 0;
-    WEBHOOK: 1;
+  export interface TypeMap {
+    TYPE_UNKNOWN: 0;
+    TYPE_WEBHOOK: 1;
   }
 
-  export const TiggerType: TiggerTypeMap;
-}
+  export const Type: TypeMap;
 
-export interface TriggerActionMap {
-  UNKNOWN: 0;
-  ON: 1;
-  OFF: 2;
-}
+  export interface ActionMap {
+    ACTION_UNKNOWN: 0;
+    ACTION_ON: 1;
+    ACTION_OFF: 2;
+  }
 
-export const TriggerAction: TriggerActionMap;
+  export const Action: ActionMap;
+}
 

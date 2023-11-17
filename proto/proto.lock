@@ -2351,30 +2351,30 @@
       "def": {
         "enums": [
           {
-            "name": "TriggerAction",
+            "name": "FlagTrigger.Type",
             "enum_fields": [
               {
-                "name": "UNKNOWN"
+                "name": "Type_UNKNOWN"
               },
               {
-                "name": "ON",
+                "name": "Type_WEBHOOK",
                 "integer": 1
-              },
-              {
-                "name": "OFF",
-                "integer": 2
               }
             ]
           },
           {
-            "name": "FlagTrigger.TiggerType",
+            "name": "FlagTrigger.Action",
             "enum_fields": [
               {
-                "name": "UNKNOWN"
+                "name": "Action_UNKNOWN"
               },
               {
-                "name": "WEBHOOK",
+                "name": "Action_ON",
                 "integer": 1
+              },
+              {
+                "name": "Action_OFF",
+                "integer": 2
               }
             ]
           }
@@ -2401,12 +2401,12 @@
               {
                 "id": 4,
                 "name": "type",
-                "type": "TiggerType"
+                "type": "Type"
               },
               {
                 "id": 5,
                 "name": "action",
-                "type": "TriggerAction"
+                "type": "Action"
               },
               {
                 "id": 6,
