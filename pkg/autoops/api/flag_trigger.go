@@ -28,14 +28,6 @@ func (s *AutoOpsService) CreateFlagTrigger(ctx context.Context,
 	return &autoopsproto.CreateFlagTriggerResponse{}, nil
 }
 
-func (s *AutoOpsService) ControlFlagTrigger(
-	ctx context.Context,
-	request *autoopsproto.ControlFlagTriggerRequest,
-) (*autoopsproto.ControlFlagTriggerResponse, error) {
-	//TODO implement me
-	return &autoopsproto.ControlFlagTriggerResponse{}, nil
-}
-
 func (s *AutoOpsService) ResetFlagTrigger(
 	ctx context.Context,
 	request *autoopsproto.ResetFlagTriggerRequest,
@@ -66,4 +58,27 @@ func (s *AutoOpsService) ListFlagTriggers(
 ) (*autoopsproto.ListFlagTriggersResponse, error) {
 	//TODO implement me
 	return &autoopsproto.ListFlagTriggersResponse{}, nil
+}
+
+func (s *AutoOpsService) UpdateFlagTrigger(
+	ctx context.Context,
+	request *autoopsproto.UpdateFlagTriggerRequest,
+) (*autoopsproto.UpdateFlagTriggerResponse, error) {
+	return &autoopsproto.UpdateFlagTriggerResponse{}, nil
+}
+
+func (s *AutoOpsService) EnableFlagTrigger(
+	ctx context.Context,
+	request *autoopsproto.EnableFlagTriggerRequest,
+) (*autoopsproto.EnableFlagTriggerResponse, error) {
+	//TODO implement me
+	return &autoopsproto.EnableFlagTriggerResponse{}, nil
+}
+
+func (s *AutoOpsService) DisableFlagTrigger(
+	ctx context.Context,
+	request *autoopsproto.DisableFlagTriggerRequest,
+) (*autoopsproto.DisableFlagTriggerResponse, error) {
+	//TODO implement me
+	return &autoopsproto.DisableFlagTriggerResponse{}, nil
 }

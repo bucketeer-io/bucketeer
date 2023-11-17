@@ -116,9 +116,17 @@ message ResetFlagTriggerCommand {
   string id = 1;
 }
 
-message ControlFlagTriggerCommand {
+message ChangeFlagTriggerDescriptionCommand {
   string id = 1;
-  bool disabled = 2;
+  string description = 2;
+}
+
+message EnableFlagTriggerCommand {
+  string id = 1;
+}
+
+message DisableFlagTriggerCommand {
+  string id = 1;
 }
 
 message DeleteFlagTriggerCommand {

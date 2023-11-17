@@ -1066,44 +1066,128 @@ export namespace DeleteFlagTriggerResponse {
   }
 }
 
-export class ControlFlagTriggerRequest extends jspb.Message {
+export class UpdateFlagTriggerRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
-  hasControlFlagTriggerCommand(): boolean;
-  clearControlFlagTriggerCommand(): void;
-  getControlFlagTriggerCommand(): proto_autoops_command_pb.ControlFlagTriggerCommand | undefined;
-  setControlFlagTriggerCommand(value?: proto_autoops_command_pb.ControlFlagTriggerCommand): void;
+  hasChangeFlagTriggerDescriptionCommand(): boolean;
+  clearChangeFlagTriggerDescriptionCommand(): void;
+  getChangeFlagTriggerDescriptionCommand(): proto_autoops_command_pb.ChangeFlagTriggerDescriptionCommand | undefined;
+  setChangeFlagTriggerDescriptionCommand(value?: proto_autoops_command_pb.ChangeFlagTriggerDescriptionCommand): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ControlFlagTriggerRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: ControlFlagTriggerRequest): ControlFlagTriggerRequest.AsObject;
+  toObject(includeInstance?: boolean): UpdateFlagTriggerRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateFlagTriggerRequest): UpdateFlagTriggerRequest.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: ControlFlagTriggerRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ControlFlagTriggerRequest;
-  static deserializeBinaryFromReader(message: ControlFlagTriggerRequest, reader: jspb.BinaryReader): ControlFlagTriggerRequest;
+  static serializeBinaryToWriter(message: UpdateFlagTriggerRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateFlagTriggerRequest;
+  static deserializeBinaryFromReader(message: UpdateFlagTriggerRequest, reader: jspb.BinaryReader): UpdateFlagTriggerRequest;
 }
 
-export namespace ControlFlagTriggerRequest {
+export namespace UpdateFlagTriggerRequest {
   export type AsObject = {
     environmentNamespace: string,
-    controlFlagTriggerCommand?: proto_autoops_command_pb.ControlFlagTriggerCommand.AsObject,
+    changeFlagTriggerDescriptionCommand?: proto_autoops_command_pb.ChangeFlagTriggerDescriptionCommand.AsObject,
   }
 }
 
-export class ControlFlagTriggerResponse extends jspb.Message {
+export class UpdateFlagTriggerResponse extends jspb.Message {
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ControlFlagTriggerResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: ControlFlagTriggerResponse): ControlFlagTriggerResponse.AsObject;
+  toObject(includeInstance?: boolean): UpdateFlagTriggerResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateFlagTriggerResponse): UpdateFlagTriggerResponse.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: ControlFlagTriggerResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ControlFlagTriggerResponse;
-  static deserializeBinaryFromReader(message: ControlFlagTriggerResponse, reader: jspb.BinaryReader): ControlFlagTriggerResponse;
+  static serializeBinaryToWriter(message: UpdateFlagTriggerResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateFlagTriggerResponse;
+  static deserializeBinaryFromReader(message: UpdateFlagTriggerResponse, reader: jspb.BinaryReader): UpdateFlagTriggerResponse;
 }
 
-export namespace ControlFlagTriggerResponse {
+export namespace UpdateFlagTriggerResponse {
+  export type AsObject = {
+  }
+}
+
+export class EnableFlagTriggerRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  hasEnableFlagTriggerCommand(): boolean;
+  clearEnableFlagTriggerCommand(): void;
+  getEnableFlagTriggerCommand(): proto_autoops_command_pb.EnableFlagTriggerCommand | undefined;
+  setEnableFlagTriggerCommand(value?: proto_autoops_command_pb.EnableFlagTriggerCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnableFlagTriggerRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: EnableFlagTriggerRequest): EnableFlagTriggerRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnableFlagTriggerRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnableFlagTriggerRequest;
+  static deserializeBinaryFromReader(message: EnableFlagTriggerRequest, reader: jspb.BinaryReader): EnableFlagTriggerRequest;
+}
+
+export namespace EnableFlagTriggerRequest {
+  export type AsObject = {
+    environmentNamespace: string,
+    enableFlagTriggerCommand?: proto_autoops_command_pb.EnableFlagTriggerCommand.AsObject,
+  }
+}
+
+export class EnableFlagTriggerResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnableFlagTriggerResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: EnableFlagTriggerResponse): EnableFlagTriggerResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnableFlagTriggerResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnableFlagTriggerResponse;
+  static deserializeBinaryFromReader(message: EnableFlagTriggerResponse, reader: jspb.BinaryReader): EnableFlagTriggerResponse;
+}
+
+export namespace EnableFlagTriggerResponse {
+  export type AsObject = {
+  }
+}
+
+export class DisableFlagTriggerRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  hasDisableFlagTriggerCommand(): boolean;
+  clearDisableFlagTriggerCommand(): void;
+  getDisableFlagTriggerCommand(): proto_autoops_command_pb.DisableFlagTriggerCommand | undefined;
+  setDisableFlagTriggerCommand(value?: proto_autoops_command_pb.DisableFlagTriggerCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DisableFlagTriggerRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: DisableFlagTriggerRequest): DisableFlagTriggerRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DisableFlagTriggerRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DisableFlagTriggerRequest;
+  static deserializeBinaryFromReader(message: DisableFlagTriggerRequest, reader: jspb.BinaryReader): DisableFlagTriggerRequest;
+}
+
+export namespace DisableFlagTriggerRequest {
+  export type AsObject = {
+    environmentNamespace: string,
+    disableFlagTriggerCommand?: proto_autoops_command_pb.DisableFlagTriggerCommand.AsObject,
+  }
+}
+
+export class DisableFlagTriggerResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DisableFlagTriggerResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: DisableFlagTriggerResponse): DisableFlagTriggerResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DisableFlagTriggerResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DisableFlagTriggerResponse;
+  static deserializeBinaryFromReader(message: DisableFlagTriggerResponse, reader: jspb.BinaryReader): DisableFlagTriggerResponse;
+}
+
+export namespace DisableFlagTriggerResponse {
   export type AsObject = {
   }
 }

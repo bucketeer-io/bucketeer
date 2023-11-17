@@ -49,26 +49,6 @@ func (mr *MockClientMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockClient)(nil).Close))
 }
 
-// ControlFlagTrigger mocks base method.
-func (m *MockClient) ControlFlagTrigger(ctx context.Context, in *autoops.ControlFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.ControlFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ControlFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*autoops.ControlFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ControlFlagTrigger indicates an expected call of ControlFlagTrigger.
-func (mr *MockClientMockRecorder) ControlFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ControlFlagTrigger", reflect.TypeOf((*MockClient)(nil).ControlFlagTrigger), varargs...)
-}
-
 // CreateAutoOpsRule mocks base method.
 func (m *MockClient) CreateAutoOpsRule(ctx context.Context, in *autoops.CreateAutoOpsRuleRequest, opts ...grpc.CallOption) (*autoops.CreateAutoOpsRuleResponse, error) {
 	m.ctrl.T.Helper()
@@ -227,6 +207,46 @@ func (mr *MockClientMockRecorder) DeleteWebhook(ctx, in interface{}, opts ...int
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWebhook", reflect.TypeOf((*MockClient)(nil).DeleteWebhook), varargs...)
+}
+
+// DisableFlagTrigger mocks base method.
+func (m *MockClient) DisableFlagTrigger(ctx context.Context, in *autoops.DisableFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.DisableFlagTriggerResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DisableFlagTrigger", varargs...)
+	ret0, _ := ret[0].(*autoops.DisableFlagTriggerResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DisableFlagTrigger indicates an expected call of DisableFlagTrigger.
+func (mr *MockClientMockRecorder) DisableFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableFlagTrigger", reflect.TypeOf((*MockClient)(nil).DisableFlagTrigger), varargs...)
+}
+
+// EnableFlagTrigger mocks base method.
+func (m *MockClient) EnableFlagTrigger(ctx context.Context, in *autoops.EnableFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.EnableFlagTriggerResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "EnableFlagTrigger", varargs...)
+	ret0, _ := ret[0].(*autoops.EnableFlagTriggerResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EnableFlagTrigger indicates an expected call of EnableFlagTrigger.
+func (mr *MockClientMockRecorder) EnableFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableFlagTrigger", reflect.TypeOf((*MockClient)(nil).EnableFlagTrigger), varargs...)
 }
 
 // ExecuteAutoOps mocks base method.
@@ -487,6 +507,26 @@ func (mr *MockClientMockRecorder) UpdateAutoOpsRule(ctx, in interface{}, opts ..
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAutoOpsRule", reflect.TypeOf((*MockClient)(nil).UpdateAutoOpsRule), varargs...)
+}
+
+// UpdateFlagTrigger mocks base method.
+func (m *MockClient) UpdateFlagTrigger(ctx context.Context, in *autoops.UpdateFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.UpdateFlagTriggerResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateFlagTrigger", varargs...)
+	ret0, _ := ret[0].(*autoops.UpdateFlagTriggerResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateFlagTrigger indicates an expected call of UpdateFlagTrigger.
+func (mr *MockClientMockRecorder) UpdateFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFlagTrigger", reflect.TypeOf((*MockClient)(nil).UpdateFlagTrigger), varargs...)
 }
 
 // UpdateWebhook mocks base method.

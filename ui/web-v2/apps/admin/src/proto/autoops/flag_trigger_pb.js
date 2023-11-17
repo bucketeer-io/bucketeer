@@ -80,17 +80,16 @@ proto.bucketeer.autoops.FlagTrigger.toObject = function(includeInstance, msg) {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
     featureId: jspb.Message.getFieldWithDefault(msg, 2, ""),
     environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    name: jspb.Message.getFieldWithDefault(msg, 4, ""),
-    type: jspb.Message.getFieldWithDefault(msg, 5, 0),
-    action: jspb.Message.getFieldWithDefault(msg, 6, 0),
-    description: jspb.Message.getFieldWithDefault(msg, 7, ""),
-    triggerTimes: jspb.Message.getFieldWithDefault(msg, 8, 0),
-    lastTriggeredAt: jspb.Message.getFieldWithDefault(msg, 9, 0),
-    uuid: jspb.Message.getFieldWithDefault(msg, 10, ""),
-    disabled: jspb.Message.getBooleanFieldWithDefault(msg, 11, false),
-    deleted: jspb.Message.getBooleanFieldWithDefault(msg, 12, false),
-    createdAt: jspb.Message.getFieldWithDefault(msg, 13, 0),
-    updatedAt: jspb.Message.getFieldWithDefault(msg, 14, 0)
+    type: jspb.Message.getFieldWithDefault(msg, 4, 0),
+    action: jspb.Message.getFieldWithDefault(msg, 5, 0),
+    description: jspb.Message.getFieldWithDefault(msg, 6, ""),
+    triggerTimes: jspb.Message.getFieldWithDefault(msg, 7, 0),
+    lastTriggeredAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
+    uuid: jspb.Message.getFieldWithDefault(msg, 9, ""),
+    disabled: jspb.Message.getBooleanFieldWithDefault(msg, 10, false),
+    deleted: jspb.Message.getBooleanFieldWithDefault(msg, 11, false),
+    createdAt: jspb.Message.getFieldWithDefault(msg, 12, 0),
+    updatedAt: jspb.Message.getFieldWithDefault(msg, 13, 0)
   };
 
   if (includeInstance) {
@@ -140,46 +139,42 @@ proto.bucketeer.autoops.FlagTrigger.deserializeBinaryFromReader = function(msg, 
       msg.setEnvironmentNamespace(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setName(value);
-      break;
-    case 5:
       var value = /** @type {!proto.bucketeer.autoops.FlagTrigger.TiggerType} */ (reader.readEnum());
       msg.setType(value);
       break;
-    case 6:
+    case 5:
       var value = /** @type {!proto.bucketeer.autoops.FlagTrigger.TriggerAction} */ (reader.readEnum());
       msg.setAction(value);
       break;
-    case 7:
+    case 6:
       var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
-    case 8:
+    case 7:
       var value = /** @type {number} */ (reader.readInt32());
       msg.setTriggerTimes(value);
       break;
-    case 9:
+    case 8:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setLastTriggeredAt(value);
       break;
-    case 10:
+    case 9:
       var value = /** @type {string} */ (reader.readString());
       msg.setUuid(value);
       break;
-    case 11:
+    case 10:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setDisabled(value);
       break;
-    case 12:
+    case 11:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setDeleted(value);
       break;
-    case 13:
+    case 12:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setCreatedAt(value);
       break;
-    case 14:
+    case 13:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setUpdatedAt(value);
       break;
@@ -233,80 +228,73 @@ proto.bucketeer.autoops.FlagTrigger.serializeBinaryToWriter = function(message, 
       f
     );
   }
-  f = message.getName();
-  if (f.length > 0) {
-    writer.writeString(
-      4,
-      f
-    );
-  }
   f = message.getType();
   if (f !== 0.0) {
     writer.writeEnum(
-      5,
+      4,
       f
     );
   }
   f = message.getAction();
   if (f !== 0.0) {
     writer.writeEnum(
-      6,
+      5,
       f
     );
   }
   f = message.getDescription();
   if (f.length > 0) {
     writer.writeString(
-      7,
+      6,
       f
     );
   }
   f = message.getTriggerTimes();
   if (f !== 0) {
     writer.writeInt32(
-      8,
+      7,
       f
     );
   }
   f = message.getLastTriggeredAt();
   if (f !== 0) {
     writer.writeInt64(
-      9,
+      8,
       f
     );
   }
   f = message.getUuid();
   if (f.length > 0) {
     writer.writeString(
-      10,
+      9,
       f
     );
   }
   f = message.getDisabled();
   if (f) {
     writer.writeBool(
-      11,
+      10,
       f
     );
   }
   f = message.getDeleted();
   if (f) {
     writer.writeBool(
-      12,
+      11,
       f
     );
   }
   f = message.getCreatedAt();
   if (f !== 0) {
     writer.writeInt64(
-      13,
+      12,
       f
     );
   }
   f = message.getUpdatedAt();
   if (f !== 0) {
     writer.writeInt64(
-      14,
+      13,
       f
     );
   }
@@ -317,7 +305,8 @@ proto.bucketeer.autoops.FlagTrigger.serializeBinaryToWriter = function(message, 
  * @enum {number}
  */
 proto.bucketeer.autoops.FlagTrigger.TiggerType = {
-  WEBHOOK: 0
+  UNKNOWN: 0,
+  WEBHOOK: 1
 };
 
 /**
@@ -383,29 +372,11 @@ proto.bucketeer.autoops.FlagTrigger.prototype.setEnvironmentNamespace = function
 
 
 /**
- * optional string name = 4;
- * @return {string}
- */
-proto.bucketeer.autoops.FlagTrigger.prototype.getName = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
- */
-proto.bucketeer.autoops.FlagTrigger.prototype.setName = function(value) {
-  return jspb.Message.setProto3StringField(this, 4, value);
-};
-
-
-/**
- * optional TiggerType type = 5;
+ * optional TiggerType type = 4;
  * @return {!proto.bucketeer.autoops.FlagTrigger.TiggerType}
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.getType = function() {
-  return /** @type {!proto.bucketeer.autoops.FlagTrigger.TiggerType} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+  return /** @type {!proto.bucketeer.autoops.FlagTrigger.TiggerType} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
 };
 
 
@@ -414,16 +385,16 @@ proto.bucketeer.autoops.FlagTrigger.prototype.getType = function() {
  * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.setType = function(value) {
-  return jspb.Message.setProto3EnumField(this, 5, value);
+  return jspb.Message.setProto3EnumField(this, 4, value);
 };
 
 
 /**
- * optional TriggerAction action = 6;
+ * optional TriggerAction action = 5;
  * @return {!proto.bucketeer.autoops.FlagTrigger.TriggerAction}
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.getAction = function() {
-  return /** @type {!proto.bucketeer.autoops.FlagTrigger.TriggerAction} */ (jspb.Message.getFieldWithDefault(this, 6, 0));
+  return /** @type {!proto.bucketeer.autoops.FlagTrigger.TriggerAction} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
 };
 
 
@@ -432,16 +403,16 @@ proto.bucketeer.autoops.FlagTrigger.prototype.getAction = function() {
  * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.setAction = function(value) {
-  return jspb.Message.setProto3EnumField(this, 6, value);
+  return jspb.Message.setProto3EnumField(this, 5, value);
 };
 
 
 /**
- * optional string description = 7;
+ * optional string description = 6;
  * @return {string}
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.getDescription = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
 };
 
 
@@ -450,16 +421,16 @@ proto.bucketeer.autoops.FlagTrigger.prototype.getDescription = function() {
  * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.setDescription = function(value) {
-  return jspb.Message.setProto3StringField(this, 7, value);
+  return jspb.Message.setProto3StringField(this, 6, value);
 };
 
 
 /**
- * optional int32 trigger_times = 8;
+ * optional int32 trigger_times = 7;
  * @return {number}
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.getTriggerTimes = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 8, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 7, 0));
 };
 
 
@@ -468,16 +439,16 @@ proto.bucketeer.autoops.FlagTrigger.prototype.getTriggerTimes = function() {
  * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.setTriggerTimes = function(value) {
-  return jspb.Message.setProto3IntField(this, 8, value);
+  return jspb.Message.setProto3IntField(this, 7, value);
 };
 
 
 /**
- * optional int64 last_triggered_at = 9;
+ * optional int64 last_triggered_at = 8;
  * @return {number}
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.getLastTriggeredAt = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 9, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 8, 0));
 };
 
 
@@ -486,16 +457,16 @@ proto.bucketeer.autoops.FlagTrigger.prototype.getLastTriggeredAt = function() {
  * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.setLastTriggeredAt = function(value) {
-  return jspb.Message.setProto3IntField(this, 9, value);
+  return jspb.Message.setProto3IntField(this, 8, value);
 };
 
 
 /**
- * optional string uuid = 10;
+ * optional string uuid = 9;
  * @return {string}
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.getUuid = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
 };
 
 
@@ -504,16 +475,16 @@ proto.bucketeer.autoops.FlagTrigger.prototype.getUuid = function() {
  * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.setUuid = function(value) {
-  return jspb.Message.setProto3StringField(this, 10, value);
+  return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 
 /**
- * optional bool disabled = 11;
+ * optional bool disabled = 10;
  * @return {boolean}
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.getDisabled = function() {
-  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 11, false));
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 10, false));
 };
 
 
@@ -522,16 +493,16 @@ proto.bucketeer.autoops.FlagTrigger.prototype.getDisabled = function() {
  * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.setDisabled = function(value) {
-  return jspb.Message.setProto3BooleanField(this, 11, value);
+  return jspb.Message.setProto3BooleanField(this, 10, value);
 };
 
 
 /**
- * optional bool deleted = 12;
+ * optional bool deleted = 11;
  * @return {boolean}
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.getDeleted = function() {
-  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 12, false));
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 11, false));
 };
 
 
@@ -540,16 +511,16 @@ proto.bucketeer.autoops.FlagTrigger.prototype.getDeleted = function() {
  * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.setDeleted = function(value) {
-  return jspb.Message.setProto3BooleanField(this, 12, value);
+  return jspb.Message.setProto3BooleanField(this, 11, value);
 };
 
 
 /**
- * optional int64 created_at = 13;
+ * optional int64 created_at = 12;
  * @return {number}
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.getCreatedAt = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 13, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 12, 0));
 };
 
 
@@ -558,16 +529,16 @@ proto.bucketeer.autoops.FlagTrigger.prototype.getCreatedAt = function() {
  * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.setCreatedAt = function(value) {
-  return jspb.Message.setProto3IntField(this, 13, value);
+  return jspb.Message.setProto3IntField(this, 12, value);
 };
 
 
 /**
- * optional int64 updated_at = 14;
+ * optional int64 updated_at = 13;
  * @return {number}
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.getUpdatedAt = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 14, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 13, 0));
 };
 
 
@@ -576,7 +547,7 @@ proto.bucketeer.autoops.FlagTrigger.prototype.getUpdatedAt = function() {
  * @return {!proto.bucketeer.autoops.FlagTrigger} returns this
  */
 proto.bucketeer.autoops.FlagTrigger.prototype.setUpdatedAt = function(value) {
-  return jspb.Message.setProto3IntField(this, 14, value);
+  return jspb.Message.setProto3IntField(this, 13, value);
 };
 
 

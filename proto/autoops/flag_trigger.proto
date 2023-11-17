@@ -18,7 +18,10 @@ package bucketeer.autoops;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
 
 message FlagTrigger {
-  enum TiggerType { Webhook = 0; }
+  enum TiggerType {
+    UNKNOWN = 0;
+    Webhook = 1;
+  }
   enum TriggerAction {
     On = 0;
     Off = 1;
@@ -26,15 +29,14 @@ message FlagTrigger {
   string id = 1;
   string feature_id = 2;
   string environment_namespace = 3;
-  string name = 4;
-  TiggerType type = 5;
-  TriggerAction action = 6;
-  string description = 7;
-  int32 trigger_times = 8;
-  int64 last_triggered_at = 9;
-  string uuid = 10;
-  bool disabled = 11;
-  bool deleted = 12;
-  int64 created_at = 13;
-  int64 updated_at = 14;
+  TiggerType type = 4;
+  TriggerAction action = 5;
+  string description = 6;
+  int32 trigger_times = 7;
+  int64 last_triggered_at = 8;
+  string uuid = 9;
+  bool disabled = 10;
+  bool deleted = 11;
+  int64 created_at = 12;
+  int64 updated_at = 13;
 }

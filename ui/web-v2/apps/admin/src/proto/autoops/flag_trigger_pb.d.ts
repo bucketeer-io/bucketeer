@@ -13,9 +13,6 @@ export class FlagTrigger extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
-  getName(): string;
-  setName(value: string): void;
-
   getType(): FlagTrigger.TiggerTypeMap[keyof FlagTrigger.TiggerTypeMap];
   setType(value: FlagTrigger.TiggerTypeMap[keyof FlagTrigger.TiggerTypeMap]): void;
 
@@ -61,7 +58,6 @@ export namespace FlagTrigger {
     id: string,
     featureId: string,
     environmentNamespace: string,
-    name: string,
     type: FlagTrigger.TiggerTypeMap[keyof FlagTrigger.TiggerTypeMap],
     action: FlagTrigger.TriggerActionMap[keyof FlagTrigger.TriggerActionMap],
     description: string,
@@ -75,7 +71,8 @@ export namespace FlagTrigger {
   }
 
   export interface TiggerTypeMap {
-    WEBHOOK: 0;
+    UNKNOWN: 0;
+    WEBHOOK: 1;
   }
 
   export const TiggerType: TiggerTypeMap;
