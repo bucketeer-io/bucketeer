@@ -25,6 +25,8 @@ var proto_autoops_auto_ops_rule_pb = require('../../proto/autoops/auto_ops_rule_
 goog.object.extend(proto, proto_autoops_auto_ops_rule_pb);
 var proto_autoops_clause_pb = require('../../proto/autoops/clause_pb.js');
 goog.object.extend(proto, proto_autoops_clause_pb);
+var proto_autoops_flag_trigger_pb = require('../../proto/autoops/flag_trigger_pb.js');
+goog.object.extend(proto, proto_autoops_flag_trigger_pb);
 goog.exportSymbol('proto.bucketeer.autoops.AddDatetimeClauseCommand', null, global);
 goog.exportSymbol('proto.bucketeer.autoops.AddOpsEventRateClauseCommand', null, global);
 goog.exportSymbol('proto.bucketeer.autoops.AddProgressiveRolloutManualScheduleClauseCommand', null, global);
@@ -3744,11 +3746,11 @@ proto.bucketeer.autoops.CreateFlagTriggerCommand.deserializeBinaryFromReader = f
       msg.setFeatureId(value);
       break;
     case 2:
-      var value = /** @type {number} */ (reader.readInt32());
+      var value = /** @type {!proto.bucketeer.autoops.FlagTrigger.Type} */ (reader.readEnum());
       msg.setType(value);
       break;
     case 3:
-      var value = /** @type {number} */ (reader.readInt32());
+      var value = /** @type {!proto.bucketeer.autoops.FlagTrigger.Action} */ (reader.readEnum());
       msg.setAction(value);
       break;
     case 4:
@@ -3792,15 +3794,15 @@ proto.bucketeer.autoops.CreateFlagTriggerCommand.serializeBinaryToWriter = funct
     );
   }
   f = message.getType();
-  if (f !== 0) {
-    writer.writeInt32(
+  if (f !== 0.0) {
+    writer.writeEnum(
       2,
       f
     );
   }
   f = message.getAction();
-  if (f !== 0) {
-    writer.writeInt32(
+  if (f !== 0.0) {
+    writer.writeEnum(
       3,
       f
     );
@@ -3834,38 +3836,38 @@ proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.setFeatureId = functi
 
 
 /**
- * optional int32 type = 2;
- * @return {number}
+ * optional FlagTrigger.Type type = 2;
+ * @return {!proto.bucketeer.autoops.FlagTrigger.Type}
  */
 proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.getType = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+  return /** @type {!proto.bucketeer.autoops.FlagTrigger.Type} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
 
 /**
- * @param {number} value
+ * @param {!proto.bucketeer.autoops.FlagTrigger.Type} value
  * @return {!proto.bucketeer.autoops.CreateFlagTriggerCommand} returns this
  */
 proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.setType = function(value) {
-  return jspb.Message.setProto3IntField(this, 2, value);
+  return jspb.Message.setProto3EnumField(this, 2, value);
 };
 
 
 /**
- * optional int32 action = 3;
- * @return {number}
+ * optional FlagTrigger.Action action = 3;
+ * @return {!proto.bucketeer.autoops.FlagTrigger.Action}
  */
 proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.getAction = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+  return /** @type {!proto.bucketeer.autoops.FlagTrigger.Action} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
 };
 
 
 /**
- * @param {number} value
+ * @param {!proto.bucketeer.autoops.FlagTrigger.Action} value
  * @return {!proto.bucketeer.autoops.CreateFlagTriggerCommand} returns this
  */
 proto.bucketeer.autoops.CreateFlagTriggerCommand.prototype.setAction = function(value) {
-  return jspb.Message.setProto3IntField(this, 3, value);
+  return jspb.Message.setProto3EnumField(this, 3, value);
 };
 
 

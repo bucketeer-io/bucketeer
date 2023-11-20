@@ -4,6 +4,7 @@
 import * as jspb from "google-protobuf";
 import * as proto_autoops_auto_ops_rule_pb from "../../proto/autoops/auto_ops_rule_pb";
 import * as proto_autoops_clause_pb from "../../proto/autoops/clause_pb";
+import * as proto_autoops_flag_trigger_pb from "../../proto/autoops/flag_trigger_pb";
 
 export class CreateAutoOpsRuleCommand extends jspb.Message {
   getFeatureId(): string;
@@ -459,11 +460,11 @@ export class CreateFlagTriggerCommand extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getType(): number;
-  setType(value: number): void;
+  getType(): proto_autoops_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_autoops_flag_trigger_pb.FlagTrigger.TypeMap];
+  setType(value: proto_autoops_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_autoops_flag_trigger_pb.FlagTrigger.TypeMap]): void;
 
-  getAction(): number;
-  setAction(value: number): void;
+  getAction(): proto_autoops_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_autoops_flag_trigger_pb.FlagTrigger.ActionMap];
+  setAction(value: proto_autoops_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_autoops_flag_trigger_pb.FlagTrigger.ActionMap]): void;
 
   getDescription(): string;
   setDescription(value: string): void;
@@ -481,8 +482,8 @@ export class CreateFlagTriggerCommand extends jspb.Message {
 export namespace CreateFlagTriggerCommand {
   export type AsObject = {
     featureId: string,
-    type: number,
-    action: number,
+    type: proto_autoops_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_autoops_flag_trigger_pb.FlagTrigger.TypeMap],
+    action: proto_autoops_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_autoops_flag_trigger_pb.FlagTrigger.ActionMap],
     description: string,
   }
 }

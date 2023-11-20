@@ -2257,12 +2257,12 @@
               {
                 "id": 2,
                 "name": "type",
-                "type": "int32"
+                "type": "FlagTrigger.Type"
               },
               {
                 "id": 3,
                 "name": "action",
-                "type": "int32"
+                "type": "FlagTrigger.Action"
               },
               {
                 "id": 4,
@@ -2333,6 +2333,9 @@
           },
           {
             "path": "proto/autoops/clause.proto"
+          },
+          {
+            "path": "proto/autoops/flag_trigger.proto"
           }
         ],
         "package": {
