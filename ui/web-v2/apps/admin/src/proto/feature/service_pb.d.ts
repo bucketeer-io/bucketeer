@@ -8,6 +8,7 @@ import * as proto_feature_feature_pb from "../../proto/feature/feature_pb";
 import * as proto_feature_evaluation_pb from "../../proto/feature/evaluation_pb";
 import * as proto_user_user_pb from "../../proto/user/user_pb";
 import * as proto_feature_segment_pb from "../../proto/feature/segment_pb";
+import * as proto_feature_flag_trigger_pb from "../../proto/feature/flag_trigger_pb";
 
 export class GetFeatureRequest extends jspb.Message {
   getId(): string;
@@ -1524,6 +1525,439 @@ export namespace ListTagsResponse {
     tagsList: Array<proto_feature_feature_pb.Tag.AsObject>,
     cursor: string,
     totalCount: number,
+  }
+}
+
+export class CreateFlagTriggerRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  hasCreateFlagTriggerCommand(): boolean;
+  clearCreateFlagTriggerCommand(): void;
+  getCreateFlagTriggerCommand(): proto_feature_command_pb.CreateFlagTriggerCommand | undefined;
+  setCreateFlagTriggerCommand(value?: proto_feature_command_pb.CreateFlagTriggerCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateFlagTriggerRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateFlagTriggerRequest): CreateFlagTriggerRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: CreateFlagTriggerRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateFlagTriggerRequest;
+  static deserializeBinaryFromReader(message: CreateFlagTriggerRequest, reader: jspb.BinaryReader): CreateFlagTriggerRequest;
+}
+
+export namespace CreateFlagTriggerRequest {
+  export type AsObject = {
+    environmentNamespace: string,
+    createFlagTriggerCommand?: proto_feature_command_pb.CreateFlagTriggerCommand.AsObject,
+  }
+}
+
+export class CreateFlagTriggerResponse extends jspb.Message {
+  hasFlagTrigger(): boolean;
+  clearFlagTrigger(): void;
+  getFlagTrigger(): proto_feature_flag_trigger_pb.FlagTrigger | undefined;
+  setFlagTrigger(value?: proto_feature_flag_trigger_pb.FlagTrigger): void;
+
+  getUrl(): string;
+  setUrl(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateFlagTriggerResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateFlagTriggerResponse): CreateFlagTriggerResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: CreateFlagTriggerResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateFlagTriggerResponse;
+  static deserializeBinaryFromReader(message: CreateFlagTriggerResponse, reader: jspb.BinaryReader): CreateFlagTriggerResponse;
+}
+
+export namespace CreateFlagTriggerResponse {
+  export type AsObject = {
+    flagTrigger?: proto_feature_flag_trigger_pb.FlagTrigger.AsObject,
+    url: string,
+  }
+}
+
+export class DeleteFlagTriggerRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  hasDeleteFlagTriggerCommand(): boolean;
+  clearDeleteFlagTriggerCommand(): void;
+  getDeleteFlagTriggerCommand(): proto_feature_command_pb.DeleteFlagTriggerCommand | undefined;
+  setDeleteFlagTriggerCommand(value?: proto_feature_command_pb.DeleteFlagTriggerCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteFlagTriggerRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteFlagTriggerRequest): DeleteFlagTriggerRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DeleteFlagTriggerRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteFlagTriggerRequest;
+  static deserializeBinaryFromReader(message: DeleteFlagTriggerRequest, reader: jspb.BinaryReader): DeleteFlagTriggerRequest;
+}
+
+export namespace DeleteFlagTriggerRequest {
+  export type AsObject = {
+    environmentNamespace: string,
+    deleteFlagTriggerCommand?: proto_feature_command_pb.DeleteFlagTriggerCommand.AsObject,
+  }
+}
+
+export class DeleteFlagTriggerResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteFlagTriggerResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteFlagTriggerResponse): DeleteFlagTriggerResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DeleteFlagTriggerResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteFlagTriggerResponse;
+  static deserializeBinaryFromReader(message: DeleteFlagTriggerResponse, reader: jspb.BinaryReader): DeleteFlagTriggerResponse;
+}
+
+export namespace DeleteFlagTriggerResponse {
+  export type AsObject = {
+  }
+}
+
+export class UpdateFlagTriggerRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  hasChangeFlagTriggerDescriptionCommand(): boolean;
+  clearChangeFlagTriggerDescriptionCommand(): void;
+  getChangeFlagTriggerDescriptionCommand(): proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand | undefined;
+  setChangeFlagTriggerDescriptionCommand(value?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateFlagTriggerRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateFlagTriggerRequest): UpdateFlagTriggerRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateFlagTriggerRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateFlagTriggerRequest;
+  static deserializeBinaryFromReader(message: UpdateFlagTriggerRequest, reader: jspb.BinaryReader): UpdateFlagTriggerRequest;
+}
+
+export namespace UpdateFlagTriggerRequest {
+  export type AsObject = {
+    environmentNamespace: string,
+    changeFlagTriggerDescriptionCommand?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.AsObject,
+  }
+}
+
+export class UpdateFlagTriggerResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateFlagTriggerResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateFlagTriggerResponse): UpdateFlagTriggerResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateFlagTriggerResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateFlagTriggerResponse;
+  static deserializeBinaryFromReader(message: UpdateFlagTriggerResponse, reader: jspb.BinaryReader): UpdateFlagTriggerResponse;
+}
+
+export namespace UpdateFlagTriggerResponse {
+  export type AsObject = {
+  }
+}
+
+export class EnableFlagTriggerRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  hasEnableFlagTriggerCommand(): boolean;
+  clearEnableFlagTriggerCommand(): void;
+  getEnableFlagTriggerCommand(): proto_feature_command_pb.EnableFlagTriggerCommand | undefined;
+  setEnableFlagTriggerCommand(value?: proto_feature_command_pb.EnableFlagTriggerCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnableFlagTriggerRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: EnableFlagTriggerRequest): EnableFlagTriggerRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnableFlagTriggerRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnableFlagTriggerRequest;
+  static deserializeBinaryFromReader(message: EnableFlagTriggerRequest, reader: jspb.BinaryReader): EnableFlagTriggerRequest;
+}
+
+export namespace EnableFlagTriggerRequest {
+  export type AsObject = {
+    environmentNamespace: string,
+    enableFlagTriggerCommand?: proto_feature_command_pb.EnableFlagTriggerCommand.AsObject,
+  }
+}
+
+export class EnableFlagTriggerResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnableFlagTriggerResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: EnableFlagTriggerResponse): EnableFlagTriggerResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnableFlagTriggerResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnableFlagTriggerResponse;
+  static deserializeBinaryFromReader(message: EnableFlagTriggerResponse, reader: jspb.BinaryReader): EnableFlagTriggerResponse;
+}
+
+export namespace EnableFlagTriggerResponse {
+  export type AsObject = {
+  }
+}
+
+export class DisableFlagTriggerRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  hasDisableFlagTriggerCommand(): boolean;
+  clearDisableFlagTriggerCommand(): void;
+  getDisableFlagTriggerCommand(): proto_feature_command_pb.DisableFlagTriggerCommand | undefined;
+  setDisableFlagTriggerCommand(value?: proto_feature_command_pb.DisableFlagTriggerCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DisableFlagTriggerRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: DisableFlagTriggerRequest): DisableFlagTriggerRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DisableFlagTriggerRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DisableFlagTriggerRequest;
+  static deserializeBinaryFromReader(message: DisableFlagTriggerRequest, reader: jspb.BinaryReader): DisableFlagTriggerRequest;
+}
+
+export namespace DisableFlagTriggerRequest {
+  export type AsObject = {
+    environmentNamespace: string,
+    disableFlagTriggerCommand?: proto_feature_command_pb.DisableFlagTriggerCommand.AsObject,
+  }
+}
+
+export class DisableFlagTriggerResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DisableFlagTriggerResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: DisableFlagTriggerResponse): DisableFlagTriggerResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DisableFlagTriggerResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DisableFlagTriggerResponse;
+  static deserializeBinaryFromReader(message: DisableFlagTriggerResponse, reader: jspb.BinaryReader): DisableFlagTriggerResponse;
+}
+
+export namespace DisableFlagTriggerResponse {
+  export type AsObject = {
+  }
+}
+
+export class ResetFlagTriggerRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  hasResetFlagTriggerCommand(): boolean;
+  clearResetFlagTriggerCommand(): void;
+  getResetFlagTriggerCommand(): proto_feature_command_pb.ResetFlagTriggerCommand | undefined;
+  setResetFlagTriggerCommand(value?: proto_feature_command_pb.ResetFlagTriggerCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ResetFlagTriggerRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ResetFlagTriggerRequest): ResetFlagTriggerRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ResetFlagTriggerRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ResetFlagTriggerRequest;
+  static deserializeBinaryFromReader(message: ResetFlagTriggerRequest, reader: jspb.BinaryReader): ResetFlagTriggerRequest;
+}
+
+export namespace ResetFlagTriggerRequest {
+  export type AsObject = {
+    environmentNamespace: string,
+    resetFlagTriggerCommand?: proto_feature_command_pb.ResetFlagTriggerCommand.AsObject,
+  }
+}
+
+export class ResetFlagTriggerResponse extends jspb.Message {
+  hasFlagTrigger(): boolean;
+  clearFlagTrigger(): void;
+  getFlagTrigger(): proto_feature_flag_trigger_pb.FlagTrigger | undefined;
+  setFlagTrigger(value?: proto_feature_flag_trigger_pb.FlagTrigger): void;
+
+  getUrl(): string;
+  setUrl(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ResetFlagTriggerResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ResetFlagTriggerResponse): ResetFlagTriggerResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ResetFlagTriggerResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ResetFlagTriggerResponse;
+  static deserializeBinaryFromReader(message: ResetFlagTriggerResponse, reader: jspb.BinaryReader): ResetFlagTriggerResponse;
+}
+
+export namespace ResetFlagTriggerResponse {
+  export type AsObject = {
+    flagTrigger?: proto_feature_flag_trigger_pb.FlagTrigger.AsObject,
+    url: string,
+  }
+}
+
+export class GetFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetFlagTriggerRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetFlagTriggerRequest): GetFlagTriggerRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetFlagTriggerRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetFlagTriggerRequest;
+  static deserializeBinaryFromReader(message: GetFlagTriggerRequest, reader: jspb.BinaryReader): GetFlagTriggerRequest;
+}
+
+export namespace GetFlagTriggerRequest {
+  export type AsObject = {
+    id: string,
+    environmentNamespace: string,
+  }
+}
+
+export class GetFlagTriggerResponse extends jspb.Message {
+  hasFlagTrigger(): boolean;
+  clearFlagTrigger(): void;
+  getFlagTrigger(): proto_feature_flag_trigger_pb.FlagTrigger | undefined;
+  setFlagTrigger(value?: proto_feature_flag_trigger_pb.FlagTrigger): void;
+
+  getUrl(): string;
+  setUrl(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetFlagTriggerResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GetFlagTriggerResponse): GetFlagTriggerResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetFlagTriggerResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetFlagTriggerResponse;
+  static deserializeBinaryFromReader(message: GetFlagTriggerResponse, reader: jspb.BinaryReader): GetFlagTriggerResponse;
+}
+
+export namespace GetFlagTriggerResponse {
+  export type AsObject = {
+    flagTrigger?: proto_feature_flag_trigger_pb.FlagTrigger.AsObject,
+    url: string,
+  }
+}
+
+export class ListFlagTriggersRequest extends jspb.Message {
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  getCursor(): number;
+  setCursor(value: number): void;
+
+  getPageSize(): number;
+  setPageSize(value: number): void;
+
+  getOrderBy(): ListFlagTriggersRequest.OrderByMap[keyof ListFlagTriggersRequest.OrderByMap];
+  setOrderBy(value: ListFlagTriggersRequest.OrderByMap[keyof ListFlagTriggersRequest.OrderByMap]): void;
+
+  getOrderDirection(): ListFlagTriggersRequest.OrderDirectionMap[keyof ListFlagTriggersRequest.OrderDirectionMap];
+  setOrderDirection(value: ListFlagTriggersRequest.OrderDirectionMap[keyof ListFlagTriggersRequest.OrderDirectionMap]): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListFlagTriggersRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ListFlagTriggersRequest): ListFlagTriggersRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ListFlagTriggersRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListFlagTriggersRequest;
+  static deserializeBinaryFromReader(message: ListFlagTriggersRequest, reader: jspb.BinaryReader): ListFlagTriggersRequest;
+}
+
+export namespace ListFlagTriggersRequest {
+  export type AsObject = {
+    featureId: string,
+    environmentNamespace: string,
+    cursor: number,
+    pageSize: number,
+    orderBy: ListFlagTriggersRequest.OrderByMap[keyof ListFlagTriggersRequest.OrderByMap],
+    orderDirection: ListFlagTriggersRequest.OrderDirectionMap[keyof ListFlagTriggersRequest.OrderDirectionMap],
+  }
+
+  export interface OrderByMap {
+    DEFAULT: 0;
+    CREATED_AT: 1;
+    UPDATED_AT: 2;
+  }
+
+  export const OrderBy: OrderByMap;
+
+  export interface OrderDirectionMap {
+    ASC: 0;
+    DESC: 1;
+  }
+
+  export const OrderDirection: OrderDirectionMap;
+}
+
+export class ListFlagTriggersResponse extends jspb.Message {
+  clearFlagTriggersList(): void;
+  getFlagTriggersList(): Array<ListFlagTriggersResponse.FlagTriggerWithUrl>;
+  setFlagTriggersList(value: Array<ListFlagTriggersResponse.FlagTriggerWithUrl>): void;
+  addFlagTriggers(value?: ListFlagTriggersResponse.FlagTriggerWithUrl, index?: number): ListFlagTriggersResponse.FlagTriggerWithUrl;
+
+  getCursor(): string;
+  setCursor(value: string): void;
+
+  getTotalCount(): number;
+  setTotalCount(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListFlagTriggersResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ListFlagTriggersResponse): ListFlagTriggersResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ListFlagTriggersResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListFlagTriggersResponse;
+  static deserializeBinaryFromReader(message: ListFlagTriggersResponse, reader: jspb.BinaryReader): ListFlagTriggersResponse;
+}
+
+export namespace ListFlagTriggersResponse {
+  export type AsObject = {
+    flagTriggersList: Array<ListFlagTriggersResponse.FlagTriggerWithUrl.AsObject>,
+    cursor: string,
+    totalCount: number,
+  }
+
+  export class FlagTriggerWithUrl extends jspb.Message {
+    hasFlagTrigger(): boolean;
+    clearFlagTrigger(): void;
+    getFlagTrigger(): proto_feature_flag_trigger_pb.FlagTrigger | undefined;
+    setFlagTrigger(value?: proto_feature_flag_trigger_pb.FlagTrigger): void;
+
+    getUrl(): string;
+    setUrl(value: string): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): FlagTriggerWithUrl.AsObject;
+    static toObject(includeInstance: boolean, msg: FlagTriggerWithUrl): FlagTriggerWithUrl.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: FlagTriggerWithUrl, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): FlagTriggerWithUrl;
+    static deserializeBinaryFromReader(message: FlagTriggerWithUrl, reader: jspb.BinaryReader): FlagTriggerWithUrl;
+  }
+
+  export namespace FlagTriggerWithUrl {
+    export type AsObject = {
+      flagTrigger?: proto_feature_flag_trigger_pb.FlagTrigger.AsObject,
+      url: string,
+    }
   }
 }
 

@@ -33,6 +33,8 @@ var proto_user_user_pb = require('../../proto/user/user_pb.js');
 goog.object.extend(proto, proto_user_user_pb);
 var proto_feature_segment_pb = require('../../proto/feature/segment_pb.js');
 goog.object.extend(proto, proto_feature_segment_pb);
+var proto_feature_flag_trigger_pb = require('../../proto/feature/flag_trigger_pb.js');
+goog.object.extend(proto, proto_feature_flag_trigger_pb);
 goog.exportSymbol('proto.bucketeer.feature.AddSegmentUserRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.AddSegmentUserResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.ArchiveFeatureRequest', null, global);
@@ -45,24 +47,34 @@ goog.exportSymbol('proto.bucketeer.feature.CloneFeatureRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.CloneFeatureResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.CreateFeatureRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.CreateFeatureResponse', null, global);
+goog.exportSymbol('proto.bucketeer.feature.CreateFlagTriggerRequest', null, global);
+goog.exportSymbol('proto.bucketeer.feature.CreateFlagTriggerResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.CreateSegmentRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.CreateSegmentResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.DeleteFeatureRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.DeleteFeatureResponse', null, global);
+goog.exportSymbol('proto.bucketeer.feature.DeleteFlagTriggerRequest', null, global);
+goog.exportSymbol('proto.bucketeer.feature.DeleteFlagTriggerResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.DeleteSegmentRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.DeleteSegmentResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.DeleteSegmentUserRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.DeleteSegmentUserResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.DisableFeatureRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.DisableFeatureResponse', null, global);
+goog.exportSymbol('proto.bucketeer.feature.DisableFlagTriggerRequest', null, global);
+goog.exportSymbol('proto.bucketeer.feature.DisableFlagTriggerResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.EnableFeatureRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.EnableFeatureResponse', null, global);
+goog.exportSymbol('proto.bucketeer.feature.EnableFlagTriggerRequest', null, global);
+goog.exportSymbol('proto.bucketeer.feature.EnableFlagTriggerResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.EvaluateFeaturesRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.EvaluateFeaturesResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.GetFeatureRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.GetFeatureResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.GetFeaturesRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.GetFeaturesResponse', null, global);
+goog.exportSymbol('proto.bucketeer.feature.GetFlagTriggerRequest', null, global);
+goog.exportSymbol('proto.bucketeer.feature.GetFlagTriggerResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.GetSegmentRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.GetSegmentResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.GetSegmentUserRequest', null, global);
@@ -73,6 +85,11 @@ goog.exportSymbol('proto.bucketeer.feature.ListFeaturesRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.ListFeaturesRequest.OrderBy', null, global);
 goog.exportSymbol('proto.bucketeer.feature.ListFeaturesRequest.OrderDirection', null, global);
 goog.exportSymbol('proto.bucketeer.feature.ListFeaturesResponse', null, global);
+goog.exportSymbol('proto.bucketeer.feature.ListFlagTriggersRequest', null, global);
+goog.exportSymbol('proto.bucketeer.feature.ListFlagTriggersRequest.OrderBy', null, global);
+goog.exportSymbol('proto.bucketeer.feature.ListFlagTriggersRequest.OrderDirection', null, global);
+goog.exportSymbol('proto.bucketeer.feature.ListFlagTriggersResponse', null, global);
+goog.exportSymbol('proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl', null, global);
 goog.exportSymbol('proto.bucketeer.feature.ListSegmentUsersRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.ListSegmentUsersResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.ListSegmentsRequest', null, global);
@@ -83,6 +100,8 @@ goog.exportSymbol('proto.bucketeer.feature.ListTagsRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.ListTagsRequest.OrderBy', null, global);
 goog.exportSymbol('proto.bucketeer.feature.ListTagsRequest.OrderDirection', null, global);
 goog.exportSymbol('proto.bucketeer.feature.ListTagsResponse', null, global);
+goog.exportSymbol('proto.bucketeer.feature.ResetFlagTriggerRequest', null, global);
+goog.exportSymbol('proto.bucketeer.feature.ResetFlagTriggerResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UnarchiveFeatureRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UnarchiveFeatureResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureDetailsRequest', null, global);
@@ -91,6 +110,8 @@ goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureTargetingRequest', null,
 goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureTargetingResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureVariationsRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureVariationsResponse', null, global);
+goog.exportSymbol('proto.bucketeer.feature.UpdateFlagTriggerRequest', null, global);
+goog.exportSymbol('proto.bucketeer.feature.UpdateFlagTriggerResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UpdateSegmentRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UpdateSegmentResponse', null, global);
 /**
@@ -1226,6 +1247,363 @@ if (goog.DEBUG && !COMPILED) {
    * @override
    */
   proto.bucketeer.feature.ListTagsResponse.displayName = 'proto.bucketeer.feature.ListTagsResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.CreateFlagTriggerRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.CreateFlagTriggerRequest.displayName = 'proto.bucketeer.feature.CreateFlagTriggerRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.CreateFlagTriggerResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.CreateFlagTriggerResponse.displayName = 'proto.bucketeer.feature.CreateFlagTriggerResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.DeleteFlagTriggerRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.DeleteFlagTriggerRequest.displayName = 'proto.bucketeer.feature.DeleteFlagTriggerRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.DeleteFlagTriggerResponse = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.DeleteFlagTriggerResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.DeleteFlagTriggerResponse.displayName = 'proto.bucketeer.feature.DeleteFlagTriggerResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.UpdateFlagTriggerRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.UpdateFlagTriggerRequest.displayName = 'proto.bucketeer.feature.UpdateFlagTriggerRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.UpdateFlagTriggerResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.UpdateFlagTriggerResponse.displayName = 'proto.bucketeer.feature.UpdateFlagTriggerResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.EnableFlagTriggerRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.EnableFlagTriggerRequest.displayName = 'proto.bucketeer.feature.EnableFlagTriggerRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.EnableFlagTriggerResponse = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.EnableFlagTriggerResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.EnableFlagTriggerResponse.displayName = 'proto.bucketeer.feature.EnableFlagTriggerResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.DisableFlagTriggerRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.DisableFlagTriggerRequest.displayName = 'proto.bucketeer.feature.DisableFlagTriggerRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.DisableFlagTriggerResponse = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.DisableFlagTriggerResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.DisableFlagTriggerResponse.displayName = 'proto.bucketeer.feature.DisableFlagTriggerResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.ResetFlagTriggerRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.ResetFlagTriggerRequest.displayName = 'proto.bucketeer.feature.ResetFlagTriggerRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.ResetFlagTriggerResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.ResetFlagTriggerResponse.displayName = 'proto.bucketeer.feature.ResetFlagTriggerResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.GetFlagTriggerRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.GetFlagTriggerRequest.displayName = 'proto.bucketeer.feature.GetFlagTriggerRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.GetFlagTriggerResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.GetFlagTriggerResponse.displayName = 'proto.bucketeer.feature.GetFlagTriggerResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.ListFlagTriggersRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.ListFlagTriggersRequest.displayName = 'proto.bucketeer.feature.ListFlagTriggersRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.bucketeer.feature.ListFlagTriggersResponse.repeatedFields_, null);
+};
+goog.inherits(proto.bucketeer.feature.ListFlagTriggersResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.ListFlagTriggersResponse.displayName = 'proto.bucketeer.feature.ListFlagTriggersResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.displayName = 'proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl';
 }
 
 
@@ -11586,6 +11964,2897 @@ proto.bucketeer.feature.ListTagsResponse.prototype.getTotalCount = function() {
  * @return {!proto.bucketeer.feature.ListTagsResponse} returns this
  */
 proto.bucketeer.feature.ListTagsResponse.prototype.setTotalCount = function(value) {
+  return jspb.Message.setProto3IntField(this, 3, value);
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.CreateFlagTriggerRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.CreateFlagTriggerRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    createFlagTriggerCommand: (f = msg.getCreateFlagTriggerCommand()) && proto_feature_command_pb.CreateFlagTriggerCommand.toObject(includeInstance, f)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerRequest}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.CreateFlagTriggerRequest;
+  return proto.bucketeer.feature.CreateFlagTriggerRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.CreateFlagTriggerRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerRequest}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 2:
+      var value = new proto_feature_command_pb.CreateFlagTriggerCommand;
+      reader.readMessage(value,proto_feature_command_pb.CreateFlagTriggerCommand.deserializeBinaryFromReader);
+      msg.setCreateFlagTriggerCommand(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.CreateFlagTriggerRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.CreateFlagTriggerRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getCreateFlagTriggerCommand();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      proto_feature_command_pb.CreateFlagTriggerCommand.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional string environment_namespace = 1;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional CreateFlagTriggerCommand create_flag_trigger_command = 2;
+ * @return {?proto.bucketeer.feature.CreateFlagTriggerCommand}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.getCreateFlagTriggerCommand = function() {
+  return /** @type{?proto.bucketeer.feature.CreateFlagTriggerCommand} */ (
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.CreateFlagTriggerCommand, 2));
+};
+
+
+/**
+ * @param {?proto.bucketeer.feature.CreateFlagTriggerCommand|undefined} value
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerRequest} returns this
+*/
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.setCreateFlagTriggerCommand = function(value) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.clearCreateFlagTriggerCommand = function() {
+  return this.setCreateFlagTriggerCommand(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.hasCreateFlagTriggerCommand = function() {
+  return jspb.Message.getField(this, 2) != null;
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.CreateFlagTriggerResponse.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.CreateFlagTriggerResponse} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    flagTrigger: (f = msg.getFlagTrigger()) && proto_feature_flag_trigger_pb.FlagTrigger.toObject(includeInstance, f),
+    url: jspb.Message.getFieldWithDefault(msg, 2, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerResponse}
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.CreateFlagTriggerResponse;
+  return proto.bucketeer.feature.CreateFlagTriggerResponse.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.CreateFlagTriggerResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerResponse}
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = new proto_feature_flag_trigger_pb.FlagTrigger;
+      reader.readMessage(value,proto_feature_flag_trigger_pb.FlagTrigger.deserializeBinaryFromReader);
+      msg.setFlagTrigger(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUrl(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.CreateFlagTriggerResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.CreateFlagTriggerResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getFlagTrigger();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto_feature_flag_trigger_pb.FlagTrigger.serializeBinaryToWriter
+    );
+  }
+  f = message.getUrl();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional FlagTrigger flag_trigger = 1;
+ * @return {?proto.bucketeer.feature.FlagTrigger}
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.prototype.getFlagTrigger = function() {
+  return /** @type{?proto.bucketeer.feature.FlagTrigger} */ (
+    jspb.Message.getWrapperField(this, proto_feature_flag_trigger_pb.FlagTrigger, 1));
+};
+
+
+/**
+ * @param {?proto.bucketeer.feature.FlagTrigger|undefined} value
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerResponse} returns this
+*/
+proto.bucketeer.feature.CreateFlagTriggerResponse.prototype.setFlagTrigger = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerResponse} returns this
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.prototype.clearFlagTrigger = function() {
+  return this.setFlagTrigger(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.prototype.hasFlagTrigger = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional string url = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.prototype.getUrl = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerResponse} returns this
+ */
+proto.bucketeer.feature.CreateFlagTriggerResponse.prototype.setUrl = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.DeleteFlagTriggerRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.DeleteFlagTriggerRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    deleteFlagTriggerCommand: (f = msg.getDeleteFlagTriggerCommand()) && proto_feature_command_pb.DeleteFlagTriggerCommand.toObject(includeInstance, f)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.DeleteFlagTriggerRequest}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.DeleteFlagTriggerRequest;
+  return proto.bucketeer.feature.DeleteFlagTriggerRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.DeleteFlagTriggerRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.DeleteFlagTriggerRequest}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 2:
+      var value = new proto_feature_command_pb.DeleteFlagTriggerCommand;
+      reader.readMessage(value,proto_feature_command_pb.DeleteFlagTriggerCommand.deserializeBinaryFromReader);
+      msg.setDeleteFlagTriggerCommand(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.DeleteFlagTriggerRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.DeleteFlagTriggerRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getDeleteFlagTriggerCommand();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      proto_feature_command_pb.DeleteFlagTriggerCommand.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional string environment_namespace = 1;
+ * @return {string}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.DeleteFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional DeleteFlagTriggerCommand delete_flag_trigger_command = 2;
+ * @return {?proto.bucketeer.feature.DeleteFlagTriggerCommand}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.getDeleteFlagTriggerCommand = function() {
+  return /** @type{?proto.bucketeer.feature.DeleteFlagTriggerCommand} */ (
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.DeleteFlagTriggerCommand, 2));
+};
+
+
+/**
+ * @param {?proto.bucketeer.feature.DeleteFlagTriggerCommand|undefined} value
+ * @return {!proto.bucketeer.feature.DeleteFlagTriggerRequest} returns this
+*/
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.setDeleteFlagTriggerCommand = function(value) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.DeleteFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.clearDeleteFlagTriggerCommand = function() {
+  return this.setDeleteFlagTriggerCommand(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.hasDeleteFlagTriggerCommand = function() {
+  return jspb.Message.getField(this, 2) != null;
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerResponse.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.DeleteFlagTriggerResponse.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.DeleteFlagTriggerResponse} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.DeleteFlagTriggerResponse.toObject = function(includeInstance, msg) {
+  var f, obj = {
+
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.DeleteFlagTriggerResponse}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerResponse.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.DeleteFlagTriggerResponse;
+  return proto.bucketeer.feature.DeleteFlagTriggerResponse.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.DeleteFlagTriggerResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.DeleteFlagTriggerResponse}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerResponse.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerResponse.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.DeleteFlagTriggerResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.DeleteFlagTriggerResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.DeleteFlagTriggerResponse.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.UpdateFlagTriggerRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.UpdateFlagTriggerRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    changeFlagTriggerDescriptionCommand: (f = msg.getChangeFlagTriggerDescriptionCommand()) && proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.toObject(includeInstance, f)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.UpdateFlagTriggerRequest;
+  return proto.bucketeer.feature.UpdateFlagTriggerRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.UpdateFlagTriggerRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 2:
+      var value = new proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand;
+      reader.readMessage(value,proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.deserializeBinaryFromReader);
+      msg.setChangeFlagTriggerDescriptionCommand(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.UpdateFlagTriggerRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.UpdateFlagTriggerRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getChangeFlagTriggerDescriptionCommand();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional string environment_namespace = 1;
+ * @return {string}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional ChangeFlagTriggerDescriptionCommand change_flag_trigger_description_command = 2;
+ * @return {?proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getChangeFlagTriggerDescriptionCommand = function() {
+  return /** @type{?proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand} */ (
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand, 2));
+};
+
+
+/**
+ * @param {?proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
+*/
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setChangeFlagTriggerDescriptionCommand = function(value) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.clearChangeFlagTriggerDescriptionCommand = function() {
+  return this.setChangeFlagTriggerDescriptionCommand(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.hasChangeFlagTriggerDescriptionCommand = function() {
+  return jspb.Message.getField(this, 2) != null;
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.UpdateFlagTriggerResponse.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.UpdateFlagTriggerResponse} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse.toObject = function(includeInstance, msg) {
+  var f, obj = {
+
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerResponse}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.UpdateFlagTriggerResponse;
+  return proto.bucketeer.feature.UpdateFlagTriggerResponse.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.UpdateFlagTriggerResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerResponse}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.UpdateFlagTriggerResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.UpdateFlagTriggerResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.EnableFlagTriggerRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.EnableFlagTriggerRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    enableFlagTriggerCommand: (f = msg.getEnableFlagTriggerCommand()) && proto_feature_command_pb.EnableFlagTriggerCommand.toObject(includeInstance, f)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.EnableFlagTriggerRequest}
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.EnableFlagTriggerRequest;
+  return proto.bucketeer.feature.EnableFlagTriggerRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.EnableFlagTriggerRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.EnableFlagTriggerRequest}
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 2:
+      var value = new proto_feature_command_pb.EnableFlagTriggerCommand;
+      reader.readMessage(value,proto_feature_command_pb.EnableFlagTriggerCommand.deserializeBinaryFromReader);
+      msg.setEnableFlagTriggerCommand(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.EnableFlagTriggerRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.EnableFlagTriggerRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getEnableFlagTriggerCommand();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      proto_feature_command_pb.EnableFlagTriggerCommand.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional string environment_namespace = 1;
+ * @return {string}
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.EnableFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional EnableFlagTriggerCommand enable_flag_trigger_command = 2;
+ * @return {?proto.bucketeer.feature.EnableFlagTriggerCommand}
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.getEnableFlagTriggerCommand = function() {
+  return /** @type{?proto.bucketeer.feature.EnableFlagTriggerCommand} */ (
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.EnableFlagTriggerCommand, 2));
+};
+
+
+/**
+ * @param {?proto.bucketeer.feature.EnableFlagTriggerCommand|undefined} value
+ * @return {!proto.bucketeer.feature.EnableFlagTriggerRequest} returns this
+*/
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.setEnableFlagTriggerCommand = function(value) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.EnableFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.clearEnableFlagTriggerCommand = function() {
+  return this.setEnableFlagTriggerCommand(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.hasEnableFlagTriggerCommand = function() {
+  return jspb.Message.getField(this, 2) != null;
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.EnableFlagTriggerResponse.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.EnableFlagTriggerResponse.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.EnableFlagTriggerResponse} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.EnableFlagTriggerResponse.toObject = function(includeInstance, msg) {
+  var f, obj = {
+
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.EnableFlagTriggerResponse}
+ */
+proto.bucketeer.feature.EnableFlagTriggerResponse.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.EnableFlagTriggerResponse;
+  return proto.bucketeer.feature.EnableFlagTriggerResponse.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.EnableFlagTriggerResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.EnableFlagTriggerResponse}
+ */
+proto.bucketeer.feature.EnableFlagTriggerResponse.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.EnableFlagTriggerResponse.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.EnableFlagTriggerResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.EnableFlagTriggerResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.EnableFlagTriggerResponse.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.DisableFlagTriggerRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.DisableFlagTriggerRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    disableFlagTriggerCommand: (f = msg.getDisableFlagTriggerCommand()) && proto_feature_command_pb.DisableFlagTriggerCommand.toObject(includeInstance, f)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.DisableFlagTriggerRequest}
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.DisableFlagTriggerRequest;
+  return proto.bucketeer.feature.DisableFlagTriggerRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.DisableFlagTriggerRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.DisableFlagTriggerRequest}
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 2:
+      var value = new proto_feature_command_pb.DisableFlagTriggerCommand;
+      reader.readMessage(value,proto_feature_command_pb.DisableFlagTriggerCommand.deserializeBinaryFromReader);
+      msg.setDisableFlagTriggerCommand(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.DisableFlagTriggerRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.DisableFlagTriggerRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getDisableFlagTriggerCommand();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      proto_feature_command_pb.DisableFlagTriggerCommand.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional string environment_namespace = 1;
+ * @return {string}
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.DisableFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional DisableFlagTriggerCommand disable_flag_trigger_command = 2;
+ * @return {?proto.bucketeer.feature.DisableFlagTriggerCommand}
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.getDisableFlagTriggerCommand = function() {
+  return /** @type{?proto.bucketeer.feature.DisableFlagTriggerCommand} */ (
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.DisableFlagTriggerCommand, 2));
+};
+
+
+/**
+ * @param {?proto.bucketeer.feature.DisableFlagTriggerCommand|undefined} value
+ * @return {!proto.bucketeer.feature.DisableFlagTriggerRequest} returns this
+*/
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.setDisableFlagTriggerCommand = function(value) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.DisableFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.clearDisableFlagTriggerCommand = function() {
+  return this.setDisableFlagTriggerCommand(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.hasDisableFlagTriggerCommand = function() {
+  return jspb.Message.getField(this, 2) != null;
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.DisableFlagTriggerResponse.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.DisableFlagTriggerResponse.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.DisableFlagTriggerResponse} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.DisableFlagTriggerResponse.toObject = function(includeInstance, msg) {
+  var f, obj = {
+
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.DisableFlagTriggerResponse}
+ */
+proto.bucketeer.feature.DisableFlagTriggerResponse.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.DisableFlagTriggerResponse;
+  return proto.bucketeer.feature.DisableFlagTriggerResponse.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.DisableFlagTriggerResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.DisableFlagTriggerResponse}
+ */
+proto.bucketeer.feature.DisableFlagTriggerResponse.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.DisableFlagTriggerResponse.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.DisableFlagTriggerResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.DisableFlagTriggerResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.DisableFlagTriggerResponse.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.ResetFlagTriggerRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.ResetFlagTriggerRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    resetFlagTriggerCommand: (f = msg.getResetFlagTriggerCommand()) && proto_feature_command_pb.ResetFlagTriggerCommand.toObject(includeInstance, f)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerRequest}
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.ResetFlagTriggerRequest;
+  return proto.bucketeer.feature.ResetFlagTriggerRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.ResetFlagTriggerRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerRequest}
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 2:
+      var value = new proto_feature_command_pb.ResetFlagTriggerCommand;
+      reader.readMessage(value,proto_feature_command_pb.ResetFlagTriggerCommand.deserializeBinaryFromReader);
+      msg.setResetFlagTriggerCommand(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.ResetFlagTriggerRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.ResetFlagTriggerRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getResetFlagTriggerCommand();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      proto_feature_command_pb.ResetFlagTriggerCommand.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional string environment_namespace = 1;
+ * @return {string}
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional ResetFlagTriggerCommand reset_flag_trigger_command = 2;
+ * @return {?proto.bucketeer.feature.ResetFlagTriggerCommand}
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.getResetFlagTriggerCommand = function() {
+  return /** @type{?proto.bucketeer.feature.ResetFlagTriggerCommand} */ (
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.ResetFlagTriggerCommand, 2));
+};
+
+
+/**
+ * @param {?proto.bucketeer.feature.ResetFlagTriggerCommand|undefined} value
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerRequest} returns this
+*/
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.setResetFlagTriggerCommand = function(value) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.clearResetFlagTriggerCommand = function() {
+  return this.setResetFlagTriggerCommand(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.hasResetFlagTriggerCommand = function() {
+  return jspb.Message.getField(this, 2) != null;
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.ResetFlagTriggerResponse.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.ResetFlagTriggerResponse} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    flagTrigger: (f = msg.getFlagTrigger()) && proto_feature_flag_trigger_pb.FlagTrigger.toObject(includeInstance, f),
+    url: jspb.Message.getFieldWithDefault(msg, 2, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerResponse}
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.ResetFlagTriggerResponse;
+  return proto.bucketeer.feature.ResetFlagTriggerResponse.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.ResetFlagTriggerResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerResponse}
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = new proto_feature_flag_trigger_pb.FlagTrigger;
+      reader.readMessage(value,proto_feature_flag_trigger_pb.FlagTrigger.deserializeBinaryFromReader);
+      msg.setFlagTrigger(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUrl(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.ResetFlagTriggerResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.ResetFlagTriggerResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getFlagTrigger();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto_feature_flag_trigger_pb.FlagTrigger.serializeBinaryToWriter
+    );
+  }
+  f = message.getUrl();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional FlagTrigger flag_trigger = 1;
+ * @return {?proto.bucketeer.feature.FlagTrigger}
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.prototype.getFlagTrigger = function() {
+  return /** @type{?proto.bucketeer.feature.FlagTrigger} */ (
+    jspb.Message.getWrapperField(this, proto_feature_flag_trigger_pb.FlagTrigger, 1));
+};
+
+
+/**
+ * @param {?proto.bucketeer.feature.FlagTrigger|undefined} value
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerResponse} returns this
+*/
+proto.bucketeer.feature.ResetFlagTriggerResponse.prototype.setFlagTrigger = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerResponse} returns this
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.prototype.clearFlagTrigger = function() {
+  return this.setFlagTrigger(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.prototype.hasFlagTrigger = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional string url = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.prototype.getUrl = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerResponse} returns this
+ */
+proto.bucketeer.feature.ResetFlagTriggerResponse.prototype.setUrl = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.GetFlagTriggerRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.GetFlagTriggerRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.GetFlagTriggerRequest}
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.GetFlagTriggerRequest;
+  return proto.bucketeer.feature.GetFlagTriggerRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.GetFlagTriggerRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.GetFlagTriggerRequest}
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setId(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.GetFlagTriggerRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.GetFlagTriggerRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getId();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional string id = 1;
+ * @return {string}
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest.prototype.getId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.GetFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest.prototype.setId = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string environment_namespace = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.GetFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.GetFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.GetFlagTriggerResponse.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.GetFlagTriggerResponse} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    flagTrigger: (f = msg.getFlagTrigger()) && proto_feature_flag_trigger_pb.FlagTrigger.toObject(includeInstance, f),
+    url: jspb.Message.getFieldWithDefault(msg, 2, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.GetFlagTriggerResponse}
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.GetFlagTriggerResponse;
+  return proto.bucketeer.feature.GetFlagTriggerResponse.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.GetFlagTriggerResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.GetFlagTriggerResponse}
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = new proto_feature_flag_trigger_pb.FlagTrigger;
+      reader.readMessage(value,proto_feature_flag_trigger_pb.FlagTrigger.deserializeBinaryFromReader);
+      msg.setFlagTrigger(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUrl(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.GetFlagTriggerResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.GetFlagTriggerResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getFlagTrigger();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto_feature_flag_trigger_pb.FlagTrigger.serializeBinaryToWriter
+    );
+  }
+  f = message.getUrl();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional FlagTrigger flag_trigger = 1;
+ * @return {?proto.bucketeer.feature.FlagTrigger}
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.prototype.getFlagTrigger = function() {
+  return /** @type{?proto.bucketeer.feature.FlagTrigger} */ (
+    jspb.Message.getWrapperField(this, proto_feature_flag_trigger_pb.FlagTrigger, 1));
+};
+
+
+/**
+ * @param {?proto.bucketeer.feature.FlagTrigger|undefined} value
+ * @return {!proto.bucketeer.feature.GetFlagTriggerResponse} returns this
+*/
+proto.bucketeer.feature.GetFlagTriggerResponse.prototype.setFlagTrigger = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.GetFlagTriggerResponse} returns this
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.prototype.clearFlagTrigger = function() {
+  return this.setFlagTrigger(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.prototype.hasFlagTrigger = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional string url = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.prototype.getUrl = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.GetFlagTriggerResponse} returns this
+ */
+proto.bucketeer.feature.GetFlagTriggerResponse.prototype.setUrl = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.ListFlagTriggersRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.ListFlagTriggersRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    featureId: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    cursor: jspb.Message.getFieldWithDefault(msg, 3, 0),
+    pageSize: jspb.Message.getFieldWithDefault(msg, 4, 0),
+    orderBy: jspb.Message.getFieldWithDefault(msg, 5, 0),
+    orderDirection: jspb.Message.getFieldWithDefault(msg, 6, 0)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.ListFlagTriggersRequest}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.ListFlagTriggersRequest;
+  return proto.bucketeer.feature.ListFlagTriggersRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.ListFlagTriggersRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.ListFlagTriggersRequest}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setFeatureId(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 3:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setCursor(value);
+      break;
+    case 4:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setPageSize(value);
+      break;
+    case 5:
+      var value = /** @type {!proto.bucketeer.feature.ListFlagTriggersRequest.OrderBy} */ (reader.readEnum());
+      msg.setOrderBy(value);
+      break;
+    case 6:
+      var value = /** @type {!proto.bucketeer.feature.ListFlagTriggersRequest.OrderDirection} */ (reader.readEnum());
+      msg.setOrderDirection(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.ListFlagTriggersRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.ListFlagTriggersRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getFeatureId();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+  f = message.getCursor();
+  if (f !== 0) {
+    writer.writeInt32(
+      3,
+      f
+    );
+  }
+  f = message.getPageSize();
+  if (f !== 0) {
+    writer.writeInt32(
+      4,
+      f
+    );
+  }
+  f = message.getOrderBy();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      5,
+      f
+    );
+  }
+  f = message.getOrderDirection();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      6,
+      f
+    );
+  }
+};
+
+
+/**
+ * @enum {number}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.OrderBy = {
+  DEFAULT: 0,
+  CREATED_AT: 1,
+  UPDATED_AT: 2
+};
+
+/**
+ * @enum {number}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.OrderDirection = {
+  ASC: 0,
+  DESC: 1
+};
+
+/**
+ * optional string feature_id = 1;
+ * @return {string}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.getFeatureId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersRequest} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.setFeatureId = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string environment_namespace = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersRequest} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional int32 cursor = 3;
+ * @return {number}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.getCursor = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersRequest} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.setCursor = function(value) {
+  return jspb.Message.setProto3IntField(this, 3, value);
+};
+
+
+/**
+ * optional int32 page_size = 4;
+ * @return {number}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.getPageSize = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersRequest} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.setPageSize = function(value) {
+  return jspb.Message.setProto3IntField(this, 4, value);
+};
+
+
+/**
+ * optional OrderBy order_by = 5;
+ * @return {!proto.bucketeer.feature.ListFlagTriggersRequest.OrderBy}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.getOrderBy = function() {
+  return /** @type {!proto.bucketeer.feature.ListFlagTriggersRequest.OrderBy} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+};
+
+
+/**
+ * @param {!proto.bucketeer.feature.ListFlagTriggersRequest.OrderBy} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersRequest} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.setOrderBy = function(value) {
+  return jspb.Message.setProto3EnumField(this, 5, value);
+};
+
+
+/**
+ * optional OrderDirection order_direction = 6;
+ * @return {!proto.bucketeer.feature.ListFlagTriggersRequest.OrderDirection}
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.getOrderDirection = function() {
+  return /** @type {!proto.bucketeer.feature.ListFlagTriggersRequest.OrderDirection} */ (jspb.Message.getFieldWithDefault(this, 6, 0));
+};
+
+
+/**
+ * @param {!proto.bucketeer.feature.ListFlagTriggersRequest.OrderDirection} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersRequest} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersRequest.prototype.setOrderDirection = function(value) {
+  return jspb.Message.setProto3EnumField(this, 6, value);
+};
+
+
+
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.repeatedFields_ = [1];
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.ListFlagTriggersResponse.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.ListFlagTriggersResponse} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    flagTriggersList: jspb.Message.toObjectList(msg.getFlagTriggersList(),
+    proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.toObject, includeInstance),
+    cursor: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.ListFlagTriggersResponse;
+  return proto.bucketeer.feature.ListFlagTriggersResponse.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.ListFlagTriggersResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = new proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl;
+      reader.readMessage(value,proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.deserializeBinaryFromReader);
+      msg.addFlagTriggers(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setCursor(value);
+      break;
+    case 3:
+      var value = /** @type {number} */ (reader.readInt64());
+      msg.setTotalCount(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.ListFlagTriggersResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.ListFlagTriggersResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getFlagTriggersList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      1,
+      f,
+      proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.serializeBinaryToWriter
+    );
+  }
+  f = message.getCursor();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+  f = message.getTotalCount();
+  if (f !== 0) {
+    writer.writeInt64(
+      3,
+      f
+    );
+  }
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.prototype.toObject = function(opt_includeInstance) {
+  return proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    flagTrigger: (f = msg.getFlagTrigger()) && proto_feature_flag_trigger_pb.FlagTrigger.toObject(includeInstance, f),
+    url: jspb.Message.getFieldWithDefault(msg, 2, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl;
+  return proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = new proto_feature_flag_trigger_pb.FlagTrigger;
+      reader.readMessage(value,proto_feature_flag_trigger_pb.FlagTrigger.deserializeBinaryFromReader);
+      msg.setFlagTrigger(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUrl(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getFlagTrigger();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto_feature_flag_trigger_pb.FlagTrigger.serializeBinaryToWriter
+    );
+  }
+  f = message.getUrl();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional FlagTrigger flag_trigger = 1;
+ * @return {?proto.bucketeer.feature.FlagTrigger}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.prototype.getFlagTrigger = function() {
+  return /** @type{?proto.bucketeer.feature.FlagTrigger} */ (
+    jspb.Message.getWrapperField(this, proto_feature_flag_trigger_pb.FlagTrigger, 1));
+};
+
+
+/**
+ * @param {?proto.bucketeer.feature.FlagTrigger|undefined} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl} returns this
+*/
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.prototype.setFlagTrigger = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.prototype.clearFlagTrigger = function() {
+  return this.setFlagTrigger(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.prototype.hasFlagTrigger = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional string url = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.prototype.getUrl = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl.prototype.setUrl = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * repeated FlagTriggerWithUrl flag_triggers = 1;
+ * @return {!Array<!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl>}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.prototype.getFlagTriggersList = function() {
+  return /** @type{!Array<!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl, 1));
+};
+
+
+/**
+ * @param {!Array<!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl>} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse} returns this
+*/
+proto.bucketeer.feature.ListFlagTriggersResponse.prototype.setFlagTriggersList = function(value) {
+  return jspb.Message.setRepeatedWrapperField(this, 1, value);
+};
+
+
+/**
+ * @param {!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.prototype.addFlagTriggers = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 1, opt_value, proto.bucketeer.feature.ListFlagTriggersResponse.FlagTriggerWithUrl, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.prototype.clearFlagTriggersList = function() {
+  return this.setFlagTriggersList([]);
+};
+
+
+/**
+ * optional string cursor = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.prototype.getCursor = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.prototype.setCursor = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional int64 total_count = 3;
+ * @return {number}
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.prototype.getTotalCount = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.feature.ListFlagTriggersResponse} returns this
+ */
+proto.bucketeer.feature.ListFlagTriggersResponse.prototype.setTotalCount = function(value) {
   return jspb.Message.setProto3IntField(this, 3, value);
 };
 

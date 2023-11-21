@@ -27,6 +27,7 @@ import "proto/feature/variation.proto";
 import "proto/feature/strategy.proto";
 import "proto/feature/segment.proto";
 import "proto/feature/prerequisite.proto";
+import "proto/feature/flag_trigger.proto";
 
 message Command {
   google.protobuf.Any command = 1;
@@ -226,4 +227,32 @@ message RemovePrerequisiteCommand {
 
 message ChangePrerequisiteVariationCommand {
   Prerequisite prerequisite = 1;
+}
+
+message CreateFlagTriggerCommand {
+  string feature_id = 1;
+  FlagTrigger.Type type = 2;
+  FlagTrigger.Action action = 3;
+  string description = 4;
+}
+
+message ResetFlagTriggerCommand {
+  string id = 1;
+}
+
+message ChangeFlagTriggerDescriptionCommand {
+  string id = 1;
+  string description = 2;
+}
+
+message EnableFlagTriggerCommand {
+  string id = 1;
+}
+
+message DisableFlagTriggerCommand {
+  string id = 1;
+}
+
+message DeleteFlagTriggerCommand {
+  string id = 1;
 }

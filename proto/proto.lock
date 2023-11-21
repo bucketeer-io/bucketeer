@@ -2204,14 +2204,12 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutManualScheduleClause"
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ]
           },
@@ -3002,14 +3000,12 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status",
-                "optional": true
+                "type": "ProgressiveRollout.Status"
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type",
-                "optional": true
+                "type": "ProgressiveRollout.Type"
               }
             ]
           },
@@ -11361,6 +11357,86 @@
                 "type": "Prerequisite"
               }
             ]
+          },
+          {
+            "name": "CreateFlagTriggerCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "type",
+                "type": "FlagTrigger.Type"
+              },
+              {
+                "id": 3,
+                "name": "action",
+                "type": "FlagTrigger.Action"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ResetFlagTriggerCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeFlagTriggerDescriptionCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EnableFlagTriggerCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DisableFlagTriggerCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteFlagTriggerCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
           }
         ],
         "imports": [
@@ -11390,6 +11466,9 @@
           },
           {
             "path": "proto/feature/prerequisite.proto"
+          },
+          {
+            "path": "proto/feature/flag_trigger.proto"
           }
         ],
         "package": {
@@ -11790,6 +11869,122 @@
                 "id": 6,
                 "name": "client_latest_version",
                 "type": "string"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.feature"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "feature:/:flag_trigger.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "FlagTrigger.Type",
+            "enum_fields": [
+              {
+                "name": "Type_UNKNOWN"
+              },
+              {
+                "name": "Type_WEBHOOK",
+                "integer": 1
+              }
+            ]
+          },
+          {
+            "name": "FlagTrigger.Action",
+            "enum_fields": [
+              {
+                "name": "Action_UNKNOWN"
+              },
+              {
+                "name": "Action_ON",
+                "integer": 1
+              },
+              {
+                "name": "Action_OFF",
+                "integer": 2
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "FlagTrigger",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "type",
+                "type": "Type"
+              },
+              {
+                "id": 5,
+                "name": "action",
+                "type": "Action"
+              },
+              {
+                "id": 6,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "trigger_times",
+                "type": "int32"
+              },
+              {
+                "id": 8,
+                "name": "last_triggered_at",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "uuid",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "disabled",
+                "type": "bool"
+              },
+              {
+                "id": 11,
+                "name": "deleted",
+                "type": "bool"
+              },
+              {
+                "id": 12,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 13,
+                "name": "updated_at",
+                "type": "int64"
               }
             ]
           }
@@ -12234,6 +12429,34 @@
           },
           {
             "name": "ListTagsRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          },
+          {
+            "name": "ListFlagTriggersRequest.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 1
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 2
+              }
+            ]
+          },
+          {
+            "name": "ListFlagTriggersRequest.OrderDirection",
             "enum_fields": [
               {
                 "name": "ASC"
@@ -13149,6 +13372,241 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "CreateFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "create_flag_trigger_command",
+                "type": "CreateFlagTriggerCommand"
+              }
+            ]
+          },
+          {
+            "name": "CreateFlagTriggerResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "flag_trigger",
+                "type": "FlagTrigger"
+              },
+              {
+                "id": 2,
+                "name": "url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "delete_flag_trigger_command",
+                "type": "DeleteFlagTriggerCommand"
+              }
+            ]
+          },
+          {
+            "name": "DeleteFlagTriggerResponse"
+          },
+          {
+            "name": "UpdateFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "change_flag_trigger_description_command",
+                "type": "ChangeFlagTriggerDescriptionCommand"
+              }
+            ]
+          },
+          {
+            "name": "UpdateFlagTriggerResponse"
+          },
+          {
+            "name": "EnableFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "enable_flag_trigger_command",
+                "type": "EnableFlagTriggerCommand"
+              }
+            ]
+          },
+          {
+            "name": "EnableFlagTriggerResponse"
+          },
+          {
+            "name": "DisableFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "disable_flag_trigger_command",
+                "type": "DisableFlagTriggerCommand"
+              }
+            ]
+          },
+          {
+            "name": "DisableFlagTriggerResponse"
+          },
+          {
+            "name": "ResetFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "reset_flag_trigger_command",
+                "type": "ResetFlagTriggerCommand"
+              }
+            ]
+          },
+          {
+            "name": "ResetFlagTriggerResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "flag_trigger",
+                "type": "FlagTrigger"
+              },
+              {
+                "id": 2,
+                "name": "url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetFlagTriggerRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetFlagTriggerResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "flag_trigger",
+                "type": "FlagTrigger"
+              },
+              {
+                "id": 2,
+                "name": "url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListFlagTriggersRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "cursor",
+                "type": "int32"
+              },
+              {
+                "id": 4,
+                "name": "page_size",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 6,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              }
+            ]
+          },
+          {
+            "name": "ListFlagTriggersResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "flag_triggers",
+                "type": "FlagTriggerWithUrl",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ],
+            "messages": [
+              {
+                "name": "FlagTriggerWithUrl",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "flag_trigger",
+                    "type": "FlagTrigger"
+                  },
+                  {
+                    "id": 2,
+                    "name": "url",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
           }
         ],
         "services": [
@@ -13319,6 +13777,46 @@
                 "name": "ListTags",
                 "in_type": "ListTagsRequest",
                 "out_type": "ListTagsResponse"
+              },
+              {
+                "name": "CreateFlagTrigger",
+                "in_type": "CreateFlagTriggerRequest",
+                "out_type": "CreateFlagTriggerResponse"
+              },
+              {
+                "name": "UpdateFlagTrigger",
+                "in_type": "UpdateFlagTriggerRequest",
+                "out_type": "UpdateFlagTriggerResponse"
+              },
+              {
+                "name": "EnableFlagTrigger",
+                "in_type": "EnableFlagTriggerRequest",
+                "out_type": "EnableFlagTriggerResponse"
+              },
+              {
+                "name": "DisableFlagTrigger",
+                "in_type": "DisableFlagTriggerRequest",
+                "out_type": "DisableFlagTriggerResponse"
+              },
+              {
+                "name": "ResetFlagTrigger",
+                "in_type": "ResetFlagTriggerRequest",
+                "out_type": "ResetFlagTriggerResponse"
+              },
+              {
+                "name": "DeleteFlagTrigger",
+                "in_type": "DeleteFlagTriggerRequest",
+                "out_type": "DeleteFlagTriggerResponse"
+              },
+              {
+                "name": "GetFlagTrigger",
+                "in_type": "GetFlagTriggerRequest",
+                "out_type": "GetFlagTriggerResponse"
+              },
+              {
+                "name": "ListFlagTriggers",
+                "in_type": "ListFlagTriggersRequest",
+                "out_type": "ListFlagTriggersResponse"
               }
             ]
           }
@@ -13341,6 +13839,9 @@
           },
           {
             "path": "proto/feature/segment.proto"
+          },
+          {
+            "path": "proto/feature/flag_trigger.proto"
           }
         ],
         "package": {

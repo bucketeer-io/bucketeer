@@ -24,6 +24,7 @@ import "proto/feature/feature.proto";
 import "proto/feature/evaluation.proto";
 import "proto/user/user.proto";
 import "proto/feature/segment.proto";
+import "proto/feature/flag_trigger.proto";
 
 message GetFeatureRequest {
   string id = 1;
@@ -334,6 +335,93 @@ message ListTagsResponse {
   int64 total_count = 3;
 }
 
+message CreateFlagTriggerRequest {
+  string environment_namespace = 1;
+  CreateFlagTriggerCommand create_flag_trigger_command = 2;
+}
+
+message CreateFlagTriggerResponse {
+  FlagTrigger flag_trigger = 1;
+  string url = 2;
+}
+
+message DeleteFlagTriggerRequest {
+  string environment_namespace = 1;
+  DeleteFlagTriggerCommand delete_flag_trigger_command = 2;
+}
+
+message DeleteFlagTriggerResponse {}
+
+message UpdateFlagTriggerRequest {
+  string environment_namespace = 1;
+  ChangeFlagTriggerDescriptionCommand change_flag_trigger_description_command =
+      2;
+}
+
+message UpdateFlagTriggerResponse {}
+
+message EnableFlagTriggerRequest {
+  string environment_namespace = 1;
+  EnableFlagTriggerCommand enable_flag_trigger_command = 2;
+}
+
+message EnableFlagTriggerResponse {}
+
+message DisableFlagTriggerRequest {
+  string environment_namespace = 1;
+  DisableFlagTriggerCommand disable_flag_trigger_command = 2;
+}
+
+message DisableFlagTriggerResponse {}
+
+message ResetFlagTriggerRequest {
+  string environment_namespace = 1;
+  ResetFlagTriggerCommand reset_flag_trigger_command = 2;
+}
+
+message ResetFlagTriggerResponse {
+  FlagTrigger flag_trigger = 1;
+  string url = 2;
+}
+
+message GetFlagTriggerRequest {
+  string id = 1;
+  string environment_namespace = 2;
+}
+
+message GetFlagTriggerResponse {
+  FlagTrigger flag_trigger = 1;
+  string url = 2;
+}
+
+message ListFlagTriggersRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    CREATED_AT = 1;
+    UPDATED_AT = 2;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  string feature_id = 1;
+  string environment_namespace = 2;
+  int32 cursor = 3;
+  int32 page_size = 4;
+  OrderBy order_by = 5;
+  OrderDirection order_direction = 6;
+}
+
+message ListFlagTriggersResponse {
+  message FlagTriggerWithUrl {
+    FlagTrigger flag_trigger = 1;
+    string url = 2;
+  }
+  repeated FlagTriggerWithUrl flag_triggers = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
 service FeatureService {
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {}
   rpc GetFeatures(GetFeaturesRequest) returns (GetFeaturesResponse) {}
@@ -384,4 +472,19 @@ service FeatureService {
   rpc EvaluateFeatures(EvaluateFeaturesRequest)
       returns (EvaluateFeaturesResponse) {}
   rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {}
+  rpc CreateFlagTrigger(CreateFlagTriggerRequest)
+      returns (CreateFlagTriggerResponse) {}
+  rpc UpdateFlagTrigger(UpdateFlagTriggerRequest)
+      returns (UpdateFlagTriggerResponse) {}
+  rpc EnableFlagTrigger(EnableFlagTriggerRequest)
+      returns (EnableFlagTriggerResponse) {}
+  rpc DisableFlagTrigger(DisableFlagTriggerRequest)
+      returns (DisableFlagTriggerResponse) {}
+  rpc ResetFlagTrigger(ResetFlagTriggerRequest)
+      returns (ResetFlagTriggerResponse) {}
+  rpc DeleteFlagTrigger(DeleteFlagTriggerRequest)
+      returns (DeleteFlagTriggerResponse) {}
+  rpc GetFlagTrigger(GetFlagTriggerRequest) returns (GetFlagTriggerResponse) {}
+  rpc ListFlagTriggers(ListFlagTriggersRequest)
+      returns (ListFlagTriggersResponse) {}
 }
