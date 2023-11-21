@@ -19,7 +19,6 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
 
 import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/clause.proto";
-import "proto/autoops/flag_trigger.proto";
 
 message CreateAutoOpsRuleCommand {
   string feature_id = 1;
@@ -103,32 +102,4 @@ message AddProgressiveRolloutTemplateScheduleClauseCommand {
 
 message ChangeProgressiveRolloutScheduleTriggeredAtCommand {
   string schedule_id = 1;
-}
-
-message CreateFlagTriggerCommand {
-  string feature_id = 1;
-  FlagTrigger.Type type = 2;
-  FlagTrigger.Action action = 3;
-  string description = 4;
-}
-
-message ResetFlagTriggerCommand {
-  string id = 1;
-}
-
-message ChangeFlagTriggerDescriptionCommand {
-  string id = 1;
-  string description = 2;
-}
-
-message EnableFlagTriggerCommand {
-  string id = 1;
-}
-
-message DisableFlagTriggerCommand {
-  string id = 1;
-}
-
-message DeleteFlagTriggerCommand {
-  string id = 1;
 }

@@ -1,5 +1,5 @@
-// package: bucketeer.autoops
-// file: proto/autoops/flag_trigger.proto
+// package: bucketeer.feature
+// file: proto/feature/flag_trigger.proto
 
 import * as jspb from "google-protobuf";
 

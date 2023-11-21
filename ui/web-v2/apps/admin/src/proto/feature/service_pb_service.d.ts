@@ -247,6 +247,78 @@ type FeatureServiceListTags = {
   readonly responseType: typeof proto_feature_service_pb.ListTagsResponse;
 };
 
+type FeatureServiceCreateFlagTrigger = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.CreateFlagTriggerRequest;
+  readonly responseType: typeof proto_feature_service_pb.CreateFlagTriggerResponse;
+};
+
+type FeatureServiceUpdateFlagTrigger = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.UpdateFlagTriggerRequest;
+  readonly responseType: typeof proto_feature_service_pb.UpdateFlagTriggerResponse;
+};
+
+type FeatureServiceEnableFlagTrigger = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.EnableFlagTriggerRequest;
+  readonly responseType: typeof proto_feature_service_pb.EnableFlagTriggerResponse;
+};
+
+type FeatureServiceDisableFlagTrigger = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.DisableFlagTriggerRequest;
+  readonly responseType: typeof proto_feature_service_pb.DisableFlagTriggerResponse;
+};
+
+type FeatureServiceResetFlagTrigger = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.ResetFlagTriggerRequest;
+  readonly responseType: typeof proto_feature_service_pb.ResetFlagTriggerResponse;
+};
+
+type FeatureServiceDeleteFlagTrigger = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.DeleteFlagTriggerRequest;
+  readonly responseType: typeof proto_feature_service_pb.DeleteFlagTriggerResponse;
+};
+
+type FeatureServiceGetFlagTrigger = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.GetFlagTriggerRequest;
+  readonly responseType: typeof proto_feature_service_pb.GetFlagTriggerResponse;
+};
+
+type FeatureServiceListFlagTriggers = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.ListFlagTriggersRequest;
+  readonly responseType: typeof proto_feature_service_pb.ListFlagTriggersResponse;
+};
+
 export class FeatureService {
   static readonly serviceName: string;
   static readonly GetFeature: FeatureServiceGetFeature;
@@ -276,6 +348,14 @@ export class FeatureService {
   static readonly BulkDownloadSegmentUsers: FeatureServiceBulkDownloadSegmentUsers;
   static readonly EvaluateFeatures: FeatureServiceEvaluateFeatures;
   static readonly ListTags: FeatureServiceListTags;
+  static readonly CreateFlagTrigger: FeatureServiceCreateFlagTrigger;
+  static readonly UpdateFlagTrigger: FeatureServiceUpdateFlagTrigger;
+  static readonly EnableFlagTrigger: FeatureServiceEnableFlagTrigger;
+  static readonly DisableFlagTrigger: FeatureServiceDisableFlagTrigger;
+  static readonly ResetFlagTrigger: FeatureServiceResetFlagTrigger;
+  static readonly DeleteFlagTrigger: FeatureServiceDeleteFlagTrigger;
+  static readonly GetFlagTrigger: FeatureServiceGetFlagTrigger;
+  static readonly ListFlagTriggers: FeatureServiceListFlagTriggers;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -552,6 +632,78 @@ export class FeatureServiceClient {
   listTags(
     requestMessage: proto_feature_service_pb.ListTagsRequest,
     callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.ListTagsResponse|null) => void
+  ): UnaryResponse;
+  createFlagTrigger(
+    requestMessage: proto_feature_service_pb.CreateFlagTriggerRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.CreateFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  createFlagTrigger(
+    requestMessage: proto_feature_service_pb.CreateFlagTriggerRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.CreateFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  updateFlagTrigger(
+    requestMessage: proto_feature_service_pb.UpdateFlagTriggerRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.UpdateFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  updateFlagTrigger(
+    requestMessage: proto_feature_service_pb.UpdateFlagTriggerRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.UpdateFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  enableFlagTrigger(
+    requestMessage: proto_feature_service_pb.EnableFlagTriggerRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.EnableFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  enableFlagTrigger(
+    requestMessage: proto_feature_service_pb.EnableFlagTriggerRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.EnableFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  disableFlagTrigger(
+    requestMessage: proto_feature_service_pb.DisableFlagTriggerRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.DisableFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  disableFlagTrigger(
+    requestMessage: proto_feature_service_pb.DisableFlagTriggerRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.DisableFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  resetFlagTrigger(
+    requestMessage: proto_feature_service_pb.ResetFlagTriggerRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.ResetFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  resetFlagTrigger(
+    requestMessage: proto_feature_service_pb.ResetFlagTriggerRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.ResetFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  deleteFlagTrigger(
+    requestMessage: proto_feature_service_pb.DeleteFlagTriggerRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.DeleteFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  deleteFlagTrigger(
+    requestMessage: proto_feature_service_pb.DeleteFlagTriggerRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.DeleteFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  getFlagTrigger(
+    requestMessage: proto_feature_service_pb.GetFlagTriggerRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.GetFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  getFlagTrigger(
+    requestMessage: proto_feature_service_pb.GetFlagTriggerRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.GetFlagTriggerResponse|null) => void
+  ): UnaryResponse;
+  listFlagTriggers(
+    requestMessage: proto_feature_service_pb.ListFlagTriggersRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.ListFlagTriggersResponse|null) => void
+  ): UnaryResponse;
+  listFlagTriggers(
+    requestMessage: proto_feature_service_pb.ListFlagTriggersRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.ListFlagTriggersResponse|null) => void
   ): UnaryResponse;
 }
 

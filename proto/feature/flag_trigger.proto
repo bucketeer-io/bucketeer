@@ -14,8 +14,8 @@
 
 syntax = "proto3";
 
-package bucketeer.autoops;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
+package bucketeer.feature;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
 
 message FlagTrigger {
   enum Type {

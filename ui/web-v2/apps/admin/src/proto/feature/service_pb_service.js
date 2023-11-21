@@ -253,6 +253,78 @@ FeatureService.ListTags = {
   responseType: proto_feature_service_pb.ListTagsResponse
 };
 
+FeatureService.CreateFlagTrigger = {
+  methodName: "CreateFlagTrigger",
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.CreateFlagTriggerRequest,
+  responseType: proto_feature_service_pb.CreateFlagTriggerResponse
+};
+
+FeatureService.UpdateFlagTrigger = {
+  methodName: "UpdateFlagTrigger",
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.UpdateFlagTriggerRequest,
+  responseType: proto_feature_service_pb.UpdateFlagTriggerResponse
+};
+
+FeatureService.EnableFlagTrigger = {
+  methodName: "EnableFlagTrigger",
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.EnableFlagTriggerRequest,
+  responseType: proto_feature_service_pb.EnableFlagTriggerResponse
+};
+
+FeatureService.DisableFlagTrigger = {
+  methodName: "DisableFlagTrigger",
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.DisableFlagTriggerRequest,
+  responseType: proto_feature_service_pb.DisableFlagTriggerResponse
+};
+
+FeatureService.ResetFlagTrigger = {
+  methodName: "ResetFlagTrigger",
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.ResetFlagTriggerRequest,
+  responseType: proto_feature_service_pb.ResetFlagTriggerResponse
+};
+
+FeatureService.DeleteFlagTrigger = {
+  methodName: "DeleteFlagTrigger",
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.DeleteFlagTriggerRequest,
+  responseType: proto_feature_service_pb.DeleteFlagTriggerResponse
+};
+
+FeatureService.GetFlagTrigger = {
+  methodName: "GetFlagTrigger",
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.GetFlagTriggerRequest,
+  responseType: proto_feature_service_pb.GetFlagTriggerResponse
+};
+
+FeatureService.ListFlagTriggers = {
+  methodName: "ListFlagTriggers",
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.ListFlagTriggersRequest,
+  responseType: proto_feature_service_pb.ListFlagTriggersResponse
+};
+
 exports.FeatureService = FeatureService;
 
 function FeatureServiceClient(serviceHost, options) {
@@ -1071,6 +1143,254 @@ FeatureServiceClient.prototype.listTags = function listTags(requestMessage, meta
     callback = arguments[1];
   }
   var client = grpc.unary(FeatureService.ListTags, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+FeatureServiceClient.prototype.createFlagTrigger = function createFlagTrigger(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(FeatureService.CreateFlagTrigger, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+FeatureServiceClient.prototype.updateFlagTrigger = function updateFlagTrigger(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(FeatureService.UpdateFlagTrigger, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+FeatureServiceClient.prototype.enableFlagTrigger = function enableFlagTrigger(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(FeatureService.EnableFlagTrigger, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+FeatureServiceClient.prototype.disableFlagTrigger = function disableFlagTrigger(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(FeatureService.DisableFlagTrigger, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+FeatureServiceClient.prototype.resetFlagTrigger = function resetFlagTrigger(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(FeatureService.ResetFlagTrigger, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+FeatureServiceClient.prototype.deleteFlagTrigger = function deleteFlagTrigger(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(FeatureService.DeleteFlagTrigger, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+FeatureServiceClient.prototype.getFlagTrigger = function getFlagTrigger(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(FeatureService.GetFlagTrigger, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+FeatureServiceClient.prototype.listFlagTriggers = function listFlagTriggers(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(FeatureService.ListFlagTriggers, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

@@ -69,26 +69,6 @@ func (mr *MockClientMockRecorder) CreateAutoOpsRule(ctx, in interface{}, opts ..
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAutoOpsRule", reflect.TypeOf((*MockClient)(nil).CreateAutoOpsRule), varargs...)
 }
 
-// CreateFlagTrigger mocks base method.
-func (m *MockClient) CreateFlagTrigger(ctx context.Context, in *autoops.CreateFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.CreateFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "CreateFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*autoops.CreateFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateFlagTrigger indicates an expected call of CreateFlagTrigger.
-func (mr *MockClientMockRecorder) CreateFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFlagTrigger", reflect.TypeOf((*MockClient)(nil).CreateFlagTrigger), varargs...)
-}
-
 // CreateProgressiveRollout mocks base method.
 func (m *MockClient) CreateProgressiveRollout(ctx context.Context, in *autoops.CreateProgressiveRolloutRequest, opts ...grpc.CallOption) (*autoops.CreateProgressiveRolloutResponse, error) {
 	m.ctrl.T.Helper()
@@ -149,26 +129,6 @@ func (mr *MockClientMockRecorder) DeleteAutoOpsRule(ctx, in interface{}, opts ..
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAutoOpsRule", reflect.TypeOf((*MockClient)(nil).DeleteAutoOpsRule), varargs...)
 }
 
-// DeleteFlagTrigger mocks base method.
-func (m *MockClient) DeleteFlagTrigger(ctx context.Context, in *autoops.DeleteFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.DeleteFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "DeleteFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*autoops.DeleteFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DeleteFlagTrigger indicates an expected call of DeleteFlagTrigger.
-func (mr *MockClientMockRecorder) DeleteFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFlagTrigger", reflect.TypeOf((*MockClient)(nil).DeleteFlagTrigger), varargs...)
-}
-
 // DeleteProgressiveRollout mocks base method.
 func (m *MockClient) DeleteProgressiveRollout(ctx context.Context, in *autoops.DeleteProgressiveRolloutRequest, opts ...grpc.CallOption) (*autoops.DeleteProgressiveRolloutResponse, error) {
 	m.ctrl.T.Helper()
@@ -207,46 +167,6 @@ func (mr *MockClientMockRecorder) DeleteWebhook(ctx, in interface{}, opts ...int
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWebhook", reflect.TypeOf((*MockClient)(nil).DeleteWebhook), varargs...)
-}
-
-// DisableFlagTrigger mocks base method.
-func (m *MockClient) DisableFlagTrigger(ctx context.Context, in *autoops.DisableFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.DisableFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "DisableFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*autoops.DisableFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DisableFlagTrigger indicates an expected call of DisableFlagTrigger.
-func (mr *MockClientMockRecorder) DisableFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableFlagTrigger", reflect.TypeOf((*MockClient)(nil).DisableFlagTrigger), varargs...)
-}
-
-// EnableFlagTrigger mocks base method.
-func (m *MockClient) EnableFlagTrigger(ctx context.Context, in *autoops.EnableFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.EnableFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "EnableFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*autoops.EnableFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// EnableFlagTrigger indicates an expected call of EnableFlagTrigger.
-func (mr *MockClientMockRecorder) EnableFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableFlagTrigger", reflect.TypeOf((*MockClient)(nil).EnableFlagTrigger), varargs...)
 }
 
 // ExecuteAutoOps mocks base method.
@@ -309,26 +229,6 @@ func (mr *MockClientMockRecorder) GetAutoOpsRule(ctx, in interface{}, opts ...in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAutoOpsRule", reflect.TypeOf((*MockClient)(nil).GetAutoOpsRule), varargs...)
 }
 
-// GetFlagTrigger mocks base method.
-func (m *MockClient) GetFlagTrigger(ctx context.Context, in *autoops.GetFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.GetFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*autoops.GetFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetFlagTrigger indicates an expected call of GetFlagTrigger.
-func (mr *MockClientMockRecorder) GetFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagTrigger", reflect.TypeOf((*MockClient)(nil).GetFlagTrigger), varargs...)
-}
-
 // GetProgressiveRollout mocks base method.
 func (m *MockClient) GetProgressiveRollout(ctx context.Context, in *autoops.GetProgressiveRolloutRequest, opts ...grpc.CallOption) (*autoops.GetProgressiveRolloutResponse, error) {
 	m.ctrl.T.Helper()
@@ -387,26 +287,6 @@ func (mr *MockClientMockRecorder) ListAutoOpsRules(ctx, in interface{}, opts ...
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAutoOpsRules", reflect.TypeOf((*MockClient)(nil).ListAutoOpsRules), varargs...)
-}
-
-// ListFlagTriggers mocks base method.
-func (m *MockClient) ListFlagTriggers(ctx context.Context, in *autoops.ListFlagTriggersRequest, opts ...grpc.CallOption) (*autoops.ListFlagTriggersResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ListFlagTriggers", varargs...)
-	ret0, _ := ret[0].(*autoops.ListFlagTriggersResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListFlagTriggers indicates an expected call of ListFlagTriggers.
-func (mr *MockClientMockRecorder) ListFlagTriggers(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFlagTriggers", reflect.TypeOf((*MockClient)(nil).ListFlagTriggers), varargs...)
 }
 
 // ListOpsCounts mocks base method.
@@ -469,26 +349,6 @@ func (mr *MockClientMockRecorder) ListWebhooks(ctx, in interface{}, opts ...inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWebhooks", reflect.TypeOf((*MockClient)(nil).ListWebhooks), varargs...)
 }
 
-// ResetFlagTrigger mocks base method.
-func (m *MockClient) ResetFlagTrigger(ctx context.Context, in *autoops.ResetFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.ResetFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ResetFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*autoops.ResetFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ResetFlagTrigger indicates an expected call of ResetFlagTrigger.
-func (mr *MockClientMockRecorder) ResetFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetFlagTrigger", reflect.TypeOf((*MockClient)(nil).ResetFlagTrigger), varargs...)
-}
-
 // UpdateAutoOpsRule mocks base method.
 func (m *MockClient) UpdateAutoOpsRule(ctx context.Context, in *autoops.UpdateAutoOpsRuleRequest, opts ...grpc.CallOption) (*autoops.UpdateAutoOpsRuleResponse, error) {
 	m.ctrl.T.Helper()
@@ -507,26 +367,6 @@ func (mr *MockClientMockRecorder) UpdateAutoOpsRule(ctx, in interface{}, opts ..
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAutoOpsRule", reflect.TypeOf((*MockClient)(nil).UpdateAutoOpsRule), varargs...)
-}
-
-// UpdateFlagTrigger mocks base method.
-func (m *MockClient) UpdateFlagTrigger(ctx context.Context, in *autoops.UpdateFlagTriggerRequest, opts ...grpc.CallOption) (*autoops.UpdateFlagTriggerResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "UpdateFlagTrigger", varargs...)
-	ret0, _ := ret[0].(*autoops.UpdateFlagTriggerResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateFlagTrigger indicates an expected call of UpdateFlagTrigger.
-func (mr *MockClientMockRecorder) UpdateFlagTrigger(ctx, in interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFlagTrigger", reflect.TypeOf((*MockClient)(nil).UpdateFlagTrigger), varargs...)
 }
 
 // UpdateWebhook mocks base method.

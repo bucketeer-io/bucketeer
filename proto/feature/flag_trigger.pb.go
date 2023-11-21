@@ -16,9 +16,9 @@
 // versions:
 // 	protoc-gen-go v1.26.0
 // 	protoc        v4.23.4
-// source: proto/autoops/flag_trigger.proto
+// source: proto/feature/flag_trigger.proto
 
-package autoops
+package feature
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -64,11 +64,11 @@ func (x FlagTrigger_Type) String() string {
 }
 
 func (FlagTrigger_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_autoops_flag_trigger_proto_enumTypes[0].Descriptor()
+	return file_proto_feature_flag_trigger_proto_enumTypes[0].Descriptor()
 }
 
 func (FlagTrigger_Type) Type() protoreflect.EnumType {
-	return &file_proto_autoops_flag_trigger_proto_enumTypes[0]
+	return &file_proto_feature_flag_trigger_proto_enumTypes[0]
 }
 
 func (x FlagTrigger_Type) Number() protoreflect.EnumNumber {
@@ -77,7 +77,7 @@ func (x FlagTrigger_Type) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use FlagTrigger_Type.Descriptor instead.
 func (FlagTrigger_Type) EnumDescriptor() ([]byte, []int) {
-	return file_proto_autoops_flag_trigger_proto_rawDescGZIP(), []int{0, 0}
+	return file_proto_feature_flag_trigger_proto_rawDescGZIP(), []int{0, 0}
 }
 
 type FlagTrigger_Action int32
@@ -113,11 +113,11 @@ func (x FlagTrigger_Action) String() string {
 }
 
 func (FlagTrigger_Action) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_autoops_flag_trigger_proto_enumTypes[1].Descriptor()
+	return file_proto_feature_flag_trigger_proto_enumTypes[1].Descriptor()
 }
 
 func (FlagTrigger_Action) Type() protoreflect.EnumType {
-	return &file_proto_autoops_flag_trigger_proto_enumTypes[1]
+	return &file_proto_feature_flag_trigger_proto_enumTypes[1]
 }
 
 func (x FlagTrigger_Action) Number() protoreflect.EnumNumber {
@@ -126,7 +126,7 @@ func (x FlagTrigger_Action) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use FlagTrigger_Action.Descriptor instead.
 func (FlagTrigger_Action) EnumDescriptor() ([]byte, []int) {
-	return file_proto_autoops_flag_trigger_proto_rawDescGZIP(), []int{0, 1}
+	return file_proto_feature_flag_trigger_proto_rawDescGZIP(), []int{0, 1}
 }
 
 type FlagTrigger struct {
@@ -137,8 +137,8 @@ type FlagTrigger struct {
 	Id                   string             `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	FeatureId            string             `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
 	EnvironmentNamespace string             `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Type                 FlagTrigger_Type   `protobuf:"varint,4,opt,name=type,proto3,enum=bucketeer.autoops.FlagTrigger_Type" json:"type,omitempty"`
-	Action               FlagTrigger_Action `protobuf:"varint,5,opt,name=action,proto3,enum=bucketeer.autoops.FlagTrigger_Action" json:"action,omitempty"`
+	Type                 FlagTrigger_Type   `protobuf:"varint,4,opt,name=type,proto3,enum=bucketeer.feature.FlagTrigger_Type" json:"type,omitempty"`
+	Action               FlagTrigger_Action `protobuf:"varint,5,opt,name=action,proto3,enum=bucketeer.feature.FlagTrigger_Action" json:"action,omitempty"`
 	Description          string             `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
 	TriggerTimes         int32              `protobuf:"varint,7,opt,name=trigger_times,json=triggerTimes,proto3" json:"trigger_times,omitempty"`
 	LastTriggeredAt      int64              `protobuf:"varint,8,opt,name=last_triggered_at,json=lastTriggeredAt,proto3" json:"last_triggered_at,omitempty"`
@@ -152,7 +152,7 @@ type FlagTrigger struct {
 func (x *FlagTrigger) Reset() {
 	*x = FlagTrigger{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_flag_trigger_proto_msgTypes[0]
+		mi := &file_proto_feature_flag_trigger_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -165,7 +165,7 @@ func (x *FlagTrigger) String() string {
 func (*FlagTrigger) ProtoMessage() {}
 
 func (x *FlagTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_flag_trigger_proto_msgTypes[0]
+	mi := &file_proto_feature_flag_trigger_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -178,7 +178,7 @@ func (x *FlagTrigger) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlagTrigger.ProtoReflect.Descriptor instead.
 func (*FlagTrigger) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_flag_trigger_proto_rawDescGZIP(), []int{0}
+	return file_proto_feature_flag_trigger_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *FlagTrigger) GetId() string {
@@ -272,13 +272,13 @@ func (x *FlagTrigger) GetUpdatedAt() int64 {
 	return 0
 }
 
-var File_proto_autoops_flag_trigger_proto protoreflect.FileDescriptor
+var File_proto_feature_flag_trigger_proto protoreflect.FileDescriptor
 
-var file_proto_autoops_flag_trigger_proto_rawDesc = []byte{
-	0x0a, 0x20, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2f,
+var file_proto_feature_flag_trigger_proto_rawDesc = []byte{
+	0x0a, 0x20, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2f,
 	0x66, 0x6c, 0x61, 0x67, 0x5f, 0x74, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x12, 0x11, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75,
-	0x74, 0x6f, 0x6f, 0x70, 0x73, 0x22, 0xcd, 0x04, 0x0a, 0x0b, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72,
+	0x74, 0x6f, 0x12, 0x11, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65,
+	0x61, 0x74, 0x75, 0x72, 0x65, 0x22, 0xcd, 0x04, 0x0a, 0x0b, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72,
 	0x69, 0x67, 0x67, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x1d, 0x0a, 0x0a, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65,
 	0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x66, 0x65, 0x61, 0x74, 0x75,
@@ -287,11 +287,11 @@ var file_proto_autoops_flag_trigger_proto_rawDesc = []byte{
 	0x01, 0x28, 0x09, 0x52, 0x14, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74,
 	0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x37, 0x0a, 0x04, 0x74, 0x79, 0x70,
 	0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x23, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
-	0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x46, 0x6c, 0x61, 0x67,
+	0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x46, 0x6c, 0x61, 0x67,
 	0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x2e, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79,
 	0x70, 0x65, 0x12, 0x3d, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x05, 0x20, 0x01,
-	0x28, 0x0e, 0x32, 0x25, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61,
-	0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67,
+	0x28, 0x0e, 0x32, 0x25, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66,
+	0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67,
 	0x65, 0x72, 0x2e, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f,
 	0x6e, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e,
 	0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74,
@@ -318,31 +318,31 @@ var file_proto_autoops_flag_trigger_proto_rawDesc = []byte{
 	0x4f, 0x46, 0x46, 0x10, 0x02, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
 	0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f,
 	0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x2f, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x2f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_proto_autoops_flag_trigger_proto_rawDescOnce sync.Once
-	file_proto_autoops_flag_trigger_proto_rawDescData = file_proto_autoops_flag_trigger_proto_rawDesc
+	file_proto_feature_flag_trigger_proto_rawDescOnce sync.Once
+	file_proto_feature_flag_trigger_proto_rawDescData = file_proto_feature_flag_trigger_proto_rawDesc
 )
 
-func file_proto_autoops_flag_trigger_proto_rawDescGZIP() []byte {
-	file_proto_autoops_flag_trigger_proto_rawDescOnce.Do(func() {
-		file_proto_autoops_flag_trigger_proto_rawDescData = protoimpl.X.CompressGZIP(file_proto_autoops_flag_trigger_proto_rawDescData)
+func file_proto_feature_flag_trigger_proto_rawDescGZIP() []byte {
+	file_proto_feature_flag_trigger_proto_rawDescOnce.Do(func() {
+		file_proto_feature_flag_trigger_proto_rawDescData = protoimpl.X.CompressGZIP(file_proto_feature_flag_trigger_proto_rawDescData)
 	})
-	return file_proto_autoops_flag_trigger_proto_rawDescData
+	return file_proto_feature_flag_trigger_proto_rawDescData
 }
 
-var file_proto_autoops_flag_trigger_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_autoops_flag_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_proto_autoops_flag_trigger_proto_goTypes = []interface{}{
-	(FlagTrigger_Type)(0),   // 0: bucketeer.autoops.FlagTrigger.Type
-	(FlagTrigger_Action)(0), // 1: bucketeer.autoops.FlagTrigger.Action
-	(*FlagTrigger)(nil),     // 2: bucketeer.autoops.FlagTrigger
+var file_proto_feature_flag_trigger_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_proto_feature_flag_trigger_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_proto_feature_flag_trigger_proto_goTypes = []interface{}{
+	(FlagTrigger_Type)(0),   // 0: bucketeer.feature.FlagTrigger.Type
+	(FlagTrigger_Action)(0), // 1: bucketeer.feature.FlagTrigger.Action
+	(*FlagTrigger)(nil),     // 2: bucketeer.feature.FlagTrigger
 }
-var file_proto_autoops_flag_trigger_proto_depIdxs = []int32{
-	0, // 0: bucketeer.autoops.FlagTrigger.type:type_name -> bucketeer.autoops.FlagTrigger.Type
-	1, // 1: bucketeer.autoops.FlagTrigger.action:type_name -> bucketeer.autoops.FlagTrigger.Action
+var file_proto_feature_flag_trigger_proto_depIdxs = []int32{
+	0, // 0: bucketeer.feature.FlagTrigger.type:type_name -> bucketeer.feature.FlagTrigger.Type
+	1, // 1: bucketeer.feature.FlagTrigger.action:type_name -> bucketeer.feature.FlagTrigger.Action
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -350,13 +350,13 @@ var file_proto_autoops_flag_trigger_proto_depIdxs = []int32{
 	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_proto_autoops_flag_trigger_proto_init() }
-func file_proto_autoops_flag_trigger_proto_init() {
-	if File_proto_autoops_flag_trigger_proto != nil {
+func init() { file_proto_feature_flag_trigger_proto_init() }
+func file_proto_feature_flag_trigger_proto_init() {
+	if File_proto_feature_flag_trigger_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_proto_autoops_flag_trigger_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_feature_flag_trigger_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FlagTrigger); i {
 			case 0:
 				return &v.state
@@ -373,19 +373,19 @@ func file_proto_autoops_flag_trigger_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_proto_autoops_flag_trigger_proto_rawDesc,
+			RawDescriptor: file_proto_feature_flag_trigger_proto_rawDesc,
 			NumEnums:      2,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_proto_autoops_flag_trigger_proto_goTypes,
-		DependencyIndexes: file_proto_autoops_flag_trigger_proto_depIdxs,
-		EnumInfos:         file_proto_autoops_flag_trigger_proto_enumTypes,
-		MessageInfos:      file_proto_autoops_flag_trigger_proto_msgTypes,
+		GoTypes:           file_proto_feature_flag_trigger_proto_goTypes,
+		DependencyIndexes: file_proto_feature_flag_trigger_proto_depIdxs,
+		EnumInfos:         file_proto_feature_flag_trigger_proto_enumTypes,
+		MessageInfos:      file_proto_feature_flag_trigger_proto_msgTypes,
 	}.Build()
-	File_proto_autoops_flag_trigger_proto = out.File
-	file_proto_autoops_flag_trigger_proto_rawDesc = nil
-	file_proto_autoops_flag_trigger_proto_goTypes = nil
-	file_proto_autoops_flag_trigger_proto_depIdxs = nil
+	File_proto_feature_flag_trigger_proto = out.File
+	file_proto_feature_flag_trigger_proto_rawDesc = nil
+	file_proto_feature_flag_trigger_proto_goTypes = nil
+	file_proto_feature_flag_trigger_proto_depIdxs = nil
 }

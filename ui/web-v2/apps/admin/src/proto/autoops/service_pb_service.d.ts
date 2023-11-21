@@ -157,78 +157,6 @@ type AutoOpsServiceExecuteProgressiveRollout = {
   readonly responseType: typeof proto_autoops_service_pb.ExecuteProgressiveRolloutResponse;
 };
 
-type AutoOpsServiceCreateFlagTrigger = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.CreateFlagTriggerRequest;
-  readonly responseType: typeof proto_autoops_service_pb.CreateFlagTriggerResponse;
-};
-
-type AutoOpsServiceUpdateFlagTrigger = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.UpdateFlagTriggerRequest;
-  readonly responseType: typeof proto_autoops_service_pb.UpdateFlagTriggerResponse;
-};
-
-type AutoOpsServiceEnableFlagTrigger = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.EnableFlagTriggerRequest;
-  readonly responseType: typeof proto_autoops_service_pb.EnableFlagTriggerResponse;
-};
-
-type AutoOpsServiceDisableFlagTrigger = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.DisableFlagTriggerRequest;
-  readonly responseType: typeof proto_autoops_service_pb.DisableFlagTriggerResponse;
-};
-
-type AutoOpsServiceResetFlagTrigger = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.ResetFlagTriggerRequest;
-  readonly responseType: typeof proto_autoops_service_pb.ResetFlagTriggerResponse;
-};
-
-type AutoOpsServiceDeleteFlagTrigger = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.DeleteFlagTriggerRequest;
-  readonly responseType: typeof proto_autoops_service_pb.DeleteFlagTriggerResponse;
-};
-
-type AutoOpsServiceGetFlagTrigger = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.GetFlagTriggerRequest;
-  readonly responseType: typeof proto_autoops_service_pb.GetFlagTriggerResponse;
-};
-
-type AutoOpsServiceListFlagTriggers = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.ListFlagTriggersRequest;
-  readonly responseType: typeof proto_autoops_service_pb.ListFlagTriggersResponse;
-};
-
 export class AutoOpsService {
   static readonly serviceName: string;
   static readonly GetAutoOpsRule: AutoOpsServiceGetAutoOpsRule;
@@ -248,14 +176,6 @@ export class AutoOpsService {
   static readonly DeleteProgressiveRollout: AutoOpsServiceDeleteProgressiveRollout;
   static readonly ListProgressiveRollouts: AutoOpsServiceListProgressiveRollouts;
   static readonly ExecuteProgressiveRollout: AutoOpsServiceExecuteProgressiveRollout;
-  static readonly CreateFlagTrigger: AutoOpsServiceCreateFlagTrigger;
-  static readonly UpdateFlagTrigger: AutoOpsServiceUpdateFlagTrigger;
-  static readonly EnableFlagTrigger: AutoOpsServiceEnableFlagTrigger;
-  static readonly DisableFlagTrigger: AutoOpsServiceDisableFlagTrigger;
-  static readonly ResetFlagTrigger: AutoOpsServiceResetFlagTrigger;
-  static readonly DeleteFlagTrigger: AutoOpsServiceDeleteFlagTrigger;
-  static readonly GetFlagTrigger: AutoOpsServiceGetFlagTrigger;
-  static readonly ListFlagTriggers: AutoOpsServiceListFlagTriggers;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -442,78 +362,6 @@ export class AutoOpsServiceClient {
   executeProgressiveRollout(
     requestMessage: proto_autoops_service_pb.ExecuteProgressiveRolloutRequest,
     callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ExecuteProgressiveRolloutResponse|null) => void
-  ): UnaryResponse;
-  createFlagTrigger(
-    requestMessage: proto_autoops_service_pb.CreateFlagTriggerRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.CreateFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  createFlagTrigger(
-    requestMessage: proto_autoops_service_pb.CreateFlagTriggerRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.CreateFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  updateFlagTrigger(
-    requestMessage: proto_autoops_service_pb.UpdateFlagTriggerRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.UpdateFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  updateFlagTrigger(
-    requestMessage: proto_autoops_service_pb.UpdateFlagTriggerRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.UpdateFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  enableFlagTrigger(
-    requestMessage: proto_autoops_service_pb.EnableFlagTriggerRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.EnableFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  enableFlagTrigger(
-    requestMessage: proto_autoops_service_pb.EnableFlagTriggerRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.EnableFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  disableFlagTrigger(
-    requestMessage: proto_autoops_service_pb.DisableFlagTriggerRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.DisableFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  disableFlagTrigger(
-    requestMessage: proto_autoops_service_pb.DisableFlagTriggerRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.DisableFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  resetFlagTrigger(
-    requestMessage: proto_autoops_service_pb.ResetFlagTriggerRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ResetFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  resetFlagTrigger(
-    requestMessage: proto_autoops_service_pb.ResetFlagTriggerRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ResetFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  deleteFlagTrigger(
-    requestMessage: proto_autoops_service_pb.DeleteFlagTriggerRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.DeleteFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  deleteFlagTrigger(
-    requestMessage: proto_autoops_service_pb.DeleteFlagTriggerRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.DeleteFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  getFlagTrigger(
-    requestMessage: proto_autoops_service_pb.GetFlagTriggerRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.GetFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  getFlagTrigger(
-    requestMessage: proto_autoops_service_pb.GetFlagTriggerRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.GetFlagTriggerResponse|null) => void
-  ): UnaryResponse;
-  listFlagTriggers(
-    requestMessage: proto_autoops_service_pb.ListFlagTriggersRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ListFlagTriggersResponse|null) => void
-  ): UnaryResponse;
-  listFlagTriggers(
-    requestMessage: proto_autoops_service_pb.ListFlagTriggersRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ListFlagTriggersResponse|null) => void
   ): UnaryResponse;
 }
 
