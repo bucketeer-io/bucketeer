@@ -3464,6 +3464,83 @@
           },
           {
             "name": "ConvertTrialProjectCommand"
+          },
+          {
+            "name": "CreateOrganizationCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateTrialOrganizationCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "RenameOrganizationCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeDescriptionOrganizationCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EnableOrganizationCommand"
+          },
+          {
+            "name": "DisableOrganizationCommand"
+          },
+          {
+            "name": "ArchiveOrganizationCommand"
+          },
+          {
+            "name": "UnarchiveOrganizationCommand"
           }
         ],
         "package": {
@@ -3521,6 +3598,77 @@
               },
               {
                 "id": 8,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.environment"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/environment"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "environment:/:organization.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "Organization",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "disabled",
+                "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "archived",
+                "type": "bool"
+              },
+              {
+                "id": 7,
+                "name": "trial",
+                "type": "bool"
+              },
+              {
+                "id": 8,
+                "name": "creator_email",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 10,
                 "name": "updated_at",
                 "type": "int64"
               }
@@ -3678,6 +3826,46 @@
           },
           {
             "name": "ListProjectsRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          },
+          {
+            "name": "ListOrganizationsRequest.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "ID",
+                "integer": 1
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 2
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 3
+              },
+              {
+                "name": "NAME",
+                "integer": 4
+              },
+              {
+                "name": "URL_CODE",
+                "integer": 5
+              }
+            ]
+          },
+          {
+            "name": "ListOrganizationsRequest.OrderDirection",
             "enum_fields": [
               {
                 "name": "ASC"
@@ -4035,6 +4223,217 @@
           },
           {
             "name": "ConvertTrialProjectResponse"
+          },
+          {
+            "name": "GetOrganizationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetOrganizationResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "organization",
+                "type": "Organization"
+              }
+            ]
+          },
+          {
+            "name": "ListOrganizationsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              }
+            ]
+          },
+          {
+            "name": "ListOrganizationsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "Organizations",
+                "type": "Organization",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CreateOrganizationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "command",
+                "type": "CreateOrganizationCommand"
+              }
+            ]
+          },
+          {
+            "name": "CreateOrganizationResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "Organization",
+                "type": "Organization"
+              }
+            ]
+          },
+          {
+            "name": "CreateTrialOrganizationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "command",
+                "type": "CreateTrialOrganizationCommand"
+              }
+            ]
+          },
+          {
+            "name": "CreateTrialOrganizationResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "Organization",
+                "type": "Organization"
+              }
+            ]
+          },
+          {
+            "name": "UpdateOrganizationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "change_description_command",
+                "type": "ChangeDescriptionOrganizationCommand"
+              },
+              {
+                "id": 3,
+                "name": "rename_command",
+                "type": "RenameOrganizationCommand"
+              }
+            ]
+          },
+          {
+            "name": "UpdateOrganizationResponse"
+          },
+          {
+            "name": "EnableOrganizationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "command",
+                "type": "EnableOrganizationCommand"
+              }
+            ]
+          },
+          {
+            "name": "EnableOrganizationResponse"
+          },
+          {
+            "name": "DisableOrganizationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "command",
+                "type": "DisableOrganizationCommand"
+              }
+            ]
+          },
+          {
+            "name": "DisableOrganizationResponse"
+          },
+          {
+            "name": "ArchiveOrganizationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "command",
+                "type": "ArchiveOrganizationCommand"
+              }
+            ]
+          },
+          {
+            "name": "ArchiveOrganizationResponse"
+          },
+          {
+            "name": "UnarchiveOrganizationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "command",
+                "type": "UnarchiveOrganizationCommand"
+              }
+            ]
+          },
+          {
+            "name": "UnarchiveOrganizationResponse"
           }
         ],
         "services": [
@@ -4110,6 +4509,51 @@
                 "name": "ConvertTrialProject",
                 "in_type": "ConvertTrialProjectRequest",
                 "out_type": "ConvertTrialProjectResponse"
+              },
+              {
+                "name": "GetOrganization",
+                "in_type": "GetOrganizationRequest",
+                "out_type": "GetOrganizationResponse"
+              },
+              {
+                "name": "ListOrganizations",
+                "in_type": "ListOrganizationsRequest",
+                "out_type": "ListOrganizationsResponse"
+              },
+              {
+                "name": "CreateOrganization",
+                "in_type": "CreateOrganizationRequest",
+                "out_type": "CreateOrganizationResponse"
+              },
+              {
+                "name": "CreateTrialOrganization",
+                "in_type": "CreateTrialOrganizationRequest",
+                "out_type": "CreateTrialOrganizationResponse"
+              },
+              {
+                "name": "UpdateOrganization",
+                "in_type": "UpdateOrganizationRequest",
+                "out_type": "UpdateOrganizationResponse"
+              },
+              {
+                "name": "EnableOrganization",
+                "in_type": "EnableOrganizationRequest",
+                "out_type": "EnableOrganizationResponse"
+              },
+              {
+                "name": "DisableOrganization",
+                "in_type": "DisableOrganizationRequest",
+                "out_type": "DisableOrganizationResponse"
+              },
+              {
+                "name": "ArchiveOrganization",
+                "in_type": "ArchiveOrganizationRequest",
+                "out_type": "ArchiveOrganizationResponse"
+              },
+              {
+                "name": "UnarchiveOrganization",
+                "in_type": "UnarchiveOrganizationRequest",
+                "out_type": "UnarchiveOrganizationResponse"
               }
             ]
           }
@@ -4123,6 +4567,9 @@
           },
           {
             "path": "proto/environment/project.proto"
+          },
+          {
+            "path": "proto/environment/organization.proto"
           },
           {
             "path": "proto/environment/command.proto"
