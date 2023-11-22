@@ -279,14 +279,20 @@ service EnvironmentService {
   rpc ConvertTrialProject(ConvertTrialProjectRequest)
       returns (ConvertTrialProjectResponse) {}
 
-  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse) {}
-  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {}
-  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {}
+  rpc GetOrganization(GetOrganizationRequest)
+      returns (GetOrganizationResponse) {}
+  rpc ListOrganizations(ListOrganizationsRequest)
+      returns (ListOrganizationsResponse) {}
+  rpc CreateOrganization(CreateOrganizationRequest)
+      returns (CreateOrganizationResponse) {}
   rpc CreateTrialOrganization(CreateTrialOrganizationRequest)
       returns (CreateTrialOrganizationResponse) {}
-  rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse) {}
-  rpc EnableOrganization(EnableOrganizationRequest) returns (EnableOrganizationResponse) {}
-  rpc DisableOrganization(DisableOrganizationRequest) returns (DisableOrganizationResponse) {}
+  rpc UpdateOrganization(UpdateOrganizationRequest)
+      returns (UpdateOrganizationResponse) {}
+  rpc EnableOrganization(EnableOrganizationRequest)
+      returns (EnableOrganizationResponse) {}
+  rpc DisableOrganization(DisableOrganizationRequest)
+      returns (DisableOrganizationResponse) {}
   rpc ArchiveOrganization(ArchiveOrganizationRequest)
       returns (ArchiveOrganizationResponse) {}
   rpc UnarchiveOrganization(UnarchiveOrganizationRequest)
