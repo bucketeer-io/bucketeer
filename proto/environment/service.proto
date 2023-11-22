@@ -210,18 +210,10 @@ message CreateOrganizationResponse {
   Organization Organization = 1;
 }
 
-message CreateTrialOrganizationRequest {
-  CreateTrialOrganizationCommand command = 1;
-}
-
-message CreateTrialOrganizationResponse {
-  Organization Organization = 1;
-}
-
 message UpdateOrganizationRequest {
   string id = 1;
-  ChangeDescriptionOrganizationCommand change_description_command = 2;
-  RenameOrganizationCommand rename_command = 3;
+  ChangeNameOrganizationCommand rename_command = 2;
+  ChangeDescriptionOrganizationCommand change_description_command = 3;
 }
 
 message UpdateOrganizationResponse {}
@@ -285,8 +277,6 @@ service EnvironmentService {
       returns (ListOrganizationsResponse) {}
   rpc CreateOrganization(CreateOrganizationRequest)
       returns (CreateOrganizationResponse) {}
-  rpc CreateTrialOrganization(CreateTrialOrganizationRequest)
-      returns (CreateTrialOrganizationResponse) {}
   rpc UpdateOrganization(UpdateOrganizationRequest)
       returns (UpdateOrganizationResponse) {}
   rpc EnableOrganization(EnableOrganizationRequest)

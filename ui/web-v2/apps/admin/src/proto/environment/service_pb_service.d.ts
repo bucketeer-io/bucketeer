@@ -157,15 +157,6 @@ type EnvironmentServiceCreateOrganization = {
   readonly responseType: typeof proto_environment_service_pb.CreateOrganizationResponse;
 };
 
-type EnvironmentServiceCreateTrialOrganization = {
-  readonly methodName: string;
-  readonly service: typeof EnvironmentService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_environment_service_pb.CreateTrialOrganizationRequest;
-  readonly responseType: typeof proto_environment_service_pb.CreateTrialOrganizationResponse;
-};
-
 type EnvironmentServiceUpdateOrganization = {
   readonly methodName: string;
   readonly service: typeof EnvironmentService;
@@ -230,7 +221,6 @@ export class EnvironmentService {
   static readonly GetOrganization: EnvironmentServiceGetOrganization;
   static readonly ListOrganizations: EnvironmentServiceListOrganizations;
   static readonly CreateOrganization: EnvironmentServiceCreateOrganization;
-  static readonly CreateTrialOrganization: EnvironmentServiceCreateTrialOrganization;
   static readonly UpdateOrganization: EnvironmentServiceUpdateOrganization;
   static readonly EnableOrganization: EnvironmentServiceEnableOrganization;
   static readonly DisableOrganization: EnvironmentServiceDisableOrganization;
@@ -422,15 +412,6 @@ export class EnvironmentServiceClient {
   createOrganization(
     requestMessage: proto_environment_service_pb.CreateOrganizationRequest,
     callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateOrganizationResponse|null) => void
-  ): UnaryResponse;
-  createTrialOrganization(
-    requestMessage: proto_environment_service_pb.CreateTrialOrganizationRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateTrialOrganizationResponse|null) => void
-  ): UnaryResponse;
-  createTrialOrganization(
-    requestMessage: proto_environment_service_pb.CreateTrialOrganizationRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateTrialOrganizationResponse|null) => void
   ): UnaryResponse;
   updateOrganization(
     requestMessage: proto_environment_service_pb.UpdateOrganizationRequest,

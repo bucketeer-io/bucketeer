@@ -41,13 +41,6 @@ func (s *EnvironmentService) CreateOrganization(
 	return &environmentproto.CreateOrganizationResponse{}, nil
 }
 
-func (s *EnvironmentService) CreateTrialOrganization(
-	ctx context.Context,
-	req *environmentproto.CreateTrialOrganizationRequest,
-) (*environmentproto.CreateTrialOrganizationResponse, error) {
-	return &environmentproto.CreateTrialOrganizationResponse{}, nil
-}
-
 func (s *EnvironmentService) UpdateOrganization(
 	ctx context.Context,
 	req *environmentproto.UpdateOrganizationRequest,

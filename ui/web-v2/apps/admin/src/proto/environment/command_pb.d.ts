@@ -269,6 +269,9 @@ export class CreateOrganizationCommand extends jspb.Message {
   getDescription(): string;
   setDescription(value: string): void;
 
+  getIsTrial(): string;
+  setIsTrial(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateOrganizationCommand.AsObject;
   static toObject(includeInstance: boolean, msg: CreateOrganizationCommand): CreateOrganizationCommand.AsObject;
@@ -284,52 +287,25 @@ export namespace CreateOrganizationCommand {
     name: string,
     urlCode: string,
     description: string,
+    isTrial: string,
   }
 }
 
-export class CreateTrialOrganizationCommand extends jspb.Message {
-  getName(): string;
-  setName(value: string): void;
-
-  getUrlCode(): string;
-  setUrlCode(value: string): void;
-
-  getDescription(): string;
-  setDescription(value: string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): CreateTrialOrganizationCommand.AsObject;
-  static toObject(includeInstance: boolean, msg: CreateTrialOrganizationCommand): CreateTrialOrganizationCommand.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: CreateTrialOrganizationCommand, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): CreateTrialOrganizationCommand;
-  static deserializeBinaryFromReader(message: CreateTrialOrganizationCommand, reader: jspb.BinaryReader): CreateTrialOrganizationCommand;
-}
-
-export namespace CreateTrialOrganizationCommand {
-  export type AsObject = {
-    name: string,
-    urlCode: string,
-    description: string,
-  }
-}
-
-export class RenameOrganizationCommand extends jspb.Message {
+export class ChangeNameOrganizationCommand extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): RenameOrganizationCommand.AsObject;
-  static toObject(includeInstance: boolean, msg: RenameOrganizationCommand): RenameOrganizationCommand.AsObject;
+  toObject(includeInstance?: boolean): ChangeNameOrganizationCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: ChangeNameOrganizationCommand): ChangeNameOrganizationCommand.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: RenameOrganizationCommand, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): RenameOrganizationCommand;
-  static deserializeBinaryFromReader(message: RenameOrganizationCommand, reader: jspb.BinaryReader): RenameOrganizationCommand;
+  static serializeBinaryToWriter(message: ChangeNameOrganizationCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeNameOrganizationCommand;
+  static deserializeBinaryFromReader(message: ChangeNameOrganizationCommand, reader: jspb.BinaryReader): ChangeNameOrganizationCommand;
 }
 
-export namespace RenameOrganizationCommand {
+export namespace ChangeNameOrganizationCommand {
   export type AsObject = {
     name: string,
   }

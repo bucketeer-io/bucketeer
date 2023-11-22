@@ -163,15 +163,6 @@ EnvironmentService.CreateOrganization = {
   responseType: proto_environment_service_pb.CreateOrganizationResponse
 };
 
-EnvironmentService.CreateTrialOrganization = {
-  methodName: "CreateTrialOrganization",
-  service: EnvironmentService,
-  requestStream: false,
-  responseStream: false,
-  requestType: proto_environment_service_pb.CreateTrialOrganizationRequest,
-  responseType: proto_environment_service_pb.CreateTrialOrganizationResponse
-};
-
 EnvironmentService.UpdateOrganization = {
   methodName: "UpdateOrganization",
   service: EnvironmentService,
@@ -725,37 +716,6 @@ EnvironmentServiceClient.prototype.createOrganization = function createOrganizat
     callback = arguments[1];
   }
   var client = grpc.unary(EnvironmentService.CreateOrganization, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
-        }
-      }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
-  };
-};
-
-EnvironmentServiceClient.prototype.createTrialOrganization = function createTrialOrganization(requestMessage, metadata, callback) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(EnvironmentService.CreateTrialOrganization, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

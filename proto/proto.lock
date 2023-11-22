@@ -3482,31 +3482,16 @@
                 "id": 3,
                 "name": "description",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "CreateTrialOrganizationCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
               },
               {
-                "id": 2,
-                "name": "url_code",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "description",
+                "id": 4,
+                "name": "is_trial",
                 "type": "string"
               }
             ]
           },
           {
-            "name": "RenameOrganizationCommand",
+            "name": "ChangeNameOrganizationCommand",
             "fields": [
               {
                 "id": 1,
@@ -4316,26 +4301,6 @@
             ]
           },
           {
-            "name": "CreateTrialOrganizationRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "command",
-                "type": "CreateTrialOrganizationCommand"
-              }
-            ]
-          },
-          {
-            "name": "CreateTrialOrganizationResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "Organization",
-                "type": "Organization"
-              }
-            ]
-          },
-          {
             "name": "UpdateOrganizationRequest",
             "fields": [
               {
@@ -4345,13 +4310,13 @@
               },
               {
                 "id": 2,
-                "name": "change_description_command",
-                "type": "ChangeDescriptionOrganizationCommand"
+                "name": "rename_command",
+                "type": "ChangeNameOrganizationCommand"
               },
               {
                 "id": 3,
-                "name": "rename_command",
-                "type": "RenameOrganizationCommand"
+                "name": "change_description_command",
+                "type": "ChangeDescriptionOrganizationCommand"
               }
             ]
           },
@@ -4519,11 +4484,6 @@
                 "name": "CreateOrganization",
                 "in_type": "CreateOrganizationRequest",
                 "out_type": "CreateOrganizationResponse"
-              },
-              {
-                "name": "CreateTrialOrganization",
-                "in_type": "CreateTrialOrganizationRequest",
-                "out_type": "CreateTrialOrganizationResponse"
               },
               {
                 "name": "UpdateOrganization",
