@@ -206,6 +206,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
 		health.WithCheck("persister", p.Check),
+		health.WithCheck("redis", redisV3Client.Check),
 	)
 	go healthChecker.Run(ctx)
 
