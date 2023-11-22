@@ -178,6 +178,7 @@ func (p *persister) Run(ctx context.Context, metrics metrics.Metrics, logger *za
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
 		health.WithCheck("segment-persister", persister.Check),
+		health.WithCheck("redis", redisV3Client.Check),
 	)
 	go healthChecker.Run(ctx)
 

@@ -162,6 +162,7 @@ func (c *apiKeyCacher) Run(ctx context.Context, metrics metrics.Metrics, logger 
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
 		health.WithCheck("cacher", cacher.Check),
+		health.WithCheck("redis", redisV3Client.Check),
 	)
 	go healthChecker.Run(ctx)
 

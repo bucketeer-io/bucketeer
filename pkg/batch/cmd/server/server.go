@@ -409,6 +409,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
+		health.WithCheck("redis", redisV3Client.Check),
 	)
 	go healthChecker.Run(ctx)
 
