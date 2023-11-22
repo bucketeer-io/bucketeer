@@ -89,6 +89,26 @@ func (mr *MockClientMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockClient)(nil).Close))
 }
 
+// ConvertTrialOrganization mocks base method.
+func (m *MockClient) ConvertTrialOrganization(ctx context.Context, in *environment.ConvertTrialOrganizationRequest, opts ...grpc.CallOption) (*environment.ConvertTrialOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ConvertTrialOrganization", varargs...)
+	ret0, _ := ret[0].(*environment.ConvertTrialOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConvertTrialOrganization indicates an expected call of ConvertTrialOrganization.
+func (mr *MockClientMockRecorder) ConvertTrialOrganization(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConvertTrialOrganization", reflect.TypeOf((*MockClient)(nil).ConvertTrialOrganization), varargs...)
+}
+
 // ConvertTrialProject mocks base method.
 func (m *MockClient) ConvertTrialProject(ctx context.Context, in *environment.ConvertTrialProjectRequest, opts ...grpc.CallOption) (*environment.ConvertTrialProjectResponse, error) {
 	m.ctrl.T.Helper()

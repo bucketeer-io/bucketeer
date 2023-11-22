@@ -75,3 +75,10 @@ func (s *EnvironmentService) UnarchiveOrganization(
 ) (*environmentproto.UnarchiveOrganizationResponse, error) {
 	return &environmentproto.UnarchiveOrganizationResponse{}, nil
 }
+
+func (s *EnvironmentService) ConvertTrialOrganization(
+	ctx context.Context,
+	req *environmentproto.ConvertTrialOrganizationRequest,
+) (*environmentproto.ConvertTrialOrganizationResponse, error) {
+	return &environmentproto.ConvertTrialOrganizationResponse{}, nil
+}

@@ -1100,3 +1100,45 @@ export namespace UnarchiveOrganizationResponse {
   }
 }
 
+export class ConvertTrialOrganizationRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_environment_command_pb.ConvertTrialOrganizationCommand | undefined;
+  setCommand(value?: proto_environment_command_pb.ConvertTrialOrganizationCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ConvertTrialOrganizationRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ConvertTrialOrganizationRequest): ConvertTrialOrganizationRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ConvertTrialOrganizationRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ConvertTrialOrganizationRequest;
+  static deserializeBinaryFromReader(message: ConvertTrialOrganizationRequest, reader: jspb.BinaryReader): ConvertTrialOrganizationRequest;
+}
+
+export namespace ConvertTrialOrganizationRequest {
+  export type AsObject = {
+    id: string,
+    command?: proto_environment_command_pb.ConvertTrialOrganizationCommand.AsObject,
+  }
+}
+
+export class ConvertTrialOrganizationResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ConvertTrialOrganizationResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ConvertTrialOrganizationResponse): ConvertTrialOrganizationResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ConvertTrialOrganizationResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ConvertTrialOrganizationResponse;
+  static deserializeBinaryFromReader(message: ConvertTrialOrganizationResponse, reader: jspb.BinaryReader): ConvertTrialOrganizationResponse;
+}
+
+export namespace ConvertTrialOrganizationResponse {
+  export type AsObject = {
+  }
+}
+

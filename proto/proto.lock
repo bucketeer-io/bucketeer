@@ -3521,6 +3521,9 @@
           },
           {
             "name": "UnarchiveOrganizationCommand"
+          },
+          {
+            "name": "ConvertTrialOrganizationCommand"
           }
         ],
         "package": {
@@ -4394,6 +4397,24 @@
           },
           {
             "name": "UnarchiveOrganizationResponse"
+          },
+          {
+            "name": "ConvertTrialOrganizationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "command",
+                "type": "ConvertTrialOrganizationCommand"
+              }
+            ]
+          },
+          {
+            "name": "ConvertTrialOrganizationResponse"
           }
         ],
         "services": [
@@ -4509,6 +4530,11 @@
                 "name": "UnarchiveOrganization",
                 "in_type": "UnarchiveOrganizationRequest",
                 "out_type": "UnarchiveOrganizationResponse"
+              },
+              {
+                "name": "ConvertTrialOrganization",
+                "in_type": "ConvertTrialOrganizationRequest",
+                "out_type": "ConvertTrialOrganizationResponse"
               }
             ]
           }

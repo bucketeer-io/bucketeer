@@ -86,3 +86,5 @@ message DisableOrganizationCommand {}
 message ArchiveOrganizationCommand {}
 
 message UnarchiveOrganizationCommand {}
+
+message ConvertTrialOrganizationCommand {}

@@ -395,3 +395,19 @@ export namespace UnarchiveOrganizationCommand {
   }
 }
 
+export class ConvertTrialOrganizationCommand extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ConvertTrialOrganizationCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: ConvertTrialOrganizationCommand): ConvertTrialOrganizationCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ConvertTrialOrganizationCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ConvertTrialOrganizationCommand;
+  static deserializeBinaryFromReader(message: ConvertTrialOrganizationCommand, reader: jspb.BinaryReader): ConvertTrialOrganizationCommand;
+}
+
+export namespace ConvertTrialOrganizationCommand {
+  export type AsObject = {
+  }
+}
+

@@ -246,6 +246,13 @@ message UnarchiveOrganizationRequest {
 
 message UnarchiveOrganizationResponse {}
 
+message ConvertTrialOrganizationRequest {
+  string id = 1;
+  ConvertTrialOrganizationCommand command = 2;
+}
+
+message ConvertTrialOrganizationResponse {}
+
 service EnvironmentService {
   rpc GetEnvironmentV2(GetEnvironmentV2Request)
       returns (GetEnvironmentV2Response) {}
@@ -287,4 +294,6 @@ service EnvironmentService {
       returns (ArchiveOrganizationResponse) {}
   rpc UnarchiveOrganization(UnarchiveOrganizationRequest)
       returns (UnarchiveOrganizationResponse) {}
+  rpc ConvertTrialOrganization(ConvertTrialOrganizationRequest)
+      returns (ConvertTrialOrganizationResponse) {}
 }

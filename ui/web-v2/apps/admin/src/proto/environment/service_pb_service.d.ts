@@ -202,6 +202,15 @@ type EnvironmentServiceUnarchiveOrganization = {
   readonly responseType: typeof proto_environment_service_pb.UnarchiveOrganizationResponse;
 };
 
+type EnvironmentServiceConvertTrialOrganization = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.ConvertTrialOrganizationRequest;
+  readonly responseType: typeof proto_environment_service_pb.ConvertTrialOrganizationResponse;
+};
+
 export class EnvironmentService {
   static readonly serviceName: string;
   static readonly GetEnvironmentV2: EnvironmentServiceGetEnvironmentV2;
@@ -226,6 +235,7 @@ export class EnvironmentService {
   static readonly DisableOrganization: EnvironmentServiceDisableOrganization;
   static readonly ArchiveOrganization: EnvironmentServiceArchiveOrganization;
   static readonly UnarchiveOrganization: EnvironmentServiceUnarchiveOrganization;
+  static readonly ConvertTrialOrganization: EnvironmentServiceConvertTrialOrganization;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -457,6 +467,15 @@ export class EnvironmentServiceClient {
   unarchiveOrganization(
     requestMessage: proto_environment_service_pb.UnarchiveOrganizationRequest,
     callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UnarchiveOrganizationResponse|null) => void
+  ): UnaryResponse;
+  convertTrialOrganization(
+    requestMessage: proto_environment_service_pb.ConvertTrialOrganizationRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ConvertTrialOrganizationResponse|null) => void
+  ): UnaryResponse;
+  convertTrialOrganization(
+    requestMessage: proto_environment_service_pb.ConvertTrialOrganizationRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ConvertTrialOrganizationResponse|null) => void
   ): UnaryResponse;
 }
 
