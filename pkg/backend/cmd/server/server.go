@@ -317,6 +317,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+	// healthCheckService
+	restHealthChecker := health.NewRestChecker(
+		"", "",
+		health.WithTimeout(healthCheckTimeout),
+		health.WithCheck("metrics", metrics.Check),
+	)
+	go restHealthChecker.Run(ctx)
+	// healthcheckService
+	healthcheckServer := rest.NewServer(
+		*s.certPath, *s.keyPath,
+		rest.WithLogger(logger),
+		rest.WithService(restHealthChecker),
+		rest.WithMetrics(registerer),
+	)
+	go healthcheckServer.Run()
 	// mysqlClient
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
@@ -348,23 +363,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 	nonPersistentRedisV3Cache := cachev3.NewRedisCache(nonPersistentRedisClient)
-	// healthCheckService
-	restHealthChecker := health.NewRestChecker(
-		"", "",
-		health.WithTimeout(healthCheckTimeout),
-		health.WithCheck("metrics", metrics.Check),
-		health.WithCheck("persistent-redis", persistentRedisClient.Check),
-		health.WithCheck("non-persistent-redis", nonPersistentRedisClient.Check),
-	)
-	go restHealthChecker.Run(ctx)
-	// healthcheckService
-	healthcheckServer := rest.NewServer(
-		*s.certPath, *s.keyPath,
-		rest.WithLogger(logger),
-		rest.WithService(restHealthChecker),
-		rest.WithMetrics(registerer),
-	)
-	go healthcheckServer.Run()
 	// bigQueryQuerier
 	bigQueryQuerier, err := s.createBigQueryQuerier(ctx, *s.project, *s.bigQueryDataLocation, registerer, logger)
 	if err != nil {

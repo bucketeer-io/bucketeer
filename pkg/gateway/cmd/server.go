@@ -254,9 +254,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		api.WithLogger(logger),
 	)
 
-	// By checking the Redis in the API Gateway, if it fails, it won't get the features from the DB.
-	// But if we don't test it, the DB might fail due to high requests until the container restarts.
-	// So we don't check it because we want to avoid internal errors as much as possible.
+	// We don't check the Redis health status because if the check fails,
+	// the Kubernetes will restart the container and it might cause internal errors.
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
