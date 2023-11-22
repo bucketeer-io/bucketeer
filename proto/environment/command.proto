@@ -68,7 +68,7 @@ message CreateOrganizationCommand {
   string name = 1;
   string url_code = 2;
   string description = 3;  // optional
-  string is_trial = 4;
+  bool is_trial = 4;
 }
 
 message ChangeNameOrganizationCommand {

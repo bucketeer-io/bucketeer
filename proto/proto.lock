@@ -3486,7 +3486,7 @@
               {
                 "id": 4,
                 "name": "is_trial",
-                "type": "string"
+                "type": "bool"
               }
             ]
           },

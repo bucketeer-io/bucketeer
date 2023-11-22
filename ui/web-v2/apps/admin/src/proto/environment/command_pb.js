@@ -2181,7 +2181,7 @@ proto.bucketeer.environment.CreateOrganizationCommand.toObject = function(includ
     name: jspb.Message.getFieldWithDefault(msg, 1, ""),
     urlCode: jspb.Message.getFieldWithDefault(msg, 2, ""),
     description: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    isTrial: jspb.Message.getFieldWithDefault(msg, 4, "")
+    isTrial: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
   };
 
   if (includeInstance) {
@@ -2231,7 +2231,7 @@ proto.bucketeer.environment.CreateOrganizationCommand.deserializeBinaryFromReade
       msg.setDescription(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {boolean} */ (reader.readBool());
       msg.setIsTrial(value);
       break;
     default:
@@ -2285,8 +2285,8 @@ proto.bucketeer.environment.CreateOrganizationCommand.serializeBinaryToWriter = 
     );
   }
   f = message.getIsTrial();
-  if (f.length > 0) {
-    writer.writeString(
+  if (f) {
+    writer.writeBool(
       4,
       f
     );
@@ -2349,20 +2349,20 @@ proto.bucketeer.environment.CreateOrganizationCommand.prototype.setDescription =
 
 
 /**
- * optional string is_trial = 4;
- * @return {string}
+ * optional bool is_trial = 4;
+ * @return {boolean}
  */
 proto.bucketeer.environment.CreateOrganizationCommand.prototype.getIsTrial = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 4, false));
 };
 
 
 /**
- * @param {string} value
+ * @param {boolean} value
  * @return {!proto.bucketeer.environment.CreateOrganizationCommand} returns this
  */
 proto.bucketeer.environment.CreateOrganizationCommand.prototype.setIsTrial = function(value) {
-  return jspb.Message.setProto3StringField(this, 4, value);
+  return jspb.Message.setProto3BooleanField(this, 4, value);
 };
 
 
