@@ -63,3 +63,28 @@ message EnableProjectCommand {}
 message DisableProjectCommand {}
 
 message ConvertTrialProjectCommand {}
+
+message CreateOrganizationCommand {
+  string name = 1;
+  string url_code = 2;
+  string description = 3;  // optional
+  bool is_trial = 4;
+}
+
+message ChangeNameOrganizationCommand {
+  string name = 1;
+}
+
+message ChangeDescriptionOrganizationCommand {
+  string description = 1;
+}
+
+message EnableOrganizationCommand {}
+
+message DisableOrganizationCommand {}
+
+message ArchiveOrganizationCommand {}
+
+message UnarchiveOrganizationCommand {}
+
+message ConvertTrialOrganizationCommand {}

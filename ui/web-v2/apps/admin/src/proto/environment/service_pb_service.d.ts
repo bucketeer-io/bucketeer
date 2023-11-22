@@ -130,6 +130,87 @@ type EnvironmentServiceConvertTrialProject = {
   readonly responseType: typeof proto_environment_service_pb.ConvertTrialProjectResponse;
 };
 
+type EnvironmentServiceGetOrganization = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.GetOrganizationRequest;
+  readonly responseType: typeof proto_environment_service_pb.GetOrganizationResponse;
+};
+
+type EnvironmentServiceListOrganizations = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.ListOrganizationsRequest;
+  readonly responseType: typeof proto_environment_service_pb.ListOrganizationsResponse;
+};
+
+type EnvironmentServiceCreateOrganization = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.CreateOrganizationRequest;
+  readonly responseType: typeof proto_environment_service_pb.CreateOrganizationResponse;
+};
+
+type EnvironmentServiceUpdateOrganization = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.UpdateOrganizationRequest;
+  readonly responseType: typeof proto_environment_service_pb.UpdateOrganizationResponse;
+};
+
+type EnvironmentServiceEnableOrganization = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.EnableOrganizationRequest;
+  readonly responseType: typeof proto_environment_service_pb.EnableOrganizationResponse;
+};
+
+type EnvironmentServiceDisableOrganization = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.DisableOrganizationRequest;
+  readonly responseType: typeof proto_environment_service_pb.DisableOrganizationResponse;
+};
+
+type EnvironmentServiceArchiveOrganization = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.ArchiveOrganizationRequest;
+  readonly responseType: typeof proto_environment_service_pb.ArchiveOrganizationResponse;
+};
+
+type EnvironmentServiceUnarchiveOrganization = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.UnarchiveOrganizationRequest;
+  readonly responseType: typeof proto_environment_service_pb.UnarchiveOrganizationResponse;
+};
+
+type EnvironmentServiceConvertTrialOrganization = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.ConvertTrialOrganizationRequest;
+  readonly responseType: typeof proto_environment_service_pb.ConvertTrialOrganizationResponse;
+};
+
 export class EnvironmentService {
   static readonly serviceName: string;
   static readonly GetEnvironmentV2: EnvironmentServiceGetEnvironmentV2;
@@ -146,6 +227,15 @@ export class EnvironmentService {
   static readonly EnableProject: EnvironmentServiceEnableProject;
   static readonly DisableProject: EnvironmentServiceDisableProject;
   static readonly ConvertTrialProject: EnvironmentServiceConvertTrialProject;
+  static readonly GetOrganization: EnvironmentServiceGetOrganization;
+  static readonly ListOrganizations: EnvironmentServiceListOrganizations;
+  static readonly CreateOrganization: EnvironmentServiceCreateOrganization;
+  static readonly UpdateOrganization: EnvironmentServiceUpdateOrganization;
+  static readonly EnableOrganization: EnvironmentServiceEnableOrganization;
+  static readonly DisableOrganization: EnvironmentServiceDisableOrganization;
+  static readonly ArchiveOrganization: EnvironmentServiceArchiveOrganization;
+  static readonly UnarchiveOrganization: EnvironmentServiceUnarchiveOrganization;
+  static readonly ConvertTrialOrganization: EnvironmentServiceConvertTrialOrganization;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -305,6 +395,87 @@ export class EnvironmentServiceClient {
   convertTrialProject(
     requestMessage: proto_environment_service_pb.ConvertTrialProjectRequest,
     callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ConvertTrialProjectResponse|null) => void
+  ): UnaryResponse;
+  getOrganization(
+    requestMessage: proto_environment_service_pb.GetOrganizationRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetOrganizationResponse|null) => void
+  ): UnaryResponse;
+  getOrganization(
+    requestMessage: proto_environment_service_pb.GetOrganizationRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.GetOrganizationResponse|null) => void
+  ): UnaryResponse;
+  listOrganizations(
+    requestMessage: proto_environment_service_pb.ListOrganizationsRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ListOrganizationsResponse|null) => void
+  ): UnaryResponse;
+  listOrganizations(
+    requestMessage: proto_environment_service_pb.ListOrganizationsRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ListOrganizationsResponse|null) => void
+  ): UnaryResponse;
+  createOrganization(
+    requestMessage: proto_environment_service_pb.CreateOrganizationRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateOrganizationResponse|null) => void
+  ): UnaryResponse;
+  createOrganization(
+    requestMessage: proto_environment_service_pb.CreateOrganizationRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.CreateOrganizationResponse|null) => void
+  ): UnaryResponse;
+  updateOrganization(
+    requestMessage: proto_environment_service_pb.UpdateOrganizationRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UpdateOrganizationResponse|null) => void
+  ): UnaryResponse;
+  updateOrganization(
+    requestMessage: proto_environment_service_pb.UpdateOrganizationRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UpdateOrganizationResponse|null) => void
+  ): UnaryResponse;
+  enableOrganization(
+    requestMessage: proto_environment_service_pb.EnableOrganizationRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.EnableOrganizationResponse|null) => void
+  ): UnaryResponse;
+  enableOrganization(
+    requestMessage: proto_environment_service_pb.EnableOrganizationRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.EnableOrganizationResponse|null) => void
+  ): UnaryResponse;
+  disableOrganization(
+    requestMessage: proto_environment_service_pb.DisableOrganizationRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.DisableOrganizationResponse|null) => void
+  ): UnaryResponse;
+  disableOrganization(
+    requestMessage: proto_environment_service_pb.DisableOrganizationRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.DisableOrganizationResponse|null) => void
+  ): UnaryResponse;
+  archiveOrganization(
+    requestMessage: proto_environment_service_pb.ArchiveOrganizationRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ArchiveOrganizationResponse|null) => void
+  ): UnaryResponse;
+  archiveOrganization(
+    requestMessage: proto_environment_service_pb.ArchiveOrganizationRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ArchiveOrganizationResponse|null) => void
+  ): UnaryResponse;
+  unarchiveOrganization(
+    requestMessage: proto_environment_service_pb.UnarchiveOrganizationRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UnarchiveOrganizationResponse|null) => void
+  ): UnaryResponse;
+  unarchiveOrganization(
+    requestMessage: proto_environment_service_pb.UnarchiveOrganizationRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.UnarchiveOrganizationResponse|null) => void
+  ): UnaryResponse;
+  convertTrialOrganization(
+    requestMessage: proto_environment_service_pb.ConvertTrialOrganizationRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ConvertTrialOrganizationResponse|null) => void
+  ): UnaryResponse;
+  convertTrialOrganization(
+    requestMessage: proto_environment_service_pb.ConvertTrialOrganizationRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_environment_service_pb.ConvertTrialOrganizationResponse|null) => void
   ): UnaryResponse;
 }
 

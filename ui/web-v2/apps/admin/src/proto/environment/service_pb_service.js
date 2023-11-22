@@ -136,6 +136,87 @@ EnvironmentService.ConvertTrialProject = {
   responseType: proto_environment_service_pb.ConvertTrialProjectResponse
 };
 
+EnvironmentService.GetOrganization = {
+  methodName: "GetOrganization",
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.GetOrganizationRequest,
+  responseType: proto_environment_service_pb.GetOrganizationResponse
+};
+
+EnvironmentService.ListOrganizations = {
+  methodName: "ListOrganizations",
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.ListOrganizationsRequest,
+  responseType: proto_environment_service_pb.ListOrganizationsResponse
+};
+
+EnvironmentService.CreateOrganization = {
+  methodName: "CreateOrganization",
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.CreateOrganizationRequest,
+  responseType: proto_environment_service_pb.CreateOrganizationResponse
+};
+
+EnvironmentService.UpdateOrganization = {
+  methodName: "UpdateOrganization",
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.UpdateOrganizationRequest,
+  responseType: proto_environment_service_pb.UpdateOrganizationResponse
+};
+
+EnvironmentService.EnableOrganization = {
+  methodName: "EnableOrganization",
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.EnableOrganizationRequest,
+  responseType: proto_environment_service_pb.EnableOrganizationResponse
+};
+
+EnvironmentService.DisableOrganization = {
+  methodName: "DisableOrganization",
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.DisableOrganizationRequest,
+  responseType: proto_environment_service_pb.DisableOrganizationResponse
+};
+
+EnvironmentService.ArchiveOrganization = {
+  methodName: "ArchiveOrganization",
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.ArchiveOrganizationRequest,
+  responseType: proto_environment_service_pb.ArchiveOrganizationResponse
+};
+
+EnvironmentService.UnarchiveOrganization = {
+  methodName: "UnarchiveOrganization",
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.UnarchiveOrganizationRequest,
+  responseType: proto_environment_service_pb.UnarchiveOrganizationResponse
+};
+
+EnvironmentService.ConvertTrialOrganization = {
+  methodName: "ConvertTrialOrganization",
+  service: EnvironmentService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_environment_service_pb.ConvertTrialOrganizationRequest,
+  responseType: proto_environment_service_pb.ConvertTrialOrganizationResponse
+};
+
 exports.EnvironmentService = EnvironmentService;
 
 function EnvironmentServiceClient(serviceHost, options) {
@@ -551,6 +632,285 @@ EnvironmentServiceClient.prototype.convertTrialProject = function convertTrialPr
     callback = arguments[1];
   }
   var client = grpc.unary(EnvironmentService.ConvertTrialProject, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+EnvironmentServiceClient.prototype.getOrganization = function getOrganization(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(EnvironmentService.GetOrganization, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+EnvironmentServiceClient.prototype.listOrganizations = function listOrganizations(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(EnvironmentService.ListOrganizations, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+EnvironmentServiceClient.prototype.createOrganization = function createOrganization(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(EnvironmentService.CreateOrganization, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+EnvironmentServiceClient.prototype.updateOrganization = function updateOrganization(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(EnvironmentService.UpdateOrganization, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+EnvironmentServiceClient.prototype.enableOrganization = function enableOrganization(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(EnvironmentService.EnableOrganization, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+EnvironmentServiceClient.prototype.disableOrganization = function disableOrganization(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(EnvironmentService.DisableOrganization, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+EnvironmentServiceClient.prototype.archiveOrganization = function archiveOrganization(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(EnvironmentService.ArchiveOrganization, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+EnvironmentServiceClient.prototype.unarchiveOrganization = function unarchiveOrganization(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(EnvironmentService.UnarchiveOrganization, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+EnvironmentServiceClient.prototype.convertTrialOrganization = function convertTrialOrganization(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(EnvironmentService.ConvertTrialOrganization, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

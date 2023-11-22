@@ -57,6 +57,26 @@ func (mr *MockClientMockRecorder) ArchiveEnvironmentV2(ctx, in interface{}, opts
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveEnvironmentV2", reflect.TypeOf((*MockClient)(nil).ArchiveEnvironmentV2), varargs...)
 }
 
+// ArchiveOrganization mocks base method.
+func (m *MockClient) ArchiveOrganization(ctx context.Context, in *environment.ArchiveOrganizationRequest, opts ...grpc.CallOption) (*environment.ArchiveOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ArchiveOrganization", varargs...)
+	ret0, _ := ret[0].(*environment.ArchiveOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ArchiveOrganization indicates an expected call of ArchiveOrganization.
+func (mr *MockClientMockRecorder) ArchiveOrganization(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveOrganization", reflect.TypeOf((*MockClient)(nil).ArchiveOrganization), varargs...)
+}
+
 // Close mocks base method.
 func (m *MockClient) Close() {
 	m.ctrl.T.Helper()
@@ -67,6 +87,26 @@ func (m *MockClient) Close() {
 func (mr *MockClientMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockClient)(nil).Close))
+}
+
+// ConvertTrialOrganization mocks base method.
+func (m *MockClient) ConvertTrialOrganization(ctx context.Context, in *environment.ConvertTrialOrganizationRequest, opts ...grpc.CallOption) (*environment.ConvertTrialOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ConvertTrialOrganization", varargs...)
+	ret0, _ := ret[0].(*environment.ConvertTrialOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConvertTrialOrganization indicates an expected call of ConvertTrialOrganization.
+func (mr *MockClientMockRecorder) ConvertTrialOrganization(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConvertTrialOrganization", reflect.TypeOf((*MockClient)(nil).ConvertTrialOrganization), varargs...)
 }
 
 // ConvertTrialProject mocks base method.
@@ -109,6 +149,26 @@ func (mr *MockClientMockRecorder) CreateEnvironmentV2(ctx, in interface{}, opts 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEnvironmentV2", reflect.TypeOf((*MockClient)(nil).CreateEnvironmentV2), varargs...)
 }
 
+// CreateOrganization mocks base method.
+func (m *MockClient) CreateOrganization(ctx context.Context, in *environment.CreateOrganizationRequest, opts ...grpc.CallOption) (*environment.CreateOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateOrganization", varargs...)
+	ret0, _ := ret[0].(*environment.CreateOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateOrganization indicates an expected call of CreateOrganization.
+func (mr *MockClientMockRecorder) CreateOrganization(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganization", reflect.TypeOf((*MockClient)(nil).CreateOrganization), varargs...)
+}
+
 // CreateProject mocks base method.
 func (m *MockClient) CreateProject(ctx context.Context, in *environment.CreateProjectRequest, opts ...grpc.CallOption) (*environment.CreateProjectResponse, error) {
 	m.ctrl.T.Helper()
@@ -149,6 +209,26 @@ func (mr *MockClientMockRecorder) CreateTrialProject(ctx, in interface{}, opts .
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTrialProject", reflect.TypeOf((*MockClient)(nil).CreateTrialProject), varargs...)
 }
 
+// DisableOrganization mocks base method.
+func (m *MockClient) DisableOrganization(ctx context.Context, in *environment.DisableOrganizationRequest, opts ...grpc.CallOption) (*environment.DisableOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DisableOrganization", varargs...)
+	ret0, _ := ret[0].(*environment.DisableOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DisableOrganization indicates an expected call of DisableOrganization.
+func (mr *MockClientMockRecorder) DisableOrganization(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableOrganization", reflect.TypeOf((*MockClient)(nil).DisableOrganization), varargs...)
+}
+
 // DisableProject mocks base method.
 func (m *MockClient) DisableProject(ctx context.Context, in *environment.DisableProjectRequest, opts ...grpc.CallOption) (*environment.DisableProjectResponse, error) {
 	m.ctrl.T.Helper()
@@ -167,6 +247,26 @@ func (mr *MockClientMockRecorder) DisableProject(ctx, in interface{}, opts ...in
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableProject", reflect.TypeOf((*MockClient)(nil).DisableProject), varargs...)
+}
+
+// EnableOrganization mocks base method.
+func (m *MockClient) EnableOrganization(ctx context.Context, in *environment.EnableOrganizationRequest, opts ...grpc.CallOption) (*environment.EnableOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "EnableOrganization", varargs...)
+	ret0, _ := ret[0].(*environment.EnableOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EnableOrganization indicates an expected call of EnableOrganization.
+func (mr *MockClientMockRecorder) EnableOrganization(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableOrganization", reflect.TypeOf((*MockClient)(nil).EnableOrganization), varargs...)
 }
 
 // EnableProject mocks base method.
@@ -209,6 +309,26 @@ func (mr *MockClientMockRecorder) GetEnvironmentV2(ctx, in interface{}, opts ...
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironmentV2", reflect.TypeOf((*MockClient)(nil).GetEnvironmentV2), varargs...)
 }
 
+// GetOrganization mocks base method.
+func (m *MockClient) GetOrganization(ctx context.Context, in *environment.GetOrganizationRequest, opts ...grpc.CallOption) (*environment.GetOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetOrganization", varargs...)
+	ret0, _ := ret[0].(*environment.GetOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrganization indicates an expected call of GetOrganization.
+func (mr *MockClientMockRecorder) GetOrganization(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganization", reflect.TypeOf((*MockClient)(nil).GetOrganization), varargs...)
+}
+
 // GetProject mocks base method.
 func (m *MockClient) GetProject(ctx context.Context, in *environment.GetProjectRequest, opts ...grpc.CallOption) (*environment.GetProjectResponse, error) {
 	m.ctrl.T.Helper()
@@ -247,6 +367,26 @@ func (mr *MockClientMockRecorder) ListEnvironmentsV2(ctx, in interface{}, opts .
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEnvironmentsV2", reflect.TypeOf((*MockClient)(nil).ListEnvironmentsV2), varargs...)
+}
+
+// ListOrganizations mocks base method.
+func (m *MockClient) ListOrganizations(ctx context.Context, in *environment.ListOrganizationsRequest, opts ...grpc.CallOption) (*environment.ListOrganizationsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListOrganizations", varargs...)
+	ret0, _ := ret[0].(*environment.ListOrganizationsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListOrganizations indicates an expected call of ListOrganizations.
+func (mr *MockClientMockRecorder) ListOrganizations(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockClient)(nil).ListOrganizations), varargs...)
 }
 
 // ListProjects mocks base method.
@@ -289,6 +429,26 @@ func (mr *MockClientMockRecorder) UnarchiveEnvironmentV2(ctx, in interface{}, op
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnarchiveEnvironmentV2", reflect.TypeOf((*MockClient)(nil).UnarchiveEnvironmentV2), varargs...)
 }
 
+// UnarchiveOrganization mocks base method.
+func (m *MockClient) UnarchiveOrganization(ctx context.Context, in *environment.UnarchiveOrganizationRequest, opts ...grpc.CallOption) (*environment.UnarchiveOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UnarchiveOrganization", varargs...)
+	ret0, _ := ret[0].(*environment.UnarchiveOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UnarchiveOrganization indicates an expected call of UnarchiveOrganization.
+func (mr *MockClientMockRecorder) UnarchiveOrganization(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnarchiveOrganization", reflect.TypeOf((*MockClient)(nil).UnarchiveOrganization), varargs...)
+}
+
 // UpdateEnvironmentV2 mocks base method.
 func (m *MockClient) UpdateEnvironmentV2(ctx context.Context, in *environment.UpdateEnvironmentV2Request, opts ...grpc.CallOption) (*environment.UpdateEnvironmentV2Response, error) {
 	m.ctrl.T.Helper()
@@ -307,6 +467,26 @@ func (mr *MockClientMockRecorder) UpdateEnvironmentV2(ctx, in interface{}, opts 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEnvironmentV2", reflect.TypeOf((*MockClient)(nil).UpdateEnvironmentV2), varargs...)
+}
+
+// UpdateOrganization mocks base method.
+func (m *MockClient) UpdateOrganization(ctx context.Context, in *environment.UpdateOrganizationRequest, opts ...grpc.CallOption) (*environment.UpdateOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateOrganization", varargs...)
+	ret0, _ := ret[0].(*environment.UpdateOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateOrganization indicates an expected call of UpdateOrganization.
+func (mr *MockClientMockRecorder) UpdateOrganization(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganization", reflect.TypeOf((*MockClient)(nil).UpdateOrganization), varargs...)
 }
 
 // UpdateProject mocks base method.

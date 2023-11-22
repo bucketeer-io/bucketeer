@@ -5,6 +5,7 @@ import * as jspb from "google-protobuf";
 import * as google_protobuf_wrappers_pb from "google-protobuf/google/protobuf/wrappers_pb";
 import * as proto_environment_environment_pb from "../../proto/environment/environment_pb";
 import * as proto_environment_project_pb from "../../proto/environment/project_pb";
+import * as proto_environment_organization_pb from "../../proto/environment/organization_pb";
 import * as proto_environment_command_pb from "../../proto/environment/command_pb";
 
 export class GetEnvironmentV2Request extends jspb.Message {
@@ -703,6 +704,440 @@ export class ConvertTrialProjectResponse extends jspb.Message {
 }
 
 export namespace ConvertTrialProjectResponse {
+  export type AsObject = {
+  }
+}
+
+export class GetOrganizationRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetOrganizationRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetOrganizationRequest): GetOrganizationRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetOrganizationRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetOrganizationRequest;
+  static deserializeBinaryFromReader(message: GetOrganizationRequest, reader: jspb.BinaryReader): GetOrganizationRequest;
+}
+
+export namespace GetOrganizationRequest {
+  export type AsObject = {
+    id: string,
+  }
+}
+
+export class GetOrganizationResponse extends jspb.Message {
+  hasOrganization(): boolean;
+  clearOrganization(): void;
+  getOrganization(): proto_environment_organization_pb.Organization | undefined;
+  setOrganization(value?: proto_environment_organization_pb.Organization): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetOrganizationResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GetOrganizationResponse): GetOrganizationResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetOrganizationResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetOrganizationResponse;
+  static deserializeBinaryFromReader(message: GetOrganizationResponse, reader: jspb.BinaryReader): GetOrganizationResponse;
+}
+
+export namespace GetOrganizationResponse {
+  export type AsObject = {
+    organization?: proto_environment_organization_pb.Organization.AsObject,
+  }
+}
+
+export class ListOrganizationsRequest extends jspb.Message {
+  getPageSize(): number;
+  setPageSize(value: number): void;
+
+  getCursor(): string;
+  setCursor(value: string): void;
+
+  getOrderBy(): ListOrganizationsRequest.OrderByMap[keyof ListOrganizationsRequest.OrderByMap];
+  setOrderBy(value: ListOrganizationsRequest.OrderByMap[keyof ListOrganizationsRequest.OrderByMap]): void;
+
+  getOrderDirection(): ListOrganizationsRequest.OrderDirectionMap[keyof ListOrganizationsRequest.OrderDirectionMap];
+  setOrderDirection(value: ListOrganizationsRequest.OrderDirectionMap[keyof ListOrganizationsRequest.OrderDirectionMap]): void;
+
+  getSearchKeyword(): string;
+  setSearchKeyword(value: string): void;
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListOrganizationsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ListOrganizationsRequest): ListOrganizationsRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ListOrganizationsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListOrganizationsRequest;
+  static deserializeBinaryFromReader(message: ListOrganizationsRequest, reader: jspb.BinaryReader): ListOrganizationsRequest;
+}
+
+export namespace ListOrganizationsRequest {
+  export type AsObject = {
+    pageSize: number,
+    cursor: string,
+    orderBy: ListOrganizationsRequest.OrderByMap[keyof ListOrganizationsRequest.OrderByMap],
+    orderDirection: ListOrganizationsRequest.OrderDirectionMap[keyof ListOrganizationsRequest.OrderDirectionMap],
+    searchKeyword: string,
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject,
+  }
+
+  export interface OrderByMap {
+    DEFAULT: 0;
+    ID: 1;
+    CREATED_AT: 2;
+    UPDATED_AT: 3;
+    NAME: 4;
+    URL_CODE: 5;
+  }
+
+  export const OrderBy: OrderByMap;
+
+  export interface OrderDirectionMap {
+    ASC: 0;
+    DESC: 1;
+  }
+
+  export const OrderDirection: OrderDirectionMap;
+}
+
+export class ListOrganizationsResponse extends jspb.Message {
+  clearOrganizationsList(): void;
+  getOrganizationsList(): Array<proto_environment_organization_pb.Organization>;
+  setOrganizationsList(value: Array<proto_environment_organization_pb.Organization>): void;
+  addOrganizations(value?: proto_environment_organization_pb.Organization, index?: number): proto_environment_organization_pb.Organization;
+
+  getCursor(): string;
+  setCursor(value: string): void;
+
+  getTotalCount(): number;
+  setTotalCount(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListOrganizationsResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ListOrganizationsResponse): ListOrganizationsResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ListOrganizationsResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListOrganizationsResponse;
+  static deserializeBinaryFromReader(message: ListOrganizationsResponse, reader: jspb.BinaryReader): ListOrganizationsResponse;
+}
+
+export namespace ListOrganizationsResponse {
+  export type AsObject = {
+    organizationsList: Array<proto_environment_organization_pb.Organization.AsObject>,
+    cursor: string,
+    totalCount: number,
+  }
+}
+
+export class CreateOrganizationRequest extends jspb.Message {
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_environment_command_pb.CreateOrganizationCommand | undefined;
+  setCommand(value?: proto_environment_command_pb.CreateOrganizationCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateOrganizationRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateOrganizationRequest): CreateOrganizationRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: CreateOrganizationRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateOrganizationRequest;
+  static deserializeBinaryFromReader(message: CreateOrganizationRequest, reader: jspb.BinaryReader): CreateOrganizationRequest;
+}
+
+export namespace CreateOrganizationRequest {
+  export type AsObject = {
+    command?: proto_environment_command_pb.CreateOrganizationCommand.AsObject,
+  }
+}
+
+export class CreateOrganizationResponse extends jspb.Message {
+  hasOrganization(): boolean;
+  clearOrganization(): void;
+  getOrganization(): proto_environment_organization_pb.Organization | undefined;
+  setOrganization(value?: proto_environment_organization_pb.Organization): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateOrganizationResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateOrganizationResponse): CreateOrganizationResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: CreateOrganizationResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateOrganizationResponse;
+  static deserializeBinaryFromReader(message: CreateOrganizationResponse, reader: jspb.BinaryReader): CreateOrganizationResponse;
+}
+
+export namespace CreateOrganizationResponse {
+  export type AsObject = {
+    organization?: proto_environment_organization_pb.Organization.AsObject,
+  }
+}
+
+export class UpdateOrganizationRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasRenameCommand(): boolean;
+  clearRenameCommand(): void;
+  getRenameCommand(): proto_environment_command_pb.ChangeNameOrganizationCommand | undefined;
+  setRenameCommand(value?: proto_environment_command_pb.ChangeNameOrganizationCommand): void;
+
+  hasChangeDescriptionCommand(): boolean;
+  clearChangeDescriptionCommand(): void;
+  getChangeDescriptionCommand(): proto_environment_command_pb.ChangeDescriptionOrganizationCommand | undefined;
+  setChangeDescriptionCommand(value?: proto_environment_command_pb.ChangeDescriptionOrganizationCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateOrganizationRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateOrganizationRequest): UpdateOrganizationRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateOrganizationRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateOrganizationRequest;
+  static deserializeBinaryFromReader(message: UpdateOrganizationRequest, reader: jspb.BinaryReader): UpdateOrganizationRequest;
+}
+
+export namespace UpdateOrganizationRequest {
+  export type AsObject = {
+    id: string,
+    renameCommand?: proto_environment_command_pb.ChangeNameOrganizationCommand.AsObject,
+    changeDescriptionCommand?: proto_environment_command_pb.ChangeDescriptionOrganizationCommand.AsObject,
+  }
+}
+
+export class UpdateOrganizationResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateOrganizationResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateOrganizationResponse): UpdateOrganizationResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateOrganizationResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateOrganizationResponse;
+  static deserializeBinaryFromReader(message: UpdateOrganizationResponse, reader: jspb.BinaryReader): UpdateOrganizationResponse;
+}
+
+export namespace UpdateOrganizationResponse {
+  export type AsObject = {
+  }
+}
+
+export class EnableOrganizationRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_environment_command_pb.EnableOrganizationCommand | undefined;
+  setCommand(value?: proto_environment_command_pb.EnableOrganizationCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnableOrganizationRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: EnableOrganizationRequest): EnableOrganizationRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnableOrganizationRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnableOrganizationRequest;
+  static deserializeBinaryFromReader(message: EnableOrganizationRequest, reader: jspb.BinaryReader): EnableOrganizationRequest;
+}
+
+export namespace EnableOrganizationRequest {
+  export type AsObject = {
+    id: string,
+    command?: proto_environment_command_pb.EnableOrganizationCommand.AsObject,
+  }
+}
+
+export class EnableOrganizationResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnableOrganizationResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: EnableOrganizationResponse): EnableOrganizationResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnableOrganizationResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnableOrganizationResponse;
+  static deserializeBinaryFromReader(message: EnableOrganizationResponse, reader: jspb.BinaryReader): EnableOrganizationResponse;
+}
+
+export namespace EnableOrganizationResponse {
+  export type AsObject = {
+  }
+}
+
+export class DisableOrganizationRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_environment_command_pb.DisableOrganizationCommand | undefined;
+  setCommand(value?: proto_environment_command_pb.DisableOrganizationCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DisableOrganizationRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: DisableOrganizationRequest): DisableOrganizationRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DisableOrganizationRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DisableOrganizationRequest;
+  static deserializeBinaryFromReader(message: DisableOrganizationRequest, reader: jspb.BinaryReader): DisableOrganizationRequest;
+}
+
+export namespace DisableOrganizationRequest {
+  export type AsObject = {
+    id: string,
+    command?: proto_environment_command_pb.DisableOrganizationCommand.AsObject,
+  }
+}
+
+export class DisableOrganizationResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DisableOrganizationResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: DisableOrganizationResponse): DisableOrganizationResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DisableOrganizationResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DisableOrganizationResponse;
+  static deserializeBinaryFromReader(message: DisableOrganizationResponse, reader: jspb.BinaryReader): DisableOrganizationResponse;
+}
+
+export namespace DisableOrganizationResponse {
+  export type AsObject = {
+  }
+}
+
+export class ArchiveOrganizationRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_environment_command_pb.ArchiveOrganizationCommand | undefined;
+  setCommand(value?: proto_environment_command_pb.ArchiveOrganizationCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ArchiveOrganizationRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ArchiveOrganizationRequest): ArchiveOrganizationRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ArchiveOrganizationRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ArchiveOrganizationRequest;
+  static deserializeBinaryFromReader(message: ArchiveOrganizationRequest, reader: jspb.BinaryReader): ArchiveOrganizationRequest;
+}
+
+export namespace ArchiveOrganizationRequest {
+  export type AsObject = {
+    id: string,
+    command?: proto_environment_command_pb.ArchiveOrganizationCommand.AsObject,
+  }
+}
+
+export class ArchiveOrganizationResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ArchiveOrganizationResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ArchiveOrganizationResponse): ArchiveOrganizationResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ArchiveOrganizationResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ArchiveOrganizationResponse;
+  static deserializeBinaryFromReader(message: ArchiveOrganizationResponse, reader: jspb.BinaryReader): ArchiveOrganizationResponse;
+}
+
+export namespace ArchiveOrganizationResponse {
+  export type AsObject = {
+  }
+}
+
+export class UnarchiveOrganizationRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_environment_command_pb.UnarchiveOrganizationCommand | undefined;
+  setCommand(value?: proto_environment_command_pb.UnarchiveOrganizationCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UnarchiveOrganizationRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: UnarchiveOrganizationRequest): UnarchiveOrganizationRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UnarchiveOrganizationRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UnarchiveOrganizationRequest;
+  static deserializeBinaryFromReader(message: UnarchiveOrganizationRequest, reader: jspb.BinaryReader): UnarchiveOrganizationRequest;
+}
+
+export namespace UnarchiveOrganizationRequest {
+  export type AsObject = {
+    id: string,
+    command?: proto_environment_command_pb.UnarchiveOrganizationCommand.AsObject,
+  }
+}
+
+export class UnarchiveOrganizationResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UnarchiveOrganizationResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: UnarchiveOrganizationResponse): UnarchiveOrganizationResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UnarchiveOrganizationResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UnarchiveOrganizationResponse;
+  static deserializeBinaryFromReader(message: UnarchiveOrganizationResponse, reader: jspb.BinaryReader): UnarchiveOrganizationResponse;
+}
+
+export namespace UnarchiveOrganizationResponse {
+  export type AsObject = {
+  }
+}
+
+export class ConvertTrialOrganizationRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_environment_command_pb.ConvertTrialOrganizationCommand | undefined;
+  setCommand(value?: proto_environment_command_pb.ConvertTrialOrganizationCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ConvertTrialOrganizationRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ConvertTrialOrganizationRequest): ConvertTrialOrganizationRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ConvertTrialOrganizationRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ConvertTrialOrganizationRequest;
+  static deserializeBinaryFromReader(message: ConvertTrialOrganizationRequest, reader: jspb.BinaryReader): ConvertTrialOrganizationRequest;
+}
+
+export namespace ConvertTrialOrganizationRequest {
+  export type AsObject = {
+    id: string,
+    command?: proto_environment_command_pb.ConvertTrialOrganizationCommand.AsObject,
+  }
+}
+
+export class ConvertTrialOrganizationResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ConvertTrialOrganizationResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ConvertTrialOrganizationResponse): ConvertTrialOrganizationResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ConvertTrialOrganizationResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ConvertTrialOrganizationResponse;
+  static deserializeBinaryFromReader(message: ConvertTrialOrganizationResponse, reader: jspb.BinaryReader): ConvertTrialOrganizationResponse;
+}
+
+export namespace ConvertTrialOrganizationResponse {
   export type AsObject = {
   }
 }
