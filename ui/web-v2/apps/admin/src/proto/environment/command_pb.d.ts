@@ -297,9 +297,6 @@ export class CreateTrialOrganizationCommand extends jspb.Message {
   getDescription(): string;
   setDescription(value: string): void;
 
-  getEmail(): string;
-  setEmail(value: string): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateTrialOrganizationCommand.AsObject;
   static toObject(includeInstance: boolean, msg: CreateTrialOrganizationCommand): CreateTrialOrganizationCommand.AsObject;
@@ -315,7 +312,6 @@ export namespace CreateTrialOrganizationCommand {
     name: string,
     urlCode: string,
     description: string,
-    email: string,
   }
 }
 

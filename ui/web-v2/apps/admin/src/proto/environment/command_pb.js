@@ -2370,8 +2370,7 @@ proto.bucketeer.environment.CreateTrialOrganizationCommand.toObject = function(i
   var f, obj = {
     name: jspb.Message.getFieldWithDefault(msg, 1, ""),
     urlCode: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    description: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    email: jspb.Message.getFieldWithDefault(msg, 4, "")
+    description: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -2420,10 +2419,6 @@ proto.bucketeer.environment.CreateTrialOrganizationCommand.deserializeBinaryFrom
       var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
-    case 4:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setEmail(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -2471,13 +2466,6 @@ proto.bucketeer.environment.CreateTrialOrganizationCommand.serializeBinaryToWrit
   if (f.length > 0) {
     writer.writeString(
       3,
-      f
-    );
-  }
-  f = message.getEmail();
-  if (f.length > 0) {
-    writer.writeString(
-      4,
       f
     );
   }
@@ -2535,24 +2523,6 @@ proto.bucketeer.environment.CreateTrialOrganizationCommand.prototype.getDescript
  */
 proto.bucketeer.environment.CreateTrialOrganizationCommand.prototype.setDescription = function(value) {
   return jspb.Message.setProto3StringField(this, 3, value);
-};
-
-
-/**
- * optional string email = 4;
- * @return {string}
- */
-proto.bucketeer.environment.CreateTrialOrganizationCommand.prototype.getEmail = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.environment.CreateTrialOrganizationCommand} returns this
- */
-proto.bucketeer.environment.CreateTrialOrganizationCommand.prototype.setEmail = function(value) {
-  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 

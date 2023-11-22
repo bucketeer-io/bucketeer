@@ -3502,11 +3502,6 @@
                 "id": 3,
                 "name": "description",
                 "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "email",
-                "type": "string"
               }
             ]
           },

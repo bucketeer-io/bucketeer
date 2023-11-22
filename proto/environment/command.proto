@@ -74,7 +74,6 @@ message CreateTrialOrganizationCommand {
   string name = 1;
   string url_code = 2;
   string description = 3;  // optional
-  string email = 4;
 }
 
 message RenameOrganizationCommand {
