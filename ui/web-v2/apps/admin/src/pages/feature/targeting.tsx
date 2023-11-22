@@ -2,13 +2,7 @@ import { createVariationLabel } from '@/utils/variation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
 import deepEqual from 'deep-equal';
-import React, {
-  useCallback,
-  useState,
-  FC,
-  memo,
-  useEffect,
-} from 'react';
+import React, { useCallback, useState, FC, memo, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -266,8 +260,6 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       }
     }, [feature]);
 
-
-
     return (
       <FormProvider {...methods}>
         <FeatureTargetingForm
@@ -488,7 +480,7 @@ export const createClauseCommands = (
         );
       });
     valRule.clauses
-      .filter((c) => !c.id)
+      .filter((c) => !clauseIds.includes(c.id))
       .forEach((c) => {
         const command = new AddClauseCommand();
         command.setRuleId(rid);
