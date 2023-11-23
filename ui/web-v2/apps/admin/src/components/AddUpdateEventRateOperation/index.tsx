@@ -10,7 +10,14 @@ import { classNames } from '@/utils/css';
 import { Dialog, Transition } from '@headlessui/react';
 import { ExclamationCircleIcon, XIcon } from '@heroicons/react/outline';
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { FC, Fragment, memo, useCallback, useState } from 'react';
+import React, {
+  FC,
+  Fragment,
+  memo,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { Controller, useForm, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -27,12 +34,15 @@ import { Select, Option } from '../Select';
 interface AddUpdateEventRateOperationProps {
   isSeeDetailsSelected: boolean;
   variationOptions: Option[];
+  featureId: string;
 }
 
 export const AddUpdateEventRateOperation: FC<AddUpdateEventRateOperationProps> =
-  memo(({ isSeeDetailsSelected, variationOptions }) => {
+  memo(({ isSeeDetailsSelected, variationOptions, featureId }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
+    const dispatch = useDispatch<AppDispatch>();
+    const currentEnvironment = useCurrentEnvironment();
 
     const [isAddGoalOpen, setIsAddGoalOpen] = useState(false);
 
@@ -47,6 +57,20 @@ export const AddUpdateEventRateOperation: FC<AddUpdateEventRateOperationProps> =
       (state) => selectAllGoals(state.goals),
       shallowEqual
     );
+
+    useEffect(() => {
+      dispatch(
+        listGoals({
+          environmentNamespace: currentEnvironment.id,
+          pageSize: 99999,
+          cursor: '',
+          searchKeyword: '',
+          status: null,
+          orderBy: ListGoalsRequest.OrderBy.NAME,
+          orderDirection: ListGoalsRequest.OrderDirection.ASC,
+        })
+      );
+    }, [dispatch, featureId, currentEnvironment]);
 
     const goalOptions = goals.map((goal) => {
       return {
@@ -339,8 +363,6 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
     mode: 'onChange',
   });
 
-  const onSubmit = (data) => console.log(data);
-
   const handleCreateGoal = useCallback(
     async (data) => {
       dispatch(
@@ -384,10 +406,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
         >
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
         </Transition.Child>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="fixed inset-0 z-10 overflow-y-auto"
-        >
+        <form className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <Transition.Child
               as={Fragment}

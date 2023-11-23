@@ -2,7 +2,7 @@ import { listProgressiveRollout } from '@/modules/porgressiveRollout';
 import { Feature } from '@/proto/feature/feature_pb';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
-import React, { FC, memo, useCallback, useEffect } from 'react';
+import React, { FC, memo, useCallback } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 
@@ -16,10 +16,8 @@ import {
 import { AppState } from '../../modules';
 import { listAutoOpsRules } from '../../modules/autoOpsRules';
 import { selectById as selectFeatureById } from '../../modules/features';
-import { listGoals } from '../../modules/goals';
 import { useCurrentEnvironment } from '../../modules/me';
 import { OpsType } from '../../proto/autoops/auto_ops_rule_pb';
-import { ListGoalsRequest } from '../../proto/experiment/service_pb';
 import { AppDispatch } from '../../store';
 
 import { operationFormSchema } from './formSchema';
@@ -113,24 +111,6 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
         defaultValues.progressiveRollout.manual.schedulesList
       );
     };
-
-    useEffect(() => {
-      handleRefetchProgressiveRollouts();
-    }, []);
-
-    useEffect(() => {
-      dispatch(
-        listGoals({
-          environmentNamespace: currentEnvironment.id,
-          pageSize: 99999,
-          cursor: '',
-          searchKeyword: '',
-          status: null,
-          orderBy: ListGoalsRequest.OrderBy.NAME,
-          orderDirection: ListGoalsRequest.OrderDirection.ASC,
-        })
-      );
-    }, [dispatch, featureId, currentEnvironment]);
 
     if (isLoading) {
       return (

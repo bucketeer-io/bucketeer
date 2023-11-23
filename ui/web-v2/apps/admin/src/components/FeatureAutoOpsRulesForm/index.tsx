@@ -32,7 +32,15 @@ import {
 } from '@heroicons/react/outline';
 import { SerializedError } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
-import React, { FC, memo, useCallback, useEffect, useState } from 'react';
+import React, {
+  Dispatch,
+  FC,
+  SetStateAction,
+  memo,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useSelector, shallowEqual, useDispatch } from 'react-redux';
@@ -64,8 +72,6 @@ import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
 import { Overlay } from '../Overlay';
 import { Option } from '../Select';
-
-const numberOfBlocks = 51;
 
 enum SORT_TYPE {
   ASC,
@@ -139,12 +145,42 @@ export const ProgressiveRolloutClauseType: ProgressiveRolloutClauseTypeMap = {
     'bucketeer.autoops.ProgressiveRolloutManualScheduleClause',
 };
 
-interface FeatureAutoOpsRulesFormProps {
-  featureId: string;
-  refetchAutoOpsRules: () => void;
-  refetchProgressiveRollouts: () => void;
-  reset: () => void;
+interface Tab {
+  label: string;
+  value: AutoOpsRule.AsObject[];
+  selected: boolean;
 }
+
+export const isActiveProgressiveRolloutExists = (
+  progressiveRollout: ProgressiveRollout.AsObject[]
+): boolean => {
+  if (progressiveRollout.length > 0) {
+    const { typeUrl, value } = progressiveRollout[0].clause;
+    const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+
+    const getSchedulesList = (scheduleType) => {
+      const data = scheduleType
+        .deserializeBinary(value as Uint8Array)
+        .toObject();
+      return data.schedulesList;
+    };
+
+    const schedulesList = getSchedulesList(
+      type ===
+        ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE
+        ? ProgressiveRolloutTemplateScheduleClause
+        : ProgressiveRolloutManualScheduleClause
+    );
+
+    const lastItemWithTriggeredAt =
+      schedulesList[schedulesList.length - 1]?.triggeredAt;
+
+    if (!lastItemWithTriggeredAt) {
+      return true;
+    }
+  }
+  return false;
+};
 
 export const getIntervalForDayjs = (
   interval: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap]
@@ -157,6 +193,13 @@ export const getIntervalForDayjs = (
     return 'week';
   }
 };
+
+interface FeatureAutoOpsRulesFormProps {
+  featureId: string;
+  refetchAutoOpsRules: () => void;
+  refetchProgressiveRollouts: () => void;
+  reset: () => void;
+}
 
 export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
   ({ featureId, refetchAutoOpsRules, refetchProgressiveRollouts, reset }) => {
@@ -177,6 +220,9 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
 
     const [open, setOpen] = useState(isNew);
     const [isKillSwitchSelected, setIsKillSwitchSelected] = useState(false);
+    const [isProgressiveRolloutSelected, setIsProgressiveRolloutSelected] =
+      useState(false);
+
     const history = useHistory();
     const currentEnvironment = useCurrentEnvironment();
 
@@ -184,7 +230,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
 
     const { handleSubmit } = methods;
 
-    const [tabs, setTabs] = useState([
+    const [tabs, setTabs] = useState<Tab[]>([
       {
         label: TabLabel.ACTIVE,
         value: sortAutoOpsRules(
@@ -285,100 +331,22 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
             <span>{intl.formatMessage(messages.button.add)}</span>
           </button>
         </div>
-        <div className="flex border-b border-gray-200 mt-2">
-          {tabs.map((tab) => (
-            <div
-              key={tab.label}
-              className={classNames(
-                'px-4 py-3 cursor-pointer',
-                tab.selected
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-gray-400'
-              )}
-              onClick={() =>
-                setTabs(
-                  tabs.map((t) => ({
-                    ...t,
-                    selected: t.label === tab.label,
-                  }))
-                )
-              }
-            >
-              {tab.label} ({tab.value.length})
-            </div>
-          ))}
-        </div>
-        <div className="py-6">
-          <p className="text-xl font-bold">
-            {intl.formatMessage(messages.autoOps.infoBlocks.title)}
-          </p>
-          <div className="flex space-x-6 mt-6">
-            {[
-              {
-                id: 1,
-                title: intl.formatMessage(messages.autoOps.schedule),
-                detail: intl.formatMessage(
-                  messages.autoOps.infoBlocks.scheduleInfo
-                ),
-                bgColor: 'bg-purple-50',
-                icon: <CalendarSvg />,
-                onClick: () => {
-                  handleOpen();
-                },
-              },
-              {
-                id: 2,
-                title: intl.formatMessage(messages.autoOps.killSwitch),
-                detail: intl.formatMessage(
-                  messages.autoOps.infoBlocks.killSwitchInfo
-                ),
-                bgColor: 'bg-pink-50',
-                icon: (
-                  <div className="relative">
-                    <RefreshSvg />
-                    <CrossSvg className="absolute right-[2px] bottom-[1px]" />
-                  </div>
-                ),
-                onClick: () => {
-                  setIsKillSwitchSelected(true);
-                  handleOpen();
-                },
-              },
-              {
-                id: 3,
-                title: intl.formatMessage(messages.autoOps.progressiveRollout),
-                detail: intl.formatMessage(
-                  messages.autoOps.infoBlocks.progressiveRolloutInfo
-                ),
-                bgColor: 'bg-blue-50',
-                icon: <ArrowTrendingUp />,
-                onclick: () => {},
-              },
-            ].map(({ id, title, detail, bgColor, icon, onClick }) => (
-              <div
-                key={id}
-                className="flex flex-1 space-x-4 p-4 rounded-md shadow-md cursor-pointer"
-                onClick={onClick}
-              >
-                <div
-                  className={classNames(
-                    'w-16 h-16 rounded-lg flex justify-center items-center',
-                    bgColor
-                  )}
-                >
-                  {icon}
-                </div>
-                <div className="flex-1">
-                  <p className="text-lg font-bold">{title}</p>
-                  <p className="">{detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ActiveCompletedTabs
+          featureId={featureId}
+          tabs={tabs}
+          setTabs={setTabs}
+        />
+        <AutoOpsInfos
+          openAddOperation={handleOpen}
+          activateKillSwitch={() => setIsKillSwitchSelected(true)}
+          activateProgressiveRollout={() =>
+            setIsProgressiveRolloutSelected(true)
+          }
+        />
         <div className="space-y-6 py-6">
           <ProgressiveRolloutOperation
             featureId={featureId}
+            isActiveTabSelected={isActiveTabSelected}
             refetchProgressiveRollouts={refetchProgressiveRollouts}
           />
           {tabs
@@ -403,6 +371,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               autoOpsRule={selectedAutoOpsRule}
               isKillSwitchSelected={isKillSwitchSelected}
               isActiveTabSelected={isActiveTabSelected}
+              isProgressiveRolloutSelected={isProgressiveRolloutSelected}
             />
           </Overlay>
         )}
@@ -411,13 +380,160 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
   }
 );
 
+interface ActiveCompletedTabsProps {
+  featureId: string;
+  tabs: Tab[];
+  setTabs: Dispatch<SetStateAction<Tab[]>>;
+}
+
+const ActiveCompletedTabs: FC<ActiveCompletedTabsProps> = memo(
+  ({ featureId, tabs, setTabs }) => {
+    const progressiveRollout = useSelector<
+      AppState,
+      ProgressiveRollout.AsObject[]
+    >(
+      (state) =>
+        selectAllProgressiveRollouts(state.progressiveRollout).filter(
+          (rule) => rule.featureId === featureId
+        ),
+      shallowEqual
+    );
+
+    const handleClick = (tabLabel) => {
+      setTabs(
+        tabs.map((t) => ({
+          ...t,
+          selected: t.label === tabLabel,
+        }))
+      );
+    };
+
+    return (
+      <div className="flex border-b border-gray-200 mt-2">
+        {tabs.map((tab) => {
+          let noOfProgressiveRollout = 0;
+
+          if (
+            tab.label === TabLabel.ACTIVE &&
+            isActiveProgressiveRolloutExists(progressiveRollout)
+          ) {
+            noOfProgressiveRollout = 1;
+          } else if (
+            tab.label === TabLabel.COMPLETED &&
+            progressiveRollout.length > 0 &&
+            !isActiveProgressiveRolloutExists(progressiveRollout)
+          ) {
+            noOfProgressiveRollout = 1;
+          }
+
+          return (
+            <div
+              key={tab.label}
+              className={classNames(
+                'px-4 py-3 cursor-pointer',
+                tab.selected
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-gray-400'
+              )}
+              onClick={() => handleClick(tab.label)}
+            >
+              {tab.label} ({tab.value.length + noOfProgressiveRollout})
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+);
+
+interface AutoOpsInfosProps {
+  openAddOperation: () => void;
+  activateKillSwitch: () => void;
+  activateProgressiveRollout: () => void;
+}
+
+const AutoOpsInfos: FC<AutoOpsInfosProps> = memo(
+  ({ openAddOperation, activateKillSwitch, activateProgressiveRollout }) => (
+    <div className="py-6">
+      <p className="text-xl font-bold">
+        {intl.formatMessage(messages.autoOps.infoBlocks.title)}
+      </p>
+      <div className="flex space-x-6 mt-6">
+        {[
+          {
+            id: 1,
+            title: intl.formatMessage(messages.autoOps.schedule),
+            detail: intl.formatMessage(
+              messages.autoOps.infoBlocks.scheduleInfo
+            ),
+            bgColor: 'bg-purple-50',
+            icon: <CalendarSvg />,
+            onClick: () => openAddOperation(),
+          },
+          {
+            id: 2,
+            title: intl.formatMessage(messages.autoOps.killSwitch),
+            detail: intl.formatMessage(
+              messages.autoOps.infoBlocks.killSwitchInfo
+            ),
+            bgColor: 'bg-pink-50',
+            icon: (
+              <div className="relative">
+                <RefreshSvg />
+                <CrossSvg className="absolute right-[2px] bottom-[1px]" />
+              </div>
+            ),
+            onClick: () => {
+              activateKillSwitch();
+              openAddOperation();
+            },
+          },
+          {
+            id: 3,
+            title: intl.formatMessage(messages.autoOps.progressiveRollout),
+            detail: intl.formatMessage(
+              messages.autoOps.infoBlocks.progressiveRolloutInfo
+            ),
+            bgColor: 'bg-blue-50',
+            icon: <ArrowTrendingUp />,
+            onClick: () => {
+              activateProgressiveRollout();
+              openAddOperation();
+            },
+          },
+        ].map(({ id, title, detail, bgColor, icon, onClick }) => (
+          <div
+            key={id}
+            className="flex flex-1 space-x-4 p-4 rounded-md shadow-md cursor-pointer"
+            onClick={onClick}
+          >
+            <div
+              className={classNames(
+                'w-16 h-16 rounded-lg flex justify-center items-center',
+                bgColor
+              )}
+            >
+              {icon}
+            </div>
+            <div className="flex-1">
+              <p className="text-lg font-bold">{title}</p>
+              <p className="">{detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+);
+
 interface ProgressiveRolloutProps {
   featureId: string;
+  isActiveTabSelected: boolean;
   refetchProgressiveRollouts: () => void;
 }
 
 const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
-  ({ featureId, refetchProgressiveRollouts }) => {
+  ({ featureId, isActiveTabSelected, refetchProgressiveRollouts }) => {
     const currentEnvironment = useCurrentEnvironment();
     const dispatch = useDispatch<AppDispatch>();
 
@@ -456,60 +572,70 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
       shallowEqual
     );
 
-    return (
-      <div>
-        {progressiveRollout?.map((rule) => {
-          const { typeUrl, value } = rule.clause;
-          const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+    if (
+      (isActiveTabSelected &&
+        isActiveProgressiveRolloutExists(progressiveRollout)) ||
+      (!isActiveTabSelected &&
+        !isActiveProgressiveRolloutExists(progressiveRollout))
+    ) {
+      return (
+        <div>
+          {progressiveRollout.map((rule) => {
+            const { typeUrl, value } = rule.clause;
+            const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
 
-          if (
-            type ===
-            ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE
-          ) {
-            const data =
-              ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
-                value as Uint8Array
-              ).toObject();
+            if (
+              type ===
+              ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE
+            ) {
+              const data =
+                ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
+                  value as Uint8Array
+                ).toObject();
 
-            const { schedulesList, increments, interval, variationId } = data;
+              const { schedulesList, increments, interval, variationId } = data;
 
-            return (
-              <ProgressiveRolloutComponent
-                key={rule.id}
-                variationOptions={variationOptions}
-                rule={rule}
-                deleteRule={() => handleRolloutDelete(rule.id)}
-                schedulesList={schedulesList}
-                increments={increments}
-                interval={interval}
-                variationId={variationId}
-              />
-            );
-          } else if (
-            type ===
-            ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE
-          ) {
-            const data =
-              ProgressiveRolloutManualScheduleClause.deserializeBinary(
-                value as Uint8Array
-              ).toObject();
+              return (
+                <ProgressiveRolloutComponent
+                  key={rule.id}
+                  variationOptions={variationOptions}
+                  rule={rule}
+                  deleteRule={() => handleRolloutDelete(rule.id)}
+                  schedulesList={schedulesList}
+                  increments={increments}
+                  interval={interval}
+                  variationId={variationId}
+                  isActiveTabSelected={isActiveTabSelected}
+                />
+              );
+            } else if (
+              type ===
+              ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE
+            ) {
+              const data =
+                ProgressiveRolloutManualScheduleClause.deserializeBinary(
+                  value as Uint8Array
+                ).toObject();
 
-            const { schedulesList, variationId } = data;
+              const { schedulesList, variationId } = data;
 
-            return (
-              <ProgressiveRolloutComponent
-                key={rule.id}
-                variationOptions={variationOptions}
-                rule={rule}
-                deleteRule={() => handleRolloutDelete(rule.id)}
-                schedulesList={schedulesList}
-                variationId={variationId}
-              />
-            );
-          }
-        })}
-      </div>
-    );
+              return (
+                <ProgressiveRolloutComponent
+                  key={rule.id}
+                  variationOptions={variationOptions}
+                  rule={rule}
+                  deleteRule={() => handleRolloutDelete(rule.id)}
+                  schedulesList={schedulesList}
+                  variationId={variationId}
+                  isActiveTabSelected={isActiveTabSelected}
+                />
+              );
+            }
+          })}
+        </div>
+      );
+    }
+    return null;
   }
 );
 
@@ -704,6 +830,18 @@ const EventRateOperation = memo(
         ) / 100;
     }
 
+    const numberOfSteps = 10;
+    const step = (threadsholdRate * 100) / numberOfSteps;
+
+    const stepArray = Array.from(
+      { length: numberOfSteps },
+      (_, index) => Math.round((step + index * step) * 100) / 100
+    );
+
+    const barWidth = isActiveTabSelected
+      ? (currentEventRate / (threadsholdRate * 100)) * 100
+      : 100;
+
     return (
       <div>
         <div className="flex items-center space-x-2 mt-3">
@@ -743,58 +881,59 @@ const EventRateOperation = memo(
             <InformationCircleIcon width={18} />
           </HoverPopover>
         </div>
-        <div className="flex pb-7 mt-4">
-          {Array(numberOfBlocks)
-            .fill('')
-            .map((_, i) => {
-              // Calculate percentage contain by one block. There are 51 blocks in the chart.
-              const oneBlockPercentage =
-                (threadsholdRate * 100 * i) / numberOfBlocks;
-
-              let bgColor = 'bg-gray-200';
-
-              let percentage;
-              if (
-                oneBlockPercentage <= currentEventRate &&
-                currentEventRate !== 0
-              ) {
-                bgColor = 'bg-pink-500';
-              } else if (i % 5 === 0) {
-                bgColor = 'bg-gray-400';
-                const step = (threadsholdRate * 100) / 10;
-                percentage = Math.round((i * step) / 5);
-              }
+        <div className="bg-gray-50 pt-16 pb-10 px-12 rounded mt-2 relative">
+          <div className="absolute right-11 top-[6px] text-sm text-pink-500 font-semibold whitespace-nowrap">
+            {f(messages.autoOps.threshold)}
+          </div>
+          <div className="flex h-[4px] bg-gray-200 relative">
+            <div
+              className="bg-pink-500 absolute h-[4px]"
+              style={{
+                width: `${barWidth}%`,
+              }}
+            />
+            <div className={classNames('flex items-center h-[4px]')}>
+              <div
+                className={classNames(
+                  'w-[9px] h-[9px] rounded-full relative',
+                  currentEventRate > 0 || !isActiveTabSelected
+                    ? 'bg-pink-500'
+                    : 'border border-gray-400 bg-gray-50'
+                )}
+              >
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2">
+                  0%
+                </span>
+              </div>
+            </div>
+            {stepArray.map((percentage) => {
+              const isActive = isActiveTabSelected
+                ? percentage <= currentEventRate && currentEventRate !== 0
+                : true;
 
               return (
                 <div
-                  key={i}
+                  key={percentage}
                   className={classNames(
-                    'relative h-[8px] flex-1 rounded-[60px]',
-                    isActiveTabSelected ? bgColor : 'bg-pink-500'
+                    'flex justify-end flex-1 items-center h-[4px]'
                   )}
                 >
-                  {i === numberOfBlocks - 1 && (
-                    <div className="absolute right-0 bottom-[26px] text-sm text-pink-500 font-semibold whitespace-nowrap">
-                      {f(messages.autoOps.threshold)}
-                    </div>
-                  )}
-                  {i !== 0 && (
-                    <div className="absolute h-[8px] w-1.5 rounded-r-full bg-white" />
-                  )}
-                  {i % 5 === 0 && (
-                    <div
-                      className={classNames(
-                        'absolute -bottom-8',
-                        i !== 0 && i < numberOfBlocks - 1 && 'left-1',
-                        i === numberOfBlocks - 1 && 'right-0'
-                      )}
-                    >
+                  <div
+                    className={classNames(
+                      'w-[9px] h-[9px] rounded-full relative',
+                      isActive
+                        ? 'bg-pink-500'
+                        : 'border border-gray-400 bg-gray-50'
+                    )}
+                  >
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2">
                       {percentage}%
-                    </div>
-                  )}
+                    </span>
+                  </div>
                 </div>
               );
             })}
+          </div>
         </div>
       </div>
     );
@@ -809,6 +948,7 @@ interface ProgressiveRolloutTemplateScheduleProps {
   increments?: number;
   interval?: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap];
   variationId: string;
+  isActiveTabSelected: boolean;
 }
 
 const ProgressiveRolloutComponent = memo(
@@ -820,6 +960,7 @@ const ProgressiveRolloutComponent = memo(
     increments,
     interval,
     variationId,
+    isActiveTabSelected,
   }: ProgressiveRolloutTemplateScheduleProps) => {
     const { formatMessage: f } = useIntl();
 
@@ -877,24 +1018,26 @@ const ProgressiveRolloutComponent = memo(
             <div className="py-[2px] px-2 bg-[#FFF7EE] rounded text-[#CE844A] text-sm">
               {f(messages.autoOps.progressiveRollout)}
             </div>
-            <Popover className="relative flex">
-              <Popover.Button>
-                <div className="pl-2 flex items-center cursor-pointer">
-                  <DotsHorizontalIcon width={20} />
-                </div>
-              </Popover.Button>
-              <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
-                <button
-                  onClick={deleteRule}
-                  className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
-                >
-                  <TrashIcon width={18} className="text-red-500" />
-                  <span className="text-red-500 text-sm">
-                    {f(messages.autoOps.deleteOperation)}
-                  </span>
-                </button>
-              </Popover.Panel>
-            </Popover>
+            {isActiveTabSelected && (
+              <Popover className="relative flex">
+                <Popover.Button>
+                  <div className="pl-2 flex items-center cursor-pointer">
+                    <DotsHorizontalIcon width={20} />
+                  </div>
+                </Popover.Button>
+                <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
+                  <button
+                    onClick={deleteRule}
+                    className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                  >
+                    <TrashIcon width={18} className="text-red-500" />
+                    <span className="text-red-500 text-sm">
+                      {f(messages.autoOps.deleteOperation)}
+                    </span>
+                  </button>
+                </Popover.Panel>
+              </Popover>
+            )}
           </div>
         </div>
         <div className="mt-4">

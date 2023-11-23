@@ -1,7 +1,6 @@
 import { intl } from '@/lang';
 import { AppState } from '@/modules';
 import { useCurrentEnvironment } from '@/modules/me';
-import { selectAll as selectAllProgressiveRollouts } from '@/modules/porgressiveRollout';
 import { AutoOpsRule, OpsType } from '@/proto/autoops/auto_ops_rule_pb';
 import {
   DatetimeClause,
@@ -17,7 +16,6 @@ import {
   CreateAutoOpsRuleCommand,
   CreateProgressiveRolloutCommand,
 } from '@/proto/autoops/command_pb';
-import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { Feature } from '@/proto/feature/feature_pb';
 import { AppDispatch } from '@/store';
 import { classNames } from '@/utils/css';
@@ -61,6 +59,7 @@ export interface OperationAddUpdateFormProps {
   autoOpsRule?: AutoOpsRule.AsObject;
   isKillSwitchSelected: boolean;
   isActiveTabSelected: boolean;
+  isProgressiveRolloutSelected: boolean;
 }
 
 const TabLabel = {
@@ -77,6 +76,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     autoOpsRule,
     isKillSwitchSelected,
     isActiveTabSelected,
+    isProgressiveRolloutSelected,
   }) => {
     const dispatch = useDispatch<AppDispatch>();
     const currentEnvironment = useCurrentEnvironment();
@@ -91,24 +91,13 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       state.features.getFeatureError,
     ]);
 
-    const progressiveRolloutList = useSelector<
-      AppState,
-      ProgressiveRollout.AsObject[]
-    >(
-      (state) =>
-        selectAllProgressiveRollouts(state.progressiveRollout).filter(
-          (rule) => rule.featureId === featureId
-        ),
-      shallowEqual
-    );
-
     const [radioList, setRadioList] = useState([]);
 
     const methods = useFormContext<any>();
     const {
       handleSubmit,
       control,
-      formState: { isValid, isSubmitting, errors },
+      formState: { isValid, isSubmitting },
       register,
       setValue,
     } = methods;
@@ -188,6 +177,12 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     };
 
     useEffect(() => {
+      if (isProgressiveRolloutSelected) {
+        setValue('clauseType', ClauseType.PROGRESSIVE_ROLLOUT);
+      }
+    }, []);
+
+    useEffect(() => {
       if (autoOpsRule) {
         const typeUrl = autoOpsRule.clausesList[0].clause.typeUrl;
         const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
@@ -234,7 +229,6 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
 
     const handleOnSubmit = useCallback(
       (data) => {
-        console.log('data', data);
         if (autoOpsRule) {
           const changeAutoOpsRuleOpsTypeCommand =
             new ChangeAutoOpsRuleOpsTypeCommand();
@@ -483,6 +477,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                           <AddUpdateEventRateOperation
                             isSeeDetailsSelected={isSeeDetailsSelected}
                             variationOptions={variationOptions}
+                            featureId={featureId}
                           />
                         )}
                       {radio.value === ClauseType.PROGRESSIVE_ROLLOUT &&
