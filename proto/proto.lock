@@ -2204,12 +2204,14 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause"
+                "type": "ProgressiveRolloutManualScheduleClause",
+                "optional": true
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause"
+                "type": "ProgressiveRolloutTemplateScheduleClause",
+                "optional": true
               }
             ]
           },
@@ -3000,12 +3002,14 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status"
+                "type": "ProgressiveRollout.Status",
+                "optional": true
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type"
+                "type": "ProgressiveRollout.Type",
+                "optional": true
               }
             ]
           },
@@ -3638,16 +3642,11 @@
               },
               {
                 "id": 8,
-                "name": "creator_email",
-                "type": "string"
-              },
-              {
-                "id": 9,
                 "name": "created_at",
                 "type": "int64"
               },
               {
-                "id": 10,
+                "id": 9,
                 "name": "updated_at",
                 "type": "int64"
               }
