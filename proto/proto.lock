@@ -4254,6 +4254,11 @@
                 "id": 6,
                 "name": "disabled",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 7,
+                "name": "archived",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },
