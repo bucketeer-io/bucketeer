@@ -97,6 +97,7 @@ export namespace Event {
     PROJECT: 12;
     WEBHOOK: 13;
     PROGRESSIVE_ROLLOUT: 14;
+    ORGANIZATION: 15;
   }
 
   export const EntityType: EntityTypeMap;
@@ -236,6 +237,14 @@ export namespace Event {
     PROGRESSIVE_ROLLOUT_CREATED: 1400;
     PROGRESSIVE_ROLLOUT_DELETED: 1401;
     PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED: 1402;
+    ORGANIZATION_CREATED: 1500;
+    ORGANIZATION_NAME_CHANGED: 1501;
+    ORGANIZATION_DESCRIPTION_CHANGED: 1502;
+    ORGANIZATION_ENABLED: 1503;
+    ORGANIZATION_DISABLED: 1504;
+    ORGANIZATION_ARCHIVED: 1505;
+    ORGANIZATION_UNARCHIVED: 1506;
+    ORGANIZATION_TRIAL_CONVERTED: 1507;
   }
 
   export const Type: TypeMap;
@@ -3928,6 +3937,206 @@ export class ProgressiveRolloutScheduleTriggeredAtChangedEvent extends jspb.Mess
 export namespace ProgressiveRolloutScheduleTriggeredAtChangedEvent {
   export type AsObject = {
     scheduleId: string,
+  }
+}
+
+export class OrganizationCreatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getDisabled(): boolean;
+  setDisabled(value: boolean): void;
+
+  getArchived(): boolean;
+  setArchived(value: boolean): void;
+
+  getTrial(): boolean;
+  setTrial(value: boolean): void;
+
+  getCreatedAt(): number;
+  setCreatedAt(value: number): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): OrganizationCreatedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: OrganizationCreatedEvent): OrganizationCreatedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: OrganizationCreatedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): OrganizationCreatedEvent;
+  static deserializeBinaryFromReader(message: OrganizationCreatedEvent, reader: jspb.BinaryReader): OrganizationCreatedEvent;
+}
+
+export namespace OrganizationCreatedEvent {
+  export type AsObject = {
+    id: string,
+    name: string,
+    urlCode: string,
+    description: string,
+    disabled: boolean,
+    archived: boolean,
+    trial: boolean,
+    createdAt: number,
+    updatedAt: number,
+  }
+}
+
+export class OrganizationDescriptionChangedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): OrganizationDescriptionChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: OrganizationDescriptionChangedEvent): OrganizationDescriptionChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: OrganizationDescriptionChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): OrganizationDescriptionChangedEvent;
+  static deserializeBinaryFromReader(message: OrganizationDescriptionChangedEvent, reader: jspb.BinaryReader): OrganizationDescriptionChangedEvent;
+}
+
+export namespace OrganizationDescriptionChangedEvent {
+  export type AsObject = {
+    id: string,
+    description: string,
+  }
+}
+
+export class OrganizationNameChangedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): OrganizationNameChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: OrganizationNameChangedEvent): OrganizationNameChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: OrganizationNameChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): OrganizationNameChangedEvent;
+  static deserializeBinaryFromReader(message: OrganizationNameChangedEvent, reader: jspb.BinaryReader): OrganizationNameChangedEvent;
+}
+
+export namespace OrganizationNameChangedEvent {
+  export type AsObject = {
+    id: string,
+    name: string,
+  }
+}
+
+export class OrganizationEnabledEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): OrganizationEnabledEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: OrganizationEnabledEvent): OrganizationEnabledEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: OrganizationEnabledEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): OrganizationEnabledEvent;
+  static deserializeBinaryFromReader(message: OrganizationEnabledEvent, reader: jspb.BinaryReader): OrganizationEnabledEvent;
+}
+
+export namespace OrganizationEnabledEvent {
+  export type AsObject = {
+    id: string,
+  }
+}
+
+export class OrganizationDisabledEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): OrganizationDisabledEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: OrganizationDisabledEvent): OrganizationDisabledEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: OrganizationDisabledEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): OrganizationDisabledEvent;
+  static deserializeBinaryFromReader(message: OrganizationDisabledEvent, reader: jspb.BinaryReader): OrganizationDisabledEvent;
+}
+
+export namespace OrganizationDisabledEvent {
+  export type AsObject = {
+    id: string,
+  }
+}
+
+export class OrganizationArchivedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): OrganizationArchivedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: OrganizationArchivedEvent): OrganizationArchivedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: OrganizationArchivedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): OrganizationArchivedEvent;
+  static deserializeBinaryFromReader(message: OrganizationArchivedEvent, reader: jspb.BinaryReader): OrganizationArchivedEvent;
+}
+
+export namespace OrganizationArchivedEvent {
+  export type AsObject = {
+    id: string,
+  }
+}
+
+export class OrganizationUnarchivedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): OrganizationUnarchivedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: OrganizationUnarchivedEvent): OrganizationUnarchivedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: OrganizationUnarchivedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): OrganizationUnarchivedEvent;
+  static deserializeBinaryFromReader(message: OrganizationUnarchivedEvent, reader: jspb.BinaryReader): OrganizationUnarchivedEvent;
+}
+
+export namespace OrganizationUnarchivedEvent {
+  export type AsObject = {
+    id: string,
+  }
+}
+
+export class OrganizationTrialConvertedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): OrganizationTrialConvertedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: OrganizationTrialConvertedEvent): OrganizationTrialConvertedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: OrganizationTrialConvertedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): OrganizationTrialConvertedEvent;
+  static deserializeBinaryFromReader(message: OrganizationTrialConvertedEvent, reader: jspb.BinaryReader): OrganizationTrialConvertedEvent;
+}
+
+export namespace OrganizationTrialConvertedEvent {
+  export type AsObject = {
+    id: string,
   }
 }
 
