@@ -16179,6 +16179,10 @@
                 "integer": 14
               },
               {
+                "name": "DOMAIN_EVENT_ORGANIZATION",
+                "integer": 15
+              },
+              {
                 "name": "FEATURE_STALE",
                 "integer": 100
               },
