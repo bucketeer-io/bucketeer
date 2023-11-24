@@ -130,14 +130,21 @@ func (h *organizationCommandHandler) unarchive(ctx context.Context, cmd *proto.U
 	})
 }
 
-func (h *organizationCommandHandler) convertTrial(ctx context.Context, cmd *proto.ConvertTrialOrganizationCommand) error {
+func (h *organizationCommandHandler) convertTrial(
+	ctx context.Context,
+	cmd *proto.ConvertTrialOrganizationCommand,
+) error {
 	h.organization.ConvertTrial()
 	return h.send(ctx, eventproto.Event_ORGANIZATION_TRIAL_CONVERTED, &eventproto.OrganizationTrialConvertedEvent{
 		Id: h.organization.Id,
 	})
 }
 
-func (h *organizationCommandHandler) send(ctx context.Context, eventType eventproto.Event_Type, event pb.Message) error {
+func (h *organizationCommandHandler) send(
+	ctx context.Context,
+	eventType eventproto.Event_Type,
+	event pb.Message,
+) error {
 	e, err := domainevent.NewAdminEvent(h.editor, eventproto.Event_ORGANIZATION, h.organization.Id, eventType, event)
 	if err != nil {
 		return err

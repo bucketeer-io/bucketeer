@@ -60,7 +60,10 @@ func (s *EnvironmentService) GetOrganization(
 	}, nil
 }
 
-func (s *EnvironmentService) validateGetOrganizationRequest(req *environmentproto.GetOrganizationRequest, localizer locale.Localizer) error {
+func (s *EnvironmentService) validateGetOrganizationRequest(
+	req *environmentproto.GetOrganizationRequest,
+	localizer locale.Localizer,
+) error {
 	if req.Id == "" {
 		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
