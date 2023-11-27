@@ -25,9 +25,6 @@ export class Organization extends jspb.Message {
   getTrial(): boolean;
   setTrial(value: boolean): void;
 
-  getCreatorEmail(): string;
-  setCreatorEmail(value: string): void;
-
   getCreatedAt(): number;
   setCreatedAt(value: number): void;
 
@@ -53,7 +50,6 @@ export namespace Organization {
     disabled: boolean,
     archived: boolean,
     trial: boolean,
-    creatorEmail: string,
     createdAt: number,
     updatedAt: number,
   }

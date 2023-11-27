@@ -771,6 +771,11 @@ export class ListOrganizationsRequest extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  hasArchived(): boolean;
+  clearArchived(): void;
+  getArchived(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setArchived(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListOrganizationsRequest.AsObject;
   static toObject(includeInstance: boolean, msg: ListOrganizationsRequest): ListOrganizationsRequest.AsObject;
@@ -789,6 +794,7 @@ export namespace ListOrganizationsRequest {
     orderDirection: ListOrganizationsRequest.OrderDirectionMap[keyof ListOrganizationsRequest.OrderDirectionMap],
     searchKeyword: string,
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject,
+    archived?: google_protobuf_wrappers_pb.BoolValue.AsObject,
   }
 
   export interface OrderByMap {

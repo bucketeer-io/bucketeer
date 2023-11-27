@@ -82,9 +82,8 @@ proto.bucketeer.environment.Organization.toObject = function(includeInstance, ms
     disabled: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
     archived: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
     trial: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
-    creatorEmail: jspb.Message.getFieldWithDefault(msg, 8, ""),
-    createdAt: jspb.Message.getFieldWithDefault(msg, 9, 0),
-    updatedAt: jspb.Message.getFieldWithDefault(msg, 10, 0)
+    createdAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
+    updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0)
   };
 
   if (includeInstance) {
@@ -150,14 +149,10 @@ proto.bucketeer.environment.Organization.deserializeBinaryFromReader = function(
       msg.setTrial(value);
       break;
     case 8:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setCreatorEmail(value);
-      break;
-    case 9:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setCreatedAt(value);
       break;
-    case 10:
+    case 9:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setUpdatedAt(value);
       break;
@@ -239,24 +234,17 @@ proto.bucketeer.environment.Organization.serializeBinaryToWriter = function(mess
       f
     );
   }
-  f = message.getCreatorEmail();
-  if (f.length > 0) {
-    writer.writeString(
-      8,
-      f
-    );
-  }
   f = message.getCreatedAt();
   if (f !== 0) {
     writer.writeInt64(
-      9,
+      8,
       f
     );
   }
   f = message.getUpdatedAt();
   if (f !== 0) {
     writer.writeInt64(
-      10,
+      9,
       f
     );
   }
@@ -390,29 +378,11 @@ proto.bucketeer.environment.Organization.prototype.setTrial = function(value) {
 
 
 /**
- * optional string creator_email = 8;
- * @return {string}
- */
-proto.bucketeer.environment.Organization.prototype.getCreatorEmail = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.environment.Organization} returns this
- */
-proto.bucketeer.environment.Organization.prototype.setCreatorEmail = function(value) {
-  return jspb.Message.setProto3StringField(this, 8, value);
-};
-
-
-/**
- * optional int64 created_at = 9;
+ * optional int64 created_at = 8;
  * @return {number}
  */
 proto.bucketeer.environment.Organization.prototype.getCreatedAt = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 9, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 8, 0));
 };
 
 
@@ -421,16 +391,16 @@ proto.bucketeer.environment.Organization.prototype.getCreatedAt = function() {
  * @return {!proto.bucketeer.environment.Organization} returns this
  */
 proto.bucketeer.environment.Organization.prototype.setCreatedAt = function(value) {
-  return jspb.Message.setProto3IntField(this, 9, value);
+  return jspb.Message.setProto3IntField(this, 8, value);
 };
 
 
 /**
- * optional int64 updated_at = 10;
+ * optional int64 updated_at = 9;
  * @return {number}
  */
 proto.bucketeer.environment.Organization.prototype.getUpdatedAt = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 10, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 9, 0));
 };
 
 
@@ -439,7 +409,7 @@ proto.bucketeer.environment.Organization.prototype.getUpdatedAt = function() {
  * @return {!proto.bucketeer.environment.Organization} returns this
  */
 proto.bucketeer.environment.Organization.prototype.setUpdatedAt = function(value) {
-  return jspb.Message.setProto3IntField(this, 10, value);
+  return jspb.Message.setProto3IntField(this, 9, value);
 };
 
 

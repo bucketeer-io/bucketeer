@@ -53,6 +53,7 @@ message Event {
     PROJECT = 12;
     WEBHOOK = 13;
     PROGRESSIVE_ROLLOUT = 14;
+    ORGANIZATION = 15;
   }
   enum Type {
     UNKNOWN = 0;
@@ -189,6 +190,14 @@ message Event {
     PROGRESSIVE_ROLLOUT_CREATED = 1400;
     PROGRESSIVE_ROLLOUT_DELETED = 1401;
     PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED = 1402;
+    ORGANIZATION_CREATED = 1500;
+    ORGANIZATION_NAME_CHANGED = 1501;
+    ORGANIZATION_DESCRIPTION_CHANGED = 1502;
+    ORGANIZATION_ENABLED = 1503;
+    ORGANIZATION_DISABLED = 1504;
+    ORGANIZATION_ARCHIVED = 1505;
+    ORGANIZATION_UNARCHIVED = 1506;
+    ORGANIZATION_TRIAL_CONVERTED = 1507;
   }
   string id = 1;
   int64 timestamp = 2;
@@ -951,4 +960,46 @@ message ProgressiveRolloutDeletedEvent {
 
 message ProgressiveRolloutScheduleTriggeredAtChangedEvent {
   string schedule_id = 1;
+}
+
+message OrganizationCreatedEvent {
+  string id = 1;
+  string name = 2;
+  string url_code = 3;
+  string description = 4;
+  bool disabled = 5;
+  bool archived = 6;
+  bool trial = 7;
+  int64 created_at = 8;
+  int64 updated_at = 9;
+}
+
+message OrganizationDescriptionChangedEvent {
+  string id = 1;
+  string description = 2;
+}
+
+message OrganizationNameChangedEvent {
+  string id = 1;
+  string name = 2;
+}
+
+message OrganizationEnabledEvent {
+  string id = 1;
+}
+
+message OrganizationDisabledEvent {
+  string id = 1;
+}
+
+message OrganizationArchivedEvent {
+  string id = 1;
+}
+
+message OrganizationUnarchivedEvent {
+  string id = 1;
+}
+
+message OrganizationTrialConvertedEvent {
+  string id = 1;
 }

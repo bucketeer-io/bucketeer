@@ -38,6 +38,7 @@ const (
 	urlTemplateAdminAccount      = "%s/%s/admin/accounts/%s"
 	urlTemplateProject           = "%s/%s/admin/projects/%s"
 	urlTemplateWebhook           = "%s/%s/settings/intergrations/webhook/%s"
+	urlTemplateOrganization      = "%s/%s/admin/organizations/%s"
 	defaultEnvironmentID         = "bucketeer"
 )
 
@@ -75,6 +76,8 @@ func URL(entityType proto.Event_EntityType, url, environmentID, id string) (stri
 		return fmt.Sprintf(urlTemplateProject, url, defaultEnvironmentID, id), nil
 	case proto.Event_WEBHOOK:
 		return fmt.Sprintf(urlTemplateWebhook, url, defaultEnvironmentID, id), nil
+	case proto.Event_ORGANIZATION:
+		return fmt.Sprintf(urlTemplateOrganization, url, defaultEnvironmentID, id), nil
 	}
 	return "", ErrUnknownEntityType
 }

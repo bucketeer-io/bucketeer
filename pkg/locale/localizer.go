@@ -61,6 +61,7 @@ const (
 	Notification                 = "Notification"
 	NotificationType             = "NotificationType"
 	OffVariation                 = "OffVariation"
+	Organization                 = "Organization"
 	Prerequisite                 = "Prerequisite"
 	PrerequisiteVariation        = "PrerequisiteVariation"
 	Project                      = "Project"

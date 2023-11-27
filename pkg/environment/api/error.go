@@ -34,10 +34,19 @@ var (
 	statusInvalidProjectUrlCode      = gstatus.New(codes.InvalidArgument, "environment: invalid project url code")
 	statusInvalidProjectCreatorEmail = gstatus.New(codes.InvalidArgument, "environment: invalid project creator email")
 	statusInvalidOrderBy             = gstatus.New(codes.InvalidArgument, "environment: order_by is invalid")
+	statusOrganizationIDRequired     = gstatus.New(codes.InvalidArgument, "environment: organization id must be specified")
+	statusOrganizationNameRequired   = gstatus.New(
+		codes.InvalidArgument,
+		"environment: organization name must be specified",
+	)
+	statusInvalidOrganizationName    = gstatus.New(codes.InvalidArgument, "environment: invalid organization name")
+	statusInvalidOrganizationUrlCode = gstatus.New(codes.InvalidArgument, "environment: invalid organization url code")
 	statusEnvironmentNotFound        = gstatus.New(codes.NotFound, "environment: environment not found")
 	statusProjectNotFound            = gstatus.New(codes.NotFound, "environment: project not found")
+	statusOrganizationNotFound       = gstatus.New(codes.NotFound, "environment: organization not found")
 	statusEnvironmentAlreadyExists   = gstatus.New(codes.AlreadyExists, "environment: environment already exists")
 	statusProjectAlreadyExists       = gstatus.New(codes.AlreadyExists, "environment: project already exists")
+	statusOrganizationAlreadyExists  = gstatus.New(codes.AlreadyExists, "environment: organization already exists")
 	statusProjectDisabled            = gstatus.New(codes.FailedPrecondition, "environment: project disabled")
 	statusUnauthenticated            = gstatus.New(codes.Unauthenticated, "environment: unauthenticated")
 	statusPermissionDenied           = gstatus.New(codes.PermissionDenied, "environment: permission denied")

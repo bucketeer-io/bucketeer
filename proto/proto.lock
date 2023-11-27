@@ -2204,12 +2204,14 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause"
+                "type": "ProgressiveRolloutManualScheduleClause",
+                "optional": true
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause"
+                "type": "ProgressiveRolloutTemplateScheduleClause",
+                "optional": true
               }
             ]
           },
@@ -3000,12 +3002,14 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status"
+                "type": "ProgressiveRollout.Status",
+                "optional": true
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type"
+                "type": "ProgressiveRollout.Type",
+                "optional": true
               }
             ]
           },
@@ -3638,16 +3642,11 @@
               },
               {
                 "id": 8,
-                "name": "creator_email",
-                "type": "string"
-              },
-              {
-                "id": 9,
                 "name": "created_at",
                 "type": "int64"
               },
               {
-                "id": 10,
+                "id": 9,
                 "name": "updated_at",
                 "type": "int64"
               }
@@ -4254,6 +4253,11 @@
               {
                 "id": 6,
                 "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 7,
+                "name": "archived",
                 "type": "google.protobuf.BoolValue"
               }
             ]
@@ -5351,6 +5355,10 @@
               {
                 "name": "PROGRESSIVE_ROLLOUT",
                 "integer": 14
+              },
+              {
+                "name": "ORGANIZATION",
+                "integer": 15
               }
             ]
           },
@@ -5891,6 +5899,38 @@
               {
                 "name": "PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED",
                 "integer": 1402
+              },
+              {
+                "name": "ORGANIZATION_CREATED",
+                "integer": 1500
+              },
+              {
+                "name": "ORGANIZATION_NAME_CHANGED",
+                "integer": 1501
+              },
+              {
+                "name": "ORGANIZATION_DESCRIPTION_CHANGED",
+                "integer": 1502
+              },
+              {
+                "name": "ORGANIZATION_ENABLED",
+                "integer": 1503
+              },
+              {
+                "name": "ORGANIZATION_DISABLED",
+                "integer": 1504
+              },
+              {
+                "name": "ORGANIZATION_ARCHIVED",
+                "integer": 1505
+              },
+              {
+                "name": "ORGANIZATION_UNARCHIVED",
+                "integer": 1506
+              },
+              {
+                "name": "ORGANIZATION_TRIAL_CONVERTED",
+                "integer": 1507
               }
             ]
           }
@@ -8380,6 +8420,136 @@
               {
                 "id": 1,
                 "name": "schedule_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "disabled",
+                "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "archived",
+                "type": "bool"
+              },
+              {
+                "id": 7,
+                "name": "trial",
+                "type": "bool"
+              },
+              {
+                "id": 8,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationDescriptionChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationNameChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationEnabledEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationDisabledEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationArchivedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationUnarchivedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationTrialConvertedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
                 "type": "string"
               }
             ]
@@ -16007,6 +16177,10 @@
               {
                 "name": "DOMAIN_EVENT_PROGRESSIVE_ROLLOUT",
                 "integer": 14
+              },
+              {
+                "name": "DOMAIN_EVENT_ORGANIZATION",
+                "integer": 15
               },
               {
                 "name": "FEATURE_STALE",

@@ -5973,7 +5973,8 @@ proto.bucketeer.environment.ListOrganizationsRequest.toObject = function(include
     orderBy: jspb.Message.getFieldWithDefault(msg, 3, 0),
     orderDirection: jspb.Message.getFieldWithDefault(msg, 4, 0),
     searchKeyword: jspb.Message.getFieldWithDefault(msg, 5, ""),
-    disabled: (f = msg.getDisabled()) && google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
+    disabled: (f = msg.getDisabled()) && google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+    archived: (f = msg.getArchived()) && google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -6034,6 +6035,11 @@ proto.bucketeer.environment.ListOrganizationsRequest.deserializeBinaryFromReader
       var value = new google_protobuf_wrappers_pb.BoolValue;
       reader.readMessage(value,google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader);
       msg.setDisabled(value);
+      break;
+    case 7:
+      var value = new google_protobuf_wrappers_pb.BoolValue;
+      reader.readMessage(value,google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader);
+      msg.setArchived(value);
       break;
     default:
       reader.skipField();
@@ -6103,6 +6109,14 @@ proto.bucketeer.environment.ListOrganizationsRequest.serializeBinaryToWriter = f
   if (f != null) {
     writer.writeMessage(
       6,
+      f,
+      google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+    );
+  }
+  f = message.getArchived();
+  if (f != null) {
+    writer.writeMessage(
+      7,
       f,
       google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
     );
@@ -6254,6 +6268,43 @@ proto.bucketeer.environment.ListOrganizationsRequest.prototype.clearDisabled = f
  */
 proto.bucketeer.environment.ListOrganizationsRequest.prototype.hasDisabled = function() {
   return jspb.Message.getField(this, 6) != null;
+};
+
+
+/**
+ * optional google.protobuf.BoolValue archived = 7;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.environment.ListOrganizationsRequest.prototype.getArchived = function() {
+  return /** @type{?proto.google.protobuf.BoolValue} */ (
+    jspb.Message.getWrapperField(this, google_protobuf_wrappers_pb.BoolValue, 7));
+};
+
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.environment.ListOrganizationsRequest} returns this
+*/
+proto.bucketeer.environment.ListOrganizationsRequest.prototype.setArchived = function(value) {
+  return jspb.Message.setWrapperField(this, 7, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.ListOrganizationsRequest} returns this
+ */
+proto.bucketeer.environment.ListOrganizationsRequest.prototype.clearArchived = function() {
+  return this.setArchived(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.ListOrganizationsRequest.prototype.hasArchived = function() {
+  return jspb.Message.getField(this, 7) != null;
 };
 
 

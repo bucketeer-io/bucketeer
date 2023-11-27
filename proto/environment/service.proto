@@ -194,6 +194,7 @@ message ListOrganizationsRequest {
   OrderDirection order_direction = 4;
   string search_keyword = 5;
   google.protobuf.BoolValue disabled = 6;
+  google.protobuf.BoolValue archived = 7;
 }
 
 message ListOrganizationsResponse {
