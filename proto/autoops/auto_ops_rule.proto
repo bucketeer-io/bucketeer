@@ -34,3 +34,7 @@ enum OpsType {
   ENABLE_FEATURE = 0;
   DISABLE_FEATURE = 1;
 }
+
+message AutoOpsRules {
+  repeated AutoOpsRule auto_ops_rules = 1;
+}
