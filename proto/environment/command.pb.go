@@ -275,6 +275,7 @@ func (*UnarchiveEnvironmentV2Command) Descriptor() ([]byte, []int) {
 	return file_proto_environment_command_proto_rawDescGZIP(), []int{4}
 }
 
+// TODO: add organizationID once we support organization create UI.
 type CreateProjectCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

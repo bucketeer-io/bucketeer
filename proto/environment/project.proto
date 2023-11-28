@@ -27,4 +27,5 @@ message Project {
   int64 updated_at = 7;
   string name = 8;
   string url_code = 9;
+  string organization_id = 10;
 }

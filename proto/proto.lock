@@ -3590,6 +3590,11 @@
                 "id": 8,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "organization_id",
+                "type": "string"
               }
             ]
           }
@@ -3721,6 +3726,11 @@
               {
                 "id": 9,
                 "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "organization_id",
                 "type": "string"
               }
             ]
