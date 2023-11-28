@@ -32,8 +32,7 @@ import (
 )
 
 const (
-	listRequestSize = 500
-	day             = 24 * 60 * 60
+	day = 24 * 60 * 60
 )
 
 var (

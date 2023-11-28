@@ -30,6 +30,12 @@ env:
   pullerMaxOutstandingBytes: "1000000000"
   # bigquery
   bigQueryDataSet:
+  # redis
+  redis:
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
 
 affinity: {}
 

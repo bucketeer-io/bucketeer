@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
@@ -37,6 +38,7 @@ const evaluationEventTable = "evaluation_event"
 type evalEvtWriter struct {
 	writer           storage.EvalEventWriter
 	experimentClient ec.Client
+	cache            cachev3.ExperimentsCache
 	flightgroup      singleflight.Group
 	location         *time.Location
 	logger           *zap.Logger
@@ -47,6 +49,7 @@ func NewEvalEventWriter(
 	r metrics.Registerer,
 	l *zap.Logger,
 	exClient ec.Client,
+	cache cachev3.ExperimentsCache,
 	project, ds string,
 	size int,
 	location *time.Location,
@@ -67,6 +70,7 @@ func NewEvalEventWriter(
 	return &evalEvtWriter{
 		writer:           storage.NewEvalEventWriter(evalQuery, size),
 		experimentClient: exClient,
+		cache:            cache,
 		location:         location,
 		logger:           l,
 	}, nil
@@ -228,28 +232,34 @@ func (w *evalEvtWriter) listExperiments(
 	exp, err, _ := w.flightgroup.Do(
 		fmt.Sprintf("%s:%s", environmentNamespace, "listExperiments"),
 		func() (interface{}, error) {
-			experiments := []*exproto.Experiment{}
-			cursor := ""
-			for {
-				resp, err := w.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
-					PageSize:             listRequestSize,
-					Cursor:               cursor,
-					EnvironmentNamespace: environmentNamespace,
-					Statuses: []exproto.Experiment_Status{
-						exproto.Experiment_RUNNING,
-						exproto.Experiment_STOPPED,
-					},
-				})
-				if err != nil {
-					return nil, err
-				}
-				experiments = append(experiments, resp.Experiments...)
-				experimentSize := len(resp.Experiments)
-				if experimentSize == 0 || experimentSize < listRequestSize {
-					return experiments, nil
-				}
-				cursor = resp.Cursor
+			// Get the experiment cache
+			expList, err := w.cache.Get(environmentNamespace)
+			if err == nil {
+				return expList.Experiments, nil
 			}
+			// Get the experiments from the DB
+			resp, err := w.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
+				PageSize:             0,
+				EnvironmentNamespace: environmentNamespace,
+				Statuses: []exproto.Experiment_Status{
+					exproto.Experiment_RUNNING,
+					exproto.Experiment_STOPPED,
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+			// Cache the experiment for the next request
+			experiments := &exproto.Experiments{
+				Experiments: resp.Experiments,
+			}
+			if err := w.cache.Put(experiments, environmentNamespace); err != nil {
+				w.logger.Error("Failed to cache experiments",
+					zap.Error(err),
+					zap.String("environmentNamespace", environmentNamespace),
+				)
+			}
+			return resp.Experiments, nil
 		},
 	)
 	if err != nil {
