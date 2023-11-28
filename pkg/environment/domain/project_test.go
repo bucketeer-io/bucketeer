@@ -22,7 +22,14 @@ import (
 
 func TestNewProject(t *testing.T) {
 	t.Parallel()
-	project, err := NewProject("project-name", "project-code", "project desc", "test@example.com", false)
+	project, err := NewProject(
+		"project-name",
+		"project-code",
+		"project desc",
+		"test@example.com",
+		"organization-id",
+		false,
+	)
 	assert.NoError(t, err)
 	assert.IsType(t, &Project{}, project)
 	assert.NotEqual(t, "project-name", project.Id)
@@ -32,7 +39,14 @@ func TestNewProject(t *testing.T) {
 
 func TestChangeDescriptionProject(t *testing.T) {
 	t.Parallel()
-	project, err := NewProject("project-name", "project-code", "project desc", "test@example.com", false)
+	project, err := NewProject(
+		"project-name",
+		"project-code",
+		"project desc",
+		"test@example.com",
+		"organization-id",
+		false,
+	)
 	assert.NoError(t, err)
 	newDesc := "new env desc"
 	project.ChangeDescription(newDesc)
@@ -41,7 +55,14 @@ func TestChangeDescriptionProject(t *testing.T) {
 
 func TestRenameProject(t *testing.T) {
 	t.Parallel()
-	project, err := NewProject("project-name", "project-code", "project desc", "test@example.com", false)
+	project, err := NewProject(
+		"project-name",
+		"project-code",
+		"project desc",
+		"test@example.com",
+		"organization-id",
+		false,
+	)
 	assert.NoError(t, err)
 	newName := "new-project-name"
 	project.Rename(newName)
@@ -50,7 +71,14 @@ func TestRenameProject(t *testing.T) {
 
 func TestEnableProject(t *testing.T) {
 	t.Parallel()
-	project, err := NewProject("project-name", "project-code", "project desc", "test@example.com", false)
+	project, err := NewProject(
+		"project-name",
+		"project-code",
+		"project desc",
+		"test@example.com",
+		"organization-id",
+		false,
+	)
 	assert.NoError(t, err)
 	project.Disabled = true
 	project.Enable()
@@ -59,7 +87,14 @@ func TestEnableProject(t *testing.T) {
 
 func TestDisableProject(t *testing.T) {
 	t.Parallel()
-	project, err := NewProject("project-name", "project-code", "project desc", "test@example.com", false)
+	project, err := NewProject(
+		"project-name",
+		"project-code",
+		"project desc",
+		"test@example.com",
+		"organization-id",
+		false,
+	)
 	assert.NoError(t, err)
 	project.Disable()
 	assert.True(t, project.Disabled)
@@ -67,7 +102,14 @@ func TestDisableProject(t *testing.T) {
 
 func TestConvertTrialProject(t *testing.T) {
 	t.Parallel()
-	project, err := NewProject("project-name", "project-code", "project desc", "test@example.com", true)
+	project, err := NewProject(
+		"project-name",
+		"project-code",
+		"project desc",
+		"test@example.com",
+		"organization-id",
+		true,
+	)
 	assert.NoError(t, err)
 	project.ConvertTrial()
 	assert.False(t, project.Trial)

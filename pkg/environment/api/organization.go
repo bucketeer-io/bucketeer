@@ -242,56 +242,8 @@ func (s *EnvironmentService) CreateOrganization(
 		)
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		orgStorage := v2es.NewOrganizationStorage(tx)
-		handler := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return orgStorage.CreateOrganization(ctx, organization)
-	})
-	if err != nil {
-		if errors.Is(err, v2es.ErrOrganizationAlreadyExists) {
-			dt, err := statusOrganizationAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		s.logger.Error(
-			"Failed to create organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+	if err := s.createOrganization(ctx, req.Command, organization, editor, localizer); err != nil {
+		return nil, err
 	}
 	return &environmentproto.CreateOrganizationResponse{
 		Organization: organization.Organization,
@@ -338,6 +290,67 @@ func (s *EnvironmentService) validateCreateOrganizationRequest(
 		dt, err := statusInvalidOrganizationUrlCode.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func (s *EnvironmentService) createOrganization(
+	ctx context.Context,
+	cmd command.Command,
+	organization *domain.Organization,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) error {
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		orgStorage := v2es.NewOrganizationStorage(tx)
+		handler := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
+		if err := handler.Handle(ctx, cmd); err != nil {
+			return err
+		}
+		return orgStorage.CreateOrganization(ctx, organization)
+	})
+	if err != nil {
+		if errors.Is(err, v2es.ErrOrganizationAlreadyExists) {
+			dt, err := statusOrganizationAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
 			return statusInternal.Err()

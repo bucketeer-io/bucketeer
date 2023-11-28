@@ -211,7 +211,8 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 	if err := validateCreateEnvironmentV2Request(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.checkProjectExistence(ctx, req.Command.ProjectId, localizer); err != nil {
+	orgID, err := s.getOrganizationID(ctx, req.Command.ProjectId, localizer)
+	if err != nil {
 		return nil, err
 	}
 	name := strings.TrimSpace(req.Command.Name)
@@ -220,6 +221,7 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 		req.Command.UrlCode,
 		req.Command.Description,
 		req.Command.ProjectId,
+		orgID,
 		s.logger,
 	)
 	if err != nil {
@@ -291,15 +293,15 @@ func validateCreateEnvironmentV2Request(
 	return nil
 }
 
-func (s *EnvironmentService) checkProjectExistence(
+func (s *EnvironmentService) getOrganizationID(
 	ctx context.Context,
 	projectID string,
 	localizer locale.Localizer,
-) error {
+) (string, error) {
 	// enabled project must exist
 	existingProject, err := s.getProject(ctx, projectID, localizer)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if existingProject.Disabled {
 		dt, err := statusProjectDisabled.WithDetails(&errdetails.LocalizedMessage{
@@ -307,11 +309,11 @@ func (s *EnvironmentService) checkProjectExistence(
 			Message: localizer.MustLocalize(locale.ProjectDisabled),
 		})
 		if err != nil {
-			return statusInternal.Err()
+			return "", statusInternal.Err()
 		}
-		return dt.Err()
+		return "", dt.Err()
 	}
-	return nil
+	return existingProject.OrganizationId, nil
 }
 
 func (s *EnvironmentService) createEnvironmentV2(

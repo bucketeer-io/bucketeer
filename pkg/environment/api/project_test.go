@@ -224,6 +224,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 		"url-code",
 		"description",
 		"email",
+		"organizationID",
 		false,
 	)
 	require.NoError(t, err)
