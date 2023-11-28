@@ -8,11 +8,12 @@ import './custom-datepicker.css';
 
 export interface DatetimePickerProps {
   name: string;
+  dateFormat?: string;
   disabled?: boolean;
 }
 
 export const DatetimePicker: FC<DatetimePickerProps> = memo(
-  ({ name, disabled }) => {
+  ({ name, dateFormat, disabled }) => {
     const methods = useFormContext();
     const { control } = methods;
 
@@ -22,7 +23,7 @@ export const DatetimePicker: FC<DatetimePickerProps> = memo(
         name={name}
         render={({ field: { onChange, value } }) => (
           <RDatePicker
-            dateFormat="yyyy-MM-dd HH:mm"
+            dateFormat={dateFormat ? dateFormat : 'yyyy-MM-dd HH:mm'}
             showTimeSelect
             timeIntervals={60}
             placeholderText=""

@@ -62,7 +62,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
         template: {
           datetime: createInitialDatetimeClause(),
           interval: '1',
-          increments: 20,
+          increments: 10,
           variationId: feature.variationsList[0].id,
           schedulesList: [],
         },

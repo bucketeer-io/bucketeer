@@ -575,8 +575,6 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
       shallowEqual
     );
 
-    console.log('first', progressiveRollout);
-
     const filteredProgressiveRollout = progressiveRollout.filter((p) => {
       return isActiveTabSelected
         ? p.status !== ProgressiveRollout.Status.FINISHED
