@@ -133,51 +133,36 @@ export const ClauseType: ClauseTypeMap = {
   PROGRESSIVE_ROLLOUT: 'bucketeer.autoops.ProgressiveRolloutClause',
 };
 
-export interface ProgressiveRolloutClauseTypeMap {
-  PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE: 'bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause';
-  PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE: 'bucketeer.autoops.ProgressiveRolloutManualScheduleClause';
-}
-
-export const ProgressiveRolloutClauseType: ProgressiveRolloutClauseTypeMap = {
-  PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE:
-    'bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause',
-  PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE:
-    'bucketeer.autoops.ProgressiveRolloutManualScheduleClause',
-};
-
 interface Tab {
   label: string;
   value: AutoOpsRule.AsObject[];
   selected: boolean;
 }
 
+const getSchedulesList = (progressiveRollout: ProgressiveRollout.AsObject) => {
+  const {
+    type,
+    clause: { value },
+  } = progressiveRollout;
+  const scheduleType =
+    type === ProgressiveRollout.Type.TEMPLATE_SCHEDULE
+      ? ProgressiveRolloutTemplateScheduleClause
+      : ProgressiveRolloutManualScheduleClause;
+  const data = scheduleType.deserializeBinary(value as Uint8Array).toObject();
+  return data.schedulesList;
+};
+
 export const isActiveProgressiveRolloutExists = (
-  progressiveRollout: ProgressiveRollout.AsObject[]
+  progressiveRolloutList: ProgressiveRollout.AsObject[]
 ): boolean => {
-  if (progressiveRollout.length > 0) {
-    const { typeUrl, value } = progressiveRollout[0].clause;
-    const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+  if (progressiveRolloutList.length > 0) {
+    return progressiveRolloutList.some((progressiveRollout) => {
+      const schedulesList = getSchedulesList(progressiveRollout);
+      const lastItemWithTriggeredAt =
+        schedulesList[schedulesList.length - 1]?.triggeredAt;
 
-    const getSchedulesList = (scheduleType) => {
-      const data = scheduleType
-        .deserializeBinary(value as Uint8Array)
-        .toObject();
-      return data.schedulesList;
-    };
-
-    const schedulesList = getSchedulesList(
-      type ===
-        ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE
-        ? ProgressiveRolloutTemplateScheduleClause
-        : ProgressiveRolloutManualScheduleClause
-    );
-
-    const lastItemWithTriggeredAt =
-      schedulesList[schedulesList.length - 1]?.triggeredAt;
-
-    if (!lastItemWithTriggeredAt) {
-      return true;
-    }
+      return !lastItemWithTriggeredAt;
+    });
   }
   return false;
 };
@@ -388,7 +373,7 @@ interface ActiveCompletedTabsProps {
 
 const ActiveCompletedTabs: FC<ActiveCompletedTabsProps> = memo(
   ({ featureId, tabs, setTabs }) => {
-    const progressiveRollout = useSelector<
+    const progressiveRollouts = useSelector<
       AppState,
       ProgressiveRollout.AsObject[]
     >(
@@ -415,15 +400,16 @@ const ActiveCompletedTabs: FC<ActiveCompletedTabsProps> = memo(
 
           if (
             tab.label === TabLabel.ACTIVE &&
-            isActiveProgressiveRolloutExists(progressiveRollout)
+            isActiveProgressiveRolloutExists(progressiveRollouts)
           ) {
             noOfProgressiveRollout = 1;
           } else if (
             tab.label === TabLabel.COMPLETED &&
-            progressiveRollout.length > 0 &&
-            !isActiveProgressiveRolloutExists(progressiveRollout)
+            progressiveRollouts.length > 0
           ) {
-            noOfProgressiveRollout = 1;
+            noOfProgressiveRollout = progressiveRollouts.filter(
+              (p) => p.status === ProgressiveRollout.Status.FINISHED
+            ).length;
           }
 
           return (
@@ -572,70 +558,63 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
       shallowEqual
     );
 
-    if (
-      (isActiveTabSelected &&
-        isActiveProgressiveRolloutExists(progressiveRollout)) ||
-      (!isActiveTabSelected &&
-        !isActiveProgressiveRolloutExists(progressiveRollout))
-    ) {
-      return (
-        <div>
-          {progressiveRollout.map((rule) => {
-            const { typeUrl, value } = rule.clause;
-            const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+    console.log('first', progressiveRollout);
 
-            if (
-              type ===
-              ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE
-            ) {
-              const data =
-                ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
-                  value as Uint8Array
-                ).toObject();
+    const filteredProgressiveRollout = progressiveRollout.filter((p) => {
+      return isActiveTabSelected
+        ? p.status !== ProgressiveRollout.Status.FINISHED
+        : p.status === ProgressiveRollout.Status.FINISHED;
+    });
 
-              const { schedulesList, increments, interval, variationId } = data;
+    return (
+      <>
+        {filteredProgressiveRollout.map((rule) => {
+          const { value } = rule.clause;
 
-              return (
-                <ProgressiveRolloutComponent
-                  key={rule.id}
-                  variationOptions={variationOptions}
-                  rule={rule}
-                  deleteRule={() => handleRolloutDelete(rule.id)}
-                  schedulesList={schedulesList}
-                  increments={increments}
-                  interval={interval}
-                  variationId={variationId}
-                  isActiveTabSelected={isActiveTabSelected}
-                />
-              );
-            } else if (
-              type ===
-              ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE
-            ) {
-              const data =
-                ProgressiveRolloutManualScheduleClause.deserializeBinary(
-                  value as Uint8Array
-                ).toObject();
+          if (rule.type === ProgressiveRollout.Type.TEMPLATE_SCHEDULE) {
+            const data =
+              ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
+                value as Uint8Array
+              ).toObject();
 
-              const { schedulesList, variationId } = data;
+            const { schedulesList, increments, interval, variationId } = data;
 
-              return (
-                <ProgressiveRolloutComponent
-                  key={rule.id}
-                  variationOptions={variationOptions}
-                  rule={rule}
-                  deleteRule={() => handleRolloutDelete(rule.id)}
-                  schedulesList={schedulesList}
-                  variationId={variationId}
-                  isActiveTabSelected={isActiveTabSelected}
-                />
-              );
-            }
-          })}
-        </div>
-      );
-    }
-    return null;
+            return (
+              <ProgressiveRolloutComponent
+                key={rule.id}
+                variationOptions={variationOptions}
+                rule={rule}
+                deleteRule={() => handleRolloutDelete(rule.id)}
+                schedulesList={schedulesList}
+                increments={increments}
+                interval={interval}
+                variationId={variationId}
+                isActiveTabSelected={isActiveTabSelected}
+              />
+            );
+          } else if (rule.type === ProgressiveRollout.Type.MANUAL_SCHEDULE) {
+            const data =
+              ProgressiveRolloutManualScheduleClause.deserializeBinary(
+                value as Uint8Array
+              ).toObject();
+
+            const { schedulesList, variationId } = data;
+
+            return (
+              <ProgressiveRolloutComponent
+                key={rule.id}
+                variationOptions={variationOptions}
+                rule={rule}
+                deleteRule={() => handleRolloutDelete(rule.id)}
+                schedulesList={schedulesList}
+                variationId={variationId}
+                isActiveTabSelected={isActiveTabSelected}
+              />
+            );
+          }
+        })}
+      </>
+    );
   }
 );
 

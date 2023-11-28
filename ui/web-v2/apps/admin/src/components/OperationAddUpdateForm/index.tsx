@@ -16,6 +16,7 @@ import {
   CreateAutoOpsRuleCommand,
   CreateProgressiveRolloutCommand,
 } from '@/proto/autoops/command_pb';
+import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { Feature } from '@/proto/feature/feature_pb';
 import { AppDispatch } from '@/store';
 import { classNames } from '@/utils/css';
@@ -24,7 +25,7 @@ import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useIntl } from 'react-intl';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { messages } from '../../lang/messages';
 import {
@@ -40,14 +41,11 @@ import {
   createOpsEventRateClause,
 } from '../AddUpdateEventRateOperation';
 import { AddUpdateScheduleOperation } from '../AddUpdateScheduleOperation';
-import {
-  ClauseType,
-  ProgressiveRolloutClauseType,
-} from '../FeatureAutoOpsRulesForm';
+import { ClauseType } from '../FeatureAutoOpsRulesForm';
 
 export interface ProgressiveRolloutTypeTab {
   label: 'Template' | 'Manual';
-  value: string;
+  value: ProgressiveRollout.TypeMap[keyof ProgressiveRollout.TypeMap];
   selected: boolean;
 }
 
@@ -127,14 +125,12 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       useState<ProgressiveRolloutTypeTab[]>([
         {
           label: 'Template',
-          value:
-            ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE,
+          value: ProgressiveRollout.Type.TEMPLATE_SCHEDULE,
           selected: true,
         },
         {
           label: 'Manual',
-          value:
-            ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE,
+          value: ProgressiveRollout.Type.MANUAL_SCHEDULE,
           selected: false,
         },
       ]);
@@ -308,7 +304,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
 
             if (
               selectedProgressiveRolloutType ===
-              ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE
+              ProgressiveRollout.Type.TEMPLATE_SCHEDULE
             ) {
               const {
                 progressiveRollout: {
@@ -343,7 +339,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
               command.setProgressiveRolloutTemplateScheduleClause(clause);
             } else if (
               selectedProgressiveRolloutType ===
-              ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_MANUAL_SCHEDULE
+              ProgressiveRollout.Type.MANUAL_SCHEDULE
             ) {
               const {
                 progressiveRollout: {

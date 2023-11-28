@@ -22,8 +22,8 @@ import { shallowEqual, useSelector } from 'react-redux';
 import { DatetimePicker } from '../DatetimePicker';
 import {
   ClauseType,
-  ProgressiveRolloutClauseType,
   getIntervalForDayjs,
+  isActiveProgressiveRolloutExists,
 } from '../FeatureAutoOpsRulesForm';
 import { ProgressiveRolloutTypeTab } from '../OperationAddUpdateForm';
 import { Option, Select } from '../Select';
@@ -72,7 +72,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
 
       const isTemplateSelected =
         progressiveRolloutTypeList.find((p) => p.selected).value ===
-        ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE;
+        ProgressiveRollout.Type.TEMPLATE_SCHEDULE;
 
       const findScheduleOperation = autoOpsRules.find((rule) => {
         const { typeUrl } = rule.clausesList[0].clause;
@@ -89,7 +89,10 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
         );
       }
 
-      if (progressiveRolloutList.length > 0) {
+      if (
+        progressiveRolloutList.length > 0 &&
+        isActiveProgressiveRolloutExists(progressiveRolloutList)
+      ) {
         return (
           <p className="input-error mt-2">
             There is already progressive rollout configured in the auto
@@ -186,7 +189,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
     useEffect(() => {
       if (
         progressiveRolloutTypeList.find((p) => p.selected).value ===
-          ProgressiveRolloutClauseType.PROGRESSIVE_ROLLOUT_TEMPLATE_SCHEDULE &&
+          ProgressiveRollout.Type.TEMPLATE_SCHEDULE &&
         Number(increments) > 0
       ) {
         const scheduleList = Array(Math.ceil(100 / increments))
