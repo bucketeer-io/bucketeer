@@ -237,11 +237,6 @@ func (w *evalEvtWriter) listExperiments(
 			if err == nil {
 				return expList.Experiments, nil
 			}
-			w.logger.Info(
-				"Experiments cache not found",
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-			)
 			// Get the experiments from the DB
 			resp, err := w.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
 				PageSize:             0,
