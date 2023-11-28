@@ -89,6 +89,14 @@ spec:
               value: /usr/local/service-token/token
             - name: BUCKETEER_EVENT_PERSISTER_DWH_BIGQUERY_DATA_SET
               value: "{{ .Values.env.bigQueryDataSet }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_REDIS_SERVER_NAME
+              value: "{{ .Values.env.redis.serverName }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_REDIS_ADDR
+              value: "{{ .Values.env.redis.addr }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_REDIS_POOL_MAX_IDLE
+              value: "{{ .Values.env.redis.poolMaxIdle }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_REDIS_POOL_MAX_ACTIVE
+              value: "{{ .Values.env.redis.poolMaxActive }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

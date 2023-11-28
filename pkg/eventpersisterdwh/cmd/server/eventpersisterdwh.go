@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/persister"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
@@ -31,6 +32,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 )
@@ -70,6 +72,11 @@ type server struct {
 	// bigquery
 	bigQueryDataSet   *string
 	bigQueryBatchSize *int
+	// redis
+	redisServerName    *string
+	redisAddr          *string
+	redisPoolMaxIdle   *int
+	redisPoolMaxActive *int
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -115,6 +122,16 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 		).Default("featureService:9090").String(),
 		bigQueryDataSet:   cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").Required().String(),
 		bigQueryBatchSize: cmd.Flag("bigquery-batch-size", "BigQuery Size of rows to be sent at once").Default("10").Int(),
+		redisServerName:   cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
+		redisAddr:         cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
+		redisPoolMaxIdle: cmd.Flag(
+			"redis-pool-max-idle",
+			"Maximum number of idle connections in the pool.",
+		).Required().Int(),
+		redisPoolMaxActive: cmd.Flag(
+			"redis-pool-max-active",
+			"Maximum number of connections allocated by the pool at a given time.",
+		).Required().Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -156,17 +173,34 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+
+	redisV3Client, err := redisv3.NewClient(
+		*s.redisAddr,
+		redisv3.WithPoolSize(*s.redisPoolMaxActive),
+		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),
+		redisv3.WithServerName(*s.redisServerName),
+		redisv3.WithMetrics(registerer),
+		redisv3.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer redisV3Client.Close()
+	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
+
 	writer, err := s.newBigQueryWriter(
 		ctx,
 		registerer,
 		logger,
 		experimentClient,
 		featureClient,
+		cachev3.NewExperimentsCache(redisV3Cache),
 		location,
 	)
 	if err != nil {
 		return err
 	}
+
 	p := persister.NewPersisterDWH(
 		puller,
 		registerer,
@@ -190,6 +224,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
 		health.WithCheck("persister", p.Check),
+		health.WithCheck("redis", redisV3Client.Check),
 	)
 	go healthChecker.Run(ctx)
 
@@ -233,6 +268,7 @@ func (s *server) newBigQueryWriter(
 	logger *zap.Logger,
 	exClient ec.Client,
 	ftClient ft.Client,
+	cache cachev3.ExperimentsCache,
 	location *time.Location,
 ) (persister.Writer, error) {
 	var writer persister.Writer
@@ -244,6 +280,7 @@ func (s *server) newBigQueryWriter(
 			r,
 			logger,
 			exClient,
+			cache,
 			*s.project,
 			*s.bigQueryDataSet,
 			*s.bigQueryBatchSize,
@@ -256,6 +293,7 @@ func (s *server) newBigQueryWriter(
 			logger,
 			exClient,
 			ftClient,
+			cache,
 			*s.project,
 			*s.bigQueryDataSet,
 			*s.bigQueryBatchSize,

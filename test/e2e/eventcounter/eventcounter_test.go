@@ -117,6 +117,9 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
+	// Wait for the experiment cache to expire
+	time.Sleep(time.Minute)
+
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
@@ -229,6 +232,9 @@ func TestExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
+	// Wait for the experiment cache to expire
+	time.Sleep(time.Minute)
+
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
@@ -339,6 +345,9 @@ func TestGrpcExperimentResult(t *testing.T) {
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
+	// Wait for the experiment cache to expire
+	time.Sleep(time.Minute)
 
 	// CVRs is 3/4
 	// Register goal variation
@@ -568,6 +577,9 @@ func TestExperimentResult(t *testing.T) {
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
+
+	// Wait for the experiment cache to expire
+	time.Sleep(time.Minute)
 
 	// CVRs is 3/4
 	// Register goal variation
@@ -804,6 +816,9 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		variations[v.Value] = v
 	}
 
+	// Wait for the experiment cache to expire
+	time.Sleep(time.Minute)
+
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
@@ -987,6 +1002,9 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		variations[v.Value] = v
 	}
 
+	// Wait for the experiment cache to expire
+	time.Sleep(time.Minute)
+
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
@@ -1167,6 +1185,9 @@ func TestHTTPTrack(t *testing.T) {
 		variations[v.Value] = v
 	}
 
+	// Wait for the experiment cache to expire
+	time.Sleep(time.Minute)
+
 	// Send track events.
 	sendHTTPTrack(t, userID, goalIDs[0], tag, value)
 	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
@@ -1274,6 +1295,9 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		startAt, stopAt,
 	)
 
+	// Wait for the experiment cache to expire
+	time.Sleep(time.Minute)
+
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
@@ -1379,6 +1403,9 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		f.Variations[0].Id,
 		startAt, stopAt,
 	)
+
+	// Wait for the experiment cache to expire
+	time.Sleep(time.Minute)
 
 	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 	for i := 0; i < retryTimes; i++ {
