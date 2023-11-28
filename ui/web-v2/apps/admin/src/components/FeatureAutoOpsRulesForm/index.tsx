@@ -323,10 +323,18 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         />
         <AutoOpsInfos
           openAddOperation={handleOpen}
-          activateKillSwitch={() => setIsKillSwitchSelected(true)}
-          activateProgressiveRollout={() =>
-            setIsProgressiveRolloutSelected(true)
-          }
+          activateSchedule={() => {
+            setIsKillSwitchSelected(false);
+            setIsProgressiveRolloutSelected(false);
+          }}
+          activateKillSwitch={() => {
+            setIsProgressiveRolloutSelected(false);
+            setIsKillSwitchSelected(true);
+          }}
+          activateProgressiveRollout={() => {
+            setIsKillSwitchSelected(false);
+            setIsProgressiveRolloutSelected(true);
+          }}
         />
         <div className="space-y-6 py-6">
           <ProgressiveRolloutOperation
@@ -434,12 +442,18 @@ const ActiveCompletedTabs: FC<ActiveCompletedTabsProps> = memo(
 
 interface AutoOpsInfosProps {
   openAddOperation: () => void;
+  activateSchedule: () => void;
   activateKillSwitch: () => void;
   activateProgressiveRollout: () => void;
 }
 
 const AutoOpsInfos: FC<AutoOpsInfosProps> = memo(
-  ({ openAddOperation, activateKillSwitch, activateProgressiveRollout }) => (
+  ({
+    openAddOperation,
+    activateSchedule,
+    activateKillSwitch,
+    activateProgressiveRollout,
+  }) => (
     <div className="py-6">
       <p className="text-xl font-bold">
         {intl.formatMessage(messages.autoOps.infoBlocks.title)}
@@ -454,7 +468,10 @@ const AutoOpsInfos: FC<AutoOpsInfosProps> = memo(
             ),
             bgColor: 'bg-purple-50',
             icon: <CalendarSvg />,
-            onClick: () => openAddOperation(),
+            onClick: () => {
+              activateSchedule();
+              openAddOperation();
+            },
           },
           {
             id: 2,
