@@ -70,7 +70,7 @@ func (s *projectStorage) CreateProject(ctx context.Context, p *domain.Project) e
 			created_at,
 			updated_at
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
 	_, err := s.qe.ExecContext(

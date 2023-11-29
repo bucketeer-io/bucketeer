@@ -64,7 +64,7 @@ func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.
 			created_at,
 			updated_at
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
 	_, err := s.qe.ExecContext(
