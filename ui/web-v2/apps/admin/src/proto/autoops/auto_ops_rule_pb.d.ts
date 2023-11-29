@@ -54,6 +54,28 @@ export namespace AutoOpsRule {
   }
 }
 
+export class AutoOpsRules extends jspb.Message {
+  clearAutoOpsRulesList(): void;
+  getAutoOpsRulesList(): Array<AutoOpsRule>;
+  setAutoOpsRulesList(value: Array<AutoOpsRule>): void;
+  addAutoOpsRules(value?: AutoOpsRule, index?: number): AutoOpsRule;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AutoOpsRules.AsObject;
+  static toObject(includeInstance: boolean, msg: AutoOpsRules): AutoOpsRules.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AutoOpsRules, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AutoOpsRules;
+  static deserializeBinaryFromReader(message: AutoOpsRules, reader: jspb.BinaryReader): AutoOpsRules;
+}
+
+export namespace AutoOpsRules {
+  export type AsObject = {
+    autoOpsRulesList: Array<AutoOpsRule.AsObject>,
+  }
+}
+
 export interface OpsTypeMap {
   ENABLE_FEATURE: 0;
   DISABLE_FEATURE: 1;

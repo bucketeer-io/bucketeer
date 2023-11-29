@@ -292,6 +292,9 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
+	// Wait for the auto ops rules cache to expire
+	time.Sleep(time.Minute)
+
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
 		registerGoalEventWithEvaluations(t, featureID, feature.Version, goalID, uid, feature.Variations[0].Id)
@@ -325,6 +328,9 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
+	// Wait for the auto ops rules cache to expire
+	time.Sleep(time.Minute)
+
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
 		grpcRegisterGoalEvent(t, goalID, uid, feature.Tags[0])
@@ -357,6 +363,9 @@ func TestOpsEventRateBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
+
+	// Wait for the auto ops rules cache to expire
+	time.Sleep(time.Minute)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {

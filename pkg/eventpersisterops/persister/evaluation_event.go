@@ -37,6 +37,7 @@ type evalEvtUpdater struct {
 	featureClient     featureclient.Client
 	autoOpsClient     aoclient.Client
 	eventCounterCache cachev3.EventCounterCache
+	autoOpsRulesCache cachev3.AutoOpsRulesCache
 	flightgroup       singleflight.Group
 	logger            *zap.Logger
 }
@@ -46,6 +47,7 @@ func NewEvalUserCountUpdater(
 	featureClient featureclient.Client,
 	autoOpsClient aoclient.Client,
 	eventCounterCache cachev3.EventCounterCache,
+	autoOpsRulesCache cachev3.AutoOpsRulesCache,
 	logger *zap.Logger,
 ) Updater {
 	return &evalEvtUpdater{
@@ -53,6 +55,7 @@ func NewEvalUserCountUpdater(
 		featureClient:     featureClient,
 		autoOpsClient:     autoOpsClient,
 		eventCounterCache: eventCounterCache,
+		autoOpsRulesCache: autoOpsRulesCache,
 		logger:            logger,
 	}
 }
@@ -154,27 +157,32 @@ func (u *evalEvtUpdater) listAutoOpsRules(
 	exp, err, _ := u.flightgroup.Do(
 		fmt.Sprintf("%s:%s", environmentNamespace, "listAutoOpsRules"),
 		func() (interface{}, error) {
-			aor := []*aoproto.AutoOpsRule{}
-			cursor := ""
-			for {
-				// We don't use the feature ID to filter the results in the request
-				// because it will increase access to the DB, which also will increase the costs.
-				// So we list all rules and use the singleflight implementation to share the response
-				resp, err := u.autoOpsClient.ListAutoOpsRules(ctx, &aoproto.ListAutoOpsRulesRequest{
-					EnvironmentNamespace: environmentNamespace,
-					PageSize:             listRequestSize,
-					Cursor:               cursor,
-				})
-				if err != nil {
-					return nil, err
-				}
-				aor = append(aor, resp.AutoOpsRules...)
-				aorSize := len(resp.AutoOpsRules)
-				if aorSize == 0 || aorSize < listRequestSize {
-					return aor, nil
-				}
-				cursor = resp.Cursor
+			// Get the auto ops rules cache
+			aorList, err := u.autoOpsRulesCache.Get(environmentNamespace)
+			if err == nil {
+				return aorList.AutoOpsRules, nil
 			}
+			// We don't use the feature ID to filter the results in the request
+			// because it will increase access to the DB, which also will increase the costs.
+			// So we list all rules and use the singleflight implementation to share the response
+			resp, err := u.autoOpsClient.ListAutoOpsRules(ctx, &aoproto.ListAutoOpsRulesRequest{
+				EnvironmentNamespace: environmentNamespace,
+				PageSize:             0,
+			})
+			if err != nil {
+				return nil, err
+			}
+			// Cache the auto ops rules for the next request
+			autoOpsRules := &aoproto.AutoOpsRules{
+				AutoOpsRules: resp.AutoOpsRules,
+			}
+			if err := u.autoOpsRulesCache.Put(autoOpsRules, environmentNamespace); err != nil {
+				u.logger.Error("Failed to cache auto ops rules",
+					zap.Error(err),
+					zap.String("environmentNamespace", environmentNamespace),
+				)
+			}
+			return resp.AutoOpsRules, nil
 		},
 	)
 	if err != nil {

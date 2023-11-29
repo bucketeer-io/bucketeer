@@ -261,6 +261,7 @@ func (s *server) newUserCountUpdater(
 			featureClient,
 			autoOpsClient,
 			cachev3.NewEventCountCache(redis),
+			cachev3.NewAutoOpsRulesCache(redis),
 			logger,
 		)
 	case evalGoalSvcName:
@@ -269,6 +270,7 @@ func (s *server) newUserCountUpdater(
 			featureClient,
 			autoOpsClient,
 			cachev3.NewEventCountCache(redis),
+			cachev3.NewAutoOpsRulesCache(redis),
 			logger,
 		)
 	default:

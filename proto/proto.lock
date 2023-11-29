@@ -1753,6 +1753,17 @@
                 "type": "bool"
               }
             ]
+          },
+          {
+            "name": "AutoOpsRules",
+            "fields": [
+              {
+                "id": 1,
+                "name": "auto_ops_rules",
+                "type": "AutoOpsRule",
+                "is_repeated": true
+              }
+            ]
           }
         ],
         "imports": [
@@ -2204,14 +2215,12 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutManualScheduleClause"
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ]
           },
@@ -3002,14 +3011,12 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status",
-                "optional": true
+                "type": "ProgressiveRollout.Status"
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type",
-                "optional": true
+                "type": "ProgressiveRollout.Type"
               }
             ]
           },

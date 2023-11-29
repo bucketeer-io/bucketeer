@@ -31,8 +31,6 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
-const listRequestSize = 500
-
 var (
 	ErrAutoOpsRulesNotFound   = errors.New("eventpersister: auto ops rules not found")
 	ErrFeatureEmptyList       = errors.New("eventpersister: list feature returned empty")
