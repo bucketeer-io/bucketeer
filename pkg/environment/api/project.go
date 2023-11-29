@@ -248,6 +248,21 @@ func (s *EnvironmentService) CreateProject(
 		)
 		return nil, err
 	}
+	createOrgCmd := &environmentproto.CreateOrganizationCommand{
+		Name:        organization.Name,
+		UrlCode:     organization.UrlCode,
+		Description: organization.Description,
+		IsTrial:     false,
+	}
+	if err = s.createOrganization(ctx, createOrgCmd, organization, editor, localizer); err != nil {
+		s.logger.Error(
+			"Failed to save organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
 	s.logger.Info(
 		`Organization is created at the same time as Project.
 This is a temporary implementation during the transition period.`,
@@ -424,6 +439,21 @@ func (s *EnvironmentService) CreateTrialProject(
 	if err != nil {
 		s.logger.Error(
 			"Failed to create organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+	createOrgCmd := &environmentproto.CreateOrganizationCommand{
+		Name:        organization.Name,
+		UrlCode:     organization.UrlCode,
+		Description: organization.Description,
+		IsTrial:     true,
+	}
+	if err = s.createOrganization(ctx, createOrgCmd, organization, editor, localizer); err != nil {
+		s.logger.Error(
+			"Failed to save organization",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
