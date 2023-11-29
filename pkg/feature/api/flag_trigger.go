@@ -405,6 +405,13 @@ func (s *FeatureService) ResetFlagTrigger(
 	}
 	newFlagTriggerId := newTriggerUuid.String()
 	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		err := v2fs.NewFlagTriggerStorage(tx).
 			ResetFlagTrigger(ctx, trigger.Id, request.EnvironmentNamespace, newFlagTriggerId)
@@ -574,6 +581,13 @@ func (s *FeatureService) ListFlagTriggers(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, request.EnvironmentNamespace, localizer)
 	if err != nil {
+		return nil, err
+	}
+	if err := validateListFlagTriggersRequest(request, localizer); err != nil {
+		s.logger.Info(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{

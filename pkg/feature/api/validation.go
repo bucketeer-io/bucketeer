@@ -1444,7 +1444,10 @@ func validateCreateFlagTriggerCommand(cmd *featureproto.CreateFlagTriggerCommand
 	return nil
 }
 
-func validateUpdateFlagTriggerCommand(cmd *featureproto.ChangeFlagTriggerDescriptionCommand, localizer locale.Localizer) error {
+func validateUpdateFlagTriggerCommand(
+	cmd *featureproto.ChangeFlagTriggerDescriptionCommand,
+	localizer locale.Localizer,
+) error {
 	if cmd == nil {
 		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
