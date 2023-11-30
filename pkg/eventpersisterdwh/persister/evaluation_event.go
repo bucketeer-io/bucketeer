@@ -83,15 +83,35 @@ func (w *evalEvtWriter) Write(
 	evalEvents := []*epproto.EvaluationEvent{}
 	fails := make(map[string]bool, len(envEvents))
 	for environmentNamespace, events := range envEvents {
+		experiments, err := w.listExperiments(ctx, environmentNamespace)
+		if err != nil {
+			w.logger.Error("failed to list experiments",
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+			)
+			handledCounter.WithLabelValues(codeNoLink).Inc()
+			// Make sure to retry all the events in the next pulling
+			for id := range events {
+				fails[id] = true
+			}
+			return fails
+		}
+		if len(experiments) == 0 {
+			handledCounter.WithLabelValues(codeNoLink).Inc()
+			// Make sure to purge the events from PubSub because there are no experiments to link
+			for id := range events {
+				fails[id] = false
+			}
+			return fails
+		}
 		for id, event := range events {
 			switch evt := event.(type) {
 			case *eventproto.EvaluationEvent:
-				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentNamespace)
+				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentNamespace, experiments)
 				if err != nil {
 					// If there is nothing to link, we don't report it as an error
 					handledCounter.WithLabelValues(codeNoLink).Inc()
-					if err == ErrNoExperiments ||
-						err == ErrExperimentNotFound ||
+					if err == ErrExperimentNotFound ||
 						err == ErrGoalEventIssuedAfterExperimentEnded {
 						w.logger.Debug(
 							"There is no experiment to link",
@@ -159,19 +179,8 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 	ctx context.Context,
 	e *eventproto.EvaluationEvent,
 	id, environmentNamespace string,
+	experiments []*exproto.Experiment,
 ) (*epproto.EvaluationEvent, bool, error) {
-	experiments, err := w.listExperiments(ctx, environmentNamespace)
-	if err != nil {
-		w.logger.Error("failed to list experiments",
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.Any("evalEvent", e),
-		)
-		return nil, true, err
-	}
-	if len(experiments) == 0 {
-		return nil, false, ErrNoExperiments
-	}
 	exp := w.existExperiment(experiments, e.FeatureId, e.FeatureVersion)
 	if exp == nil {
 		return nil, false, ErrExperimentNotFound

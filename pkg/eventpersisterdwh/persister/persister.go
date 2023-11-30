@@ -43,7 +43,6 @@ var (
 	ErrGoalEventIssuedAfterExperimentEnded = errors.New("eventpersister: goal event issued after experiment ended")
 	ErrFailedToEvaluateUser                = errors.New("eventpersister: failed to evaluate user")
 	ErrNoAutoOpsRules                      = errors.New("eventpersister: no auto ops rules")
-	ErrNoExperiments                       = errors.New("eventpersister: no experiments")
 	ErrNothingToLink                       = errors.New("eventpersister: nothing to link")
 	ErrInvalidEventTimestamp               = errors.New("eventpersister: invalid event timestamp")
 )
