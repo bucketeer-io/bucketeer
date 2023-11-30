@@ -18,6 +18,7 @@ package feature
 import (
 	"context"
 	"testing"
+	"time"
 
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -31,17 +32,19 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(cmd, "create flag trigger test")
 	resp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
-	if resp.FlagTrigger.FeatureId == cmd.Id {
-		t.Fatal("unexpected feature id")
+	if resp.FlagTrigger.FeatureId != cmd.Id {
+		t.Fatalf("unexpected flag feature id: %s, feature id: %s", resp.FlagTrigger.FeatureId, cmd.Id)
 	}
 	if resp.FlagTrigger.Type != createFlagTriggerCommand.Type {
-		t.Fatal("unexpected type")
+		t.Fatalf("unexpected trigger type: %s, type: %s", resp.FlagTrigger.Type, createFlagTriggerCommand.Type)
 	}
 	if resp.FlagTrigger.Action != createFlagTriggerCommand.Action {
-		t.Fatal("unexpected action")
+		t.Fatalf("unexpected trigger action: %s, action: %s",
+			resp.FlagTrigger.Action, createFlagTriggerCommand.Action)
 	}
 	if resp.FlagTrigger.Description != createFlagTriggerCommand.Description {
-		t.Fatal("unexpected description")
+		t.Fatalf("unexpected trigger description: %s, description: %s",
+			resp.FlagTrigger.Description, createFlagTriggerCommand.Description)
 	}
 }
 
@@ -49,12 +52,10 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	createFeature(t, client, newCreateFeatureCommand(newFeatureID(t)))
+	command := newCreateFeatureCommand(newFeatureID(t))
+	createFeature(t, client, command)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		newCreateFeatureCommand(newFeatureID(t)),
-		"create flag trigger test",
-	)
+	createFlagTriggerCommand := newCreateFlagTriggerCmd(command, "create flag trigger test")
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Update flag trigger
 	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
@@ -83,12 +84,10 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	createFeature(t, client, newCreateFeatureCommand(newFeatureID(t)))
+	command := newCreateFeatureCommand(newFeatureID(t))
+	createFeature(t, client, command)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		newCreateFeatureCommand(newFeatureID(t)),
-		"create flag trigger test",
-	)
+	createFlagTriggerCommand := newCreateFlagTriggerCmd(command, "create flag trigger test")
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Disable flag trigger
 	disableFlagTriggerReq := &featureproto.DisableFlagTriggerRequest{
@@ -108,7 +107,7 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 	// Get flag trigger
 	resp := getFeatureFlagTrigger(t, client, getFlagTriggerReq)
 	if resp.FlagTrigger.Disabled != true {
-		t.Fatal("unexpected disabled")
+		t.Fatalf("unexpected disabled: %v", resp.FlagTrigger.Disabled)
 	}
 	// Enable flag trigger
 	enableFlagTriggerReq := &featureproto.EnableFlagTriggerRequest{
@@ -132,12 +131,10 @@ func TestResetFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	createFeature(t, client, newCreateFeatureCommand(newFeatureID(t)))
+	command := newCreateFeatureCommand(newFeatureID(t))
+	createFeature(t, client, command)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		newCreateFeatureCommand(newFeatureID(t)),
-		"create flag trigger test",
-	)
+	createFlagTriggerCommand := newCreateFlagTriggerCmd(command, "create flag trigger test")
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Reset flag trigger
 	resetFlagTriggerReq := &featureproto.ResetFlagTriggerRequest{
@@ -157,10 +154,10 @@ func TestResetFlagTrigger(t *testing.T) {
 	}
 	resp := getFeatureFlagTrigger(t, client, getFlagTriggerReq)
 	if resp.FlagTrigger.Uuid == createResp.FlagTrigger.Uuid {
-		t.Fatal("unexpected uuid")
+		t.Fatalf("unexpected uuid: %s", resp.FlagTrigger.Uuid)
 	}
 	if resp.Url == createResp.Url {
-		t.Fatal("unexpected url")
+		t.Fatalf("unexpected url: %s", resp.Url)
 	}
 }
 
@@ -168,12 +165,10 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	// Create feature
-	createFeature(t, client, newCreateFeatureCommand(newFeatureID(t)))
+	command := newCreateFeatureCommand(newFeatureID(t))
+	createFeature(t, client, command)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		newCreateFeatureCommand(newFeatureID(t)),
-		"create flag trigger test",
-	)
+	createFlagTriggerCommand := newCreateFlagTriggerCmd(command, "create flag trigger test")
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Delete flag trigger
 	deleteFlagTriggerReq := &featureproto.DeleteFlagTriggerRequest{
@@ -211,6 +206,7 @@ func TestListFlagTriggers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	time.Sleep(1 * time.Second)
 	trigger2, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
 		EnvironmentNamespace:     *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(command, "create flag trigger test 2"),
@@ -232,19 +228,27 @@ func TestListFlagTriggers(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(triggers.FlagTriggers) != 2 {
-		t.Fatal("unexpected length")
+		t.Fatalf("unexpected length: %d", len(triggers.FlagTriggers))
 	}
 	if triggers.FlagTriggers[0].FlagTrigger.GetId() != trigger1.FlagTrigger.Id {
-		t.Fatal("unexpected id")
+		t.Fatalf(
+			"unexpected id: %s , id: %s",
+			triggers.FlagTriggers[0].FlagTrigger.GetId(),
+			trigger1.FlagTrigger.Id,
+		)
 	}
 	if triggers.FlagTriggers[1].FlagTrigger.GetId() != trigger2.FlagTrigger.Id {
-		t.Fatal("unexpected id")
+		t.Fatalf(
+			"unexpected id: %s , id: %s",
+			triggers.FlagTriggers[1].FlagTrigger.GetId(),
+			trigger2.FlagTrigger.Id,
+		)
 	}
 	if triggers.TotalCount != 2 {
-		t.Fatal("unexpected total count")
+		t.Fatalf("unexpected total count: %d", triggers.TotalCount)
 	}
 	if triggers.Cursor != "2" {
-		t.Fatal("unexpected cursor")
+		t.Fatalf("unexpected cursor: %s", triggers.Cursor)
 	}
 }
 

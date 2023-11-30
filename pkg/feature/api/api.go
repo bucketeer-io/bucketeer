@@ -76,6 +76,8 @@ func NewFeatureService(
 	v3Cache cache.MultiGetCache,
 	segmentUsersPublisher publisher.Publisher,
 	domainPublisher publisher.Publisher,
+	triggerCryptoUtil crypto.EncrypterDecrypter,
+	triggerURL string,
 	opts ...Option,
 ) *FeatureService {
 	dopts := &options{
@@ -93,6 +95,8 @@ func NewFeatureService(
 		segmentUsersCache:     cachev3.NewSegmentUsersCache(v3Cache),
 		segmentUsersPublisher: segmentUsersPublisher,
 		domainPublisher:       domainPublisher,
+		triggerCryptoUtil:     triggerCryptoUtil,
+		triggerURL:            triggerURL,
 		opts:                  dopts,
 		logger:                dopts.logger.Named("api"),
 	}

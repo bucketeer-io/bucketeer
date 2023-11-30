@@ -30,8 +30,8 @@ func NewFlagTriggerSecret(id, featureID, namespace, uuid string, action int) *Fl
 		ID:                   id,
 		FeatureID:            featureID,
 		EnvironmentNamespace: namespace,
-		Action:               action,
 		UUID:                 uuid,
+		Action:               action,
 	}
 }
 

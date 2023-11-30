@@ -132,8 +132,8 @@ func (s *FeatureService) CreateFlagTrigger(
 	flagTriggerSecret := domain.NewFlagTriggerSecret(
 		id,
 		request.CreateFlagTriggerCommand.FeatureId,
-		flagTriggerUuid,
 		request.EnvironmentNamespace,
+		flagTriggerUuid,
 		int(request.CreateFlagTriggerCommand.Action),
 	)
 	triggerURL, err := s.generateTriggerURL(ctx, flagTriggerSecret, false)
@@ -440,8 +440,8 @@ func (s *FeatureService) ResetFlagTrigger(
 	flagTriggerSecret := domain.NewFlagTriggerSecret(
 		trigger.Id,
 		trigger.FeatureId,
-		newFlagTriggerId,
 		trigger.EnvironmentNamespace,
+		newFlagTriggerId,
 		int(trigger.Action),
 	)
 	triggerURL, err := s.generateTriggerURL(ctx, flagTriggerSecret, false)
