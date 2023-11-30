@@ -234,6 +234,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
           <span className="input-label">{f(messages.autoOps.startDate)}</span>
           <DatetimePicker
             name="progressiveRollout.template.datetime.time"
+            dateFormat="yyyy/MM/dd HH:mm"
             disabled={isSeeDetailsSelected}
           />
           <p className="input-error">
@@ -496,6 +497,7 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
                   <div>
                     <DatetimePicker
                       name={`progressiveRollout.manual.schedulesList.${index}.executeAt.time`}
+                      dateFormat="yyyy/MM/dd HH:mm"
                     />
                     <p className="input-error">
                       {errors.progressiveRollout?.manual?.schedulesList[index]

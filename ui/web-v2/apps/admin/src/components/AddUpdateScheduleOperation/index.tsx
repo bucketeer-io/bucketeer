@@ -21,7 +21,11 @@ export const AddUpdateScheduleOperation: FC<AddUpdateScheduleOperationProps> =
     return (
       <div className="mt-1">
         <span className="input-label">{f(messages.autoOps.startDate)}</span>
-        <DatetimePicker name="datetime.time" disabled={isSeeDetailsSelected} />
+        <DatetimePicker
+          name="datetime.time"
+          dateFormat="yyyy/MM/dd HH:mm"
+          disabled={isSeeDetailsSelected}
+        />
         <p className="input-error">
           {errors.datetime?.time?.message && (
             <span role="alert">{errors.datetime?.time?.message}</span>
