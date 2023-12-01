@@ -58,7 +58,7 @@
     "deep-equal": "2.2.1",
     "document-register-element": "1.13.1",
     "formik": "2.2.9",
-    "google-protobuf": "3.14.0",
+    "google-protobuf": "3.21.2",
     "history": "4.10.1",
     "js-cookie": "2.2.1",
     "jstat": "1.9.4",
