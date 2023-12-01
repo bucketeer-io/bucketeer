@@ -217,6 +217,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 		"url-code_.01",
 		"description",
 		"project-id01",
+		"organization-id01",
 		nil,
 	)
 	envExpected.Archived = false

@@ -40,6 +40,7 @@ func TestHandleCreateEnvironmentV2Command(t *testing.T) {
 		"env-url-code",
 		"env-desc",
 		"project-id",
+		"organization-id",
 		zap.NewNop(),
 	)
 	assert.NoError(t, err)
@@ -65,6 +66,7 @@ func TestHandleRenameEnvironmentV2Command(t *testing.T) {
 		"env-url-code",
 		"env-desc",
 		"project-id",
+		"organization-id",
 		zap.NewNop(),
 	)
 	h := newEnvironmentV2CommandHandler(t, pub, env)
@@ -86,6 +88,7 @@ func TestHandleChangeDescriptionEnvironmentV2Command(t *testing.T) {
 		"env-url-code",
 		"env-desc",
 		"project-id",
+		"organization-id",
 		zap.NewNop(),
 	)
 	h := newEnvironmentV2CommandHandler(t, pub, env)
@@ -107,6 +110,7 @@ func TestHandleArchiveAndUnarchiveEnvironmentV2Command(t *testing.T) {
 		"env-url-code",
 		"env-desc",
 		"project-id",
+		"organization-id",
 		zap.NewNop(),
 	)
 	h := newEnvironmentV2CommandHandler(t, pub, env)

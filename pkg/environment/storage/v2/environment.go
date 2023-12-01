@@ -59,11 +59,12 @@ func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.
 			url_code,
 			description,
 			project_id,
+			organization_id,
 			archived,
 			created_at,
 			updated_at
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
 	_, err := s.qe.ExecContext(
@@ -74,6 +75,7 @@ func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.
 		e.UrlCode,
 		e.Description,
 		e.ProjectId,
+		e.OrganizationId,
 		e.Archived,
 		e.CreatedAt,
 		e.UpdatedAt,
@@ -132,6 +134,7 @@ func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*
 			url_code,
 			description,
 			project_id,
+			organization_id,
 			archived,
 			created_at,
 			updated_at
@@ -150,6 +153,7 @@ func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*
 		&e.UrlCode,
 		&e.Description,
 		&e.ProjectId,
+		&e.OrganizationId,
 		&e.Archived,
 		&e.CreatedAt,
 		&e.UpdatedAt,
@@ -178,6 +182,7 @@ func (s *environmentStorage) ListEnvironmentsV2(ctx context.Context,
 			url_code,
 			description,
 			project_id,
+			organization_id,
 			archived,
 			created_at,
 			updated_at
@@ -200,6 +205,7 @@ func (s *environmentStorage) ListEnvironmentsV2(ctx context.Context,
 			&e.UrlCode,
 			&e.Description,
 			&e.ProjectId,
+			&e.OrganizationId,
 			&e.Archived,
 			&e.CreatedAt,
 			&e.UpdatedAt,

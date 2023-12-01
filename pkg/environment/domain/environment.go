@@ -27,7 +27,14 @@ type EnvironmentV2 struct {
 	*proto.EnvironmentV2
 }
 
-func NewEnvironmentV2(name, urlCode, description, projectID string, logger *zap.Logger) (*EnvironmentV2, error) {
+func NewEnvironmentV2(
+	name,
+	urlCode,
+	description,
+	projectID,
+	organizationID string,
+	logger *zap.Logger,
+) (*EnvironmentV2, error) {
 	uid, err := uuid.NewUUID()
 	if err != nil {
 		logger.Error("failed to generate uuid", zap.Error(err))
@@ -35,14 +42,15 @@ func NewEnvironmentV2(name, urlCode, description, projectID string, logger *zap.
 	}
 	now := time.Now().Unix()
 	return &EnvironmentV2{&proto.EnvironmentV2{
-		Id:          uid.String(),
-		Name:        name,
-		UrlCode:     urlCode,
-		Description: description,
-		ProjectId:   projectID,
-		Archived:    false,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		Id:             uid.String(),
+		Name:           name,
+		UrlCode:        urlCode,
+		Description:    description,
+		ProjectId:      projectID,
+		OrganizationId: organizationID,
+		Archived:       false,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}}, nil
 }
 

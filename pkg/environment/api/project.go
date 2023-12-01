@@ -236,7 +236,42 @@ func (s *EnvironmentService) CreateProject(
 	}
 	name := strings.TrimSpace(req.Command.Name)
 	urlCode := strings.TrimSpace(req.Command.UrlCode)
-	project, err := domain.NewProject(name, urlCode, req.Command.Description, editor.Email, false)
+	// TODO: Temporary implementations that create Organization at the same time as Project.
+	// This should be removed when the Organization management page is added.
+	organization, err := domain.NewOrganization(name, urlCode, req.Command.Description, false)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+	createOrgCmd := &environmentproto.CreateOrganizationCommand{
+		Name:        organization.Name,
+		UrlCode:     organization.UrlCode,
+		Description: organization.Description,
+		IsTrial:     false,
+	}
+	if err = s.createOrganization(ctx, createOrgCmd, organization, editor, localizer); err != nil {
+		s.logger.Error(
+			"Failed to save organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+	s.logger.Info(
+		`Organization is created at the same time as Project.
+This is a temporary implementation during the transition period.`,
+		zap.String("organization_id", organization.Id),
+		zap.String("organization_name", organization.Name),
+		zap.String("organization_url_code", organization.UrlCode),
+	)
+
+	project, err := domain.NewProject(name, urlCode, req.Command.Description, editor.Email, organization.Id, false)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create project",
@@ -398,7 +433,41 @@ func (s *EnvironmentService) CreateTrialProject(
 	if req.Command.UrlCode != "" {
 		urlCode = req.Command.UrlCode
 	}
-	project, err := domain.NewProject(name, urlCode, "", editor.Email, true)
+	// TODO: Temporary implementations that create Organization at the same time as Project.
+	// This should be removed when the Organization management page is added.
+	organization, err := domain.NewOrganization(name, urlCode, "", true)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+	createOrgCmd := &environmentproto.CreateOrganizationCommand{
+		Name:        organization.Name,
+		UrlCode:     organization.UrlCode,
+		Description: organization.Description,
+		IsTrial:     true,
+	}
+	if err = s.createOrganization(ctx, createOrgCmd, organization, editor, localizer); err != nil {
+		s.logger.Error(
+			"Failed to save organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+	s.logger.Info(
+		`Trial organization is created at the same time as Project.
+This is a temporary implementation during the transition period.`,
+		zap.String("organization_id", organization.Id),
+		zap.String("organization_name", organization.Name),
+		zap.String("organization_url_code", organization.UrlCode),
+	)
+	project, err := domain.NewProject(name, urlCode, "", editor.Email, organization.Id, true)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create trial project",
@@ -542,7 +611,7 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 			ProjectId:   project.Id,
 			Description: "",
 		}
-		envV2, err := domain.NewEnvironmentV2(envID, envID, "", project.Id, s.logger)
+		envV2, err := domain.NewEnvironmentV2(envID, envID, "", project.Id, project.OrganizationId, s.logger)
 		if err != nil {
 			return err
 		}

@@ -66,10 +66,11 @@ func (s *projectStorage) CreateProject(ctx context.Context, p *domain.Project) e
 			disabled,
 			trial,
 			creator_email,
+			organization_id,
 			created_at,
 			updated_at
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
 	_, err := s.qe.ExecContext(
@@ -82,6 +83,7 @@ func (s *projectStorage) CreateProject(ctx context.Context, p *domain.Project) e
 		p.Disabled,
 		p.Trial,
 		p.CreatorEmail,
+		p.OrganizationId,
 		p.CreatedAt,
 		p.UpdatedAt,
 	)
@@ -145,6 +147,7 @@ func (s *projectStorage) GetProject(ctx context.Context, id string) (*domain.Pro
 			disabled,
 			trial,
 			creator_email,
+			organization_id,
 			created_at,
 			updated_at
 		FROM
@@ -164,6 +167,7 @@ func (s *projectStorage) GetProject(ctx context.Context, id string) (*domain.Pro
 		&project.Disabled,
 		&project.Trial,
 		&project.CreatorEmail,
+		&project.OrganizationId,
 		&project.CreatedAt,
 		&project.UpdatedAt,
 	)
@@ -191,6 +195,7 @@ func (s *projectStorage) GetTrialProjectByEmail(
 			disabled,
 			trial,
 			creator_email,
+			organization_id,
 			created_at,
 			updated_at
 		FROM
@@ -214,6 +219,7 @@ func (s *projectStorage) GetTrialProjectByEmail(
 		&project.Disabled,
 		&project.Trial,
 		&project.CreatorEmail,
+		&project.OrganizationId,
 		&project.CreatedAt,
 		&project.UpdatedAt,
 	)
@@ -245,6 +251,7 @@ func (s *projectStorage) ListProjects(
 			disabled,
 			trial,
 			creator_email,
+			organization_id,
 			created_at,
 			updated_at
 		FROM
@@ -268,6 +275,7 @@ func (s *projectStorage) ListProjects(
 			&project.Disabled,
 			&project.Trial,
 			&project.CreatorEmail,
+			&project.OrganizationId,
 			&project.CreatedAt,
 			&project.UpdatedAt,
 		)

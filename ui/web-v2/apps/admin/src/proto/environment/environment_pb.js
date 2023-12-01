@@ -82,7 +82,8 @@ proto.bucketeer.environment.EnvironmentV2.toObject = function(includeInstance, m
     projectId: jspb.Message.getFieldWithDefault(msg, 5, ""),
     archived: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
     createdAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
-    updatedAt: jspb.Message.getFieldWithDefault(msg, 8, 0)
+    updatedAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
+    organizationId: jspb.Message.getFieldWithDefault(msg, 9, "")
   };
 
   if (includeInstance) {
@@ -150,6 +151,10 @@ proto.bucketeer.environment.EnvironmentV2.deserializeBinaryFromReader = function
     case 8:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setUpdatedAt(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setOrganizationId(value);
       break;
     default:
       reader.skipField();
@@ -233,6 +238,13 @@ proto.bucketeer.environment.EnvironmentV2.serializeBinaryToWriter = function(mes
   if (f !== 0) {
     writer.writeInt64(
       8,
+      f
+    );
+  }
+  f = message.getOrganizationId();
+  if (f.length > 0) {
+    writer.writeString(
+      9,
       f
     );
   }
@@ -380,6 +392,24 @@ proto.bucketeer.environment.EnvironmentV2.prototype.getUpdatedAt = function() {
  */
 proto.bucketeer.environment.EnvironmentV2.prototype.setUpdatedAt = function(value) {
   return jspb.Message.setProto3IntField(this, 8, value);
+};
+
+
+/**
+ * optional string organization_id = 9;
+ * @return {string}
+ */
+proto.bucketeer.environment.EnvironmentV2.prototype.getOrganizationId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.EnvironmentV2} returns this
+ */
+proto.bucketeer.environment.EnvironmentV2.prototype.setOrganizationId = function(value) {
+  return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 

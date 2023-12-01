@@ -25,22 +25,23 @@ type Project struct {
 	*proto.Project
 }
 
-func NewProject(name, urlCode, description, creatorEmail string, trial bool) (*Project, error) {
+func NewProject(name, urlCode, description, creatorEmail, organizationID string, trial bool) (*Project, error) {
 	now := time.Now().Unix()
 	uid, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
 	return &Project{&proto.Project{
-		Id:           uid.String(),
-		Name:         name,
-		UrlCode:      urlCode,
-		Description:  description,
-		Disabled:     false,
-		Trial:        trial,
-		CreatorEmail: creatorEmail,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		Id:             uid.String(),
+		Name:           name,
+		UrlCode:        urlCode,
+		Description:    description,
+		Disabled:       false,
+		Trial:          trial,
+		CreatorEmail:   creatorEmail,
+		OrganizationId: organizationID,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}}, nil
 }
 

@@ -224,6 +224,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 		"url-code",
 		"description",
 		"email",
+		"organizationID",
 		false,
 	)
 	require.NoError(t, err)
@@ -289,6 +290,10 @@ func TestCreateProjectMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrProjectAlreadyExists)
 			},
 			req: &proto.CreateProjectRequest{
@@ -312,6 +317,10 @@ func TestCreateProjectMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -457,6 +466,10 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrProjectAlreadyExists)
 			},
 			req: &proto.CreateTrialProjectRequest{
@@ -486,10 +499,10 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(4)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(5)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil).Times(4)
+				).Return(nil).Times(5)
 				s.accountClient.(*acmock.MockClient).EXPECT().GetAdminAccount(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.NotFound, "not found"))
 				s.accountClient.(*acmock.MockClient).EXPECT().CreateAccount(gomock.Any(), gomock.Any()).Return(

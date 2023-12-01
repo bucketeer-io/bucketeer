@@ -23,7 +23,14 @@ import (
 
 func TestNewEnvironmentV2(t *testing.T) {
 	t.Parallel()
-	env, err := NewEnvironmentV2("name", "code", "desc", "project-id", zap.NewNop())
+	env, err := NewEnvironmentV2(
+		"name",
+		"code",
+		"desc",
+		"project-id",
+		"organization-id",
+		zap.NewNop(),
+	)
 	assert.NoError(t, err)
 	assert.IsType(t, &EnvironmentV2{}, env)
 	assert.Equal(t, "name", env.Name)
@@ -35,7 +42,14 @@ func TestNewEnvironmentV2(t *testing.T) {
 
 func TestRenameEnvironmentV2(t *testing.T) {
 	t.Parallel()
-	env, err := NewEnvironmentV2("name", "code", "desc", "project-id", zap.NewNop())
+	env, err := NewEnvironmentV2(
+		"name",
+		"code",
+		"desc",
+		"project-id",
+		"organization-id",
+		zap.NewNop(),
+	)
 	assert.NoError(t, err)
 	newName := "new-name"
 	env.Rename(newName)
@@ -44,7 +58,14 @@ func TestRenameEnvironmentV2(t *testing.T) {
 
 func TestChangeDescriptionEnvironmentV2(t *testing.T) {
 	t.Parallel()
-	env, err := NewEnvironmentV2("name", "code", "desc", "project-id", zap.NewNop())
+	env, err := NewEnvironmentV2(
+		"name",
+		"code",
+		"desc",
+		"project-id",
+		"organization-id",
+		zap.NewNop(),
+	)
 	assert.NoError(t, err)
 	newDesc := "new desc"
 	env.ChangeDescription(newDesc)
@@ -53,7 +74,14 @@ func TestChangeDescriptionEnvironmentV2(t *testing.T) {
 
 func TestSetArchivedEnvironmentV2(t *testing.T) {
 	t.Parallel()
-	env, err := NewEnvironmentV2("name", "code", "desc", "project-id", zap.NewNop())
+	env, err := NewEnvironmentV2(
+		"name",
+		"code",
+		"desc",
+		"project-id",
+		"organization-id",
+		zap.NewNop(),
+	)
 	assert.NoError(t, err)
 	env.SetArchived()
 	assert.Equal(t, true, env.Archived)
