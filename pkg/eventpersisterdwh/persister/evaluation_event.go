@@ -89,7 +89,7 @@ func (w *evalEvtWriter) Write(
 				zap.Error(err),
 				zap.String("environmentNamespace", environmentNamespace),
 			)
-			handledCounter.WithLabelValues(codeNoLink).Inc()
+			handledCounter.WithLabelValues(codeFailedToListExperiments).Inc()
 			// Make sure to retry all the events in the next pulling
 			for id := range events {
 				fails[id] = true
@@ -97,11 +97,6 @@ func (w *evalEvtWriter) Write(
 			return fails
 		}
 		if len(experiments) == 0 {
-			handledCounter.WithLabelValues(codeNoLink).Inc()
-			// Make sure to purge the events from PubSub because there are no experiments to link
-			for id := range events {
-				fails[id] = false
-			}
 			return fails
 		}
 		for id, event := range events {
@@ -110,16 +105,12 @@ func (w *evalEvtWriter) Write(
 				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentNamespace, experiments)
 				if err != nil {
 					// If there is nothing to link, we don't report it as an error
-					handledCounter.WithLabelValues(codeNoLink).Inc()
-					if err == ErrExperimentNotFound ||
-						err == ErrGoalEventIssuedAfterExperimentEnded {
-						w.logger.Debug(
-							"There is no experiment to link",
-							zap.Error(err),
-							zap.String("id", id),
-							zap.String("environmentNamespace", environmentNamespace),
-							zap.Any("evalEvent", evt),
-						)
+					if err == ErrExperimentNotFound {
+						handledCounter.WithLabelValues(codeExperimentNotFound).Inc()
+						continue
+					}
+					if err == ErrEvaluationEventIssuedAfterExperimentEnded {
+						handledCounter.WithLabelValues(codeEventIssuedAfterExperimentEnded).Inc()
 						continue
 					}
 					if !retriable {
@@ -186,8 +177,7 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 		return nil, false, ErrExperimentNotFound
 	}
 	if exp.StopAt < e.Timestamp {
-		handledCounter.WithLabelValues(codeEventIssuedAfterExperimentEnded).Inc()
-		return nil, false, ErrGoalEventIssuedAfterExperimentEnded
+		return nil, false, ErrEvaluationEventIssuedAfterExperimentEnded
 	}
 	var ud []byte
 	if e.User != nil {
@@ -272,7 +262,6 @@ func (w *evalEvtWriter) listExperiments(
 		},
 	)
 	if err != nil {
-		handledCounter.WithLabelValues(codeFailedToListExperiments).Inc()
 		return nil, err
 	}
 	// Filter the stopped experiments

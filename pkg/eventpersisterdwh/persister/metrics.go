@@ -24,13 +24,13 @@ const (
 	codeEvaluationsAreEmpty                 = "EvaluationsAreEmpty"
 	codeEventIssuedAfterExperimentEnded     = "EventIssuedAfterExperimentEnded"
 	codeEventOlderThanExperiment            = "EventOlderThanExperiment"
+	codeExperimentNotFound                  = "ExperimentNotFound"
 	codeGoalEventIssuedAfterExperimentEnded = "GoalEventIssuedAfterExperimentEnded"
 	codeFailedToEvaluateUser                = "FailedToEvaluateUser"
 	codeFailedToListExperiments             = "FailedToListExperiments"
 	codeFailedToAppendEvaluationEvents      = "FailedToAppendEvaluationEvents"
 	codeFailedToAppendGoalEvents            = "FailedToAppendGoalEvents"
 	codeLinked                              = "Linked"
-	codeNoLink                              = "NoLink"
 )
 
 var (

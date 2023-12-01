@@ -69,7 +69,7 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 				zap.Error(err),
 				zap.String("environmentNamespace", environmentNamespace),
 			)
-			handledCounter.WithLabelValues(codeNoLink).Inc()
+			handledCounter.WithLabelValues(codeFailedToListAutoOpsRules).Inc()
 			// Make sure to retry all the events in the next pulling
 			for id := range events {
 				fails[id] = true
@@ -77,11 +77,6 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 			return fails
 		}
 		if len(listAutoOpsRules) == 0 {
-			handledCounter.WithLabelValues(codeNoLink).Inc()
-			// Make sure to purge the events from PubSub because there are no experiments to link
-			for id := range events {
-				fails[id] = false
-			}
 			return fails
 		}
 		for id, event := range events {
@@ -89,15 +84,9 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 			case *eventproto.EvaluationEvent:
 				retriable, err := u.updateUserCount(ctx, environmentNamespace, evt, listAutoOpsRules)
 				if err != nil {
-					if err == ErrAutoOpsRulesNotFound {
+					if err == ErrAutoOpsRuleNotFound {
 						// If there is nothing to link, we don't report it as an error
-						handledCounter.WithLabelValues(codeNoLink).Inc()
-						u.logger.Debug(
-							"There is no auto ops rules to link the evaluation event",
-							zap.Error(err),
-							zap.String("eventId", id),
-							zap.String("environmentNamespace", environmentNamespace),
-						)
+						handledCounter.WithLabelValues(codeAutoOpsRuleNotFound).Inc()
 						continue
 					}
 					if !retriable {
@@ -133,7 +122,7 @@ func (u *evalEvtUpdater) updateUserCount(
 ) (bool, error) {
 	rules := u.linkOpsRulesByFeatureID(event.FeatureId, listAutoOpsRules)
 	if len(rules) == 0 {
-		return false, ErrAutoOpsRulesNotFound
+		return false, ErrAutoOpsRuleNotFound
 	}
 	// Link the event rate clauses by variation ID
 	linkedOpsRules := make(map[string][]string, len(rules))

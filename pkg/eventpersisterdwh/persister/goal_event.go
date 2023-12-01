@@ -95,7 +95,7 @@ func (w *goalEvtWriter) Write(
 				zap.Error(err),
 				zap.String("environmentNamespace", environmentNamespace),
 			)
-			handledCounter.WithLabelValues(codeNoLink).Inc()
+			handledCounter.WithLabelValues(codeFailedToListExperiments).Inc()
 			// Make sure to retry all the events in the next pulling
 			for id := range events {
 				fails[id] = true
@@ -103,11 +103,6 @@ func (w *goalEvtWriter) Write(
 			return fails
 		}
 		if len(experiments) == 0 {
-			handledCounter.WithLabelValues(codeNoLink).Inc()
-			// Make sure to purge the events from PubSub because there are no experiments to link
-			for id := range events {
-				fails[id] = false
-			}
 			return fails
 		}
 		for id, event := range events {
@@ -117,14 +112,7 @@ func (w *goalEvtWriter) Write(
 				if err != nil {
 					if err == ErrExperimentNotFound {
 						// If there is nothing to link, we don't report it as an error
-						handledCounter.WithLabelValues(codeNoLink).Inc()
-						w.logger.Debug(
-							"There is no experiment to link",
-							zap.Error(err),
-							zap.String("id", id),
-							zap.String("environmentNamespace", environmentNamespace),
-							zap.Any("goalEvent", evt),
-						)
+						handledCounter.WithLabelValues(codeExperimentNotFound).Inc()
 						continue
 					}
 					if !retriable {
@@ -365,7 +353,6 @@ func (w *goalEvtWriter) listExperiments(
 		},
 	)
 	if err != nil {
-		handledCounter.WithLabelValues(codeFailedToListExperiments).Inc()
 		return nil, err
 	}
 	// Filter the stopped experiments

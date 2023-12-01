@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	codeAutoOpsRuleNotFound                = "ErrAutoOpsRuleNotFound"
 	codeFailedToExtractOpsEventRateClauses = "FailedToExtractOpsEventRateClauses"
 	codeFailedToGetFeatures                = "FailedToGetFeatures"
 	codeFailedToFindFeatureVersion         = "FailedToFindFeatureVersion"
@@ -28,7 +29,6 @@ const (
 	codeFailedToUpdateUserCount            = "FailedToUpdateUserCount"
 	codeGetFeaturesReturnedEmpty           = "GetFeaturesReturnedEmpty"
 	codeLinked                             = "Linked"
-	codeNoLink                             = "NoLink"
 )
 
 var (

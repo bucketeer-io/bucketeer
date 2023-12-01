@@ -32,7 +32,7 @@ import (
 )
 
 var (
-	ErrAutoOpsRulesNotFound   = errors.New("eventpersister: auto ops rules not found")
+	ErrAutoOpsRuleNotFound    = errors.New("eventpersister: auto ops rule not found")
 	ErrFeatureEmptyList       = errors.New("eventpersister: list feature returned empty")
 	ErrFeatureVersionNotFound = errors.New("eventpersister: feature version not found")
 	ErrNoExperiments          = errors.New("eventpersister: no experiments")
