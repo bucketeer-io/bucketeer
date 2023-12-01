@@ -12,4 +12,4 @@ SELECT id,
        created_at,
        updated_at
 FROM flag_triggers
-WHERE %s %s %s
+%s %s %s
