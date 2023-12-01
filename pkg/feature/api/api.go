@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"

@@ -19,7 +19,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"fmt"
+	"net/url"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -35,9 +35,7 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
-const mask = "********"
-
-var maskLength = len(mask)
+const maskURI = "********"
 
 func (s *FeatureService) CreateFlagTrigger(
 	ctx context.Context,
@@ -685,9 +683,15 @@ func (s *FeatureService) generateTriggerURL(
 		return "", err
 	}
 	secret := base64.RawURLEncoding.EncodeToString(encrypted)
+	triggerURL, _ := url.Parse(s.triggerURL)
+	query := triggerURL.Query()
 	if masked {
-		return fmt.Sprintf("%s/%s", s.triggerURL, mask+secret[maskLength:]), nil
+		query.Set("secret", maskURI)
+		triggerURL.RawQuery = query.Encode()
+		return triggerURL.String(), nil
 	} else {
-		return fmt.Sprintf("%s/%s", s.triggerURL, secret), nil
+		query.Set("secret", secret)
+		triggerURL.RawQuery = query.Encode()
+		return triggerURL.String(), nil
 	}
 }

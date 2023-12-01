@@ -18,12 +18,10 @@ package webhook
 import (
 	"context"
 	"encoding/base64"
-	"net/http"
-	"strings"
-
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"net/http"
 
 	"github.com/bucketeer-io/bucketeer/pkg/crypto"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -75,12 +73,15 @@ func NewHandler(
 
 func (h handler) ServeHTTP(resp http.ResponseWriter, request *http.Request) {
 	ctx := request.Context()
-	uri := request.URL.RequestURI()
-	if !strings.HasPrefix(uri, "/") {
+	secret := request.URL.Query().Get("secret")
+	if secret == "" {
+		h.logger.Error(
+			"Failed to get secret from query",
+			log.FieldsFromImcomingContext(ctx)...,
+		)
 		resp.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	secret := uri[1:]
 	triggerSecret, err := h.authSecret(ctx, secret)
 	if err != nil {
 		h.logger.Error(
@@ -98,6 +99,14 @@ func (h handler) ServeHTTP(resp http.ResponseWriter, request *http.Request) {
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if trigger.GetDisabled() || trigger.GetDeleted() {
+		h.logger.Error(
+			"Flag trigger is disabled or deleted",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		resp.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	// check trigger secret

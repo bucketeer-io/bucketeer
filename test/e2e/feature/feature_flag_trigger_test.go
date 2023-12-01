@@ -17,6 +17,9 @@ package feature
 
 import (
 	"context"
+	"crypto/tls"
+	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,7 +33,11 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 	cmd := newCreateFeatureCommand(newFeatureID(t))
 	createFeature(t, client, cmd)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(cmd, "create flag trigger test")
+	createFlagTriggerCommand := newCreateFlagTriggerCmd(
+		cmd,
+		"create flag trigger test",
+		featureproto.FlagTrigger_Action_ON,
+	)
 	resp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	if resp.FlagTrigger.FeatureId != cmd.Id {
 		t.Fatalf("unexpected flag feature id: %s, feature id: %s", resp.FlagTrigger.FeatureId, cmd.Id)
@@ -55,7 +62,11 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	command := newCreateFeatureCommand(newFeatureID(t))
 	createFeature(t, client, command)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(command, "create flag trigger test")
+	createFlagTriggerCommand := newCreateFlagTriggerCmd(
+		command,
+		"create flag trigger test",
+		featureproto.FlagTrigger_Action_ON,
+	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Update flag trigger
 	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
@@ -87,7 +98,11 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 	command := newCreateFeatureCommand(newFeatureID(t))
 	createFeature(t, client, command)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(command, "create flag trigger test")
+	createFlagTriggerCommand := newCreateFlagTriggerCmd(
+		command,
+		"create flag trigger test",
+		featureproto.FlagTrigger_Action_ON,
+	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Disable flag trigger
 	disableFlagTriggerReq := &featureproto.DisableFlagTriggerRequest{
@@ -134,7 +149,11 @@ func TestResetFlagTrigger(t *testing.T) {
 	command := newCreateFeatureCommand(newFeatureID(t))
 	createFeature(t, client, command)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(command, "create flag trigger test")
+	createFlagTriggerCommand := newCreateFlagTriggerCmd(
+		command,
+		"create flag trigger test",
+		featureproto.FlagTrigger_Action_ON,
+	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Reset flag trigger
 	resetFlagTriggerReq := &featureproto.ResetFlagTriggerRequest{
@@ -168,7 +187,11 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	command := newCreateFeatureCommand(newFeatureID(t))
 	createFeature(t, client, command)
 	// Create flag trigger
-	createFlagTriggerCommand := newCreateFlagTriggerCmd(command, "create flag trigger test")
+	createFlagTriggerCommand := newCreateFlagTriggerCmd(
+		command,
+		"create flag trigger test",
+		featureproto.FlagTrigger_Action_ON,
+	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Delete flag trigger
 	deleteFlagTriggerReq := &featureproto.DeleteFlagTriggerRequest{
@@ -200,16 +223,24 @@ func TestListFlagTriggers(t *testing.T) {
 	createFeature(t, client, command)
 	// Create flag triggers
 	trigger1, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentNamespace:     *environmentNamespace,
-		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(command, "create flag trigger test 1"),
+		EnvironmentNamespace: *environmentNamespace,
+		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
+			command,
+			"create flag trigger test 1",
+			featureproto.FlagTrigger_Action_ON,
+		),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(1 * time.Second)
 	trigger2, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentNamespace:     *environmentNamespace,
-		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(command, "create flag trigger test 2"),
+		EnvironmentNamespace: *environmentNamespace,
+		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
+			command,
+			"create flag trigger test 2",
+			featureproto.FlagTrigger_Action_ON,
+		),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -252,14 +283,92 @@ func TestListFlagTriggers(t *testing.T) {
 	}
 }
 
+func TestFeatureFlagWebhook(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	// Create feature
+	command := newCreateFeatureCommand(newFeatureID(t))
+	createFeature(t, client, command)
+	// Create Enable flag triggers
+	enableTrigger, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
+			command,
+			"webhook flag trigger test",
+			featureproto.FlagTrigger_Action_ON,
+		),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("enable trigger URL: %s", enableTrigger.GetUrl())
+	// Send post request
+	resp, err := sendPostRequestIgnoreSSL(enableTrigger.GetUrl())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status code: %s", resp.Status)
+	}
+	enabledFeature := getFeature(t, command.Id, client)
+	if enabledFeature.Enabled != true {
+		t.Fatalf("unexpected enabled: %v", enabledFeature.Enabled)
+	}
+	// Create Disable flag triggers
+	disableTrigger, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
+			command,
+			"webhook flag trigger test",
+			featureproto.FlagTrigger_Action_OFF,
+		),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("disable trigger URL: %s", disableTrigger.GetUrl())
+	// Send post request
+	resp, err = sendPostRequestIgnoreSSL(disableTrigger.GetUrl())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status code: %s", resp.Status)
+	}
+	disabledFeature := getFeature(t, command.Id, client)
+	if disabledFeature.Enabled != false {
+		t.Fatalf("unexpected enabled: %v", disabledFeature.Enabled)
+	}
+}
+
+func sendPostRequestIgnoreSSL(targetURL string) (*http.Response, error) {
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	req, err := http.NewRequest("POST", targetURL, strings.NewReader(""))
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func newCreateFlagTriggerCmd(
 	cmd *featureproto.CreateFeatureCommand,
 	description string,
+	action featureproto.FlagTrigger_Action,
 ) *featureproto.CreateFlagTriggerCommand {
 	createFlagTriggerCommand := &featureproto.CreateFlagTriggerCommand{
 		FeatureId:   cmd.Id,
 		Type:        featureproto.FlagTrigger_Type_WEBHOOK,
-		Action:      featureproto.FlagTrigger_Action_ON,
+		Action:      action,
 		Description: description,
 	}
 	return createFlagTriggerCommand

@@ -488,6 +488,14 @@ data:
                                   retry_on: 5xx
                                   num_retries: 3
                             - match:
+                                prefix: /webhook
+                              route:
+                                cluster: feature
+                                timeout: 15s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
                                 prefix: /bucketeer.environment.EnvironmentService
                               route:
                                 cluster: environment

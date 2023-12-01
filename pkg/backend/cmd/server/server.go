@@ -854,7 +854,7 @@ func (s *server) createFeatureFlagTriggerService(
 		segmentUsersPublisher,
 		domainTopicPublisher,
 		triggerCryptoUtil,
-		*s.webhookBaseURL,
+		fmt.Sprintf("%s/%s", *s.webhookBaseURL, featureFlagTriggerWebhookPath),
 		featureapi.WithLogger(logger),
 	)
 
