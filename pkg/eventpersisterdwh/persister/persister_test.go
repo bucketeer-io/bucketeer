@@ -381,7 +381,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc:  "error: goal event was issued after the experiment ended",
+			desc:  "error: evaluation event was issued after the experiment ended",
 			input: evaluationEvent,
 			inputExperiment: []*exproto.Experiment{
 				{
@@ -395,7 +395,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 				},
 			},
 			expected:           nil,
-			expectedErr:        ErrGoalEventIssuedAfterExperimentEnded,
+			expectedErr:        ErrEvaluationEventIssuedAfterExperimentEnded,
 			expectedRepeatable: false,
 		},
 		{
@@ -654,6 +654,36 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 			},
 			expected:           nil,
 			expectedErr:        ErrEvaluationsAreEmpty,
+			expectedRepeatable: false,
+		},
+		{
+			desc: "error: goal event was issued after the experiment ended",
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_ANDROID,
+				Timestamp: now.Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: nil,
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "",
+			},
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					Status:         exproto.Experiment_STOPPED,
+					StartAt:        time.Now().Add(-time.Hour * 2).Unix(),
+					StopAt:         time.Now().Add(-time.Hour * 1).Unix(),
+				},
+			},
+			expected:           nil,
+			expectedErr:        ErrExperimentNotFound,
 			expectedRepeatable: false,
 		},
 		{

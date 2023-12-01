@@ -41,7 +41,6 @@ var (
 	ErrEvaluationsAreEmpty                       = errors.New("eventpersister: evaluations are empty")
 	ErrEvaluationEventIssuedAfterExperimentEnded = errors.New("eventpersister: evaluation event issued after experiment ended")
 	ErrExperimentNotFound                        = errors.New("eventpersister: experiment not found")
-	ErrGoalEventIssuedAfterExperimentEnded       = errors.New("eventpersister: goal event issued after experiment ended")
 	ErrFailedToEvaluateUser                      = errors.New("eventpersister: failed to evaluate user")
 	ErrNoAutoOpsRules                            = errors.New("eventpersister: no auto ops rules")
 	ErrNothingToLink                             = errors.New("eventpersister: nothing to link")
