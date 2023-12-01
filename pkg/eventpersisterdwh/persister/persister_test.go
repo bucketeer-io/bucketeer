@@ -145,6 +145,168 @@ var (
 	}
 )
 
+func TestListExperiments(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	now := time.Now()
+	environmentNamespace := "ns"
+	patterns := []struct {
+		desc        string
+		setup       func(context.Context, *evalEvtWriter)
+		expected    []*exproto.Experiment
+		expectedErr error
+	}{
+		{
+			desc: "error: failed to list experiments",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
+					nil,
+					errors.New("internal"),
+				)
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             0,
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(nil, errors.New("internal"))
+			},
+			expected:    nil,
+			expectedErr: errors.New("internal"),
+		},
+		{
+			desc: "success: stop_at is older than 3 days",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				experiments := &exproto.Experiments{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      "feature-id",
+							FeatureVersion: 1,
+							Status:         exproto.Experiment_STOPPED,
+							StopAt:         now.Unix() - 3*day,
+						},
+						{
+							Id:             "experiment-id-2",
+							GoalIds:        []string{"goal-id-2"},
+							FeatureId:      "feature-id-2",
+							FeatureVersion: 1,
+							Status:         exproto.Experiment_STOPPED,
+							StopAt:         now.Unix() - 1*day,
+						},
+					},
+				}
+				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
+					experiments,
+					nil,
+				)
+			},
+			expected: []*exproto.Experiment{
+				{
+					Id:             "experiment-id-2",
+					GoalIds:        []string{"goal-id-2"},
+					FeatureId:      "feature-id-2",
+					FeatureVersion: 1,
+					Status:         exproto.Experiment_STOPPED,
+					StopAt:         now.Unix() - 1*day,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: using the cache",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				experiments := &exproto.Experiments{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      "feature-id",
+							FeatureVersion: 1,
+						},
+					},
+				}
+				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
+					experiments,
+					nil,
+				)
+			},
+			expected: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"goal-id"},
+					FeatureId:      "feature-id",
+					FeatureVersion: 1,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: using the API",
+			setup: func(ctx context.Context, p *evalEvtWriter) {
+				experiments := &exproto.Experiments{
+					Experiments: []*exproto.Experiment{
+						{
+							Id:             "experiment-id",
+							GoalIds:        []string{"goal-id"},
+							FeatureId:      "feature-id",
+							FeatureVersion: 1,
+						},
+					},
+				}
+				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
+					nil,
+					errors.New("internal"),
+				)
+				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
+					nil,
+				)
+				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
+					ctx,
+					&exproto.ListExperimentsRequest{
+						PageSize:             0,
+						EnvironmentNamespace: environmentNamespace,
+						Statuses: []exproto.Experiment_Status{
+							exproto.Experiment_RUNNING,
+							exproto.Experiment_STOPPED,
+						},
+					},
+				).Return(&exproto.ListExperimentsResponse{
+					Experiments: experiments.Experiments,
+				}, nil)
+			},
+			expected: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"goal-id"},
+					FeatureId:      "feature-id",
+					FeatureVersion: 1,
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			persister := newEvalEventWriter(mockController)
+			p.setup(ctx, persister)
+			actual, err := persister.listExperiments(ctx, environmentNamespace)
+			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestConvToEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -197,229 +359,59 @@ func TestConvToEvaluationEvent(t *testing.T) {
 	eventID := "event-id"
 	patterns := []struct {
 		desc               string
-		setup              func(context.Context, *evalEvtWriter)
 		input              *eventproto.EvaluationEvent
+		inputExperiment    []*exproto.Experiment
 		expected           *epproto.EvaluationEvent
 		expectedErr        error
 		expectedRepeatable bool
 	}{
 		{
-			desc: "error: failed to list experiments",
-			setup: func(ctx context.Context, p *evalEvtWriter) {
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(nil, errors.New("internal"))
+			desc:  "error: experiment not found",
+			input: evaluationEvent,
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"goal-id"},
+					FeatureId:      "invalid",
+					FeatureVersion: -1,
+				},
 			},
-			input:              evaluationEvent,
-			expected:           nil,
-			expectedErr:        errors.New("internal"),
-			expectedRepeatable: true,
-		},
-		{
-			desc: "error: experiment does not exist",
-			setup: func(ctx context.Context, p *evalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: []*exproto.Experiment{}},
-					nil,
-				)
-			},
-			input:              evaluationEvent,
-			expected:           nil,
-			expectedErr:        ErrNoExperiments,
-			expectedRepeatable: false,
-		},
-		{
-			desc: "error: stop_at is older than 3 days",
-			setup: func(ctx context.Context, p *evalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"goal-id"},
-							FeatureId:      evaluationEvent.FeatureId,
-							FeatureVersion: evaluation.FeatureVersion,
-							Status:         exproto.Experiment_STOPPED,
-							StopAt:         time.Now().Unix() - 3*day,
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
-			},
-			input:              evaluationEvent,
-			expected:           nil,
-			expectedErr:        ErrNoExperiments,
-			expectedRepeatable: false,
-		},
-		{
-			desc: "error: experiment not found",
-			setup: func(ctx context.Context, p *evalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"goal-id"},
-							FeatureId:      "invalid",
-							FeatureVersion: -1,
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
-			},
-			input:              evaluationEvent,
 			expected:           nil,
 			expectedErr:        ErrExperimentNotFound,
 			expectedRepeatable: false,
 		},
 		{
-			desc: "error: goal event was issued after the experiment ended",
-			setup: func(ctx context.Context, p *evalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"goal-id"},
-							FeatureId:      evaluationEvent.FeatureId,
-							FeatureVersion: evaluation.FeatureVersion,
-							Status:         exproto.Experiment_STOPPED,
-							StartAt:        t1.Add(-time.Hour * 3).Unix(),
-							StopAt:         t1.Add(-time.Hour * 2).Unix(),
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
+			desc:  "error: evaluation event was issued after the experiment ended",
+			input: evaluationEvent,
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"goal-id"},
+					FeatureId:      evaluationEvent.FeatureId,
+					FeatureVersion: evaluation.FeatureVersion,
+					Status:         exproto.Experiment_STOPPED,
+					StartAt:        t1.Add(-time.Hour * 3).Unix(),
+					StopAt:         t1.Add(-time.Hour * 2).Unix(),
+				},
 			},
-			input:              evaluationEvent,
 			expected:           nil,
-			expectedErr:        ErrGoalEventIssuedAfterExperimentEnded,
+			expectedErr:        ErrEvaluationEventIssuedAfterExperimentEnded,
 			expectedRepeatable: false,
 		},
 		{
-			desc: "success: evaluation event with running status",
-			setup: func(ctx context.Context, p *evalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"goal-id"},
-							FeatureId:      evaluationEvent.FeatureId,
-							FeatureVersion: evaluation.FeatureVersion,
-							Status:         exproto.Experiment_RUNNING,
-							StartAt:        t1.Add(-time.Hour).Unix(),
-							StopAt:         t1.Add(time.Hour).Unix(),
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
-			},
+			desc:  "success: evaluation event with running status",
 			input: evaluationEvent,
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"goal-id"},
+					FeatureId:      evaluationEvent.FeatureId,
+					FeatureVersion: evaluation.FeatureVersion,
+					Status:         exproto.Experiment_RUNNING,
+					StartAt:        t1.Add(-time.Hour).Unix(),
+					StopAt:         t1.Add(time.Hour).Unix(),
+				},
+			},
 			expected: &epproto.EvaluationEvent{
 				Id:                   eventID,
 				FeatureId:            evaluationEvent.FeatureId,
@@ -437,43 +429,19 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "success: evaluation event with stopped status",
-			setup: func(ctx context.Context, p *evalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"goal-id"},
-							FeatureId:      evaluationEvent.FeatureId,
-							FeatureVersion: evaluation.FeatureVersion,
-							Status:         exproto.Experiment_RUNNING,
-							StartAt:        t1.Add(-time.Hour).Unix(),
-							StopAt:         t1.Add(time.Hour).Unix(),
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
-			},
+			desc:  "success: evaluation event with stopped status",
 			input: evaluationEvent,
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"goal-id"},
+					FeatureId:      evaluationEvent.FeatureId,
+					FeatureVersion: evaluation.FeatureVersion,
+					Status:         exproto.Experiment_RUNNING,
+					StartAt:        t1.Add(-time.Hour).Unix(),
+					StopAt:         t1.Add(time.Hour).Unix(),
+				},
+			},
 			expected: &epproto.EvaluationEvent{
 				Id:                   eventID,
 				FeatureId:            evaluationEvent.FeatureId,
@@ -491,43 +459,19 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "success: with empty tag and user data is nil",
-			setup: func(ctx context.Context, p *evalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"goal-id"},
-							FeatureId:      evaluationEventWithTagEmpty.FeatureId,
-							FeatureVersion: evaluation.FeatureVersion,
-							Status:         exproto.Experiment_STOPPED,
-							StartAt:        t1.Add(-time.Hour * 2).Unix(),
-							StopAt:         t1.Add(-time.Hour).Unix(),
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
-			},
+			desc:  "success: with empty tag and user data is nil",
 			input: evaluationEventWithTagEmpty,
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"goal-id"},
+					FeatureId:      evaluationEventWithTagEmpty.FeatureId,
+					FeatureVersion: evaluation.FeatureVersion,
+					Status:         exproto.Experiment_STOPPED,
+					StartAt:        t1.Add(-time.Hour * 2).Unix(),
+					StopAt:         t1.Add(-time.Hour).Unix(),
+				},
+			},
 			expected: &epproto.EvaluationEvent{
 				Id:                   eventID,
 				FeatureId:            evaluationEventWithTagEmpty.FeatureId,
@@ -545,27 +489,19 @@ func TestConvToEvaluationEvent(t *testing.T) {
 			expectedRepeatable: false,
 		},
 		{
-			desc: "success: using cache",
-			setup: func(ctx context.Context, p *evalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"goal-id"},
-							FeatureId:      evaluationEventWithTagEmpty.FeatureId,
-							FeatureVersion: evaluation.FeatureVersion,
-							Status:         exproto.Experiment_STOPPED,
-							StartAt:        t1.Add(-time.Hour * 2).Unix(),
-							StopAt:         t1.Add(-time.Hour).Unix(),
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					experiments,
-					nil,
-				)
-			},
+			desc:  "success: using cache",
 			input: evaluationEventWithTagEmpty,
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"goal-id"},
+					FeatureId:      evaluationEventWithTagEmpty.FeatureId,
+					FeatureVersion: evaluation.FeatureVersion,
+					Status:         exproto.Experiment_STOPPED,
+					StartAt:        t1.Add(-time.Hour * 2).Unix(),
+					StopAt:         t1.Add(-time.Hour).Unix(),
+				},
+			},
 			expected: &epproto.EvaluationEvent{
 				Id:                   eventID,
 				FeatureId:            evaluationEventWithTagEmpty.FeatureId,
@@ -586,10 +522,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			persister := newEvalEventWriter(mockController)
-			if p.setup != nil {
-				p.setup(ctx, persister)
-			}
-			actual, repeatable, err := persister.convToEvaluationEvent(ctx, p.input, eventID, environmentNamespace)
+			actual, repeatable, err := persister.convToEvaluationEvent(ctx, p.input, eventID, environmentNamespace, p.inputExperiment)
 			assert.Equal(t, p.expectedRepeatable, repeatable)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
@@ -621,123 +554,13 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		desc               string
 		setup              func(context.Context, *goalEvtWriter)
 		input              *eventproto.GoalEvent
+		inputExperiment    []*exproto.Experiment
 		expected           []*epproto.GoalEvent
 		expectedErr        error
 		expectedRepeatable bool
 	}{
 		{
-			desc: "err: list experiment internal",
-			setup: func(ctx context.Context, p *goalEvtWriter) {
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(nil, errors.New("internal"))
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: now.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected:           nil,
-			expectedErr:        errors.New("internal"),
-			expectedRepeatable: true,
-		},
-		{
-			desc: "err: list experiment empty",
-			setup: func(ctx context.Context, p *goalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: []*exproto.Experiment{}},
-					nil,
-				)
-			},
-			input: &eventproto.GoalEvent{
-				SourceId:  eventproto.SourceId_ANDROID,
-				Timestamp: now.Unix(),
-				GoalId:    "gid",
-				UserId:    "uid",
-				User: &userproto.User{
-					Id:   "uid",
-					Data: map[string]string{"atr": "av"},
-				},
-				Value:       float64(1.2),
-				Evaluations: nil,
-				Tag:         "tag",
-			},
-			expected:           nil,
-			expectedErr:        ErrNoExperiments,
-			expectedRepeatable: false,
-		},
-		{
 			desc: "err: experiment not found",
-			setup: func(ctx context.Context, p *goalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:      "experiment-id",
-							GoalIds: []string{"goal-id"},
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
-			},
 			input: &eventproto.GoalEvent{
 				SourceId:  eventproto.SourceId_ANDROID,
 				Timestamp: now.Unix(),
@@ -750,6 +573,12 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Value:       float64(1.2),
 				Evaluations: nil,
 				Tag:         "tag",
+			},
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:      "experiment-id",
+					GoalIds: []string{"goal-id"},
+				},
 			},
 			expected:           nil,
 			expectedErr:        ErrExperimentNotFound,
@@ -758,38 +587,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		{
 			desc: "err: ErrFailedToEvaluateUser",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
 				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
 					gomock.Any(),
@@ -808,6 +605,16 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Evaluations: nil,
 				Tag:         "tag",
 			},
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(-time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+			},
 			expected:           nil,
 			expectedErr:        ErrFailedToEvaluateUser,
 			expectedRepeatable: true,
@@ -815,38 +622,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		{
 			desc: "err: ErrEvaluationsAreEmpty",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
 				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
 					gomock.Any(),
@@ -867,63 +642,53 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Evaluations: nil,
 				Tag:         "tag",
 			},
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(-time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+			},
 			expected:           nil,
 			expectedErr:        ErrEvaluationsAreEmpty,
 			expectedRepeatable: false,
 		},
 		{
+			desc: "error: goal event was issued after the experiment ended",
+			input: &eventproto.GoalEvent{
+				SourceId:  eventproto.SourceId_ANDROID,
+				Timestamp: now.Unix(),
+				GoalId:    "gid",
+				UserId:    "uid",
+				User: &userproto.User{
+					Id:   "uid",
+					Data: nil,
+				},
+				Value:       float64(1.2),
+				Evaluations: nil,
+				Tag:         "",
+			},
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					Status:         exproto.Experiment_STOPPED,
+					StartAt:        time.Now().Add(-time.Hour * 2).Unix(),
+					StopAt:         time.Now().Add(-time.Hour * 1).Unix(),
+				},
+			},
+			expected:           nil,
+			expectedErr:        ErrExperimentNotFound,
+			expectedRepeatable: false,
+		},
+		{
 			desc: "success",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-						{
-							Id:             "experiment-id-2",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid-2",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-						// This experiment won't be computed
-						// because the startAt is higher than the goal event timestamp
-						{
-							Id:             "experiment-id-3",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid-2",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
 				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
 					&featureproto.EvaluateFeaturesRequest{
@@ -987,6 +752,34 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Evaluations: nil,
 				Tag:         "tag",
 			},
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(-time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+				{
+					Id:             "experiment-id-2",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid-2",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(-time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+				// This experiment won't be computed
+				// because the startAt is higher than the goal event timestamp
+				{
+					Id:             "experiment-id-3",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid-2",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+			},
 			expected: []*epproto.GoalEvent{
 				{
 					SourceId:             eventproto.SourceId_ANDROID.String(),
@@ -1025,50 +818,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		{
 			desc: "success: using cache",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-						{
-							Id:             "experiment-id-2",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid-2",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-						// This experiment won't be computed
-						// because the startAt is higher than the goal event timestamp
-						{
-							Id:             "experiment-id-3",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid-2",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-						// This experiment won't be computed
-						// because the goal event was issued after the experiment ended
-						{
-							Id:             "experiment-id-3",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid-2",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour * 3).Unix(),
-							StopAt:         time.Now().Add(-time.Hour * 2).Unix(),
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					experiments,
-					nil,
-				)
 				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
 					&featureproto.EvaluateFeaturesRequest{
@@ -1140,6 +889,44 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Value:       float64(1.2),
 				Evaluations: nil,
 				Tag:         "",
+			},
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(-time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+				{
+					Id:             "experiment-id-2",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid-2",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(-time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+				// This experiment won't be computed
+				// because the startAt is higher than the goal event timestamp
+				{
+					Id:             "experiment-id-3",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid-2",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+				// This experiment won't be computed
+				// because the goal event was issued after the experiment ended
+				{
+					Id:             "experiment-id-3",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid-2",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(-time.Hour * 3).Unix(),
+					StopAt:         time.Now().Add(-time.Hour * 2).Unix(),
+				},
 			},
 			expected: []*epproto.GoalEvent{
 				{
@@ -1179,66 +966,6 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 		{
 			desc: "success: with empty tag and user data is nil",
 			setup: func(ctx context.Context, p *goalEvtWriter) {
-				experiments := &exproto.Experiments{
-					Experiments: []*exproto.Experiment{
-						{
-							Id:             "experiment-id",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-						{
-							Id:             "experiment-id-2",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid-2",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-						// This experiment won't be computed
-						// because the startAt is higher than the goal event timestamp
-						{
-							Id:             "experiment-id-3",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid-2",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(time.Hour).Unix(),
-							StopAt:         time.Now().Add(time.Hour).Unix(),
-						},
-						// This experiment won't be computed
-						// because the goal event was issued after the experiment ended
-						{
-							Id:             "experiment-id-3",
-							GoalIds:        []string{"gid"},
-							FeatureId:      "fid-2",
-							FeatureVersion: int32(1),
-							StartAt:        time.Now().Add(-time.Hour * 3).Unix(),
-							StopAt:         time.Now().Add(-time.Hour * 2).Unix(),
-						},
-					},
-				}
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Get(environmentNamespace).Return(
-					nil,
-					errors.New("internal"),
-				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
-				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
-					ctx,
-					&exproto.ListExperimentsRequest{
-						PageSize:             0,
-						EnvironmentNamespace: environmentNamespace,
-						Statuses: []exproto.Experiment_Status{
-							exproto.Experiment_RUNNING,
-							exproto.Experiment_STOPPED,
-						},
-					},
-				).Return(&exproto.ListExperimentsResponse{
-					Experiments: experiments.Experiments,
-				}, nil)
 				p.featureClient.(*ftmock.MockClient).EXPECT().EvaluateFeatures(
 					ctx,
 					&featureproto.EvaluateFeaturesRequest{
@@ -1310,6 +1037,44 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				Value:       float64(1.2),
 				Evaluations: nil,
 				Tag:         "",
+			},
+			inputExperiment: []*exproto.Experiment{
+				{
+					Id:             "experiment-id",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(-time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+				{
+					Id:             "experiment-id-2",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid-2",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(-time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+				// This experiment won't be computed
+				// because the startAt is higher than the goal event timestamp
+				{
+					Id:             "experiment-id-3",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid-2",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(time.Hour).Unix(),
+					StopAt:         time.Now().Add(time.Hour).Unix(),
+				},
+				// This experiment won't be computed
+				// because the goal event was issued after the experiment ended
+				{
+					Id:             "experiment-id-3",
+					GoalIds:        []string{"gid"},
+					FeatureId:      "fid-2",
+					FeatureVersion: int32(1),
+					StartAt:        time.Now().Add(-time.Hour * 3).Unix(),
+					StopAt:         time.Now().Add(-time.Hour * 2).Unix(),
+				},
 			},
 			expected: []*epproto.GoalEvent{
 				{
@@ -1358,6 +1123,7 @@ func TestConvToGoalEventWithExperiments(t *testing.T) {
 				p.input,
 				eventID,
 				environmentNamespace,
+				p.inputExperiment,
 			)
 			assert.Equal(t, p.expectedRepeatable, repeatable)
 			assert.Equal(t, p.expected, actual)

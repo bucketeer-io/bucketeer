@@ -83,23 +83,34 @@ func (w *evalEvtWriter) Write(
 	evalEvents := []*epproto.EvaluationEvent{}
 	fails := make(map[string]bool, len(envEvents))
 	for environmentNamespace, events := range envEvents {
+		experiments, err := w.listExperiments(ctx, environmentNamespace)
+		if err != nil {
+			w.logger.Error("failed to list experiments",
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+			)
+			handledCounter.WithLabelValues(codeFailedToListExperiments).Inc()
+			// Make sure to retry all the events in the next pulling
+			for id := range events {
+				fails[id] = true
+			}
+			continue
+		}
+		if len(experiments) == 0 {
+			continue
+		}
 		for id, event := range events {
 			switch evt := event.(type) {
 			case *eventproto.EvaluationEvent:
-				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentNamespace)
+				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentNamespace, experiments)
 				if err != nil {
 					// If there is nothing to link, we don't report it as an error
-					handledCounter.WithLabelValues(codeNoLink).Inc()
-					if err == ErrNoExperiments ||
-						err == ErrExperimentNotFound ||
-						err == ErrGoalEventIssuedAfterExperimentEnded {
-						w.logger.Debug(
-							"There is no experiment to link",
-							zap.Error(err),
-							zap.String("id", id),
-							zap.String("environmentNamespace", environmentNamespace),
-							zap.Any("evalEvent", evt),
-						)
+					if err == ErrExperimentNotFound {
+						handledCounter.WithLabelValues(codeExperimentNotFound).Inc()
+						continue
+					}
+					if err == ErrEvaluationEventIssuedAfterExperimentEnded {
+						handledCounter.WithLabelValues(codeEventIssuedAfterExperimentEnded).Inc()
 						continue
 					}
 					if !retriable {
@@ -159,26 +170,14 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 	ctx context.Context,
 	e *eventproto.EvaluationEvent,
 	id, environmentNamespace string,
+	experiments []*exproto.Experiment,
 ) (*epproto.EvaluationEvent, bool, error) {
-	experiments, err := w.listExperiments(ctx, environmentNamespace)
-	if err != nil {
-		w.logger.Error("failed to list experiments",
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.Any("evalEvent", e),
-		)
-		return nil, true, err
-	}
-	if len(experiments) == 0 {
-		return nil, false, ErrNoExperiments
-	}
 	exp := w.existExperiment(experiments, e.FeatureId, e.FeatureVersion)
 	if exp == nil {
 		return nil, false, ErrExperimentNotFound
 	}
 	if exp.StopAt < e.Timestamp {
-		handledCounter.WithLabelValues(codeEventIssuedAfterExperimentEnded).Inc()
-		return nil, false, ErrGoalEventIssuedAfterExperimentEnded
+		return nil, false, ErrEvaluationEventIssuedAfterExperimentEnded
 	}
 	var ud []byte
 	if e.User != nil {
@@ -263,7 +262,6 @@ func (w *evalEvtWriter) listExperiments(
 		},
 	)
 	if err != nil {
-		handledCounter.WithLabelValues(codeFailedToListExperiments).Inc()
 		return nil, err
 	}
 	// Filter the stopped experiments

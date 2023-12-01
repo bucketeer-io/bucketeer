@@ -70,14 +70,30 @@ func NewGoalUserCountUpdater(
 func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentEventMap) map[string]bool {
 	fails := map[string]bool{}
 	for environmentNamespace, events := range evt {
+		listAutoOpsRules, err := u.listAutoOpsRules(ctx, environmentNamespace)
+		if err != nil {
+			u.logger.Error("failed to list auto ops rules",
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+			)
+			handledCounter.WithLabelValues(codeFailedToListAutoOpsRules).Inc()
+			// Make sure to retry all the events in the next pulling
+			for id := range events {
+				fails[id] = true
+			}
+			continue
+		}
+		if len(listAutoOpsRules) == 0 {
+			continue
+		}
 		for id, event := range events {
 			switch evt := event.(type) {
 			case *eventproto.GoalEvent:
-				retriable, err := u.updateUserCount(ctx, environmentNamespace, evt)
+				retriable, err := u.updateUserCount(ctx, environmentNamespace, evt, listAutoOpsRules)
 				if err != nil {
-					if err == ErrNoAutoOpsRules || err == ErrAutoOpsRulesNotFound {
+					if err == ErrAutoOpsRuleNotFound {
 						// If there is nothing to link, we don't report it as an error
-						handledCounter.WithLabelValues(codeNoLink).Inc()
+						handledCounter.WithLabelValues(codeAutoOpsRuleNotFound).Inc()
 						u.logger.Debug(
 							"There is no auto ops rules to link the goal event",
 							zap.Error(err),
@@ -115,20 +131,12 @@ func (u *evalGoalUpdater) updateUserCount(
 	ctx context.Context,
 	environmentNamespace string,
 	event *eventproto.GoalEvent,
+	listAutoOpsRules []*aoproto.AutoOpsRule,
 ) (bool, error) {
-	// List all the auto ops rules
-	list, err := u.listAutoOpsRules(ctx, environmentNamespace)
-	if err != nil {
-		handledCounter.WithLabelValues(codeFailedToListAutoOpsRules).Inc()
-		return true, err
-	}
-	if len(list) == 0 {
-		return false, ErrNoAutoOpsRules
-	}
 	// Link the rules
-	linkedRules := u.linkOpsRulesByGoalID(event.GoalId, list)
+	linkedRules := u.linkOpsRulesByGoalID(event.GoalId, listAutoOpsRules)
 	if len(linkedRules) == 0 {
-		return false, ErrAutoOpsRulesNotFound
+		return false, ErrAutoOpsRuleNotFound
 	}
 	featureIDs := u.getUniqueFeatureIDs(linkedRules)
 	// Get the latest feature version
