@@ -81,10 +81,10 @@ func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentE
 			for id := range events {
 				fails[id] = true
 			}
-			return fails
+			continue
 		}
 		if len(listAutoOpsRules) == 0 {
-			return fails
+			continue
 		}
 		for id, event := range events {
 			switch evt := event.(type) {
