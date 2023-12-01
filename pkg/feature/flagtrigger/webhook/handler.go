@@ -18,10 +18,11 @@ package webhook
 import (
 	"context"
 	"encoding/base64"
+	"net/http"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net/http"
 
 	"github.com/bucketeer-io/bucketeer/pkg/crypto"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
