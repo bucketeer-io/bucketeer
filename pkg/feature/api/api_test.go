@@ -147,6 +147,8 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 		featuresCache:         cachev3mock.NewMockFeaturesCache(c),
 		segmentUsersPublisher: segmentUsersPublisher,
 		domainPublisher:       domainPublisher,
+		triggerCryptoUtil:     &dummyWebhookCryptoUtil{},
+		triggerURL:            "http://localhost",
 		opts:                  &defaultOptions,
 		logger:                defaultOptions.logger,
 	}

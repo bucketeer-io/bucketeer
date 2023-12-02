@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/url"
 	"strconv"
 
@@ -678,18 +679,17 @@ func (s *FeatureService) generateTriggerURL(
 	if err != nil {
 		return "", err
 	}
-	encrypted, err := s.triggerCryptoUtil.Encrypt(ctx, encoded)
-	if err != nil {
-		return "", err
-	}
-	secret := base64.RawURLEncoding.EncodeToString(encrypted)
 	triggerURL, _ := url.Parse(s.triggerURL)
-	query := triggerURL.Query()
 	if masked {
-		query.Set("secret", maskURI)
-		triggerURL.RawQuery = query.Encode()
+		triggerURL.RawQuery = fmt.Sprintf("secret=%s", maskURI)
 		return triggerURL.String(), nil
 	} else {
+		query := triggerURL.Query()
+		encrypted, err := s.triggerCryptoUtil.Encrypt(ctx, encoded)
+		if err != nil {
+			return "", err
+		}
+		secret := base64.RawURLEncoding.EncodeToString(encrypted)
 		query.Set("secret", secret)
 		triggerURL.RawQuery = query.Encode()
 		return triggerURL.String(), nil

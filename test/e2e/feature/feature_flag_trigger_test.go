@@ -162,21 +162,12 @@ func TestResetFlagTrigger(t *testing.T) {
 			Id: createResp.FlagTrigger.Id,
 		},
 	}
-	_, err := client.ResetFlagTrigger(context.Background(), resetFlagTriggerReq)
+	resetResp, err := client.ResetFlagTrigger(context.Background(), resetFlagTriggerReq)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Get flag trigger
-	getFlagTriggerReq := &featureproto.GetFlagTriggerRequest{
-		Id:                   createResp.FlagTrigger.Id,
-		EnvironmentNamespace: *environmentNamespace,
-	}
-	resp := getFeatureFlagTrigger(t, client, getFlagTriggerReq)
-	if resp.FlagTrigger.Uuid == createResp.FlagTrigger.Uuid {
-		t.Fatalf("unexpected uuid: %s", resp.FlagTrigger.Uuid)
-	}
-	if resp.Url == createResp.Url {
-		t.Fatalf("unexpected url: %s", resp.Url)
+	if resetResp.Url == createResp.Url {
+		t.Fatalf("unexpected reset url: %s, create url: %s", resetResp.Url, createResp.Url)
 	}
 }
 
@@ -294,7 +285,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 		EnvironmentNamespace: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
 			command,
-			"webhook flag trigger test",
+			"webhook flag trigger test action: on",
 			featureproto.FlagTrigger_Action_ON,
 		),
 	})
@@ -319,7 +310,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 		EnvironmentNamespace: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
 			command,
-			"webhook flag trigger test",
+			"webhook flag trigger test action: off",
 			featureproto.FlagTrigger_Action_OFF,
 		),
 	})
