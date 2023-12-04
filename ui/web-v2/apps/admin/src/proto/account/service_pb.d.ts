@@ -825,6 +825,52 @@ export namespace DisableAccountV2Response {
   }
 }
 
+export class DeleteAccountV2Request extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_account_command_pb.DeleteAccountV2Command | undefined;
+  setCommand(value?: proto_account_command_pb.DeleteAccountV2Command): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteAccountV2Request.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteAccountV2Request): DeleteAccountV2Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DeleteAccountV2Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteAccountV2Request;
+  static deserializeBinaryFromReader(message: DeleteAccountV2Request, reader: jspb.BinaryReader): DeleteAccountV2Request;
+}
+
+export namespace DeleteAccountV2Request {
+  export type AsObject = {
+    email: string,
+    organizationId: string,
+    command?: proto_account_command_pb.DeleteAccountV2Command.AsObject,
+  }
+}
+
+export class DeleteAccountV2Response extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteAccountV2Response.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteAccountV2Response): DeleteAccountV2Response.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DeleteAccountV2Response, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteAccountV2Response;
+  static deserializeBinaryFromReader(message: DeleteAccountV2Response, reader: jspb.BinaryReader): DeleteAccountV2Response;
+}
+
+export namespace DeleteAccountV2Response {
+  export type AsObject = {
+  }
+}
+
 export class UpdateAccountV2Request extends jspb.Message {
   getEmail(): string;
   setEmail(value: string): void;

@@ -283,6 +283,22 @@ export namespace DisableAccountV2Command {
   }
 }
 
+export class DeleteAccountV2Command extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteAccountV2Command.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteAccountV2Command): DeleteAccountV2Command.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DeleteAccountV2Command, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteAccountV2Command;
+  static deserializeBinaryFromReader(message: DeleteAccountV2Command, reader: jspb.BinaryReader): DeleteAccountV2Command;
+}
+
+export namespace DeleteAccountV2Command {
+  export type AsObject = {
+  }
+}
+
 export class CreateAPIKeyCommand extends jspb.Message {
   getName(): string;
   setName(value: string): void;

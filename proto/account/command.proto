@@ -65,6 +65,8 @@ message EnableAccountV2Command {}
 
 message DisableAccountV2Command {}
 
+message DeleteAccountV2Command {}
+
 message CreateAPIKeyCommand {
   string name = 1;
   account.APIKey.Role role = 2;

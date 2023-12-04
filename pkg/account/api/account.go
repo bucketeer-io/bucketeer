@@ -529,6 +529,14 @@ func (s *AccountService) DisableAccountV2(
 	return &accountproto.DisableAccountV2Response{}, nil
 }
 
+func (s *AccountService) DeleteAccountV2(
+	ctx context.Context,
+	req *accountproto.DeleteAccountV2Request,
+) (*accountproto.DeleteAccountV2Response, error) {
+	// TODO: Implement the business logic.
+	return &accountproto.DeleteAccountV2Response{}, nil
+}
+
 func (s *AccountService) GetAccountV2(
 	ctx context.Context,
 	req *accountproto.GetAccountV2Request,

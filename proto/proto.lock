@@ -401,6 +401,9 @@
             "name": "DisableAccountV2Command"
           },
           {
+            "name": "DeleteAccountV2Command"
+          },
+          {
             "name": "CreateAPIKeyCommand",
             "fields": [
               {
@@ -1005,6 +1008,29 @@
             "name": "DisableAccountV2Response"
           },
           {
+            "name": "DeleteAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "command",
+                "type": "DeleteAccountV2Command"
+              }
+            ]
+          },
+          {
+            "name": "DeleteAccountV2Response"
+          },
+          {
             "name": "UpdateAccountV2Request",
             "fields": [
               {
@@ -1422,6 +1448,11 @@
                 "name": "UpdateAccountV2",
                 "in_type": "UpdateAccountV2Request",
                 "out_type": "UpdateAccountV2Response"
+              },
+              {
+                "name": "DeleteAccountV2",
+                "in_type": "DeleteAccountV2Request",
+                "out_type": "DeleteAccountV2Response"
               },
               {
                 "name": "GetAccountV2",

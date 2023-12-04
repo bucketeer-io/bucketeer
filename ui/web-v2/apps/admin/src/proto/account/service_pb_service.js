@@ -172,6 +172,15 @@ AccountService.UpdateAccountV2 = {
   responseType: proto_account_service_pb.UpdateAccountV2Response
 };
 
+AccountService.DeleteAccountV2 = {
+  methodName: "DeleteAccountV2",
+  service: AccountService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_account_service_pb.DeleteAccountV2Request,
+  responseType: proto_account_service_pb.DeleteAccountV2Response
+};
+
 AccountService.GetAccountV2 = {
   methodName: "GetAccountV2",
   service: AccountService,
@@ -792,6 +801,37 @@ AccountServiceClient.prototype.updateAccountV2 = function updateAccountV2(reques
     callback = arguments[1];
   }
   var client = grpc.unary(AccountService.UpdateAccountV2, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+AccountServiceClient.prototype.deleteAccountV2 = function deleteAccountV2(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AccountService.DeleteAccountV2, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

@@ -189,6 +189,14 @@ message DisableAccountV2Request {
 
 message DisableAccountV2Response {}
 
+message DeleteAccountV2Request {
+  string email = 1;
+  string organization_id = 2;
+  DeleteAccountV2Command command = 3;
+}
+
+message DeleteAccountV2Response {}
+
 message UpdateAccountV2Request {
   string email = 1;
   string organization_id = 2;
@@ -338,6 +346,7 @@ service AccountService {
   rpc DisableAccountV2(DisableAccountV2Request)
       returns (DisableAccountV2Response);
   rpc UpdateAccountV2(UpdateAccountV2Request) returns (UpdateAccountV2Response);
+  rpc DeleteAccountV2(DeleteAccountV2Request) returns (DeleteAccountV2Response);
   rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response);
   rpc ListAccountsV2(ListAccountsV2Request) returns (ListAccountsV2Response);
 

@@ -166,6 +166,15 @@ type AccountServiceUpdateAccountV2 = {
   readonly responseType: typeof proto_account_service_pb.UpdateAccountV2Response;
 };
 
+type AccountServiceDeleteAccountV2 = {
+  readonly methodName: string;
+  readonly service: typeof AccountService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_account_service_pb.DeleteAccountV2Request;
+  readonly responseType: typeof proto_account_service_pb.DeleteAccountV2Response;
+};
+
 type AccountServiceGetAccountV2 = {
   readonly methodName: string;
   readonly service: typeof AccountService;
@@ -267,6 +276,7 @@ export class AccountService {
   static readonly EnableAccountV2: AccountServiceEnableAccountV2;
   static readonly DisableAccountV2: AccountServiceDisableAccountV2;
   static readonly UpdateAccountV2: AccountServiceUpdateAccountV2;
+  static readonly DeleteAccountV2: AccountServiceDeleteAccountV2;
   static readonly GetAccountV2: AccountServiceGetAccountV2;
   static readonly ListAccountsV2: AccountServiceListAccountsV2;
   static readonly CreateAPIKey: AccountServiceCreateAPIKey;
@@ -471,6 +481,15 @@ export class AccountServiceClient {
   updateAccountV2(
     requestMessage: proto_account_service_pb.UpdateAccountV2Request,
     callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.UpdateAccountV2Response|null) => void
+  ): UnaryResponse;
+  deleteAccountV2(
+    requestMessage: proto_account_service_pb.DeleteAccountV2Request,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.DeleteAccountV2Response|null) => void
+  ): UnaryResponse;
+  deleteAccountV2(
+    requestMessage: proto_account_service_pb.DeleteAccountV2Request,
+    callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.DeleteAccountV2Response|null) => void
   ): UnaryResponse;
   getAccountV2(
     requestMessage: proto_account_service_pb.GetAccountV2Request,
