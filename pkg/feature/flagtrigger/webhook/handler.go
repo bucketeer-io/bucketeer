@@ -141,6 +141,11 @@ func (h handler) ServeHTTP(resp http.ResponseWriter, request *http.Request) {
 		resp.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	err = h.updateTriggerUsageInfo(ctx, trigger)
+	if err != nil {
+		resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	resp.WriteHeader(http.StatusOK)
 }
 
@@ -173,6 +178,40 @@ func (h handler) authSecret(
 		return nil, err
 	}
 	return triggerSecret, nil
+}
+
+func (h handler) updateTriggerUsageInfo(ctx context.Context, flagTrigger *domain.FlagTrigger) error {
+	tx, err := h.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		h.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).
+				AddFields(zap.Error(err))...,
+		)
+		return nil
+	}
+	err = h.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		storage := v2fs.NewFlagTriggerStorage(tx)
+		err := storage.UpdateFlagTriggerUsage(
+			ctx,
+			flagTrigger.GetId(),
+			flagTrigger.GetEnvironmentNamespace(),
+			int64(flagTrigger.GetTriggerTimes()+1),
+		)
+		if err != nil {
+			h.logger.Error(
+				"Failed to update flag trigger usage",
+				log.FieldsFromImcomingContext(ctx).
+					AddFields(zap.Error(err))...,
+			)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (h handler) enableFeature(

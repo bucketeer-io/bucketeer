@@ -33,6 +33,8 @@ var (
 	insertFlagTriggerSQL string
 	//go:embed sql/flag_trigger/update_flag_trigger.sql
 	updateFlagTriggerSQL string
+	//go:embed sql/flag_trigger/update_flag_trigger_usage.sql
+	updateFlagTriggerUsageSQL string
 	//go:embed sql/flag_trigger/reset_flag_trigger.sql
 	resetFlagTriggerSQL string
 	//go:embed sql/flag_trigger/delete_flag_trigger.sql
@@ -60,6 +62,10 @@ type FlagTriggerStorage interface {
 	UpdateFlagTrigger(
 		ctx context.Context,
 		id, environmentNamespace, description string,
+	) error
+	UpdateFlagTriggerUsage(ctx context.Context,
+		id, environmentNamespace string,
+		triggerTimes int64,
 	) error
 	EnableFlagTrigger(ctx context.Context, id, environmentNamespace string) error
 	DisableFlagTrigger(ctx context.Context, id, environmentNamespace string) error
@@ -122,6 +128,32 @@ func (f flagTriggerStorage) UpdateFlagTrigger(
 	result, err := f.qe.ExecContext(ctx, updateFlagTriggerSQL,
 		description,
 		time.Now().Unix(),
+		id,
+		environmentNamespace,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return ErrFlagTriggerUnexpectedAffectedRows
+	}
+	return nil
+}
+
+func (f flagTriggerStorage) UpdateFlagTriggerUsage(
+	ctx context.Context,
+	id, environmentNamespace string,
+	triggerTimes int64,
+) error {
+	now := time.Now().Unix()
+	result, err := f.qe.ExecContext(ctx, updateFlagTriggerUsageSQL,
+		triggerTimes,
+		now,
+		now,
 		id,
 		environmentNamespace,
 	)

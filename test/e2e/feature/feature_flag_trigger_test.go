@@ -305,6 +305,16 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	if enabledFeature.Enabled != true {
 		t.Fatalf("unexpected enabled: %v", enabledFeature.Enabled)
 	}
+	enabledTrigger := getFeatureFlagTrigger(t, client, &featureproto.GetFlagTriggerRequest{
+		Id:                   enableTrigger.FlagTrigger.Id,
+		EnvironmentNamespace: *environmentNamespace,
+	})
+	if enabledTrigger.FlagTrigger.TriggerTimes != 1 {
+		t.Fatalf("unexpected trigger times: %d", enabledTrigger.FlagTrigger.TriggerTimes)
+	}
+	if enabledTrigger.FlagTrigger.LastTriggeredAt == 0 {
+		t.Fatal("unexpected last triggered at")
+	}
 	// Create Disable flag triggers
 	disableTrigger, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
 		EnvironmentNamespace: *environmentNamespace,
@@ -329,6 +339,16 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	disabledFeature := getFeature(t, command.Id, client)
 	if disabledFeature.Enabled != false {
 		t.Fatalf("unexpected enabled: %v", disabledFeature.Enabled)
+	}
+	disabledTrigger := getFeatureFlagTrigger(t, client, &featureproto.GetFlagTriggerRequest{
+		Id:                   disableTrigger.FlagTrigger.Id,
+		EnvironmentNamespace: *environmentNamespace,
+	})
+	if disabledTrigger.FlagTrigger.TriggerTimes != 1 {
+		t.Fatalf("unexpected trigger times: %d", disabledTrigger.FlagTrigger.TriggerTimes)
+	}
+	if disabledTrigger.FlagTrigger.LastTriggeredAt == 0 {
+		t.Fatal("unexpected last triggered at")
 	}
 }
 
