@@ -166,6 +166,86 @@ message ListAccountsResponse {
   int64 total_count = 3;
 }
 
+message CreateAccountV2Request {
+  string organization_id = 1;
+  CreateAccountV2Command command = 2;
+}
+
+message CreateAccountV2Response {
+  AccountV2 account = 1;
+}
+
+message EnableAccountV2Request {
+  string email = 1;
+  string organization_id = 2;
+  EnableAccountV2Command command = 3;
+}
+
+message EnableAccountV2Response {}
+
+message DisableAccountV2Request {
+  string email = 1;
+  string organization_id = 2;
+  DisableAccountV2Command command = 3;
+}
+
+message DisableAccountV2Response {}
+
+message DeleteAccountV2Request {
+  string email = 1;
+  string organization_id = 2;
+  DeleteAccountV2Command command = 3;
+}
+
+message DeleteAccountV2Response {}
+
+message UpdateAccountV2Request {
+  string email = 1;
+  string organization_id = 2;
+  ChangeAccountV2NameCommand change_name_command = 3;
+  ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command = 4;
+  ChangeAccountV2OrganizationRoleCommand change_organization_role_command = 5;
+  ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command = 6;
+}
+
+message UpdateAccountV2Response {}
+
+message GetAccountV2Request {
+  string email = 1;
+  string organization_id = 2;
+}
+
+message GetAccountV2Response {
+  AccountV2 account = 1;
+}
+
+message ListAccountsV2Request {
+  enum OrderBy {
+    DEFAULT = 0;
+    EMAIL = 1;
+    CREATED_AT = 2;
+    UPDATED_AT = 3;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  string organization_id = 3;
+  OrderBy order_by = 4;
+  OrderDirection order_direction = 5;
+  string search_keyword = 6;
+  google.protobuf.BoolValue disabled = 7;
+  google.protobuf.Int32Value role = 8;
+}
+
+message ListAccountsV2Response {
+  repeated AccountV2 accounts = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
 message CreateAPIKeyRequest {
   CreateAPIKeyCommand command = 1;
   string environment_namespace = 2;
@@ -263,6 +343,15 @@ service AccountService {
       returns (ChangeAccountRoleResponse);
   rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
   rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
+
+  rpc CreateAccountV2(CreateAccountV2Request) returns (CreateAccountV2Response);
+  rpc EnableAccountV2(EnableAccountV2Request) returns (EnableAccountV2Response);
+  rpc DisableAccountV2(DisableAccountV2Request)
+      returns (DisableAccountV2Response);
+  rpc UpdateAccountV2(UpdateAccountV2Request) returns (UpdateAccountV2Response);
+  rpc DeleteAccountV2(DeleteAccountV2Request) returns (DeleteAccountV2Response);
+  rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response);
+  rpc ListAccountsV2(ListAccountsV2Request) returns (ListAccountsV2Response);
 
   rpc CreateAPIKey(CreateAPIKeyRequest) returns (CreateAPIKeyResponse);
   rpc ChangeAPIKeyName(ChangeAPIKeyNameRequest)

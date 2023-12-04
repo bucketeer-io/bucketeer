@@ -36,6 +36,35 @@ message Account {
   bool deleted = 8;
 }
 
+message AccountV2 {
+  message Role {
+    enum Environment {
+      Environment_UNASSIGNED = 0;
+      Environment_VIEWER = 1;
+      Environment_EDITOR = 2;
+    }
+    enum Organization {
+      Organization_UNASSIGNED = 0;
+      Organization_MEMBER = 1;
+      Organization_ADMIN = 2;
+      Organization_OWNER = 3;
+    }
+  }
+  message EnvironmentRole {
+    string environment_id = 1;
+    Role.Environment role = 2;
+  }
+  string email = 1;
+  string name = 2;
+  string avatar_image_url = 3;
+  string organization_id = 4;
+  Role.Organization organization_role = 5;
+  repeated EnvironmentRole environment_roles = 6;
+  bool disabled = 7;
+  int64 created_at = 8;
+  int64 updated_at = 9;
+}
+
 message EnvironmentRoleV2 {
   environment.EnvironmentV2 environment = 1;
   Account.Role role = 2;

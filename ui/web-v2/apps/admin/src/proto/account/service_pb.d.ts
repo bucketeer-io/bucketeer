@@ -691,6 +691,400 @@ export namespace ListAccountsResponse {
   }
 }
 
+export class CreateAccountV2Request extends jspb.Message {
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_account_command_pb.CreateAccountV2Command | undefined;
+  setCommand(value?: proto_account_command_pb.CreateAccountV2Command): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateAccountV2Request.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateAccountV2Request): CreateAccountV2Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: CreateAccountV2Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateAccountV2Request;
+  static deserializeBinaryFromReader(message: CreateAccountV2Request, reader: jspb.BinaryReader): CreateAccountV2Request;
+}
+
+export namespace CreateAccountV2Request {
+  export type AsObject = {
+    organizationId: string,
+    command?: proto_account_command_pb.CreateAccountV2Command.AsObject,
+  }
+}
+
+export class CreateAccountV2Response extends jspb.Message {
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): proto_account_account_pb.AccountV2 | undefined;
+  setAccount(value?: proto_account_account_pb.AccountV2): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateAccountV2Response.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateAccountV2Response): CreateAccountV2Response.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: CreateAccountV2Response, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateAccountV2Response;
+  static deserializeBinaryFromReader(message: CreateAccountV2Response, reader: jspb.BinaryReader): CreateAccountV2Response;
+}
+
+export namespace CreateAccountV2Response {
+  export type AsObject = {
+    account?: proto_account_account_pb.AccountV2.AsObject,
+  }
+}
+
+export class EnableAccountV2Request extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_account_command_pb.EnableAccountV2Command | undefined;
+  setCommand(value?: proto_account_command_pb.EnableAccountV2Command): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnableAccountV2Request.AsObject;
+  static toObject(includeInstance: boolean, msg: EnableAccountV2Request): EnableAccountV2Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnableAccountV2Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnableAccountV2Request;
+  static deserializeBinaryFromReader(message: EnableAccountV2Request, reader: jspb.BinaryReader): EnableAccountV2Request;
+}
+
+export namespace EnableAccountV2Request {
+  export type AsObject = {
+    email: string,
+    organizationId: string,
+    command?: proto_account_command_pb.EnableAccountV2Command.AsObject,
+  }
+}
+
+export class EnableAccountV2Response extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnableAccountV2Response.AsObject;
+  static toObject(includeInstance: boolean, msg: EnableAccountV2Response): EnableAccountV2Response.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnableAccountV2Response, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnableAccountV2Response;
+  static deserializeBinaryFromReader(message: EnableAccountV2Response, reader: jspb.BinaryReader): EnableAccountV2Response;
+}
+
+export namespace EnableAccountV2Response {
+  export type AsObject = {
+  }
+}
+
+export class DisableAccountV2Request extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_account_command_pb.DisableAccountV2Command | undefined;
+  setCommand(value?: proto_account_command_pb.DisableAccountV2Command): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DisableAccountV2Request.AsObject;
+  static toObject(includeInstance: boolean, msg: DisableAccountV2Request): DisableAccountV2Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DisableAccountV2Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DisableAccountV2Request;
+  static deserializeBinaryFromReader(message: DisableAccountV2Request, reader: jspb.BinaryReader): DisableAccountV2Request;
+}
+
+export namespace DisableAccountV2Request {
+  export type AsObject = {
+    email: string,
+    organizationId: string,
+    command?: proto_account_command_pb.DisableAccountV2Command.AsObject,
+  }
+}
+
+export class DisableAccountV2Response extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DisableAccountV2Response.AsObject;
+  static toObject(includeInstance: boolean, msg: DisableAccountV2Response): DisableAccountV2Response.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DisableAccountV2Response, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DisableAccountV2Response;
+  static deserializeBinaryFromReader(message: DisableAccountV2Response, reader: jspb.BinaryReader): DisableAccountV2Response;
+}
+
+export namespace DisableAccountV2Response {
+  export type AsObject = {
+  }
+}
+
+export class DeleteAccountV2Request extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_account_command_pb.DeleteAccountV2Command | undefined;
+  setCommand(value?: proto_account_command_pb.DeleteAccountV2Command): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteAccountV2Request.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteAccountV2Request): DeleteAccountV2Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DeleteAccountV2Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteAccountV2Request;
+  static deserializeBinaryFromReader(message: DeleteAccountV2Request, reader: jspb.BinaryReader): DeleteAccountV2Request;
+}
+
+export namespace DeleteAccountV2Request {
+  export type AsObject = {
+    email: string,
+    organizationId: string,
+    command?: proto_account_command_pb.DeleteAccountV2Command.AsObject,
+  }
+}
+
+export class DeleteAccountV2Response extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteAccountV2Response.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteAccountV2Response): DeleteAccountV2Response.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: DeleteAccountV2Response, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteAccountV2Response;
+  static deserializeBinaryFromReader(message: DeleteAccountV2Response, reader: jspb.BinaryReader): DeleteAccountV2Response;
+}
+
+export namespace DeleteAccountV2Response {
+  export type AsObject = {
+  }
+}
+
+export class UpdateAccountV2Request extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  hasChangeNameCommand(): boolean;
+  clearChangeNameCommand(): void;
+  getChangeNameCommand(): proto_account_command_pb.ChangeAccountV2NameCommand | undefined;
+  setChangeNameCommand(value?: proto_account_command_pb.ChangeAccountV2NameCommand): void;
+
+  hasChangeAvatarUrlCommand(): boolean;
+  clearChangeAvatarUrlCommand(): void;
+  getChangeAvatarUrlCommand(): proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand | undefined;
+  setChangeAvatarUrlCommand(value?: proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand): void;
+
+  hasChangeOrganizationRoleCommand(): boolean;
+  clearChangeOrganizationRoleCommand(): void;
+  getChangeOrganizationRoleCommand(): proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand | undefined;
+  setChangeOrganizationRoleCommand(value?: proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand): void;
+
+  hasChangeEnvironmentRolesCommand(): boolean;
+  clearChangeEnvironmentRolesCommand(): void;
+  getChangeEnvironmentRolesCommand(): proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand | undefined;
+  setChangeEnvironmentRolesCommand(value?: proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateAccountV2Request): UpdateAccountV2Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateAccountV2Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateAccountV2Request;
+  static deserializeBinaryFromReader(message: UpdateAccountV2Request, reader: jspb.BinaryReader): UpdateAccountV2Request;
+}
+
+export namespace UpdateAccountV2Request {
+  export type AsObject = {
+    email: string,
+    organizationId: string,
+    changeNameCommand?: proto_account_command_pb.ChangeAccountV2NameCommand.AsObject,
+    changeAvatarUrlCommand?: proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand.AsObject,
+    changeOrganizationRoleCommand?: proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand.AsObject,
+    changeEnvironmentRolesCommand?: proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand.AsObject,
+  }
+}
+
+export class UpdateAccountV2Response extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateAccountV2Response.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateAccountV2Response): UpdateAccountV2Response.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateAccountV2Response, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateAccountV2Response;
+  static deserializeBinaryFromReader(message: UpdateAccountV2Response, reader: jspb.BinaryReader): UpdateAccountV2Response;
+}
+
+export namespace UpdateAccountV2Response {
+  export type AsObject = {
+  }
+}
+
+export class GetAccountV2Request extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetAccountV2Request.AsObject;
+  static toObject(includeInstance: boolean, msg: GetAccountV2Request): GetAccountV2Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetAccountV2Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetAccountV2Request;
+  static deserializeBinaryFromReader(message: GetAccountV2Request, reader: jspb.BinaryReader): GetAccountV2Request;
+}
+
+export namespace GetAccountV2Request {
+  export type AsObject = {
+    email: string,
+    organizationId: string,
+  }
+}
+
+export class GetAccountV2Response extends jspb.Message {
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): proto_account_account_pb.AccountV2 | undefined;
+  setAccount(value?: proto_account_account_pb.AccountV2): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetAccountV2Response.AsObject;
+  static toObject(includeInstance: boolean, msg: GetAccountV2Response): GetAccountV2Response.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetAccountV2Response, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetAccountV2Response;
+  static deserializeBinaryFromReader(message: GetAccountV2Response, reader: jspb.BinaryReader): GetAccountV2Response;
+}
+
+export namespace GetAccountV2Response {
+  export type AsObject = {
+    account?: proto_account_account_pb.AccountV2.AsObject,
+  }
+}
+
+export class ListAccountsV2Request extends jspb.Message {
+  getPageSize(): number;
+  setPageSize(value: number): void;
+
+  getCursor(): string;
+  setCursor(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getOrderBy(): ListAccountsV2Request.OrderByMap[keyof ListAccountsV2Request.OrderByMap];
+  setOrderBy(value: ListAccountsV2Request.OrderByMap[keyof ListAccountsV2Request.OrderByMap]): void;
+
+  getOrderDirection(): ListAccountsV2Request.OrderDirectionMap[keyof ListAccountsV2Request.OrderDirectionMap];
+  setOrderDirection(value: ListAccountsV2Request.OrderDirectionMap[keyof ListAccountsV2Request.OrderDirectionMap]): void;
+
+  getSearchKeyword(): string;
+  setSearchKeyword(value: string): void;
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  hasRole(): boolean;
+  clearRole(): void;
+  getRole(): google_protobuf_wrappers_pb.Int32Value | undefined;
+  setRole(value?: google_protobuf_wrappers_pb.Int32Value): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListAccountsV2Request.AsObject;
+  static toObject(includeInstance: boolean, msg: ListAccountsV2Request): ListAccountsV2Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ListAccountsV2Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListAccountsV2Request;
+  static deserializeBinaryFromReader(message: ListAccountsV2Request, reader: jspb.BinaryReader): ListAccountsV2Request;
+}
+
+export namespace ListAccountsV2Request {
+  export type AsObject = {
+    pageSize: number,
+    cursor: string,
+    organizationId: string,
+    orderBy: ListAccountsV2Request.OrderByMap[keyof ListAccountsV2Request.OrderByMap],
+    orderDirection: ListAccountsV2Request.OrderDirectionMap[keyof ListAccountsV2Request.OrderDirectionMap],
+    searchKeyword: string,
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject,
+    role?: google_protobuf_wrappers_pb.Int32Value.AsObject,
+  }
+
+  export interface OrderByMap {
+    DEFAULT: 0;
+    EMAIL: 1;
+    CREATED_AT: 2;
+    UPDATED_AT: 3;
+  }
+
+  export const OrderBy: OrderByMap;
+
+  export interface OrderDirectionMap {
+    ASC: 0;
+    DESC: 1;
+  }
+
+  export const OrderDirection: OrderDirectionMap;
+}
+
+export class ListAccountsV2Response extends jspb.Message {
+  clearAccountsList(): void;
+  getAccountsList(): Array<proto_account_account_pb.AccountV2>;
+  setAccountsList(value: Array<proto_account_account_pb.AccountV2>): void;
+  addAccounts(value?: proto_account_account_pb.AccountV2, index?: number): proto_account_account_pb.AccountV2;
+
+  getCursor(): string;
+  setCursor(value: string): void;
+
+  getTotalCount(): number;
+  setTotalCount(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListAccountsV2Response.AsObject;
+  static toObject(includeInstance: boolean, msg: ListAccountsV2Response): ListAccountsV2Response.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ListAccountsV2Response, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListAccountsV2Response;
+  static deserializeBinaryFromReader(message: ListAccountsV2Response, reader: jspb.BinaryReader): ListAccountsV2Response;
+}
+
+export namespace ListAccountsV2Response {
+  export type AsObject = {
+    accountsList: Array<proto_account_account_pb.AccountV2.AsObject>,
+    cursor: string,
+    totalCount: number,
+  }
+}
+
 export class CreateAPIKeyRequest extends jspb.Message {
   hasCommand(): boolean;
   clearCommand(): void;

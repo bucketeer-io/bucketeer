@@ -496,3 +496,59 @@ func (s *AccountService) newAccountListOrders(
 	}
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
+
+func (s *AccountService) CreateAccountV2(
+	ctx context.Context,
+	req *accountproto.CreateAccountV2Request,
+) (*accountproto.CreateAccountV2Response, error) {
+	// TODO: Implement the business logic.
+	return &accountproto.CreateAccountV2Response{}, nil
+}
+
+func (s *AccountService) UpdateAccountV2(
+	ctx context.Context,
+	req *accountproto.UpdateAccountV2Request,
+) (*accountproto.UpdateAccountV2Response, error) {
+	// TODO: Implement the business logic.
+	return &accountproto.UpdateAccountV2Response{}, nil
+}
+
+func (s *AccountService) EnableAccountV2(
+	ctx context.Context,
+	req *accountproto.EnableAccountV2Request,
+) (*accountproto.EnableAccountV2Response, error) {
+	// TODO: Implement the business logic.
+	return &accountproto.EnableAccountV2Response{}, nil
+}
+
+func (s *AccountService) DisableAccountV2(
+	ctx context.Context,
+	req *accountproto.DisableAccountV2Request,
+) (*accountproto.DisableAccountV2Response, error) {
+	// TODO: Implement the business logic.
+	return &accountproto.DisableAccountV2Response{}, nil
+}
+
+func (s *AccountService) DeleteAccountV2(
+	ctx context.Context,
+	req *accountproto.DeleteAccountV2Request,
+) (*accountproto.DeleteAccountV2Response, error) {
+	// TODO: Implement the business logic.
+	return &accountproto.DeleteAccountV2Response{}, nil
+}
+
+func (s *AccountService) GetAccountV2(
+	ctx context.Context,
+	req *accountproto.GetAccountV2Request,
+) (*accountproto.GetAccountV2Response, error) {
+	// TODO: Implement the business logic.
+	return &accountproto.GetAccountV2Response{}, nil
+}
+
+func (s *AccountService) ListAccountsV2(
+	ctx context.Context,
+	req *accountproto.ListAccountsV2Request,
+) (*accountproto.ListAccountsV2Response, error) {
+	// TODO: Implement the business logic.
+	return &accountproto.ListAccountsV2Response{}, nil
+}

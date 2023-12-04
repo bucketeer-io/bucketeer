@@ -45,6 +45,37 @@ message EnableAccountCommand {}
 
 message DisableAccountCommand {}
 
+message CreateAccountV2Command {
+  string email = 1;
+  string name = 2;
+  string avatar_image_url = 3;
+  string organization_id = 4;
+  account.AccountV2.Role.Organization organization_role = 5;
+  repeated account.AccountV2.EnvironmentRole environment_roles = 6;
+}
+
+message ChangeAccountV2NameCommand {
+  string name = 1;
+}
+
+message ChangeAccountV2AvatarImageUrlCommand {
+  string avatar_image_url = 1;
+}
+
+message ChangeAccountV2OrganizationRoleCommand {
+  account.AccountV2.Role.Organization role = 1;
+}
+
+message ChangeAccountV2EnvironmentRolesCommand {
+  repeated account.AccountV2.EnvironmentRole roles = 1;
+}
+
+message EnableAccountV2Command {}
+
+message DisableAccountV2Command {}
+
+message DeleteAccountV2Command {}
+
 message CreateAPIKeyCommand {
   string name = 1;
   account.APIKey.Role role = 2;

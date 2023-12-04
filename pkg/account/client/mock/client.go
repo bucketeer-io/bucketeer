@@ -149,6 +149,26 @@ func (mr *MockClientMockRecorder) CreateAccount(ctx, in interface{}, opts ...int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccount", reflect.TypeOf((*MockClient)(nil).CreateAccount), varargs...)
 }
 
+// CreateAccountV2 mocks base method.
+func (m *MockClient) CreateAccountV2(ctx context.Context, in *account.CreateAccountV2Request, opts ...grpc.CallOption) (*account.CreateAccountV2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateAccountV2", varargs...)
+	ret0, _ := ret[0].(*account.CreateAccountV2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateAccountV2 indicates an expected call of CreateAccountV2.
+func (mr *MockClientMockRecorder) CreateAccountV2(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccountV2", reflect.TypeOf((*MockClient)(nil).CreateAccountV2), varargs...)
+}
+
 // CreateAdminAccount mocks base method.
 func (m *MockClient) CreateAdminAccount(ctx context.Context, in *account.CreateAdminAccountRequest, opts ...grpc.CallOption) (*account.CreateAdminAccountResponse, error) {
 	m.ctrl.T.Helper()
@@ -167,6 +187,26 @@ func (mr *MockClientMockRecorder) CreateAdminAccount(ctx, in interface{}, opts .
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAdminAccount", reflect.TypeOf((*MockClient)(nil).CreateAdminAccount), varargs...)
+}
+
+// DeleteAccountV2 mocks base method.
+func (m *MockClient) DeleteAccountV2(ctx context.Context, in *account.DeleteAccountV2Request, opts ...grpc.CallOption) (*account.DeleteAccountV2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteAccountV2", varargs...)
+	ret0, _ := ret[0].(*account.DeleteAccountV2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteAccountV2 indicates an expected call of DeleteAccountV2.
+func (mr *MockClientMockRecorder) DeleteAccountV2(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountV2", reflect.TypeOf((*MockClient)(nil).DeleteAccountV2), varargs...)
 }
 
 // DisableAPIKey mocks base method.
@@ -207,6 +247,26 @@ func (mr *MockClientMockRecorder) DisableAccount(ctx, in interface{}, opts ...in
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableAccount", reflect.TypeOf((*MockClient)(nil).DisableAccount), varargs...)
+}
+
+// DisableAccountV2 mocks base method.
+func (m *MockClient) DisableAccountV2(ctx context.Context, in *account.DisableAccountV2Request, opts ...grpc.CallOption) (*account.DisableAccountV2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DisableAccountV2", varargs...)
+	ret0, _ := ret[0].(*account.DisableAccountV2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DisableAccountV2 indicates an expected call of DisableAccountV2.
+func (mr *MockClientMockRecorder) DisableAccountV2(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableAccountV2", reflect.TypeOf((*MockClient)(nil).DisableAccountV2), varargs...)
 }
 
 // DisableAdminAccount mocks base method.
@@ -267,6 +327,26 @@ func (mr *MockClientMockRecorder) EnableAccount(ctx, in interface{}, opts ...int
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableAccount", reflect.TypeOf((*MockClient)(nil).EnableAccount), varargs...)
+}
+
+// EnableAccountV2 mocks base method.
+func (m *MockClient) EnableAccountV2(ctx context.Context, in *account.EnableAccountV2Request, opts ...grpc.CallOption) (*account.EnableAccountV2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "EnableAccountV2", varargs...)
+	ret0, _ := ret[0].(*account.EnableAccountV2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EnableAccountV2 indicates an expected call of EnableAccountV2.
+func (mr *MockClientMockRecorder) EnableAccountV2(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableAccountV2", reflect.TypeOf((*MockClient)(nil).EnableAccountV2), varargs...)
 }
 
 // EnableAdminAccount mocks base method.
@@ -347,6 +427,26 @@ func (mr *MockClientMockRecorder) GetAccount(ctx, in interface{}, opts ...interf
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccount", reflect.TypeOf((*MockClient)(nil).GetAccount), varargs...)
+}
+
+// GetAccountV2 mocks base method.
+func (m *MockClient) GetAccountV2(ctx context.Context, in *account.GetAccountV2Request, opts ...grpc.CallOption) (*account.GetAccountV2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAccountV2", varargs...)
+	ret0, _ := ret[0].(*account.GetAccountV2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountV2 indicates an expected call of GetAccountV2.
+func (mr *MockClientMockRecorder) GetAccountV2(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountV2", reflect.TypeOf((*MockClient)(nil).GetAccountV2), varargs...)
 }
 
 // GetAdminAccount mocks base method.
@@ -449,6 +549,26 @@ func (mr *MockClientMockRecorder) ListAccounts(ctx, in interface{}, opts ...inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAccounts", reflect.TypeOf((*MockClient)(nil).ListAccounts), varargs...)
 }
 
+// ListAccountsV2 mocks base method.
+func (m *MockClient) ListAccountsV2(ctx context.Context, in *account.ListAccountsV2Request, opts ...grpc.CallOption) (*account.ListAccountsV2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListAccountsV2", varargs...)
+	ret0, _ := ret[0].(*account.ListAccountsV2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAccountsV2 indicates an expected call of ListAccountsV2.
+func (mr *MockClientMockRecorder) ListAccountsV2(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAccountsV2", reflect.TypeOf((*MockClient)(nil).ListAccountsV2), varargs...)
+}
+
 // ListAdminAccounts mocks base method.
 func (m *MockClient) ListAdminAccounts(ctx context.Context, in *account.ListAdminAccountsRequest, opts ...grpc.CallOption) (*account.ListAdminAccountsResponse, error) {
 	m.ctrl.T.Helper()
@@ -467,4 +587,24 @@ func (mr *MockClientMockRecorder) ListAdminAccounts(ctx, in interface{}, opts ..
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAdminAccounts", reflect.TypeOf((*MockClient)(nil).ListAdminAccounts), varargs...)
+}
+
+// UpdateAccountV2 mocks base method.
+func (m *MockClient) UpdateAccountV2(ctx context.Context, in *account.UpdateAccountV2Request, opts ...grpc.CallOption) (*account.UpdateAccountV2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateAccountV2", varargs...)
+	ret0, _ := ret[0].(*account.UpdateAccountV2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateAccountV2 indicates an expected call of UpdateAccountV2.
+func (mr *MockClientMockRecorder) UpdateAccountV2(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccountV2", reflect.TypeOf((*MockClient)(nil).UpdateAccountV2), varargs...)
 }

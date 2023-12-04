@@ -12,31 +12,31 @@ import (
 	autoops "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
 
-// MockAutoOpsCache is a mock of AutoOpsCache interface.
-type MockAutoOpsCache struct {
+// MockAutoOpsRulesCache is a mock of AutoOpsRulesCache interface.
+type MockAutoOpsRulesCache struct {
 	ctrl     *gomock.Controller
-	recorder *MockAutoOpsCacheMockRecorder
+	recorder *MockAutoOpsRulesCacheMockRecorder
 }
 
-// MockAutoOpsCacheMockRecorder is the mock recorder for MockAutoOpsCache.
-type MockAutoOpsCacheMockRecorder struct {
-	mock *MockAutoOpsCache
+// MockAutoOpsRulesCacheMockRecorder is the mock recorder for MockAutoOpsRulesCache.
+type MockAutoOpsRulesCacheMockRecorder struct {
+	mock *MockAutoOpsRulesCache
 }
 
-// NewMockAutoOpsCache creates a new mock instance.
-func NewMockAutoOpsCache(ctrl *gomock.Controller) *MockAutoOpsCache {
-	mock := &MockAutoOpsCache{ctrl: ctrl}
-	mock.recorder = &MockAutoOpsCacheMockRecorder{mock}
+// NewMockAutoOpsRulesCache creates a new mock instance.
+func NewMockAutoOpsRulesCache(ctrl *gomock.Controller) *MockAutoOpsRulesCache {
+	mock := &MockAutoOpsRulesCache{ctrl: ctrl}
+	mock.recorder = &MockAutoOpsRulesCacheMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAutoOpsCache) EXPECT() *MockAutoOpsCacheMockRecorder {
+func (m *MockAutoOpsRulesCache) EXPECT() *MockAutoOpsRulesCacheMockRecorder {
 	return m.recorder
 }
 
 // Get mocks base method.
-func (m *MockAutoOpsCache) Get(environmentNamespace string) (*autoops.AutoOpsRules, error) {
+func (m *MockAutoOpsRulesCache) Get(environmentNamespace string) (*autoops.AutoOpsRules, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", environmentNamespace)
 	ret0, _ := ret[0].(*autoops.AutoOpsRules)
@@ -45,13 +45,13 @@ func (m *MockAutoOpsCache) Get(environmentNamespace string) (*autoops.AutoOpsRul
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockAutoOpsCacheMockRecorder) Get(environmentNamespace interface{}) *gomock.Call {
+func (mr *MockAutoOpsRulesCacheMockRecorder) Get(environmentNamespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAutoOpsCache)(nil).Get), environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAutoOpsRulesCache)(nil).Get), environmentNamespace)
 }
 
 // Put mocks base method.
-func (m *MockAutoOpsCache) Put(autoOps *autoops.AutoOpsRules, environmentNamespace string) error {
+func (m *MockAutoOpsRulesCache) Put(autoOps *autoops.AutoOpsRules, environmentNamespace string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Put", autoOps, environmentNamespace)
 	ret0, _ := ret[0].(error)
@@ -59,7 +59,7 @@ func (m *MockAutoOpsCache) Put(autoOps *autoops.AutoOpsRules, environmentNamespa
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockAutoOpsCacheMockRecorder) Put(autoOps, environmentNamespace interface{}) *gomock.Call {
+func (mr *MockAutoOpsRulesCacheMockRecorder) Put(autoOps, environmentNamespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockAutoOpsCache)(nil).Put), autoOps, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockAutoOpsRulesCache)(nil).Put), autoOps, environmentNamespace)
 }
