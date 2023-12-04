@@ -61,6 +61,93 @@ export namespace Account {
   export const Role: RoleMap;
 }
 
+export class AccountV2 extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getAvatarImageUrl(): string;
+  setAvatarImageUrl(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getOrganizationRole(): AccountV2.RoleMap[keyof AccountV2.RoleMap];
+  setOrganizationRole(value: AccountV2.RoleMap[keyof AccountV2.RoleMap]): void;
+
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<AccountV2.EnvironmentRole>;
+  setEnvironmentRolesList(value: Array<AccountV2.EnvironmentRole>): void;
+  addEnvironmentRoles(value?: AccountV2.EnvironmentRole, index?: number): AccountV2.EnvironmentRole;
+
+  getDisabled(): boolean;
+  setDisabled(value: boolean): void;
+
+  getCreatedAt(): number;
+  setCreatedAt(value: number): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2.AsObject;
+  static toObject(includeInstance: boolean, msg: AccountV2): AccountV2.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AccountV2, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2;
+  static deserializeBinaryFromReader(message: AccountV2, reader: jspb.BinaryReader): AccountV2;
+}
+
+export namespace AccountV2 {
+  export type AsObject = {
+    email: string,
+    name: string,
+    avatarImageUrl: string,
+    organizationId: string,
+    organizationRole: AccountV2.RoleMap[keyof AccountV2.RoleMap],
+    environmentRolesList: Array<AccountV2.EnvironmentRole.AsObject>,
+    disabled: boolean,
+    createdAt: number,
+    updatedAt: number,
+  }
+
+  export class EnvironmentRole extends jspb.Message {
+    getEnvironmentId(): string;
+    setEnvironmentId(value: string): void;
+
+    getRole(): AccountV2.RoleMap[keyof AccountV2.RoleMap];
+    setRole(value: AccountV2.RoleMap[keyof AccountV2.RoleMap]): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): EnvironmentRole.AsObject;
+    static toObject(includeInstance: boolean, msg: EnvironmentRole): EnvironmentRole.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: EnvironmentRole, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): EnvironmentRole;
+    static deserializeBinaryFromReader(message: EnvironmentRole, reader: jspb.BinaryReader): EnvironmentRole;
+  }
+
+  export namespace EnvironmentRole {
+    export type AsObject = {
+      environmentId: string,
+      role: AccountV2.RoleMap[keyof AccountV2.RoleMap],
+    }
+  }
+
+  export interface RoleMap {
+    UNASSIGNED: 0;
+    VIEWER: 1;
+    EDITOR: 2;
+    ADMIN: 3;
+  }
+
+  export const Role: RoleMap;
+}
+
 export class EnvironmentRoleV2 extends jspb.Message {
   hasEnvironment(): boolean;
   clearEnvironment(): void;

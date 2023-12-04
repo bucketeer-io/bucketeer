@@ -36,6 +36,28 @@ message Account {
   bool deleted = 8;
 }
 
+message AccountV2 {
+  enum Role {
+    UNASSIGNED = 0;
+    VIEWER = 1;
+    EDITOR = 2;
+    ADMIN = 3;
+  }
+  message EnvironmentRole {
+    string environment_id = 1;
+    Role role = 2;
+  }
+  string email = 1;
+  string name = 2;
+  string avatar_image_url = 3;
+  string organization_id = 4;
+  Role organization_role = 5;
+  repeated EnvironmentRole environment_roles = 6;
+  bool disabled = 7;
+  int64 created_at = 8;
+  int64 updated_at = 9;
+}
+
 message EnvironmentRoleV2 {
   environment.EnvironmentV2 environment = 1;
   Account.Role role = 2;

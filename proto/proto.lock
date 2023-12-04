@@ -23,6 +23,26 @@
                 "integer": 99
               }
             ]
+          },
+          {
+            "name": "AccountV2.Role",
+            "enum_fields": [
+              {
+                "name": "UNASSIGNED"
+              },
+              {
+                "name": "VIEWER",
+                "integer": 1
+              },
+              {
+                "name": "EDITOR",
+                "integer": 2
+              },
+              {
+                "name": "ADMIN",
+                "integer": 3
+              }
+            ]
           }
         ],
         "messages": [
@@ -68,6 +88,74 @@
                 "id": 8,
                 "name": "deleted",
                 "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "avatar_image_url",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "organization_role",
+                "type": "Role"
+              },
+              {
+                "id": 6,
+                "name": "environment_roles",
+                "type": "EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "disabled",
+                "type": "bool"
+              },
+              {
+                "id": 8,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ],
+            "messages": [
+              {
+                "name": "EnvironmentRole",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "environment_id",
+                    "type": "string"
+                  },
+                  {
+                    "id": 2,
+                    "name": "role",
+                    "type": "Role"
+                  }
+                ]
               }
             ]
           },
@@ -261,6 +349,58 @@
             "name": "DisableAccountCommand"
           },
           {
+            "name": "CreateAccountV2Command",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "role",
+                "type": "account.AccountV2.Role"
+              }
+            ]
+          },
+          {
+            "name": "ChangeAccountV2AvatarImageUrlCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "avatar_image_url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeAccountV2OrganizationRoleCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "role",
+                "type": "account.AccountV2.Role"
+              }
+            ]
+          },
+          {
+            "name": "ChangeAccountV2EnvironmentRolesCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "roles",
+                "type": "account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "EnableAccountV2Command"
+          },
+          {
+            "name": "DisableAccountV2Command"
+          },
+          {
             "name": "CreateAPIKeyCommand",
             "fields": [
               {
@@ -369,6 +509,38 @@
           },
           {
             "name": "ListAccountsRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          },
+          {
+            "name": "ListAccountsV2Request.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "EMAIL",
+                "integer": 1
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 2
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 3
+              }
+            ]
+          },
+          {
+            "name": "ListAccountsV2Request.OrderDirection",
             "enum_fields": [
               {
                 "name": "ASC"
@@ -769,6 +941,194 @@
             ]
           },
           {
+            "name": "CreateAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "command",
+                "type": "CreateAccountV2Command"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateAccountV2Response"
+          },
+          {
+            "name": "EnableAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "command",
+                "type": "EnableAccountV2Command"
+              }
+            ]
+          },
+          {
+            "name": "EnableAccountV2Response"
+          },
+          {
+            "name": "DisableAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "command",
+                "type": "DisableAccountV2Command"
+              }
+            ]
+          },
+          {
+            "name": "DisableAccountV2Response"
+          },
+          {
+            "name": "UpdateAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "change_avatar_url_command",
+                "type": "ChangeAccountV2AvatarImageUrlCommand"
+              },
+              {
+                "id": 4,
+                "name": "change_organization_role_command",
+                "type": "ChangeAccountV2OrganizationRoleCommand"
+              },
+              {
+                "id": 5,
+                "name": "change_environment_roles_command",
+                "type": "ChangeAccountV2EnvironmentRolesCommand"
+              }
+            ]
+          },
+          {
+            "name": "UpdateAccountV2Response"
+          },
+          {
+            "name": "GetAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "AccountV2"
+              }
+            ]
+          },
+          {
+            "name": "ListAccountsV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 5,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 6,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 8,
+                "name": "role",
+                "type": "google.protobuf.Int32Value"
+              }
+            ]
+          },
+          {
+            "name": "ListAccountsV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "accounts",
+                "type": "AccountV2",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
             "name": "CreateAPIKeyRequest",
             "fields": [
               {
@@ -1042,6 +1402,36 @@
                 "name": "ListAccounts",
                 "in_type": "ListAccountsRequest",
                 "out_type": "ListAccountsResponse"
+              },
+              {
+                "name": "CreateAccountV2",
+                "in_type": "CreateAccountV2Request",
+                "out_type": "CreateAccountV2Response"
+              },
+              {
+                "name": "EnableAccountV2",
+                "in_type": "EnableAccountV2Request",
+                "out_type": "EnableAccountV2Response"
+              },
+              {
+                "name": "DisableAccountV2",
+                "in_type": "DisableAccountV2Request",
+                "out_type": "DisableAccountV2Response"
+              },
+              {
+                "name": "UpdateAccountV2",
+                "in_type": "UpdateAccountV2Request",
+                "out_type": "UpdateAccountV2Response"
+              },
+              {
+                "name": "GetAccountV2",
+                "in_type": "GetAccountV2Request",
+                "out_type": "GetAccountV2Response"
+              },
+              {
+                "name": "ListAccountsV2",
+                "in_type": "ListAccountsV2Request",
+                "out_type": "ListAccountsV2Response"
               },
               {
                 "name": "CreateAPIKey",
