@@ -1557,7 +1557,8 @@ proto.bucketeer.account.CreateAccountV2Command.toObject = function(includeInstan
     avatarImageUrl: jspb.Message.getFieldWithDefault(msg, 3, ""),
     organizationId: jspb.Message.getFieldWithDefault(msg, 4, ""),
     organizationRole: jspb.Message.getFieldWithDefault(msg, 5, 0),
-    environmentRolesList: (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f
+    environmentRolesList: jspb.Message.toObjectList(msg.getEnvironmentRolesList(),
+    proto_account_account_pb.AccountV2.EnvironmentRole.toObject, includeInstance)
   };
 
   if (includeInstance) {
@@ -1611,14 +1612,13 @@ proto.bucketeer.account.CreateAccountV2Command.deserializeBinaryFromReader = fun
       msg.setOrganizationId(value);
       break;
     case 5:
-      var value = /** @type {!proto.bucketeer.account.AccountV2.Organization_Role} */ (reader.readEnum());
+      var value = /** @type {!proto.bucketeer.account.AccountV2.Role.Organization} */ (reader.readEnum());
       msg.setOrganizationRole(value);
       break;
     case 6:
-      var values = /** @type {!Array<!proto.bucketeer.account.AccountV2.Environment_Role>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addEnvironmentRoles(values[i]);
-      }
+      var value = new proto_account_account_pb.AccountV2.EnvironmentRole;
+      reader.readMessage(value,proto_account_account_pb.AccountV2.EnvironmentRole.deserializeBinaryFromReader);
+      msg.addEnvironmentRoles(value);
       break;
     default:
       reader.skipField();
@@ -1686,9 +1686,10 @@ proto.bucketeer.account.CreateAccountV2Command.serializeBinaryToWriter = functio
   }
   f = message.getEnvironmentRolesList();
   if (f.length > 0) {
-    writer.writePackedEnum(
+    writer.writeRepeatedMessage(
       6,
-      f
+      f,
+      proto_account_account_pb.AccountV2.EnvironmentRole.serializeBinaryToWriter
     );
   }
 };
@@ -1767,16 +1768,16 @@ proto.bucketeer.account.CreateAccountV2Command.prototype.setOrganizationId = fun
 
 
 /**
- * optional AccountV2.Organization_Role organization_role = 5;
- * @return {!proto.bucketeer.account.AccountV2.Organization_Role}
+ * optional AccountV2.Role.Organization organization_role = 5;
+ * @return {!proto.bucketeer.account.AccountV2.Role.Organization}
  */
 proto.bucketeer.account.CreateAccountV2Command.prototype.getOrganizationRole = function() {
-  return /** @type {!proto.bucketeer.account.AccountV2.Organization_Role} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+  return /** @type {!proto.bucketeer.account.AccountV2.Role.Organization} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
 };
 
 
 /**
- * @param {!proto.bucketeer.account.AccountV2.Organization_Role} value
+ * @param {!proto.bucketeer.account.AccountV2.Role.Organization} value
  * @return {!proto.bucketeer.account.CreateAccountV2Command} returns this
  */
 proto.bucketeer.account.CreateAccountV2Command.prototype.setOrganizationRole = function(value) {
@@ -1785,30 +1786,31 @@ proto.bucketeer.account.CreateAccountV2Command.prototype.setOrganizationRole = f
 
 
 /**
- * repeated AccountV2.Environment_Role environment_roles = 6;
- * @return {!Array<!proto.bucketeer.account.AccountV2.Environment_Role>}
+ * repeated AccountV2.EnvironmentRole environment_roles = 6;
+ * @return {!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>}
  */
 proto.bucketeer.account.CreateAccountV2Command.prototype.getEnvironmentRolesList = function() {
-  return /** @type {!Array<!proto.bucketeer.account.AccountV2.Environment_Role>} */ (jspb.Message.getRepeatedField(this, 6));
+  return /** @type{!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto_account_account_pb.AccountV2.EnvironmentRole, 6));
 };
 
 
 /**
- * @param {!Array<!proto.bucketeer.account.AccountV2.Environment_Role>} value
+ * @param {!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>} value
  * @return {!proto.bucketeer.account.CreateAccountV2Command} returns this
- */
+*/
 proto.bucketeer.account.CreateAccountV2Command.prototype.setEnvironmentRolesList = function(value) {
-  return jspb.Message.setField(this, 6, value || []);
+  return jspb.Message.setRepeatedWrapperField(this, 6, value);
 };
 
 
 /**
- * @param {!proto.bucketeer.account.AccountV2.Environment_Role} value
+ * @param {!proto.bucketeer.account.AccountV2.EnvironmentRole=} opt_value
  * @param {number=} opt_index
- * @return {!proto.bucketeer.account.CreateAccountV2Command} returns this
+ * @return {!proto.bucketeer.account.AccountV2.EnvironmentRole}
  */
-proto.bucketeer.account.CreateAccountV2Command.prototype.addEnvironmentRoles = function(value, opt_index) {
-  return jspb.Message.addToRepeatedField(this, 6, value, opt_index);
+proto.bucketeer.account.CreateAccountV2Command.prototype.addEnvironmentRoles = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 6, opt_value, proto.bucketeer.account.AccountV2.EnvironmentRole, opt_index);
 };
 
 
@@ -2151,7 +2153,7 @@ proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand.deserializeBinary
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {!proto.bucketeer.account.AccountV2.Organization_Role} */ (reader.readEnum());
+      var value = /** @type {!proto.bucketeer.account.AccountV2.Role.Organization} */ (reader.readEnum());
       msg.setRole(value);
       break;
     default:
@@ -2194,16 +2196,16 @@ proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand.serializeBinaryTo
 
 
 /**
- * optional AccountV2.Organization_Role role = 1;
- * @return {!proto.bucketeer.account.AccountV2.Organization_Role}
+ * optional AccountV2.Role.Organization role = 1;
+ * @return {!proto.bucketeer.account.AccountV2.Role.Organization}
  */
 proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand.prototype.getRole = function() {
-  return /** @type {!proto.bucketeer.account.AccountV2.Organization_Role} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+  return /** @type {!proto.bucketeer.account.AccountV2.Role.Organization} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
 };
 
 
 /**
- * @param {!proto.bucketeer.account.AccountV2.Organization_Role} value
+ * @param {!proto.bucketeer.account.AccountV2.Role.Organization} value
  * @return {!proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand} returns this
  */
 proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand.prototype.setRole = function(value) {

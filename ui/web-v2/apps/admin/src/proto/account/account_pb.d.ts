@@ -74,8 +74,8 @@ export class AccountV2 extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
-  getOrganizationRole(): AccountV2.Organization_RoleMap[keyof AccountV2.Organization_RoleMap];
-  setOrganizationRole(value: AccountV2.Organization_RoleMap[keyof AccountV2.Organization_RoleMap]): void;
+  getOrganizationRole(): AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap];
+  setOrganizationRole(value: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap]): void;
 
   clearEnvironmentRolesList(): void;
   getEnvironmentRolesList(): Array<AccountV2.EnvironmentRole>;
@@ -107,19 +107,52 @@ export namespace AccountV2 {
     name: string,
     avatarImageUrl: string,
     organizationId: string,
-    organizationRole: AccountV2.Organization_RoleMap[keyof AccountV2.Organization_RoleMap],
+    organizationRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap],
     environmentRolesList: Array<AccountV2.EnvironmentRole.AsObject>,
     disabled: boolean,
     createdAt: number,
     updatedAt: number,
   }
 
+  export class Role extends jspb.Message {
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): Role.AsObject;
+    static toObject(includeInstance: boolean, msg: Role): Role.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: Role, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): Role;
+    static deserializeBinaryFromReader(message: Role, reader: jspb.BinaryReader): Role;
+  }
+
+  export namespace Role {
+    export type AsObject = {
+    }
+
+    export interface EnvironmentMap {
+      ENVIRONMENT_UNASSIGNED: 0;
+      ENVIRONMENT_VIEWER: 1;
+      ENVIRONMENT_EDITOR: 2;
+    }
+
+    export const Environment: EnvironmentMap;
+
+    export interface OrganizationMap {
+      ORGANIZATION_UNASSIGNED: 0;
+      ORGANIZATION_MEMBER: 1;
+      ORGANIZATION_ADMIN: 2;
+      ORGANIZATION_OWNER: 3;
+    }
+
+    export const Organization: OrganizationMap;
+  }
+
   export class EnvironmentRole extends jspb.Message {
     getEnvironmentId(): string;
     setEnvironmentId(value: string): void;
 
-    getRole(): AccountV2.Environment_RoleMap[keyof AccountV2.Environment_RoleMap];
-    setRole(value: AccountV2.Environment_RoleMap[keyof AccountV2.Environment_RoleMap]): void;
+    getRole(): AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap];
+    setRole(value: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap]): void;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): EnvironmentRole.AsObject;
@@ -134,27 +167,9 @@ export namespace AccountV2 {
   export namespace EnvironmentRole {
     export type AsObject = {
       environmentId: string,
-      role: AccountV2.Environment_RoleMap[keyof AccountV2.Environment_RoleMap],
+      role: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap],
     }
   }
-
-  export interface Environment_RoleMap {
-    ENVIRONMENT_ROLE_UNASSIGNED: 0;
-    ENVIRONMENT_ROLE_VIEWER: 1;
-    ENVIRONMENT_ROLE_EDITOR: 2;
-    ENVIRONMENT_ROLE_OWNER: 3;
-  }
-
-  export const Environment_Role: Environment_RoleMap;
-
-  export interface Organization_RoleMap {
-    ORGANIZATION_ROLE_UNASSIGNED: 0;
-    ORGANIZATION_ROLE_MEMBER: 1;
-    ORGANIZATION_ROLE_ADMIN: 2;
-    ORGANIZATION_ROLE_OWNER: 3;
-  }
-
-  export const Organization_Role: Organization_RoleMap;
 }
 
 export class EnvironmentRoleV2 extends jspb.Message {

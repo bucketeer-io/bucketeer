@@ -25,41 +25,37 @@
             ]
           },
           {
-            "name": "AccountV2.Environment_Role",
+            "name": "Role.Environment",
             "enum_fields": [
               {
-                "name": "Environment_Role_UNASSIGNED"
+                "name": "Environment_UNASSIGNED"
               },
               {
-                "name": "Environment_Role_VIEWER",
+                "name": "Environment_VIEWER",
                 "integer": 1
               },
               {
-                "name": "Environment_Role_EDITOR",
+                "name": "Environment_EDITOR",
                 "integer": 2
-              },
-              {
-                "name": "Environment_Role_OWNER",
-                "integer": 3
               }
             ]
           },
           {
-            "name": "AccountV2.Organization_Role",
+            "name": "Role.Organization",
             "enum_fields": [
               {
-                "name": "Organization_Role_UNASSIGNED"
+                "name": "Organization_UNASSIGNED"
               },
               {
-                "name": "Organization_Role_MEMBER",
+                "name": "Organization_MEMBER",
                 "integer": 1
               },
               {
-                "name": "Organization_Role_ADMIN",
+                "name": "Organization_ADMIN",
                 "integer": 2
               },
               {
-                "name": "Organization_Role_OWNER",
+                "name": "Organization_OWNER",
                 "integer": 3
               }
             ]
@@ -137,7 +133,7 @@
               {
                 "id": 5,
                 "name": "organization_role",
-                "type": "Organization_Role"
+                "type": "Role.Organization"
               },
               {
                 "id": 6,
@@ -163,6 +159,9 @@
             ],
             "messages": [
               {
+                "name": "Role"
+              },
+              {
                 "name": "EnvironmentRole",
                 "fields": [
                   {
@@ -173,7 +172,7 @@
                   {
                     "id": 2,
                     "name": "role",
-                    "type": "Environment_Role"
+                    "type": "Role.Environment"
                   }
                 ]
               }
@@ -394,12 +393,12 @@
               {
                 "id": 5,
                 "name": "organization_role",
-                "type": "account.AccountV2.Organization_Role"
+                "type": "account.AccountV2.Role.Organization"
               },
               {
                 "id": 6,
                 "name": "environment_roles",
-                "type": "account.AccountV2.Environment_Role",
+                "type": "account.AccountV2.EnvironmentRole",
                 "is_repeated": true
               }
             ]
@@ -430,7 +429,7 @@
               {
                 "id": 1,
                 "name": "role",
-                "type": "account.AccountV2.Organization_Role"
+                "type": "account.AccountV2.Role.Organization"
               }
             ]
           },

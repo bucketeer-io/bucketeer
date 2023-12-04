@@ -50,8 +50,8 @@ message CreateAccountV2Command {
   string name = 2;
   string avatar_image_url = 3;
   string organization_id = 4;
-  account.AccountV2.Organization_Role organization_role = 5;
-  repeated account.AccountV2.Environment_Role environment_roles = 6;
+  account.AccountV2.Role.Organization organization_role = 5;
+  repeated account.AccountV2.EnvironmentRole environment_roles = 6;
 }
 
 message ChangeAccountV2NameCommand {
@@ -63,7 +63,7 @@ message ChangeAccountV2AvatarImageUrlCommand {
 }
 
 message ChangeAccountV2OrganizationRoleCommand {
-  account.AccountV2.Organization_Role role = 1;
+  account.AccountV2.Role.Organization role = 1;
 }
 
 message ChangeAccountV2EnvironmentRolesCommand {

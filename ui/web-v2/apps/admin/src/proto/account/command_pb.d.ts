@@ -178,13 +178,13 @@ export class CreateAccountV2Command extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
-  getOrganizationRole(): proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap];
-  setOrganizationRole(value: proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap]): void;
+  getOrganizationRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+  setOrganizationRole(value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]): void;
 
   clearEnvironmentRolesList(): void;
-  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.Environment_RoleMap[keyof proto_account_account_pb.AccountV2.Environment_RoleMap]>;
-  setEnvironmentRolesList(value: Array<proto_account_account_pb.AccountV2.Environment_RoleMap[keyof proto_account_account_pb.AccountV2.Environment_RoleMap]>): void;
-  addEnvironmentRoles(value: proto_account_account_pb.AccountV2.Environment_RoleMap[keyof proto_account_account_pb.AccountV2.Environment_RoleMap], index?: number): proto_account_account_pb.AccountV2.Environment_RoleMap[keyof proto_account_account_pb.AccountV2.Environment_RoleMap];
+  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.EnvironmentRole>;
+  setEnvironmentRolesList(value: Array<proto_account_account_pb.AccountV2.EnvironmentRole>): void;
+  addEnvironmentRoles(value?: proto_account_account_pb.AccountV2.EnvironmentRole, index?: number): proto_account_account_pb.AccountV2.EnvironmentRole;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAccountV2Command.AsObject;
@@ -202,8 +202,8 @@ export namespace CreateAccountV2Command {
     name: string,
     avatarImageUrl: string,
     organizationId: string,
-    organizationRole: proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap],
-    environmentRolesList: Array<proto_account_account_pb.AccountV2.Environment_RoleMap[keyof proto_account_account_pb.AccountV2.Environment_RoleMap]>,
+    organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap],
+    environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>,
   }
 }
 
@@ -248,8 +248,8 @@ export namespace ChangeAccountV2AvatarImageUrlCommand {
 }
 
 export class ChangeAccountV2OrganizationRoleCommand extends jspb.Message {
-  getRole(): proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap];
-  setRole(value: proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap]): void;
+  getRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+  setRole(value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ChangeAccountV2OrganizationRoleCommand.AsObject;
@@ -263,7 +263,7 @@ export class ChangeAccountV2OrganizationRoleCommand extends jspb.Message {
 
 export namespace ChangeAccountV2OrganizationRoleCommand {
   export type AsObject = {
-    role: proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap],
+    role: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap],
   }
 }
 
