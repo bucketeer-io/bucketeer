@@ -692,13 +692,13 @@ export namespace ListAccountsResponse {
 }
 
 export class CreateAccountV2Request extends jspb.Message {
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   hasCommand(): boolean;
   clearCommand(): void;
   getCommand(): proto_account_command_pb.CreateAccountV2Command | undefined;
   setCommand(value?: proto_account_command_pb.CreateAccountV2Command): void;
-
-  getOrganizationId(): string;
-  setOrganizationId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAccountV2Request.AsObject;
@@ -712,12 +712,17 @@ export class CreateAccountV2Request extends jspb.Message {
 
 export namespace CreateAccountV2Request {
   export type AsObject = {
-    command?: proto_account_command_pb.CreateAccountV2Command.AsObject,
     organizationId: string,
+    command?: proto_account_command_pb.CreateAccountV2Command.AsObject,
   }
 }
 
 export class CreateAccountV2Response extends jspb.Message {
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): proto_account_account_pb.AccountV2 | undefined;
+  setAccount(value?: proto_account_account_pb.AccountV2): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAccountV2Response.AsObject;
   static toObject(includeInstance: boolean, msg: CreateAccountV2Response): CreateAccountV2Response.AsObject;
@@ -730,6 +735,7 @@ export class CreateAccountV2Response extends jspb.Message {
 
 export namespace CreateAccountV2Response {
   export type AsObject = {
+    account?: proto_account_account_pb.AccountV2.AsObject,
   }
 }
 
@@ -878,6 +884,11 @@ export class UpdateAccountV2Request extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
+  hasChangeNameCommand(): boolean;
+  clearChangeNameCommand(): void;
+  getChangeNameCommand(): proto_account_command_pb.ChangeAccountV2NameCommand | undefined;
+  setChangeNameCommand(value?: proto_account_command_pb.ChangeAccountV2NameCommand): void;
+
   hasChangeAvatarUrlCommand(): boolean;
   clearChangeAvatarUrlCommand(): void;
   getChangeAvatarUrlCommand(): proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand | undefined;
@@ -907,6 +918,7 @@ export namespace UpdateAccountV2Request {
   export type AsObject = {
     email: string,
     organizationId: string,
+    changeNameCommand?: proto_account_command_pb.ChangeAccountV2NameCommand.AsObject,
     changeAvatarUrlCommand?: proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand.AsObject,
     changeOrganizationRoleCommand?: proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand.AsObject,
     changeEnvironmentRolesCommand?: proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand.AsObject,

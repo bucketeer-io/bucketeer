@@ -74,8 +74,8 @@ export class AccountV2 extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
-  getOrganizationRole(): AccountV2.RoleMap[keyof AccountV2.RoleMap];
-  setOrganizationRole(value: AccountV2.RoleMap[keyof AccountV2.RoleMap]): void;
+  getOrganizationRole(): AccountV2.Organization_RoleMap[keyof AccountV2.Organization_RoleMap];
+  setOrganizationRole(value: AccountV2.Organization_RoleMap[keyof AccountV2.Organization_RoleMap]): void;
 
   clearEnvironmentRolesList(): void;
   getEnvironmentRolesList(): Array<AccountV2.EnvironmentRole>;
@@ -107,7 +107,7 @@ export namespace AccountV2 {
     name: string,
     avatarImageUrl: string,
     organizationId: string,
-    organizationRole: AccountV2.RoleMap[keyof AccountV2.RoleMap],
+    organizationRole: AccountV2.Organization_RoleMap[keyof AccountV2.Organization_RoleMap],
     environmentRolesList: Array<AccountV2.EnvironmentRole.AsObject>,
     disabled: boolean,
     createdAt: number,
@@ -118,8 +118,8 @@ export namespace AccountV2 {
     getEnvironmentId(): string;
     setEnvironmentId(value: string): void;
 
-    getRole(): AccountV2.RoleMap[keyof AccountV2.RoleMap];
-    setRole(value: AccountV2.RoleMap[keyof AccountV2.RoleMap]): void;
+    getRole(): AccountV2.Environment_RoleMap[keyof AccountV2.Environment_RoleMap];
+    setRole(value: AccountV2.Environment_RoleMap[keyof AccountV2.Environment_RoleMap]): void;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): EnvironmentRole.AsObject;
@@ -134,18 +134,27 @@ export namespace AccountV2 {
   export namespace EnvironmentRole {
     export type AsObject = {
       environmentId: string,
-      role: AccountV2.RoleMap[keyof AccountV2.RoleMap],
+      role: AccountV2.Environment_RoleMap[keyof AccountV2.Environment_RoleMap],
     }
   }
 
-  export interface RoleMap {
-    UNASSIGNED: 0;
-    VIEWER: 1;
-    EDITOR: 2;
-    ADMIN: 3;
+  export interface Environment_RoleMap {
+    ENVIRONMENT_ROLE_UNASSIGNED: 0;
+    ENVIRONMENT_ROLE_VIEWER: 1;
+    ENVIRONMENT_ROLE_EDITOR: 2;
+    ENVIRONMENT_ROLE_OWNER: 3;
   }
 
-  export const Role: RoleMap;
+  export const Environment_Role: Environment_RoleMap;
+
+  export interface Organization_RoleMap {
+    ORGANIZATION_ROLE_UNASSIGNED: 0;
+    ORGANIZATION_ROLE_MEMBER: 1;
+    ORGANIZATION_ROLE_ADMIN: 2;
+    ORGANIZATION_ROLE_OWNER: 3;
+  }
+
+  export const Organization_Role: Organization_RoleMap;
 }
 
 export class EnvironmentRoleV2 extends jspb.Message {

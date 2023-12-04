@@ -5797,8 +5797,8 @@ proto.bucketeer.account.CreateAccountV2Request.prototype.toObject = function(opt
  */
 proto.bucketeer.account.CreateAccountV2Request.toObject = function(includeInstance, msg) {
   var f, obj = {
-    command: (f = msg.getCommand()) && proto_account_command_pb.CreateAccountV2Command.toObject(includeInstance, f),
-    organizationId: jspb.Message.getFieldWithDefault(msg, 2, "")
+    organizationId: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    command: (f = msg.getCommand()) && proto_account_command_pb.CreateAccountV2Command.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -5836,13 +5836,13 @@ proto.bucketeer.account.CreateAccountV2Request.deserializeBinaryFromReader = fun
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setOrganizationId(value);
+      break;
+    case 2:
       var value = new proto_account_command_pb.CreateAccountV2Command;
       reader.readMessage(value,proto_account_command_pb.CreateAccountV2Command.deserializeBinaryFromReader);
       msg.setCommand(value);
-      break;
-    case 2:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setOrganizationId(value);
       break;
     default:
       reader.skipField();
@@ -5873,31 +5873,49 @@ proto.bucketeer.account.CreateAccountV2Request.prototype.serializeBinary = funct
  */
 proto.bucketeer.account.CreateAccountV2Request.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getCommand();
-  if (f != null) {
-    writer.writeMessage(
-      1,
-      f,
-      proto_account_command_pb.CreateAccountV2Command.serializeBinaryToWriter
-    );
-  }
   f = message.getOrganizationId();
   if (f.length > 0) {
     writer.writeString(
-      2,
+      1,
       f
+    );
+  }
+  f = message.getCommand();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      proto_account_command_pb.CreateAccountV2Command.serializeBinaryToWriter
     );
   }
 };
 
 
 /**
- * optional CreateAccountV2Command command = 1;
+ * optional string organization_id = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getOrganizationId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setOrganizationId = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional CreateAccountV2Command command = 2;
  * @return {?proto.bucketeer.account.CreateAccountV2Command}
  */
 proto.bucketeer.account.CreateAccountV2Request.prototype.getCommand = function() {
   return /** @type{?proto.bucketeer.account.CreateAccountV2Command} */ (
-    jspb.Message.getWrapperField(this, proto_account_command_pb.CreateAccountV2Command, 1));
+    jspb.Message.getWrapperField(this, proto_account_command_pb.CreateAccountV2Command, 2));
 };
 
 
@@ -5906,7 +5924,7 @@ proto.bucketeer.account.CreateAccountV2Request.prototype.getCommand = function()
  * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
 */
 proto.bucketeer.account.CreateAccountV2Request.prototype.setCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 1, value);
+  return jspb.Message.setWrapperField(this, 2, value);
 };
 
 
@@ -5924,25 +5942,7 @@ proto.bucketeer.account.CreateAccountV2Request.prototype.clearCommand = function
  * @return {boolean}
  */
 proto.bucketeer.account.CreateAccountV2Request.prototype.hasCommand = function() {
-  return jspb.Message.getField(this, 1) != null;
-};
-
-
-/**
- * optional string organization_id = 2;
- * @return {string}
- */
-proto.bucketeer.account.CreateAccountV2Request.prototype.getOrganizationId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
- */
-proto.bucketeer.account.CreateAccountV2Request.prototype.setOrganizationId = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.getField(this, 2) != null;
 };
 
 
@@ -5978,7 +5978,7 @@ proto.bucketeer.account.CreateAccountV2Response.prototype.toObject = function(op
  */
 proto.bucketeer.account.CreateAccountV2Response.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+    account: (f = msg.getAccount()) && proto_account_account_pb.AccountV2.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -6015,6 +6015,11 @@ proto.bucketeer.account.CreateAccountV2Response.deserializeBinaryFromReader = fu
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = new proto_account_account_pb.AccountV2;
+      reader.readMessage(value,proto_account_account_pb.AccountV2.deserializeBinaryFromReader);
+      msg.setAccount(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -6044,6 +6049,51 @@ proto.bucketeer.account.CreateAccountV2Response.prototype.serializeBinary = func
  */
 proto.bucketeer.account.CreateAccountV2Response.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getAccount();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto_account_account_pb.AccountV2.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional AccountV2 account = 1;
+ * @return {?proto.bucketeer.account.AccountV2}
+ */
+proto.bucketeer.account.CreateAccountV2Response.prototype.getAccount = function() {
+  return /** @type{?proto.bucketeer.account.AccountV2} */ (
+    jspb.Message.getWrapperField(this, proto_account_account_pb.AccountV2, 1));
+};
+
+
+/**
+ * @param {?proto.bucketeer.account.AccountV2|undefined} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Response} returns this
+*/
+proto.bucketeer.account.CreateAccountV2Response.prototype.setAccount = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.CreateAccountV2Response} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Response.prototype.clearAccount = function() {
+  return this.setAccount(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.CreateAccountV2Response.prototype.hasAccount = function() {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 
@@ -7017,6 +7067,7 @@ proto.bucketeer.account.UpdateAccountV2Request.toObject = function(includeInstan
   var f, obj = {
     email: jspb.Message.getFieldWithDefault(msg, 1, ""),
     organizationId: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    changeNameCommand: (f = msg.getChangeNameCommand()) && proto_account_command_pb.ChangeAccountV2NameCommand.toObject(includeInstance, f),
     changeAvatarUrlCommand: (f = msg.getChangeAvatarUrlCommand()) && proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand.toObject(includeInstance, f),
     changeOrganizationRoleCommand: (f = msg.getChangeOrganizationRoleCommand()) && proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand.toObject(includeInstance, f),
     changeEnvironmentRolesCommand: (f = msg.getChangeEnvironmentRolesCommand()) && proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand.toObject(includeInstance, f)
@@ -7065,16 +7116,21 @@ proto.bucketeer.account.UpdateAccountV2Request.deserializeBinaryFromReader = fun
       msg.setOrganizationId(value);
       break;
     case 3:
+      var value = new proto_account_command_pb.ChangeAccountV2NameCommand;
+      reader.readMessage(value,proto_account_command_pb.ChangeAccountV2NameCommand.deserializeBinaryFromReader);
+      msg.setChangeNameCommand(value);
+      break;
+    case 4:
       var value = new proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand;
       reader.readMessage(value,proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand.deserializeBinaryFromReader);
       msg.setChangeAvatarUrlCommand(value);
       break;
-    case 4:
+    case 5:
       var value = new proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand;
       reader.readMessage(value,proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand.deserializeBinaryFromReader);
       msg.setChangeOrganizationRoleCommand(value);
       break;
-    case 5:
+    case 6:
       var value = new proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand;
       reader.readMessage(value,proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand.deserializeBinaryFromReader);
       msg.setChangeEnvironmentRolesCommand(value);
@@ -7122,10 +7178,18 @@ proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter = functio
       f
     );
   }
-  f = message.getChangeAvatarUrlCommand();
+  f = message.getChangeNameCommand();
   if (f != null) {
     writer.writeMessage(
       3,
+      f,
+      proto_account_command_pb.ChangeAccountV2NameCommand.serializeBinaryToWriter
+    );
+  }
+  f = message.getChangeAvatarUrlCommand();
+  if (f != null) {
+    writer.writeMessage(
+      4,
       f,
       proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand.serializeBinaryToWriter
     );
@@ -7133,7 +7197,7 @@ proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter = functio
   f = message.getChangeOrganizationRoleCommand();
   if (f != null) {
     writer.writeMessage(
-      4,
+      5,
       f,
       proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand.serializeBinaryToWriter
     );
@@ -7141,7 +7205,7 @@ proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter = functio
   f = message.getChangeEnvironmentRolesCommand();
   if (f != null) {
     writer.writeMessage(
-      5,
+      6,
       f,
       proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand.serializeBinaryToWriter
     );
@@ -7186,12 +7250,49 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.setOrganizationId = fun
 
 
 /**
- * optional ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command = 3;
+ * optional ChangeAccountV2NameCommand change_name_command = 3;
+ * @return {?proto.bucketeer.account.ChangeAccountV2NameCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeNameCommand = function() {
+  return /** @type{?proto.bucketeer.account.ChangeAccountV2NameCommand} */ (
+    jspb.Message.getWrapperField(this, proto_account_command_pb.ChangeAccountV2NameCommand, 3));
+};
+
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2NameCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+*/
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeNameCommand = function(value) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeNameCommand = function() {
+  return this.setChangeNameCommand(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeNameCommand = function() {
+  return jspb.Message.getField(this, 3) != null;
+};
+
+
+/**
+ * optional ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command = 4;
  * @return {?proto.bucketeer.account.ChangeAccountV2AvatarImageUrlCommand}
  */
 proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeAvatarUrlCommand = function() {
   return /** @type{?proto.bucketeer.account.ChangeAccountV2AvatarImageUrlCommand} */ (
-    jspb.Message.getWrapperField(this, proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand, 3));
+    jspb.Message.getWrapperField(this, proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand, 4));
 };
 
 
@@ -7200,7 +7301,7 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeAvatarUrlComma
  * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
 */
 proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeAvatarUrlCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 3, value);
+  return jspb.Message.setWrapperField(this, 4, value);
 };
 
 
@@ -7218,17 +7319,17 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeAvatarUrlCom
  * @return {boolean}
  */
 proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeAvatarUrlCommand = function() {
-  return jspb.Message.getField(this, 3) != null;
+  return jspb.Message.getField(this, 4) != null;
 };
 
 
 /**
- * optional ChangeAccountV2OrganizationRoleCommand change_organization_role_command = 4;
+ * optional ChangeAccountV2OrganizationRoleCommand change_organization_role_command = 5;
  * @return {?proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand}
  */
 proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeOrganizationRoleCommand = function() {
   return /** @type{?proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand} */ (
-    jspb.Message.getWrapperField(this, proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand, 4));
+    jspb.Message.getWrapperField(this, proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand, 5));
 };
 
 
@@ -7237,7 +7338,7 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeOrganizationRo
  * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
 */
 proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeOrganizationRoleCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 4, value);
+  return jspb.Message.setWrapperField(this, 5, value);
 };
 
 
@@ -7255,17 +7356,17 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeOrganization
  * @return {boolean}
  */
 proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeOrganizationRoleCommand = function() {
-  return jspb.Message.getField(this, 4) != null;
+  return jspb.Message.getField(this, 5) != null;
 };
 
 
 /**
- * optional ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command = 5;
+ * optional ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command = 6;
  * @return {?proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand}
  */
 proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeEnvironmentRolesCommand = function() {
   return /** @type{?proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand} */ (
-    jspb.Message.getWrapperField(this, proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand, 5));
+    jspb.Message.getWrapperField(this, proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand, 6));
 };
 
 
@@ -7274,7 +7375,7 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeEnvironmentRol
  * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
 */
 proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeEnvironmentRolesCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 5, value);
+  return jspb.Message.setWrapperField(this, 6, value);
 };
 
 
@@ -7292,7 +7393,7 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeEnvironmentR
  * @return {boolean}
  */
 proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeEnvironmentRolesCommand = function() {
-  return jspb.Message.getField(this, 5) != null;
+  return jspb.Message.getField(this, 6) != null;
 };
 
 

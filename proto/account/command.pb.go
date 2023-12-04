@@ -416,8 +416,12 @@ type CreateAccountV2Command struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email string         `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Role  AccountV2_Role `protobuf:"varint,2,opt,name=role,proto3,enum=bucketeer.account.AccountV2_Role" json:"role,omitempty"`
+	Email            string                       `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	Name             string                       `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	AvatarImageUrl   string                       `protobuf:"bytes,3,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url,omitempty"`
+	OrganizationId   string                       `protobuf:"bytes,4,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	OrganizationRole AccountV2_Organization_Role  `protobuf:"varint,5,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Organization_Role" json:"organization_role,omitempty"`
+	EnvironmentRoles []AccountV2_Environment_Role `protobuf:"varint,6,rep,packed,name=environment_roles,json=environmentRoles,proto3,enum=bucketeer.account.AccountV2_Environment_Role" json:"environment_roles,omitempty"`
 }
 
 func (x *CreateAccountV2Command) Reset() {
@@ -459,11 +463,86 @@ func (x *CreateAccountV2Command) GetEmail() string {
 	return ""
 }
 
-func (x *CreateAccountV2Command) GetRole() AccountV2_Role {
+func (x *CreateAccountV2Command) GetName() string {
 	if x != nil {
-		return x.Role
+		return x.Name
 	}
-	return AccountV2_UNASSIGNED
+	return ""
+}
+
+func (x *CreateAccountV2Command) GetAvatarImageUrl() string {
+	if x != nil {
+		return x.AvatarImageUrl
+	}
+	return ""
+}
+
+func (x *CreateAccountV2Command) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+func (x *CreateAccountV2Command) GetOrganizationRole() AccountV2_Organization_Role {
+	if x != nil {
+		return x.OrganizationRole
+	}
+	return AccountV2_Organization_Role_UNASSIGNED
+}
+
+func (x *CreateAccountV2Command) GetEnvironmentRoles() []AccountV2_Environment_Role {
+	if x != nil {
+		return x.EnvironmentRoles
+	}
+	return nil
+}
+
+type ChangeAccountV2NameCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *ChangeAccountV2NameCommand) Reset() {
+	*x = ChangeAccountV2NameCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_account_command_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ChangeAccountV2NameCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeAccountV2NameCommand) ProtoMessage() {}
+
+func (x *ChangeAccountV2NameCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_account_command_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeAccountV2NameCommand.ProtoReflect.Descriptor instead.
+func (*ChangeAccountV2NameCommand) Descriptor() ([]byte, []int) {
+	return file_proto_account_command_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ChangeAccountV2NameCommand) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
 }
 
 type ChangeAccountV2AvatarImageUrlCommand struct {
@@ -477,7 +556,7 @@ type ChangeAccountV2AvatarImageUrlCommand struct {
 func (x *ChangeAccountV2AvatarImageUrlCommand) Reset() {
 	*x = ChangeAccountV2AvatarImageUrlCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[10]
+		mi := &file_proto_account_command_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -490,7 +569,7 @@ func (x *ChangeAccountV2AvatarImageUrlCommand) String() string {
 func (*ChangeAccountV2AvatarImageUrlCommand) ProtoMessage() {}
 
 func (x *ChangeAccountV2AvatarImageUrlCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[10]
+	mi := &file_proto_account_command_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -503,7 +582,7 @@ func (x *ChangeAccountV2AvatarImageUrlCommand) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use ChangeAccountV2AvatarImageUrlCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAccountV2AvatarImageUrlCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{10}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ChangeAccountV2AvatarImageUrlCommand) GetAvatarImageUrl() string {
@@ -518,13 +597,13 @@ type ChangeAccountV2OrganizationRoleCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Role AccountV2_Role `protobuf:"varint,1,opt,name=role,proto3,enum=bucketeer.account.AccountV2_Role" json:"role,omitempty"`
+	Role AccountV2_Organization_Role `protobuf:"varint,1,opt,name=role,proto3,enum=bucketeer.account.AccountV2_Organization_Role" json:"role,omitempty"`
 }
 
 func (x *ChangeAccountV2OrganizationRoleCommand) Reset() {
 	*x = ChangeAccountV2OrganizationRoleCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[11]
+		mi := &file_proto_account_command_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -537,7 +616,7 @@ func (x *ChangeAccountV2OrganizationRoleCommand) String() string {
 func (*ChangeAccountV2OrganizationRoleCommand) ProtoMessage() {}
 
 func (x *ChangeAccountV2OrganizationRoleCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[11]
+	mi := &file_proto_account_command_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -550,14 +629,14 @@ func (x *ChangeAccountV2OrganizationRoleCommand) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use ChangeAccountV2OrganizationRoleCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAccountV2OrganizationRoleCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{11}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *ChangeAccountV2OrganizationRoleCommand) GetRole() AccountV2_Role {
+func (x *ChangeAccountV2OrganizationRoleCommand) GetRole() AccountV2_Organization_Role {
 	if x != nil {
 		return x.Role
 	}
-	return AccountV2_UNASSIGNED
+	return AccountV2_Organization_Role_UNASSIGNED
 }
 
 type ChangeAccountV2EnvironmentRolesCommand struct {
@@ -571,7 +650,7 @@ type ChangeAccountV2EnvironmentRolesCommand struct {
 func (x *ChangeAccountV2EnvironmentRolesCommand) Reset() {
 	*x = ChangeAccountV2EnvironmentRolesCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[12]
+		mi := &file_proto_account_command_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -584,7 +663,7 @@ func (x *ChangeAccountV2EnvironmentRolesCommand) String() string {
 func (*ChangeAccountV2EnvironmentRolesCommand) ProtoMessage() {}
 
 func (x *ChangeAccountV2EnvironmentRolesCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[12]
+	mi := &file_proto_account_command_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -597,7 +676,7 @@ func (x *ChangeAccountV2EnvironmentRolesCommand) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use ChangeAccountV2EnvironmentRolesCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAccountV2EnvironmentRolesCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{12}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ChangeAccountV2EnvironmentRolesCommand) GetRoles() []*AccountV2_EnvironmentRole {
@@ -616,7 +695,7 @@ type EnableAccountV2Command struct {
 func (x *EnableAccountV2Command) Reset() {
 	*x = EnableAccountV2Command{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[13]
+		mi := &file_proto_account_command_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -629,7 +708,7 @@ func (x *EnableAccountV2Command) String() string {
 func (*EnableAccountV2Command) ProtoMessage() {}
 
 func (x *EnableAccountV2Command) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[13]
+	mi := &file_proto_account_command_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -642,7 +721,7 @@ func (x *EnableAccountV2Command) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnableAccountV2Command.ProtoReflect.Descriptor instead.
 func (*EnableAccountV2Command) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{13}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{14}
 }
 
 type DisableAccountV2Command struct {
@@ -654,7 +733,7 @@ type DisableAccountV2Command struct {
 func (x *DisableAccountV2Command) Reset() {
 	*x = DisableAccountV2Command{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[14]
+		mi := &file_proto_account_command_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -667,7 +746,7 @@ func (x *DisableAccountV2Command) String() string {
 func (*DisableAccountV2Command) ProtoMessage() {}
 
 func (x *DisableAccountV2Command) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[14]
+	mi := &file_proto_account_command_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -680,7 +759,7 @@ func (x *DisableAccountV2Command) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableAccountV2Command.ProtoReflect.Descriptor instead.
 func (*DisableAccountV2Command) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{14}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{15}
 }
 
 type DeleteAccountV2Command struct {
@@ -692,7 +771,7 @@ type DeleteAccountV2Command struct {
 func (x *DeleteAccountV2Command) Reset() {
 	*x = DeleteAccountV2Command{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[15]
+		mi := &file_proto_account_command_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -705,7 +784,7 @@ func (x *DeleteAccountV2Command) String() string {
 func (*DeleteAccountV2Command) ProtoMessage() {}
 
 func (x *DeleteAccountV2Command) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[15]
+	mi := &file_proto_account_command_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -718,7 +797,7 @@ func (x *DeleteAccountV2Command) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountV2Command.ProtoReflect.Descriptor instead.
 func (*DeleteAccountV2Command) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{15}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{16}
 }
 
 type CreateAPIKeyCommand struct {
@@ -733,7 +812,7 @@ type CreateAPIKeyCommand struct {
 func (x *CreateAPIKeyCommand) Reset() {
 	*x = CreateAPIKeyCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[16]
+		mi := &file_proto_account_command_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -746,7 +825,7 @@ func (x *CreateAPIKeyCommand) String() string {
 func (*CreateAPIKeyCommand) ProtoMessage() {}
 
 func (x *CreateAPIKeyCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[16]
+	mi := &file_proto_account_command_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -759,7 +838,7 @@ func (x *CreateAPIKeyCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAPIKeyCommand.ProtoReflect.Descriptor instead.
 func (*CreateAPIKeyCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{16}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *CreateAPIKeyCommand) GetName() string {
@@ -787,7 +866,7 @@ type ChangeAPIKeyNameCommand struct {
 func (x *ChangeAPIKeyNameCommand) Reset() {
 	*x = ChangeAPIKeyNameCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[17]
+		mi := &file_proto_account_command_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -800,7 +879,7 @@ func (x *ChangeAPIKeyNameCommand) String() string {
 func (*ChangeAPIKeyNameCommand) ProtoMessage() {}
 
 func (x *ChangeAPIKeyNameCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[17]
+	mi := &file_proto_account_command_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -813,7 +892,7 @@ func (x *ChangeAPIKeyNameCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeAPIKeyNameCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAPIKeyNameCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{17}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ChangeAPIKeyNameCommand) GetName() string {
@@ -832,7 +911,7 @@ type EnableAPIKeyCommand struct {
 func (x *EnableAPIKeyCommand) Reset() {
 	*x = EnableAPIKeyCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[18]
+		mi := &file_proto_account_command_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -845,7 +924,7 @@ func (x *EnableAPIKeyCommand) String() string {
 func (*EnableAPIKeyCommand) ProtoMessage() {}
 
 func (x *EnableAPIKeyCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[18]
+	mi := &file_proto_account_command_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -858,7 +937,7 @@ func (x *EnableAPIKeyCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnableAPIKeyCommand.ProtoReflect.Descriptor instead.
 func (*EnableAPIKeyCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{18}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{19}
 }
 
 type DisableAPIKeyCommand struct {
@@ -870,7 +949,7 @@ type DisableAPIKeyCommand struct {
 func (x *DisableAPIKeyCommand) Reset() {
 	*x = DisableAPIKeyCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[19]
+		mi := &file_proto_account_command_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -883,7 +962,7 @@ func (x *DisableAPIKeyCommand) String() string {
 func (*DisableAPIKeyCommand) ProtoMessage() {}
 
 func (x *DisableAPIKeyCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[19]
+	mi := &file_proto_account_command_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -896,7 +975,7 @@ func (x *DisableAPIKeyCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableAPIKeyCommand.ProtoReflect.Descriptor instead.
 func (*DisableAPIKeyCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{19}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{20}
 }
 
 var File_proto_account_command_proto protoreflect.FileDescriptor
@@ -932,52 +1011,71 @@ var file_proto_account_command_proto_rawDesc = []byte{
 	0x6e, 0x74, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22, 0x16, 0x0a,
 	0x14, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x43, 0x6f,
 	0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x17, 0x0a, 0x15, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65,
-	0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x65,
-	0x0a, 0x16, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56,
-	0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69,
-	0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x35,
-	0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x21, 0x2e, 0x62,
-	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
-	0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x52,
-	0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22, 0x50, 0x0a, 0x24, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x41,
-	0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x41, 0x76, 0x61, 0x74, 0x61, 0x72, 0x49, 0x6d,
-	0x61, 0x67, 0x65, 0x55, 0x72, 0x6c, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x28, 0x0a,
-	0x10, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72, 0x5f, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x5f, 0x75, 0x72,
-	0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72, 0x49,
-	0x6d, 0x61, 0x67, 0x65, 0x55, 0x72, 0x6c, 0x22, 0x5f, 0x0a, 0x26, 0x43, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69,
-	0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x6f, 0x6c, 0x65, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e,
-	0x64, 0x12, 0x35, 0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32,
-	0x21, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f,
-	0x75, 0x6e, 0x74, 0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x2e, 0x52, 0x6f,
-	0x6c, 0x65, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22, 0x6c, 0x0a, 0x26, 0x43, 0x68, 0x61, 0x6e,
-	0x67, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x45, 0x6e, 0x76, 0x69, 0x72,
-	0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x73, 0x43, 0x6f, 0x6d, 0x6d, 0x61,
-	0x6e, 0x64, 0x12, 0x42, 0x0a, 0x05, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
-	0x0b, 0x32, 0x2c, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63,
+	0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0xce,
+	0x02, 0x0a, 0x16, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x56, 0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61,
+	0x69, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12,
+	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x12, 0x28, 0x0a, 0x10, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72, 0x5f, 0x69, 0x6d,
+	0x61, 0x67, 0x65, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x61,
+	0x76, 0x61, 0x74, 0x61, 0x72, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x27, 0x0a,
+	0x0f, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64,
+	0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x5b, 0x0a, 0x11, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69,
+	0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28,
+	0x0e, 0x32, 0x2e, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63,
 	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x2e,
-	0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x52,
-	0x05, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x22, 0x18, 0x0a, 0x16, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65,
-	0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64,
-	0x22, 0x19, 0x0a, 0x17, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75,
-	0x6e, 0x74, 0x56, 0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x18, 0x0a, 0x16, 0x44,
-	0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x43, 0x6f,
-	0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x5d, 0x0a, 0x13, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41,
-	0x50, 0x49, 0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a, 0x04,
-	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65,
-	0x12, 0x32, 0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1e,
+	0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x52, 0x6f, 0x6c,
+	0x65, 0x52, 0x10, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52,
+	0x6f, 0x6c, 0x65, 0x12, 0x5a, 0x0a, 0x11, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65,
+	0x6e, 0x74, 0x5f, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x0e, 0x32, 0x2d,
 	0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75,
-	0x6e, 0x74, 0x2e, 0x41, 0x50, 0x49, 0x4b, 0x65, 0x79, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x04,
-	0x72, 0x6f, 0x6c, 0x65, 0x22, 0x2d, 0x0a, 0x17, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x50,
-	0x49, 0x4b, 0x65, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12,
-	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
-	0x61, 0x6d, 0x65, 0x22, 0x15, 0x0a, 0x13, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x50, 0x49,
-	0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x16, 0x0a, 0x14, 0x44, 0x69,
-	0x73, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x50, 0x49, 0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x61,
-	0x6e, 0x64, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
-	0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75,
-	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x63,
-	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6e, 0x74, 0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x2e, 0x45, 0x6e, 0x76,
+	0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x10, 0x65,
+	0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x73, 0x22,
+	0x30, 0x0a, 0x1a, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x56, 0x32, 0x4e, 0x61, 0x6d, 0x65, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x22, 0x50, 0x0a, 0x24, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75,
+	0x6e, 0x74, 0x56, 0x32, 0x41, 0x76, 0x61, 0x74, 0x61, 0x72, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x55,
+	0x72, 0x6c, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x28, 0x0a, 0x10, 0x61, 0x76, 0x61,
+	0x74, 0x61, 0x72, 0x5f, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0e, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72, 0x49, 0x6d, 0x61, 0x67, 0x65,
+	0x55, 0x72, 0x6c, 0x22, 0x6c, 0x0a, 0x26, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x63, 0x63,
+	0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x52, 0x6f, 0x6c, 0x65, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x42, 0x0a,
+	0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x2e, 0x2e, 0x62, 0x75,
+	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e,
+	0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x2e, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69,
+	0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x04, 0x72, 0x6f, 0x6c,
+	0x65, 0x22, 0x6c, 0x0a, 0x26, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75,
+	0x6e, 0x74, 0x56, 0x32, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52,
+	0x6f, 0x6c, 0x65, 0x73, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x42, 0x0a, 0x05, 0x72,
+	0x6f, 0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x62, 0x75, 0x63,
+	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x41,
+	0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x2e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x05, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x22,
+	0x18, 0x0a, 0x16, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x56, 0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x19, 0x0a, 0x17, 0x44, 0x69, 0x73,
+	0x61, 0x62, 0x6c, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x43, 0x6f, 0x6d,
+	0x6d, 0x61, 0x6e, 0x64, 0x22, 0x18, 0x0a, 0x16, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x63,
+	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x5d,
+	0x0a, 0x13, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x50, 0x49, 0x4b, 0x65, 0x79, 0x43, 0x6f,
+	0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x32, 0x0a, 0x04, 0x72, 0x6f, 0x6c,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1e, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x41, 0x50, 0x49, 0x4b,
+	0x65, 0x79, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22, 0x2d, 0x0a,
+	0x17, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x50, 0x49, 0x4b, 0x65, 0x79, 0x4e, 0x61, 0x6d,
+	0x65, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x15, 0x0a, 0x13,
+	0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x50, 0x49, 0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d, 0x6d,
+	0x61, 0x6e, 0x64, 0x22, 0x16, 0x0a, 0x14, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x50,
+	0x49, 0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x42, 0x31, 0x5a, 0x2f, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
+	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -992,7 +1090,7 @@ func file_proto_account_command_proto_rawDescGZIP() []byte {
 	return file_proto_account_command_proto_rawDescData
 }
 
-var file_proto_account_command_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_proto_account_command_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_proto_account_command_proto_goTypes = []interface{}{
 	(*CreateAdminAccountCommand)(nil),              // 0: bucketeer.account.CreateAdminAccountCommand
 	(*EnableAdminAccountCommand)(nil),              // 1: bucketeer.account.EnableAdminAccountCommand
@@ -1004,33 +1102,36 @@ var file_proto_account_command_proto_goTypes = []interface{}{
 	(*EnableAccountCommand)(nil),                   // 7: bucketeer.account.EnableAccountCommand
 	(*DisableAccountCommand)(nil),                  // 8: bucketeer.account.DisableAccountCommand
 	(*CreateAccountV2Command)(nil),                 // 9: bucketeer.account.CreateAccountV2Command
-	(*ChangeAccountV2AvatarImageUrlCommand)(nil),   // 10: bucketeer.account.ChangeAccountV2AvatarImageUrlCommand
-	(*ChangeAccountV2OrganizationRoleCommand)(nil), // 11: bucketeer.account.ChangeAccountV2OrganizationRoleCommand
-	(*ChangeAccountV2EnvironmentRolesCommand)(nil), // 12: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand
-	(*EnableAccountV2Command)(nil),                 // 13: bucketeer.account.EnableAccountV2Command
-	(*DisableAccountV2Command)(nil),                // 14: bucketeer.account.DisableAccountV2Command
-	(*DeleteAccountV2Command)(nil),                 // 15: bucketeer.account.DeleteAccountV2Command
-	(*CreateAPIKeyCommand)(nil),                    // 16: bucketeer.account.CreateAPIKeyCommand
-	(*ChangeAPIKeyNameCommand)(nil),                // 17: bucketeer.account.ChangeAPIKeyNameCommand
-	(*EnableAPIKeyCommand)(nil),                    // 18: bucketeer.account.EnableAPIKeyCommand
-	(*DisableAPIKeyCommand)(nil),                   // 19: bucketeer.account.DisableAPIKeyCommand
-	(Account_Role)(0),                              // 20: bucketeer.account.Account.Role
-	(AccountV2_Role)(0),                            // 21: bucketeer.account.AccountV2.Role
-	(*AccountV2_EnvironmentRole)(nil),              // 22: bucketeer.account.AccountV2.EnvironmentRole
-	(APIKey_Role)(0),                               // 23: bucketeer.account.APIKey.Role
+	(*ChangeAccountV2NameCommand)(nil),             // 10: bucketeer.account.ChangeAccountV2NameCommand
+	(*ChangeAccountV2AvatarImageUrlCommand)(nil),   // 11: bucketeer.account.ChangeAccountV2AvatarImageUrlCommand
+	(*ChangeAccountV2OrganizationRoleCommand)(nil), // 12: bucketeer.account.ChangeAccountV2OrganizationRoleCommand
+	(*ChangeAccountV2EnvironmentRolesCommand)(nil), // 13: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand
+	(*EnableAccountV2Command)(nil),                 // 14: bucketeer.account.EnableAccountV2Command
+	(*DisableAccountV2Command)(nil),                // 15: bucketeer.account.DisableAccountV2Command
+	(*DeleteAccountV2Command)(nil),                 // 16: bucketeer.account.DeleteAccountV2Command
+	(*CreateAPIKeyCommand)(nil),                    // 17: bucketeer.account.CreateAPIKeyCommand
+	(*ChangeAPIKeyNameCommand)(nil),                // 18: bucketeer.account.ChangeAPIKeyNameCommand
+	(*EnableAPIKeyCommand)(nil),                    // 19: bucketeer.account.EnableAPIKeyCommand
+	(*DisableAPIKeyCommand)(nil),                   // 20: bucketeer.account.DisableAPIKeyCommand
+	(Account_Role)(0),                              // 21: bucketeer.account.Account.Role
+	(AccountV2_Organization_Role)(0),               // 22: bucketeer.account.AccountV2.Organization_Role
+	(AccountV2_Environment_Role)(0),                // 23: bucketeer.account.AccountV2.Environment_Role
+	(*AccountV2_EnvironmentRole)(nil),              // 24: bucketeer.account.AccountV2.EnvironmentRole
+	(APIKey_Role)(0),                               // 25: bucketeer.account.APIKey.Role
 }
 var file_proto_account_command_proto_depIdxs = []int32{
-	20, // 0: bucketeer.account.CreateAccountCommand.role:type_name -> bucketeer.account.Account.Role
-	20, // 1: bucketeer.account.ChangeAccountRoleCommand.role:type_name -> bucketeer.account.Account.Role
-	21, // 2: bucketeer.account.CreateAccountV2Command.role:type_name -> bucketeer.account.AccountV2.Role
-	21, // 3: bucketeer.account.ChangeAccountV2OrganizationRoleCommand.role:type_name -> bucketeer.account.AccountV2.Role
-	22, // 4: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
-	23, // 5: bucketeer.account.CreateAPIKeyCommand.role:type_name -> bucketeer.account.APIKey.Role
-	6,  // [6:6] is the sub-list for method output_type
-	6,  // [6:6] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	21, // 0: bucketeer.account.CreateAccountCommand.role:type_name -> bucketeer.account.Account.Role
+	21, // 1: bucketeer.account.ChangeAccountRoleCommand.role:type_name -> bucketeer.account.Account.Role
+	22, // 2: bucketeer.account.CreateAccountV2Command.organization_role:type_name -> bucketeer.account.AccountV2.Organization_Role
+	23, // 3: bucketeer.account.CreateAccountV2Command.environment_roles:type_name -> bucketeer.account.AccountV2.Environment_Role
+	22, // 4: bucketeer.account.ChangeAccountV2OrganizationRoleCommand.role:type_name -> bucketeer.account.AccountV2.Organization_Role
+	24, // 5: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
+	25, // 6: bucketeer.account.CreateAPIKeyCommand.role:type_name -> bucketeer.account.APIKey.Role
+	7,  // [7:7] is the sub-list for method output_type
+	7,  // [7:7] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_proto_account_command_proto_init() }
@@ -1162,7 +1263,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAccountV2AvatarImageUrlCommand); i {
+			switch v := v.(*ChangeAccountV2NameCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1174,7 +1275,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAccountV2OrganizationRoleCommand); i {
+			switch v := v.(*ChangeAccountV2AvatarImageUrlCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1186,7 +1287,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAccountV2EnvironmentRolesCommand); i {
+			switch v := v.(*ChangeAccountV2OrganizationRoleCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1198,7 +1299,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EnableAccountV2Command); i {
+			switch v := v.(*ChangeAccountV2EnvironmentRolesCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1210,7 +1311,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DisableAccountV2Command); i {
+			switch v := v.(*EnableAccountV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1222,7 +1323,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteAccountV2Command); i {
+			switch v := v.(*DisableAccountV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1234,7 +1335,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateAPIKeyCommand); i {
+			switch v := v.(*DeleteAccountV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1246,7 +1347,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAPIKeyNameCommand); i {
+			switch v := v.(*CreateAPIKeyCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1258,7 +1359,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EnableAPIKeyCommand); i {
+			switch v := v.(*ChangeAPIKeyNameCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1270,6 +1371,18 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EnableAPIKeyCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_account_command_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DisableAPIKeyCommand); i {
 			case 0:
 				return &v.state
@@ -1288,7 +1401,7 @@ func file_proto_account_command_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_account_command_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

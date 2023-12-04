@@ -167,11 +167,13 @@ message ListAccountsResponse {
 }
 
 message CreateAccountV2Request {
-  CreateAccountV2Command command = 1;
-  string organization_id = 2;
+  string organization_id = 1;
+  CreateAccountV2Command command = 2;
 }
 
-message CreateAccountV2Response {}
+message CreateAccountV2Response {
+  AccountV2 account = 1;
+}
 
 message EnableAccountV2Request {
   string email = 1;
@@ -200,9 +202,10 @@ message DeleteAccountV2Response {}
 message UpdateAccountV2Request {
   string email = 1;
   string organization_id = 2;
-  ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command = 3;
-  ChangeAccountV2OrganizationRoleCommand change_organization_role_command = 4;
-  ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command = 5;
+  ChangeAccountV2NameCommand change_name_command = 3;
+  ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command = 4;
+  ChangeAccountV2OrganizationRoleCommand change_organization_role_command = 5;
+  ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command = 6;
 }
 
 message UpdateAccountV2Response {}

@@ -25,21 +25,41 @@
             ]
           },
           {
-            "name": "AccountV2.Role",
+            "name": "AccountV2.Environment_Role",
             "enum_fields": [
               {
-                "name": "UNASSIGNED"
+                "name": "Environment_Role_UNASSIGNED"
               },
               {
-                "name": "VIEWER",
+                "name": "Environment_Role_VIEWER",
                 "integer": 1
               },
               {
-                "name": "EDITOR",
+                "name": "Environment_Role_EDITOR",
                 "integer": 2
               },
               {
-                "name": "ADMIN",
+                "name": "Environment_Role_OWNER",
+                "integer": 3
+              }
+            ]
+          },
+          {
+            "name": "AccountV2.Organization_Role",
+            "enum_fields": [
+              {
+                "name": "Organization_Role_UNASSIGNED"
+              },
+              {
+                "name": "Organization_Role_MEMBER",
+                "integer": 1
+              },
+              {
+                "name": "Organization_Role_ADMIN",
+                "integer": 2
+              },
+              {
+                "name": "Organization_Role_OWNER",
                 "integer": 3
               }
             ]
@@ -117,7 +137,7 @@
               {
                 "id": 5,
                 "name": "organization_role",
-                "type": "Role"
+                "type": "Organization_Role"
               },
               {
                 "id": 6,
@@ -153,7 +173,7 @@
                   {
                     "id": 2,
                     "name": "role",
-                    "type": "Role"
+                    "type": "Environment_Role"
                   }
                 ]
               }
@@ -358,8 +378,39 @@
               },
               {
                 "id": 2,
-                "name": "role",
-                "type": "account.AccountV2.Role"
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "avatar_image_url",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "organization_role",
+                "type": "account.AccountV2.Organization_Role"
+              },
+              {
+                "id": 6,
+                "name": "environment_roles",
+                "type": "account.AccountV2.Environment_Role",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "ChangeAccountV2NameCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
               }
             ]
           },
@@ -379,7 +430,7 @@
               {
                 "id": 1,
                 "name": "role",
-                "type": "account.AccountV2.Role"
+                "type": "account.AccountV2.Organization_Role"
               }
             ]
           },
@@ -948,18 +999,25 @@
             "fields": [
               {
                 "id": 1,
-                "name": "command",
-                "type": "CreateAccountV2Command"
+                "name": "organization_id",
+                "type": "string"
               },
               {
                 "id": 2,
-                "name": "organization_id",
-                "type": "string"
+                "name": "command",
+                "type": "CreateAccountV2Command"
               }
             ]
           },
           {
-            "name": "CreateAccountV2Response"
+            "name": "CreateAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "AccountV2"
+              }
+            ]
           },
           {
             "name": "EnableAccountV2Request",
@@ -1045,16 +1103,21 @@
               },
               {
                 "id": 3,
+                "name": "change_name_command",
+                "type": "ChangeAccountV2NameCommand"
+              },
+              {
+                "id": 4,
                 "name": "change_avatar_url_command",
                 "type": "ChangeAccountV2AvatarImageUrlCommand"
               },
               {
-                "id": 4,
+                "id": 5,
                 "name": "change_organization_role_command",
                 "type": "ChangeAccountV2OrganizationRoleCommand"
               },
               {
-                "id": 5,
+                "id": 6,
                 "name": "change_environment_roles_command",
                 "type": "ChangeAccountV2EnvironmentRolesCommand"
               }

@@ -169,8 +169,22 @@ export class CreateAccountV2Command extends jspb.Message {
   getEmail(): string;
   setEmail(value: string): void;
 
-  getRole(): proto_account_account_pb.AccountV2.RoleMap[keyof proto_account_account_pb.AccountV2.RoleMap];
-  setRole(value: proto_account_account_pb.AccountV2.RoleMap[keyof proto_account_account_pb.AccountV2.RoleMap]): void;
+  getName(): string;
+  setName(value: string): void;
+
+  getAvatarImageUrl(): string;
+  setAvatarImageUrl(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getOrganizationRole(): proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap];
+  setOrganizationRole(value: proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap]): void;
+
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.Environment_RoleMap[keyof proto_account_account_pb.AccountV2.Environment_RoleMap]>;
+  setEnvironmentRolesList(value: Array<proto_account_account_pb.AccountV2.Environment_RoleMap[keyof proto_account_account_pb.AccountV2.Environment_RoleMap]>): void;
+  addEnvironmentRoles(value: proto_account_account_pb.AccountV2.Environment_RoleMap[keyof proto_account_account_pb.AccountV2.Environment_RoleMap], index?: number): proto_account_account_pb.AccountV2.Environment_RoleMap[keyof proto_account_account_pb.AccountV2.Environment_RoleMap];
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAccountV2Command.AsObject;
@@ -185,7 +199,31 @@ export class CreateAccountV2Command extends jspb.Message {
 export namespace CreateAccountV2Command {
   export type AsObject = {
     email: string,
-    role: proto_account_account_pb.AccountV2.RoleMap[keyof proto_account_account_pb.AccountV2.RoleMap],
+    name: string,
+    avatarImageUrl: string,
+    organizationId: string,
+    organizationRole: proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap],
+    environmentRolesList: Array<proto_account_account_pb.AccountV2.Environment_RoleMap[keyof proto_account_account_pb.AccountV2.Environment_RoleMap]>,
+  }
+}
+
+export class ChangeAccountV2NameCommand extends jspb.Message {
+  getName(): string;
+  setName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeAccountV2NameCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: ChangeAccountV2NameCommand): ChangeAccountV2NameCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ChangeAccountV2NameCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeAccountV2NameCommand;
+  static deserializeBinaryFromReader(message: ChangeAccountV2NameCommand, reader: jspb.BinaryReader): ChangeAccountV2NameCommand;
+}
+
+export namespace ChangeAccountV2NameCommand {
+  export type AsObject = {
+    name: string,
   }
 }
 
@@ -210,8 +248,8 @@ export namespace ChangeAccountV2AvatarImageUrlCommand {
 }
 
 export class ChangeAccountV2OrganizationRoleCommand extends jspb.Message {
-  getRole(): proto_account_account_pb.AccountV2.RoleMap[keyof proto_account_account_pb.AccountV2.RoleMap];
-  setRole(value: proto_account_account_pb.AccountV2.RoleMap[keyof proto_account_account_pb.AccountV2.RoleMap]): void;
+  getRole(): proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap];
+  setRole(value: proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap]): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ChangeAccountV2OrganizationRoleCommand.AsObject;
@@ -225,7 +263,7 @@ export class ChangeAccountV2OrganizationRoleCommand extends jspb.Message {
 
 export namespace ChangeAccountV2OrganizationRoleCommand {
   export type AsObject = {
-    role: proto_account_account_pb.AccountV2.RoleMap[keyof proto_account_account_pb.AccountV2.RoleMap],
+    role: proto_account_account_pb.AccountV2.Organization_RoleMap[keyof proto_account_account_pb.AccountV2.Organization_RoleMap],
   }
 }
 
