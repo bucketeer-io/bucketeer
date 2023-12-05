@@ -44,7 +44,7 @@ import { AddUpdateScheduleOperation } from '../AddUpdateScheduleOperation';
 import { ClauseType } from '../FeatureAutoOpsRulesForm';
 
 export interface ProgressiveRolloutTypeTab {
-  label: 'Template' | 'Manual';
+  label: string;
   value: ProgressiveRollout.TypeMap[keyof ProgressiveRollout.TypeMap];
   selected: boolean;
 }
@@ -124,12 +124,12 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     const [progressiveRolloutTypeList, setProgressiveRolloutTypeList] =
       useState<ProgressiveRolloutTypeTab[]>([
         {
-          label: 'Template',
+          label: f(messages.autoOps.template),
           value: ProgressiveRollout.Type.TEMPLATE_SCHEDULE,
           selected: true,
         },
         {
-          label: 'Manual',
+          label: f(messages.autoOps.manual),
           value: ProgressiveRollout.Type.MANUAL_SCHEDULE,
           selected: false,
         },

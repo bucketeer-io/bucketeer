@@ -1042,7 +1042,9 @@ const ProgressiveRolloutComponent = memo(
             {increments && (
               <>
                 <div className="space-x-1 items-center flex">
-                  <span className="text-gray-400">Increment</span>
+                  <span className="text-gray-400">
+                    {f(messages.autoOps.increment)}
+                  </span>
                   <span className="text-gray-500">{increments}%</span>
                   <InformationCircleIcon width={18} className="text-gray-400" />
                 </div>
@@ -1061,7 +1063,9 @@ const ProgressiveRolloutComponent = memo(
             {interval && (
               <>
                 <div className="flex space-x-1">
-                  <span className="text-gray-400">Frequency</span>
+                  <span className="text-gray-400">
+                    {f(messages.autoOps.frequency)}
+                  </span>
                   <span className="text-gray-500">
                     {getFrequency(interval)}
                   </span>

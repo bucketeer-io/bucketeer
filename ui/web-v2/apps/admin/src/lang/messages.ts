@@ -405,6 +405,48 @@ export const messages = {
       id: 'autoOps.evaluationCount',
       defaultMessage: 'Evaluation Count',
     }),
+    increment: defineMessage({
+      id: 'autoOps.increment',
+      defaultMessage: 'Increment',
+    }),
+    frequency: defineMessage({
+      id: 'autoOps.frequency',
+      defaultMessage: 'Frequency',
+    }),
+    template: defineMessage({
+      id: 'autoOps.template',
+      defaultMessage: 'Template',
+    }),
+    manual: defineMessage({
+      id: 'autoOps.manual',
+      defaultMessage: 'Manual',
+    }),
+    weight: defineMessage({
+      id: 'autoOps.weight',
+      defaultMessage: 'Weight',
+    }),
+    executeAt: defineMessage({
+      id: 'autoOps.executeAt',
+      defaultMessage: 'Execute at',
+    }),
+    alreadyProgressiveRolloutConfigured: defineMessage({
+      id: 'autoOps.alreadyProgressiveRolloutConfigured',
+      defaultMessage:
+        'There is already a progressive rollout configured. Please delete it before creating a new one.',
+    }),
+    scheduleConfigured: defineMessage({
+      id: 'autoOps.scheduleConfigured',
+      defaultMessage:
+        'There is a schedule configured. Please delete it before creating a progressive rollout.',
+    }),
+    weightIncreasingOrder: defineMessage({
+      id: 'autoOps.weightIncreasingOrder',
+      defaultMessage: 'The weight must be in increasing order.',
+    }),
+    dateIncreasingOrder: defineMessage({
+      id: 'autoOps.dateIncreasingOrder',
+      defaultMessage: 'The date must be in increasing order.',
+    }),
   },
   trigger: {
     documentation: defineMessage({

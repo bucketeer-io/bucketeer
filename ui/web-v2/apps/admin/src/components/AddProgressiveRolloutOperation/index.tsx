@@ -83,8 +83,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
       if (findScheduleOperation) {
         return (
           <p className="input-error mt-2">
-            There is a schedule configured in the auto operations. Please delete
-            it before using the progressive rollout.
+            {f(messages.autoOps.scheduleConfigured)}
           </p>
         );
       }
@@ -95,8 +94,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
       ) {
         return (
           <p className="input-error mt-2">
-            There is already progressive rollout configured in the auto
-            operations.
+            {f(messages.autoOps.alreadyProgressiveRolloutConfigured)}
           </p>
         );
       }
@@ -247,7 +245,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
         </div>
         <div className="flex space-x-4 mt-4">
           <div className="flex-1">
-            <span className="input-label">Increment</span>
+            <span className="input-label">{f(messages.autoOps.increment)}</span>
             <div className="flex">
               <input
                 type="number"
@@ -282,7 +280,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
             </p>
           </div>
           <div className="flex-1">
-            <span className="input-label">Frequency</span>
+            <span className="input-label">{f(messages.autoOps.frequency)}</span>
             <Controller
               name="progressiveRollout.template.interval"
               control={control}
@@ -303,8 +301,12 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
               <div key={index}>
                 {index === 0 && (
                   <div className="flex space-x-4 mb-2">
-                    <div className="w-1/2 input-label">Weight</div>
-                    <div className="w-1/2 input-label">Execute at</div>
+                    <div className="w-1/2 input-label">
+                      {f(messages.autoOps.weight)}
+                    </div>
+                    <div className="w-1/2 input-label">
+                      {f(messages.autoOps.executeAt)}
+                    </div>
                   </div>
                 )}
                 <div className="flex space-x-4">
@@ -446,8 +448,12 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
             <div key={index}>
               {index === 0 && (
                 <div className="flex space-x-4 mb-2">
-                  <div className="w-1/2 input-label">Weight</div>
-                  <div className="w-1/2 input-label">Execute at</div>
+                  <div className="w-1/2 input-label">
+                    {f(messages.autoOps.weight)}
+                  </div>
+                  <div className="w-1/2 input-label">
+                    {f(messages.autoOps.executeAt)}
+                  </div>
                 </div>
               )}
               <div className="flex space-x-4 pr-1">
@@ -552,24 +558,29 @@ interface ErrorMessageProps {
 }
 
 const ErrorMessage: FC<ErrorMessageProps> = memo(
-  ({ isWeightsSorted, isDatesSorted }) => (
-    <div className="flex pb-6 pt-2 space-x-2 pr-6">
-      <div className="flex-1">
-        {!isWeightsSorted && (
-          <p className="input-error">
-            <span role="alert">
-              The weights need to be in increasing order.
-            </span>
-          </p>
-        )}
+  ({ isWeightsSorted, isDatesSorted }) => {
+    const { formatMessage: f } = useIntl();
+    return (
+      <div className="flex pb-6 pt-2 space-x-2 pr-6">
+        <div className="flex-1">
+          {!isWeightsSorted && (
+            <p className="input-error">
+              <span role="alert">
+                {f(messages.autoOps.weightIncreasingOrder)}
+              </span>
+            </p>
+          )}
+        </div>
+        <div className="flex-1">
+          {!isDatesSorted && (
+            <p className="input-error">
+              <span role="alert">
+                {f(messages.autoOps.dateIncreasingOrder)}
+              </span>
+            </p>
+          )}
+        </div>
       </div>
-      <div className="flex-1">
-        {!isDatesSorted && (
-          <p className="input-error">
-            <span role="alert">The dates need to be in increasing order.</span>
-          </p>
-        )}
-      </div>
-    </div>
-  )
+    );
+  }
 );
