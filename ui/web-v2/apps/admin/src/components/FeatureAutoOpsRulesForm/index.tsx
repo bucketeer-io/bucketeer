@@ -842,24 +842,24 @@ const EventRateOperation = memo(
       <div>
         <div className="flex items-center space-x-2 mt-3">
           <span className="text-gray-400">
-            {f(messages.autoOps.opsEventRateClause.goal)}
+            {f(messages.autoOps.opsEventRateClause.goal)}:
           </span>
           <span className="text-gray-500 truncate max-w-[120px]">{goalId}</span>
           <span className="text-gray-200">/</span>
           <span className="text-gray-400">
-            {f(messages.autoOps.minimumGoalCount)}
+            {f(messages.autoOps.minimumGoalCount)}:
           </span>
           <span className="text-gray-500">{minCount}</span>
           <span className="text-gray-200">/</span>
           <span className="text-gray-400">
-            {f(messages.autoOps.totalGoalCountEvents)}
+            {f(messages.autoOps.totalGoalCountEvents)}:
           </span>
           <span className="text-gray-500">
             {opsCount ? opsCount.opsEventCount : 0}
           </span>
           <span className="text-gray-200">/</span>
           <span className="text-gray-400">
-            {f(messages.autoOps.currentEventRate)}
+            {f(messages.autoOps.currentEventRate)}:
           </span>
           <span className="text-gray-500">
             {opsCount ? `${currentEventRate}%` : '0%'}
@@ -1045,7 +1045,7 @@ const ProgressiveRolloutComponent = memo(
               <>
                 <div className="space-x-1 items-center flex">
                   <span className="text-gray-400">
-                    {f(messages.autoOps.increment)}
+                    {f(messages.autoOps.increment)}:
                   </span>
                   <span className="text-gray-500">{increments}%</span>
                   <InformationCircleIcon width={18} className="text-gray-400" />
@@ -1055,7 +1055,7 @@ const ProgressiveRolloutComponent = memo(
             )}
             <div className="flex space-x-1">
               <span className="text-gray-400">
-                {f(messages.autoOps.startDate)}
+                {f(messages.autoOps.startDate)}:
               </span>
               <span className="text-gray-500">
                 {dayjs(schedulesList[0].executeAt * 1000).format('YYYY-MM-DD')}
@@ -1066,7 +1066,7 @@ const ProgressiveRolloutComponent = memo(
               <>
                 <div className="flex space-x-1">
                   <span className="text-gray-400">
-                    {f(messages.autoOps.frequency)}
+                    {f(messages.autoOps.frequency)}:
                   </span>
                   <span className="text-gray-500">
                     {getFrequency(interval)}
@@ -1077,7 +1077,7 @@ const ProgressiveRolloutComponent = memo(
             )}
             <div className="flex space-x-1">
               <span className="text-gray-400">
-                {f(messages.feature.variation)}
+                {f(messages.feature.variation)}:
               </span>
               <span className="text-gray-500">
                 {variationOptions.find((v) => v.value === variationId)?.label}
