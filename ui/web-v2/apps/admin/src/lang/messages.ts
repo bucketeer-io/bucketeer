@@ -342,7 +342,7 @@ export const messages = {
       }),
       progressiveRolloutInfo: defineMessage({
         id: 'infoBlocks.progressiveRolloutInfo',
-        defaultMessage: 'Coming soon',
+        defaultMessage: 'Automate to release a feature progressively',
       }),
     },
     editOperation: defineMessage({

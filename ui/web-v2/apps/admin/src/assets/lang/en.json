@@ -333,7 +333,7 @@
   "goal.update.header.title": "Update the goal",
   "id": "ID",
   "infoBlocks.killSwitchInfo": "Turn off automatically a flag based on KPI events",
-  "infoBlocks.progressiveRolloutInfo": "Coming soon",
+  "infoBlocks.progressiveRolloutInfo": "Automate to release a feature progressively",
   "infoBlocks.scheduleInfo": "Schedule a flag to turn on or off",
   "infoBlocks.title": "You can safely switch a flag on and off by using auto operations",
   "input.destinationEnvironment": "Destination environment",

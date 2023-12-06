@@ -824,12 +824,14 @@ const EventRateOperation = memo(
         ) / 100;
     }
 
-    const numberOfSteps = 10;
+    const numberOfSteps =
+      Math.round(threadsholdRate * 100) > 10
+        ? 10
+        : Math.round(threadsholdRate * 100);
     const step = (threadsholdRate * 100) / numberOfSteps;
 
-    const stepArray = Array.from(
-      { length: numberOfSteps },
-      (_, index) => Math.round((step + index * step) * 100) / 100
+    const stepArray = Array.from({ length: numberOfSteps }, (_, index) =>
+      Math.round(step + index * step)
     );
 
     const barWidth = isActiveTabSelected

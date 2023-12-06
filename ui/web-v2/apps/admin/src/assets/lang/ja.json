@@ -333,7 +333,7 @@
   "goal.update.header.title": "ゴールの更新",
   "id": "ID",
   "infoBlocks.killSwitchInfo": "KPIイベントに基づいてフラグを自動的にOFFにできます",
-  "infoBlocks.progressiveRolloutInfo": "Coming soon",
+  "infoBlocks.progressiveRolloutInfo": "フィーチャーフラグの段階的なリリースを自動化する",
   "infoBlocks.scheduleInfo": "フラグのON/OFFをスケジュールできます",
   "infoBlocks.title": "オートオペレーションを使うことによって、安全にフラグのON/OFFを切り替えることができます",
   "input.destinationEnvironment": "環境先",
