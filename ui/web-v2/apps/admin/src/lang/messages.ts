@@ -413,6 +413,18 @@ export const messages = {
       id: 'autoOps.frequency',
       defaultMessage: 'Frequency',
     }),
+    hourly: defineMessage({
+      id: 'autoOps.hourly',
+      defaultMessage: 'Hourly',
+    }),
+    daily: defineMessage({
+      id: 'autoOps.daily',
+      defaultMessage: 'Daily',
+    }),
+    weekly: defineMessage({
+      id: 'autoOps.weekly',
+      defaultMessage: 'Weekly',
+    }),
     template: defineMessage({
       id: 'autoOps.template',
       defaultMessage: 'Template',

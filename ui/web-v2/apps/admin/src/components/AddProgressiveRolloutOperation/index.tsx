@@ -213,15 +213,15 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
 
     const intervalOptions = [
       {
-        label: 'Hourly',
+        label: f(messages.autoOps.hourly),
         value: '1',
       },
       {
-        label: 'Daily',
+        label: f(messages.autoOps.daily),
         value: '2',
       },
       {
-        label: 'Weekly',
+        label: f(messages.autoOps.weekly),
         value: '3',
       },
     ];

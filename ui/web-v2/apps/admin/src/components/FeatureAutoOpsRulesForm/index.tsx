@@ -964,11 +964,11 @@ const ProgressiveRolloutComponent = memo(
 
     const getFrequency = (frequency) => {
       if (frequency === 1) {
-        return 'Hourly';
+        return f(messages.autoOps.hourly);
       } else if (frequency === 2) {
-        return 'Daily';
+        return f(messages.autoOps.daily);
       } else if (frequency === 3) {
-        return 'Weekly';
+        return f(messages.autoOps.weekly);
       } else {
         return null;
       }
