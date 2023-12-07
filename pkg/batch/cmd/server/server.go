@@ -371,9 +371,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		environmentClient,
-		domainEventPuller,
-		notificationSender,
 		rediscounter.NewRedisCounterDeleter(
 			redisV3Cache,
 			environmentClient,
@@ -401,9 +398,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		notification.NewDomainEventInformer(
+			environmentClient,
+			domainEventPuller,
+			notificationSender,
+			notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
+			notification.WithLogger(logger),
+			notification.WithMetrics(registerer),
+		),
 		logger,
-		notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
-		notification.WithLogger(logger),
 	)
 
 	healthChecker := health.NewGrpcChecker(

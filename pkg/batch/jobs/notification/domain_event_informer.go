@@ -83,7 +83,7 @@ func WithLogger(logger *zap.Logger) Option {
 
 type domainEventInformer struct {
 	environmentClient environmentclient.Client
-	puller            puller.RateLimitedPuller
+	puller            puller.Puller
 	sender            sender.Sender
 	group             errgroup.Group
 	opts              *options
@@ -104,36 +104,47 @@ func NewDomainEventInformer(
 	}
 	return &domainEventInformer{
 		environmentClient: environmentClient,
-		puller:            puller.NewRateLimitedPuller(p, options.maxMPS),
+		puller:            p,
 		sender:            sender,
 		opts:              &options,
 		logger:            options.logger.Named("sender"),
 	}
 }
 
+func (i *domainEventInformer) createRateLimitedPuller() puller.RateLimitedPuller {
+	return puller.NewRateLimitedPuller(i.puller, i.opts.maxMPS)
+}
+
 func (i *domainEventInformer) Run(ctx context.Context) error {
 	i.logger.Info("DomainEventInformer start running")
-	runningDurationCtx, cancel := context.WithTimeout(ctx, i.opts.runningDurationPerBatch)
-	defer cancel()
+	rateLimitedPuller := i.createRateLimitedPuller()
+	cctx, cancel := context.WithCancel(ctx)
+	time.AfterFunc(i.opts.runningDurationPerBatch, func() {
+		i.logger.Info(
+			"DomainEventInformer start stopping",
+			zap.Duration("runningDurationPerBatch", i.opts.runningDurationPerBatch),
+		)
+		cancel()
+	})
 	i.group.Go(func() error {
-		return i.puller.Run(runningDurationCtx)
+		return rateLimitedPuller.Run(cctx)
 	})
 	i.group.Go(func() error {
 		for {
 			select {
-			case msg, ok := <-i.puller.MessageCh():
+			case msg, ok := <-rateLimitedPuller.MessageCh():
 				if !ok {
 					return nil
 				}
 				receivedCounter.WithLabelValues(typeDomainEvent).Inc()
 				i.handleMessage(msg)
-			case <-runningDurationCtx.Done():
+			case <-cctx.Done():
 				return nil
 			}
 		}
 	})
 	err := i.group.Wait()
-	i.logger.Info("DomainEventInformer start stopping")
+	i.logger.Info("DomainEventInformer is stopped")
 	return err
 }
 

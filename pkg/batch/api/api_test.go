@@ -611,9 +611,6 @@ func newBatchService(t *testing.T,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		environmentMockClient,
-		domainMockEventPuller,
-		notificationMockSender,
 		rediscounter.NewRedisCounterDeleter(
 			cacheMock,
 			environmentMockClient,
@@ -641,8 +638,14 @@ func newBatchService(t *testing.T,
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		notification.NewDomainEventInformer(
+			environmentMockClient,
+			domainMockEventPuller,
+			notificationMockSender,
+			notification.WithLogger(logger),
+			notification.WithRunningDurationPerBatch(pullerRunningDuration),
+		),
 		logger,
-		notification.WithRunningDurationPerBatch(pullerRunningDuration),
 	)
 	return service
 }
