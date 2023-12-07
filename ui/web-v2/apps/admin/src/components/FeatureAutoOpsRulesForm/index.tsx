@@ -762,11 +762,11 @@ const DateTimeOperation = memo(
     ).toObject();
 
     const datetime = dayjs(new Date(datetimeClause.time * 1000)).format(
-      'YYYY-MM-DD HH:mm'
+      'YYYY/MM/DD HH:mm'
     );
 
     const createdAt = dayjs(new Date(rule.createdAt * 1000)).format(
-      'YYYY-MM-DD HH:mm'
+      'YYYY/MM/DD HH:mm'
     );
 
     return (
@@ -1058,7 +1058,7 @@ const ProgressiveRolloutComponent = memo(
                 {f(messages.autoOps.startDate)}:
               </span>
               <span className="text-gray-500">
-                {dayjs(schedulesList[0].executeAt * 1000).format('YYYY-MM-DD')}
+                {dayjs(schedulesList[0].executeAt * 1000).format('YYYY/MM/DD')}
               </span>
             </div>
             <span className="text-gray-200">/</span>
@@ -1104,7 +1104,7 @@ const ProgressiveRolloutComponent = memo(
                     </p>
                     <p className="text-gray-400 text-xs">
                       {dayjs(firstSchedule.executeAt * 1000).format(
-                        'YYYY-MM-DD'
+                        'YYYY/MM/DD'
                       )}
                     </p>
                   </div>
@@ -1135,7 +1135,7 @@ const ProgressiveRolloutComponent = memo(
                         {dayjs(schedule.executeAt * 1000).format('HH:mm')}
                       </p>
                       <p className="text-gray-400 text-xs">
-                        {dayjs(schedule.executeAt * 1000).format('YYYY-MM-DD')}
+                        {dayjs(schedule.executeAt * 1000).format('YYYY/MM/DD')}
                       </p>
                     </div>
                   </div>
