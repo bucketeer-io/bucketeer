@@ -30,6 +30,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
@@ -44,10 +45,16 @@ var (
 )
 
 type options struct {
-	maxMPS                  int
-	runningDurationPerBatch time.Duration
-	metrics                 metrics.Registerer
-	logger                  *zap.Logger
+	maxMPS                       int
+	runningDurationPerBatch      time.Duration
+	project                      string
+	domainSubscription           string
+	domainTopic                  string
+	pullerNumGoroutines          int
+	pullerMaxOutstandingMessages int
+	pullerMaxOutstandingBytes    int
+	metrics                      metrics.Registerer
+	logger                       *zap.Logger
 }
 
 var defaultOptions = options{
@@ -60,6 +67,42 @@ type Option func(*options)
 func WithRunningDurationPerBatch(d time.Duration) Option {
 	return func(opts *options) {
 		opts.runningDurationPerBatch = d
+	}
+}
+
+func WithProject(p string) Option {
+	return func(opts *options) {
+		opts.project = p
+	}
+}
+
+func WithDomainSubscription(s string) Option {
+	return func(opts *options) {
+		opts.domainSubscription = s
+	}
+}
+
+func WithDomainTopic(t string) Option {
+	return func(opts *options) {
+		opts.domainTopic = t
+	}
+}
+
+func WithPullerNumGoroutines(n int) Option {
+	return func(opts *options) {
+		opts.pullerNumGoroutines = n
+	}
+}
+
+func WithPullerMaxOutstandingMessages(n int) Option {
+	return func(opts *options) {
+		opts.pullerMaxOutstandingMessages = n
+	}
+}
+
+func WithPullerMaxOutstandingBytes(n int) Option {
+	return func(opts *options) {
+		opts.pullerMaxOutstandingBytes = n
 	}
 }
 
@@ -111,17 +154,46 @@ func NewDomainEventInformer(
 	}
 }
 
-func (i *domainEventInformer) createRateLimitedPuller() puller.RateLimitedPuller {
-	return puller.NewRateLimitedPuller(i.puller, i.opts.maxMPS)
+func (i *domainEventInformer) createPuller(ctx context.Context) (puller.RateLimitedPuller, func()) {
+	pubsubClient, err := pubsub.NewClient(
+		ctx,
+		i.opts.project,
+		pubsub.WithMetrics(i.opts.metrics),
+		pubsub.WithLogger(i.logger),
+	)
+	if err != nil {
+		i.logger.Error("Failed to create pubsub client", zap.Error(err))
+		return nil, nil
+	}
+	pubsubPuller, err := pubsubClient.CreatePuller(i.opts.domainSubscription, i.opts.domainTopic,
+		pubsub.WithNumGoroutines(i.opts.pullerNumGoroutines),
+		pubsub.WithMaxOutstandingMessages(i.opts.pullerMaxOutstandingMessages),
+		pubsub.WithMaxOutstandingBytes(i.opts.pullerMaxOutstandingBytes),
+	)
+	if err != nil {
+		i.logger.Error("Failed to create pubsub puller", zap.Error(err))
+		return nil, nil
+	}
+	closePubsubClient := func() {
+		i.logger.Debug("Closing pubsub client",
+			zap.String("subscription", i.opts.domainSubscription),
+			zap.String("topic", i.opts.domainTopic),
+		)
+		if err := pubsubClient.Close(); err != nil {
+			i.logger.Error("Failed to close pubsub client", zap.Error(err))
+		}
+	}
+	rateLimitedPuller := puller.NewRateLimitedPuller(pubsubPuller, i.opts.maxMPS)
+	return rateLimitedPuller, closePubsubClient
 }
 
 func (i *domainEventInformer) Run(ctx context.Context) error {
-	i.logger.Info("DomainEventInformer start running")
-	rateLimitedPuller := i.createRateLimitedPuller()
+	i.logger.Info("DomainEventInformer running")
+	rateLimitedPuller, closeClient := i.createPuller(ctx)
 	cctx, cancel := context.WithCancel(ctx)
 	time.AfterFunc(i.opts.runningDurationPerBatch, func() {
 		i.logger.Info(
-			"DomainEventInformer start stopping",
+			"DomainEventInformer stopping",
 			zap.Duration("runningDurationPerBatch", i.opts.runningDurationPerBatch),
 		)
 		cancel()
@@ -144,7 +216,8 @@ func (i *domainEventInformer) Run(ctx context.Context) error {
 		}
 	})
 	err := i.group.Wait()
-	i.logger.Info("DomainEventInformer is stopped")
+	closeClient()
+	i.logger.Info("DomainEventInformer stopped")
 	return err
 }
 

@@ -485,40 +485,6 @@ func TestProgressiveRolloutWatcher(t *testing.T) {
 	}, setupMock)
 }
 
-func TestDomainEventInformer(t *testing.T) {
-	setupMock := func(
-		environmentMockClient *environmentclient.MockClient,
-		autoOpsRulesMockClient *aoclientmock.MockClient,
-		experimentMockClient *experimentclient.MockClient,
-		featureMockClient *featureclientmock.MockClient,
-		eventCounterMockClient *ecclient.MockClient,
-		notificationMockSender *notificationsender.MockSender,
-		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
-		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-		domainMockEventPuller *domainEventPullerMock,
-		mysqlMockClient *mysqlmock.MockClient) {
-		environmentMockClient.EXPECT().
-			GetEnvironmentV2(gomock.Any(), gomock.Any()).
-			MinTimes(3).
-			MaxTimes(5).
-			Return(
-				&environmentproto.GetEnvironmentV2Response{
-					Environment: &environmentproto.EnvironmentV2{
-						Id: "eid0",
-					}},
-				nil,
-			)
-		notificationMockSender.EXPECT().
-			Send(gomock.Any(), gomock.Any()).
-			MinTimes(3).
-			MaxTimes(5).
-			Return(nil)
-	}
-	executeMockBatchJob(t, &batchproto.BatchJobRequest{
-		Job: batchproto.BatchJob_DomainEventInformer,
-	}, setupMock)
-}
-
 func executeMockBatchJob(t *testing.T,
 	request *batchproto.BatchJobRequest, setupMock setupMockFunc) {
 	controller := gomock.NewController(t)
