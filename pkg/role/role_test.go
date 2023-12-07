@@ -48,7 +48,7 @@ func TestCheckAdminRole(t *testing.T) {
 		},
 		{
 			inputCtx:    getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_OWNER}),
-			expected:    &eventproto.Editor{Email: "test@example.com", Role: accountproto.Account_OWNER, IsAdmin: true},
+			expected:    &eventproto.Editor{Email: "test@example.com", IsAdmin: true},
 			expectedErr: nil,
 		},
 	}
@@ -114,13 +114,13 @@ func TestCheckRole(t *testing.T) {
 					Account: &accountproto.Account{Email: "test@example.com", Role: accountproto.Account_EDITOR},
 				}, nil
 			},
-			expected:    &eventproto.Editor{Email: "test@example.com", Role: accountproto.Account_EDITOR, IsAdmin: false},
+			expected:    &eventproto.Editor{Email: "test@example.com", IsAdmin: false},
 			expectedErr: nil,
 		},
 		{
 			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_OWNER}),
 			inputRequiredRole: accountproto.Account_OWNER,
-			expected:          &eventproto.Editor{Email: "test@example.com", Role: accountproto.Account_OWNER, IsAdmin: true},
+			expected:          &eventproto.Editor{Email: "test@example.com", IsAdmin: true},
 			expectedErr:       nil,
 		},
 	}

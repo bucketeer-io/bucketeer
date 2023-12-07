@@ -33,7 +33,6 @@ import (
 	pullermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	serviceevent "github.com/bucketeer-io/bucketeer/proto/event/service"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -130,7 +129,6 @@ func TestHandleEventMySQL(t *testing.T) {
 				State:                featureproto.SegmentUser_INCLUDED,
 				Editor: &eventproto.Editor{
 					Email: "email",
-					Role:  accountproto.Account_OWNER,
 				},
 			},
 			expectedErr: nil,

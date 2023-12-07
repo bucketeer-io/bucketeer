@@ -21,7 +21,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
@@ -185,7 +184,6 @@ func newAdminSubscriptionCommandHandler(t *testing.T, subscription *domain.Subsc
 	return NewAdminSubscriptionCommandHandler(
 		&eventproto.Editor{
 			Email:   "email",
-			Role:    accountproto.Account_OWNER,
 			IsAdmin: true,
 		},
 		subscription,

@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
@@ -201,7 +200,6 @@ func newSubscriptionCommandHandler(t *testing.T, subscription *domain.Subscripti
 	return NewSubscriptionCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
-			Role:  accountproto.Account_EDITOR,
 		},
 		subscription,
 		"ns0",

@@ -25,7 +25,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	domain "github.com/bucketeer-io/bucketeer/pkg/push/domain"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/proto/push"
 )
@@ -156,7 +155,6 @@ func newPushCommandHandler(t *testing.T, publisher publisher.Publisher, push *do
 	return NewPushCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
-			Role:  accountproto.Account_EDITOR,
 		},
 		push,
 		publisher,

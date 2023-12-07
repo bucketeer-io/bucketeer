@@ -71,7 +71,6 @@ func checkRole(email string, role, requiredRole accountproto.Account_Role, isAdm
 	}
 	return &eventproto.Editor{
 		Email:   email,
-		Role:    role,
 		IsAdmin: isAdmin,
 	}, nil
 }
