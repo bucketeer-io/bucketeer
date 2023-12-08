@@ -46,8 +46,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
@@ -90,6 +88,7 @@ type server struct {
 	pullerMaxOutstandingMessages *int
 	pullerMaxOutstandingBytes    *int
 	runningDurationPerBatch      *time.Duration
+	maxMPS                       *int
 	// Redis
 	redisServerName    *string
 	redisAddr          *string
@@ -167,6 +166,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"running-duration-per-batch",
 			"Duration of running domain event informer per batch.",
 		).Required().Duration(),
+		maxMPS: cmd.Flag(
+			"max-mps",
+			"Maximum number of messages per second.",
+		).Required().Int(),
 		redisServerName: cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
 		redisAddr:       cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		redisPoolMaxIdle: cmd.Flag(
@@ -294,11 +297,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		notificationsender.WithLogger(logger),
 	)
 
-	domainEventPuller, err := s.createPuller(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-
 	location, err := locale.GetLocation(*s.timezone)
 	if err != nil {
 		return err
@@ -371,9 +369,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		environmentClient,
-		domainEventPuller,
-		notificationSender,
 		rediscounter.NewRedisCounterDeleter(
 			redisV3Cache,
 			environmentClient,
@@ -401,9 +396,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		notification.NewDomainEventInformer(
+			environmentClient,
+			notificationSender,
+			*s.maxMPS,
+			*s.runningDurationPerBatch,
+			*s.project,
+			*s.domainSubscription,
+			*s.domainTopic,
+			*s.pullerNumGoroutines,
+			*s.pullerMaxOutstandingMessages,
+			*s.pullerMaxOutstandingBytes,
+			notification.WithLogger(logger),
+			notification.WithMetrics(registerer),
+		),
 		logger,
-		notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
-		notification.WithLogger(logger),
 	)
 
 	healthChecker := health.NewGrpcChecker(
@@ -462,30 +469,4 @@ func (s *server) insertTelepresenceMountRoot(path string) string {
 		return path
 	}
 	return volumeRoot + path
-}
-
-func (s *server) createPuller(ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (puller.Puller, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	pubsubClient, err := pubsub.NewClient(
-		ctx,
-		*s.project,
-		pubsub.WithMetrics(registerer),
-		pubsub.WithLogger(logger),
-	)
-	if err != nil {
-		return nil, err
-	}
-	pubsubPuller, err := pubsubClient.CreatePuller(*s.domainSubscription, *s.domainTopic,
-		pubsub.WithNumGoroutines(*s.pullerNumGoroutines),
-		pubsub.WithMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
-		pubsub.WithMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return pubsubPuller, nil
 }

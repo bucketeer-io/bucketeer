@@ -32,6 +32,7 @@ env:
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
   runningDurationPerBatch: 15s
+  maxMps: 50
   # redis settings
   redis:
     serverName:

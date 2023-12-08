@@ -23,11 +23,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
-	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
-	notificationsender "github.com/bucketeer-io/bucketeer/pkg/notification/sender"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/proto/batch"
 )
 
@@ -47,26 +43,18 @@ type batchService struct {
 	experimentCalculator      jobs.Job
 	mauSummarizer             jobs.Job
 	mauPartitionDeleter       jobs.Job
-	environmentClient         envclient.Client
-	domainEventPuller         puller.Puller
-	notificationSender        notificationsender.Sender
-	notificationOpts          []notification.Option
+	domainEventInformer       jobs.Job
 	logger                    *zap.Logger
 }
 
 func NewBatchService(
 	experimentStatusUpdater, experimentRunningWatcher,
 	featureStaleWatcher, mauCountWatcher, datetimeWatcher,
-	eventCountWatcher, progressiveRolloutWatcher jobs.Job,
-	environmentClient envclient.Client,
-	domainEventPuller puller.Puller,
-	notificationSender notificationsender.Sender,
-	redisCounterDeleter jobs.Job,
-	experimentCalculator jobs.Job,
-	mauSummarizer jobs.Job,
-	mauPartitionDeleter jobs.Job,
+	eventCountWatcher, progressiveRolloutWatcher,
+	redisCounterDeleter, experimentCalculator,
+	mauSummarizer, mauPartitionDeleter,
+	domainEventInformer jobs.Job,
 	logger *zap.Logger,
-	options ...notification.Option,
 ) *batchService {
 	return &batchService{
 		experimentStatusUpdater:   experimentStatusUpdater,
@@ -80,10 +68,7 @@ func NewBatchService(
 		experimentCalculator:      experimentCalculator,
 		mauSummarizer:             mauSummarizer,
 		mauPartitionDeleter:       mauPartitionDeleter,
-		environmentClient:         environmentClient,
-		domainEventPuller:         domainEventPuller,
-		notificationSender:        notificationSender,
-		notificationOpts:          options,
+		domainEventInformer:       domainEventInformer,
 		logger:                    logger.Named("batch-service"),
 	}
 }
@@ -105,13 +90,7 @@ func (s *batchService) ExecuteBatchJob(
 	case batch.BatchJob_EventCountWatcher:
 		err = s.countWatcher.Run(ctx)
 	case batch.BatchJob_DomainEventInformer:
-		domainEventInformer := notification.NewDomainEventInformer(
-			s.environmentClient,
-			s.domainEventPuller,
-			s.notificationSender,
-			s.notificationOpts...,
-		)
-		err = domainEventInformer.Run(ctx)
+		err = s.domainEventInformer.Run(ctx)
 	case batch.BatchJob_RedisCounterDeleter:
 		err = s.redisCounterDeleter.Run(ctx)
 	case batch.BatchJob_ProgressiveRolloutWatcher:

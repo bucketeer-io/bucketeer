@@ -28,7 +28,7 @@ var (
 	receivedCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "batch-server",
+			Subsystem: "batch_server",
 			Name:      "domain_event_informer_received_event_total",
 			Help:      "Total number of received domain events",
 		}, []string{"type"})
@@ -36,7 +36,7 @@ var (
 	handledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "batch-server",
+			Subsystem: "batch_server",
 			Name:      "domain_event_informer_handle_event_total",
 			Help:      "Total number of handled messages",
 		}, []string{"type", "code"})
