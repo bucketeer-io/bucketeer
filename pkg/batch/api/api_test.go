@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,12 +44,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	notificationsender "github.com/bucketeer-io/bucketeer/pkg/notification/sender/mock"
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	batchproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	domaineventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -70,37 +67,8 @@ type setupMockFunc func(
 	notificationMockSender *notificationsender.MockSender,
 	mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 	mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-	domainMockEventPuller *domainEventPullerMock,
 	// redisCounterDeleterMock *redisCounterDeleterMock,
 	mysqlMockClient *mysqlmock.MockClient)
-
-type domainEventPullerMock struct{}
-
-func (d domainEventPullerMock) Pull(
-	ctx context.Context,
-	f func(context.Context, *puller.Message)) error {
-	// using timer.Ticker to mock pubsub event
-	timer := time.NewTicker(200 * time.Millisecond)
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-timer.C:
-			event := domaineventproto.Event{
-				IsAdminEvent: false,
-				Timestamp:    int64(time.Now().Nanosecond()),
-			}
-			data, _ := proto.Marshal(&event)
-			f(ctx, &puller.Message{
-				Attributes: map[string]string{
-					"id": "event",
-				},
-				Data: data,
-				Ack:  func() {},
-			})
-		}
-	}
-}
 
 func TestExperimentStatusUpdater(t *testing.T) {
 	setupMock := func(
@@ -112,7 +80,6 @@ func TestExperimentStatusUpdater(t *testing.T) {
 		notificationMockSender *notificationsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -161,7 +128,6 @@ func TestExperimentRunningWatcher(t *testing.T) {
 		notificationMockSender *notificationsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -200,7 +166,6 @@ func TestFeatureStaleWatcher(t *testing.T) {
 		notificationMockSender *notificationsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -239,7 +204,6 @@ func TestMAUCountWatcher(t *testing.T) {
 		notificationMockSender *notificationsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
 			ListProjects(gomock.Any(), gomock.Any()).
@@ -288,7 +252,6 @@ func TestDatetimeWatcher(t *testing.T) {
 		notificationMockSender *notificationsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -335,7 +298,6 @@ func TestEventCountWatcher(t *testing.T) {
 		notificationMockSender *notificationsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -433,7 +395,6 @@ func TestProgressiveRolloutWatcher(t *testing.T) {
 		notificationMockSender *notificationsender.MockSender,
 		mockAutoOpsExecutor *opsexecutor.MockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor *opsexecutor.MockProgressiveRolloutExecutor,
-		domainMockEventPuller *domainEventPullerMock,
 		mysqlMockClient *mysqlmock.MockClient) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -507,7 +468,6 @@ func newBatchService(t *testing.T,
 	notificationMockSender := notificationsender.NewMockSender(mockController)
 	mockAutoOpsExecutor := opsexecutor.NewMockAutoOpsExecutor(mockController)
 	mockProgressiveRolloutExecutor := opsexecutor.NewMockProgressiveRolloutExecutor(mockController)
-	domainMockEventPuller := &domainEventPullerMock{}
 	cacheMock := cachemock.NewMockMultiGetDeleteCountCache(mockController)
 	mysqlMockClient := mysqlmock.NewMockClient(mockController)
 	experimentCalculatorClient := experimentcalculatorclient.NewMockClient(mockController)
@@ -521,7 +481,6 @@ func newBatchService(t *testing.T,
 		notificationMockSender,
 		mockAutoOpsExecutor,
 		mockProgressiveRolloutExecutor,
-		domainMockEventPuller,
 		mysqlMockClient,
 	)
 
@@ -606,7 +565,6 @@ func newBatchService(t *testing.T,
 		),
 		notification.NewDomainEventInformer(
 			environmentMockClient,
-			domainMockEventPuller,
 			notificationMockSender,
 			notification.WithLogger(logger),
 			notification.WithRunningDurationPerBatch(pullerRunningDuration),

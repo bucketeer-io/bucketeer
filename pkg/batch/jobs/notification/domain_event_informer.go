@@ -135,7 +135,6 @@ type domainEventInformer struct {
 
 func NewDomainEventInformer(
 	environmentClient environmentclient.Client,
-	p puller.Puller,
 	sender sender.Sender,
 	opts ...Option) jobs.Job {
 	options := defaultOptions
@@ -147,7 +146,6 @@ func NewDomainEventInformer(
 	}
 	return &domainEventInformer{
 		environmentClient: environmentClient,
-		puller:            p,
 		sender:            sender,
 		opts:              &options,
 		logger:            options.logger.Named("sender"),

@@ -46,8 +46,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
@@ -294,11 +292,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		notificationsender.WithLogger(logger),
 	)
 
-	domainEventPuller, err := s.createPuller(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-
 	location, err := locale.GetLocation(*s.timezone)
 	if err != nil {
 		return err
@@ -400,7 +393,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		),
 		notification.NewDomainEventInformer(
 			environmentClient,
-			domainEventPuller,
 			notificationSender,
 			notification.WithLogger(logger),
 			notification.WithMetrics(registerer),
@@ -470,30 +462,4 @@ func (s *server) insertTelepresenceMountRoot(path string) string {
 		return path
 	}
 	return volumeRoot + path
-}
-
-func (s *server) createPuller(ctx context.Context,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (puller.Puller, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	pubsubClient, err := pubsub.NewClient(
-		ctx,
-		*s.project,
-		pubsub.WithMetrics(registerer),
-		pubsub.WithLogger(logger),
-	)
-	if err != nil {
-		return nil, err
-	}
-	pubsubPuller, err := pubsubClient.CreatePuller(*s.domainSubscription, *s.domainTopic,
-		pubsub.WithNumGoroutines(*s.pullerNumGoroutines),
-		pubsub.WithMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
-		pubsub.WithMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return pubsubPuller, nil
 }
