@@ -126,7 +126,6 @@ func WithLogger(logger *zap.Logger) Option {
 
 type domainEventInformer struct {
 	environmentClient environmentclient.Client
-	puller            puller.Puller
 	sender            sender.Sender
 	group             errgroup.Group
 	opts              *options
