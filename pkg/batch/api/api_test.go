@@ -54,8 +54,7 @@ import (
 )
 
 var (
-	jpLocation            = time.FixedZone("Asia/Tokyo", 9*60*60)
-	pullerRunningDuration = 1 * time.Second
+	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
 )
 
 type setupMockFunc func(
@@ -563,12 +562,7 @@ func newBatchService(t *testing.T,
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		notification.NewDomainEventInformer(
-			environmentMockClient,
-			notificationMockSender,
-			notification.WithLogger(logger),
-			notification.WithRunningDurationPerBatch(pullerRunningDuration),
-		),
+		nil, // we don't test domainEventInformer in unit test
 		logger,
 	)
 	return service

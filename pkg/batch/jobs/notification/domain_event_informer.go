@@ -45,72 +45,15 @@ var (
 )
 
 type options struct {
-	maxMPS                       int
-	runningDurationPerBatch      time.Duration
-	project                      string
-	domainSubscription           string
-	domainTopic                  string
-	pullerNumGoroutines          int
-	pullerMaxOutstandingMessages int
-	pullerMaxOutstandingBytes    int
-	metrics                      metrics.Registerer
-	logger                       *zap.Logger
+	metrics metrics.Registerer
+	logger  *zap.Logger
 }
 
 var defaultOptions = options{
-	maxMPS: 50,
 	logger: zap.NewNop(),
 }
 
 type Option func(*options)
-
-func WithRunningDurationPerBatch(d time.Duration) Option {
-	return func(opts *options) {
-		opts.runningDurationPerBatch = d
-	}
-}
-
-func WithProject(p string) Option {
-	return func(opts *options) {
-		opts.project = p
-	}
-}
-
-func WithDomainSubscription(s string) Option {
-	return func(opts *options) {
-		opts.domainSubscription = s
-	}
-}
-
-func WithDomainTopic(t string) Option {
-	return func(opts *options) {
-		opts.domainTopic = t
-	}
-}
-
-func WithPullerNumGoroutines(n int) Option {
-	return func(opts *options) {
-		opts.pullerNumGoroutines = n
-	}
-}
-
-func WithPullerMaxOutstandingMessages(n int) Option {
-	return func(opts *options) {
-		opts.pullerMaxOutstandingMessages = n
-	}
-}
-
-func WithPullerMaxOutstandingBytes(n int) Option {
-	return func(opts *options) {
-		opts.pullerMaxOutstandingBytes = n
-	}
-}
-
-func WithMaxMPS(mps int) Option {
-	return func(opts *options) {
-		opts.maxMPS = mps
-	}
-}
 
 func WithMetrics(r metrics.Registerer) Option {
 	return func(opts *options) {
@@ -125,16 +68,32 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type domainEventInformer struct {
-	environmentClient environmentclient.Client
-	sender            sender.Sender
-	group             errgroup.Group
-	opts              *options
-	logger            *zap.Logger
+	environmentClient            environmentclient.Client
+	sender                       sender.Sender
+	group                        errgroup.Group
+	maxMPS                       int
+	runningDurationPerBatch      time.Duration
+	project                      string
+	domainSubscription           string
+	domainTopic                  string
+	pullerNumGoroutines          int
+	pullerMaxOutstandingMessages int
+	pullerMaxOutstandingBytes    int
+	opts                         *options
+	logger                       *zap.Logger
 }
 
 func NewDomainEventInformer(
 	environmentClient environmentclient.Client,
 	sender sender.Sender,
+	maxMPS int,
+	runningDurationPerBatch time.Duration,
+	project string,
+	domainSubscription string,
+	domainTopic string,
+	pullerNumGoroutines int,
+	pullerMaxOutstandingMessages int,
+	pullerMaxOutstandingBytes int,
 	opts ...Option) jobs.Job {
 	options := defaultOptions
 	for _, opt := range opts {
@@ -144,44 +103,19 @@ func NewDomainEventInformer(
 		registerMetrics(options.metrics)
 	}
 	return &domainEventInformer{
-		environmentClient: environmentClient,
-		sender:            sender,
-		opts:              &options,
-		logger:            options.logger.Named("sender"),
+		environmentClient:            environmentClient,
+		sender:                       sender,
+		maxMPS:                       maxMPS,
+		runningDurationPerBatch:      runningDurationPerBatch,
+		project:                      project,
+		domainSubscription:           domainSubscription,
+		domainTopic:                  domainTopic,
+		pullerNumGoroutines:          pullerNumGoroutines,
+		pullerMaxOutstandingMessages: pullerMaxOutstandingMessages,
+		pullerMaxOutstandingBytes:    pullerMaxOutstandingBytes,
+		opts:                         &options,
+		logger:                       options.logger.Named("sender"),
 	}
-}
-
-func (i *domainEventInformer) createPuller(ctx context.Context) (puller.RateLimitedPuller, func(), error) {
-	pubsubClient, err := pubsub.NewClient(
-		ctx,
-		i.opts.project,
-		pubsub.WithMetrics(i.opts.metrics),
-		pubsub.WithLogger(i.logger),
-	)
-	if err != nil {
-		i.logger.Error("Failed to create pubsub client", zap.Error(err))
-		return nil, nil, err
-	}
-	pubsubPuller, err := pubsubClient.CreatePuller(i.opts.domainSubscription, i.opts.domainTopic,
-		pubsub.WithNumGoroutines(i.opts.pullerNumGoroutines),
-		pubsub.WithMaxOutstandingMessages(i.opts.pullerMaxOutstandingMessages),
-		pubsub.WithMaxOutstandingBytes(i.opts.pullerMaxOutstandingBytes),
-	)
-	if err != nil {
-		i.logger.Error("Failed to create pubsub puller", zap.Error(err))
-		return nil, nil, err
-	}
-	closePubsubClient := func() {
-		i.logger.Debug("Closing pubsub client",
-			zap.String("subscription", i.opts.domainSubscription),
-			zap.String("topic", i.opts.domainTopic),
-		)
-		if err := pubsubClient.Close(); err != nil {
-			i.logger.Error("Failed to close pubsub client", zap.Error(err))
-		}
-	}
-	rateLimitedPuller := puller.NewRateLimitedPuller(pubsubPuller, i.opts.maxMPS)
-	return rateLimitedPuller, closePubsubClient, nil
 }
 
 func (i *domainEventInformer) Run(ctx context.Context) error {
@@ -191,10 +125,10 @@ func (i *domainEventInformer) Run(ctx context.Context) error {
 		return err
 	}
 	cctx, cancel := context.WithCancel(ctx)
-	time.AfterFunc(i.opts.runningDurationPerBatch, func() {
+	time.AfterFunc(i.runningDurationPerBatch, func() {
 		i.logger.Info(
 			"DomainEventInformer stopping",
-			zap.Duration("runningDurationPerBatch", i.opts.runningDurationPerBatch),
+			zap.Duration("runningDurationPerBatch", i.runningDurationPerBatch),
 		)
 		cancel()
 	})
@@ -219,6 +153,39 @@ func (i *domainEventInformer) Run(ctx context.Context) error {
 	closeClient()
 	i.logger.Info("DomainEventInformer stopped")
 	return err
+}
+
+func (i *domainEventInformer) createPuller(ctx context.Context) (puller.RateLimitedPuller, func(), error) {
+	pubsubClient, err := pubsub.NewClient(
+		ctx,
+		i.project,
+		pubsub.WithMetrics(i.opts.metrics),
+		pubsub.WithLogger(i.logger),
+	)
+	if err != nil {
+		i.logger.Error("Failed to create pubsub client", zap.Error(err))
+		return nil, nil, err
+	}
+	pubsubPuller, err := pubsubClient.CreatePuller(i.domainSubscription, i.domainTopic,
+		pubsub.WithNumGoroutines(i.pullerNumGoroutines),
+		pubsub.WithMaxOutstandingMessages(i.pullerMaxOutstandingMessages),
+		pubsub.WithMaxOutstandingBytes(i.pullerMaxOutstandingBytes),
+	)
+	if err != nil {
+		i.logger.Error("Failed to create pubsub puller", zap.Error(err))
+		return nil, nil, err
+	}
+	closePubsubClient := func() {
+		i.logger.Debug("Closing pubsub client",
+			zap.String("subscription", i.domainSubscription),
+			zap.String("topic", i.domainTopic),
+		)
+		if err := pubsubClient.Close(); err != nil {
+			i.logger.Error("Failed to close pubsub client", zap.Error(err))
+		}
+	}
+	rateLimitedPuller := puller.NewRateLimitedPuller(pubsubPuller, i.maxMPS)
+	return rateLimitedPuller, closePubsubClient, nil
 }
 
 func (i *domainEventInformer) handleMessage(msg *puller.Message) {

@@ -88,6 +88,7 @@ type server struct {
 	pullerMaxOutstandingMessages *int
 	pullerMaxOutstandingBytes    *int
 	runningDurationPerBatch      *time.Duration
+	maxMPS                       *int
 	// Redis
 	redisServerName    *string
 	redisAddr          *string
@@ -165,6 +166,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"running-duration-per-batch",
 			"Duration of running domain event informer per batch.",
 		).Required().Duration(),
+		maxMPS: cmd.Flag(
+			"max-mps",
+			"Maximum number of messages per second.",
+		).Required().Int(),
 		redisServerName: cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
 		redisAddr:       cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		redisPoolMaxIdle: cmd.Flag(
@@ -394,15 +399,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		notification.NewDomainEventInformer(
 			environmentClient,
 			notificationSender,
+			*s.maxMPS,
+			*s.runningDurationPerBatch,
+			*s.project,
+			*s.domainSubscription,
+			*s.domainTopic,
+			*s.pullerNumGoroutines,
+			*s.pullerMaxOutstandingMessages,
+			*s.pullerMaxOutstandingBytes,
 			notification.WithLogger(logger),
 			notification.WithMetrics(registerer),
-			notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
-			notification.WithDomainSubscription(*s.domainSubscription),
-			notification.WithProject(*s.project),
-			notification.WithDomainTopic(*s.domainTopic),
-			notification.WithPullerNumGoroutines(*s.pullerNumGoroutines),
-			notification.WithPullerMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
-			notification.WithPullerMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
 		),
 		logger,
 	)
