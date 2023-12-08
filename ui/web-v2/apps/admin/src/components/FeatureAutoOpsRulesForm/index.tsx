@@ -54,6 +54,49 @@ import { Overlay } from '../Overlay';
 
 const numberOfBlocks = 51;
 
+enum SORT_TYPE {
+  ASC,
+  DESC,
+}
+
+const sortAutoOpsRules = (
+  rules: AutoOpsRule.AsObject[],
+  sortType: SORT_TYPE
+) => {
+  return rules.sort((a, b) => {
+    const { typeUrl: aTypeUrl } = a.clausesList[0].clause;
+    const aType = aTypeUrl.substring(aTypeUrl.lastIndexOf('/') + 1);
+
+    const { typeUrl: bTypeUrl } = b.clausesList[0].clause;
+    const bType = bTypeUrl.substring(bTypeUrl.lastIndexOf('/') + 1);
+
+    if (aType === ClauseType.EVENT_RATE && bType === ClauseType.DATETIME) {
+      return -1; // Move event rate type to a lower index
+    } else if (
+      aType === ClauseType.DATETIME &&
+      bType === ClauseType.EVENT_RATE
+    ) {
+      return 1; // Keep datetime type at a higher index
+    } else if (aType === ClauseType.DATETIME && bType === ClauseType.DATETIME) {
+      const { value: aValue } = a.clausesList[0].clause;
+      const { value: bValue } = b.clausesList[0].clause;
+
+      const aDatetimeClause = DatetimeClause.deserializeBinary(
+        aValue as Uint8Array
+      ).toObject();
+      const bDatetimeClause = DatetimeClause.deserializeBinary(
+        bValue as Uint8Array
+      ).toObject();
+
+      return sortType === SORT_TYPE.ASC
+        ? aDatetimeClause.time - bDatetimeClause.time
+        : bDatetimeClause.time - aDatetimeClause.time; // Sort date
+    } else {
+      return 0; // Maintain the current order for other types
+    }
+  });
+};
+
 const TabLabel = {
   ACTIVE: intl.formatMessage(messages.autoOps.active),
   COMPLETED: intl.formatMessage(messages.autoOps.completed),
@@ -103,12 +146,18 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const [tabs, setTabs] = useState([
       {
         label: TabLabel.ACTIVE,
-        value: autoOpsRules.filter((rule) => !rule.triggeredAt),
+        value: sortAutoOpsRules(
+          autoOpsRules.filter((rule) => !rule.triggeredAt),
+          SORT_TYPE.ASC
+        ),
         selected: true,
       },
       {
         label: TabLabel.COMPLETED,
-        value: autoOpsRules.filter((rule) => rule.triggeredAt),
+        value: sortAutoOpsRules(
+          autoOpsRules.filter((rule) => rule.triggeredAt),
+          SORT_TYPE.DESC
+        ),
         selected: false,
       },
     ]);
