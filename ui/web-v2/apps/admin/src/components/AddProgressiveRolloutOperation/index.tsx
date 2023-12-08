@@ -27,11 +27,7 @@ import { shallowEqual, useSelector } from 'react-redux';
 
 import { selectById as selectFeatureById } from '../../modules/features';
 import { DatetimePicker } from '../DatetimePicker';
-import {
-  ClauseType,
-  getIntervalForDayjs,
-  isActiveProgressiveRolloutExists,
-} from '../FeatureAutoOpsRulesForm';
+import { ClauseType, getIntervalForDayjs } from '../FeatureAutoOpsRulesForm';
 import { ProgressiveRolloutTypeTab } from '../OperationAddUpdateForm';
 import { Option, Select } from '../Select';
 
@@ -64,7 +60,9 @@ export const isProgressiveRolloutsWarningsExists = ({
     feature.targetsList.find((targets) => targets.usersList.length > 0) ||
     feature.rulesList.length > 0 ||
     (progressiveRolloutList.length > 0 &&
-      isActiveProgressiveRolloutExists(progressiveRolloutList)) ||
+      progressiveRolloutList.find(
+        (p) => p.status !== ProgressiveRollout.Status.FINISHED
+      )) ||
     findScheduleOperation({ autoOpsRules });
   return !!check;
 };
@@ -168,7 +166,9 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                       </li>
                     ) : null}
                     {progressiveRolloutList.length > 0 &&
-                    isActiveProgressiveRolloutExists(progressiveRolloutList) ? (
+                    progressiveRolloutList.find(
+                      (p) => p.status !== ProgressiveRollout.Status.FINISHED
+                    ) ? (
                       <li>
                         <p>
                           {f(

@@ -75,46 +75,86 @@ import { Overlay } from '../Overlay';
 import { Option } from '../Select';
 
 enum SORT_TYPE {
-  ASC,
-  DESC,
+  ASC = 'ASC',
+  DESC = 'DESC',
 }
 
-const sortAutoOpsRules = (
-  rules: AutoOpsRule.AsObject[],
+enum OperationType {
+  AutoOps = 'AutoOps',
+  Progressive = 'Progressive',
+}
+interface ProgressiveRolloutWithType extends ProgressiveRollout.AsObject {
+  operationType: OperationType;
+}
+
+interface AutoOpsRuleWithType extends AutoOpsRule.AsObject {
+  operationType: OperationType;
+}
+
+const extractClauseType = (typeUrl: string) => {
+  return typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+};
+
+const extractDatetimeFromAutoOps = (autoOps: AutoOpsRuleWithType) => {
+  const { value } = autoOps.clausesList[0].clause;
+  return DatetimeClause.deserializeBinary(value as Uint8Array).toObject().time;
+};
+
+const extractDatetimeFromProgressiveRollout = (
+  prOperation: ProgressiveRollout.AsObject
+) => {
+  const { type, clause } = prOperation;
+  const { value } = clause;
+  const data =
+    type === ProgressiveRollout.Type.TEMPLATE_SCHEDULE
+      ? ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
+          value as Uint8Array
+        ).toObject()
+      : ProgressiveRolloutManualScheduleClause.deserializeBinary(
+          value as Uint8Array
+        ).toObject();
+  const schedulesList = data.schedulesList;
+  return schedulesList[schedulesList.length - 1].executeAt;
+};
+
+const sortOperations = (
+  rules: AutoOpsRuleWithType[],
+  rollouts: ProgressiveRolloutWithType[],
   sortType: SORT_TYPE
 ) => {
-  return rules.sort((a, b) => {
-    const { typeUrl: aTypeUrl } = a.clausesList[0].clause;
-    const aType = aTypeUrl.substring(aTypeUrl.lastIndexOf('/') + 1);
+  const eventRateOperations = rules.filter(
+    (r) =>
+      extractClauseType(r.clausesList[0].clause.typeUrl) ===
+      ClauseType.EVENT_RATE
+  );
 
-    const { typeUrl: bTypeUrl } = b.clausesList[0].clause;
-    const bType = bTypeUrl.substring(bTypeUrl.lastIndexOf('/') + 1);
+  const dateTimeOperations = rules.filter(
+    (r) =>
+      extractClauseType(r.clausesList[0].clause.typeUrl) !==
+      ClauseType.EVENT_RATE
+  );
 
-    if (aType === ClauseType.EVENT_RATE && bType === ClauseType.DATETIME) {
-      return -1; // Move event rate type to a lower index
-    } else if (
-      aType === ClauseType.DATETIME &&
-      bType === ClauseType.EVENT_RATE
-    ) {
-      return 1; // Keep datetime type at a higher index
-    } else if (aType === ClauseType.DATETIME && bType === ClauseType.DATETIME) {
-      const { value: aValue } = a.clausesList[0].clause;
-      const { value: bValue } = b.clausesList[0].clause;
+  const sortedList = [...dateTimeOperations, ...rollouts].sort((a, b) => {
+    const aDatetime =
+      a.operationType === OperationType.AutoOps
+        ? extractDatetimeFromAutoOps(a as AutoOpsRuleWithType)
+        : extractDatetimeFromProgressiveRollout(
+            a as ProgressiveRolloutWithType
+          );
 
-      const aDatetimeClause = DatetimeClause.deserializeBinary(
-        aValue as Uint8Array
-      ).toObject();
-      const bDatetimeClause = DatetimeClause.deserializeBinary(
-        bValue as Uint8Array
-      ).toObject();
+    const bDatetime =
+      b.operationType === OperationType.AutoOps
+        ? extractDatetimeFromAutoOps(b as AutoOpsRuleWithType)
+        : extractDatetimeFromProgressiveRollout(
+            b as ProgressiveRolloutWithType
+          );
 
-      return sortType === SORT_TYPE.ASC
-        ? aDatetimeClause.time - bDatetimeClause.time
-        : bDatetimeClause.time - aDatetimeClause.time; // Sort date
-    } else {
-      return 0; // Maintain the current order for other types
-    }
+    return sortType === SORT_TYPE.ASC
+      ? aDatetime - bDatetime
+      : bDatetime - aDatetime;
   });
+
+  return [...eventRateOperations, ...sortedList];
 };
 
 const TabLabel = {
@@ -136,37 +176,9 @@ export const ClauseType: ClauseTypeMap = {
 
 interface Tab {
   label: string;
-  value: AutoOpsRule.AsObject[];
+  value: (AutoOpsRuleWithType | ProgressiveRolloutWithType)[];
   selected: boolean;
 }
-
-const getSchedulesList = (progressiveRollout: ProgressiveRollout.AsObject) => {
-  const {
-    type,
-    clause: { value },
-  } = progressiveRollout;
-  const scheduleType =
-    type === ProgressiveRollout.Type.TEMPLATE_SCHEDULE
-      ? ProgressiveRolloutTemplateScheduleClause
-      : ProgressiveRolloutManualScheduleClause;
-  const data = scheduleType.deserializeBinary(value as Uint8Array).toObject();
-  return data.schedulesList;
-};
-
-export const isActiveProgressiveRolloutExists = (
-  progressiveRolloutList: ProgressiveRollout.AsObject[]
-): boolean => {
-  if (progressiveRolloutList.length > 0) {
-    return progressiveRolloutList.some((progressiveRollout) => {
-      const schedulesList = getSchedulesList(progressiveRollout);
-      const lastItemWithTriggeredAt =
-        schedulesList[schedulesList.length - 1]?.triggeredAt;
-
-      return !lastItemWithTriggeredAt;
-    });
-  }
-  return false;
-};
 
 export const getIntervalForDayjs = (
   interval: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap]
@@ -203,6 +215,17 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         ),
       shallowEqual
     );
+    const progressiveRollout = useSelector<
+      AppState,
+      ProgressiveRollout.AsObject[]
+    >(
+      (state) =>
+        selectAllProgressiveRollouts(state.progressiveRollout).filter(
+          (rule) => rule.featureId === featureId
+        ),
+      shallowEqual
+    );
+
     const isAutoOpsRuleLoading = useSelector<AppState, boolean>(
       (state) => state.autoOpsRules.loading,
       shallowEqual
@@ -227,25 +250,40 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const [tabs, setTabs] = useState<Tab[]>([]);
 
     useEffect(() => {
+      const rules = autoOpsRules.map((r) => ({
+        ...r,
+        operationType: OperationType.AutoOps,
+      }));
+      const rollouts = progressiveRollout.map((r) => ({
+        ...r,
+        operationType: OperationType.Progressive,
+      }));
+
       setTabs([
         {
           label: TabLabel.ACTIVE,
-          value: sortAutoOpsRules(
-            autoOpsRules.filter((rule) => !rule.triggeredAt),
+          value: sortOperations(
+            rules.filter((rule) => !rule.triggeredAt),
+            rollouts.filter(
+              (p) => p.status !== ProgressiveRollout.Status.FINISHED
+            ),
             SORT_TYPE.ASC
           ),
           selected: true,
         },
         {
           label: TabLabel.COMPLETED,
-          value: sortAutoOpsRules(
-            autoOpsRules.filter((rule) => rule.triggeredAt),
+          value: sortOperations(
+            rules.filter((rule) => rule.triggeredAt),
+            rollouts.filter(
+              (p) => p.status === ProgressiveRollout.Status.FINISHED
+            ),
             SORT_TYPE.DESC
           ),
           selected: false,
         },
       ]);
-    }, [autoOpsRules, setTabs]);
+    }, [autoOpsRules, progressiveRollout, setTabs]);
 
     useEffect(() => {
       if (autoOpsRules?.length > 0) {
@@ -329,11 +367,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
             <span>{intl.formatMessage(messages.button.add)}</span>
           </button>
         </div>
-        <ActiveCompletedTabs
-          featureId={featureId}
-          tabs={tabs}
-          setTabs={setTabs}
-        />
+        <ActiveCompletedTabs tabs={tabs} setTabs={setTabs} />
         <AutoOpsInfos
           openAddOperation={handleOpen}
           activateSchedule={() => {
@@ -353,22 +387,35 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           <DetailSkeleton />
         ) : (
           <div className="space-y-6 py-6">
-            <ProgressiveRolloutOperation
-              featureId={featureId}
-              isActiveTabSelected={isActiveTabSelected}
-              refetchProgressiveRollouts={refetchProgressiveRollouts}
-            />
             {tabs
               .find((tab) => tab.selected)
-              ?.value.map((rule) => (
-                <Operation
-                  key={rule.id}
-                  rule={rule}
-                  isActiveTabSelected={isActiveTabSelected}
-                  handleOpenUpdate={handleOpenUpdate}
-                  refetchAutoOpsRules={refetchAutoOpsRules}
-                />
-              ))}
+              ?.value.map((operation) => {
+                if (operation.operationType === OperationType.AutoOps) {
+                  return (
+                    <Operation
+                      key={operation.id}
+                      rule={operation as AutoOpsRule.AsObject}
+                      isActiveTabSelected={isActiveTabSelected}
+                      handleOpenUpdate={handleOpenUpdate}
+                      refetchAutoOpsRules={refetchAutoOpsRules}
+                    />
+                  );
+                } else if (
+                  operation.operationType === OperationType.Progressive
+                ) {
+                  return (
+                    <ProgressiveRolloutOperation
+                      key={operation.id}
+                      featureId={featureId}
+                      isActiveTabSelected={isActiveTabSelected}
+                      refetchProgressiveRollouts={refetchProgressiveRollouts}
+                      progressiveRollout={
+                        operation as ProgressiveRollout.AsObject
+                      }
+                    />
+                  );
+                }
+              })}
           </div>
         )}
         {open && (
@@ -391,24 +438,12 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
 );
 
 interface ActiveCompletedTabsProps {
-  featureId: string;
   tabs: Tab[];
   setTabs: Dispatch<SetStateAction<Tab[]>>;
 }
 
 const ActiveCompletedTabs: FC<ActiveCompletedTabsProps> = memo(
-  ({ featureId, tabs, setTabs }) => {
-    const progressiveRollouts = useSelector<
-      AppState,
-      ProgressiveRollout.AsObject[]
-    >(
-      (state) =>
-        selectAllProgressiveRollouts(state.progressiveRollout).filter(
-          (rule) => rule.featureId === featureId
-        ),
-      shallowEqual
-    );
-
+  ({ tabs, setTabs }) => {
     const handleClick = (tabLabel) => {
       setTabs(
         tabs.map((t) => ({
@@ -421,22 +456,6 @@ const ActiveCompletedTabs: FC<ActiveCompletedTabsProps> = memo(
     return (
       <div className="flex border-b border-gray-200 mt-2">
         {tabs.map((tab) => {
-          let noOfProgressiveRollout = 0;
-
-          if (
-            tab.label === TabLabel.ACTIVE &&
-            isActiveProgressiveRolloutExists(progressiveRollouts)
-          ) {
-            noOfProgressiveRollout = 1;
-          } else if (
-            tab.label === TabLabel.COMPLETED &&
-            progressiveRollouts.length > 0
-          ) {
-            noOfProgressiveRollout = progressiveRollouts.filter(
-              (p) => p.status === ProgressiveRollout.Status.FINISHED
-            ).length;
-          }
-
           return (
             <div
               key={tab.label}
@@ -448,7 +467,7 @@ const ActiveCompletedTabs: FC<ActiveCompletedTabsProps> = memo(
               )}
               onClick={() => handleClick(tab.label)}
             >
-              {tab.label} ({tab.value.length + noOfProgressiveRollout})
+              {tab.label} ({tab.value.length})
             </div>
           );
         })}
@@ -550,10 +569,16 @@ interface ProgressiveRolloutProps {
   featureId: string;
   isActiveTabSelected: boolean;
   refetchProgressiveRollouts: () => void;
+  progressiveRollout: ProgressiveRollout.AsObject;
 }
 
 const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
-  ({ featureId, isActiveTabSelected, refetchProgressiveRollouts }) => {
+  ({
+    featureId,
+    isActiveTabSelected,
+    refetchProgressiveRollouts,
+    progressiveRollout,
+  }) => {
     const currentEnvironment = useCurrentEnvironment();
     const dispatch = useDispatch<AppDispatch>();
 
@@ -581,72 +606,50 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
       ).then(refetchProgressiveRollouts);
     };
 
-    const progressiveRollout = useSelector<
-      AppState,
-      ProgressiveRollout.AsObject[]
-    >(
-      (state) =>
-        selectAllProgressiveRollouts(state.progressiveRollout).filter(
-          (rule) => rule.featureId === featureId
-        ),
-      shallowEqual
-    );
+    const { value } = progressiveRollout.clause;
 
-    const filteredProgressiveRollout = progressiveRollout.filter((p) => {
-      return isActiveTabSelected
-        ? p.status !== ProgressiveRollout.Status.FINISHED
-        : p.status === ProgressiveRollout.Status.FINISHED;
-    });
+    if (progressiveRollout.type === ProgressiveRollout.Type.TEMPLATE_SCHEDULE) {
+      const data = ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
+        value as Uint8Array
+      ).toObject();
 
-    return (
-      <>
-        {filteredProgressiveRollout.map((rule) => {
-          const { value } = rule.clause;
+      const { schedulesList, increments, interval, variationId } = data;
 
-          if (rule.type === ProgressiveRollout.Type.TEMPLATE_SCHEDULE) {
-            const data =
-              ProgressiveRolloutTemplateScheduleClause.deserializeBinary(
-                value as Uint8Array
-              ).toObject();
+      return (
+        <ProgressiveRolloutComponent
+          key={progressiveRollout.id}
+          variationOptions={variationOptions}
+          rule={progressiveRollout}
+          deleteRule={() => handleRolloutDelete(progressiveRollout.id)}
+          schedulesList={schedulesList}
+          increments={increments}
+          interval={interval}
+          variationId={variationId}
+          isActiveTabSelected={isActiveTabSelected}
+        />
+      );
+    } else if (
+      progressiveRollout.type === ProgressiveRollout.Type.MANUAL_SCHEDULE
+    ) {
+      const data = ProgressiveRolloutManualScheduleClause.deserializeBinary(
+        value as Uint8Array
+      ).toObject();
 
-            const { schedulesList, increments, interval, variationId } = data;
+      const { schedulesList, variationId } = data;
 
-            return (
-              <ProgressiveRolloutComponent
-                key={rule.id}
-                variationOptions={variationOptions}
-                rule={rule}
-                deleteRule={() => handleRolloutDelete(rule.id)}
-                schedulesList={schedulesList}
-                increments={increments}
-                interval={interval}
-                variationId={variationId}
-                isActiveTabSelected={isActiveTabSelected}
-              />
-            );
-          } else if (rule.type === ProgressiveRollout.Type.MANUAL_SCHEDULE) {
-            const data =
-              ProgressiveRolloutManualScheduleClause.deserializeBinary(
-                value as Uint8Array
-              ).toObject();
-
-            const { schedulesList, variationId } = data;
-
-            return (
-              <ProgressiveRolloutComponent
-                key={rule.id}
-                variationOptions={variationOptions}
-                rule={rule}
-                deleteRule={() => handleRolloutDelete(rule.id)}
-                schedulesList={schedulesList}
-                variationId={variationId}
-                isActiveTabSelected={isActiveTabSelected}
-              />
-            );
-          }
-        })}
-      </>
-    );
+      return (
+        <ProgressiveRolloutComponent
+          key={progressiveRollout.id}
+          variationOptions={variationOptions}
+          rule={progressiveRollout}
+          deleteRule={() => handleRolloutDelete(progressiveRollout.id)}
+          schedulesList={schedulesList}
+          variationId={variationId}
+          isActiveTabSelected={isActiveTabSelected}
+        />
+      );
+    }
+    return null;
   }
 );
 
