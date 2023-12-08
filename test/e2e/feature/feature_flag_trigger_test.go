@@ -34,7 +34,7 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 	createFeature(t, client, cmd)
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		cmd,
+		cmd.Id,
 		"create flag trigger test",
 		featureproto.FlagTrigger_Action_ON,
 	)
@@ -53,6 +53,9 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 		t.Fatalf("unexpected trigger description: %s, description: %s",
 			resp.FlagTrigger.Description, createFlagTriggerCommand.Description)
 	}
+	if resp.GetUrl() == "" {
+		t.Fatal("unexpected empty url")
+	}
 }
 
 func TestUpdateFlagTrigger(t *testing.T) {
@@ -63,7 +66,7 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	createFeature(t, client, command)
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		command,
+		command.Id,
 		"create flag trigger test",
 		featureproto.FlagTrigger_Action_ON,
 	)
@@ -99,7 +102,7 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 	createFeature(t, client, command)
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		command,
+		command.Id,
 		"create flag trigger test",
 		featureproto.FlagTrigger_Action_ON,
 	)
@@ -150,7 +153,7 @@ func TestResetFlagTrigger(t *testing.T) {
 	createFeature(t, client, command)
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		command,
+		command.Id,
 		"create flag trigger test",
 		featureproto.FlagTrigger_Action_ON,
 	)
@@ -179,7 +182,7 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	createFeature(t, client, command)
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(
-		command,
+		command.Id,
 		"create flag trigger test",
 		featureproto.FlagTrigger_Action_ON,
 	)
@@ -216,7 +219,7 @@ func TestListFlagTriggers(t *testing.T) {
 	trigger1, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
-			command,
+			command.Id,
 			"create flag trigger test 1",
 			featureproto.FlagTrigger_Action_ON,
 		),
@@ -228,7 +231,7 @@ func TestListFlagTriggers(t *testing.T) {
 	trigger2, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
-			command,
+			command.Id,
 			"create flag trigger test 2",
 			featureproto.FlagTrigger_Action_ON,
 		),
@@ -284,7 +287,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	enableTrigger, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
-			command,
+			command.Id,
 			"webhook flag trigger test action: on",
 			featureproto.FlagTrigger_Action_ON,
 		),
@@ -319,7 +322,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	disableTrigger, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
-			command,
+			command.Id,
 			"webhook flag trigger test action: off",
 			featureproto.FlagTrigger_Action_OFF,
 		),
@@ -372,12 +375,12 @@ func sendPostRequestIgnoreSSL(targetURL string) (*http.Response, error) {
 }
 
 func newCreateFlagTriggerCmd(
-	cmd *featureproto.CreateFeatureCommand,
+	featureID string,
 	description string,
 	action featureproto.FlagTrigger_Action,
 ) *featureproto.CreateFlagTriggerCommand {
 	createFlagTriggerCommand := &featureproto.CreateFlagTriggerCommand{
-		FeatureId:   cmd.Id,
+		FeatureId:   featureID,
 		Type:        featureproto.FlagTrigger_Type_WEBHOOK,
 		Action:      action,
 		Description: description,
