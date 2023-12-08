@@ -387,16 +387,11 @@
               },
               {
                 "id": 4,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 5,
                 "name": "organization_role",
                 "type": "account.AccountV2.Role.Organization"
               },
               {
-                "id": 6,
+                "id": 5,
                 "name": "environment_roles",
                 "type": "account.AccountV2.EnvironmentRole",
                 "is_repeated": true
