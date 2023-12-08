@@ -319,6 +319,15 @@ type FeatureServiceListFlagTriggers = {
   readonly responseType: typeof proto_feature_service_pb.ListFlagTriggersResponse;
 };
 
+type FeatureServiceFlagTriggerWebhook = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.FlagTriggerWebhookRequest;
+  readonly responseType: typeof proto_feature_service_pb.FlagTriggerWebhookResponse;
+};
+
 export class FeatureService {
   static readonly serviceName: string;
   static readonly GetFeature: FeatureServiceGetFeature;
@@ -356,6 +365,7 @@ export class FeatureService {
   static readonly DeleteFlagTrigger: FeatureServiceDeleteFlagTrigger;
   static readonly GetFlagTrigger: FeatureServiceGetFlagTrigger;
   static readonly ListFlagTriggers: FeatureServiceListFlagTriggers;
+  static readonly FlagTriggerWebhook: FeatureServiceFlagTriggerWebhook;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -704,6 +714,15 @@ export class FeatureServiceClient {
   listFlagTriggers(
     requestMessage: proto_feature_service_pb.ListFlagTriggersRequest,
     callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.ListFlagTriggersResponse|null) => void
+  ): UnaryResponse;
+  flagTriggerWebhook(
+    requestMessage: proto_feature_service_pb.FlagTriggerWebhookRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.FlagTriggerWebhookResponse|null) => void
+  ): UnaryResponse;
+  flagTriggerWebhook(
+    requestMessage: proto_feature_service_pb.FlagTriggerWebhookRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.FlagTriggerWebhookResponse|null) => void
   ): UnaryResponse;
 }
 

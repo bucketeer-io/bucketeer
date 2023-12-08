@@ -23,9 +23,13 @@ import (
 	"net/url"
 	"strconv"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -43,7 +47,7 @@ func (s *FeatureService) CreateFlagTrigger(
 	request *featureproto.CreateFlagTriggerRequest,
 ) (*featureproto.CreateFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -57,33 +61,17 @@ func (s *FeatureService) CreateFlagTrigger(
 		)
 		return nil, err
 	}
-	triggerID, err := uuid.NewUUID()
+	flagTrigger, err := domain.NewFlagTrigger(
+		request.EnvironmentNamespace,
+		request.CreateFlagTriggerCommand,
+	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to generate trigger id",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
-			)...,
-		)
-		return nil, err
-	}
-	id := triggerID.String()
-	triggerUUID, err := uuid.NewUUID()
-	if err != nil {
-		s.logger.Error(
-			"Failed to generate trigger uuid",
+			"Failed to create flag trigger",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
 	}
-	flagTriggerUuid := triggerUUID.String()
-	flagTrigger := domain.NewFlagTrigger(
-		id,
-		request.EnvironmentNamespace,
-		flagTriggerUuid,
-		request.CreateFlagTriggerCommand,
-	)
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -96,6 +84,19 @@ func (s *FeatureService) CreateFlagTrigger(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2fs.NewFlagTriggerStorage(tx)
+		handler := command.NewFlagTriggerCommandHandler(
+			editor,
+			flagTrigger,
+			s.domainPublisher,
+			request.EnvironmentNamespace,
+		)
+		if err := handler.Handle(ctx, request.CreateFlagTriggerCommand); err != nil {
+			s.logger.Error(
+				"Failed to create flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return err
+		}
 		if err := storage.CreateFlagTrigger(ctx, flagTrigger); err != nil {
 			s.logger.Error(
 				"Failed to create flag trigger",
@@ -129,10 +130,10 @@ func (s *FeatureService) CreateFlagTrigger(
 		return nil, dt.Err()
 	}
 	flagTriggerSecret := domain.NewFlagTriggerSecret(
-		id,
+		flagTrigger.GetId(),
 		request.CreateFlagTriggerCommand.FeatureId,
 		request.EnvironmentNamespace,
-		flagTriggerUuid,
+		flagTrigger.GetUuid(),
 		int(request.CreateFlagTriggerCommand.Action),
 	)
 	triggerURL, err := s.generateTriggerURL(ctx, flagTriggerSecret, false)
@@ -154,7 +155,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 	request *featureproto.UpdateFlagTriggerRequest,
 ) (*featureproto.UpdateFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -180,6 +181,34 @@ func (s *FeatureService) UpdateFlagTrigger(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2fs.NewFlagTriggerStorage(tx)
+		flagTrigger, err := storage.GetFlagTrigger(
+			ctx,
+			request.ChangeFlagTriggerDescriptionCommand.Id,
+			request.EnvironmentNamespace,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", request.EnvironmentNamespace),
+				)...,
+			)
+			return err
+		}
+		handler := command.NewFlagTriggerCommandHandler(
+			editor,
+			flagTrigger,
+			s.domainPublisher,
+			request.EnvironmentNamespace,
+		)
+		if err := handler.Handle(ctx, request.ChangeFlagTriggerDescriptionCommand); err != nil {
+			s.logger.Error(
+				"Failed to update flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return err
+		}
 		if err := storage.UpdateFlagTrigger(
 			ctx,
 			request.ChangeFlagTriggerDescriptionCommand.Id,
@@ -225,7 +254,7 @@ func (s *FeatureService) EnableFlagTrigger(
 	request *featureproto.EnableFlagTriggerRequest,
 ) (*featureproto.EnableFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -251,6 +280,34 @@ func (s *FeatureService) EnableFlagTrigger(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2fs.NewFlagTriggerStorage(tx)
+		flagTrigger, err := storage.GetFlagTrigger(
+			ctx,
+			request.EnableFlagTriggerCommand.Id,
+			request.EnvironmentNamespace,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", request.EnvironmentNamespace),
+				)...,
+			)
+			return err
+		}
+		handler := command.NewFlagTriggerCommandHandler(
+			editor,
+			flagTrigger,
+			s.domainPublisher,
+			request.EnvironmentNamespace,
+		)
+		if err := handler.Handle(ctx, request.EnableFlagTriggerCommand); err != nil {
+			s.logger.Error(
+				"Failed to enable flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return err
+		}
 		if err := storage.EnableFlagTrigger(
 			ctx,
 			request.EnableFlagTriggerCommand.Id,
@@ -295,7 +352,7 @@ func (s *FeatureService) DisableFlagTrigger(
 	request *featureproto.DisableFlagTriggerRequest,
 ) (*featureproto.DisableFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -321,6 +378,34 @@ func (s *FeatureService) DisableFlagTrigger(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2fs.NewFlagTriggerStorage(tx)
+		flagTrigger, err := storage.GetFlagTrigger(
+			ctx,
+			request.DisableFlagTriggerCommand.Id,
+			request.EnvironmentNamespace,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", request.EnvironmentNamespace),
+				)...,
+			)
+			return err
+		}
+		handler := command.NewFlagTriggerCommandHandler(
+			editor,
+			flagTrigger,
+			s.domainPublisher,
+			request.EnvironmentNamespace,
+		)
+		if err := handler.Handle(ctx, request.DisableFlagTriggerCommand); err != nil {
+			s.logger.Error(
+				"Failed to enable flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return err
+		}
 		if err := storage.DisableFlagTrigger(
 			ctx,
 			request.DisableFlagTriggerCommand.Id,
@@ -365,7 +450,7 @@ func (s *FeatureService) ResetFlagTrigger(
 	request *featureproto.ResetFlagTriggerRequest,
 ) (*featureproto.ResetFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -412,6 +497,19 @@ func (s *FeatureService) ResetFlagTrigger(
 		return nil, err
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		handler := command.NewFlagTriggerCommandHandler(
+			editor,
+			trigger,
+			s.domainPublisher,
+			request.EnvironmentNamespace,
+		)
+		if err := handler.Handle(ctx, request.ResetFlagTriggerCommand); err != nil {
+			s.logger.Error(
+				"Failed to reset flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return err
+		}
 		err := v2fs.NewFlagTriggerStorage(tx).
 			ResetFlagTrigger(ctx, trigger.Id, request.EnvironmentNamespace, newFlagTriggerId)
 		if err != nil {
@@ -462,7 +560,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 	request *featureproto.DeleteFlagTriggerRequest,
 ) (*featureproto.DeleteFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, request.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -486,6 +584,34 @@ func (s *FeatureService) DeleteFlagTrigger(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2fs.NewFlagTriggerStorage(tx)
+		flagTrigger, err := storage.GetFlagTrigger(
+			ctx,
+			request.DeleteFlagTriggerCommand.Id,
+			request.EnvironmentNamespace,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", request.EnvironmentNamespace),
+				)...,
+			)
+			return err
+		}
+		handler := command.NewFlagTriggerCommandHandler(
+			editor,
+			flagTrigger,
+			s.domainPublisher,
+			request.EnvironmentNamespace,
+		)
+		if err := handler.Handle(ctx, request.DeleteFlagTriggerCommand); err != nil {
+			s.logger.Error(
+				"Failed to delete flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			return err
+		}
 		if err := storage.DeleteFlagTrigger(
 			ctx,
 			request.DeleteFlagTriggerCommand.Id,
@@ -603,7 +729,21 @@ func (s *FeatureService) ListFlagTriggers(
 		return nil, err
 	}
 	limit := int(request.PageSize)
-	offset := int(request.Cursor)
+	cursor := request.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	offset, err := strconv.Atoi(cursor)
+	if err != nil {
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	flagTriggers, nextOffset, totalCount, _ := v2fs.NewFlagTriggerStorage(s.mysqlClient).ListFlagTriggers(
 		ctx,
 		whereParts,
@@ -668,6 +808,202 @@ func (s *FeatureService) newListFlagTriggerOrders(
 	return []*mysql.Order{
 		mysql.NewOrder(column, direction),
 	}, nil
+}
+
+func (s *FeatureService) FlagTriggerWebhook(
+	ctx context.Context,
+	request *featureproto.FlagTriggerWebhookRequest,
+) (*featureproto.FlagTriggerWebhookResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	secret := request.GetSecret()
+	resp := &featureproto.FlagTriggerWebhookResponse{}
+	if secret == "" {
+		s.logger.Error(
+			"Failed to get secret from query",
+			log.FieldsFromImcomingContext(ctx)...,
+		)
+		return resp, nil
+	}
+	triggerSecret, err := s.authSecret(ctx, secret)
+	if err != nil {
+		s.logger.Error(
+			"Failed to auth trigger secret",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return resp, nil
+	}
+	storage := v2fs.NewFlagTriggerStorage(s.mysqlClient)
+	trigger, err := storage.GetFlagTrigger(ctx, triggerSecret.GetID(), triggerSecret.GetEnvironmentNamespace())
+	if err != nil {
+		s.logger.Error(
+			"Failed to get flag trigger",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return resp, nil
+	}
+	if trigger.GetDisabled() || trigger.GetDeleted() {
+		s.logger.Error(
+			"Flag trigger is disabled or deleted",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return resp, nil
+	}
+	// check trigger secret
+	if trigger.GetFeatureId() != triggerSecret.GetFeatureID() ||
+		int(trigger.GetAction()) != triggerSecret.GetAction() ||
+		trigger.GetUuid() != triggerSecret.GetUUID() {
+		s.logger.Error(
+			"Failed to auth trigger secret",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return resp, nil
+	}
+	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON {
+		err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
+		if err != nil {
+			return resp, nil
+		}
+	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF {
+		err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
+		if err != nil {
+			return resp, nil
+		}
+	} else {
+		s.logger.Error(
+			"Invalid action",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return resp, nil
+	}
+	err = s.updateTriggerUsageInfo(ctx, trigger)
+	if err != nil {
+		return resp, nil
+	}
+	return resp, nil
+}
+
+func (s *FeatureService) authSecret(
+	ctx context.Context,
+	secret string,
+) (*domain.FlagTriggerSecret, error) {
+	decoded, err := base64.RawURLEncoding.DecodeString(secret)
+	if err != nil {
+		s.logger.Error(
+			"Failed to decode encrypted secret",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+	decrypted, err := s.triggerCryptoUtil.Decrypt(ctx, decoded)
+	if err != nil {
+		s.logger.Error(
+			"Failed to decrypt encrypted secret",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+	triggerSecret, err := domain.UnmarshalFlagTriggerSecret(decrypted)
+	if err != nil {
+		s.logger.Error(
+			"Failed to unmarshal trigger url secret",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+	return triggerSecret, nil
+}
+
+func (s *FeatureService) updateTriggerUsageInfo(ctx context.Context, flagTrigger *domain.FlagTrigger) error {
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).
+				AddFields(zap.Error(err))...,
+		)
+		return nil
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		storage := v2fs.NewFlagTriggerStorage(tx)
+		err := storage.UpdateFlagTriggerUsage(
+			ctx,
+			flagTrigger.GetId(),
+			flagTrigger.GetEnvironmentNamespace(),
+			int64(flagTrigger.GetTriggerTimes()+1),
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to update flag trigger usage",
+				log.FieldsFromImcomingContext(ctx).
+					AddFields(zap.Error(err))...,
+			)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to update flag trigger usage",
+			log.FieldsFromImcomingContext(ctx).
+				AddFields(zap.Error(err))...,
+		)
+		return err
+	}
+	return nil
+}
+
+func (s *FeatureService) enableFeature(
+	ctx context.Context,
+	featureId, environmentNamespace string,
+	localizer locale.Localizer,
+) error {
+	if err := s.updateFeature(
+		ctx,
+		&featureproto.EnableFeatureCommand{},
+		featureId,
+		environmentNamespace,
+		"",
+		localizer,
+	); err != nil {
+		if status.Code(err) == codes.Internal {
+			s.logger.Error(
+				"Failed to enable feature",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", environmentNamespace),
+				)...,
+			)
+		}
+		return err
+	}
+	return nil
+}
+
+func (s *FeatureService) disableFeature(
+	ctx context.Context,
+	featureId, environmentNamespace string,
+	localizer locale.Localizer,
+) error {
+	if err := s.updateFeature(
+		ctx,
+		&featureproto.DisableFeatureCommand{},
+		featureId,
+		environmentNamespace,
+		"",
+		localizer,
+	); err != nil {
+		if status.Code(err) == codes.Internal {
+			s.logger.Error(
+				"Failed to disable feature",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", environmentNamespace),
+				)...,
+			)
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *FeatureService) generateTriggerURL(

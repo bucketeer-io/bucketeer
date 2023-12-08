@@ -18,6 +18,7 @@ package domain
 import (
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -26,23 +27,31 @@ type FlagTrigger struct {
 }
 
 func NewFlagTrigger(
-	id, namespace, uuid string,
+	namespace string,
 	cmd *proto.CreateFlagTriggerCommand,
-) *FlagTrigger {
+) (*FlagTrigger, error) {
 	now := time.Now().Unix()
+	triggerID, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
+	triggerUUID, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
 	return &FlagTrigger{&proto.FlagTrigger{
-		Id:                   id,
+		Id:                   triggerID.String(),
 		FeatureId:            cmd.FeatureId,
 		EnvironmentNamespace: namespace,
 		Type:                 cmd.Type,
 		Action:               cmd.Action,
 		Description:          cmd.Description,
-		Uuid:                 uuid,
+		Uuid:                 triggerUUID.String(),
 		Disabled:             false,
 		Deleted:              false,
 		CreatedAt:            now,
 		UpdatedAt:            now,
-	}}
+	}}, nil
 }
 
 func (ft *FlagTrigger) GetId() string {

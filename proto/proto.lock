@@ -23,42 +23,6 @@
                 "integer": 99
               }
             ]
-          },
-          {
-            "name": "Role.Environment",
-            "enum_fields": [
-              {
-                "name": "Environment_UNASSIGNED"
-              },
-              {
-                "name": "Environment_VIEWER",
-                "integer": 1
-              },
-              {
-                "name": "Environment_EDITOR",
-                "integer": 2
-              }
-            ]
-          },
-          {
-            "name": "Role.Organization",
-            "enum_fields": [
-              {
-                "name": "Organization_UNASSIGNED"
-              },
-              {
-                "name": "Organization_MEMBER",
-                "integer": 1
-              },
-              {
-                "name": "Organization_ADMIN",
-                "integer": 2
-              },
-              {
-                "name": "Organization_OWNER",
-                "integer": 3
-              }
-            ]
           }
         ],
         "messages": [
@@ -104,77 +68,6 @@
                 "id": 8,
                 "name": "deleted",
                 "type": "bool"
-              }
-            ]
-          },
-          {
-            "name": "AccountV2",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "avatar_image_url",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "organization_role",
-                "type": "Role.Organization"
-              },
-              {
-                "id": 6,
-                "name": "environment_roles",
-                "type": "EnvironmentRole",
-                "is_repeated": true
-              },
-              {
-                "id": 7,
-                "name": "disabled",
-                "type": "bool"
-              },
-              {
-                "id": 8,
-                "name": "created_at",
-                "type": "int64"
-              },
-              {
-                "id": 9,
-                "name": "updated_at",
-                "type": "int64"
-              }
-            ],
-            "messages": [
-              {
-                "name": "Role"
-              },
-              {
-                "name": "EnvironmentRole",
-                "fields": [
-                  {
-                    "id": 1,
-                    "name": "environment_id",
-                    "type": "string"
-                  },
-                  {
-                    "id": 2,
-                    "name": "role",
-                    "type": "Role.Environment"
-                  }
-                ]
               }
             ]
           },
@@ -368,87 +261,6 @@
             "name": "DisableAccountCommand"
           },
           {
-            "name": "CreateAccountV2Command",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "avatar_image_url",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "organization_role",
-                "type": "account.AccountV2.Role.Organization"
-              },
-              {
-                "id": 5,
-                "name": "environment_roles",
-                "type": "account.AccountV2.EnvironmentRole",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "ChangeAccountV2NameCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeAccountV2AvatarImageUrlCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "avatar_image_url",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeAccountV2OrganizationRoleCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "role",
-                "type": "account.AccountV2.Role.Organization"
-              }
-            ]
-          },
-          {
-            "name": "ChangeAccountV2EnvironmentRolesCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "roles",
-                "type": "account.AccountV2.EnvironmentRole",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "EnableAccountV2Command"
-          },
-          {
-            "name": "DisableAccountV2Command"
-          },
-          {
-            "name": "DeleteAccountV2Command"
-          },
-          {
             "name": "CreateAPIKeyCommand",
             "fields": [
               {
@@ -557,38 +369,6 @@
           },
           {
             "name": "ListAccountsRequest.OrderDirection",
-            "enum_fields": [
-              {
-                "name": "ASC"
-              },
-              {
-                "name": "DESC",
-                "integer": 1
-              }
-            ]
-          },
-          {
-            "name": "ListAccountsV2Request.OrderBy",
-            "enum_fields": [
-              {
-                "name": "DEFAULT"
-              },
-              {
-                "name": "EMAIL",
-                "integer": 1
-              },
-              {
-                "name": "CREATED_AT",
-                "integer": 2
-              },
-              {
-                "name": "UPDATED_AT",
-                "integer": 3
-              }
-            ]
-          },
-          {
-            "name": "ListAccountsV2Request.OrderDirection",
             "enum_fields": [
               {
                 "name": "ASC"
@@ -989,229 +769,6 @@
             ]
           },
           {
-            "name": "CreateAccountV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "CreateAccountV2Command"
-              }
-            ]
-          },
-          {
-            "name": "CreateAccountV2Response",
-            "fields": [
-              {
-                "id": 1,
-                "name": "account",
-                "type": "AccountV2"
-              }
-            ]
-          },
-          {
-            "name": "EnableAccountV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "command",
-                "type": "EnableAccountV2Command"
-              }
-            ]
-          },
-          {
-            "name": "EnableAccountV2Response"
-          },
-          {
-            "name": "DisableAccountV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "command",
-                "type": "DisableAccountV2Command"
-              }
-            ]
-          },
-          {
-            "name": "DisableAccountV2Response"
-          },
-          {
-            "name": "DeleteAccountV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "command",
-                "type": "DeleteAccountV2Command"
-              }
-            ]
-          },
-          {
-            "name": "DeleteAccountV2Response"
-          },
-          {
-            "name": "UpdateAccountV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "change_name_command",
-                "type": "ChangeAccountV2NameCommand"
-              },
-              {
-                "id": 4,
-                "name": "change_avatar_url_command",
-                "type": "ChangeAccountV2AvatarImageUrlCommand"
-              },
-              {
-                "id": 5,
-                "name": "change_organization_role_command",
-                "type": "ChangeAccountV2OrganizationRoleCommand"
-              },
-              {
-                "id": 6,
-                "name": "change_environment_roles_command",
-                "type": "ChangeAccountV2EnvironmentRolesCommand"
-              }
-            ]
-          },
-          {
-            "name": "UpdateAccountV2Response"
-          },
-          {
-            "name": "GetAccountV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "organization_id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetAccountV2Response",
-            "fields": [
-              {
-                "id": 1,
-                "name": "account",
-                "type": "AccountV2"
-              }
-            ]
-          },
-          {
-            "name": "ListAccountsV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "order_by",
-                "type": "OrderBy"
-              },
-              {
-                "id": 5,
-                "name": "order_direction",
-                "type": "OrderDirection"
-              },
-              {
-                "id": 6,
-                "name": "search_keyword",
-                "type": "string"
-              },
-              {
-                "id": 7,
-                "name": "disabled",
-                "type": "google.protobuf.BoolValue"
-              },
-              {
-                "id": 8,
-                "name": "role",
-                "type": "google.protobuf.Int32Value"
-              }
-            ]
-          },
-          {
-            "name": "ListAccountsV2Response",
-            "fields": [
-              {
-                "id": 1,
-                "name": "accounts",
-                "type": "AccountV2",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "total_count",
-                "type": "int64"
-              }
-            ]
-          },
-          {
             "name": "CreateAPIKeyRequest",
             "fields": [
               {
@@ -1485,41 +1042,6 @@
                 "name": "ListAccounts",
                 "in_type": "ListAccountsRequest",
                 "out_type": "ListAccountsResponse"
-              },
-              {
-                "name": "CreateAccountV2",
-                "in_type": "CreateAccountV2Request",
-                "out_type": "CreateAccountV2Response"
-              },
-              {
-                "name": "EnableAccountV2",
-                "in_type": "EnableAccountV2Request",
-                "out_type": "EnableAccountV2Response"
-              },
-              {
-                "name": "DisableAccountV2",
-                "in_type": "DisableAccountV2Request",
-                "out_type": "DisableAccountV2Response"
-              },
-              {
-                "name": "UpdateAccountV2",
-                "in_type": "UpdateAccountV2Request",
-                "out_type": "UpdateAccountV2Response"
-              },
-              {
-                "name": "DeleteAccountV2",
-                "in_type": "DeleteAccountV2Request",
-                "out_type": "DeleteAccountV2Response"
-              },
-              {
-                "name": "GetAccountV2",
-                "in_type": "GetAccountV2Request",
-                "out_type": "GetAccountV2Response"
-              },
-              {
-                "name": "ListAccountsV2",
-                "in_type": "ListAccountsV2Request",
-                "out_type": "ListAccountsV2Response"
               },
               {
                 "name": "CreateAPIKey",
@@ -2231,17 +1753,6 @@
                 "type": "bool"
               }
             ]
-          },
-          {
-            "name": "AutoOpsRules",
-            "fields": [
-              {
-                "id": 1,
-                "name": "auto_ops_rules",
-                "type": "AutoOpsRule",
-                "is_repeated": true
-              }
-            ]
           }
         ],
         "imports": [
@@ -2693,14 +2204,12 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutManualScheduleClause"
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ]
           },
@@ -3491,14 +3000,12 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status",
-                "optional": true
+                "type": "ProgressiveRollout.Status"
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type",
-                "optional": true
+                "type": "ProgressiveRollout.Type"
               }
             ]
           },
@@ -4072,11 +3579,6 @@
                 "id": 8,
                 "name": "updated_at",
                 "type": "int64"
-              },
-              {
-                "id": 9,
-                "name": "organization_id",
-                "type": "string"
               }
             ]
           }
@@ -4136,11 +3638,16 @@
               },
               {
                 "id": 8,
+                "name": "creator_email",
+                "type": "string"
+              },
+              {
+                "id": 9,
                 "name": "created_at",
                 "type": "int64"
               },
               {
-                "id": 9,
+                "id": 10,
                 "name": "updated_at",
                 "type": "int64"
               }
@@ -4208,11 +3715,6 @@
               {
                 "id": 9,
                 "name": "url_code",
-                "type": "string"
-              },
-              {
-                "id": 10,
-                "name": "organization_id",
                 "type": "string"
               }
             ]
@@ -4752,11 +4254,6 @@
               {
                 "id": 6,
                 "name": "disabled",
-                "type": "google.protobuf.BoolValue"
-              },
-              {
-                "id": 7,
-                "name": "archived",
                 "type": "google.protobuf.BoolValue"
               }
             ]
@@ -5856,7 +5353,7 @@
                 "integer": 14
               },
               {
-                "name": "ORGANIZATION",
+                "name": "FlagTrigger",
                 "integer": 15
               }
             ]
@@ -6094,38 +5591,6 @@
               {
                 "name": "ACCOUNT_DELETED",
                 "integer": 304
-              },
-              {
-                "name": "ACCOUNT_V2_CREATED",
-                "integer": 305
-              },
-              {
-                "name": "ACCOUNT_V2_NAME_CHANGED",
-                "integer": 306
-              },
-              {
-                "name": "ACCOUNT_V2_AVATAR_IMAGE_URL_CHANGED",
-                "integer": 307
-              },
-              {
-                "name": "ACCOUNT_V2_ORGANIZATION_ROLE_CHANGED",
-                "integer": 308
-              },
-              {
-                "name": "ACCOUNT_V2_ENVIRONMENT_ROLES_CHANGED",
-                "integer": 309
-              },
-              {
-                "name": "ACCOUNT_V2_ENABLED",
-                "integer": 310
-              },
-              {
-                "name": "ACCOUNT_V2_DISABLED",
-                "integer": 311
-              },
-              {
-                "name": "ACCOUNT_V2_DELETED",
-                "integer": 312
               },
               {
                 "name": "APIKEY_CREATED",
@@ -6432,36 +5897,28 @@
                 "integer": 1402
               },
               {
-                "name": "ORGANIZATION_CREATED",
-                "integer": 1500
-              },
-              {
-                "name": "ORGANIZATION_NAME_CHANGED",
+                "name": "FLAG_TRIGGER_CREATED",
                 "integer": 1501
               },
               {
-                "name": "ORGANIZATION_DESCRIPTION_CHANGED",
+                "name": "FLAG_TRIGGER_RESET",
                 "integer": 1502
               },
               {
-                "name": "ORGANIZATION_ENABLED",
+                "name": "FLAG_TRIGGER_CHANGE_DESCRIPTION",
                 "integer": 1503
               },
               {
-                "name": "ORGANIZATION_DISABLED",
+                "name": "FLAG_TRIGGER_DISABLED",
                 "integer": 1504
               },
               {
-                "name": "ORGANIZATION_ARCHIVED",
+                "name": "FLAG_TRIGGER_ENABLED",
                 "integer": 1505
               },
               {
-                "name": "ORGANIZATION_UNARCHIVED",
+                "name": "FLAG_TRIGGER_DELETED",
                 "integer": 1506
-              },
-              {
-                "name": "ORGANIZATION_TRIAL_CONVERTED",
-                "integer": 1507
               }
             ]
           }
@@ -6533,13 +5990,7 @@
               {
                 "id": 2,
                 "name": "role",
-                "type": "bucketeer.account.Account.Role",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
+                "type": "bucketeer.account.Account.Role"
               },
               {
                 "id": 3,
@@ -7623,148 +7074,6 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AccountV2CreatedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "avatar_image_url",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "organization_role",
-                "type": "bucketeer.account.AccountV2.Role.Organization"
-              },
-              {
-                "id": 6,
-                "name": "environment_roles",
-                "type": "bucketeer.account.AccountV2.EnvironmentRole",
-                "is_repeated": true
-              },
-              {
-                "id": 7,
-                "name": "disabled",
-                "type": "bool"
-              },
-              {
-                "id": 8,
-                "name": "created_at",
-                "type": "int64"
-              },
-              {
-                "id": 9,
-                "name": "updated_at",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "AccountV2NameChangedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AccountV2AvatarImageURLChangedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "avatar_image_url",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AccountV2OrganizationRoleChangedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "organization_role",
-                "type": "bucketeer.account.AccountV2.Role.Organization"
-              }
-            ]
-          },
-          {
-            "name": "AccountV2EnvironmentRolesChangedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "environment_roles",
-                "type": "bucketeer.account.AccountV2.EnvironmentRole",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "AccountV2EnabledEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AccountV2DisabledEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AccountV2DeletedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
                 "type": "string"
               }
             ]
@@ -9104,7 +8413,7 @@
             ]
           },
           {
-            "name": "OrganizationCreatedEvent",
+            "name": "FlagTriggerCreatedEvent",
             "fields": [
               {
                 "id": 1,
@@ -9113,33 +8422,33 @@
               },
               {
                 "id": 2,
-                "name": "name",
+                "name": "feature_id",
                 "type": "string"
               },
               {
                 "id": 3,
-                "name": "url_code",
+                "name": "environment_namespace",
                 "type": "string"
               },
               {
                 "id": 4,
+                "name": "type",
+                "type": "bucketeer.feature.FlagTrigger.Type"
+              },
+              {
+                "id": 5,
+                "name": "action",
+                "type": "bucketeer.feature.FlagTrigger.Action"
+              },
+              {
+                "id": 6,
                 "name": "description",
                 "type": "string"
               },
               {
-                "id": 5,
-                "name": "disabled",
-                "type": "bool"
-              },
-              {
-                "id": 6,
-                "name": "archived",
-                "type": "bool"
-              },
-              {
                 "id": 7,
-                "name": "trial",
-                "type": "bool"
+                "name": "uuid",
+                "type": "string"
               },
               {
                 "id": 8,
@@ -9154,7 +8463,7 @@
             ]
           },
           {
-            "name": "OrganizationDescriptionChangedEvent",
+            "name": "FlagTriggerResetEvent",
             "fields": [
               {
                 "id": 1,
@@ -9163,13 +8472,48 @@
               },
               {
                 "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "uuid",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "FlagTriggerChangeDescriptionEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
                 "name": "description",
                 "type": "string"
               }
             ]
           },
           {
-            "name": "OrganizationNameChangedEvent",
+            "name": "FlagTriggerDisabledEvent",
             "fields": [
               {
                 "id": 1,
@@ -9178,57 +8522,52 @@
               },
               {
                 "id": 2,
-                "name": "name",
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
                 "type": "string"
               }
             ]
           },
           {
-            "name": "OrganizationEnabledEvent",
+            "name": "FlagTriggerEnabledEvent",
             "fields": [
               {
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "OrganizationDisabledEvent",
-            "fields": [
+              },
               {
-                "id": 1,
-                "name": "id",
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
                 "type": "string"
               }
             ]
           },
           {
-            "name": "OrganizationArchivedEvent",
+            "name": "FlagTriggerDeletedEvent",
             "fields": [
               {
                 "id": 1,
                 "name": "id",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "OrganizationUnarchivedEvent",
-            "fields": [
+              },
               {
-                "id": 1,
-                "name": "id",
+                "id": 2,
+                "name": "feature_id",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "OrganizationTrialConvertedEvent",
-            "fields": [
+              },
               {
-                "id": 1,
-                "name": "id",
+                "id": 3,
+                "name": "environment_namespace",
                 "type": "string"
               }
             ]
@@ -9285,6 +8624,9 @@
           },
           {
             "path": "proto/autoops/progressive_rollout.proto"
+          },
+          {
+            "path": "proto/feature/flag_trigger.proto"
           }
         ],
         "package": {
@@ -14828,7 +14170,7 @@
               {
                 "id": 3,
                 "name": "cursor",
-                "type": "int32"
+                "type": "string"
               },
               {
                 "id": 4,
@@ -14884,6 +14226,19 @@
                 ]
               }
             ]
+          },
+          {
+            "name": "FlagTriggerWebhookRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "secret",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "FlagTriggerWebhookResponse"
           }
         ],
         "services": [
@@ -15094,11 +14449,30 @@
                 "name": "ListFlagTriggers",
                 "in_type": "ListFlagTriggersRequest",
                 "out_type": "ListFlagTriggersResponse"
+              },
+              {
+                "name": "FlagTriggerWebhook",
+                "in_type": "FlagTriggerWebhookRequest",
+                "out_type": "FlagTriggerWebhookResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/webhook/{secret}"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
         ],
         "imports": [
+          {
+            "path": "google/api/annotations.proto"
+          },
           {
             "path": "google/protobuf/wrappers.proto"
           },
@@ -16856,10 +16230,6 @@
               {
                 "name": "DOMAIN_EVENT_PROGRESSIVE_ROLLOUT",
                 "integer": 14
-              },
-              {
-                "name": "DOMAIN_EVENT_ORGANIZATION",
-                "integer": 15
               },
               {
                 "name": "FEATURE_STALE",

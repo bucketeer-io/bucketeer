@@ -28,6 +28,7 @@ lint:
 ROOT_DIR := $(CURDIR)/../..
 SRC_DIR := $(CURDIR)/apps/admin/src
 PROTOBUF_INCLUDE_DIR := $(ROOT_DIR)/proto/external/protocolbuffers/protobuf/v23.4
+GOOGLEAPIS := $(ROOT_DIR)/proto/external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974
 NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
 
 .PHONY: gen_proto
@@ -39,6 +40,7 @@ gen_proto: clean_proto
 	--ts_out=service=grpc-web:$(SRC_DIR) \
 	-I $(ROOT_DIR) \
 	-I $(PROTOBUF_INCLUDE_DIR) \
+	-I $(GOOGLEAPIS) \
 	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/gateway/*.proto" -not -path "**/google/protobuf/*.proto" -not -path "**/google/api/*.proto")
 
 .PHONY: clean_proto

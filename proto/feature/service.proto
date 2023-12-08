@@ -17,6 +17,7 @@ syntax = "proto3";
 package bucketeer.feature;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
 
+import "google/api/annotations.proto";
 import "google/protobuf/wrappers.proto";
 
 import "proto/feature/command.proto";
@@ -406,7 +407,7 @@ message ListFlagTriggersRequest {
   }
   string feature_id = 1;
   string environment_namespace = 2;
-  int32 cursor = 3;
+  string cursor = 3;
   int32 page_size = 4;
   OrderBy order_by = 5;
   OrderDirection order_direction = 6;
@@ -421,6 +422,12 @@ message ListFlagTriggersResponse {
   string cursor = 2;
   int64 total_count = 3;
 }
+
+message FlagTriggerWebhookRequest {
+  string secret = 1;
+}
+
+message FlagTriggerWebhookResponse {}
 
 service FeatureService {
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {}
@@ -487,4 +494,10 @@ service FeatureService {
   rpc GetFlagTrigger(GetFlagTriggerRequest) returns (GetFlagTriggerResponse) {}
   rpc ListFlagTriggers(ListFlagTriggersRequest)
       returns (ListFlagTriggersResponse) {}
+  rpc FlagTriggerWebhook(FlagTriggerWebhookRequest)
+      returns (FlagTriggerWebhookResponse) {
+    option (google.api.http) = {
+      get: "/webhook/{secret}"
+    };
+  }
 }

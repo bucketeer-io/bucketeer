@@ -243,7 +243,7 @@ func TestListFlagTriggers(t *testing.T) {
 	listFlagTriggersReq := &featureproto.ListFlagTriggersRequest{
 		FeatureId:            command.Id,
 		EnvironmentNamespace: *environmentNamespace,
-		Cursor:               0,
+		Cursor:               "0",
 		PageSize:             10,
 		OrderBy:              featureproto.ListFlagTriggersRequest_CREATED_AT,
 		OrderDirection:       featureproto.ListFlagTriggersRequest_ASC,
