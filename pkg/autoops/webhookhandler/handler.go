@@ -39,7 +39,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	event "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
@@ -105,7 +104,6 @@ func NewHandler(
 	}
 	editor := &event.Editor{
 		Email:   token.Email,
-		Role:    accountproto.Account_OWNER,
 		IsAdmin: true,
 	}
 	return &handler{

@@ -24,7 +24,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
@@ -100,7 +99,6 @@ func newGoalCommandHandler(t *testing.T, publisher publisher.Publisher, goal *do
 	return NewGoalCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
-			Role:  accountproto.Account_EDITOR,
 		},
 		goal,
 		publisher,

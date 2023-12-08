@@ -26,7 +26,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -593,7 +592,6 @@ func makeEventFactory(feature *domain.Feature) *FeatureEventFactory {
 	return &FeatureEventFactory{
 		editor: &eventproto.Editor{
 			Email: "email",
-			Role:  accountproto.Account_EDITOR,
 		},
 		feature:              feature,
 		environmentNamespace: "ns0",

@@ -23,7 +23,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -78,7 +77,6 @@ func newMockSegmentCommandHandler(t *testing.T, mockController *gomock.Controlle
 	return &segmentCommandHandler{
 		&eventproto.Editor{
 			Email: "email",
-			Role:  accountproto.Account_OWNER,
 		},
 		segment,
 		publishermock.NewMockPublisher(mockController),

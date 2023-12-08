@@ -406,7 +406,6 @@ func (s *EnvironmentService) CreateTrialProject(
 	}
 	editor := &eventproto.Editor{
 		Email:   req.Command.Email,
-		Role:    accountproto.Account_UNASSIGNED,
 		IsAdmin: false,
 	}
 	existingProject, err := s.getTrialProjectByEmail(ctx, editor.Email, localizer)

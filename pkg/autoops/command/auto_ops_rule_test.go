@@ -25,7 +25,6 @@ import (
 	domain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
@@ -309,7 +308,6 @@ func newAutoOpsRuleCommandHandler(publisher publisher.Publisher, autoOpsRule *do
 	return NewAutoOpsCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
-			Role:  accountproto.Account_EDITOR,
 		},
 		autoOpsRule,
 		publisher,

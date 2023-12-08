@@ -25,7 +25,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
@@ -131,7 +130,6 @@ func newEnvironmentV2CommandHandler(t *testing.T, publisher publisher.Publisher,
 	return NewEnvironmentV2CommandHandler(
 		&eventproto.Editor{
 			Email: "email",
-			Role:  accountproto.Account_EDITOR,
 		},
 		env,
 		publisher,

@@ -32,7 +32,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	pullermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/bucketeer-io/bucketeer/proto/event/domain"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
@@ -99,7 +98,7 @@ func TestExtractAuditLogs(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	editor := &eventproto.Editor{Email: "test@example.com", Role: accountproto.Account_EDITOR}
+	editor := &eventproto.Editor{Email: "test@example.com"}
 	event0, err := domainevent.NewEvent(editor, eventproto.Event_FEATURE, "fId-0", eventproto.Event_FEATURE_CREATED, &eventproto.FeatureCreatedEvent{Id: "fId-0"}, "ns0")
 	assert.NoError(t, err)
 	event1, err := domainevent.NewEvent(editor, eventproto.Event_FEATURE, "fId-1", eventproto.Event_FEATURE_CREATED, &eventproto.FeatureCreatedEvent{Id: "fId-1"}, "ns0")

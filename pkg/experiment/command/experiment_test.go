@@ -26,7 +26,6 @@ import (
 	experimentdomain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -169,7 +168,6 @@ func newExperimentCommandHandler(t *testing.T, publisher publisher.Publisher, ex
 	return NewExperimentCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
-			Role:  accountproto.Account_EDITOR,
 		},
 		experiment,
 		publisher,
