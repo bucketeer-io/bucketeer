@@ -398,6 +398,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			notification.WithMetrics(registerer),
 			notification.WithRunningDurationPerBatch(*s.runningDurationPerBatch),
 			notification.WithDomainSubscription(*s.domainSubscription),
+			notification.WithProject(*s.project),
 			notification.WithDomainTopic(*s.domainTopic),
 			notification.WithPullerNumGoroutines(*s.pullerNumGoroutines),
 			notification.WithPullerMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),

@@ -151,7 +151,7 @@ func NewDomainEventInformer(
 	}
 }
 
-func (i *domainEventInformer) createPuller(ctx context.Context) (puller.RateLimitedPuller, func()) {
+func (i *domainEventInformer) createPuller(ctx context.Context) (puller.RateLimitedPuller, func(), error) {
 	pubsubClient, err := pubsub.NewClient(
 		ctx,
 		i.opts.project,
@@ -160,7 +160,7 @@ func (i *domainEventInformer) createPuller(ctx context.Context) (puller.RateLimi
 	)
 	if err != nil {
 		i.logger.Error("Failed to create pubsub client", zap.Error(err))
-		return nil, nil
+		return nil, nil, err
 	}
 	pubsubPuller, err := pubsubClient.CreatePuller(i.opts.domainSubscription, i.opts.domainTopic,
 		pubsub.WithNumGoroutines(i.opts.pullerNumGoroutines),
@@ -169,7 +169,7 @@ func (i *domainEventInformer) createPuller(ctx context.Context) (puller.RateLimi
 	)
 	if err != nil {
 		i.logger.Error("Failed to create pubsub puller", zap.Error(err))
-		return nil, nil
+		return nil, nil, err
 	}
 	closePubsubClient := func() {
 		i.logger.Debug("Closing pubsub client",
@@ -181,12 +181,15 @@ func (i *domainEventInformer) createPuller(ctx context.Context) (puller.RateLimi
 		}
 	}
 	rateLimitedPuller := puller.NewRateLimitedPuller(pubsubPuller, i.opts.maxMPS)
-	return rateLimitedPuller, closePubsubClient
+	return rateLimitedPuller, closePubsubClient, nil
 }
 
 func (i *domainEventInformer) Run(ctx context.Context) error {
 	i.logger.Info("DomainEventInformer running")
-	rateLimitedPuller, closeClient := i.createPuller(ctx)
+	rateLimitedPuller, closeClient, err := i.createPuller(ctx)
+	if err != nil {
+		return err
+	}
 	cctx, cancel := context.WithCancel(ctx)
 	time.AfterFunc(i.opts.runningDurationPerBatch, func() {
 		i.logger.Info(
@@ -212,7 +215,7 @@ func (i *domainEventInformer) Run(ctx context.Context) error {
 			}
 		}
 	})
-	err := i.group.Wait()
+	err = i.group.Wait()
 	closeClient()
 	i.logger.Info("DomainEventInformer stopped")
 	return err
