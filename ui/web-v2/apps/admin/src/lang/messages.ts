@@ -443,13 +443,11 @@ export const messages = {
     }),
     alreadyProgressiveRolloutConfigured: defineMessage({
       id: 'autoOps.alreadyProgressiveRolloutConfigured',
-      defaultMessage:
-        'There is already a progressive rollout configured. Please delete it before creating a new one.',
+      defaultMessage: 'There is a progressive rollout in progress.',
     }),
     scheduleConfigured: defineMessage({
       id: 'autoOps.scheduleConfigured',
-      defaultMessage:
-        'There is a schedule configured. Please delete it before creating a progressive rollout.',
+      defaultMessage: 'There is a schedule configured.',
     }),
     weightIncreasingOrder: defineMessage({
       id: 'autoOps.weightIncreasingOrder',

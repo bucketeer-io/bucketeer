@@ -68,6 +68,7 @@ import {
 } from '../../proto/autoops/clause_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { classNames } from '../../utils/css';
+import { DetailSkeleton } from '../DetailSkeleton';
 import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
 import { Overlay } from '../Overlay';
@@ -202,6 +203,14 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         ),
       shallowEqual
     );
+    const isAutoOpsRuleLoading = useSelector<AppState, boolean>(
+      (state) => state.autoOpsRules.loading,
+      shallowEqual
+    );
+    const isProgressiveRolloutsLoading = useSelector<AppState, boolean>(
+      (state) => state.progressiveRollout.loading,
+      shallowEqual
+    );
 
     const [open, setOpen] = useState(isNew);
     const [isKillSwitchSelected, setIsKillSwitchSelected] = useState(false);
@@ -215,24 +224,28 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
 
     const { handleSubmit } = methods;
 
-    const [tabs, setTabs] = useState<Tab[]>([
-      {
-        label: TabLabel.ACTIVE,
-        value: sortAutoOpsRules(
-          autoOpsRules.filter((rule) => !rule.triggeredAt),
-          SORT_TYPE.ASC
-        ),
-        selected: true,
-      },
-      {
-        label: TabLabel.COMPLETED,
-        value: sortAutoOpsRules(
-          autoOpsRules.filter((rule) => rule.triggeredAt),
-          SORT_TYPE.DESC
-        ),
-        selected: false,
-      },
-    ]);
+    const [tabs, setTabs] = useState<Tab[]>([]);
+
+    useEffect(() => {
+      setTabs([
+        {
+          label: TabLabel.ACTIVE,
+          value: sortAutoOpsRules(
+            autoOpsRules.filter((rule) => !rule.triggeredAt),
+            SORT_TYPE.ASC
+          ),
+          selected: true,
+        },
+        {
+          label: TabLabel.COMPLETED,
+          value: sortAutoOpsRules(
+            autoOpsRules.filter((rule) => rule.triggeredAt),
+            SORT_TYPE.DESC
+          ),
+          selected: false,
+        },
+      ]);
+    }, [autoOpsRules, setTabs]);
 
     useEffect(() => {
       if (autoOpsRules?.length > 0) {
@@ -289,7 +302,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     }, []);
 
     const isActiveTabSelected =
-      tabs.find((tab) => tab.selected).label === TabLabel.ACTIVE;
+      tabs.find((tab) => tab.selected)?.label === TabLabel.ACTIVE;
 
     return (
       <div className="px-10 py-6 bg-white">
@@ -336,24 +349,28 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
             setIsProgressiveRolloutSelected(true);
           }}
         />
-        <div className="space-y-6 py-6">
-          <ProgressiveRolloutOperation
-            featureId={featureId}
-            isActiveTabSelected={isActiveTabSelected}
-            refetchProgressiveRollouts={refetchProgressiveRollouts}
-          />
-          {tabs
-            .find((tab) => tab.selected)
-            .value.map((rule) => (
-              <Operation
-                key={rule.id}
-                rule={rule}
-                isActiveTabSelected={isActiveTabSelected}
-                handleOpenUpdate={handleOpenUpdate}
-                refetchAutoOpsRules={refetchAutoOpsRules}
-              />
-            ))}
-        </div>
+        {isAutoOpsRuleLoading || isProgressiveRolloutsLoading ? (
+          <DetailSkeleton />
+        ) : (
+          <div className="space-y-6 py-6">
+            <ProgressiveRolloutOperation
+              featureId={featureId}
+              isActiveTabSelected={isActiveTabSelected}
+              refetchProgressiveRollouts={refetchProgressiveRollouts}
+            />
+            {tabs
+              .find((tab) => tab.selected)
+              ?.value.map((rule) => (
+                <Operation
+                  key={rule.id}
+                  rule={rule}
+                  isActiveTabSelected={isActiveTabSelected}
+                  handleOpenUpdate={handleOpenUpdate}
+                  refetchAutoOpsRules={refetchAutoOpsRules}
+                />
+              ))}
+          </div>
+        )}
         {open && (
           <Overlay open={open} onClose={handleClose}>
             <OperationAddUpdateForm

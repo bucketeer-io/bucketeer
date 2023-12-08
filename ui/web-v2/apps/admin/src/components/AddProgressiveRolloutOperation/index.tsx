@@ -5,11 +5,17 @@ import { useIsEditable } from '@/modules/me';
 import { selectAll as selectAllProgressiveRollouts } from '@/modules/porgressiveRollout';
 import { AutoOpsRule } from '@/proto/autoops/auto_ops_rule_pb';
 import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
+import { Feature } from '@/proto/feature/feature_pb';
 import { classNames } from '@/utils/css';
 import { isArraySorted } from '@/utils/isArraySorted';
-import { MinusCircleIcon, PlusIcon } from '@heroicons/react/outline';
+import {
+  ExclamationCircleIcon,
+  MinusCircleIcon,
+  PlusIcon,
+} from '@heroicons/react/outline';
+import { SerializedError } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
-import React, { memo, FC, useEffect, useCallback, Fragment } from 'react';
+import React, { memo, FC, useEffect, useCallback } from 'react';
 import {
   Controller,
   useFieldArray,
@@ -19,6 +25,7 @@ import {
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
 
+import { selectById as selectFeatureById } from '../../modules/features';
 import { DatetimePicker } from '../DatetimePicker';
 import {
   ClauseType,
@@ -27,6 +34,40 @@ import {
 } from '../FeatureAutoOpsRulesForm';
 import { ProgressiveRolloutTypeTab } from '../OperationAddUpdateForm';
 import { Option, Select } from '../Select';
+
+interface FindScheduleOperation {
+  autoOpsRules: AutoOpsRule.AsObject[];
+}
+
+const findScheduleOperation = ({ autoOpsRules }: FindScheduleOperation) => {
+  return autoOpsRules.find((rule) => {
+    const { typeUrl } = rule.clausesList[0].clause;
+    const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
+    return !rule.triggeredAt && type === ClauseType.DATETIME;
+  });
+};
+
+interface isProgressiveRolloutsWarningsExists {
+  feature: Feature.AsObject;
+  progressiveRolloutList: ProgressiveRollout.AsObject[];
+  autoOpsRules: AutoOpsRule.AsObject[];
+}
+
+export const isProgressiveRolloutsWarningsExists = ({
+  feature,
+  progressiveRolloutList,
+  autoOpsRules,
+}: isProgressiveRolloutsWarningsExists): boolean => {
+  const check =
+    feature.variationsList.length > 2 ||
+    feature.prerequisitesList.length > 0 ||
+    feature.targetsList.find((targets) => targets.usersList.length > 0) ||
+    feature.rulesList.length > 0 ||
+    (progressiveRolloutList.length > 0 &&
+      isActiveProgressiveRolloutExists(progressiveRolloutList)) ||
+    findScheduleOperation({ autoOpsRules });
+  return !!check;
+};
 
 interface AddProgressiveRolloutOperationProps {
   featureId: string;
@@ -51,6 +92,14 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
       const methods = useFormContext<any>();
       const { control } = methods;
 
+      const [feature] = useSelector<
+        AppState,
+        [Feature.AsObject | undefined, SerializedError | null]
+      >((state) => [
+        selectFeatureById(state.features, featureId),
+        state.features.getFeatureError,
+      ]);
+
       const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
         (state) =>
           selectAllAutoOpsRules(state.autoOpsRules).filter(
@@ -74,28 +123,70 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
         progressiveRolloutTypeList.find((p) => p.selected).value ===
         ProgressiveRollout.Type.TEMPLATE_SCHEDULE;
 
-      const findScheduleOperation = autoOpsRules.find((rule) => {
-        const { typeUrl } = rule.clausesList[0].clause;
-        const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
-        return !rule.triggeredAt && type === ClauseType.DATETIME;
-      });
-
-      if (findScheduleOperation) {
-        return (
-          <p className="input-error mt-2">
-            {f(messages.autoOps.scheduleConfigured)}
-          </p>
-        );
-      }
-
       if (
-        progressiveRolloutList.length > 0 &&
-        isActiveProgressiveRolloutExists(progressiveRolloutList)
+        isProgressiveRolloutsWarningsExists({
+          feature,
+          progressiveRolloutList,
+          autoOpsRules,
+        })
       ) {
         return (
-          <p className="input-error mt-2">
-            {f(messages.autoOps.alreadyProgressiveRolloutConfigured)}
-          </p>
+          <div className="rounded-md bg-yellow-50 p-4 mt-2">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <ExclamationCircleIcon
+                  className="h-5 w-5 text-yellow-400"
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm text-yellow-700 font-semibold">
+                  The progressive rollout can't be created because
+                </p>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <ul className="list-disc space-y-1 pl-5">
+                    {feature.variationsList.length > 2 ? (
+                      <li>
+                        <p>There are more than 2 variations.</p>
+                      </li>
+                    ) : null}
+                    {feature.prerequisitesList.length ? (
+                      <li>
+                        <p>There is Prerequisite.</p>
+                      </li>
+                    ) : null}
+                    {feature.targetsList.find(
+                      (targets) => targets.usersList.length > 0
+                    ) ? (
+                      <li>
+                        <p>There is an Individual targeting.</p>
+                      </li>
+                    ) : null}
+                    {feature.rulesList.length > 0 ? (
+                      <li>
+                        <p>There is a rule.</p>
+                      </li>
+                    ) : null}
+                    {progressiveRolloutList.length > 0 &&
+                    isActiveProgressiveRolloutExists(progressiveRolloutList) ? (
+                      <li>
+                        <p>
+                          {f(
+                            messages.autoOps.alreadyProgressiveRolloutConfigured
+                          )}
+                        </p>
+                      </li>
+                    ) : null}
+                    {findScheduleOperation({ autoOpsRules }) ? (
+                      <li>
+                        <p>{f(messages.autoOps.scheduleConfigured)}</p>
+                      </li>
+                    ) : null}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         );
       }
 

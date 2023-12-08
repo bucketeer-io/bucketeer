@@ -41,17 +41,6 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       selectFeatureById(state.features, featureId),
       state.features.getFeatureError,
     ]);
-    const isAutoOpsRuleLoading = useSelector<AppState, boolean>(
-      (state) => state.autoOpsRules.loading,
-      shallowEqual
-    );
-    const isProgressiveRolloutsLoading = useSelector<AppState, boolean>(
-      (state) => state.progressiveRollout.loading,
-      shallowEqual
-    );
-
-    const isLoading =
-      isFeatureLoading || isAutoOpsRuleLoading || isProgressiveRolloutsLoading;
 
     const defaultValues = {
       opsType: OpsType.ENABLE_FEATURE,
@@ -112,7 +101,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       );
     };
 
-    if (isLoading) {
+    if (isFeatureLoading) {
       return (
         <div className="p-9 bg-gray-100">
           <DetailSkeleton />

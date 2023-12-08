@@ -1,6 +1,8 @@
 import { intl } from '@/lang';
 import { AppState } from '@/modules';
+import { selectAll as selectAllAutoOpsRules } from '@/modules/autoOpsRules';
 import { useCurrentEnvironment } from '@/modules/me';
+import { selectAll as selectAllProgressiveRollouts } from '@/modules/porgressiveRollout';
 import { AutoOpsRule, OpsType } from '@/proto/autoops/auto_ops_rule_pb';
 import {
   DatetimeClause,
@@ -20,12 +22,12 @@ import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { Feature } from '@/proto/feature/feature_pb';
 import { AppDispatch } from '@/store';
 import { classNames } from '@/utils/css';
-import { XIcon } from '@heroicons/react/outline';
+import { ExclamationCircleIcon, XIcon } from '@heroicons/react/outline';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useIntl } from 'react-intl';
-import { useDispatch, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { messages } from '../../lang/messages';
 import {
@@ -35,7 +37,10 @@ import {
 } from '../../modules/autoOpsRules';
 import { selectById as selectFeatureById } from '../../modules/features';
 import { createProgressiveRollout } from '../../modules/porgressiveRollout';
-import { AddProgressiveRolloutOperation } from '../AddProgressiveRolloutOperation';
+import {
+  AddProgressiveRolloutOperation,
+  isProgressiveRolloutsWarningsExists,
+} from '../AddProgressiveRolloutOperation';
 import {
   AddUpdateEventRateOperation,
   createOpsEventRateClause,
@@ -88,6 +93,24 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       selectFeatureById(state.features, featureId),
       state.features.getFeatureError,
     ]);
+    const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
+      (state) =>
+        selectAllAutoOpsRules(state.autoOpsRules).filter(
+          (rule) => rule.featureId === featureId
+        ),
+      shallowEqual
+    );
+
+    const progressiveRolloutList = useSelector<
+      AppState,
+      ProgressiveRollout.AsObject[]
+    >(
+      (state) =>
+        selectAllProgressiveRollouts(state.progressiveRollout).filter(
+          (rule) => rule.featureId === featureId
+        ),
+      shallowEqual
+    );
 
     const [radioList, setRadioList] = useState([]);
 
@@ -408,6 +431,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                 onClick={onCancel}
               />
             </div>
+
             <div className="px-4 h-full flex flex-col overflow-hidden">
               <div className="flex border-b border-gray-100">
                 {tabs.map((tab) => (
@@ -510,7 +534,17 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             <button
               type="button"
               className="btn-submit-gradient"
-              disabled={!isValid || isSubmitting || isSeeDetailsSelected}
+              disabled={
+                !isValid ||
+                isSubmitting ||
+                isSeeDetailsSelected ||
+                (clauseType === ClauseType.PROGRESSIVE_ROLLOUT &&
+                  isProgressiveRolloutsWarningsExists({
+                    progressiveRolloutList,
+                    feature,
+                    autoOpsRules,
+                  }))
+              }
               onClick={handleSubmit(handleOnSubmit)}
             >
               {f(messages.button.submit)}
