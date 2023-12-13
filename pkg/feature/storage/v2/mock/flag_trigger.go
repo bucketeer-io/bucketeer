@@ -38,20 +38,6 @@ func (m *MockFlagTriggerStorage) EXPECT() *MockFlagTriggerStorageMockRecorder {
 	return m.recorder
 }
 
-// ControlFlagTrigger mocks base method.
-func (m *MockFlagTriggerStorage) ControlFlagTrigger(ctx context.Context, id, environmentNamespace string, disabled bool) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ControlFlagTrigger", ctx, id, environmentNamespace, disabled)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ControlFlagTrigger indicates an expected call of ControlFlagTrigger.
-func (mr *MockFlagTriggerStorageMockRecorder) ControlFlagTrigger(ctx, id, environmentNamespace, disabled interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ControlFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).ControlFlagTrigger), ctx, id, environmentNamespace, disabled)
-}
-
 // CreateFlagTrigger mocks base method.
 func (m *MockFlagTriggerStorage) CreateFlagTrigger(ctx context.Context, flagTrigger *domain.FlagTrigger) error {
 	m.ctrl.T.Helper()
@@ -78,6 +64,34 @@ func (m *MockFlagTriggerStorage) DeleteFlagTrigger(ctx context.Context, id, envi
 func (mr *MockFlagTriggerStorageMockRecorder) DeleteFlagTrigger(ctx, id, environmentNamespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).DeleteFlagTrigger), ctx, id, environmentNamespace)
+}
+
+// DisableFlagTrigger mocks base method.
+func (m *MockFlagTriggerStorage) DisableFlagTrigger(ctx context.Context, id, environmentNamespace string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DisableFlagTrigger", ctx, id, environmentNamespace)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DisableFlagTrigger indicates an expected call of DisableFlagTrigger.
+func (mr *MockFlagTriggerStorageMockRecorder) DisableFlagTrigger(ctx, id, environmentNamespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).DisableFlagTrigger), ctx, id, environmentNamespace)
+}
+
+// EnableFlagTrigger mocks base method.
+func (m *MockFlagTriggerStorage) EnableFlagTrigger(ctx context.Context, id, environmentNamespace string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableFlagTrigger", ctx, id, environmentNamespace)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnableFlagTrigger indicates an expected call of EnableFlagTrigger.
+func (mr *MockFlagTriggerStorageMockRecorder) EnableFlagTrigger(ctx, id, environmentNamespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).EnableFlagTrigger), ctx, id, environmentNamespace)
 }
 
 // GetFlagTrigger mocks base method.
@@ -124,4 +138,32 @@ func (m *MockFlagTriggerStorage) ResetFlagTrigger(ctx context.Context, id, envir
 func (mr *MockFlagTriggerStorageMockRecorder) ResetFlagTrigger(ctx, id, environmentNamespace, uuid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).ResetFlagTrigger), ctx, id, environmentNamespace, uuid)
+}
+
+// UpdateFlagTrigger mocks base method.
+func (m *MockFlagTriggerStorage) UpdateFlagTrigger(ctx context.Context, id, environmentNamespace, description string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFlagTrigger", ctx, id, environmentNamespace, description)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFlagTrigger indicates an expected call of UpdateFlagTrigger.
+func (mr *MockFlagTriggerStorageMockRecorder) UpdateFlagTrigger(ctx, id, environmentNamespace, description interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).UpdateFlagTrigger), ctx, id, environmentNamespace, description)
+}
+
+// UpdateFlagTriggerUsage mocks base method.
+func (m *MockFlagTriggerStorage) UpdateFlagTriggerUsage(ctx context.Context, id, environmentNamespace string, triggerTimes int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFlagTriggerUsage", ctx, id, environmentNamespace, triggerTimes)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFlagTriggerUsage indicates an expected call of UpdateFlagTriggerUsage.
+func (mr *MockFlagTriggerStorageMockRecorder) UpdateFlagTriggerUsage(ctx, id, environmentNamespace, triggerTimes interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFlagTriggerUsage", reflect.TypeOf((*MockFlagTriggerStorage)(nil).UpdateFlagTriggerUsage), ctx, id, environmentNamespace, triggerTimes)
 }

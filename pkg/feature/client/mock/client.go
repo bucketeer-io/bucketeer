@@ -389,6 +389,26 @@ func (mr *MockClientMockRecorder) EvaluateFeatures(ctx, in interface{}, opts ...
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EvaluateFeatures", reflect.TypeOf((*MockClient)(nil).EvaluateFeatures), varargs...)
 }
 
+// FlagTriggerWebhook mocks base method.
+func (m *MockClient) FlagTriggerWebhook(ctx context.Context, in *feature.FlagTriggerWebhookRequest, opts ...grpc.CallOption) (*feature.FlagTriggerWebhookResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "FlagTriggerWebhook", varargs...)
+	ret0, _ := ret[0].(*feature.FlagTriggerWebhookResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FlagTriggerWebhook indicates an expected call of FlagTriggerWebhook.
+func (mr *MockClientMockRecorder) FlagTriggerWebhook(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlagTriggerWebhook", reflect.TypeOf((*MockClient)(nil).FlagTriggerWebhook), varargs...)
+}
+
 // GetFeature mocks base method.
 func (m *MockClient) GetFeature(ctx context.Context, in *feature.GetFeatureRequest, opts ...grpc.CallOption) (*feature.GetFeatureResponse, error) {
 	m.ctrl.T.Helper()
