@@ -139,30 +139,50 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
               </div>
               <div className="ml-3 flex-1">
                 <p className="text-sm text-yellow-700 font-semibold">
-                  The progressive rollout can't be created because
+                  {f(messages.autoOps.progressiveRolloutWarningMessages.title)}
                 </p>
                 <div className="mt-2 text-sm text-yellow-700">
                   <ul className="list-disc space-y-1 pl-5">
                     {feature.variationsList.length > 2 ? (
                       <li>
-                        <p>There are more than 2 variations.</p>
+                        <p>
+                          {f(
+                            messages.autoOps.progressiveRolloutWarningMessages
+                              .variations
+                          )}
+                        </p>
                       </li>
                     ) : null}
                     {feature.prerequisitesList.length ? (
                       <li>
-                        <p>There is Prerequisite.</p>
+                        <p>
+                          {f(
+                            messages.autoOps.progressiveRolloutWarningMessages
+                              .prerequisites
+                          )}
+                        </p>
                       </li>
                     ) : null}
                     {feature.targetsList.find(
                       (targets) => targets.usersList.length > 0
                     ) ? (
                       <li>
-                        <p>There is an Individual targeting.</p>
+                        <p>
+                          {f(
+                            messages.autoOps.progressiveRolloutWarningMessages
+                              .individualTargeting
+                          )}
+                        </p>
                       </li>
                     ) : null}
                     {feature.rulesList.length > 0 ? (
                       <li>
-                        <p>There is a rule.</p>
+                        <p>
+                          {f(
+                            messages.autoOps.progressiveRolloutWarningMessages
+                              .targetingRules
+                          )}
+                        </p>
                       </li>
                     ) : null}
                     {progressiveRolloutList.length > 0 &&
@@ -172,18 +192,30 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                       <li>
                         <p>
                           {f(
-                            messages.autoOps.alreadyProgressiveRolloutConfigured
+                            messages.autoOps.progressiveRolloutWarningMessages
+                              .alreadyProgressiveRollout
                           )}
                         </p>
                       </li>
                     ) : null}
                     {findScheduleOperation({ autoOpsRules }) ? (
                       <li>
-                        <p>{f(messages.autoOps.scheduleConfigured)}</p>
+                        <p>
+                          {f(
+                            messages.autoOps.progressiveRolloutWarningMessages
+                              .scheduledOperations
+                          )}
+                        </p>
                       </li>
                     ) : null}
                   </ul>
                 </div>
+                <p className="text-yellow-700 text-sm mt-4">
+                  {f(
+                    messages.autoOps.progressiveRolloutWarningMessages
+                      .moreInformation
+                  )}
+                </p>
               </div>
             </div>
           </div>

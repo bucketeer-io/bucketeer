@@ -441,14 +441,6 @@ export const messages = {
       id: 'autoOps.executeAt',
       defaultMessage: 'Execute at',
     }),
-    alreadyProgressiveRolloutConfigured: defineMessage({
-      id: 'autoOps.alreadyProgressiveRolloutConfigured',
-      defaultMessage: 'There is a progressive rollout in progress.',
-    }),
-    scheduleConfigured: defineMessage({
-      id: 'autoOps.scheduleConfigured',
-      defaultMessage: 'There is a schedule configured.',
-    }),
     weightIncreasingOrder: defineMessage({
       id: 'autoOps.weightIncreasingOrder',
       defaultMessage: 'The weight must be in increasing order.',
@@ -457,6 +449,42 @@ export const messages = {
       id: 'autoOps.dateIncreasingOrder',
       defaultMessage: 'The date must be in increasing order.',
     }),
+    progressiveRolloutWarningMessages: {
+      title: defineMessage({
+        id: 'progressiveRolloutWarningMessages.title',
+        defaultMessage:
+          'The progressive rollout cannot be created. Please check the following conditions.',
+      }),
+      variations: defineMessage({
+        id: 'progressiveRolloutWarningMessages.variations',
+        defaultMessage: 'The flag must have only 2 variations',
+      }),
+      prerequisites: defineMessage({
+        id: 'progressiveRolloutWarningMessages.prerequisites',
+        defaultMessage: 'The flag must not have Prerequisites',
+      }),
+      individualTargeting: defineMessage({
+        id: 'progressiveRolloutWarningMessages.individualTargeting',
+        defaultMessage: 'The flag must not have individual targeting',
+      }),
+      targetingRules: defineMessage({
+        id: 'progressiveRolloutWarningMessages.targetingRules',
+        defaultMessage: 'The flag must not have targeting rules',
+      }),
+      scheduledOperations: defineMessage({
+        id: 'progressiveRolloutWarningMessages.scheduledOperations',
+        defaultMessage: 'The flag must not have scheduled operations',
+      }),
+      alreadyProgressiveRollout: defineMessage({
+        id: 'progressiveRolloutWarningMessages.alreadyProgressiveRollout',
+        defaultMessage:
+          'Cannot execute more than one progressive rollout at the same time',
+      }),
+      moreInformation: defineMessage({
+        id: 'progressiveRolloutWarningMessages.moreInformation',
+        defaultMessage: 'For more information, please see the documentation.',
+      }),
+    },
   },
   trigger: {
     documentation: defineMessage({
