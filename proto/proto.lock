@@ -16912,6 +16912,10 @@
                 "integer": 15
               },
               {
+                "name": "DOMAIN_EVENT_FLAG_TRIGGER",
+                "integer": 16
+              },
+              {
                 "name": "FEATURE_STALE",
                 "integer": 100
               },
