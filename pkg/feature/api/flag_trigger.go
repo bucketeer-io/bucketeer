@@ -20,14 +20,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"net/url"
 	"strconv"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -1015,19 +1013,14 @@ func (s *FeatureService) generateTriggerURL(
 	if err != nil {
 		return "", err
 	}
-	triggerURL, _ := url.Parse(s.triggerURL)
 	if masked {
-		triggerURL.RawQuery = fmt.Sprintf("secret=%s", maskURI)
-		return triggerURL.String(), nil
+		return fmt.Sprintf("%s/%s", s.triggerURL, maskURI), nil
 	} else {
-		query := triggerURL.Query()
 		encrypted, err := s.triggerCryptoUtil.Encrypt(ctx, encoded)
 		if err != nil {
 			return "", err
 		}
 		secret := base64.RawURLEncoding.EncodeToString(encrypted)
-		query.Set("secret", secret)
-		triggerURL.RawQuery = query.Encode()
-		return triggerURL.String(), nil
+		return fmt.Sprintf("%s/%s", s.triggerURL, secret), nil
 	}
 }

@@ -46,7 +46,6 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureapi "github.com/bucketeer-io/bucketeer/pkg/feature/api"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/flagtrigger/webhook"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
@@ -584,7 +583,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go experimentServer.Run()
 	// featureService
-	featureService, featureFlagHandler, err := s.createFeatureFlagTriggerService(
+	featureService, err := s.createFeatureFlagTriggerService(
 		ctx,
 		accountClient,
 		experimentClient,
@@ -592,7 +591,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		nonPersistentRedisV3Cache,
 		segmentUsersPublisher,
 		domainTopicPublisher,
-		featureClient,
 		mysqlClient,
 		logger,
 	)
@@ -605,7 +603,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
-		rpc.WithHandler(fmt.Sprintf("/%s", featureFlagTriggerWebhookPath), featureFlagHandler),
 	)
 	go featureServer.Run()
 	// migrateMySQLService
@@ -837,13 +834,12 @@ func (s *server) createFeatureFlagTriggerService(
 	nonPersistentRedisV3Cache cache.MultiGetDeleteCountCache,
 	segmentUsersPublisher publisher.Publisher,
 	domainTopicPublisher publisher.Publisher,
-	featureClient featureclient.Client,
 	mysqlClient mysql.Client,
 	logger *zap.Logger,
-) (rpc.Service, http.Handler, error) {
+) (rpc.Service, error) {
 	triggerCryptoUtil, err := s.createCryptoUtil(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	featureService := featureapi.NewFeatureService(
 		mysqlClient,
@@ -858,13 +854,7 @@ func (s *server) createFeatureFlagTriggerService(
 		featureapi.WithLogger(logger),
 	)
 
-	handler := webhook.NewHandler(
-		mysqlClient,
-		featureClient,
-		triggerCryptoUtil,
-		webhook.WithLogger(logger),
-	)
-	return featureService, handler, nil
+	return featureService, nil
 }
 
 func (s *server) createCryptoUtil(
