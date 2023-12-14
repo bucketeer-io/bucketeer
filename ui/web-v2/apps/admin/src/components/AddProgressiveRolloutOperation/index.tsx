@@ -8,6 +8,7 @@ import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { Feature } from '@/proto/feature/feature_pb';
 import { classNames } from '@/utils/css';
 import { isArraySorted } from '@/utils/isArraySorted';
+import { isIntervals5MinutesApart } from '@/utils/isIntervals5MinutesApart';
 import {
   ExclamationCircleIcon,
   MinusCircleIcon,
@@ -55,6 +56,7 @@ export const isProgressiveRolloutsWarningsExists = ({
   autoOpsRules,
 }: isProgressiveRolloutsWarningsExists): boolean => {
   const check =
+    !feature.enabled ||
     feature.variationsList.length > 2 ||
     feature.prerequisitesList.length > 0 ||
     feature.targetsList.find((targets) => targets.usersList.length > 0) ||
@@ -143,6 +145,16 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                 </p>
                 <div className="mt-2 text-sm text-yellow-700">
                   <ul className="list-disc space-y-1 pl-5">
+                    {!feature.enabled ? (
+                      <li>
+                        <p>
+                          {f(
+                            messages.autoOps.progressiveRolloutWarningMessages
+                              .featureNotEnabled
+                          )}
+                        </p>
+                      </li>
+                    ) : null}
                     {feature.variationsList.length > 2 ? (
                       <li>
                         <p>
@@ -246,7 +258,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
               </div>
             ))}
           </div>
-          <div className="mt-4">
+          <div className="mt-4  px-[2px]">
             <span className="input-label">{f(messages.feature.variation)}</span>
             <Controller
               key={
@@ -350,7 +362,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
     ];
 
     return (
-      <div className="mt-4 h-full flex flex-col overflow-hidden">
+      <div className="mt-4 h-full flex flex-col overflow-hidden px-[2px]">
         <div>
           <span className="input-label">{f(messages.autoOps.startDate)}</span>
           <DatetimePicker
@@ -547,25 +559,12 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
     const isDatesSorted = isArraySorted(
       watchManualSchedulesList.map((d) => d.executeAt.time.getTime())
     );
+    const isDatetime5MinutesApart = isIntervals5MinutesApart(
+      watchManualSchedulesList.map((d) => d.executeAt.time.getTime())
+    );
 
     return (
-      <div className="mt-4 h-full flex flex-col overflow-hidden">
-        <button
-          onClick={handleAddOperation}
-          className={classNames(
-            'text-primary space-x-2 flex items-center self-start',
-            (isLastScheduleWeight100 || !isWeightsSorted || !isDatesSorted) &&
-              'opacity-50 cursor-not-allowed'
-          )}
-          disabled={
-            isLastScheduleWeight100 || !isWeightsSorted || !isDatesSorted
-          }
-        >
-          <PlusIcon width={16} />
-          <span className="text-sm font-medium">
-            {f(messages.button.addOperation)}
-          </span>
-        </button>
+      <div className="mt-4 h-full flex flex-col overflow-hidden px-[2px]">
         <div className="space-y-2 flex flex-col overflow-y-auto h-full mt-2">
           {manualSchedulesList.map((_, index) => (
             <div key={index}>
@@ -661,13 +660,35 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
             <ErrorMessage
               isWeightsSorted={isWeightsSorted}
               isDatesSorted={isDatesSorted}
+              isDatetime5MinutesApart={isDatetime5MinutesApart}
             />
           )}
+          <div className="py-3">
+            <button
+              onClick={handleAddOperation}
+              className={classNames(
+                'text-primary space-x-2 flex items-center self-start',
+                (isLastScheduleWeight100 ||
+                  !isWeightsSorted ||
+                  !isDatesSorted) &&
+                  'opacity-50 cursor-not-allowed'
+              )}
+              disabled={
+                isLastScheduleWeight100 || !isWeightsSorted || !isDatesSorted
+              }
+            >
+              <PlusIcon width={16} />
+              <span className="text-sm font-medium">
+                {f(messages.button.addOperation)}
+              </span>
+            </button>
+          </div>
         </div>
         {watchManualSchedulesList.length > 10 && (
           <ErrorMessage
             isWeightsSorted={isWeightsSorted}
             isDatesSorted={isDatesSorted}
+            isDatetime5MinutesApart={isDatetime5MinutesApart}
           />
         )}
       </div>
@@ -678,13 +699,19 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
 interface ErrorMessageProps {
   isWeightsSorted: boolean;
   isDatesSorted: boolean;
+  isDatetime5MinutesApart: boolean;
 }
 
 const ErrorMessage: FC<ErrorMessageProps> = memo(
-  ({ isWeightsSorted, isDatesSorted }) => {
+  ({ isWeightsSorted, isDatesSorted, isDatetime5MinutesApart }) => {
     const { formatMessage: f } = useIntl();
+
+    if (isWeightsSorted && isDatesSorted && isDatetime5MinutesApart) {
+      return null;
+    }
+
     return (
-      <div className="flex pb-6 pt-2 space-x-2 pr-6">
+      <div className="flex space-x-2">
         <div className="flex-1">
           {!isWeightsSorted && (
             <p className="input-error">
@@ -695,13 +722,21 @@ const ErrorMessage: FC<ErrorMessageProps> = memo(
           )}
         </div>
         <div className="flex-1">
-          {!isDatesSorted && (
+          {!isDatesSorted ? (
             <p className="input-error">
               <span role="alert">
                 {f(messages.autoOps.dateIncreasingOrder)}
               </span>
             </p>
-          )}
+          ) : !isDatetime5MinutesApart ? (
+            !isDatetime5MinutesApart && (
+              <p className="input-error">
+                <span role="alert">
+                  {f(messages.autoOps.timeInterval5MinutesApart)}
+                </span>
+              </p>
+            )
+          ) : null}
         </div>
       </div>
     );

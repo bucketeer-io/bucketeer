@@ -449,6 +449,11 @@ export const messages = {
       id: 'autoOps.dateIncreasingOrder',
       defaultMessage: 'The date must be in increasing order.',
     }),
+    timeInterval5MinutesApart: defineMessage({
+      id: 'autoOps.timeInterval5MinutesApart',
+      defaultMessage:
+        'The scheduled time interval must be at least 5 minutes apart.',
+    }),
     progressiveRolloutWarningMessages: {
       title: defineMessage({
         id: 'progressiveRolloutWarningMessages.title',
@@ -458,6 +463,11 @@ export const messages = {
       variations: defineMessage({
         id: 'progressiveRolloutWarningMessages.variations',
         defaultMessage: 'The flag must have only 2 variations',
+      }),
+      featureNotEnabled: defineMessage({
+        id: 'progressiveRolloutWarningMessages.featureNotEnabled',
+        defaultMessage:
+          'The feature flag is not enabled. Please enable it before using the progressive rollout',
       }),
       prerequisites: defineMessage({
         id: 'progressiveRolloutWarningMessages.prerequisites',

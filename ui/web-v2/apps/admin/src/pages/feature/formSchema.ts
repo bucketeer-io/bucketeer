@@ -1,5 +1,6 @@
 import { yupLocale } from '@/lang/yup';
 import { isArraySorted } from '@/utils/isArraySorted';
+import { isIntervals5MinutesApart } from '@/utils/isIntervals5MinutesApart';
 import * as yup from 'yup';
 
 import { ClauseType } from '../../components/FeatureAutoOpsRulesForm';
@@ -240,6 +241,20 @@ export const operationFormSchema = yup.object().shape({
                   from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
                 ) {
                   return isArraySorted(
+                    from[4].value.progressiveRollout.manual.schedulesList.map(
+                      (d) => d.executeAt.time.getTime()
+                    )
+                  );
+                }
+                return true;
+              })
+              .test('timeIntervals', '', function () {
+                const { from } = this as any;
+
+                if (
+                  from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
+                ) {
+                  return isIntervals5MinutesApart(
                     from[4].value.progressiveRollout.manual.schedulesList.map(
                       (d) => d.executeAt.time.getTime()
                     )

@@ -22,6 +22,7 @@ import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { Feature } from '@/proto/feature/feature_pb';
 import { AppDispatch } from '@/store';
 import { classNames } from '@/utils/css';
+import { createVariationLabel } from '@/utils/variation';
 import { XIcon } from '@heroicons/react/outline';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
@@ -405,7 +406,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     const variationOptions = feature.variationsList.map((v) => {
       return {
         value: v.id,
-        label: v.value,
+        label: createVariationLabel(v),
       };
     });
 
