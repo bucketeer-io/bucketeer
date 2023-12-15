@@ -527,10 +527,10 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
 
       let weight = lastSchedule ? Number(lastSchedule.weight) : 0;
 
-      if (weight >= 80) {
+      if (weight >= 90) {
         weight = 100;
       } else {
-        weight = weight + 20;
+        weight = weight + 10;
       }
 
       append({
@@ -566,8 +566,8 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
     return (
       <div className="mt-4 h-full flex flex-col overflow-hidden px-[2px]">
         <div className="space-y-2 flex flex-col overflow-y-auto h-full mt-2">
-          {manualSchedulesList.map((_, index) => (
-            <div key={index}>
+          {manualSchedulesList.map((schedule, index) => (
+            <div key={schedule.id}>
               {index === 0 && (
                 <div className="flex space-x-4 mb-2">
                   <div className="w-1/2 input-label">

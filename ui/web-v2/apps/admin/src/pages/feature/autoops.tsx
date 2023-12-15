@@ -60,7 +60,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
           schedulesList: [
             {
               executeAt: createInitialDatetimeClause(),
-              weight: 20,
+              weight: 10,
             },
           ],
         },
