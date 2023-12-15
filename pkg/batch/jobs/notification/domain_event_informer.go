@@ -330,7 +330,7 @@ func (i *domainEventInformer) convSourceType(
 		return notificationproto.Subscription_DOMAIN_EVENT_PROGRESSIVE_ROLLOUT, nil
 	case domaineventproto.Event_ORGANIZATION:
 		return notificationproto.Subscription_DOMAIN_EVENT_ORGANIZATION, nil
-	case domaineventproto.Event_FlagTrigger:
+	case domaineventproto.Event_FLAG_TRIGGER:
 		return notificationproto.Subscription_DOMAIN_EVENT_FLAG_TRIGGER, nil
 
 	}
