@@ -504,6 +504,72 @@ export const messages = {
       defaultMessage: 'Evaluation Count',
     }),
   },
+  trigger: {
+    description: defineMessage({
+      id: 'trigger.description',
+      defaultMessage: 'Use triggers to turn a flag on or off remotely',
+    }),
+    addTrigger: defineMessage({
+      id: 'trigger.addTrigger',
+      defaultMessage: 'Add Trigger',
+    }),
+    triggerType: defineMessage({
+      id: 'trigger.triggerType',
+      defaultMessage: 'Trigger type',
+    }),
+    action: defineMessage({
+      id: 'trigger.action',
+      defaultMessage: 'Action',
+    }),
+    save: defineMessage({
+      id: 'trigger.save',
+      defaultMessage: 'Save',
+    }),
+    flagTarget: defineMessage({
+      id: 'trigger.flagTarget',
+      defaultMessage: 'Flag Target',
+    }),
+    triggerURL: defineMessage({
+      id: 'trigger.triggerURL',
+      defaultMessage: 'Trigger URL',
+    }),
+    triggeredTimes: defineMessage({
+      id: 'trigger.triggeredTimes',
+      defaultMessage: 'Triggered Times',
+    }),
+    lastTriggered: defineMessage({
+      id: 'trigger.lastTriggered',
+      defaultMessage: 'Last Triggered',
+    }),
+    turnTheFlagON: defineMessage({
+      id: 'trigger.turnTheFlagON',
+      defaultMessage: 'Turn the flag ON',
+    }),
+    turnTheFlagOFF: defineMessage({
+      id: 'trigger.turnTheFlagOFF',
+      defaultMessage: 'Turn the flag OFF',
+    }),
+    editDescription: defineMessage({
+      id: 'trigger.editDescription',
+      defaultMessage: 'Edit description',
+    }),
+    enableTrigger: defineMessage({
+      id: 'trigger.enableTrigger',
+      defaultMessage: 'Enable Trigger',
+    }),
+    disableTrigger: defineMessage({
+      id: 'trigger.disableTrigger',
+      defaultMessage: 'Disable Trigger',
+    }),
+    resetURL: defineMessage({
+      id: 'trigger.resetURL',
+      defaultMessage: 'Reset URL',
+    }),
+    deleteTrigger: defineMessage({
+      id: 'trigger.deleteTrigger',
+      defaultMessage: 'Delete Trigger',
+    }),
+  },
   maintainer: defineMessage({
     id: 'maintainer',
     defaultMessage: 'Maintainer',
@@ -1713,6 +1779,10 @@ export const messages = {
       autoOps: defineMessage({
         id: 'feature.tab.autoOps',
         defaultMessage: 'Auto Operations',
+      }),
+      trigger: defineMessage({
+        id: 'feature.tab.trigger',
+        defaultMessage: 'Trigger',
       }),
       evaluation: defineMessage({
         id: 'feature.tab.evaluation',

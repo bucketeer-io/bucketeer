@@ -24,6 +24,7 @@ import {
   PAGE_PATH_FEATURE_HISTORY,
   PAGE_PATH_FEATURE_SETTING,
   PAGE_PATH_FEATURE_TARGETING,
+  PAGE_PATH_FEATURE_TRIGGER,
   PAGE_PATH_FEATURE_VARIATION,
   PAGE_PATH_NEW,
   PAGE_PATH_ROOT,
@@ -45,6 +46,7 @@ import { FeatureExperimentsPage } from './experiments';
 import { FeatureHistoryPage } from './history';
 import { FeatureSettingsPage } from './settings';
 import { FeatureTargetingPage } from './targeting';
+import { FeatureTriggerPage } from './triggers';
 import { FeatureVariationsPage } from './variations';
 
 export const FeatureDetailPage: FC = memo(() => {
@@ -159,6 +161,9 @@ export const FeatureDetailPage: FC = memo(() => {
         >
           <FeatureExperimentsPage featureId={featureId} />
         </Route>
+        <Route exact path={`${url}${PAGE_PATH_FEATURE_TRIGGER}`}>
+          <FeatureTriggerPage featureId={featureId} />
+        </Route>
         <Route exact path={`${url}${PAGE_PATH_FEATURE_VARIATION}`}>
           <FeatureVariationsPage featureId={featureId} />
         </Route>
@@ -201,6 +206,11 @@ const createTabs = (): Array<TabItem> => {
       message: intl.formatMessage(messages.feature.tab.autoOps),
       to: PAGE_PATH_FEATURE_AUTOOPS,
       isNew: true,
+    },
+    {
+      message: intl.formatMessage(messages.feature.tab.trigger),
+      to: PAGE_PATH_FEATURE_TRIGGER,
+      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.experiments),
