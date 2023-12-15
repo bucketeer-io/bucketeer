@@ -203,9 +203,9 @@ func TestDeleteFlagTrigger(t *testing.T) {
 		Id:                   createResp.FlagTrigger.Id,
 		EnvironmentNamespace: *environmentNamespace,
 	}
-	resp := getFeatureFlagTrigger(t, client, getFlagTriggerReq)
-	if resp.FlagTrigger.Deleted != true {
-		t.Fatal("unexpected deleted")
+	_, err = client.GetFlagTrigger(context.Background(), getFlagTriggerReq)
+	if err == nil {
+		t.Fatal("flag trigger delete error")
 	}
 }
 
@@ -391,10 +391,10 @@ func newCreateFlagTriggerCmd(
 func getFeatureFlagTrigger(
 	t *testing.T,
 	client featureproto.FeatureServiceClient,
-	cmd *featureproto.GetFlagTriggerRequest,
+	req *featureproto.GetFlagTriggerRequest,
 ) *featureproto.GetFlagTriggerResponse {
 	t.Helper()
-	resp, err := client.GetFlagTrigger(context.Background(), cmd)
+	resp, err := client.GetFlagTrigger(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}

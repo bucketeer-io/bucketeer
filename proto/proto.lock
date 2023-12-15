@@ -5861,7 +5861,7 @@
                 "integer": 15
               },
               {
-                "name": "FlagTrigger",
+                "name": "FLAG_TRIGGER",
                 "integer": 16
               }
             ]
@@ -6445,7 +6445,7 @@
                 "integer": 1602
               },
               {
-                "name": "FLAG_TRIGGER_CHANGE_DESCRIPTION",
+                "name": "FLAG_TRIGGER_DESCRIPTION_CHANGED",
                 "integer": 1603
               },
               {
@@ -9164,7 +9164,7 @@
             ]
           },
           {
-            "name": "FlagTriggerChangeDescriptionEvent",
+            "name": "FlagTriggerDescriptionChangedEvent",
             "fields": [
               {
                 "id": 1,
@@ -13268,16 +13268,11 @@
               },
               {
                 "id": 11,
-                "name": "deleted",
-                "type": "bool"
-              },
-              {
-                "id": 12,
                 "name": "created_at",
                 "type": "int64"
               },
               {
-                "id": 13,
+                "id": 12,
                 "name": "updated_at",
                 "type": "int64"
               }

@@ -1,5 +1,3 @@
-UPDATE flag_triggers
-SET deleted   = 1,
-    updated_at = ?
+DELETE FROM flag_triggers
 WHERE id = ?
   AND environment_namespace = ?

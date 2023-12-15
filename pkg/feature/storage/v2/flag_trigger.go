@@ -21,7 +21,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -33,10 +32,6 @@ var (
 	insertFlagTriggerSQL string
 	//go:embed sql/flag_trigger/update_flag_trigger.sql
 	updateFlagTriggerSQL string
-	//go:embed sql/flag_trigger/update_flag_trigger_usage.sql
-	updateFlagTriggerUsageSQL string
-	//go:embed sql/flag_trigger/reset_flag_trigger.sql
-	resetFlagTriggerSQL string
 	//go:embed sql/flag_trigger/delete_flag_trigger.sql
 	deleteFlagTriggerSQL string
 	//go:embed sql/flag_trigger/get_flag_trigger.sql
@@ -45,10 +40,6 @@ var (
 	listFlagTriggersSQL string
 	//go:embed sql/flag_trigger/count_flag_trigger.sql
 	countFlagTriggersSQL string
-	//go:embed sql/flag_trigger/enable_flag_trigger.sql
-	enableFlagTriggerSQL string
-	//go:embed sql/flag_trigger/disable_flag_trigger.sql
-	disableFlagTriggerSQL string
 )
 
 var (
@@ -59,20 +50,7 @@ var (
 
 type FlagTriggerStorage interface {
 	CreateFlagTrigger(ctx context.Context, flagTrigger *domain.FlagTrigger) error
-	UpdateFlagTrigger(
-		ctx context.Context,
-		id, environmentNamespace, description string,
-	) error
-	UpdateFlagTriggerUsage(ctx context.Context,
-		id, environmentNamespace string,
-		triggerTimes int64,
-	) error
-	EnableFlagTrigger(ctx context.Context, id, environmentNamespace string) error
-	DisableFlagTrigger(ctx context.Context, id, environmentNamespace string) error
-	ResetFlagTrigger(
-		ctx context.Context,
-		id, environmentNamespace, uuid string,
-	) error
+	UpdateFlagTrigger(ctx context.Context, flagTrigger *domain.FlagTrigger) error
 	DeleteFlagTrigger(ctx context.Context, id, environmentNamespace string) error
 	GetFlagTrigger(ctx context.Context, id, environmentNamespace string) (*domain.FlagTrigger, error)
 	ListFlagTriggers(
@@ -108,7 +86,6 @@ func (f flagTriggerStorage) CreateFlagTrigger(
 		flagTrigger.LastTriggeredAt,
 		flagTrigger.Uuid,
 		flagTrigger.Disabled,
-		flagTrigger.Deleted,
 		flagTrigger.CreatedAt,
 		flagTrigger.UpdatedAt,
 	)
@@ -121,108 +98,20 @@ func (f flagTriggerStorage) CreateFlagTrigger(
 	return nil
 }
 
-func (f flagTriggerStorage) UpdateFlagTrigger(
-	ctx context.Context,
-	id, environmentNamespace, description string,
-) error {
+func (f flagTriggerStorage) UpdateFlagTrigger(ctx context.Context, flagTrigger *domain.FlagTrigger) error {
 	result, err := f.qe.ExecContext(ctx, updateFlagTriggerSQL,
-		description,
-		time.Now().Unix(),
-		id,
-		environmentNamespace,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrFlagTriggerUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (f flagTriggerStorage) UpdateFlagTriggerUsage(
-	ctx context.Context,
-	id, environmentNamespace string,
-	triggerTimes int64,
-) error {
-	now := time.Now().Unix()
-	result, err := f.qe.ExecContext(ctx, updateFlagTriggerUsageSQL,
-		triggerTimes,
-		now,
-		now,
-		id,
-		environmentNamespace,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrFlagTriggerUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (f flagTriggerStorage) EnableFlagTrigger(
-	ctx context.Context,
-	id, environmentNamespace string,
-) error {
-	result, err := f.qe.ExecContext(ctx, enableFlagTriggerSQL,
-		time.Now().Unix(),
-		id,
-		environmentNamespace,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrFlagTriggerUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (f flagTriggerStorage) DisableFlagTrigger(
-	ctx context.Context,
-	id, environmentNamespace string,
-) error {
-	result, err := f.qe.ExecContext(ctx, disableFlagTriggerSQL,
-		time.Now().Unix(),
-		id,
-		environmentNamespace,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrFlagTriggerUnexpectedAffectedRows
-	}
-	return nil
-}
-
-func (f flagTriggerStorage) ResetFlagTrigger(
-	ctx context.Context,
-	id, environmentNamespace, uuid string,
-) error {
-	result, err := f.qe.ExecContext(ctx, resetFlagTriggerSQL,
-		uuid,
-		time.Now().Unix(),
-		id,
-		environmentNamespace,
+		flagTrigger.FeatureId,
+		flagTrigger.Type,
+		flagTrigger.Action,
+		flagTrigger.Description,
+		flagTrigger.TriggerTimes,
+		flagTrigger.LastTriggeredAt,
+		flagTrigger.Uuid,
+		flagTrigger.Disabled,
+		flagTrigger.CreatedAt,
+		flagTrigger.UpdatedAt,
+		flagTrigger.Id,
+		flagTrigger.EnvironmentNamespace,
 	)
 	if err != nil {
 		return err
@@ -242,7 +131,6 @@ func (f flagTriggerStorage) DeleteFlagTrigger(
 	id, environmentNamespace string,
 ) error {
 	result, err := f.qe.ExecContext(ctx, deleteFlagTriggerSQL,
-		time.Now().Unix(),
 		id,
 		environmentNamespace,
 	)
@@ -280,7 +168,6 @@ func (f flagTriggerStorage) GetFlagTrigger(
 		&trigger.LastTriggeredAt,
 		&trigger.Uuid,
 		&trigger.Disabled,
-		&trigger.Deleted,
 		&trigger.CreatedAt,
 		&trigger.UpdatedAt,
 	)
@@ -322,7 +209,6 @@ func (f flagTriggerStorage) ListFlagTriggers(
 			&trigger.LastTriggeredAt,
 			&trigger.Uuid,
 			&trigger.Disabled,
-			&trigger.Deleted,
 			&trigger.CreatedAt,
 			&trigger.UpdatedAt,
 		)

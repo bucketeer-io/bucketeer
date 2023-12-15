@@ -33,7 +33,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -209,9 +208,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 		}
 		if err := storage.UpdateFlagTrigger(
 			ctx,
-			request.ChangeFlagTriggerDescriptionCommand.Id,
-			request.EnvironmentNamespace,
-			request.ChangeFlagTriggerDescriptionCommand.Description,
+			flagTrigger,
 		); err != nil {
 			s.logger.Error(
 				"Failed to update flag trigger",
@@ -306,10 +303,9 @@ func (s *FeatureService) EnableFlagTrigger(
 			)
 			return err
 		}
-		if err := storage.EnableFlagTrigger(
+		if err := storage.UpdateFlagTrigger(
 			ctx,
-			request.EnableFlagTriggerCommand.Id,
-			request.EnvironmentNamespace,
+			flagTrigger,
 		); err != nil {
 			s.logger.Error(
 				"Failed to enable flag trigger",
@@ -404,11 +400,7 @@ func (s *FeatureService) DisableFlagTrigger(
 			)
 			return err
 		}
-		if err := storage.DisableFlagTrigger(
-			ctx,
-			request.DisableFlagTriggerCommand.Id,
-			request.EnvironmentNamespace,
-		); err != nil {
+		if err := storage.UpdateFlagTrigger(ctx, flagTrigger); err != nil {
 			s.logger.Error(
 				"Failed to disable flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -477,15 +469,6 @@ func (s *FeatureService) ResetFlagTrigger(
 		}
 		return nil, err
 	}
-	newTriggerUuid, err := uuid.NewUUID()
-	if err != nil {
-		s.logger.Error(
-			"Failed to generate new trigger uuid",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	newFlagTriggerId := newTriggerUuid.String()
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -508,8 +491,7 @@ func (s *FeatureService) ResetFlagTrigger(
 			)
 			return err
 		}
-		err := v2fs.NewFlagTriggerStorage(tx).
-			ResetFlagTrigger(ctx, trigger.Id, request.EnvironmentNamespace, newFlagTriggerId)
+		err := v2fs.NewFlagTriggerStorage(tx).UpdateFlagTrigger(ctx, trigger)
 		if err != nil {
 			s.logger.Error(
 				"Failed to reset flag trigger",
@@ -536,7 +518,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		trigger.Id,
 		trigger.FeatureId,
 		trigger.EnvironmentNamespace,
-		newFlagTriggerId,
+		trigger.Uuid,
 		int(trigger.Action),
 	)
 	triggerURL, err := s.generateTriggerURL(ctx, flagTriggerSecret, false)
@@ -839,9 +821,9 @@ func (s *FeatureService) FlagTriggerWebhook(
 		)
 		return resp, nil
 	}
-	if trigger.GetDisabled() || trigger.GetDeleted() {
+	if trigger.GetDisabled() {
 		s.logger.Error(
-			"Flag trigger is disabled or deleted",
+			"Flag trigger is disabled",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return resp, nil
@@ -923,12 +905,8 @@ func (s *FeatureService) updateTriggerUsageInfo(ctx context.Context, flagTrigger
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2fs.NewFlagTriggerStorage(tx)
-		err := storage.UpdateFlagTriggerUsage(
-			ctx,
-			flagTrigger.GetId(),
-			flagTrigger.GetEnvironmentNamespace(),
-			int64(flagTrigger.GetTriggerTimes()+1),
-		)
+		_ = flagTrigger.UpdateTriggerUsage()
+		err := storage.UpdateFlagTrigger(ctx, flagTrigger)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update flag trigger usage",

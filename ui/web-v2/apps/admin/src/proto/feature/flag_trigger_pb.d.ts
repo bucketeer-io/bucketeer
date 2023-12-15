@@ -34,9 +34,6 @@ export class FlagTrigger extends jspb.Message {
   getDisabled(): boolean;
   setDisabled(value: boolean): void;
 
-  getDeleted(): boolean;
-  setDeleted(value: boolean): void;
-
   getCreatedAt(): number;
   setCreatedAt(value: number): void;
 
@@ -65,7 +62,6 @@ export namespace FlagTrigger {
     lastTriggeredAt: number,
     uuid: string,
     disabled: boolean,
-    deleted: boolean,
     createdAt: number,
     updatedAt: number,
   }

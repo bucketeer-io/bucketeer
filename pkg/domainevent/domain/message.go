@@ -1210,7 +1210,7 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.FlagTrigger),
 			),
 		}
-	case proto.Event_FLAG_TRIGGER_CHANGE_DESCRIPTION:
+	case proto.Event_FLAG_TRIGGER_DESCRIPTION_CHANGED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(

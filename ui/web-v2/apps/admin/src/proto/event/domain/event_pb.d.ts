@@ -99,7 +99,7 @@ export namespace Event {
     WEBHOOK: 13;
     PROGRESSIVE_ROLLOUT: 14;
     ORGANIZATION: 15;
-    FLAGTRIGGER: 16;
+    FLAG_TRIGGER: 16;
   }
 
   export const EntityType: EntityTypeMap;
@@ -257,7 +257,7 @@ export namespace Event {
     ORGANIZATION_TRIAL_CONVERTED: 1507;
     FLAG_TRIGGER_CREATED: 1601;
     FLAG_TRIGGER_RESET: 1602;
-    FLAG_TRIGGER_CHANGE_DESCRIPTION: 1603;
+    FLAG_TRIGGER_DESCRIPTION_CHANGED: 1603;
     FLAG_TRIGGER_DISABLED: 1604;
     FLAG_TRIGGER_ENABLED: 1605;
     FLAG_TRIGGER_DELETED: 1606;
@@ -4452,7 +4452,7 @@ export namespace FlagTriggerResetEvent {
   }
 }
 
-export class FlagTriggerChangeDescriptionEvent extends jspb.Message {
+export class FlagTriggerDescriptionChangedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
@@ -4466,16 +4466,16 @@ export class FlagTriggerChangeDescriptionEvent extends jspb.Message {
   setDescription(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): FlagTriggerChangeDescriptionEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: FlagTriggerChangeDescriptionEvent): FlagTriggerChangeDescriptionEvent.AsObject;
+  toObject(includeInstance?: boolean): FlagTriggerDescriptionChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerDescriptionChangedEvent): FlagTriggerDescriptionChangedEvent.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: FlagTriggerChangeDescriptionEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): FlagTriggerChangeDescriptionEvent;
-  static deserializeBinaryFromReader(message: FlagTriggerChangeDescriptionEvent, reader: jspb.BinaryReader): FlagTriggerChangeDescriptionEvent;
+  static serializeBinaryToWriter(message: FlagTriggerDescriptionChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerDescriptionChangedEvent;
+  static deserializeBinaryFromReader(message: FlagTriggerDescriptionChangedEvent, reader: jspb.BinaryReader): FlagTriggerDescriptionChangedEvent;
 }
 
-export namespace FlagTriggerChangeDescriptionEvent {
+export namespace FlagTriggerDescriptionChangedEvent {
   export type AsObject = {
     id: string,
     featureId: string,

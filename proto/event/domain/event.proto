@@ -55,7 +55,7 @@ message Event {
     WEBHOOK = 13;
     PROGRESSIVE_ROLLOUT = 14;
     ORGANIZATION = 15;
-    FlagTrigger = 16;
+    FLAG_TRIGGER = 16;
   }
   enum Type {
     UNKNOWN = 0;
@@ -210,7 +210,7 @@ message Event {
     ORGANIZATION_TRIAL_CONVERTED = 1507;
     FLAG_TRIGGER_CREATED = 1601;
     FLAG_TRIGGER_RESET = 1602;
-    FLAG_TRIGGER_CHANGE_DESCRIPTION = 1603;
+    FLAG_TRIGGER_DESCRIPTION_CHANGED = 1603;
     FLAG_TRIGGER_DISABLED = 1604;
     FLAG_TRIGGER_ENABLED = 1605;
     FLAG_TRIGGER_DELETED = 1606;
@@ -1083,7 +1083,7 @@ message FlagTriggerResetEvent {
   string uuid = 4;
 }
 
-message FlagTriggerChangeDescriptionEvent {
+message FlagTriggerDescriptionChangedEvent {
   string id = 1;
   string feature_id = 2;
   string environment_namespace = 3;

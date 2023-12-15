@@ -27,7 +27,7 @@ type FlagTrigger struct {
 }
 
 func NewFlagTrigger(
-	namespace string,
+	environmentNamespace string,
 	cmd *proto.CreateFlagTriggerCommand,
 ) (*FlagTrigger, error) {
 	now := time.Now().Unix()
@@ -42,22 +42,49 @@ func NewFlagTrigger(
 	return &FlagTrigger{&proto.FlagTrigger{
 		Id:                   triggerID.String(),
 		FeatureId:            cmd.FeatureId,
-		EnvironmentNamespace: namespace,
+		EnvironmentNamespace: environmentNamespace,
 		Type:                 cmd.Type,
 		Action:               cmd.Action,
 		Description:          cmd.Description,
 		Uuid:                 triggerUUID.String(),
 		Disabled:             false,
-		Deleted:              false,
 		CreatedAt:            now,
 		UpdatedAt:            now,
 	}}, nil
 }
 
-func (ft *FlagTrigger) GetId() string {
-	return ft.Id
+func (ft *FlagTrigger) ChangeDescription(description string) error {
+	ft.Description = description
+	ft.UpdatedAt = time.Now().Unix()
+	return nil
 }
 
-func (ft *FlagTrigger) GetDescription() string {
-	return ft.Description
+func (ft *FlagTrigger) Disable() error {
+	ft.Disabled = true
+	ft.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (ft *FlagTrigger) Enable() error {
+	ft.Disabled = false
+	ft.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (ft *FlagTrigger) ResetUUID() error {
+	newTriggerUuid, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+	ft.Uuid = newTriggerUuid.String()
+	ft.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (ft *FlagTrigger) UpdateTriggerUsage() error {
+	unix := time.Now().Unix()
+	ft.LastTriggeredAt = unix
+	ft.UpdatedAt = unix
+	ft.TriggerTimes = ft.TriggerTimes + 1
+	return nil
 }

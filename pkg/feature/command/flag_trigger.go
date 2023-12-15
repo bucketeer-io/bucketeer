@@ -90,6 +90,9 @@ func (f *flagTriggerCommandHandler) reset(
 	ctx context.Context,
 	cmd *proto.ResetFlagTriggerCommand,
 ) error {
+	if err := f.flagTrigger.ResetUUID(); err != nil {
+		return err
+	}
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_RESET, &eventproto.FlagTriggerResetEvent{
 		Id:                   f.flagTrigger.Id,
 		FeatureId:            f.flagTrigger.FeatureId,
@@ -102,9 +105,10 @@ func (f *flagTriggerCommandHandler) changeDescription(
 	ctx context.Context,
 	cmd *proto.ChangeFlagTriggerDescriptionCommand,
 ) error {
+	_ = f.flagTrigger.ChangeDescription(cmd.Description)
 	return f.send(ctx,
-		eventproto.Event_FLAG_TRIGGER_CHANGE_DESCRIPTION,
-		&eventproto.FlagTriggerChangeDescriptionEvent{
+		eventproto.Event_FLAG_TRIGGER_DESCRIPTION_CHANGED,
+		&eventproto.FlagTriggerDescriptionChangedEvent{
 			Id:                   f.flagTrigger.Id,
 			FeatureId:            f.flagTrigger.FeatureId,
 			EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
@@ -116,6 +120,7 @@ func (f *flagTriggerCommandHandler) disable(
 	ctx context.Context,
 	cmd *proto.DisableFlagTriggerCommand,
 ) error {
+	_ = f.flagTrigger.Disable()
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_DISABLED, &eventproto.FlagTriggerDisabledEvent{
 		Id:                   f.flagTrigger.Id,
 		FeatureId:            f.flagTrigger.FeatureId,
@@ -127,6 +132,7 @@ func (f *flagTriggerCommandHandler) enable(
 	ctx context.Context,
 	cmd *proto.EnableFlagTriggerCommand,
 ) error {
+	_ = f.flagTrigger.Enable()
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_ENABLED, &eventproto.FlagTriggerEnabledEvent{
 		Id:                   f.flagTrigger.Id,
 		FeatureId:            f.flagTrigger.FeatureId,
@@ -152,7 +158,7 @@ func (f *flagTriggerCommandHandler) send(
 ) error {
 	e, err := domainevent.NewEvent(
 		f.editor,
-		eventproto.Event_FlagTrigger,
+		eventproto.Event_FLAG_TRIGGER,
 		f.flagTrigger.Id,
 		eventType,
 		event,

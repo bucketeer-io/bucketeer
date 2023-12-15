@@ -37,7 +37,6 @@ message FlagTrigger {
   int64 last_triggered_at = 8;
   string uuid = 9;
   bool disabled = 10;
-  bool deleted = 11;
-  int64 created_at = 12;
-  int64 updated_at = 13;
+  int64 created_at = 11;
+  int64 updated_at = 12;
 }
