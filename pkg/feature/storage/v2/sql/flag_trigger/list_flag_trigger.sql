@@ -8,7 +8,6 @@ SELECT id,
        last_triggered_at,
        uuid,
        disabled,
-       deleted,
        created_at,
        updated_at
 FROM flag_triggers
