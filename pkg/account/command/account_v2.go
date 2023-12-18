@@ -169,7 +169,11 @@ func (h *accountV2CommandHandler) delete(ctx context.Context, _ *accountproto.De
 	})
 }
 
-func (h *accountV2CommandHandler) send(ctx context.Context, eventType eventproto.Event_Type, event proto.Message) error {
+func (h *accountV2CommandHandler) send(
+	ctx context.Context,
+	eventType eventproto.Event_Type,
+	event proto.Message,
+) error {
 	e, err := domainevent.NewAdminEvent(
 		h.editor,
 		eventproto.Event_ACCOUNT,
