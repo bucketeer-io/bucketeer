@@ -442,6 +442,14 @@ data:
                                 retry_on: 5xx
                                 num_retries: 3
                           - match:
+                              prefix: /webhook
+                            route:
+                              cluster: backend
+                              timeout: 60s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
+                          - match:
                               prefix: /bucketeer.notification.NotificationService
                             route:
                               cluster: backend

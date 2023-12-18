@@ -698,7 +698,6 @@ func (s *FeatureService) ListFlagTriggers(
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("feature_id", "=", request.FeatureId),
 		mysql.NewFilter("environment_namespace", "=", request.EnvironmentNamespace),
-		mysql.NewFilter("deleted", "=", false),
 	}
 	orders, err := s.newListFlagTriggerOrders(request.OrderBy, request.OrderDirection, localizer)
 	if err != nil {
