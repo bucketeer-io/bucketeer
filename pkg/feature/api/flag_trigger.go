@@ -180,7 +180,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 		storage := v2fs.NewFlagTriggerStorage(tx)
 		flagTrigger, err := storage.GetFlagTrigger(
 			ctx,
-			request.ChangeFlagTriggerDescriptionCommand.Id,
+			request.Id,
 			request.EnvironmentNamespace,
 		)
 		if err != nil {
@@ -277,7 +277,7 @@ func (s *FeatureService) EnableFlagTrigger(
 		storage := v2fs.NewFlagTriggerStorage(tx)
 		flagTrigger, err := storage.GetFlagTrigger(
 			ctx,
-			request.EnableFlagTriggerCommand.Id,
+			request.Id,
 			request.EnvironmentNamespace,
 		)
 		if err != nil {
@@ -374,7 +374,7 @@ func (s *FeatureService) DisableFlagTrigger(
 		storage := v2fs.NewFlagTriggerStorage(tx)
 		flagTrigger, err := storage.GetFlagTrigger(
 			ctx,
-			request.DisableFlagTriggerCommand.Id,
+			request.Id,
 			request.EnvironmentNamespace,
 		)
 		if err != nil {
@@ -455,7 +455,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		return nil, err
 	}
 	trigger, err := v2fs.NewFlagTriggerStorage(s.mysqlClient).
-		GetFlagTrigger(ctx, request.ResetFlagTriggerCommand.Id, request.EnvironmentNamespace)
+		GetFlagTrigger(ctx, request.Id, request.EnvironmentNamespace)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -566,7 +566,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 		storage := v2fs.NewFlagTriggerStorage(tx)
 		flagTrigger, err := storage.GetFlagTrigger(
 			ctx,
-			request.DeleteFlagTriggerCommand.Id,
+			request.Id,
 			request.EnvironmentNamespace,
 		)
 		if err != nil {
@@ -594,7 +594,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 		}
 		if err := storage.DeleteFlagTrigger(
 			ctx,
-			request.DeleteFlagTriggerCommand.Id,
+			request.Id,
 			request.EnvironmentNamespace,
 		); err != nil {
 			s.logger.Error(

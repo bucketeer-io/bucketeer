@@ -77,9 +77,9 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Update flag trigger
 	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
+		Id:                   createResp.FlagTrigger.Id,
 		EnvironmentNamespace: *environmentNamespace,
 		ChangeFlagTriggerDescriptionCommand: &featureproto.ChangeFlagTriggerDescriptionCommand{
-			Id:          createResp.FlagTrigger.Id,
 			Description: "change flag trigger description test",
 		},
 	}
@@ -113,10 +113,9 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Disable flag trigger
 	disableFlagTriggerReq := &featureproto.DisableFlagTriggerRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		DisableFlagTriggerCommand: &featureproto.DisableFlagTriggerCommand{
-			Id: createResp.FlagTrigger.Id,
-		},
+		Id:                        createResp.FlagTrigger.Id,
+		EnvironmentNamespace:      *environmentNamespace,
+		DisableFlagTriggerCommand: &featureproto.DisableFlagTriggerCommand{},
 	}
 	_, err := client.DisableFlagTrigger(context.Background(), disableFlagTriggerReq)
 	if err != nil {
@@ -133,10 +132,9 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 	}
 	// Enable flag trigger
 	enableFlagTriggerReq := &featureproto.EnableFlagTriggerRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		EnableFlagTriggerCommand: &featureproto.EnableFlagTriggerCommand{
-			Id: createResp.FlagTrigger.Id,
-		},
+		Id:                       createResp.FlagTrigger.Id,
+		EnvironmentNamespace:     *environmentNamespace,
+		EnableFlagTriggerCommand: &featureproto.EnableFlagTriggerCommand{},
 	}
 	_, err = client.EnableFlagTrigger(context.Background(), enableFlagTriggerReq)
 	if err != nil {
@@ -164,10 +162,9 @@ func TestResetFlagTrigger(t *testing.T) {
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Reset flag trigger
 	resetFlagTriggerReq := &featureproto.ResetFlagTriggerRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		ResetFlagTriggerCommand: &featureproto.ResetFlagTriggerCommand{
-			Id: createResp.FlagTrigger.Id,
-		},
+		Id:                      createResp.FlagTrigger.Id,
+		EnvironmentNamespace:    *environmentNamespace,
+		ResetFlagTriggerCommand: &featureproto.ResetFlagTriggerCommand{},
 	}
 	resetResp, err := client.ResetFlagTrigger(context.Background(), resetFlagTriggerReq)
 	if err != nil {
@@ -193,10 +190,9 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Delete flag trigger
 	deleteFlagTriggerReq := &featureproto.DeleteFlagTriggerRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		DeleteFlagTriggerCommand: &featureproto.DeleteFlagTriggerCommand{
-			Id: createResp.FlagTrigger.Id,
-		},
+		Id:                       createResp.FlagTrigger.Id,
+		EnvironmentNamespace:     *environmentNamespace,
+		DeleteFlagTriggerCommand: &featureproto.DeleteFlagTriggerCommand{},
 	}
 	_, err := client.DeleteFlagTrigger(context.Background(), deleteFlagTriggerReq)
 	if err != nil {

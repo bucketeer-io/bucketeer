@@ -8469,7 +8469,7 @@ proto.bucketeer.feature.ResetFlagTriggerCommand.prototype.toObject = function(op
  */
 proto.bucketeer.feature.ResetFlagTriggerCommand.toObject = function(includeInstance, msg) {
   var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, "")
+
   };
 
   if (includeInstance) {
@@ -8506,10 +8506,6 @@ proto.bucketeer.feature.ResetFlagTriggerCommand.deserializeBinaryFromReader = fu
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setId(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -8539,31 +8535,6 @@ proto.bucketeer.feature.ResetFlagTriggerCommand.prototype.serializeBinary = func
  */
 proto.bucketeer.feature.ResetFlagTriggerCommand.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getId();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
-};
-
-
-/**
- * optional string id = 1;
- * @return {string}
- */
-proto.bucketeer.feature.ResetFlagTriggerCommand.prototype.getId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.feature.ResetFlagTriggerCommand} returns this
- */
-proto.bucketeer.feature.ResetFlagTriggerCommand.prototype.setId = function(value) {
-  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -8599,8 +8570,7 @@ proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.prototype.toObject =
  */
 proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.toObject = function(includeInstance, msg) {
   var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    description: jspb.Message.getFieldWithDefault(msg, 2, "")
+    description: jspb.Message.getFieldWithDefault(msg, 1, "")
   };
 
   if (includeInstance) {
@@ -8639,10 +8609,6 @@ proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.deserializeBinaryFro
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setId(value);
-      break;
-    case 2:
-      var value = /** @type {string} */ (reader.readString());
       msg.setDescription(value);
       break;
     default:
@@ -8674,17 +8640,10 @@ proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.prototype.serializeB
  */
 proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getId();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
   f = message.getDescription();
   if (f.length > 0) {
     writer.writeString(
-      2,
+      1,
       f
     );
   }
@@ -8692,10 +8651,10 @@ proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.serializeBinaryToWri
 
 
 /**
- * optional string id = 1;
+ * optional string description = 1;
  * @return {string}
  */
-proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.prototype.getId = function() {
+proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.prototype.getDescription = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
@@ -8704,26 +8663,8 @@ proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.prototype.getId = fu
  * @param {string} value
  * @return {!proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand} returns this
  */
-proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.prototype.setId = function(value) {
-  return jspb.Message.setProto3StringField(this, 1, value);
-};
-
-
-/**
- * optional string description = 2;
- * @return {string}
- */
-proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.prototype.getDescription = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand} returns this
- */
 proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand.prototype.setDescription = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -8759,7 +8700,7 @@ proto.bucketeer.feature.EnableFlagTriggerCommand.prototype.toObject = function(o
  */
 proto.bucketeer.feature.EnableFlagTriggerCommand.toObject = function(includeInstance, msg) {
   var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, "")
+
   };
 
   if (includeInstance) {
@@ -8796,10 +8737,6 @@ proto.bucketeer.feature.EnableFlagTriggerCommand.deserializeBinaryFromReader = f
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setId(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -8829,31 +8766,6 @@ proto.bucketeer.feature.EnableFlagTriggerCommand.prototype.serializeBinary = fun
  */
 proto.bucketeer.feature.EnableFlagTriggerCommand.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getId();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
-};
-
-
-/**
- * optional string id = 1;
- * @return {string}
- */
-proto.bucketeer.feature.EnableFlagTriggerCommand.prototype.getId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.feature.EnableFlagTriggerCommand} returns this
- */
-proto.bucketeer.feature.EnableFlagTriggerCommand.prototype.setId = function(value) {
-  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -8889,7 +8801,7 @@ proto.bucketeer.feature.DisableFlagTriggerCommand.prototype.toObject = function(
  */
 proto.bucketeer.feature.DisableFlagTriggerCommand.toObject = function(includeInstance, msg) {
   var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, "")
+
   };
 
   if (includeInstance) {
@@ -8926,10 +8838,6 @@ proto.bucketeer.feature.DisableFlagTriggerCommand.deserializeBinaryFromReader = 
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setId(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -8959,31 +8867,6 @@ proto.bucketeer.feature.DisableFlagTriggerCommand.prototype.serializeBinary = fu
  */
 proto.bucketeer.feature.DisableFlagTriggerCommand.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getId();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
-};
-
-
-/**
- * optional string id = 1;
- * @return {string}
- */
-proto.bucketeer.feature.DisableFlagTriggerCommand.prototype.getId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.feature.DisableFlagTriggerCommand} returns this
- */
-proto.bucketeer.feature.DisableFlagTriggerCommand.prototype.setId = function(value) {
-  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -9019,7 +8902,7 @@ proto.bucketeer.feature.DeleteFlagTriggerCommand.prototype.toObject = function(o
  */
 proto.bucketeer.feature.DeleteFlagTriggerCommand.toObject = function(includeInstance, msg) {
   var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 1, "")
+
   };
 
   if (includeInstance) {
@@ -9056,10 +8939,6 @@ proto.bucketeer.feature.DeleteFlagTriggerCommand.deserializeBinaryFromReader = f
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setId(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -9089,31 +8968,6 @@ proto.bucketeer.feature.DeleteFlagTriggerCommand.prototype.serializeBinary = fun
  */
 proto.bucketeer.feature.DeleteFlagTriggerCommand.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getId();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
-};
-
-
-/**
- * optional string id = 1;
- * @return {string}
- */
-proto.bucketeer.feature.DeleteFlagTriggerCommand.prototype.getId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.feature.DeleteFlagTriggerCommand} returns this
- */
-proto.bucketeer.feature.DeleteFlagTriggerCommand.prototype.setId = function(value) {
-  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 

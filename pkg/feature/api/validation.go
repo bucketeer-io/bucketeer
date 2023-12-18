@@ -1458,16 +1458,6 @@ func validateUpdateFlagTriggerCommand(
 		}
 		return dt.Err()
 	}
-	if cmd.Id == "" {
-		dt, err := statusMissingTriggerID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if cmd.Description == "" {
 		dt, err := statusMissingDescription.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1492,16 +1482,6 @@ func validateEnableFlagTriggerCommand(cmd *featureproto.EnableFlagTriggerCommand
 		}
 		return dt.Err()
 	}
-	if cmd.Id == "" {
-		dt, err := statusMissingTriggerID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.RequiredFieldTemplate),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 
@@ -1510,16 +1490,6 @@ func validateDisableFlagTriggerCommand(cmd *featureproto.DisableFlagTriggerComma
 		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if cmd.Id == "" {
-		dt, err := statusMissingTriggerID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.RequiredFieldTemplate),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -1540,16 +1510,6 @@ func validateDeleteFlagTriggerCommand(cmd *featureproto.DeleteFlagTriggerCommand
 		}
 		return dt.Err()
 	}
-	if cmd.Id == "" {
-		dt, err := statusMissingTriggerID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.RequiredFieldTemplate),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 
@@ -1558,16 +1518,6 @@ func validateResetFlagTriggerCommand(cmd *featureproto.ResetFlagTriggerCommand, 
 		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if cmd.Id == "" {
-		dt, err := statusMissingTriggerID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.RequiredFieldTemplate),
 		})
 		if err != nil {
 			return statusInternal.Err()

@@ -12679,59 +12679,26 @@
             ]
           },
           {
-            "name": "ResetFlagTriggerCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
+            "name": "ResetFlagTriggerCommand"
           },
           {
             "name": "ChangeFlagTriggerDescriptionCommand",
             "fields": [
               {
                 "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
                 "name": "description",
                 "type": "string"
               }
             ]
           },
           {
-            "name": "EnableFlagTriggerCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
+            "name": "EnableFlagTriggerCommand"
           },
           {
-            "name": "DisableFlagTriggerCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
+            "name": "DisableFlagTriggerCommand"
           },
           {
-            "name": "DeleteFlagTriggerCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
+            "name": "DeleteFlagTriggerCommand"
           }
         ],
         "imports": [
@@ -14698,11 +14665,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "delete_flag_trigger_command",
                 "type": "DeleteFlagTriggerCommand"
               }
@@ -14716,11 +14688,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "change_flag_trigger_description_command",
                 "type": "ChangeFlagTriggerDescriptionCommand"
               }
@@ -14734,11 +14711,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "enable_flag_trigger_command",
                 "type": "EnableFlagTriggerCommand"
               }
@@ -14752,11 +14734,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "disable_flag_trigger_command",
                 "type": "DisableFlagTriggerCommand"
               }
@@ -14770,11 +14757,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "reset_flag_trigger_command",
                 "type": "ResetFlagTriggerCommand"
               }

@@ -12408,7 +12408,8 @@ proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.toObject = function(o
  */
 proto.bucketeer.feature.DeleteFlagTriggerRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ""),
     deleteFlagTriggerCommand: (f = msg.getDeleteFlagTriggerCommand()) && proto_feature_command_pb.DeleteFlagTriggerCommand.toObject(includeInstance, f)
   };
 
@@ -12448,9 +12449,13 @@ proto.bucketeer.feature.DeleteFlagTriggerRequest.deserializeBinaryFromReader = f
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentNamespace(value);
+      msg.setId(value);
       break;
     case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 3:
       var value = new proto_feature_command_pb.DeleteFlagTriggerCommand;
       reader.readMessage(value,proto_feature_command_pb.DeleteFlagTriggerCommand.deserializeBinaryFromReader);
       msg.setDeleteFlagTriggerCommand(value);
@@ -12484,17 +12489,24 @@ proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.serializeBinary = fun
  */
 proto.bucketeer.feature.DeleteFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getEnvironmentNamespace();
+  f = message.getId();
   if (f.length > 0) {
     writer.writeString(
       1,
       f
     );
   }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
   f = message.getDeleteFlagTriggerCommand();
   if (f != null) {
     writer.writeMessage(
-      2,
+      3,
       f,
       proto_feature_command_pb.DeleteFlagTriggerCommand.serializeBinaryToWriter
     );
@@ -12503,10 +12515,10 @@ proto.bucketeer.feature.DeleteFlagTriggerRequest.serializeBinaryToWriter = funct
 
 
 /**
- * optional string environment_namespace = 1;
+ * optional string id = 1;
  * @return {string}
  */
-proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.getId = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
@@ -12515,18 +12527,36 @@ proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.getEnvironmentNamespa
  * @param {string} value
  * @return {!proto.bucketeer.feature.DeleteFlagTriggerRequest} returns this
  */
-proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.setId = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
 /**
- * optional DeleteFlagTriggerCommand delete_flag_trigger_command = 2;
+ * optional string environment_namespace = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.DeleteFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional DeleteFlagTriggerCommand delete_flag_trigger_command = 3;
  * @return {?proto.bucketeer.feature.DeleteFlagTriggerCommand}
  */
 proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.getDeleteFlagTriggerCommand = function() {
   return /** @type{?proto.bucketeer.feature.DeleteFlagTriggerCommand} */ (
-    jspb.Message.getWrapperField(this, proto_feature_command_pb.DeleteFlagTriggerCommand, 2));
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.DeleteFlagTriggerCommand, 3));
 };
 
 
@@ -12535,7 +12565,7 @@ proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.getDeleteFlagTriggerC
  * @return {!proto.bucketeer.feature.DeleteFlagTriggerRequest} returns this
 */
 proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.setDeleteFlagTriggerCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 2, value);
+  return jspb.Message.setWrapperField(this, 3, value);
 };
 
 
@@ -12553,7 +12583,7 @@ proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.clearDeleteFlagTrigge
  * @return {boolean}
  */
 proto.bucketeer.feature.DeleteFlagTriggerRequest.prototype.hasDeleteFlagTriggerCommand = function() {
-  return jspb.Message.getField(this, 2) != null;
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
@@ -12690,7 +12720,8 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.toObject = function(o
  */
 proto.bucketeer.feature.UpdateFlagTriggerRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ""),
     changeFlagTriggerDescriptionCommand: (f = msg.getChangeFlagTriggerDescriptionCommand()) && proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.toObject(includeInstance, f)
   };
 
@@ -12730,9 +12761,13 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.deserializeBinaryFromReader = f
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentNamespace(value);
+      msg.setId(value);
       break;
     case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 3:
       var value = new proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand;
       reader.readMessage(value,proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.deserializeBinaryFromReader);
       msg.setChangeFlagTriggerDescriptionCommand(value);
@@ -12766,17 +12801,24 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.serializeBinary = fun
  */
 proto.bucketeer.feature.UpdateFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getEnvironmentNamespace();
+  f = message.getId();
   if (f.length > 0) {
     writer.writeString(
       1,
       f
     );
   }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
   f = message.getChangeFlagTriggerDescriptionCommand();
   if (f != null) {
     writer.writeMessage(
-      2,
+      3,
       f,
       proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.serializeBinaryToWriter
     );
@@ -12785,10 +12827,10 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.serializeBinaryToWriter = funct
 
 
 /**
- * optional string environment_namespace = 1;
+ * optional string id = 1;
  * @return {string}
  */
-proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getId = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
@@ -12797,18 +12839,36 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getEnvironmentNamespa
  * @param {string} value
  * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
  */
-proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setId = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
 /**
- * optional ChangeFlagTriggerDescriptionCommand change_flag_trigger_description_command = 2;
+ * optional string environment_namespace = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional ChangeFlagTriggerDescriptionCommand change_flag_trigger_description_command = 3;
  * @return {?proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand}
  */
 proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getChangeFlagTriggerDescriptionCommand = function() {
   return /** @type{?proto.bucketeer.feature.ChangeFlagTriggerDescriptionCommand} */ (
-    jspb.Message.getWrapperField(this, proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand, 2));
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand, 3));
 };
 
 
@@ -12817,7 +12877,7 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getChangeFlagTriggerD
  * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
 */
 proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setChangeFlagTriggerDescriptionCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 2, value);
+  return jspb.Message.setWrapperField(this, 3, value);
 };
 
 
@@ -12835,7 +12895,7 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.clearChangeFlagTrigge
  * @return {boolean}
  */
 proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.hasChangeFlagTriggerDescriptionCommand = function() {
-  return jspb.Message.getField(this, 2) != null;
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
@@ -12972,7 +13032,8 @@ proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.toObject = function(o
  */
 proto.bucketeer.feature.EnableFlagTriggerRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ""),
     enableFlagTriggerCommand: (f = msg.getEnableFlagTriggerCommand()) && proto_feature_command_pb.EnableFlagTriggerCommand.toObject(includeInstance, f)
   };
 
@@ -13012,9 +13073,13 @@ proto.bucketeer.feature.EnableFlagTriggerRequest.deserializeBinaryFromReader = f
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentNamespace(value);
+      msg.setId(value);
       break;
     case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 3:
       var value = new proto_feature_command_pb.EnableFlagTriggerCommand;
       reader.readMessage(value,proto_feature_command_pb.EnableFlagTriggerCommand.deserializeBinaryFromReader);
       msg.setEnableFlagTriggerCommand(value);
@@ -13048,17 +13113,24 @@ proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.serializeBinary = fun
  */
 proto.bucketeer.feature.EnableFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getEnvironmentNamespace();
+  f = message.getId();
   if (f.length > 0) {
     writer.writeString(
       1,
       f
     );
   }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
   f = message.getEnableFlagTriggerCommand();
   if (f != null) {
     writer.writeMessage(
-      2,
+      3,
       f,
       proto_feature_command_pb.EnableFlagTriggerCommand.serializeBinaryToWriter
     );
@@ -13067,10 +13139,10 @@ proto.bucketeer.feature.EnableFlagTriggerRequest.serializeBinaryToWriter = funct
 
 
 /**
- * optional string environment_namespace = 1;
+ * optional string id = 1;
  * @return {string}
  */
-proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.getId = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
@@ -13079,18 +13151,36 @@ proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.getEnvironmentNamespa
  * @param {string} value
  * @return {!proto.bucketeer.feature.EnableFlagTriggerRequest} returns this
  */
-proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.setId = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
 /**
- * optional EnableFlagTriggerCommand enable_flag_trigger_command = 2;
+ * optional string environment_namespace = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.EnableFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional EnableFlagTriggerCommand enable_flag_trigger_command = 3;
  * @return {?proto.bucketeer.feature.EnableFlagTriggerCommand}
  */
 proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.getEnableFlagTriggerCommand = function() {
   return /** @type{?proto.bucketeer.feature.EnableFlagTriggerCommand} */ (
-    jspb.Message.getWrapperField(this, proto_feature_command_pb.EnableFlagTriggerCommand, 2));
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.EnableFlagTriggerCommand, 3));
 };
 
 
@@ -13099,7 +13189,7 @@ proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.getEnableFlagTriggerC
  * @return {!proto.bucketeer.feature.EnableFlagTriggerRequest} returns this
 */
 proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.setEnableFlagTriggerCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 2, value);
+  return jspb.Message.setWrapperField(this, 3, value);
 };
 
 
@@ -13117,7 +13207,7 @@ proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.clearEnableFlagTrigge
  * @return {boolean}
  */
 proto.bucketeer.feature.EnableFlagTriggerRequest.prototype.hasEnableFlagTriggerCommand = function() {
-  return jspb.Message.getField(this, 2) != null;
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
@@ -13254,7 +13344,8 @@ proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.toObject = function(
  */
 proto.bucketeer.feature.DisableFlagTriggerRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ""),
     disableFlagTriggerCommand: (f = msg.getDisableFlagTriggerCommand()) && proto_feature_command_pb.DisableFlagTriggerCommand.toObject(includeInstance, f)
   };
 
@@ -13294,9 +13385,13 @@ proto.bucketeer.feature.DisableFlagTriggerRequest.deserializeBinaryFromReader = 
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentNamespace(value);
+      msg.setId(value);
       break;
     case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 3:
       var value = new proto_feature_command_pb.DisableFlagTriggerCommand;
       reader.readMessage(value,proto_feature_command_pb.DisableFlagTriggerCommand.deserializeBinaryFromReader);
       msg.setDisableFlagTriggerCommand(value);
@@ -13330,17 +13425,24 @@ proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.serializeBinary = fu
  */
 proto.bucketeer.feature.DisableFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getEnvironmentNamespace();
+  f = message.getId();
   if (f.length > 0) {
     writer.writeString(
       1,
       f
     );
   }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
   f = message.getDisableFlagTriggerCommand();
   if (f != null) {
     writer.writeMessage(
-      2,
+      3,
       f,
       proto_feature_command_pb.DisableFlagTriggerCommand.serializeBinaryToWriter
     );
@@ -13349,10 +13451,10 @@ proto.bucketeer.feature.DisableFlagTriggerRequest.serializeBinaryToWriter = func
 
 
 /**
- * optional string environment_namespace = 1;
+ * optional string id = 1;
  * @return {string}
  */
-proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.getId = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
@@ -13361,18 +13463,36 @@ proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.getEnvironmentNamesp
  * @param {string} value
  * @return {!proto.bucketeer.feature.DisableFlagTriggerRequest} returns this
  */
-proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.setId = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
 /**
- * optional DisableFlagTriggerCommand disable_flag_trigger_command = 2;
+ * optional string environment_namespace = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.DisableFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional DisableFlagTriggerCommand disable_flag_trigger_command = 3;
  * @return {?proto.bucketeer.feature.DisableFlagTriggerCommand}
  */
 proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.getDisableFlagTriggerCommand = function() {
   return /** @type{?proto.bucketeer.feature.DisableFlagTriggerCommand} */ (
-    jspb.Message.getWrapperField(this, proto_feature_command_pb.DisableFlagTriggerCommand, 2));
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.DisableFlagTriggerCommand, 3));
 };
 
 
@@ -13381,7 +13501,7 @@ proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.getDisableFlagTrigge
  * @return {!proto.bucketeer.feature.DisableFlagTriggerRequest} returns this
 */
 proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.setDisableFlagTriggerCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 2, value);
+  return jspb.Message.setWrapperField(this, 3, value);
 };
 
 
@@ -13399,7 +13519,7 @@ proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.clearDisableFlagTrig
  * @return {boolean}
  */
 proto.bucketeer.feature.DisableFlagTriggerRequest.prototype.hasDisableFlagTriggerCommand = function() {
-  return jspb.Message.getField(this, 2) != null;
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
@@ -13536,7 +13656,8 @@ proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.toObject = function(op
  */
 proto.bucketeer.feature.ResetFlagTriggerRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ""),
     resetFlagTriggerCommand: (f = msg.getResetFlagTriggerCommand()) && proto_feature_command_pb.ResetFlagTriggerCommand.toObject(includeInstance, f)
   };
 
@@ -13576,9 +13697,13 @@ proto.bucketeer.feature.ResetFlagTriggerRequest.deserializeBinaryFromReader = fu
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentNamespace(value);
+      msg.setId(value);
       break;
     case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentNamespace(value);
+      break;
+    case 3:
       var value = new proto_feature_command_pb.ResetFlagTriggerCommand;
       reader.readMessage(value,proto_feature_command_pb.ResetFlagTriggerCommand.deserializeBinaryFromReader);
       msg.setResetFlagTriggerCommand(value);
@@ -13612,17 +13737,24 @@ proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.serializeBinary = func
  */
 proto.bucketeer.feature.ResetFlagTriggerRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getEnvironmentNamespace();
+  f = message.getId();
   if (f.length > 0) {
     writer.writeString(
       1,
       f
     );
   }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
   f = message.getResetFlagTriggerCommand();
   if (f != null) {
     writer.writeMessage(
-      2,
+      3,
       f,
       proto_feature_command_pb.ResetFlagTriggerCommand.serializeBinaryToWriter
     );
@@ -13631,10 +13763,10 @@ proto.bucketeer.feature.ResetFlagTriggerRequest.serializeBinaryToWriter = functi
 
 
 /**
- * optional string environment_namespace = 1;
+ * optional string id = 1;
  * @return {string}
  */
-proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.getId = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
@@ -13643,18 +13775,36 @@ proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.getEnvironmentNamespac
  * @param {string} value
  * @return {!proto.bucketeer.feature.ResetFlagTriggerRequest} returns this
  */
-proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.setId = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
 /**
- * optional ResetFlagTriggerCommand reset_flag_trigger_command = 2;
+ * optional string environment_namespace = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.getEnvironmentNamespace = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.ResetFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.setEnvironmentNamespace = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional ResetFlagTriggerCommand reset_flag_trigger_command = 3;
  * @return {?proto.bucketeer.feature.ResetFlagTriggerCommand}
  */
 proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.getResetFlagTriggerCommand = function() {
   return /** @type{?proto.bucketeer.feature.ResetFlagTriggerCommand} */ (
-    jspb.Message.getWrapperField(this, proto_feature_command_pb.ResetFlagTriggerCommand, 2));
+    jspb.Message.getWrapperField(this, proto_feature_command_pb.ResetFlagTriggerCommand, 3));
 };
 
 
@@ -13663,7 +13813,7 @@ proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.getResetFlagTriggerCom
  * @return {!proto.bucketeer.feature.ResetFlagTriggerRequest} returns this
 */
 proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.setResetFlagTriggerCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 2, value);
+  return jspb.Message.setWrapperField(this, 3, value);
 };
 
 
@@ -13681,7 +13831,7 @@ proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.clearResetFlagTriggerC
  * @return {boolean}
  */
 proto.bucketeer.feature.ResetFlagTriggerRequest.prototype.hasResetFlagTriggerCommand = function() {
-  return jspb.Message.getField(this, 2) != null;
+  return jspb.Message.getField(this, 3) != null;
 };
 
 

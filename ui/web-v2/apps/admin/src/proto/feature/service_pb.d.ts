@@ -1582,6 +1582,9 @@ export namespace CreateFlagTriggerResponse {
 }
 
 export class DeleteFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -1602,6 +1605,7 @@ export class DeleteFlagTriggerRequest extends jspb.Message {
 
 export namespace DeleteFlagTriggerRequest {
   export type AsObject = {
+    id: string,
     environmentNamespace: string,
     deleteFlagTriggerCommand?: proto_feature_command_pb.DeleteFlagTriggerCommand.AsObject,
   }
@@ -1624,6 +1628,9 @@ export namespace DeleteFlagTriggerResponse {
 }
 
 export class UpdateFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -1644,6 +1651,7 @@ export class UpdateFlagTriggerRequest extends jspb.Message {
 
 export namespace UpdateFlagTriggerRequest {
   export type AsObject = {
+    id: string,
     environmentNamespace: string,
     changeFlagTriggerDescriptionCommand?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.AsObject,
   }
@@ -1666,6 +1674,9 @@ export namespace UpdateFlagTriggerResponse {
 }
 
 export class EnableFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -1686,6 +1697,7 @@ export class EnableFlagTriggerRequest extends jspb.Message {
 
 export namespace EnableFlagTriggerRequest {
   export type AsObject = {
+    id: string,
     environmentNamespace: string,
     enableFlagTriggerCommand?: proto_feature_command_pb.EnableFlagTriggerCommand.AsObject,
   }
@@ -1708,6 +1720,9 @@ export namespace EnableFlagTriggerResponse {
 }
 
 export class DisableFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -1728,6 +1743,7 @@ export class DisableFlagTriggerRequest extends jspb.Message {
 
 export namespace DisableFlagTriggerRequest {
   export type AsObject = {
+    id: string,
     environmentNamespace: string,
     disableFlagTriggerCommand?: proto_feature_command_pb.DisableFlagTriggerCommand.AsObject,
   }
@@ -1750,6 +1766,9 @@ export namespace DisableFlagTriggerResponse {
 }
 
 export class ResetFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -1770,6 +1789,7 @@ export class ResetFlagTriggerRequest extends jspb.Message {
 
 export namespace ResetFlagTriggerRequest {
   export type AsObject = {
+    id: string,
     environmentNamespace: string,
     resetFlagTriggerCommand?: proto_feature_command_pb.ResetFlagTriggerCommand.AsObject,
   }
