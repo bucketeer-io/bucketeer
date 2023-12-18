@@ -5,6 +5,10 @@
 # Nouns
 Account: "Account"
 AccountRole: "Account role"
+AccountName: "Account name"
+AccountAvatarImageURL: "Account avatar image URL"
+AccountOrganizationRole: "Account organization role"
+AccountEnvironmentRoles: "Account environment roles"
 AdminAccount: "Admin account"
 AdminNotification: "Admin notification"
 AdminNotificationType: "Admin notification type"

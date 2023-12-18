@@ -37,6 +37,10 @@ const (
 	// nouns
 	Account                      = "Account"
 	AccountRole                  = "AccountRole"
+	AccountName                  = "AccountName"
+	AccountAvatarImageURL        = "AccountAvatarImageURL"
+	AccountOrganizationRole      = "AccountOrganizationRole"
+	AccountEnvironmentRoles      = "AccountEnvironmentRoles"
 	AdminAccount                 = "AdminAccount"
 	AdminNotification            = "AdminNotification"
 	AdminNotificationType        = "AdminNotificationType"

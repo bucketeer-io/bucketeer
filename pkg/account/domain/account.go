@@ -24,6 +24,10 @@ type Account struct {
 	*proto.Account
 }
 
+type AccountV2 struct {
+	*proto.AccountV2
+}
+
 func NewAccount(email string, role proto.Account_Role) (*Account, error) {
 	now := time.Now().Unix()
 	return &Account{&proto.Account{
@@ -55,6 +59,61 @@ func (a *Account) Disable() error {
 
 func (a *Account) Delete() error {
 	a.Account.Deleted = true
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func NewAccountV2(
+	email, name, avatarImageURL, organizationID string,
+	organizationRole proto.AccountV2_Role_Organization,
+	environmentRoles []*proto.AccountV2_EnvironmentRole,
+) *AccountV2 {
+	now := time.Now().Unix()
+	return &AccountV2{&proto.AccountV2{
+		Email:            email,
+		Name:             name,
+		AvatarImageUrl:   avatarImageURL,
+		OrganizationId:   organizationID,
+		OrganizationRole: organizationRole,
+		EnvironmentRoles: environmentRoles,
+		Disabled:         false,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}}
+}
+
+func (a *AccountV2) ChangeName(newName string) error {
+	a.AccountV2.Name = newName
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) ChangeAvatarImageURL(url string) error {
+	a.AccountV2.AvatarImageUrl = url
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) ChangeOrganizationRole(role proto.AccountV2_Role_Organization) error {
+	a.AccountV2.OrganizationRole = role
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) ChangeEnvironmentRole(roles []*proto.AccountV2_EnvironmentRole) error {
+	a.AccountV2.EnvironmentRoles = roles
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) Enable() error {
+	a.AccountV2.Disabled = false
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) Disable() error {
+	a.AccountV2.Disabled = true
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }

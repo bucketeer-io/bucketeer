@@ -51,3 +51,86 @@ func TestDisable(t *testing.T) {
 	a.Disable()
 	assert.Equal(t, true, a.Disabled)
 }
+
+func TestNewAccountV2(t *testing.T) {
+	a := NewAccountV2(
+		"email",
+		"name",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
+	assert.Equal(t, "email", a.Email)
+	assert.Equal(t, "name", a.Name)
+	assert.Equal(t, "avatarImageURL", a.AvatarImageUrl)
+	assert.Equal(t, "organizationID", a.OrganizationId)
+	assert.Equal(t, proto.AccountV2_Role_Organization_MEMBER, a.OrganizationRole)
+	assert.Equal(t, []*proto.AccountV2_EnvironmentRole{}, a.EnvironmentRoles)
+}
+
+func TestChangeName(t *testing.T) {
+	a := NewAccountV2(
+		"email",
+		"name",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
+	a.ChangeName("newName")
+	assert.Equal(t, "newName", a.Name)
+}
+
+func TestChangeAvatarImageURL(t *testing.T) {
+	a := NewAccountV2(
+		"email",
+		"name",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
+	a.ChangeAvatarImageURL("newURL")
+	assert.Equal(t, "newURL", a.AvatarImageUrl)
+}
+
+func TestChangeOrganizationRole(t *testing.T) {
+	a := NewAccountV2(
+		"email",
+		"name",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
+	a.ChangeOrganizationRole(proto.AccountV2_Role_Organization_ADMIN)
+	assert.Equal(t, proto.AccountV2_Role_Organization_ADMIN, a.OrganizationRole)
+}
+
+func TestEnableV2(t *testing.T) {
+	a := NewAccountV2(
+		"email",
+		"name",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
+	a.Disabled = true
+	a.Enable()
+	assert.Equal(t, false, a.Disabled)
+}
+
+func TestDisableV2(t *testing.T) {
+	a := NewAccountV2(
+		"email",
+		"name",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
+	a.Disable()
+	assert.Equal(t, true, a.Disabled)
+}

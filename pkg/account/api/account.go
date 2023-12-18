@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -501,23 +502,219 @@ func (s *AccountService) CreateAccountV2(
 	ctx context.Context,
 	req *accountproto.CreateAccountV2Request,
 ) (*accountproto.CreateAccountV2Response, error) {
-	// TODO: Implement the business logic.
-	return &accountproto.CreateAccountV2Response{}, nil
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.OrganizationId,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateCreateAccountV2Request(req, localizer); err != nil {
+		s.logger.Error(
+			"Failed to create account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+			)...,
+		)
+		return nil, err
+	}
+	account := domain.NewAccountV2(
+		req.Command.Email, req.Command.Name, req.Command.AvatarImageUrl, req.OrganizationId,
+		req.Command.OrganizationRole, req.Command.EnvironmentRoles,
+	)
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		accountStorage := v2as.NewAccountStorage(tx)
+		handler := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
+		if err := handler.Handle(ctx, req.Command); err != nil {
+			return err
+		}
+		return accountStorage.CreateAccountV2(ctx, account)
+	})
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
 
 func (s *AccountService) UpdateAccountV2(
 	ctx context.Context,
 	req *accountproto.UpdateAccountV2Request,
 ) (*accountproto.UpdateAccountV2Response, error) {
-	// TODO: Implement the business logic.
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.OrganizationId,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	commands := s.getUpdateAccountV2Commands(req)
+	if err := validateUpdateAccountV2Request(req, commands, localizer); err != nil {
+		s.logger.Error(
+			"Failed to update account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		return nil, err
+	}
+	if err := s.updateAccountV2MySQL(ctx, editor, commands, req.Email, req.OrganizationId); err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	return &accountproto.UpdateAccountV2Response{}, nil
+}
+
+func (s *AccountService) getUpdateAccountV2Commands(req *accountproto.UpdateAccountV2Request) []command.Command {
+	commands := make([]command.Command, 0)
+	if req.ChangeNameCommand != nil {
+		commands = append(commands, req.ChangeNameCommand)
+	}
+	if req.ChangeAvatarUrlCommand != nil {
+		commands = append(commands, req.ChangeAvatarUrlCommand)
+	}
+	if req.ChangeOrganizationRoleCommand != nil {
+		commands = append(commands, req.ChangeOrganizationRoleCommand)
+	}
+	if req.ChangeEnvironmentRolesCommand != nil {
+		commands = append(commands, req.ChangeEnvironmentRolesCommand)
+	}
+	return commands
 }
 
 func (s *AccountService) EnableAccountV2(
 	ctx context.Context,
 	req *accountproto.EnableAccountV2Request,
 ) (*accountproto.EnableAccountV2Response, error) {
-	// TODO: Implement the business logic.
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.OrganizationId,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateEnableAccountV2Request(req, localizer); err != nil {
+		s.logger.Error(
+			"Failed to enable account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		return nil, err
+	}
+	err = s.updateAccountV2MySQL(
+		ctx,
+		editor,
+		[]command.Command{req.Command},
+		req.Email,
+		req.OrganizationId,
+	)
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to enable account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	return &accountproto.EnableAccountV2Response{}, nil
 }
 
@@ -525,15 +722,172 @@ func (s *AccountService) DisableAccountV2(
 	ctx context.Context,
 	req *accountproto.DisableAccountV2Request,
 ) (*accountproto.DisableAccountV2Response, error) {
-	// TODO: Implement the business logic.
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.OrganizationId,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateDisableAccountV2Request(req, localizer); err != nil {
+		s.logger.Error(
+			"Failed to disable account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		return nil, err
+	}
+	err = s.updateAccountV2MySQL(
+		ctx,
+		editor,
+		[]command.Command{req.Command},
+		req.Email,
+		req.OrganizationId,
+	)
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to disable account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	return &accountproto.DisableAccountV2Response{}, nil
+}
+
+func (s *AccountService) updateAccountV2MySQL(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	commands []command.Command,
+	email, organizationID string,
+) error {
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return err
+	}
+	return s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		accountStorage := v2as.NewAccountStorage(tx)
+		account, err := accountStorage.GetAccountV2(ctx, email, organizationID)
+		if err != nil {
+			return err
+		}
+		handler := command.NewAccountV2CommandHandler(editor, account, s.publisher, organizationID)
+		for _, c := range commands {
+			if err := handler.Handle(ctx, c); err != nil {
+				return err
+			}
+		}
+		return accountStorage.UpdateAccountV2(ctx, account)
+	})
 }
 
 func (s *AccountService) DeleteAccountV2(
 	ctx context.Context,
 	req *accountproto.DeleteAccountV2Request,
 ) (*accountproto.DeleteAccountV2Response, error) {
-	// TODO: Implement the business logic.
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.OrganizationId,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateDeleteAccountV2Request(req, localizer); err != nil {
+		s.logger.Error(
+			"Failed to delete account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		return nil, err
+	}
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		accountStorage := v2as.NewAccountStorage(tx)
+		account, err := accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
+		if err != nil {
+			return err
+		}
+		handler := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
+		if err := handler.Handle(ctx, req.Command); err != nil {
+			return err
+		}
+		return accountStorage.DeleteAccountV2(ctx, account)
+	})
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to delete account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	return &accountproto.DeleteAccountV2Response{}, nil
 }
 
@@ -541,14 +895,181 @@ func (s *AccountService) GetAccountV2(
 	ctx context.Context,
 	req *accountproto.GetAccountV2Request,
 ) (*accountproto.GetAccountV2Response, error) {
-	// TODO: Implement the business logic.
-	return &accountproto.GetAccountV2Response{}, nil
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkOrganizationRole(
+		ctx,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		req.OrganizationId,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateGetAccountV2Request(req, localizer); err != nil {
+		s.logger.Error(
+			"Failed to get account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		return nil, err
+	}
+	account, err := s.getAccountV2(ctx, req.Email, req.OrganizationId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	return &accountproto.GetAccountV2Response{Account: account.AccountV2}, nil
+}
+
+func (s *AccountService) getAccountV2(
+	ctx context.Context,
+	email, organizationID string,
+	localizer locale.Localizer,
+) (*domain.AccountV2, error) {
+	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
+	account, err := accountStorage.GetAccountV2(ctx, email, organizationID)
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to get account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", organizationID),
+				zap.String("email", email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return account, nil
 }
 
 func (s *AccountService) ListAccountsV2(
 	ctx context.Context,
 	req *accountproto.ListAccountsV2Request,
 ) (*accountproto.ListAccountsV2Response, error) {
-	// TODO: Implement the business logic.
-	return &accountproto.ListAccountsV2Response{}, nil
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkOrganizationRole(
+		ctx,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		req.OrganizationId,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	whereParts := []mysql.WherePart{
+		mysql.NewFilter("organization_id", "=", req.OrganizationId),
+	}
+	if req.Disabled != nil {
+		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
+	}
+	if req.Role != nil {
+		whereParts = append(whereParts, mysql.NewFilter("role", "=", req.Role.Value))
+	}
+	if req.SearchKeyword != "" {
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"email"}, req.SearchKeyword))
+	}
+	orders, err := s.newAccountV2ListOrders(req.OrderBy, req.OrderDirection, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+	limit := int(req.PageSize)
+	cursor := req.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	offset, err := strconv.Atoi(cursor)
+	if err != nil {
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
+	accounts, nextCursor, totalCount, err := accountStorage.ListAccountsV2(
+		ctx,
+		whereParts,
+		orders,
+		limit,
+		offset,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list accounts",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &accountproto.ListAccountsV2Response{
+		Accounts:   accounts,
+		Cursor:     strconv.Itoa(nextCursor),
+		TotalCount: totalCount,
+	}, nil
+}
+
+func (s *AccountService) newAccountV2ListOrders(
+	orderBy accountproto.ListAccountsV2Request_OrderBy,
+	orderDirection accountproto.ListAccountsV2Request_OrderDirection,
+	localizer locale.Localizer,
+) ([]*mysql.Order, error) {
+	var column string
+	switch orderBy {
+	case accountproto.ListAccountsV2Request_DEFAULT,
+		accountproto.ListAccountsV2Request_EMAIL:
+		column = "email"
+	case accountproto.ListAccountsV2Request_CREATED_AT:
+		column = "created_at"
+	case accountproto.ListAccountsV2Request_UPDATED_AT:
+		column = "updated_at"
+	default:
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	direction := mysql.OrderDirectionAsc
+	if orderDirection == accountproto.ListAccountsV2Request_DESC {
+		direction = mysql.OrderDirectionDesc
+	}
+	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }

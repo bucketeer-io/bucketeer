@@ -161,6 +161,14 @@ export namespace Event {
     ACCOUNT_ENABLED: 302;
     ACCOUNT_DISABLED: 303;
     ACCOUNT_DELETED: 304;
+    ACCOUNT_V2_CREATED: 305;
+    ACCOUNT_V2_NAME_CHANGED: 306;
+    ACCOUNT_V2_AVATAR_IMAGE_URL_CHANGED: 307;
+    ACCOUNT_V2_ORGANIZATION_ROLE_CHANGED: 308;
+    ACCOUNT_V2_ENVIRONMENT_ROLES_CHANGED: 309;
+    ACCOUNT_V2_ENABLED: 310;
+    ACCOUNT_V2_DISABLED: 311;
+    ACCOUNT_V2_DELETED: 312;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -1855,6 +1863,218 @@ export class AccountDeletedEvent extends jspb.Message {
 export namespace AccountDeletedEvent {
   export type AsObject = {
     id: string,
+  }
+}
+
+export class AccountV2CreatedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getAvatarImageUrl(): string;
+  setAvatarImageUrl(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getOrganizationRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+  setOrganizationRole(value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]): void;
+
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.EnvironmentRole>;
+  setEnvironmentRolesList(value: Array<proto_account_account_pb.AccountV2.EnvironmentRole>): void;
+  addEnvironmentRoles(value?: proto_account_account_pb.AccountV2.EnvironmentRole, index?: number): proto_account_account_pb.AccountV2.EnvironmentRole;
+
+  getDisabled(): boolean;
+  setDisabled(value: boolean): void;
+
+  getCreatedAt(): number;
+  setCreatedAt(value: number): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2CreatedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: AccountV2CreatedEvent): AccountV2CreatedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AccountV2CreatedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2CreatedEvent;
+  static deserializeBinaryFromReader(message: AccountV2CreatedEvent, reader: jspb.BinaryReader): AccountV2CreatedEvent;
+}
+
+export namespace AccountV2CreatedEvent {
+  export type AsObject = {
+    email: string,
+    name: string,
+    avatarImageUrl: string,
+    organizationId: string,
+    organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap],
+    environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>,
+    disabled: boolean,
+    createdAt: number,
+    updatedAt: number,
+  }
+}
+
+export class AccountV2NameChangedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2NameChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: AccountV2NameChangedEvent): AccountV2NameChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AccountV2NameChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2NameChangedEvent;
+  static deserializeBinaryFromReader(message: AccountV2NameChangedEvent, reader: jspb.BinaryReader): AccountV2NameChangedEvent;
+}
+
+export namespace AccountV2NameChangedEvent {
+  export type AsObject = {
+    email: string,
+    name: string,
+  }
+}
+
+export class AccountV2AvatarImageURLChangedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getAvatarImageUrl(): string;
+  setAvatarImageUrl(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2AvatarImageURLChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: AccountV2AvatarImageURLChangedEvent): AccountV2AvatarImageURLChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AccountV2AvatarImageURLChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2AvatarImageURLChangedEvent;
+  static deserializeBinaryFromReader(message: AccountV2AvatarImageURLChangedEvent, reader: jspb.BinaryReader): AccountV2AvatarImageURLChangedEvent;
+}
+
+export namespace AccountV2AvatarImageURLChangedEvent {
+  export type AsObject = {
+    email: string,
+    avatarImageUrl: string,
+  }
+}
+
+export class AccountV2OrganizationRoleChangedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+  setOrganizationRole(value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2OrganizationRoleChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: AccountV2OrganizationRoleChangedEvent): AccountV2OrganizationRoleChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AccountV2OrganizationRoleChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2OrganizationRoleChangedEvent;
+  static deserializeBinaryFromReader(message: AccountV2OrganizationRoleChangedEvent, reader: jspb.BinaryReader): AccountV2OrganizationRoleChangedEvent;
+}
+
+export namespace AccountV2OrganizationRoleChangedEvent {
+  export type AsObject = {
+    email: string,
+    organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap],
+  }
+}
+
+export class AccountV2EnvironmentRolesChangedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.EnvironmentRole>;
+  setEnvironmentRolesList(value: Array<proto_account_account_pb.AccountV2.EnvironmentRole>): void;
+  addEnvironmentRoles(value?: proto_account_account_pb.AccountV2.EnvironmentRole, index?: number): proto_account_account_pb.AccountV2.EnvironmentRole;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2EnvironmentRolesChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: AccountV2EnvironmentRolesChangedEvent): AccountV2EnvironmentRolesChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AccountV2EnvironmentRolesChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2EnvironmentRolesChangedEvent;
+  static deserializeBinaryFromReader(message: AccountV2EnvironmentRolesChangedEvent, reader: jspb.BinaryReader): AccountV2EnvironmentRolesChangedEvent;
+}
+
+export namespace AccountV2EnvironmentRolesChangedEvent {
+  export type AsObject = {
+    email: string,
+    environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>,
+  }
+}
+
+export class AccountV2EnabledEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2EnabledEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: AccountV2EnabledEvent): AccountV2EnabledEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AccountV2EnabledEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2EnabledEvent;
+  static deserializeBinaryFromReader(message: AccountV2EnabledEvent, reader: jspb.BinaryReader): AccountV2EnabledEvent;
+}
+
+export namespace AccountV2EnabledEvent {
+  export type AsObject = {
+    email: string,
+  }
+}
+
+export class AccountV2DisabledEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2DisabledEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: AccountV2DisabledEvent): AccountV2DisabledEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AccountV2DisabledEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2DisabledEvent;
+  static deserializeBinaryFromReader(message: AccountV2DisabledEvent, reader: jspb.BinaryReader): AccountV2DisabledEvent;
+}
+
+export namespace AccountV2DisabledEvent {
+  export type AsObject = {
+    email: string,
+  }
+}
+
+export class AccountV2DeletedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2DeletedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: AccountV2DeletedEvent): AccountV2DeletedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AccountV2DeletedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2DeletedEvent;
+  static deserializeBinaryFromReader(message: AccountV2DeletedEvent, reader: jspb.BinaryReader): AccountV2DeletedEvent;
+}
+
+export namespace AccountV2DeletedEvent {
+  export type AsObject = {
+    email: string,
   }
 }
 
