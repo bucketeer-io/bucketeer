@@ -74,3 +74,35 @@ func checkRole(email string, role, requiredRole accountproto.Account_Role, isAdm
 		IsAdmin: isAdmin,
 	}, nil
 }
+
+func CheckOrganizationRole(
+	ctx context.Context,
+	requiredRole accountproto.AccountV2_Role_Organization,
+	getAccountFunc func(email string) (*accountproto.GetAccountV2Response, error),
+) (*eventproto.Editor, error) {
+	token, ok := rpc.GetIDToken(ctx)
+	if !ok {
+		return nil, ErrUnauthenticated
+	}
+	// TODO remove this condition after migration to AccountV2
+	if token.IsAdmin() {
+		return &eventproto.Editor{
+			Email:   token.Email,
+			IsAdmin: true,
+		}, nil
+	}
+	resp, err := getAccountFunc(token.Email)
+	if err != nil {
+		if code := status.Code(err); code == codes.NotFound {
+			return nil, ErrUnauthenticated
+		}
+		return nil, ErrInternal
+	}
+	if resp.Account.OrganizationRole < requiredRole {
+		return nil, ErrPermissionDenied
+	}
+	return &eventproto.Editor{
+		Email:   token.Email,
+		IsAdmin: token.IsAdmin(),
+	}, nil
+}

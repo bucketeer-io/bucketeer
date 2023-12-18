@@ -175,9 +175,6 @@ export class CreateAccountV2Command extends jspb.Message {
   getAvatarImageUrl(): string;
   setAvatarImageUrl(value: string): void;
 
-  getOrganizationId(): string;
-  setOrganizationId(value: string): void;
-
   getOrganizationRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
   setOrganizationRole(value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]): void;
 
@@ -201,7 +198,6 @@ export namespace CreateAccountV2Command {
     email: string,
     name: string,
     avatarImageUrl: string,
-    organizationId: string,
     organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap],
     environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>,
   }

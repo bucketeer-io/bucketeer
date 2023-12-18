@@ -114,6 +114,14 @@ message Event {
     ACCOUNT_ENABLED = 302;
     ACCOUNT_DISABLED = 303;
     ACCOUNT_DELETED = 304;
+    ACCOUNT_V2_CREATED = 305;
+    ACCOUNT_V2_NAME_CHANGED = 306;
+    ACCOUNT_V2_AVATAR_IMAGE_URL_CHANGED = 307;
+    ACCOUNT_V2_ORGANIZATION_ROLE_CHANGED = 308;
+    ACCOUNT_V2_ENVIRONMENT_ROLES_CHANGED = 309;
+    ACCOUNT_V2_ENABLED = 310;
+    ACCOUNT_V2_DISABLED = 311;
+    ACCOUNT_V2_DELETED = 312;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -541,6 +549,50 @@ message AccountDisabledEvent {
 
 message AccountDeletedEvent {
   string id = 1;
+}
+
+message AccountV2CreatedEvent {
+  string email = 1;
+  string name = 2;
+  string avatar_image_url = 3;
+  string organization_id = 4;
+  bucketeer.account.AccountV2.Role.Organization organization_role = 5;
+  repeated bucketeer.account.AccountV2.EnvironmentRole environment_roles = 6;
+  bool disabled = 7;
+  int64 created_at = 8;
+  int64 updated_at = 9;
+}
+
+message AccountV2NameChangedEvent {
+  string email = 1;
+  string name = 2;
+}
+
+message AccountV2AvatarImageURLChangedEvent {
+  string email = 1;
+  string avatar_image_url = 2;
+}
+
+message AccountV2OrganizationRoleChangedEvent {
+  string email = 1;
+  bucketeer.account.AccountV2.Role.Organization organization_role = 2;
+}
+
+message AccountV2EnvironmentRolesChangedEvent {
+  string email = 1;
+  repeated bucketeer.account.AccountV2.EnvironmentRole environment_roles = 2;
+}
+
+message AccountV2EnabledEvent {
+  string email = 1;
+}
+
+message AccountV2DisabledEvent {
+  string email = 1;
+}
+
+message AccountV2DeletedEvent {
+  string email = 1;
 }
 
 message APIKeyCreatedEvent {

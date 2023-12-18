@@ -5,6 +5,10 @@
 # Nouns
 Account: "アカウント"
 AccountRole: "アカウントの権限"
+AccountName: "アカウントの名前"
+AccountAvatarImageURL: "アカウントのアバターの画像URL"
+AccountOrganizationRole: "アカウントのオーガニゼーションの権限"
+AccountEnvironmentRoles: "アカウントの環境の権限"
 AdminAccount: "管理者アカウント"
 AdminNotification: "管理者用通知設定"
 AdminNotificationType: "管理者用通知設定のタイプ"

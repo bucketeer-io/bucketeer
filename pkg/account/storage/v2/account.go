@@ -41,6 +41,16 @@ type AccountStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Account, int, int64, error)
+	CreateAccountV2(ctx context.Context, a *domain.AccountV2) error
+	UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error
+	DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error
+	GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error)
+	ListAccountsV2(
+		ctx context.Context,
+		whereParts []mysql.WherePart,
+		orders []*mysql.Order,
+		limit, offset int,
+	) ([]*proto.AccountV2, int, int64, error)
 }
 
 type accountStorage struct {
@@ -234,6 +244,228 @@ func (s *accountStorage) ListAccounts(
 			COUNT(1)
 		FROM
 			account
+		%s %s
+		`, whereSQL, orderBySQL,
+	)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return accounts, nextOffset, totalCount, nil
+}
+
+func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV2) error {
+	query := `
+		INSERT INTO account_v2 (
+			email,
+			name,
+			avatar_image_url,
+			organization_id,
+			organization_role,
+			environment_roles,
+			disabled,
+			created_at,
+			updated_at
+		) VALUES (
+			?, ?, ?, ?, ?, ?, ?, ?, ?
+		)
+	`
+	_, err := s.qe.ExecContext(
+		ctx,
+		query,
+		a.Email,
+		a.Name,
+		a.AvatarImageUrl,
+		a.OrganizationId,
+		int32(a.OrganizationRole),
+		mysql.JSONObject{Val: a.EnvironmentRoles},
+		a.Disabled,
+		a.CreatedAt,
+		a.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
+			return ErrAccountAlreadyExists
+		}
+		return err
+	}
+	return nil
+}
+
+func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error {
+	query := `
+		UPDATE 
+			account_v2
+		SET
+			name = ?,
+			avatar_image_url = ?,
+			organization_role = ?,
+			environment_roles = ?,
+			disabled = ?,
+			updated_at = ?
+		WHERE
+			email = ? AND
+			organization_id = ?
+	`
+	result, err := s.qe.ExecContext(
+		ctx,
+		query,
+		a.Name,
+		a.AvatarImageUrl,
+		int32(a.OrganizationRole),
+		mysql.JSONObject{Val: a.EnvironmentRoles},
+		a.Disabled,
+		a.UpdatedAt,
+		a.Email,
+		a.OrganizationId,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return ErrAccountUnexpectedAffectedRows
+	}
+	return nil
+}
+
+func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error {
+	query := `
+		DELETE FROM
+			account_v2
+		WHERE
+			email = ? AND
+			organization_id = ?
+	`
+	result, err := s.qe.ExecContext(
+		ctx,
+		query,
+		a.Email,
+		a.OrganizationId,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return ErrAccountUnexpectedAffectedRows
+	}
+	return nil
+}
+
+func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error) {
+	account := proto.AccountV2{}
+	var organizationRole int32
+	query := `
+		SELECT
+			email,
+			name,
+			avatar_image_url,
+			organization_id,
+			organization_role,
+			environment_roles,
+			disabled,
+			created_at,
+			updated_at
+		FROM
+			account_v2
+		WHERE
+			email = ? AND
+			organization_id = ?
+	`
+	err := s.qe.QueryRowContext(
+		ctx,
+		query,
+		email,
+		organizationID,
+	).Scan(
+		&account.Email,
+		&account.Name,
+		&account.AvatarImageUrl,
+		&account.OrganizationId,
+		&organizationRole,
+		&mysql.JSONObject{Val: &account.EnvironmentRoles},
+		&account.Disabled,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrAccountNotFound
+		}
+		return nil, err
+	}
+	account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
+	return &domain.AccountV2{AccountV2: &account}, nil
+}
+
+func (s *accountStorage) ListAccountsV2(
+	ctx context.Context,
+	whereParts []mysql.WherePart,
+	orders []*mysql.Order,
+	limit, offset int,
+) ([]*proto.AccountV2, int, int64, error) {
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	orderBySQL := mysql.ConstructOrderBySQLString(orders)
+	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
+	query := fmt.Sprintf(`
+		SELECT
+			email,
+			name,
+			avatar_image_url,
+			organization_id,
+			organization_role,
+			environment_roles,
+			disabled,
+			created_at,
+			updated_at
+		FROM
+			account_v2
+		%s %s %s
+		`, whereSQL, orderBySQL, limitOffsetSQL,
+	)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	defer rows.Close()
+	accounts := make([]*proto.AccountV2, 0, limit)
+	for rows.Next() {
+		account := proto.AccountV2{}
+		var organizationRole int32
+		err := rows.Scan(
+			&account.Email,
+			&account.Name,
+			&account.AvatarImageUrl,
+			&account.OrganizationId,
+			&organizationRole,
+			&mysql.JSONObject{Val: &account.EnvironmentRoles},
+			&account.Disabled,
+			&account.CreatedAt,
+			&account.UpdatedAt,
+		)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
+		accounts = append(accounts, &account)
+	}
+	if rows.Err() != nil {
+		return nil, 0, 0, err
+	}
+	nextOffset := offset + len(accounts)
+	var totalCount int64
+	countQuery := fmt.Sprintf(`
+		SELECT
+			COUNT(1)
+		FROM
+			account_v2
 		%s %s
 		`, whereSQL, orderBySQL,
 	)

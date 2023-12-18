@@ -477,6 +477,70 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Account),
 			),
 		}
+	case proto.Event_ACCOUNT_V2_CREATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.CreatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Account),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_NAME_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ChangedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AccountName),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_AVATAR_IMAGE_URL_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ChangedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AccountAvatarImageURL),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_ORGANIZATION_ROLE_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ChangedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AccountOrganizationRole),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_ENVIRONMENT_ROLES_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ChangedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AccountEnvironmentRoles),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_ENABLED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.EnabledTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Account),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_DISABLED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DisabledTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Account),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_DELETED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DeletedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Account),
+			),
+		}
 	case proto.Event_APIKEY_CREATED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),

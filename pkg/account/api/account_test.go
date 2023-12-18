@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -670,6 +671,737 @@ func TestListAccountsMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			actual, err := service.ListAccounts(ctx, p.input)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+			assert.Equal(t, p.expected, actual, p.desc)
+		})
+	}
+}
+
+func TestCreateAccountV2MySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AccountService)
+		ctxRole     accountproto.Account_Role
+		req         *accountproto.CreateAccountV2Request
+		expectedErr error
+	}{
+		{
+			desc:    "errNoCommand",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.CreateAccountV2Request{
+				Command:        nil,
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		},
+		{
+			desc:    "errEmailIsEmpty",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.CreateAccountV2Request{
+				Command:        &accountproto.CreateAccountV2Command{Email: ""},
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+		},
+		{
+			desc:    "errInvalidEmail",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.CreateAccountV2Request{
+				Command:        &accountproto.CreateAccountV2Command{Email: "bucketeer@"},
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+		},
+		{
+			desc: "errAccountAlreadyExists",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrAccountAlreadyExists)
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.CreateAccountV2Request{
+				Command: &accountproto.CreateAccountV2Command{
+					Email:            "bucketeer_environment@example.com",
+					Name:             "name",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				},
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			desc: "errInternal",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errors.New("test"))
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.CreateAccountV2Request{
+				Command: &accountproto.CreateAccountV2Command{
+					Email:            "bucketeer@example.com",
+					Name:             "name",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				},
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.CreateAccountV2Request{
+				Command: &accountproto.CreateAccountV2Command{
+					Email:            "bucketeer@example.com",
+					Name:             "name",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				},
+				OrganizationId: "org0",
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx = setToken(ctx, p.ctxRole)
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.CreateAccountV2(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+		})
+	}
+}
+
+func TestUpdateAccountV2MySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AccountService)
+		ctxRole     accountproto.Account_Role
+		req         *accountproto.UpdateAccountV2Request
+		expectedErr error
+	}{
+		{
+			desc:    "errEmailIsEmpty",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.UpdateAccountV2Request{
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+		},
+		{
+			desc:    "errInvalidEmail",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.UpdateAccountV2Request{
+				Email:          "bucketeer@",
+				OrganizationId: "org0",
+				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
+					Name: "newName",
+				},
+			},
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+		},
+		{
+			desc:    "errOrganizationIDIsEmpty",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.UpdateAccountV2Request{
+				Email: "bucketeer@example.com",
+				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
+					Name: "newName",
+				},
+			},
+			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+		},
+		{
+			desc:    "errNoCommand",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.UpdateAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		},
+		{
+			desc:    "errInvalidNewName",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.UpdateAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
+					Name: strings.Repeat("a", 251),
+				},
+			},
+			expectedErr: createError(statusInvalidName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+		},
+		{
+			desc:    "errInvalidNewOrganizationRole",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.UpdateAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				ChangeOrganizationRoleCommand: &accountproto.ChangeAccountV2OrganizationRoleCommand{
+					Role: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+				},
+			},
+			expectedErr: createError(statusInvalidOrganizationRole, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "organization_role")),
+		},
+		{
+			desc: "errAccountNotFound",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrAccountNotFound)
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.UpdateAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
+					Name: "newName",
+				},
+			},
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "errInternal",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errors.New("test"))
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.UpdateAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
+					Name: "newName",
+				},
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.UpdateAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
+					Name: "newName",
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx = setToken(ctx, p.ctxRole)
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.UpdateAccountV2(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+		})
+	}
+}
+
+func TestEnableAccountV2MySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AccountService)
+		ctxRole     accountproto.Account_Role
+		req         *accountproto.EnableAccountV2Request
+		expectedErr error
+	}{
+		{
+			desc:    "errEmailIsEmpty",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.EnableAccountV2Request{
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+		},
+		{
+			desc:    "errInvalidEmail",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.EnableAccountV2Request{
+				Email:          "bucketeer@",
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+		},
+		{
+			desc:    "errOrganizationIDIsEmpty",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.EnableAccountV2Request{
+				Email: "bucketeer@example.com",
+			},
+			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+		},
+		{
+			desc:    "errNoCommand",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.EnableAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		},
+		{
+			desc: "errAccountNotFound",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrAccountNotFound)
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.EnableAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				Command:        &accountproto.EnableAccountV2Command{},
+			},
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "errInternal",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errors.New("test"))
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.EnableAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				Command:        &accountproto.EnableAccountV2Command{},
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.EnableAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				Command:        &accountproto.EnableAccountV2Command{},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx = setToken(ctx, p.ctxRole)
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.EnableAccountV2(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+		})
+	}
+}
+
+func TestDisableAccountV2MySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AccountService)
+		ctxRole     accountproto.Account_Role
+		req         *accountproto.DisableAccountV2Request
+		expectedErr error
+	}{
+		{
+			desc:    "errEmailIsEmpty",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DisableAccountV2Request{
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+		},
+		{
+			desc:    "errInvalidEmail",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DisableAccountV2Request{
+				Email:          "bucketeer@",
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+		},
+		{
+			desc:    "errOrganizationIDIsEmpty",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DisableAccountV2Request{
+				Email: "bucketeer@example.com",
+			},
+			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+		},
+		{
+			desc:    "errNoCommand",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DisableAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		},
+		{
+			desc: "errAccountNotFound",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrAccountNotFound)
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DisableAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				Command:        &accountproto.DisableAccountV2Command{},
+			},
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "errInternal",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errors.New("test"))
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DisableAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				Command:        &accountproto.DisableAccountV2Command{},
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DisableAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				Command:        &accountproto.DisableAccountV2Command{},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx = setToken(ctx, p.ctxRole)
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.DisableAccountV2(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+		})
+	}
+}
+
+func TestDeleteAccountV2MySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AccountService)
+		ctxRole     accountproto.Account_Role
+		req         *accountproto.DeleteAccountV2Request
+		expectedErr error
+	}{
+		{
+			desc:    "errEmailIsEmpty",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DeleteAccountV2Request{
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+		},
+		{
+			desc:    "errInvalidEmail",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DeleteAccountV2Request{
+				Email:          "bucketeer@",
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+		},
+		{
+			desc:    "errOrganizationIDIsEmpty",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DeleteAccountV2Request{
+				Email: "bucketeer@example.com",
+			},
+			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
+		},
+		{
+			desc:    "errNoCommand",
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DeleteAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+			},
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		},
+		{
+			desc: "errAccountNotFound",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrAccountNotFound)
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DeleteAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				Command:        &accountproto.DeleteAccountV2Command{},
+			},
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "errInternal",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errors.New("test"))
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DeleteAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				Command:        &accountproto.DeleteAccountV2Command{},
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			ctxRole: accountproto.Account_OWNER,
+			req: &accountproto.DeleteAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				Command:        &accountproto.DeleteAccountV2Command{},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx = setToken(ctx, p.ctxRole)
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.DeleteAccountV2(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+		})
+	}
+}
+
+func TestListAccountsV2MySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithDefaultToken(t, accountproto.Account_OWNER)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AccountService)
+		input       *accountproto.ListAccountsV2Request
+		expected    *accountproto.ListAccountsV2Response
+		expectedErr error
+	}{
+		{
+			desc:        "errInvalidCursor",
+			setup:       nil,
+			input:       &accountproto.ListAccountsV2Request{OrganizationId: "org0", Cursor: "XXX"},
+			expected:    nil,
+			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
+		},
+		{
+			desc: "errInternal",
+			setup: func(s *AccountService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("test"))
+			},
+			input:       &accountproto.ListAccountsV2Request{OrganizationId: "org0"},
+			expected:    nil,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AccountService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			input:       &accountproto.ListAccountsV2Request{PageSize: 2, Cursor: "", OrganizationId: "org0"},
+			expected:    &accountproto.ListAccountsV2Response{Accounts: []*accountproto.AccountV2{}, Cursor: "0"},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			actual, err := service.ListAccountsV2(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			assert.Equal(t, p.expected, actual, p.desc)
 		})

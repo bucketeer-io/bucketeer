@@ -387,16 +387,11 @@
               },
               {
                 "id": 4,
-                "name": "organization_id",
-                "type": "string"
-              },
-              {
-                "id": 5,
                 "name": "organization_role",
                 "type": "account.AccountV2.Role.Organization"
               },
               {
-                "id": 6,
+                "id": 5,
                 "name": "environment_roles",
                 "type": "account.AccountV2.EnvironmentRole",
                 "is_repeated": true
@@ -6101,6 +6096,38 @@
                 "integer": 304
               },
               {
+                "name": "ACCOUNT_V2_CREATED",
+                "integer": 305
+              },
+              {
+                "name": "ACCOUNT_V2_NAME_CHANGED",
+                "integer": 306
+              },
+              {
+                "name": "ACCOUNT_V2_AVATAR_IMAGE_URL_CHANGED",
+                "integer": 307
+              },
+              {
+                "name": "ACCOUNT_V2_ORGANIZATION_ROLE_CHANGED",
+                "integer": 308
+              },
+              {
+                "name": "ACCOUNT_V2_ENVIRONMENT_ROLES_CHANGED",
+                "integer": 309
+              },
+              {
+                "name": "ACCOUNT_V2_ENABLED",
+                "integer": 310
+              },
+              {
+                "name": "ACCOUNT_V2_DISABLED",
+                "integer": 311
+              },
+              {
+                "name": "ACCOUNT_V2_DELETED",
+                "integer": 312
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -7596,6 +7623,148 @@
               {
                 "id": 1,
                 "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2CreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "avatar_image_url",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "organization_role",
+                "type": "bucketeer.account.AccountV2.Role.Organization"
+              },
+              {
+                "id": 6,
+                "name": "environment_roles",
+                "type": "bucketeer.account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "disabled",
+                "type": "bool"
+              },
+              {
+                "id": 8,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2NameChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2AvatarImageURLChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "avatar_image_url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2OrganizationRoleChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_role",
+                "type": "bucketeer.account.AccountV2.Role.Organization"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2EnvironmentRolesChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_roles",
+                "type": "bucketeer.account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "AccountV2EnabledEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2DisabledEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2DeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
                 "type": "string"
               }
             ]
