@@ -50,6 +50,7 @@ var (
 )
 
 func TestGetAccount(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -83,6 +84,7 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -102,6 +104,7 @@ func TestListAccounts(t *testing.T) {
 }
 
 func TestUpdateAccount(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -156,6 +159,7 @@ func TestUpdateAccount(t *testing.T) {
 }
 
 func TestEnableAndDisableAccount(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
@@ -213,6 +217,7 @@ func TestEnableAndDisableAccount(t *testing.T) {
 }
 
 func TestDeleteAccount(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
