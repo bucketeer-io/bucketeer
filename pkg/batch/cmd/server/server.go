@@ -294,6 +294,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	notificationSender := notificationsender.NewSender(
 		notificationClient,
 		[]notifier.Notifier{slackNotifier},
+		notificationsender.WithMetrics(registerer),
 		notificationsender.WithLogger(logger),
 	)
 
