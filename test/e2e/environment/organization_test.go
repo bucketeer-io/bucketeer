@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultOrganizationID = "default"
+	defaultOrganizationID = "e2e"
 )
 
 func TestGetOrganization(t *testing.T) {
