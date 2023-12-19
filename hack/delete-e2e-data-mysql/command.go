@@ -29,6 +29,7 @@ import (
 
 const (
 	envNamespace   = "e2e"
+	organizationID = "e2e"
 	prefixTestName = "e2e-test"
 )
 
@@ -47,6 +48,9 @@ var (
 		{table: "ops_progressive_rollout", targetField: "feature_id"},
 		{table: "feature", targetField: "id"},
 		{table: "webhook", targetField: "name"},
+	}
+	targetEntitiesInOrganization = []*mysqlE2EInfo{
+		{table: "account_v2", targetField: "email"},
 	}
 )
 
@@ -88,8 +92,26 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 	defer client.Close()
 	for _, target := range targetEntities {
-		if err := c.deleteData(ctx, client, target); err != nil {
+		query, args := c.constructDeleteQuery(target)
+		_, err := client.ExecContext(
+			ctx,
+			query,
+			args...,
+		)
+		if err != nil {
 			logger.Error("Failed to delete data", zap.Error(err), zap.String("table", target.table))
+			return err
+		}
+	}
+	for _, target := range targetEntitiesInOrganization {
+		query, args := c.constructDeleteQueryForOrganization(target)
+		_, err := client.ExecContext(
+			ctx,
+			query,
+			args...,
+		)
+		if err != nil {
+			logger.Error("Failed to delete data in organization", zap.Error(err), zap.String("table", target.table))
 			return err
 		}
 	}
@@ -110,19 +132,6 @@ func (c *command) createMySQLClient(
 		*c.mysqlDBName,
 		mysql.WithLogger(logger),
 	)
-}
-
-func (c *command) deleteData(ctx context.Context, client mysql.Client, target *mysqlE2EInfo) error {
-	query, args := c.constructDeleteQuery(target)
-	_, err := client.ExecContext(
-		ctx,
-		query,
-		args...,
-	)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (c *command) constructDeleteQuery(target *mysqlE2EInfo) (query string, args []interface{}) {
@@ -148,6 +157,33 @@ func (c *command) constructDeleteQuery(target *mysqlE2EInfo) (query string, args
 	`, target.table)
 	args = []interface{}{
 		envNamespace,
+	}
+	return
+}
+
+func (c *command) constructDeleteQueryForOrganization(target *mysqlE2EInfo) (query string, args []interface{}) {
+	if target.targetField != "" && *c.testID != "" {
+		query = fmt.Sprintf(`
+			DELETE FROM
+				%s
+			WHERE
+				organization_id = ? AND
+				%s LIKE ?
+		`, target.table, target.targetField)
+		args = []interface{}{
+			organizationID,
+			prefixTestName + "-" + *c.testID + "%",
+		}
+		return
+	}
+	query = fmt.Sprintf(`
+		DELETE FROM
+			%s
+		WHERE
+			organization_id = ?
+	`, target.table)
+	args = []interface{}{
+		organizationID,
 	}
 	return
 }

@@ -16,8 +16,12 @@ package account
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base32"
 	"flag"
 	"fmt"
+	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,9 +31,9 @@ import (
 )
 
 const (
-	defaultOrganizationID = "default"
-	defaultAccountEmail   = "bucketeer@example.com"
-	timeout               = 10 * time.Second
+	defaultOrganizationID   = "e2e"
+	e2eAccountAddressPrefix = "e2e-test"
+	timeout                 = 10 * time.Second
 )
 
 var (
@@ -50,15 +54,28 @@ func TestGetAccount(t *testing.T) {
 	defer cancel()
 	c := newAccountClient(t)
 	defer c.Close()
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateAccountV2Command{
+			Name:             name,
+			Email:            email,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	resp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          defaultAccountEmail,
+		Email:          email,
 		OrganizationId: defaultOrganizationID,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.Account.Email != defaultAccountEmail {
-		t.Fatalf("different email, expected: %v, actual: %v", defaultAccountEmail, resp.Account.Email)
+	if resp.Account.Email != email {
+		t.Fatalf("different email, expected: %v, actual: %v", email, resp.Account.Email)
 	}
 	if resp.Account.OrganizationId != defaultOrganizationID {
 		t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, resp.Account.OrganizationId)
@@ -89,10 +106,23 @@ func TestUpdateAccount(t *testing.T) {
 	defer cancel()
 	c := newAccountClient(t)
 	defer c.Close()
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateAccountV2Command{
+			Name:             name,
+			Email:            email,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	newName := fmt.Sprintf("name-%v", time.Now().Unix())
 	newAvatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
-	_, err := c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
-		Email:          defaultAccountEmail,
+	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
+		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
 			Name: newName,
@@ -105,14 +135,14 @@ func TestUpdateAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 	getResp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          defaultAccountEmail,
+		Email:          email,
 		OrganizationId: defaultOrganizationID,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if getResp.Account.Email != defaultAccountEmail {
-		t.Fatalf("different email, expected: %v, actual: %v", defaultAccountEmail, getResp.Account.Email)
+	if getResp.Account.Email != email {
+		t.Fatalf("different email, expected: %v, actual: %v", email, getResp.Account.Email)
 	}
 	if getResp.Account.OrganizationId != defaultOrganizationID {
 		t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, getResp.Account.OrganizationId)
@@ -130,9 +160,21 @@ func TestEnableAndDisableAccount(t *testing.T) {
 	defer cancel()
 	c := newAccountClient(t)
 	defer c.Close()
-
-	_, err := c.DisableAccountV2(ctx, &accountproto.DisableAccountV2Request{
-		Email:          defaultAccountEmail,
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateAccountV2Command{
+			Name:             name,
+			Email:            email,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = c.DisableAccountV2(ctx, &accountproto.DisableAccountV2Request{
+		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		Command:        &accountproto.DisableAccountV2Command{},
 	})
@@ -140,7 +182,7 @@ func TestEnableAndDisableAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 	getResp1, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          defaultAccountEmail,
+		Email:          email,
 		OrganizationId: defaultOrganizationID,
 	})
 	if err != nil {
@@ -151,7 +193,7 @@ func TestEnableAndDisableAccount(t *testing.T) {
 	}
 
 	_, err = c.EnableAccountV2(ctx, &accountproto.EnableAccountV2Request{
-		Email:          defaultAccountEmail,
+		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		Command:        &accountproto.EnableAccountV2Command{},
 	})
@@ -159,7 +201,7 @@ func TestEnableAndDisableAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 	getResp2, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-		Email:          defaultAccountEmail,
+		Email:          email,
 		OrganizationId: defaultOrganizationID,
 	})
 	if err != nil {
@@ -170,13 +212,13 @@ func TestEnableAndDisableAccount(t *testing.T) {
 	}
 }
 
-func TestCreateAndDeleteAccount(t *testing.T) {
+func TestDeleteAccount(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t)
 	defer c.Close()
-	email := fmt.Sprintf("email-%v@example.com", time.Now().Unix())
-	name := fmt.Sprintf("name-%v", time.Now().Unix())
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
 	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.CreateAccountV2Command{
@@ -203,6 +245,13 @@ func TestCreateAndDeleteAccount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	_, err = c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err == nil {
+		t.Fatal("account is not deleted")
+	}
 }
 
 func newAccountClient(t *testing.T) accountclient.Client {
@@ -222,4 +271,14 @@ func newAccountClient(t *testing.T) accountclient.Client {
 		t.Fatal("Failed to create environment client:", err)
 	}
 	return client
+}
+
+func randomString() string {
+	b := make([]byte, 8)
+	_, err := io.ReadFull(rand.Reader, b)
+	if err != nil {
+		fmt.Println("error:", err)
+		return ""
+	}
+	return strings.TrimRight(base32.StdEncoding.EncodeToString(b), "=")
 }
