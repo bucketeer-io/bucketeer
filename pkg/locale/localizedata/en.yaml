@@ -84,8 +84,8 @@ WaitingOrRunningProgressiveRolloutExists: "There is a progressive rollout schedu
 
 # Auto Ops errors
 AutoOpsFeatureDisabled: "The feature flag is not enabled. Please enable it before using the progressive rollout"
-AutoFeatureHasIndividualTargeting: "There is an individual targeting configured in the feature flag. Please delete it before using the progressive rollout"
-AutoFeatureHasPrerequisites: "There is a prerequisite configured in the feature flag. Please delete it before using the progressive rollout"
+AutoOpsFeatureHasIndividualTargeting: "There is an individual targeting configured in the feature flag. Please delete it before using the progressive rollout"
+AutoOpsFeatureHasPrerequisites: "There is a prerequisite configured in the feature flag. Please delete it before using the progressive rollout"
 AutoFeatureHasRules: "There is a rule configured in the feature flag. Please delete it before using the progressive rollout"
 AutoOpsHasDatetime: "There is a schedule configured in the auto operations. Please delete it before using the progressive rollout"
 AutoOpsHasWebhook: "There is a webhook configured in the auto operations. Please delete it before using the progressive rollout"
