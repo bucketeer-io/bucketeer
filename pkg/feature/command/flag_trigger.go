@@ -65,6 +65,8 @@ func (f *flagTriggerCommandHandler) Handle(
 		return f.enable(ctx, c)
 	case *proto.DeleteFlagTriggerCommand:
 		return f.delete(ctx, c)
+	case *proto.UpdateFlagTriggerUsageCommand:
+		return f.updateUsage(ctx, c)
 	}
 	return errBadCommand
 }
@@ -137,6 +139,20 @@ func (f *flagTriggerCommandHandler) enable(
 		Id:                   f.flagTrigger.Id,
 		FeatureId:            f.flagTrigger.FeatureId,
 		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
+	})
+}
+
+func (f *flagTriggerCommandHandler) updateUsage(
+	ctx context.Context,
+	c *proto.UpdateFlagTriggerUsageCommand,
+) error {
+	_ = f.flagTrigger.UpdateTriggerUsage()
+	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_USAGE_UPDATED, &eventproto.FlagTriggerUsageUpdatedEvent{
+		Id:                   f.flagTrigger.Id,
+		FeatureId:            f.flagTrigger.FeatureId,
+		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
+		LastTriggeredAt:      f.flagTrigger.LastTriggeredAt,
+		TriggerTimes:         f.flagTrigger.TriggerTimes,
 	})
 }
 

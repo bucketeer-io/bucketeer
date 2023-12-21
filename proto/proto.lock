@@ -6486,6 +6486,10 @@
               {
                 "name": "FLAG_TRIGGER_DELETED",
                 "integer": 1606
+              },
+              {
+                "name": "FLAG_TRIGGER_USAGE_UPDATED",
+                "integer": 1607
               }
             ]
           }
@@ -9414,6 +9418,36 @@
                 "id": 3,
                 "name": "environment_namespace",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "FlagTriggerUsageUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "last_triggered_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "trigger_times",
+                "type": "int32"
               }
             ]
           }
@@ -12868,6 +12902,9 @@
           },
           {
             "name": "DeleteFlagTriggerCommand"
+          },
+          {
+            "name": "UpdateFlagTriggerUsageCommand"
           }
         ],
         "imports": [

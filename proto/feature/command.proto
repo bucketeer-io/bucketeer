@@ -247,3 +247,5 @@ message EnableFlagTriggerCommand {}
 message DisableFlagTriggerCommand {}
 
 message DeleteFlagTriggerCommand {}
+
+message UpdateFlagTriggerUsageCommand {}

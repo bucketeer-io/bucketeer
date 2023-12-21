@@ -1173,3 +1173,19 @@ export namespace DeleteFlagTriggerCommand {
   }
 }
 
+export class UpdateFlagTriggerUsageCommand extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateFlagTriggerUsageCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateFlagTriggerUsageCommand): UpdateFlagTriggerUsageCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateFlagTriggerUsageCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateFlagTriggerUsageCommand;
+  static deserializeBinaryFromReader(message: UpdateFlagTriggerUsageCommand, reader: jspb.BinaryReader): UpdateFlagTriggerUsageCommand;
+}
+
+export namespace UpdateFlagTriggerUsageCommand {
+  export type AsObject = {
+  }
+}
+

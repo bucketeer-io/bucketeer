@@ -34,6 +34,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -801,15 +802,29 @@ func (s *FeatureService) FlagTriggerWebhook(
 			"Failed to get secret from query",
 			log.FieldsFromImcomingContext(ctx)...,
 		)
-		return resp, nil
+		dt, err := statusSecretRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "secret"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
-	triggerSecret, err := s.authSecret(ctx, secret)
+	triggerSecret, err := s.decryptSecret(ctx, secret)
 	if err != nil {
 		s.logger.Error(
-			"Failed to auth trigger secret",
+			"Failed to decrypt trigger secret",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return resp, nil
+		dt, err := statusSecretInvalid.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	storage := v2fs.NewFlagTriggerStorage(s.mysqlClient)
 	trigger, err := storage.GetFlagTrigger(ctx, triggerSecret.GetID(), triggerSecret.GetEnvironmentNamespace())
@@ -818,14 +833,32 @@ func (s *FeatureService) FlagTriggerWebhook(
 			"Failed to get flag trigger",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return resp, nil
+		dt, err := statusTriggerNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NotFoundError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if trigger.GetDisabled() {
 		s.logger.Error(
 			"Flag trigger is disabled",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return resp, nil
+		dt, err := statusTriggerAlreadyDisabled.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InvalidArgumentError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, trigger.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
 	}
 	// check trigger secret
 	if trigger.GetFeatureId() != triggerSecret.GetFeatureID() ||
@@ -835,33 +868,68 @@ func (s *FeatureService) FlagTriggerWebhook(
 			"Failed to auth trigger secret",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return resp, nil
+		dt, err := statusSecretMismatch.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON {
 		err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
 		if err != nil {
-			return resp, nil
+			dt, err := statusTriggerEnableFailed.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF {
 		err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
 		if err != nil {
-			return resp, nil
+			dt, err := statusTriggerDisableFailed.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 	} else {
 		s.logger.Error(
 			"Invalid action",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
-		return resp, nil
+		dt, err := statusTriggerActionInvalid.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InvalidArgumentError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
-	err = s.updateTriggerUsageInfo(ctx, trigger)
+	err = s.updateTriggerUsageInfo(ctx, editor, trigger)
 	if err != nil {
-		return resp, nil
+		dt, err := statusTriggerUsageUpdateFailed.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return resp, nil
 }
 
-func (s *FeatureService) authSecret(
+func (s *FeatureService) decryptSecret(
 	ctx context.Context,
 	secret string,
 ) (*domain.FlagTriggerSecret, error) {
@@ -892,7 +960,11 @@ func (s *FeatureService) authSecret(
 	return triggerSecret, nil
 }
 
-func (s *FeatureService) updateTriggerUsageInfo(ctx context.Context, flagTrigger *domain.FlagTrigger) error {
+func (s *FeatureService) updateTriggerUsageInfo(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	flagTrigger *domain.FlagTrigger,
+) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -900,12 +972,26 @@ func (s *FeatureService) updateTriggerUsageInfo(ctx context.Context, flagTrigger
 			log.FieldsFromImcomingContext(ctx).
 				AddFields(zap.Error(err))...,
 		)
-		return nil
+		return err
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2fs.NewFlagTriggerStorage(tx)
-		_ = flagTrigger.UpdateTriggerUsage()
-		err := storage.UpdateFlagTrigger(ctx, flagTrigger)
+		handler := command.NewFlagTriggerCommandHandler(
+			editor,
+			flagTrigger,
+			s.domainPublisher,
+			flagTrigger.EnvironmentNamespace,
+		)
+		err := handler.Handle(ctx, &featureproto.UpdateFlagTriggerUsageCommand{})
+		if err != nil {
+			s.logger.Error(
+				"Failed to update flag trigger usage",
+				log.FieldsFromImcomingContext(ctx).
+					AddFields(zap.Error(err))...,
+			)
+			return err
+		}
+		err = storage.UpdateFlagTrigger(ctx, flagTrigger)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update flag trigger usage",

@@ -261,6 +261,7 @@ export namespace Event {
     FLAG_TRIGGER_DISABLED: 1604;
     FLAG_TRIGGER_ENABLED: 1605;
     FLAG_TRIGGER_DELETED: 1606;
+    FLAG_TRIGGER_USAGE_UPDATED: 1607;
   }
 
   export const Type: TypeMap;
@@ -4565,6 +4566,42 @@ export namespace FlagTriggerDeletedEvent {
     id: string,
     featureId: string,
     environmentNamespace: string,
+  }
+}
+
+export class FlagTriggerUsageUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  getLastTriggeredAt(): number;
+  setLastTriggeredAt(value: number): void;
+
+  getTriggerTimes(): number;
+  setTriggerTimes(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerUsageUpdatedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerUsageUpdatedEvent): FlagTriggerUsageUpdatedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FlagTriggerUsageUpdatedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerUsageUpdatedEvent;
+  static deserializeBinaryFromReader(message: FlagTriggerUsageUpdatedEvent, reader: jspb.BinaryReader): FlagTriggerUsageUpdatedEvent;
+}
+
+export namespace FlagTriggerUsageUpdatedEvent {
+  export type AsObject = {
+    id: string,
+    featureId: string,
+    environmentNamespace: string,
+    lastTriggeredAt: number,
+    triggerTimes: number,
   }
 }
 

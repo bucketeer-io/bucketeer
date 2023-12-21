@@ -583,7 +583,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go experimentServer.Run()
 	// featureService
-	featureService, err := s.createFeatureFlagTriggerService(
+	featureService, err := s.createFeatureService(
 		ctx,
 		accountClient,
 		experimentClient,
@@ -826,7 +826,7 @@ func (s *server) createAutoOpsService(
 	return autoOpsService, autoOpsWebhookHandler, nil
 }
 
-func (s *server) createFeatureFlagTriggerService(
+func (s *server) createFeatureService(
 	ctx context.Context,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
