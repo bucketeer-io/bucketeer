@@ -657,6 +657,11 @@ func (s *FeatureService) CreateFeature(
 		}
 		return nil, dt.Err()
 	}
+	s.logger.Info("Test Log",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.String("environmentNamespace", req.EnvironmentNamespace),
+		)...,
+	)
 	return &featureproto.CreateFeatureResponse{}, nil
 }
 
