@@ -71,6 +71,8 @@ spec:
               value: "{{ .Values.env.flushSize }}"
             - name: BUCKETEER_EVENT_PERSISTER_OPS_FLUSH_INTERVAL
               value: "{{ .Values.env.flushInterval }}"
+            - name: BUCKETEER_EVENT_PERSISTER_OPS_CHECK_INTERVAL
+              value: "{{ .Values.env.checkInterval }}"
             - name: BUCKETEER_EVENT_PERSISTER_OPS_FLUSH_TIMEOUT
               value: "{{ .Values.env.flushTimeout }}"
             - name: BUCKETEER_EVENT_PERSISTER_OPS_PULLER_NUM_GOROUTINES

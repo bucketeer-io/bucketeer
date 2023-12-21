@@ -20,6 +20,7 @@ env:
   maxMps: "1000"
   numWorkers: 5
   flushSize: 100
+  checkInterval: 60s
   flushInterval: 2s
   flushTimeout: 30s
   # pubsub

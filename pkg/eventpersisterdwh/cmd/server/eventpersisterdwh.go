@@ -17,6 +17,7 @@ package server
 import (
 	"context"
 	"errors"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"time"
 
 	"go.uber.org/zap"
@@ -52,6 +53,7 @@ type server struct {
 	maxMPS        *int
 	numWorkers    *int
 	flushSize     *int
+	checkInterval *time.Duration
 	flushInterval *time.Duration
 	flushTimeout  *time.Duration
 	timezone      *string
@@ -77,6 +79,12 @@ type server struct {
 	redisAddr          *string
 	redisPoolMaxIdle   *int
 	redisPoolMaxActive *int
+	// mysql
+	mysqlUser   *string
+	mysqlPass   *string
+	mysqlHost   *string
+	mysqlPort   *int
+	mysqlDbName *string
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -92,6 +100,10 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"flush-size",
 			"Maximum number of messages to batch before writing to datastore.",
 		).Default("50").Int(),
+		checkInterval: cmd.Flag(
+			"check-interval",
+			"Interval to check if there are experiments to be handled.",
+		).Required().Duration(),
 		flushInterval: cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
 		flushTimeout:  cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
 		timezone:      cmd.Flag("timezone", "Time zone").Required().String(),
@@ -132,6 +144,11 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"redis-pool-max-active",
 			"Maximum number of connections allocated by the pool at a given time.",
 		).Required().Int(),
+		mysqlUser:   cmd.Flag("mysql-user", "").String(),
+		mysqlPass:   cmd.Flag("mysql-pass", "").String(),
+		mysqlHost:   cmd.Flag("mysql-host", "").String(),
+		mysqlPort:   cmd.Flag("mysql-port", "").Int(),
+		mysqlDbName: cmd.Flag("mysql-dbname", "").String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -139,6 +156,11 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 
 func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	registerer := metrics.DefaultRegisterer()
+	// mysqlClient
+	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
+	if err != nil {
+		return err
+	}
 	puller, err := s.createPuller(ctx, logger)
 	if err != nil {
 		return err
@@ -205,9 +227,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		puller,
 		registerer,
 		writer,
+		mysqlClient,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
+		persister.WithCheckInterval(*s.checkInterval),
 		persister.WithFlushInterval(*s.flushInterval),
 		persister.WithFlushTimeout(*s.flushTimeout),
 		persister.WithMetrics(registerer),
@@ -303,4 +327,21 @@ func (s *server) newBigQueryWriter(
 		return nil, errUnknownSvcName
 	}
 	return writer, err
+}
+
+func (s *server) createMySQLClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (mysql.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return mysql.NewClient(
+		ctx,
+		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost,
+		*s.mysqlPort,
+		*s.mysqlDbName,
+		mysql.WithLogger(logger),
+		mysql.WithMetrics(registerer),
+	)
 }

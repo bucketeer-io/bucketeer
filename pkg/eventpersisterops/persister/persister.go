@@ -24,10 +24,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
+	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersisterops/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
@@ -44,20 +46,26 @@ type eventMap map[string]proto.Message
 type environmentEventMap map[string]eventMap
 
 type persister struct {
-	ctx     context.Context
-	cancel  func()
-	updater Updater
-	puller  puller.RateLimitedPuller
-	group   errgroup.Group
-	doneCh  chan struct{}
-	logger  *zap.Logger
-	opts    *options
+	ctx                 context.Context
+	cancel              func()
+	updater             Updater
+	puller              puller.Puller
+	mysqlClient         mysql.Client
+	runningPullerCtx    context.Context
+	runningPullerCancel func()
+	isRunning           bool
+	rateLimitedPuller   puller.RateLimitedPuller
+	group               errgroup.Group
+	doneCh              chan struct{}
+	logger              *zap.Logger
+	opts                *options
 }
 
 type options struct {
 	maxMPS        int
 	numWorkers    int
 	flushSize     int
+	checkInterval time.Duration
 	flushInterval time.Duration
 	flushTimeout  time.Duration
 	metrics       metrics.Registerer
@@ -65,6 +73,12 @@ type options struct {
 }
 
 type Option func(*options)
+
+func WithCheckInterval(interval time.Duration) Option {
+	return func(opts *options) {
+		opts.checkInterval = interval
+	}
+}
 
 func WithMaxMPS(mps int) Option {
 	return func(opts *options) {
@@ -110,6 +124,7 @@ func WithLogger(l *zap.Logger) Option {
 
 func NewPersister(
 	updater Updater,
+	mysqlClient mysql.Client,
 	p puller.Puller,
 	opts ...Option,
 ) *persister {
@@ -117,6 +132,7 @@ func NewPersister(
 		maxMPS:        1000,
 		numWorkers:    1,
 		flushSize:     100,
+		checkInterval: 1 * time.Minute,
 		flushInterval: 2 * time.Second,
 		flushTimeout:  600 * time.Second,
 		logger:        zap.NewNop(),
@@ -129,25 +145,53 @@ func NewPersister(
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &persister{
-		ctx:     ctx,
-		cancel:  cancel,
-		updater: updater,
-		puller:  puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		doneCh:  make(chan struct{}),
-		logger:  dopts.logger.Named("persister"),
-		opts:    dopts,
+		ctx:         ctx,
+		cancel:      cancel,
+		updater:     updater,
+		mysqlClient: mysqlClient,
+		puller:      p,
+		doneCh:      make(chan struct{}),
+		logger:      dopts.logger.Named("persister"),
+		opts:        dopts,
 	}
 }
 
 func (p *persister) Run() error {
 	defer close(p.doneCh)
-	p.group.Go(func() error {
-		return p.puller.Run(p.ctx)
-	})
-	for i := 0; i < p.opts.numWorkers; i++ {
-		p.group.Go(p.batch)
+	timer := time.NewTimer(p.opts.checkInterval)
+	defer timer.Stop()
+	subscription := make(chan struct{})
+	go p.subscribe(subscription)
+	for {
+		select {
+		case <-timer.C:
+			// check if there are not been triggerd auto ops rules
+			exist, err := p.checkAutoOpsRules(p.ctx)
+			if err != nil {
+				p.logger.Error("Failed to check auto ops rules existence", zap.Error(err))
+				continue
+			}
+			if exist {
+				if !p.IsRunning() {
+					subscription <- struct{}{}
+				}
+			} else {
+				if p.IsRunning() {
+					p.unsubscribe()
+					err := p.group.Wait()
+					if err != nil {
+						p.logger.Error("Waiting for puller to finish error", zap.Error(err))
+					}
+					p.rateLimitedPuller = puller.NewRateLimitedPuller(p.puller, p.opts.maxMPS)
+					p.group = errgroup.Group{}
+				}
+			}
+			timer.Reset(p.opts.checkInterval)
+		case <-p.ctx.Done():
+			p.runningPullerCancel()
+			return nil
+		}
 	}
-	return p.group.Wait()
 }
 
 func (p *persister) Stop() {
@@ -169,13 +213,55 @@ func (p *persister) Check(ctx context.Context) health.Status {
 	}
 }
 
+func (p *persister) subscribe(subscription chan struct{}) {
+	for {
+		select {
+		case <-subscription:
+			p.isRunning = true
+			ctx, cancel := context.WithCancel(context.Background())
+			p.runningPullerCtx = ctx
+			p.runningPullerCancel = cancel
+			p.group.Go(func() error {
+				return p.rateLimitedPuller.Run(ctx)
+			})
+			for i := 0; i < p.opts.numWorkers; i++ {
+				p.group.Go(p.batch)
+			}
+			err := p.group.Wait()
+			if err != nil {
+				p.logger.Error("Running puller error", zap.Error(err))
+			}
+			p.isRunning = false
+		case <-p.ctx.Done():
+			return
+		}
+	}
+}
+
+func (p *persister) unsubscribe() {
+	p.runningPullerCancel()
+}
+
+func (p *persister) IsRunning() bool {
+	return p.isRunning
+}
+
+func (p *persister) checkAutoOpsRules(ctx context.Context) (bool, error) {
+	autoOpsRuleStorage := storage.NewAutoOpsRuleStorage(p.mysqlClient)
+	autoOpsRuleCount, err := autoOpsRuleStorage.CountNotTriggeredAutoOpsRules(ctx)
+	if err != nil {
+		return false, err
+	}
+	return autoOpsRuleCount > 0, nil
+}
+
 func (p *persister) batch() error {
 	batch := make(map[string]*puller.Message)
 	timer := time.NewTimer(p.opts.flushInterval)
 	defer timer.Stop()
 	for {
 		select {
-		case msg, ok := <-p.puller.MessageCh():
+		case msg, ok := <-p.rateLimitedPuller.MessageCh():
 			if !ok {
 				return nil
 			}
@@ -205,7 +291,7 @@ func (p *persister) batch() error {
 				batch = make(map[string]*puller.Message)
 			}
 			timer.Reset(p.opts.flushInterval)
-		case <-p.ctx.Done():
+		case <-p.runningPullerCtx.Done():
 			batchSize := len(batch)
 			p.logger.Info("Context is done", zap.Int("batchSize", batchSize))
 			if len(batch) > 0 {
