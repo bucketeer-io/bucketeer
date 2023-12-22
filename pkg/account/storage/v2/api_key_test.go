@@ -28,29 +28,21 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
-func TestNewAPIKeyStorage(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	storage := NewAPIKeyStorage(mock.NewMockQueryExecer(mockController))
-	assert.IsType(t, &apiKeyStorage{}, storage)
-}
-
 func TestCreateAPIKey(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
 		desc                 string
-		setup                func(*apiKeyStorage)
+		setup                func(*accountStorage)
 		input                *domain.APIKey
 		environmentNamespace string
 		expectedErr          error
 	}{
 		{
 			desc: "ErrAPIKeyAlreadyExists",
-			setup: func(s *apiKeyStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			setup: func(s *accountStorage) {
+				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
@@ -62,8 +54,8 @@ func TestCreateAPIKey(t *testing.T) {
 		},
 		{
 			desc: "Error",
-			setup: func(s *apiKeyStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			setup: func(s *accountStorage) {
+				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -75,8 +67,8 @@ func TestCreateAPIKey(t *testing.T) {
 		},
 		{
 			desc: "Success",
-			setup: func(s *apiKeyStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			setup: func(s *accountStorage) {
+				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
@@ -89,7 +81,7 @@ func TestCreateAPIKey(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newAPIKeyStorageWithMock(t, mockController)
+			storage := newAccountStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -105,17 +97,17 @@ func TestUpdateAPIKey(t *testing.T) {
 	defer mockController.Finish()
 	patterns := []struct {
 		desc                 string
-		setup                func(*apiKeyStorage)
+		setup                func(*accountStorage)
 		input                *domain.APIKey
 		environmentNamespace string
 		expectedErr          error
 	}{
 		{
 			desc: "ErrAPIKeyUnexpectedAffectedRows",
-			setup: func(s *apiKeyStorage) {
+			setup: func(s *accountStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -127,8 +119,8 @@ func TestUpdateAPIKey(t *testing.T) {
 		},
 		{
 			desc: "Error",
-			setup: func(s *apiKeyStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			setup: func(s *accountStorage) {
+				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -140,10 +132,10 @@ func TestUpdateAPIKey(t *testing.T) {
 		},
 		{
 			desc: "Success",
-			setup: func(s *apiKeyStorage) {
+			setup: func(s *accountStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -156,7 +148,7 @@ func TestUpdateAPIKey(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newAPIKeyStorageWithMock(t, mockController)
+			storage := newAccountStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -172,17 +164,17 @@ func TestGetAPIKey(t *testing.T) {
 	defer mockController.Finish()
 	patterns := []struct {
 		desc                 string
-		setup                func(*apiKeyStorage)
+		setup                func(*accountStorage)
 		id                   string
 		environmentNamespace string
 		expectedErr          error
 	}{
 		{
 			desc: "ErrAPIKeyNotFound",
-			setup: func(s *apiKeyStorage) {
+			setup: func(s *accountStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -192,10 +184,10 @@ func TestGetAPIKey(t *testing.T) {
 		},
 		{
 			desc: "Error",
-			setup: func(s *apiKeyStorage) {
+			setup: func(s *accountStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 
@@ -206,10 +198,10 @@ func TestGetAPIKey(t *testing.T) {
 		},
 		{
 			desc: "Success",
-			setup: func(s *apiKeyStorage) {
+			setup: func(s *accountStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -220,7 +212,7 @@ func TestGetAPIKey(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newAPIKeyStorageWithMock(t, mockController)
+			storage := newAccountStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -236,7 +228,7 @@ func TestListAPIKeys(t *testing.T) {
 	defer mockController.Finish()
 	patterns := []struct {
 		desc           string
-		setup          func(*apiKeyStorage)
+		setup          func(*accountStorage)
 		whereParts     []mysql.WherePart
 		orders         []*mysql.Order
 		limit          int
@@ -247,8 +239,8 @@ func TestListAPIKeys(t *testing.T) {
 	}{
 		{
 			desc: "Error",
-			setup: func(s *apiKeyStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+			setup: func(s *accountStorage) {
+				s.client.(*mock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -262,17 +254,17 @@ func TestListAPIKeys(t *testing.T) {
 		},
 		{
 			desc: "Success",
-			setup: func(s *apiKeyStorage) {
+			setup: func(s *accountStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				s.client.(*mock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -291,7 +283,7 @@ func TestListAPIKeys(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newAPIKeyStorageWithMock(t, mockController)
+			storage := newAccountStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -307,9 +299,4 @@ func TestListAPIKeys(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
-}
-
-func newAPIKeyStorageWithMock(t *testing.T, mockController *gomock.Controller) *apiKeyStorage {
-	t.Helper()
-	return &apiKeyStorage{mock.NewMockQueryExecer(mockController)}
 }

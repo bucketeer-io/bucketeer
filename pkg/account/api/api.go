@@ -24,6 +24,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	v2 "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -57,10 +59,11 @@ func WithLogger(logger *zap.Logger) Option {
 
 type AccountService struct {
 	environmentClient environmentclient.Client
-	mysqlClient       mysql.Client
-	publisher         publisher.Publisher
-	opts              *options
-	logger            *zap.Logger
+	//mysqlClient       mysql.Client
+	accountStorage v2.AccountStorage
+	publisher      publisher.Publisher
+	opts           *options
+	logger         *zap.Logger
 }
 
 func NewAccountService(
@@ -75,7 +78,7 @@ func NewAccountService(
 	}
 	return &AccountService{
 		environmentClient: e,
-		mysqlClient:       mysqlClient,
+		accountStorage:    v2.NewAccountStorage(mysqlClient),
 		publisher:         publisher,
 		opts:              &options,
 		logger:            options.logger.Named("api"),

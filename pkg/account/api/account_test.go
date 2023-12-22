@@ -28,11 +28,12 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
@@ -94,11 +95,17 @@ func TestCreateAccountMySQL(t *testing.T) {
 		{
 			desc: "errAlreadyExists_AdminAccount",
 			setup: func(s *AccountService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Account{
+					Account: &accountproto.Account{
+						Id:    "bucketeer@example.com",
+						Email: "bucketeer@example.com",
+						Name:  "test",
+						Role:  accountproto.Account_OWNER,
+					},
+				}, nil)
+
 			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAccountRequest{
@@ -110,14 +117,11 @@ func TestCreateAccountMySQL(t *testing.T) {
 		{
 			desc: "errAlreadyExists_EnvironmentAccount",
 			setup: func(s *AccountService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrAdminAccountNotFound)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountAlreadyExists)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -130,11 +134,12 @@ func TestCreateAccountMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrAdminAccountNotFound)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("test"))
 			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAccountRequest{
@@ -149,14 +154,11 @@ func TestCreateAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrAdminAccountNotFound)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -232,9 +234,8 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -250,9 +251,8 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -268,9 +268,8 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -346,10 +345,12 @@ func TestEnableAccountMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
+				//s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccount(
+				//	gomock.Any(), gomock.Any(), gomock.Any(),
+				//).Return(nil, v2as.ErrAccountNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountRequest{
@@ -362,9 +363,8 @@ func TestEnableAccountMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -378,9 +378,8 @@ func TestEnableAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -454,9 +453,8 @@ func TestDisableAccountMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -470,9 +468,8 @@ func TestDisableAccountMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -486,9 +483,8 @@ func TestDisableAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -557,11 +553,9 @@ func TestGetAccountMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccount(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(nil, v2as.ErrAccountNotFound)
 			},
 			req: &accountproto.GetAccountRequest{
 				Email:                "service@example.com",
@@ -572,11 +566,16 @@ func TestGetAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccount(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.Account{
+					Account: &accountproto.Account{
+						Id:    "bucketeer@example.com",
+						Email: "bucketeer@example.com",
+						Name:  "test",
+						Role:  accountproto.Account_OWNER,
+					},
+				}, nil)
 			},
 			req: &accountproto.GetAccountRequest{
 				Email:                "bucketeer@example.com",
@@ -599,6 +598,7 @@ func TestGetAccountMySQL(t *testing.T) {
 		})
 	}
 }
+
 func TestListAccountsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -635,9 +635,9 @@ func TestListAccountsMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAccounts(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:       &accountproto.ListAccountsRequest{EnvironmentNamespace: "ns0"},
 			expected:    nil,
@@ -646,18 +646,9 @@ func TestListAccountsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAccounts(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.Account{}, 0, int64(0), nil)
 			},
 			input:       &accountproto.ListAccountsRequest{PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
 			expected:    &accountproto.ListAccountsResponse{Accounts: []*accountproto.Account{}, Cursor: "0"},
@@ -711,6 +702,17 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				Command:        nil,
 				OrganizationId: "org0",
 			},
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
@@ -719,6 +721,17 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.CreateAccountV2Request{
 				Command:        &accountproto.CreateAccountV2Command{Email: ""},
 				OrganizationId: "org0",
+			},
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
 			},
 			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
 		},
@@ -729,14 +742,34 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				Command:        &accountproto.CreateAccountV2Command{Email: "bucketeer@"},
 				OrganizationId: "org0",
 			},
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
 			desc: "errAccountAlreadyExists",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountAlreadyExists)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -753,9 +786,18 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -772,9 +814,18 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -830,7 +881,18 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:    "errEmailIsEmpty",
+			desc: "errEmailIsEmpty",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				OrganizationId: "org0",
@@ -838,7 +900,18 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
 		},
 		{
-			desc:    "errInvalidEmail",
+			desc: "errInvalidEmail",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@",
@@ -850,7 +923,18 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
-			desc:    "errOrganizationIDIsEmpty",
+			desc: "errOrganizationIDIsEmpty",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email: "bucketeer@example.com",
@@ -861,7 +945,18 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
 		},
 		{
-			desc:    "errNoCommand",
+			desc: "errNoCommand",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -870,7 +965,18 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc:    "errInvalidNewName",
+			desc: "errInvalidNewName",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -882,7 +988,18 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
 		},
 		{
-			desc:    "errInvalidNewOrganizationRole",
+			desc: "errInvalidNewOrganizationRole",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -896,9 +1013,18 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errAccountNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -914,9 +1040,18 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -932,9 +1067,18 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -989,7 +1133,18 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:    "errEmailIsEmpty",
+			desc: "errEmailIsEmpty",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				OrganizationId: "org0",
@@ -997,7 +1152,18 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
 		},
 		{
-			desc:    "errInvalidEmail",
+			desc: "errInvalidEmail",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@",
@@ -1006,7 +1172,18 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
-			desc:    "errOrganizationIDIsEmpty",
+			desc: "errOrganizationIDIsEmpty",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				Email: "bucketeer@example.com",
@@ -1014,7 +1191,18 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
 		},
 		{
-			desc:    "errNoCommand",
+			desc: "errNoCommand",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1025,9 +1213,18 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errAccountNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -1041,9 +1238,18 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -1057,9 +1263,18 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -1112,7 +1327,18 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:    "errEmailIsEmpty",
+			desc: "errEmailIsEmpty",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				OrganizationId: "org0",
@@ -1120,7 +1346,18 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
 		},
 		{
-			desc:    "errInvalidEmail",
+			desc: "errInvalidEmail",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@",
@@ -1129,7 +1366,18 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
-			desc:    "errOrganizationIDIsEmpty",
+			desc: "errOrganizationIDIsEmpty",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				Email: "bucketeer@example.com",
@@ -1137,7 +1385,18 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
 		},
 		{
-			desc:    "errNoCommand",
+			desc: "errNoCommand",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1148,9 +1407,18 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errAccountNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -1164,9 +1432,18 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -1180,9 +1457,18 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -1235,7 +1521,18 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:    "errEmailIsEmpty",
+			desc: "errEmailIsEmpty",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				OrganizationId: "org0",
@@ -1243,7 +1540,18 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
 		},
 		{
-			desc:    "errInvalidEmail",
+			desc: "errInvalidEmail",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@",
@@ -1252,7 +1560,18 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
-			desc:    "errOrganizationIDIsEmpty",
+			desc: "errOrganizationIDIsEmpty",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				Email: "bucketeer@example.com",
@@ -1260,7 +1579,18 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
 		},
 		{
-			desc:    "errNoCommand",
+			desc: "errNoCommand",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1271,9 +1601,18 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errAccountNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -1287,9 +1626,18 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -1303,9 +1651,18 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -1357,8 +1714,18 @@ func TestListAccountsV2MySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:        "errInvalidCursor",
-			setup:       nil,
+			desc: "errInvalidCursor",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
 			input:       &accountproto.ListAccountsV2Request{OrganizationId: "org0", Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
@@ -1366,9 +1733,19 @@ func TestListAccountsV2MySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAccountsV2(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:       &accountproto.ListAccountsV2Request{OrganizationId: "org0"},
 			expected:    nil,
@@ -1377,18 +1754,19 @@ func TestListAccountsV2MySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAccountsV2(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{}, 0, int64(0), nil)
 			},
 			input:       &accountproto.ListAccountsV2Request{PageSize: 2, Cursor: "", OrganizationId: "org0"},
 			expected:    &accountproto.ListAccountsV2Response{Accounts: []*accountproto.AccountV2{}, Cursor: "0"},

@@ -26,12 +26,12 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
@@ -58,7 +58,7 @@ func createAccountService(t *testing.T, mockController *gomock.Controller, db st
 	logger := zap.NewNop()
 	return &AccountService{
 		environmentClient: ecmock.NewMockClient(mockController),
-		mysqlClient:       mysqlmock.NewMockClient(mockController),
+		accountStorage:    storagemock.NewMockAccountStorage(mockController),
 		publisher:         publishermock.NewMockPublisher(mockController),
 		logger:            logger.Named("api"),
 	}

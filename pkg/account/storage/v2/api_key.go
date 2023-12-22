@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
 package v2
 
 import (
@@ -31,27 +30,7 @@ var (
 	ErrAPIKeyUnexpectedAffectedRows = errors.New("apiKey: api key unexpected affected rows")
 )
 
-type APIKeyStorage interface {
-	CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error
-	UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error
-	GetAPIKey(ctx context.Context, id, environmentNamespace string) (*domain.APIKey, error)
-	ListAPIKeys(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*proto.APIKey, int, int64, error)
-}
-
-type apiKeyStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewAPIKeyStorage(qe mysql.QueryExecer) APIKeyStorage {
-	return &apiKeyStorage{qe}
-}
-
-func (s *apiKeyStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
+func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
 	query := `
 		INSERT INTO api_key (
 			id,
@@ -65,7 +44,7 @@ func (s *apiKeyStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, envi
 			?, ?, ?, ?, ?, ?, ?
 		)
 	`
-	_, err := s.qe.ExecContext(
+	_, err := s.qe().ExecContext(
 		ctx,
 		query,
 		k.Id,
@@ -85,7 +64,7 @@ func (s *apiKeyStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, envi
 	return nil
 }
 
-func (s *apiKeyStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
+func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
 	query := `
 		UPDATE 
 			api_key
@@ -99,7 +78,7 @@ func (s *apiKeyStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, envi
 			id = ? AND
 			environment_namespace = ?
 	`
-	result, err := s.qe.ExecContext(
+	result, err := s.qe().ExecContext(
 		ctx,
 		query,
 		k.Name,
@@ -123,7 +102,7 @@ func (s *apiKeyStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, envi
 	return nil
 }
 
-func (s *apiKeyStorage) GetAPIKey(ctx context.Context, id, environmentNamespace string) (*domain.APIKey, error) {
+func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentNamespace string) (*domain.APIKey, error) {
 	apiKey := proto.APIKey{}
 	var role int32
 	query := `
@@ -140,7 +119,7 @@ func (s *apiKeyStorage) GetAPIKey(ctx context.Context, id, environmentNamespace 
 			id = ? AND
 			environment_namespace = ?
 	`
-	err := s.qe.QueryRowContext(
+	err := s.qe().QueryRowContext(
 		ctx,
 		query,
 		id,
@@ -163,7 +142,7 @@ func (s *apiKeyStorage) GetAPIKey(ctx context.Context, id, environmentNamespace 
 	return &domain.APIKey{APIKey: &apiKey}, nil
 }
 
-func (s *apiKeyStorage) ListAPIKeys(
+func (s *accountStorage) ListAPIKeys(
 	ctx context.Context,
 	whereParts []mysql.WherePart,
 	orders []*mysql.Order,
@@ -185,7 +164,7 @@ func (s *apiKeyStorage) ListAPIKeys(
 		%s %s %s
 		`, whereSQL, orderBySQL, limitOffsetSQL,
 	)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe().QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -221,7 +200,7 @@ func (s *apiKeyStorage) ListAPIKeys(
 		%s %s
 		`, whereSQL, orderBySQL,
 	)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe().QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

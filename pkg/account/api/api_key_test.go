@@ -26,10 +26,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
+
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
@@ -79,9 +80,8 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -96,9 +96,8 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -171,9 +170,8 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAPIKeyNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -188,9 +186,8 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -205,9 +202,8 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -280,9 +276,8 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAPIKeyNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -295,9 +290,8 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -310,9 +304,8 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -383,9 +376,8 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAPIKeyNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -398,9 +390,8 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -413,9 +404,8 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -473,11 +463,9 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAPIKey(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(nil, v2as.ErrAPIKeyNotFound)
 			},
 			req:      &accountproto.GetAPIKeyRequest{Id: "id"},
 			expected: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
@@ -485,11 +473,13 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAPIKey(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.APIKey{
+					APIKey: &accountproto.APIKey{
+						Id: "id",
+					},
+				}, nil)
 			},
 			req:      &accountproto.GetAPIKeyRequest{Id: "id"},
 			expected: nil,
@@ -547,9 +537,9 @@ func TestListAPIKeysMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input:       &accountproto.ListAPIKeysRequest{},
 			expected:    nil,
@@ -558,18 +548,9 @@ func TestListAPIKeysMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.APIKey{}, 0, int64(0), nil)
 			},
 			input:       &accountproto.ListAPIKeysRequest{PageSize: 2, Cursor: ""},
 			expected:    &accountproto.ListAPIKeysResponse{ApiKeys: []*accountproto.APIKey{}, Cursor: "0"},
