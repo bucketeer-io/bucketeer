@@ -17,6 +17,7 @@ syntax = "proto3";
 package bucketeer.feature;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
 
+import "google/api/annotations.proto";
 import "google/protobuf/wrappers.proto";
 
 import "proto/feature/command.proto";
@@ -346,37 +347,42 @@ message CreateFlagTriggerResponse {
 }
 
 message DeleteFlagTriggerRequest {
-  string environment_namespace = 1;
-  DeleteFlagTriggerCommand delete_flag_trigger_command = 2;
+  string id = 1;
+  string environment_namespace = 2;
+  DeleteFlagTriggerCommand delete_flag_trigger_command = 3;
 }
 
 message DeleteFlagTriggerResponse {}
 
 message UpdateFlagTriggerRequest {
-  string environment_namespace = 1;
+  string id = 1;
+  string environment_namespace = 2;
   ChangeFlagTriggerDescriptionCommand change_flag_trigger_description_command =
-      2;
+      3;
 }
 
 message UpdateFlagTriggerResponse {}
 
 message EnableFlagTriggerRequest {
-  string environment_namespace = 1;
-  EnableFlagTriggerCommand enable_flag_trigger_command = 2;
+  string id = 1;
+  string environment_namespace = 2;
+  EnableFlagTriggerCommand enable_flag_trigger_command = 3;
 }
 
 message EnableFlagTriggerResponse {}
 
 message DisableFlagTriggerRequest {
-  string environment_namespace = 1;
-  DisableFlagTriggerCommand disable_flag_trigger_command = 2;
+  string id = 1;
+  string environment_namespace = 2;
+  DisableFlagTriggerCommand disable_flag_trigger_command = 3;
 }
 
 message DisableFlagTriggerResponse {}
 
 message ResetFlagTriggerRequest {
-  string environment_namespace = 1;
-  ResetFlagTriggerCommand reset_flag_trigger_command = 2;
+  string id = 1;
+  string environment_namespace = 2;
+  ResetFlagTriggerCommand reset_flag_trigger_command = 3;
 }
 
 message ResetFlagTriggerResponse {
@@ -406,7 +412,7 @@ message ListFlagTriggersRequest {
   }
   string feature_id = 1;
   string environment_namespace = 2;
-  int32 cursor = 3;
+  string cursor = 3;
   int32 page_size = 4;
   OrderBy order_by = 5;
   OrderDirection order_direction = 6;
@@ -421,6 +427,12 @@ message ListFlagTriggersResponse {
   string cursor = 2;
   int64 total_count = 3;
 }
+
+message FlagTriggerWebhookRequest {
+  string secret = 1;
+}
+
+message FlagTriggerWebhookResponse {}
 
 service FeatureService {
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {}
@@ -487,4 +499,10 @@ service FeatureService {
   rpc GetFlagTrigger(GetFlagTriggerRequest) returns (GetFlagTriggerResponse) {}
   rpc ListFlagTriggers(ListFlagTriggersRequest)
       returns (ListFlagTriggersResponse) {}
+  rpc FlagTriggerWebhook(FlagTriggerWebhookRequest)
+      returns (FlagTriggerWebhookResponse) {
+    option (google.api.http) = {
+      post: "/webhook/{secret}"
+    };
+  }
 }

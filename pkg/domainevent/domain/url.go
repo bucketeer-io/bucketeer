@@ -78,6 +78,8 @@ func URL(entityType proto.Event_EntityType, url, environmentID, id string) (stri
 		return fmt.Sprintf(urlTemplateWebhook, url, defaultEnvironmentID, id), nil
 	case proto.Event_ORGANIZATION:
 		return fmt.Sprintf(urlTemplateOrganization, url, defaultEnvironmentID, id), nil
+	case proto.Event_FLAG_TRIGGER:
+		return fmt.Sprintf(urlTemplateFeature, url, environmentID, id), nil
 	}
 	return "", ErrUnknownEntityType
 }

@@ -236,23 +236,16 @@ message CreateFlagTriggerCommand {
   string description = 4;
 }
 
-message ResetFlagTriggerCommand {
-  string id = 1;
-}
+message ResetFlagTriggerCommand {}
 
 message ChangeFlagTriggerDescriptionCommand {
-  string id = 1;
-  string description = 2;
+  string description = 1;
 }
 
-message EnableFlagTriggerCommand {
-  string id = 1;
-}
+message EnableFlagTriggerCommand {}
 
-message DisableFlagTriggerCommand {
-  string id = 1;
-}
+message DisableFlagTriggerCommand {}
 
-message DeleteFlagTriggerCommand {
-  string id = 1;
-}
+message DeleteFlagTriggerCommand {}
+
+message UpdateFlagTriggerUsageCommand {}

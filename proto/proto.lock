@@ -2693,14 +2693,12 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutManualScheduleClause"
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ]
           },
@@ -3491,14 +3489,12 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status",
-                "optional": true
+                "type": "ProgressiveRollout.Status"
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type",
-                "optional": true
+                "type": "ProgressiveRollout.Type"
               }
             ]
           },
@@ -5858,6 +5854,10 @@
               {
                 "name": "ORGANIZATION",
                 "integer": 15
+              },
+              {
+                "name": "FLAG_TRIGGER",
+                "integer": 16
               }
             ]
           },
@@ -6462,6 +6462,34 @@
               {
                 "name": "ORGANIZATION_TRIAL_CONVERTED",
                 "integer": 1507
+              },
+              {
+                "name": "FLAG_TRIGGER_CREATED",
+                "integer": 1601
+              },
+              {
+                "name": "FLAG_TRIGGER_RESET",
+                "integer": 1602
+              },
+              {
+                "name": "FLAG_TRIGGER_DESCRIPTION_CHANGED",
+                "integer": 1603
+              },
+              {
+                "name": "FLAG_TRIGGER_DISABLED",
+                "integer": 1604
+              },
+              {
+                "name": "FLAG_TRIGGER_ENABLED",
+                "integer": 1605
+              },
+              {
+                "name": "FLAG_TRIGGER_DELETED",
+                "integer": 1606
+              },
+              {
+                "name": "FLAG_TRIGGER_USAGE_UPDATED",
+                "integer": 1607
               }
             ]
           }
@@ -9232,6 +9260,196 @@
                 "type": "string"
               }
             ]
+          },
+          {
+            "name": "FlagTriggerCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "type",
+                "type": "bucketeer.feature.FlagTrigger.Type"
+              },
+              {
+                "id": 5,
+                "name": "action",
+                "type": "bucketeer.feature.FlagTrigger.Action"
+              },
+              {
+                "id": 6,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "uuid",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "FlagTriggerResetEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "uuid",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "FlagTriggerDescriptionChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "FlagTriggerDisabledEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "FlagTriggerEnabledEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "FlagTriggerDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "FlagTriggerUsageUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "last_triggered_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "trigger_times",
+                "type": "int32"
+              }
+            ]
           }
         ],
         "imports": [
@@ -9285,6 +9503,9 @@
           },
           {
             "path": "proto/autoops/progressive_rollout.proto"
+          },
+          {
+            "path": "proto/feature/flag_trigger.proto"
           }
         ],
         "package": {
@@ -12661,59 +12882,29 @@
             ]
           },
           {
-            "name": "ResetFlagTriggerCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
+            "name": "ResetFlagTriggerCommand"
           },
           {
             "name": "ChangeFlagTriggerDescriptionCommand",
             "fields": [
               {
                 "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
                 "name": "description",
                 "type": "string"
               }
             ]
           },
           {
-            "name": "EnableFlagTriggerCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
+            "name": "EnableFlagTriggerCommand"
           },
           {
-            "name": "DisableFlagTriggerCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
+            "name": "DisableFlagTriggerCommand"
           },
           {
-            "name": "DeleteFlagTriggerCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
+            "name": "DeleteFlagTriggerCommand"
+          },
+          {
+            "name": "UpdateFlagTriggerUsageCommand"
           }
         ],
         "imports": [
@@ -13230,7 +13421,7 @@
               },
               {
                 "id": 7,
-                "name": "trigger_times",
+                "name": "trigger_count",
                 "type": "int32"
               },
               {
@@ -13250,16 +13441,11 @@
               },
               {
                 "id": 11,
-                "name": "deleted",
-                "type": "bool"
-              },
-              {
-                "id": 12,
                 "name": "created_at",
                 "type": "int64"
               },
               {
-                "id": 13,
+                "id": 12,
                 "name": "updated_at",
                 "type": "int64"
               }
@@ -14685,11 +14871,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "delete_flag_trigger_command",
                 "type": "DeleteFlagTriggerCommand"
               }
@@ -14703,11 +14894,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "change_flag_trigger_description_command",
                 "type": "ChangeFlagTriggerDescriptionCommand"
               }
@@ -14721,11 +14917,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "enable_flag_trigger_command",
                 "type": "EnableFlagTriggerCommand"
               }
@@ -14739,11 +14940,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "disable_flag_trigger_command",
                 "type": "DisableFlagTriggerCommand"
               }
@@ -14757,11 +14963,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "reset_flag_trigger_command",
                 "type": "ResetFlagTriggerCommand"
               }
@@ -14828,7 +15039,7 @@
               {
                 "id": 3,
                 "name": "cursor",
-                "type": "int32"
+                "type": "string"
               },
               {
                 "id": 4,
@@ -14884,6 +15095,19 @@
                 ]
               }
             ]
+          },
+          {
+            "name": "FlagTriggerWebhookRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "secret",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "FlagTriggerWebhookResponse"
           }
         ],
         "services": [
@@ -15094,11 +15318,30 @@
                 "name": "ListFlagTriggers",
                 "in_type": "ListFlagTriggersRequest",
                 "out_type": "ListFlagTriggersResponse"
+              },
+              {
+                "name": "FlagTriggerWebhook",
+                "in_type": "FlagTriggerWebhookRequest",
+                "out_type": "FlagTriggerWebhookResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/webhook/{secret}"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
         ],
         "imports": [
+          {
+            "path": "google/api/annotations.proto"
+          },
           {
             "path": "google/protobuf/wrappers.proto"
           },
@@ -16860,6 +17103,10 @@
               {
                 "name": "DOMAIN_EVENT_ORGANIZATION",
                 "integer": 15
+              },
+              {
+                "name": "DOMAIN_EVENT_FLAG_TRIGGER",
+                "integer": 16
               },
               {
                 "name": "FEATURE_STALE",

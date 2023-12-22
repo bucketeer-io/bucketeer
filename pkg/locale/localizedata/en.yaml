@@ -58,6 +58,7 @@ Tag: "Tag"
 TrialProject: "Trial project"
 Webhook: "Webhook"
 WebhookRule: "Webhook rule"
+FlagTrigger: "Flag Trigger"
 
 # Error sentences
 RequiredField: "{{ .Field_1 }} is required"

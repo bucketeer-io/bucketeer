@@ -127,4 +127,17 @@ var (
 		codes.FailedPrecondition,
 		"feature: progressive rollout in waiting or running status exists",
 	)
+	// flag trigger
+	statusMissingFeatureID         = gstatus.New(codes.InvalidArgument, "feature: trigger missing feature id")
+	statusMissingDescription       = gstatus.New(codes.InvalidArgument, "feature: trigger missing description")
+	statusMissingTriggerID         = gstatus.New(codes.InvalidArgument, "feature: missing trigger id")
+	statusSecretRequired           = gstatus.New(codes.InvalidArgument, "feature: trigger secret is required")
+	statusSecretInvalid            = gstatus.New(codes.InvalidArgument, "feature: trigger secret is invalid")
+	statusSecretMismatch           = gstatus.New(codes.InvalidArgument, "feature: trigger secret mismatch")
+	statusTriggerAlreadyDisabled   = gstatus.New(codes.FailedPrecondition, "feature: trigger already disabled")
+	statusTriggerNotFound          = gstatus.New(codes.NotFound, "feature: trigger not found")
+	statusTriggerDisableFailed     = gstatus.New(codes.Internal, "feature: trigger disable failed")
+	statusTriggerEnableFailed      = gstatus.New(codes.Internal, "feature: trigger enable failed")
+	statusTriggerActionInvalid     = gstatus.New(codes.InvalidArgument, "feature: trigger action is invalid")
+	statusTriggerUsageUpdateFailed = gstatus.New(codes.Internal, "feature: trigger usage update failed")
 )

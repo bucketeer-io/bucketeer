@@ -2,6 +2,7 @@
 // file: proto/feature/service.proto
 
 import * as jspb from "google-protobuf";
+import * as google_api_annotations_pb from "../../google/api/annotations_pb";
 import * as google_protobuf_wrappers_pb from "google-protobuf/google/protobuf/wrappers_pb";
 import * as proto_feature_command_pb from "../../proto/feature/command_pb";
 import * as proto_feature_feature_pb from "../../proto/feature/feature_pb";
@@ -1581,6 +1582,9 @@ export namespace CreateFlagTriggerResponse {
 }
 
 export class DeleteFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -1601,6 +1605,7 @@ export class DeleteFlagTriggerRequest extends jspb.Message {
 
 export namespace DeleteFlagTriggerRequest {
   export type AsObject = {
+    id: string,
     environmentNamespace: string,
     deleteFlagTriggerCommand?: proto_feature_command_pb.DeleteFlagTriggerCommand.AsObject,
   }
@@ -1623,6 +1628,9 @@ export namespace DeleteFlagTriggerResponse {
 }
 
 export class UpdateFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -1643,6 +1651,7 @@ export class UpdateFlagTriggerRequest extends jspb.Message {
 
 export namespace UpdateFlagTriggerRequest {
   export type AsObject = {
+    id: string,
     environmentNamespace: string,
     changeFlagTriggerDescriptionCommand?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.AsObject,
   }
@@ -1665,6 +1674,9 @@ export namespace UpdateFlagTriggerResponse {
 }
 
 export class EnableFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -1685,6 +1697,7 @@ export class EnableFlagTriggerRequest extends jspb.Message {
 
 export namespace EnableFlagTriggerRequest {
   export type AsObject = {
+    id: string,
     environmentNamespace: string,
     enableFlagTriggerCommand?: proto_feature_command_pb.EnableFlagTriggerCommand.AsObject,
   }
@@ -1707,6 +1720,9 @@ export namespace EnableFlagTriggerResponse {
 }
 
 export class DisableFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -1727,6 +1743,7 @@ export class DisableFlagTriggerRequest extends jspb.Message {
 
 export namespace DisableFlagTriggerRequest {
   export type AsObject = {
+    id: string,
     environmentNamespace: string,
     disableFlagTriggerCommand?: proto_feature_command_pb.DisableFlagTriggerCommand.AsObject,
   }
@@ -1749,6 +1766,9 @@ export namespace DisableFlagTriggerResponse {
 }
 
 export class ResetFlagTriggerRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
@@ -1769,6 +1789,7 @@ export class ResetFlagTriggerRequest extends jspb.Message {
 
 export namespace ResetFlagTriggerRequest {
   export type AsObject = {
+    id: string,
     environmentNamespace: string,
     resetFlagTriggerCommand?: proto_feature_command_pb.ResetFlagTriggerCommand.AsObject,
   }
@@ -1857,8 +1878,8 @@ export class ListFlagTriggersRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
-  getCursor(): number;
-  setCursor(value: number): void;
+  getCursor(): string;
+  setCursor(value: string): void;
 
   getPageSize(): number;
   setPageSize(value: number): void;
@@ -1883,7 +1904,7 @@ export namespace ListFlagTriggersRequest {
   export type AsObject = {
     featureId: string,
     environmentNamespace: string,
-    cursor: number,
+    cursor: string,
     pageSize: number,
     orderBy: ListFlagTriggersRequest.OrderByMap[keyof ListFlagTriggersRequest.OrderByMap],
     orderDirection: ListFlagTriggersRequest.OrderDirectionMap[keyof ListFlagTriggersRequest.OrderDirectionMap],
@@ -1958,6 +1979,42 @@ export namespace ListFlagTriggersResponse {
       flagTrigger?: proto_feature_flag_trigger_pb.FlagTrigger.AsObject,
       url: string,
     }
+  }
+}
+
+export class FlagTriggerWebhookRequest extends jspb.Message {
+  getSecret(): string;
+  setSecret(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerWebhookRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerWebhookRequest): FlagTriggerWebhookRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FlagTriggerWebhookRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerWebhookRequest;
+  static deserializeBinaryFromReader(message: FlagTriggerWebhookRequest, reader: jspb.BinaryReader): FlagTriggerWebhookRequest;
+}
+
+export namespace FlagTriggerWebhookRequest {
+  export type AsObject = {
+    secret: string,
+  }
+}
+
+export class FlagTriggerWebhookResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerWebhookResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerWebhookResponse): FlagTriggerWebhookResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FlagTriggerWebhookResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerWebhookResponse;
+  static deserializeBinaryFromReader(message: FlagTriggerWebhookResponse, reader: jspb.BinaryReader): FlagTriggerWebhookResponse;
+}
+
+export namespace FlagTriggerWebhookResponse {
+  export type AsObject = {
   }
 }
 

@@ -1090,9 +1090,6 @@ export namespace CreateFlagTriggerCommand {
 }
 
 export class ResetFlagTriggerCommand extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ResetFlagTriggerCommand.AsObject;
   static toObject(includeInstance: boolean, msg: ResetFlagTriggerCommand): ResetFlagTriggerCommand.AsObject;
@@ -1105,14 +1102,10 @@ export class ResetFlagTriggerCommand extends jspb.Message {
 
 export namespace ResetFlagTriggerCommand {
   export type AsObject = {
-    id: string,
   }
 }
 
 export class ChangeFlagTriggerDescriptionCommand extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
   getDescription(): string;
   setDescription(value: string): void;
 
@@ -1128,15 +1121,11 @@ export class ChangeFlagTriggerDescriptionCommand extends jspb.Message {
 
 export namespace ChangeFlagTriggerDescriptionCommand {
   export type AsObject = {
-    id: string,
     description: string,
   }
 }
 
 export class EnableFlagTriggerCommand extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnableFlagTriggerCommand.AsObject;
   static toObject(includeInstance: boolean, msg: EnableFlagTriggerCommand): EnableFlagTriggerCommand.AsObject;
@@ -1149,14 +1138,10 @@ export class EnableFlagTriggerCommand extends jspb.Message {
 
 export namespace EnableFlagTriggerCommand {
   export type AsObject = {
-    id: string,
   }
 }
 
 export class DisableFlagTriggerCommand extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DisableFlagTriggerCommand.AsObject;
   static toObject(includeInstance: boolean, msg: DisableFlagTriggerCommand): DisableFlagTriggerCommand.AsObject;
@@ -1169,14 +1154,10 @@ export class DisableFlagTriggerCommand extends jspb.Message {
 
 export namespace DisableFlagTriggerCommand {
   export type AsObject = {
-    id: string,
   }
 }
 
 export class DeleteFlagTriggerCommand extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteFlagTriggerCommand.AsObject;
   static toObject(includeInstance: boolean, msg: DeleteFlagTriggerCommand): DeleteFlagTriggerCommand.AsObject;
@@ -1189,7 +1170,22 @@ export class DeleteFlagTriggerCommand extends jspb.Message {
 
 export namespace DeleteFlagTriggerCommand {
   export type AsObject = {
-    id: string,
+  }
+}
+
+export class UpdateFlagTriggerUsageCommand extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateFlagTriggerUsageCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateFlagTriggerUsageCommand): UpdateFlagTriggerUsageCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateFlagTriggerUsageCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateFlagTriggerUsageCommand;
+  static deserializeBinaryFromReader(message: UpdateFlagTriggerUsageCommand, reader: jspb.BinaryReader): UpdateFlagTriggerUsageCommand;
+}
+
+export namespace UpdateFlagTriggerUsageCommand {
+  export type AsObject = {
   }
 }
 

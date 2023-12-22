@@ -35,6 +35,7 @@ import (
 	autoopsapi "github.com/bucketeer-io/bucketeer/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/webhookhandler"
+	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/pkg/crypto"
@@ -64,13 +65,14 @@ import (
 )
 
 const (
-	command               = "server"
-	gcp                   = "gcp"
-	aws                   = "aws"
-	autoOpsWebhookPath    = "hook"
-	healthCheckTimeout    = 1 * time.Second
-	clientDialTimeout     = 30 * time.Second
-	serverShutDownTimeout = 10 * time.Second
+	command                       = "server"
+	gcp                           = "gcp"
+	aws                           = "aws"
+	autoOpsWebhookPath            = "hook"
+	featureFlagTriggerWebhookPath = "webhook"
+	healthCheckTimeout            = 1 * time.Second
+	clientDialTimeout             = 30 * time.Second
+	serverShutDownTimeout         = 10 * time.Second
 )
 
 type server struct {
@@ -581,16 +583,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go experimentServer.Run()
 	// featureService
-	featureService := featureapi.NewFeatureService(
-		mysqlClient,
+	featureService, err := s.createFeatureService(
+		ctx,
 		accountClient,
 		experimentClient,
 		autoOpsClient,
 		nonPersistentRedisV3Cache,
 		segmentUsersPublisher,
 		domainTopicPublisher,
-		featureapi.WithLogger(logger),
+		mysqlClient,
+		logger,
 	)
+	if err != nil {
+		return err
+	}
 	featureServer := rpc.NewServer(featureService, *s.certPath, *s.keyPath,
 		"feature-server",
 		rpc.WithPort(*s.featureServicePort),
@@ -788,20 +794,11 @@ func (s *server) createAutoOpsService(
 	}
 	u.Path = path.Join(u.Path, autoOpsWebhookPath)
 
-	var webhookCryptoUtil crypto.EncrypterDecrypter
-	switch *s.cloudService {
-	case gcp:
-		webhookCryptoUtil, err = crypto.NewCloudKMSCrypto(ctx, *s.webhookKMSResourceName)
-		if err != nil {
-			return nil, nil, err
-		}
-	case aws:
-		// TODO: Get region from command-line flags
-		webhookCryptoUtil, err = crypto.NewAwsKMSCrypto(ctx, *s.webhookKMSResourceName, "ap-northeast-1")
-		if err != nil {
-			return nil, nil, err
-		}
+	webhookCryptoUtil, err := s.createCryptoUtil(ctx)
+	if err != nil {
+		return nil, nil, err
 	}
+
 	autoOpsService := autoopsapi.NewAutoOpsService(
 		mysqlClient,
 		featureClient,
@@ -827,4 +824,58 @@ func (s *server) createAutoOpsService(
 		return nil, nil, err
 	}
 	return autoOpsService, autoOpsWebhookHandler, nil
+}
+
+func (s *server) createFeatureService(
+	ctx context.Context,
+	accountClient accountclient.Client,
+	experimentClient experimentclient.Client,
+	autoOpsClient autoopsclient.Client,
+	nonPersistentRedisV3Cache cache.MultiGetDeleteCountCache,
+	segmentUsersPublisher publisher.Publisher,
+	domainTopicPublisher publisher.Publisher,
+	mysqlClient mysql.Client,
+	logger *zap.Logger,
+) (rpc.Service, error) {
+	triggerCryptoUtil, err := s.createCryptoUtil(ctx)
+	if err != nil {
+		return nil, err
+	}
+	featureService := featureapi.NewFeatureService(
+		mysqlClient,
+		accountClient,
+		experimentClient,
+		autoOpsClient,
+		nonPersistentRedisV3Cache,
+		segmentUsersPublisher,
+		domainTopicPublisher,
+		triggerCryptoUtil,
+		fmt.Sprintf("%s/%s", *s.webhookBaseURL, featureFlagTriggerWebhookPath),
+		featureapi.WithLogger(logger),
+	)
+
+	return featureService, nil
+}
+
+func (s *server) createCryptoUtil(
+	ctx context.Context,
+) (crypto.EncrypterDecrypter, error) {
+	var (
+		cryptoUtil crypto.EncrypterDecrypter
+		err        error
+	)
+	switch *s.cloudService {
+	case gcp:
+		cryptoUtil, err = crypto.NewCloudKMSCrypto(ctx, *s.webhookKMSResourceName)
+		if err != nil {
+			return nil, err
+		}
+	case aws:
+		// TODO: Get region from command-line flags
+		cryptoUtil, err = crypto.NewAwsKMSCrypto(ctx, *s.webhookKMSResourceName, "ap-northeast-1")
+		if err != nil {
+			return nil, err
+		}
+	}
+	return cryptoUtil, nil
 }

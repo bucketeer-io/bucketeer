@@ -1194,6 +1194,62 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.TrialConverted),
 		}
+	case proto.Event_FLAG_TRIGGER_CREATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.CreatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.FlagTrigger),
+			),
+		}
+	case proto.Event_FLAG_TRIGGER_DELETED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DeletedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.FlagTrigger),
+			),
+		}
+	case proto.Event_FLAG_TRIGGER_DESCRIPTION_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DescriptionUpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.FlagTrigger),
+			),
+		}
+	case proto.Event_FLAG_TRIGGER_ENABLED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.EnabledTemplate,
+				localizer.MustLocalizeWithTemplate(locale.FlagTrigger),
+			),
+		}
+	case proto.Event_FLAG_TRIGGER_DISABLED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DisabledTemplate,
+				localizer.MustLocalizeWithTemplate(locale.FlagTrigger),
+			),
+		}
+	case proto.Event_FLAG_TRIGGER_RESET:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ResetTemplate,
+				localizer.MustLocalizeWithTemplate(locale.FlagTrigger),
+			),
+		}
+	case proto.Event_FLAG_TRIGGER_USAGE_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.FlagTrigger),
+			),
+		}
 	}
 	return &proto.LocalizedMessage{
 		Locale:  localizer.GetLocale(),

@@ -19,6 +19,7 @@ import * as proto_notification_subscription_pb from "../../../proto/notification
 import * as proto_notification_recipient_pb from "../../../proto/notification/recipient_pb";
 import * as proto_feature_prerequisite_pb from "../../../proto/feature/prerequisite_pb";
 import * as proto_autoops_progressive_rollout_pb from "../../../proto/autoops/progressive_rollout_pb";
+import * as proto_feature_flag_trigger_pb from "../../../proto/feature/flag_trigger_pb";
 
 export class Event extends jspb.Message {
   getId(): string;
@@ -98,6 +99,7 @@ export namespace Event {
     WEBHOOK: 13;
     PROGRESSIVE_ROLLOUT: 14;
     ORGANIZATION: 15;
+    FLAG_TRIGGER: 16;
   }
 
   export const EntityType: EntityTypeMap;
@@ -253,6 +255,13 @@ export namespace Event {
     ORGANIZATION_ARCHIVED: 1505;
     ORGANIZATION_UNARCHIVED: 1506;
     ORGANIZATION_TRIAL_CONVERTED: 1507;
+    FLAG_TRIGGER_CREATED: 1601;
+    FLAG_TRIGGER_RESET: 1602;
+    FLAG_TRIGGER_DESCRIPTION_CHANGED: 1603;
+    FLAG_TRIGGER_DISABLED: 1604;
+    FLAG_TRIGGER_ENABLED: 1605;
+    FLAG_TRIGGER_DELETED: 1606;
+    FLAG_TRIGGER_USAGE_UPDATED: 1607;
   }
 
   export const Type: TypeMap;
@@ -4357,6 +4366,242 @@ export class OrganizationTrialConvertedEvent extends jspb.Message {
 export namespace OrganizationTrialConvertedEvent {
   export type AsObject = {
     id: string,
+  }
+}
+
+export class FlagTriggerCreatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  getType(): proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap];
+  setType(value: proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap]): void;
+
+  getAction(): proto_feature_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.ActionMap];
+  setAction(value: proto_feature_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.ActionMap]): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getUuid(): string;
+  setUuid(value: string): void;
+
+  getCreatedAt(): number;
+  setCreatedAt(value: number): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerCreatedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerCreatedEvent): FlagTriggerCreatedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FlagTriggerCreatedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerCreatedEvent;
+  static deserializeBinaryFromReader(message: FlagTriggerCreatedEvent, reader: jspb.BinaryReader): FlagTriggerCreatedEvent;
+}
+
+export namespace FlagTriggerCreatedEvent {
+  export type AsObject = {
+    id: string,
+    featureId: string,
+    environmentNamespace: string,
+    type: proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap],
+    action: proto_feature_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.ActionMap],
+    description: string,
+    uuid: string,
+    createdAt: number,
+    updatedAt: number,
+  }
+}
+
+export class FlagTriggerResetEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  getUuid(): string;
+  setUuid(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerResetEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerResetEvent): FlagTriggerResetEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FlagTriggerResetEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerResetEvent;
+  static deserializeBinaryFromReader(message: FlagTriggerResetEvent, reader: jspb.BinaryReader): FlagTriggerResetEvent;
+}
+
+export namespace FlagTriggerResetEvent {
+  export type AsObject = {
+    id: string,
+    featureId: string,
+    environmentNamespace: string,
+    uuid: string,
+  }
+}
+
+export class FlagTriggerDescriptionChangedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerDescriptionChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerDescriptionChangedEvent): FlagTriggerDescriptionChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FlagTriggerDescriptionChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerDescriptionChangedEvent;
+  static deserializeBinaryFromReader(message: FlagTriggerDescriptionChangedEvent, reader: jspb.BinaryReader): FlagTriggerDescriptionChangedEvent;
+}
+
+export namespace FlagTriggerDescriptionChangedEvent {
+  export type AsObject = {
+    id: string,
+    featureId: string,
+    environmentNamespace: string,
+    description: string,
+  }
+}
+
+export class FlagTriggerDisabledEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerDisabledEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerDisabledEvent): FlagTriggerDisabledEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FlagTriggerDisabledEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerDisabledEvent;
+  static deserializeBinaryFromReader(message: FlagTriggerDisabledEvent, reader: jspb.BinaryReader): FlagTriggerDisabledEvent;
+}
+
+export namespace FlagTriggerDisabledEvent {
+  export type AsObject = {
+    id: string,
+    featureId: string,
+    environmentNamespace: string,
+  }
+}
+
+export class FlagTriggerEnabledEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerEnabledEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerEnabledEvent): FlagTriggerEnabledEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FlagTriggerEnabledEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerEnabledEvent;
+  static deserializeBinaryFromReader(message: FlagTriggerEnabledEvent, reader: jspb.BinaryReader): FlagTriggerEnabledEvent;
+}
+
+export namespace FlagTriggerEnabledEvent {
+  export type AsObject = {
+    id: string,
+    featureId: string,
+    environmentNamespace: string,
+  }
+}
+
+export class FlagTriggerDeletedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerDeletedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerDeletedEvent): FlagTriggerDeletedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FlagTriggerDeletedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerDeletedEvent;
+  static deserializeBinaryFromReader(message: FlagTriggerDeletedEvent, reader: jspb.BinaryReader): FlagTriggerDeletedEvent;
+}
+
+export namespace FlagTriggerDeletedEvent {
+  export type AsObject = {
+    id: string,
+    featureId: string,
+    environmentNamespace: string,
+  }
+}
+
+export class FlagTriggerUsageUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  getLastTriggeredAt(): number;
+  setLastTriggeredAt(value: number): void;
+
+  getTriggerTimes(): number;
+  setTriggerTimes(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerUsageUpdatedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FlagTriggerUsageUpdatedEvent): FlagTriggerUsageUpdatedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FlagTriggerUsageUpdatedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerUsageUpdatedEvent;
+  static deserializeBinaryFromReader(message: FlagTriggerUsageUpdatedEvent, reader: jspb.BinaryReader): FlagTriggerUsageUpdatedEvent;
+}
+
+export namespace FlagTriggerUsageUpdatedEvent {
+  export type AsObject = {
+    id: string,
+    featureId: string,
+    environmentNamespace: string,
+    lastTriggeredAt: number,
+    triggerTimes: number,
   }
 }
 

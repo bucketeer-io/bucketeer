@@ -2442,8 +2442,6 @@ type ResetFlagTriggerCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
-
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (x *ResetFlagTriggerCommand) Reset() {
@@ -2478,20 +2476,12 @@ func (*ResetFlagTriggerCommand) Descriptor() ([]byte, []int) {
 	return file_proto_feature_command_proto_rawDescGZIP(), []int{46}
 }
 
-func (x *ResetFlagTriggerCommand) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
 type ChangeFlagTriggerDescriptionCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
 }
 
 func (x *ChangeFlagTriggerDescriptionCommand) Reset() {
@@ -2526,13 +2516,6 @@ func (*ChangeFlagTriggerDescriptionCommand) Descriptor() ([]byte, []int) {
 	return file_proto_feature_command_proto_rawDescGZIP(), []int{47}
 }
 
-func (x *ChangeFlagTriggerDescriptionCommand) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
 func (x *ChangeFlagTriggerDescriptionCommand) GetDescription() string {
 	if x != nil {
 		return x.Description
@@ -2544,8 +2527,6 @@ type EnableFlagTriggerCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
-
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (x *EnableFlagTriggerCommand) Reset() {
@@ -2580,19 +2561,10 @@ func (*EnableFlagTriggerCommand) Descriptor() ([]byte, []int) {
 	return file_proto_feature_command_proto_rawDescGZIP(), []int{48}
 }
 
-func (x *EnableFlagTriggerCommand) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
 type DisableFlagTriggerCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
-
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (x *DisableFlagTriggerCommand) Reset() {
@@ -2627,19 +2599,10 @@ func (*DisableFlagTriggerCommand) Descriptor() ([]byte, []int) {
 	return file_proto_feature_command_proto_rawDescGZIP(), []int{49}
 }
 
-func (x *DisableFlagTriggerCommand) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
 type DeleteFlagTriggerCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
-
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (x *DeleteFlagTriggerCommand) Reset() {
@@ -2674,11 +2637,42 @@ func (*DeleteFlagTriggerCommand) Descriptor() ([]byte, []int) {
 	return file_proto_feature_command_proto_rawDescGZIP(), []int{50}
 }
 
-func (x *DeleteFlagTriggerCommand) GetId() string {
-	if x != nil {
-		return x.Id
+type UpdateFlagTriggerUsageCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *UpdateFlagTriggerUsageCommand) Reset() {
+	*x = UpdateFlagTriggerUsageCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_feature_command_proto_msgTypes[51]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
 	}
-	return ""
+}
+
+func (x *UpdateFlagTriggerUsageCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateFlagTriggerUsageCommand) ProtoMessage() {}
+
+func (x *UpdateFlagTriggerUsageCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_feature_command_proto_msgTypes[51]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateFlagTriggerUsageCommand.ProtoReflect.Descriptor instead.
+func (*UpdateFlagTriggerUsageCommand) Descriptor() ([]byte, []int) {
+	return file_proto_feature_command_proto_rawDescGZIP(), []int{51}
 }
 
 var File_proto_feature_command_proto protoreflect.FileDescriptor
@@ -2947,28 +2941,25 @@ var file_proto_feature_command_proto_rawDesc = []byte{
 	0x2e, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x2e, 0x41, 0x63, 0x74,
 	0x69, 0x6f, 0x6e, 0x52, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x20, 0x0a, 0x0b, 0x64,
 	0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x29, 0x0a,
+	0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x19, 0x0a,
 	0x17, 0x52, 0x65, 0x73, 0x65, 0x74, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65,
-	0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x57, 0x0a, 0x23, 0x43, 0x68, 0x61, 0x6e,
+	0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x47, 0x0a, 0x23, 0x43, 0x68, 0x61, 0x6e,
 	0x67, 0x65, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x44, 0x65, 0x73,
 	0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12,
-	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12,
-	0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02,
+	0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f,
-	0x6e, 0x22, 0x2a, 0x0a, 0x18, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x46, 0x6c, 0x61, 0x67, 0x54,
-	0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a,
-	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x2b, 0x0a,
+	0x6e, 0x22, 0x1a, 0x0a, 0x18, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x46, 0x6c, 0x61, 0x67, 0x54,
+	0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x1b, 0x0a,
 	0x19, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67,
-	0x67, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x2a, 0x0a, 0x18, 0x44, 0x65,
+	0x67, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x1a, 0x0a, 0x18, 0x44, 0x65,
 	0x6c, 0x65, 0x74, 0x65, 0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x43,
-	0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
-	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69,
-	0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x1f, 0x0a, 0x1d, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x46, 0x6c, 0x61, 0x67, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x55, 0x73, 0x61, 0x67, 0x65,
+	0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75,
+	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d,
+	0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -2983,7 +2974,7 @@ func file_proto_feature_command_proto_rawDescGZIP() []byte {
 	return file_proto_feature_command_proto_rawDescData
 }
 
-var file_proto_feature_command_proto_msgTypes = make([]protoimpl.MessageInfo, 51)
+var file_proto_feature_command_proto_msgTypes = make([]protoimpl.MessageInfo, 52)
 var file_proto_feature_command_proto_goTypes = []interface{}{
 	(*Command)(nil),                                   // 0: bucketeer.feature.Command
 	(*CreateFeatureCommand)(nil),                      // 1: bucketeer.feature.CreateFeatureCommand
@@ -3036,44 +3027,45 @@ var file_proto_feature_command_proto_goTypes = []interface{}{
 	(*EnableFlagTriggerCommand)(nil),                  // 48: bucketeer.feature.EnableFlagTriggerCommand
 	(*DisableFlagTriggerCommand)(nil),                 // 49: bucketeer.feature.DisableFlagTriggerCommand
 	(*DeleteFlagTriggerCommand)(nil),                  // 50: bucketeer.feature.DeleteFlagTriggerCommand
-	(*anypb.Any)(nil),                                 // 51: google.protobuf.Any
-	(*Variation)(nil),                                 // 52: bucketeer.feature.Variation
-	(*wrapperspb.Int32Value)(nil),                     // 53: google.protobuf.Int32Value
-	(Feature_VariationType)(0),                        // 54: bucketeer.feature.Feature.VariationType
-	(Segment_Status)(0),                               // 55: bucketeer.feature.Segment.Status
-	(SegmentUser_State)(0),                            // 56: bucketeer.feature.SegmentUser.State
-	(*Strategy)(nil),                                  // 57: bucketeer.feature.Strategy
-	(*Rule)(nil),                                      // 58: bucketeer.feature.Rule
-	(*Clause)(nil),                                    // 59: bucketeer.feature.Clause
-	(Clause_Operator)(0),                              // 60: bucketeer.feature.Clause.Operator
-	(*FixedStrategy)(nil),                             // 61: bucketeer.feature.FixedStrategy
-	(*RolloutStrategy)(nil),                           // 62: bucketeer.feature.RolloutStrategy
-	(*Prerequisite)(nil),                              // 63: bucketeer.feature.Prerequisite
-	(FlagTrigger_Type)(0),                             // 64: bucketeer.feature.FlagTrigger.Type
-	(FlagTrigger_Action)(0),                           // 65: bucketeer.feature.FlagTrigger.Action
+	(*UpdateFlagTriggerUsageCommand)(nil),             // 51: bucketeer.feature.UpdateFlagTriggerUsageCommand
+	(*anypb.Any)(nil),                                 // 52: google.protobuf.Any
+	(*Variation)(nil),                                 // 53: bucketeer.feature.Variation
+	(*wrapperspb.Int32Value)(nil),                     // 54: google.protobuf.Int32Value
+	(Feature_VariationType)(0),                        // 55: bucketeer.feature.Feature.VariationType
+	(Segment_Status)(0),                               // 56: bucketeer.feature.Segment.Status
+	(SegmentUser_State)(0),                            // 57: bucketeer.feature.SegmentUser.State
+	(*Strategy)(nil),                                  // 58: bucketeer.feature.Strategy
+	(*Rule)(nil),                                      // 59: bucketeer.feature.Rule
+	(*Clause)(nil),                                    // 60: bucketeer.feature.Clause
+	(Clause_Operator)(0),                              // 61: bucketeer.feature.Clause.Operator
+	(*FixedStrategy)(nil),                             // 62: bucketeer.feature.FixedStrategy
+	(*RolloutStrategy)(nil),                           // 63: bucketeer.feature.RolloutStrategy
+	(*Prerequisite)(nil),                              // 64: bucketeer.feature.Prerequisite
+	(FlagTrigger_Type)(0),                             // 65: bucketeer.feature.FlagTrigger.Type
+	(FlagTrigger_Action)(0),                           // 66: bucketeer.feature.FlagTrigger.Action
 }
 var file_proto_feature_command_proto_depIdxs = []int32{
-	51, // 0: bucketeer.feature.Command.command:type_name -> google.protobuf.Any
-	52, // 1: bucketeer.feature.CreateFeatureCommand.variations:type_name -> bucketeer.feature.Variation
-	53, // 2: bucketeer.feature.CreateFeatureCommand.default_on_variation_index:type_name -> google.protobuf.Int32Value
-	53, // 3: bucketeer.feature.CreateFeatureCommand.default_off_variation_index:type_name -> google.protobuf.Int32Value
-	54, // 4: bucketeer.feature.CreateFeatureCommand.variation_type:type_name -> bucketeer.feature.Feature.VariationType
-	55, // 5: bucketeer.feature.ChangeBulkUploadSegmentUsersStatusCommand.status:type_name -> bucketeer.feature.Segment.Status
-	56, // 6: bucketeer.feature.ChangeBulkUploadSegmentUsersStatusCommand.state:type_name -> bucketeer.feature.SegmentUser.State
-	57, // 7: bucketeer.feature.ChangeDefaultStrategyCommand.strategy:type_name -> bucketeer.feature.Strategy
-	58, // 8: bucketeer.feature.AddRuleCommand.rule:type_name -> bucketeer.feature.Rule
-	57, // 9: bucketeer.feature.ChangeRuleStrategyCommand.strategy:type_name -> bucketeer.feature.Strategy
-	59, // 10: bucketeer.feature.AddClauseCommand.clause:type_name -> bucketeer.feature.Clause
-	60, // 11: bucketeer.feature.ChangeClauseOperatorCommand.operator:type_name -> bucketeer.feature.Clause.Operator
-	61, // 12: bucketeer.feature.ChangeFixedStrategyCommand.strategy:type_name -> bucketeer.feature.FixedStrategy
-	62, // 13: bucketeer.feature.ChangeRolloutStrategyCommand.strategy:type_name -> bucketeer.feature.RolloutStrategy
-	56, // 14: bucketeer.feature.AddSegmentUserCommand.state:type_name -> bucketeer.feature.SegmentUser.State
-	56, // 15: bucketeer.feature.DeleteSegmentUserCommand.state:type_name -> bucketeer.feature.SegmentUser.State
-	56, // 16: bucketeer.feature.BulkUploadSegmentUsersCommand.state:type_name -> bucketeer.feature.SegmentUser.State
-	63, // 17: bucketeer.feature.AddPrerequisiteCommand.prerequisite:type_name -> bucketeer.feature.Prerequisite
-	63, // 18: bucketeer.feature.ChangePrerequisiteVariationCommand.prerequisite:type_name -> bucketeer.feature.Prerequisite
-	64, // 19: bucketeer.feature.CreateFlagTriggerCommand.type:type_name -> bucketeer.feature.FlagTrigger.Type
-	65, // 20: bucketeer.feature.CreateFlagTriggerCommand.action:type_name -> bucketeer.feature.FlagTrigger.Action
+	52, // 0: bucketeer.feature.Command.command:type_name -> google.protobuf.Any
+	53, // 1: bucketeer.feature.CreateFeatureCommand.variations:type_name -> bucketeer.feature.Variation
+	54, // 2: bucketeer.feature.CreateFeatureCommand.default_on_variation_index:type_name -> google.protobuf.Int32Value
+	54, // 3: bucketeer.feature.CreateFeatureCommand.default_off_variation_index:type_name -> google.protobuf.Int32Value
+	55, // 4: bucketeer.feature.CreateFeatureCommand.variation_type:type_name -> bucketeer.feature.Feature.VariationType
+	56, // 5: bucketeer.feature.ChangeBulkUploadSegmentUsersStatusCommand.status:type_name -> bucketeer.feature.Segment.Status
+	57, // 6: bucketeer.feature.ChangeBulkUploadSegmentUsersStatusCommand.state:type_name -> bucketeer.feature.SegmentUser.State
+	58, // 7: bucketeer.feature.ChangeDefaultStrategyCommand.strategy:type_name -> bucketeer.feature.Strategy
+	59, // 8: bucketeer.feature.AddRuleCommand.rule:type_name -> bucketeer.feature.Rule
+	58, // 9: bucketeer.feature.ChangeRuleStrategyCommand.strategy:type_name -> bucketeer.feature.Strategy
+	60, // 10: bucketeer.feature.AddClauseCommand.clause:type_name -> bucketeer.feature.Clause
+	61, // 11: bucketeer.feature.ChangeClauseOperatorCommand.operator:type_name -> bucketeer.feature.Clause.Operator
+	62, // 12: bucketeer.feature.ChangeFixedStrategyCommand.strategy:type_name -> bucketeer.feature.FixedStrategy
+	63, // 13: bucketeer.feature.ChangeRolloutStrategyCommand.strategy:type_name -> bucketeer.feature.RolloutStrategy
+	57, // 14: bucketeer.feature.AddSegmentUserCommand.state:type_name -> bucketeer.feature.SegmentUser.State
+	57, // 15: bucketeer.feature.DeleteSegmentUserCommand.state:type_name -> bucketeer.feature.SegmentUser.State
+	57, // 16: bucketeer.feature.BulkUploadSegmentUsersCommand.state:type_name -> bucketeer.feature.SegmentUser.State
+	64, // 17: bucketeer.feature.AddPrerequisiteCommand.prerequisite:type_name -> bucketeer.feature.Prerequisite
+	64, // 18: bucketeer.feature.ChangePrerequisiteVariationCommand.prerequisite:type_name -> bucketeer.feature.Prerequisite
+	65, // 19: bucketeer.feature.CreateFlagTriggerCommand.type:type_name -> bucketeer.feature.FlagTrigger.Type
+	66, // 20: bucketeer.feature.CreateFlagTriggerCommand.action:type_name -> bucketeer.feature.FlagTrigger.Action
 	21, // [21:21] is the sub-list for method output_type
 	21, // [21:21] is the sub-list for method input_type
 	21, // [21:21] is the sub-list for extension type_name
@@ -3707,6 +3699,18 @@ func file_proto_feature_command_proto_init() {
 				return nil
 			}
 		}
+		file_proto_feature_command_proto_msgTypes[51].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UpdateFlagTriggerUsageCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -3714,7 +3718,7 @@ func file_proto_feature_command_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_feature_command_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   51,
+			NumMessages:   52,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

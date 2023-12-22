@@ -57,6 +57,16 @@ var (
 	}
 )
 
+type dummyWebhookCryptoUtil struct{}
+
+func (u *dummyWebhookCryptoUtil) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
+	return []byte(data), nil
+}
+
+func (u *dummyWebhookCryptoUtil) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
+	return []byte(data), nil
+}
+
 func createContextWithToken() context.Context {
 	token := &token.IDToken{
 		Issuer:    "issuer",
@@ -112,6 +122,8 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 		p,
 		p,
 		singleflight.Group{},
+		&dummyWebhookCryptoUtil{},
+		"http://localhost",
 		&defaultOptions,
 		defaultOptions.logger,
 	}
@@ -135,6 +147,8 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 		featuresCache:         cachev3mock.NewMockFeaturesCache(c),
 		segmentUsersPublisher: segmentUsersPublisher,
 		domainPublisher:       domainPublisher,
+		triggerCryptoUtil:     &dummyWebhookCryptoUtil{},
+		triggerURL:            "http://localhost",
 		opts:                  &defaultOptions,
 		logger:                defaultOptions.logger,
 	}

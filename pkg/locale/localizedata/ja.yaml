@@ -58,6 +58,7 @@ TrialProject: "トライアルプロジェクト"
 Variation: "バリエーション"
 Webhook: "Webhook"
 WebhookRule: "Webhookのルール"
+FlagTrigger: "フラグトリガー"
 
 # Error sentences
 RequiredField: "{{ .Field_1 }}は必須です"

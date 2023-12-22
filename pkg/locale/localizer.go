@@ -90,6 +90,7 @@ const (
 	TrialProject                 = "TrialProject"
 	Webhook                      = "Webhook"
 	WebhookRule                  = "WebhookRule"
+	FlagTrigger                  = "FlagTrigger"
 
 	// error sentence
 	RequiredFieldTemplate = "RequiredField"

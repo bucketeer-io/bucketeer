@@ -35,6 +35,7 @@ import "proto/notification/subscription.proto";
 import "proto/notification/recipient.proto";
 import "proto/feature/prerequisite.proto";
 import "proto/autoops/progressive_rollout.proto";
+import "proto/feature/flag_trigger.proto";
 
 message Event {
   enum EntityType {
@@ -54,6 +55,7 @@ message Event {
     WEBHOOK = 13;
     PROGRESSIVE_ROLLOUT = 14;
     ORGANIZATION = 15;
+    FLAG_TRIGGER = 16;
   }
   enum Type {
     UNKNOWN = 0;
@@ -206,6 +208,13 @@ message Event {
     ORGANIZATION_ARCHIVED = 1505;
     ORGANIZATION_UNARCHIVED = 1506;
     ORGANIZATION_TRIAL_CONVERTED = 1507;
+    FLAG_TRIGGER_CREATED = 1601;
+    FLAG_TRIGGER_RESET = 1602;
+    FLAG_TRIGGER_DESCRIPTION_CHANGED = 1603;
+    FLAG_TRIGGER_DISABLED = 1604;
+    FLAG_TRIGGER_ENABLED = 1605;
+    FLAG_TRIGGER_DELETED = 1606;
+    FLAG_TRIGGER_USAGE_UPDATED = 1607;
   }
   string id = 1;
   int64 timestamp = 2;
@@ -216,8 +225,8 @@ message Event {
   google.protobuf.Any data = 7;
   string environment_namespace = 8;
   bool is_admin_event = 9;  // if true, it's stored in AdminDomainEvent table
-                            // and AdminAuditLog table.
-  Options options = 10;     // optional
+  // and AdminAuditLog table.
+  Options options = 10;  // optional
 }
 
 message Editor {
@@ -1054,4 +1063,56 @@ message OrganizationUnarchivedEvent {
 
 message OrganizationTrialConvertedEvent {
   string id = 1;
+}
+
+message FlagTriggerCreatedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string environment_namespace = 3;
+  bucketeer.feature.FlagTrigger.Type type = 4;
+  bucketeer.feature.FlagTrigger.Action action = 5;
+  string description = 6;
+  string uuid = 7;
+  int64 created_at = 8;
+  int64 updated_at = 9;
+}
+
+message FlagTriggerResetEvent {
+  string id = 1;
+  string feature_id = 2;
+  string environment_namespace = 3;
+  string uuid = 4;
+}
+
+message FlagTriggerDescriptionChangedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string environment_namespace = 3;
+  string description = 4;
+}
+
+message FlagTriggerDisabledEvent {
+  string id = 1;
+  string feature_id = 2;
+  string environment_namespace = 3;
+}
+
+message FlagTriggerEnabledEvent {
+  string id = 1;
+  string feature_id = 2;
+  string environment_namespace = 3;
+}
+
+message FlagTriggerDeletedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string environment_namespace = 3;
+}
+
+message FlagTriggerUsageUpdatedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string environment_namespace = 3;
+  int64 last_triggered_at = 4;
+  int32 trigger_times = 5;
 }
