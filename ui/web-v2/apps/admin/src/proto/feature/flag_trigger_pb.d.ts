@@ -22,8 +22,8 @@ export class FlagTrigger extends jspb.Message {
   getDescription(): string;
   setDescription(value: string): void;
 
-  getTriggerTimes(): number;
-  setTriggerTimes(value: number): void;
+  getTriggerCount(): number;
+  setTriggerCount(value: number): void;
 
   getLastTriggeredAt(): number;
   setLastTriggeredAt(value: number): void;
@@ -58,7 +58,7 @@ export namespace FlagTrigger {
     type: FlagTrigger.TypeMap[keyof FlagTrigger.TypeMap],
     action: FlagTrigger.ActionMap[keyof FlagTrigger.ActionMap],
     description: string,
-    triggerTimes: number,
+    triggerCount: number,
     lastTriggeredAt: number,
     uuid: string,
     disabled: boolean,

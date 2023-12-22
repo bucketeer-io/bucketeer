@@ -4,12 +4,12 @@ SELECT id,
        type,
        `action`,
        description,
-       trigger_times,
+       trigger_count,
        last_triggered_at,
        uuid,
        disabled,
        created_at,
        updated_at
-from flag_triggers
+from flag_trigger
 where id = ?
   AND environment_namespace = ?

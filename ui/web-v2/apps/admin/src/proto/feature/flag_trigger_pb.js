@@ -83,7 +83,7 @@ proto.bucketeer.feature.FlagTrigger.toObject = function(includeInstance, msg) {
     type: jspb.Message.getFieldWithDefault(msg, 4, 0),
     action: jspb.Message.getFieldWithDefault(msg, 5, 0),
     description: jspb.Message.getFieldWithDefault(msg, 6, ""),
-    triggerTimes: jspb.Message.getFieldWithDefault(msg, 7, 0),
+    triggerCount: jspb.Message.getFieldWithDefault(msg, 7, 0),
     lastTriggeredAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
     uuid: jspb.Message.getFieldWithDefault(msg, 9, ""),
     disabled: jspb.Message.getBooleanFieldWithDefault(msg, 10, false),
@@ -151,7 +151,7 @@ proto.bucketeer.feature.FlagTrigger.deserializeBinaryFromReader = function(msg, 
       break;
     case 7:
       var value = /** @type {number} */ (reader.readInt32());
-      msg.setTriggerTimes(value);
+      msg.setTriggerCount(value);
       break;
     case 8:
       var value = /** @type {number} */ (reader.readInt64());
@@ -244,7 +244,7 @@ proto.bucketeer.feature.FlagTrigger.serializeBinaryToWriter = function(message, 
       f
     );
   }
-  f = message.getTriggerTimes();
+  f = message.getTriggerCount();
   if (f !== 0) {
     writer.writeInt32(
       7,
@@ -415,10 +415,10 @@ proto.bucketeer.feature.FlagTrigger.prototype.setDescription = function(value) {
 
 
 /**
- * optional int32 trigger_times = 7;
+ * optional int32 trigger_count = 7;
  * @return {number}
  */
-proto.bucketeer.feature.FlagTrigger.prototype.getTriggerTimes = function() {
+proto.bucketeer.feature.FlagTrigger.prototype.getTriggerCount = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 7, 0));
 };
 
@@ -427,7 +427,7 @@ proto.bucketeer.feature.FlagTrigger.prototype.getTriggerTimes = function() {
  * @param {number} value
  * @return {!proto.bucketeer.feature.FlagTrigger} returns this
  */
-proto.bucketeer.feature.FlagTrigger.prototype.setTriggerTimes = function(value) {
+proto.bucketeer.feature.FlagTrigger.prototype.setTriggerCount = function(value) {
   return jspb.Message.setProto3IntField(this, 7, value);
 };
 

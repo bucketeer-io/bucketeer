@@ -1,2 +1,2 @@
 SELECT COUNT(1)
-FROM flag_triggers %s %s
+FROM flag_trigger %s %s

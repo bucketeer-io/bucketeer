@@ -85,6 +85,6 @@ func (ft *FlagTrigger) UpdateTriggerUsage() error {
 	unix := time.Now().Unix()
 	ft.LastTriggeredAt = unix
 	ft.UpdatedAt = unix
-	ft.TriggerTimes = ft.TriggerTimes + 1
+	ft.TriggerCount = ft.TriggerCount + 1
 	return nil
 }

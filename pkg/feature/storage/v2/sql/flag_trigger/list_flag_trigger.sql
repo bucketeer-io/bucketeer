@@ -4,11 +4,10 @@ SELECT id,
        type,
        `action`,
        description,
-       trigger_times,
+       trigger_count,
        last_triggered_at,
        uuid,
        disabled,
        created_at,
        updated_at
-FROM flag_triggers
-%s %s %s
+FROM flag_trigger %s %s %s

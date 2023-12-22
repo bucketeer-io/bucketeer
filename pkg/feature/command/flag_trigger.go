@@ -152,7 +152,7 @@ func (f *flagTriggerCommandHandler) updateUsage(
 		FeatureId:            f.flagTrigger.FeatureId,
 		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
 		LastTriggeredAt:      f.flagTrigger.LastTriggeredAt,
-		TriggerTimes:         f.flagTrigger.TriggerTimes,
+		TriggerTimes:         f.flagTrigger.TriggerCount,
 	})
 }
 

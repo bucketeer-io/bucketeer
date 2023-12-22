@@ -13421,7 +13421,7 @@
               },
               {
                 "id": 7,
-                "name": "trigger_times",
+                "name": "trigger_count",
                 "type": "int32"
               },
               {
