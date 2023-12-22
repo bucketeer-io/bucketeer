@@ -312,8 +312,8 @@ func TestFeatureFlagWebhook(t *testing.T) {
 		Id:                   enableTrigger.FlagTrigger.Id,
 		EnvironmentNamespace: *environmentNamespace,
 	})
-	if enabledTrigger.FlagTrigger.TriggerTimes != 1 {
-		t.Fatalf("unexpected trigger times: %d", enabledTrigger.FlagTrigger.TriggerTimes)
+	if enabledTrigger.FlagTrigger.TriggerCount != 1 {
+		t.Fatalf("unexpected trigger times: %d", enabledTrigger.FlagTrigger.TriggerCount)
 	}
 	if enabledTrigger.FlagTrigger.LastTriggeredAt == 0 {
 		t.Fatal("unexpected last triggered at")
@@ -347,8 +347,8 @@ func TestFeatureFlagWebhook(t *testing.T) {
 		Id:                   disableTrigger.FlagTrigger.Id,
 		EnvironmentNamespace: *environmentNamespace,
 	})
-	if disabledTrigger.FlagTrigger.TriggerTimes != 1 {
-		t.Fatalf("unexpected trigger times: %d", disabledTrigger.FlagTrigger.TriggerTimes)
+	if disabledTrigger.FlagTrigger.TriggerCount != 1 {
+		t.Fatalf("unexpected trigger times: %d", disabledTrigger.FlagTrigger.TriggerCount)
 	}
 	if disabledTrigger.FlagTrigger.LastTriggeredAt == 0 {
 		t.Fatal("unexpected last triggered at")
