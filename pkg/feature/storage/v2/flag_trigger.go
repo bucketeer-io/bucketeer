@@ -201,7 +201,6 @@ func (f flagTriggerStorage) ListFlagTriggers(
 		err := rows.Scan(
 			&trigger.Id,
 			&trigger.FeatureId,
-			&trigger.EnvironmentNamespace,
 			&trigger.Type,
 			&trigger.Action,
 			&trigger.Description,

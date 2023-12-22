@@ -1,6 +1,5 @@
 SELECT id,
        feature_id,
-       environment_namespace,
        type,
        `action`,
        description,
