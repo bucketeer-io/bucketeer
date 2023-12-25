@@ -691,13 +691,11 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
-		ctxRole     accountproto.Account_Role
 		req         *accountproto.CreateAccountV2Request
 		expectedErr error
 	}{
 		{
-			desc:    "errNoCommand",
-			ctxRole: accountproto.Account_OWNER,
+			desc: "errNoCommand",
 			req: &accountproto.CreateAccountV2Request{
 				Command:        nil,
 				OrganizationId: "org0",
@@ -716,8 +714,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc:    "errEmailIsEmpty",
-			ctxRole: accountproto.Account_OWNER,
+			desc: "errEmailIsEmpty",
 			req: &accountproto.CreateAccountV2Request{
 				Command:        &accountproto.CreateAccountV2Command{Email: ""},
 				OrganizationId: "org0",
@@ -736,8 +733,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
 		},
 		{
-			desc:    "errInvalidEmail",
-			ctxRole: accountproto.Account_OWNER,
+			desc: "errInvalidEmail",
 			req: &accountproto.CreateAccountV2Request{
 				Command:        &accountproto.CreateAccountV2Command{Email: "bucketeer@"},
 				OrganizationId: "org0",
@@ -772,7 +768,6 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountAlreadyExists)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer_environment@example.com",
@@ -800,7 +795,6 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer@example.com",
@@ -828,7 +822,6 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer@example.com",
@@ -842,7 +835,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, p.ctxRole)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -876,7 +869,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
-		ctxRole     accountproto.Account_Role
 		req         *accountproto.UpdateAccountV2Request
 		expectedErr error
 	}{
@@ -893,7 +885,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				OrganizationId: "org0",
 			},
@@ -912,7 +903,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@",
 				OrganizationId: "org0",
@@ -935,7 +925,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email: "bucketeer@example.com",
 				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
@@ -957,7 +946,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -977,7 +965,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1000,7 +987,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1027,7 +1013,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1054,7 +1039,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1081,7 +1065,6 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1094,7 +1077,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, p.ctxRole)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -1128,7 +1111,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
-		ctxRole     accountproto.Account_Role
 		req         *accountproto.EnableAccountV2Request
 		expectedErr error
 	}{
@@ -1145,7 +1127,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				OrganizationId: "org0",
 			},
@@ -1164,7 +1145,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@",
 				OrganizationId: "org0",
@@ -1184,7 +1164,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				Email: "bucketeer@example.com",
 			},
@@ -1203,7 +1182,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1227,7 +1205,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1252,7 +1229,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1277,7 +1253,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1288,7 +1263,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, p.ctxRole)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -1322,7 +1297,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
-		ctxRole     accountproto.Account_Role
 		req         *accountproto.DisableAccountV2Request
 		expectedErr error
 	}{
@@ -1339,7 +1313,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				OrganizationId: "org0",
 			},
@@ -1358,7 +1331,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@",
 				OrganizationId: "org0",
@@ -1378,7 +1350,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				Email: "bucketeer@example.com",
 			},
@@ -1397,7 +1368,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1421,7 +1391,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1446,7 +1415,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1471,7 +1439,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1482,7 +1449,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, p.ctxRole)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -1516,7 +1483,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*AccountService)
-		ctxRole     accountproto.Account_Role
 		req         *accountproto.DeleteAccountV2Request
 		expectedErr error
 	}{
@@ -1533,7 +1499,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				OrganizationId: "org0",
 			},
@@ -1552,7 +1517,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@",
 				OrganizationId: "org0",
@@ -1572,7 +1536,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				Email: "bucketeer@example.com",
 			},
@@ -1591,7 +1554,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1615,7 +1577,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1640,7 +1601,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1665,7 +1625,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -1676,7 +1635,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, p.ctxRole)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -1692,7 +1651,7 @@ func TestListAccountsV2MySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithDefaultToken(t, accountproto.Account_OWNER)
+	ctx := createContextWithDefaultToken(t, accountproto.Account_UNASSIGNED)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})

@@ -84,6 +84,13 @@ func CheckOrganizationRole(
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
+	// TODO remove this condition after migration to AccountV2
+	if token.IsAdmin() {
+		return &eventproto.Editor{
+			Email:   token.Email,
+			IsAdmin: true,
+		}, nil
+	}
 	resp, err := getAccountFunc(token.Email)
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {
