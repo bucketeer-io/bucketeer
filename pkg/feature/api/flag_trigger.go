@@ -38,7 +38,10 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
-const maskURI = "********"
+const (
+	numOfSecretCharsToShow = 5
+	maskURI                = "********"
+)
 
 func (s *FeatureService) CreateFlagTrigger(
 	ctx context.Context,
@@ -1111,14 +1114,14 @@ func (s *FeatureService) generateTriggerURL(
 	if err != nil {
 		return "", err
 	}
+	encrypted, err := s.triggerCryptoUtil.Encrypt(ctx, encoded)
+	if err != nil {
+		return "", err
+	}
+	secret := base64.RawURLEncoding.EncodeToString(encrypted)
 	if masked {
-		return fmt.Sprintf("%s/%s", s.triggerURL, maskURI), nil
+		return fmt.Sprintf("%s/%s", s.triggerURL, secret[:numOfSecretCharsToShow]+maskURI), nil
 	} else {
-		encrypted, err := s.triggerCryptoUtil.Encrypt(ctx, encoded)
-		if err != nil {
-			return "", err
-		}
-		secret := base64.RawURLEncoding.EncodeToString(encrypted)
 		return fmt.Sprintf("%s/%s", s.triggerURL, secret), nil
 	}
 }
