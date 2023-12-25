@@ -81,8 +81,6 @@ func (s *accountStorage) RunInTransaction(ctx context.Context, f func() error) e
 	}
 	s.tx = tx
 	defer func() {
-		// TODO 消す
-		fmt.Println("transaction is deleted")
 		s.tx = nil
 	}()
 	return s.client.RunInTransaction(ctx, tx, f)
