@@ -311,9 +311,8 @@ func (s *AccountService) CreateAdminAccount(
 		return nil, dt.Err()
 	}
 	// check if an Account that has the same email already exists in any environment
-	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
 	for _, env := range environments {
-		_, err := accountStorage.GetAccount(ctx, account.Id, env.Id)
+		_, err := s.accountStorage.GetAccount(ctx, account.Id, env.Id)
 		if err == nil {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -328,30 +327,12 @@ func (s *AccountService) CreateAdminAccount(
 			return nil, err
 		}
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		adminAccountStorage := v2as.NewAdminAccountStorage(tx)
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
 		handler := command.NewAdminAccountCommandHandler(editor, account, s.publisher)
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return adminAccountStorage.CreateAdminAccount(ctx, account)
+		return s.accountStorage.CreateAdminAccount(ctx, account)
 	})
 	if err != nil {
 		if err == v2as.ErrAdminAccountAlreadyExists {
@@ -472,19 +453,8 @@ func (s *AccountService) updateAdminAccountMySQL(
 	id string,
 	cmd command.Command,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return err
-	}
-	return s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		adminAccountStorage := v2as.NewAdminAccountStorage(tx)
-		account, err := adminAccountStorage.GetAdminAccount(ctx, id)
+	return s.accountStorage.RunInTransaction(ctx, func() error {
+		account, err := s.accountStorage.GetAdminAccount(ctx, id)
 		if err != nil {
 			return err
 		}
@@ -492,7 +462,7 @@ func (s *AccountService) updateAdminAccountMySQL(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return adminAccountStorage.UpdateAdminAccount(ctx, account)
+		return s.accountStorage.UpdateAdminAccount(ctx, account)
 	})
 }
 
@@ -544,28 +514,10 @@ func (s *AccountService) ConvertAccount(
 	}
 	deleteAccountCommand := &accountproto.DeleteAccountCommand{}
 	createAdminAccountCommand := &accountproto.CreateAdminAccountCommand{Email: req.Id}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		accountStorage := v2as.NewAccountStorage(tx)
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
 		var existedAccountCount int
 		for _, env := range environments {
-			existedAccount, err := accountStorage.GetAccount(ctx, account.Id, env.Id)
+			existedAccount, err := s.accountStorage.GetAccount(ctx, account.Id, env.Id)
 			if err != nil {
 				if err == v2as.ErrAccountNotFound {
 					continue
@@ -582,19 +534,18 @@ func (s *AccountService) ConvertAccount(
 			if err := handler.Handle(ctx, deleteAccountCommand); err != nil {
 				return err
 			}
-			if err := accountStorage.UpdateAccount(ctx, existedAccount, env.Id); err != nil {
+			if err := s.accountStorage.UpdateAccount(ctx, existedAccount, env.Id); err != nil {
 				return err
 			}
 		}
 		if existedAccountCount == 0 {
 			return v2as.ErrAccountNotFound
 		}
-		adminAccountStorage := v2as.NewAdminAccountStorage(tx)
 		handler := command.NewAdminAccountCommandHandler(editor, account, s.publisher)
 		if err := handler.Handle(ctx, createAdminAccountCommand); err != nil {
 			return err
 		}
-		return adminAccountStorage.CreateAdminAccount(ctx, account)
+		return s.accountStorage.CreateAdminAccount(ctx, account)
 	})
 	if err != nil {
 		if err == v2as.ErrAccountNotFound {
@@ -654,8 +605,7 @@ func (s *AccountService) getAdminAccount(
 	email string,
 	localizer locale.Localizer,
 ) (*domain.Account, error) {
-	adminAccountStorage := v2as.NewAdminAccountStorage(s.mysqlClient)
-	account, err := adminAccountStorage.GetAdminAccount(ctx, email)
+	account, err := s.accountStorage.GetAdminAccount(ctx, email)
 	if err != nil {
 		if err == v2as.ErrAdminAccountNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -726,8 +676,7 @@ func (s *AccountService) ListAdminAccounts(
 		}
 		return nil, dt.Err()
 	}
-	adminAccountStorage := v2as.NewAdminAccountStorage(s.mysqlClient)
-	accounts, nextCursor, totalCount, err := adminAccountStorage.ListAdminAccounts(
+	accounts, nextCursor, totalCount, err := s.accountStorage.ListAdminAccounts(
 		ctx,
 		whereParts,
 		orders,

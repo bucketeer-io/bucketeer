@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
 package v2
 
 import (
@@ -31,27 +30,7 @@ var (
 	ErrAdminAccountUnexpectedAffectedRows = errors.New("account: admin account unexpected affected rows")
 )
 
-type AdminAccountStorage interface {
-	CreateAdminAccount(ctx context.Context, a *domain.Account) error
-	UpdateAdminAccount(ctx context.Context, a *domain.Account) error
-	GetAdminAccount(ctx context.Context, id string) (*domain.Account, error)
-	ListAdminAccounts(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*proto.Account, int, int64, error)
-}
-
-type adminAccountStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewAdminAccountStorage(qe mysql.QueryExecer) AdminAccountStorage {
-	return &adminAccountStorage{qe}
-}
-
-func (s *adminAccountStorage) CreateAdminAccount(ctx context.Context, a *domain.Account) error {
+func (s *accountStorage) CreateAdminAccount(ctx context.Context, a *domain.Account) error {
 	query := `
 		INSERT INTO admin_account (
 			id,
@@ -66,7 +45,7 @@ func (s *adminAccountStorage) CreateAdminAccount(ctx context.Context, a *domain.
 			?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
-	_, err := s.qe.ExecContext(
+	_, err := s.qe().ExecContext(
 		ctx,
 		query,
 		a.Id,
@@ -87,7 +66,7 @@ func (s *adminAccountStorage) CreateAdminAccount(ctx context.Context, a *domain.
 	return nil
 }
 
-func (s *adminAccountStorage) UpdateAdminAccount(ctx context.Context, a *domain.Account) error {
+func (s *accountStorage) UpdateAdminAccount(ctx context.Context, a *domain.Account) error {
 	query := `
 		UPDATE 
 			admin_account
@@ -102,7 +81,7 @@ func (s *adminAccountStorage) UpdateAdminAccount(ctx context.Context, a *domain.
 		WHERE
 			id = ?
 	`
-	result, err := s.qe.ExecContext(
+	result, err := s.qe().ExecContext(
 		ctx,
 		query,
 		a.Email,
@@ -127,7 +106,7 @@ func (s *adminAccountStorage) UpdateAdminAccount(ctx context.Context, a *domain.
 	return nil
 }
 
-func (s *adminAccountStorage) GetAdminAccount(ctx context.Context, id string) (*domain.Account, error) {
+func (s *accountStorage) GetAdminAccount(ctx context.Context, id string) (*domain.Account, error) {
 	account := proto.Account{}
 	var role int32
 	query := `
@@ -145,7 +124,7 @@ func (s *adminAccountStorage) GetAdminAccount(ctx context.Context, id string) (*
 		WHERE
 			id = ?
 	`
-	err := s.qe.QueryRowContext(
+	err := s.qe().QueryRowContext(
 		ctx,
 		query,
 		id,
@@ -169,7 +148,7 @@ func (s *adminAccountStorage) GetAdminAccount(ctx context.Context, id string) (*
 	return &domain.Account{Account: &account}, nil
 }
 
-func (s *adminAccountStorage) ListAdminAccounts(
+func (s *accountStorage) ListAdminAccounts(
 	ctx context.Context,
 	whereParts []mysql.WherePart,
 	orders []*mysql.Order,
@@ -193,7 +172,7 @@ func (s *adminAccountStorage) ListAdminAccounts(
 		%s %s %s
 		`, whereSQL, orderBySQL, limitOffsetSQL,
 	)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe().QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -231,7 +210,7 @@ func (s *adminAccountStorage) ListAdminAccounts(
 		%s %s
 		`, whereSQL, orderBySQL,
 	)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe().QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

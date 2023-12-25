@@ -26,12 +26,13 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/storage/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
@@ -140,7 +141,7 @@ func TestGetMeV2MySQL(t *testing.T) {
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "errNotFound",
+			desc: "success",
 			ctx:  createContextWithDefaultToken(t, accountproto.Account_EDITOR),
 			setup: func(s *AccountService) {
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
@@ -163,15 +164,23 @@ func TestGetMeV2MySQL(t *testing.T) {
 					},
 					nil,
 				)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows).Times(3)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrAdminAccountNotFound)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccount(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row).Times(3)
+				).Return(&domain.Account{
+					Account: &accountproto.Account{
+						Id:    "bucketeer@example.com",
+						Email: "bucketeer@example.com",
+						Name:  "test",
+						Role:  accountproto.Account_EDITOR,
+					},
+				}, nil).Times(2)
 			},
 			input:       &accountproto.GetMeV2Request{},
-			expected:    "",
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expected:    "bucketeer@example.com",
+			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
@@ -236,7 +245,7 @@ func TestGetMeByEmailV2MySQL(t *testing.T) {
 			),
 		},
 		{
-			desc: "errNotFound",
+			desc: "success",
 			ctx:  createContextWithDefaultToken(t, accountproto.Account_EDITOR),
 			setup: func(s *AccountService) {
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
@@ -259,17 +268,25 @@ func TestGetMeByEmailV2MySQL(t *testing.T) {
 					},
 					nil,
 				)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows).Times(3)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrAdminAccountNotFound)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccount(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row).Times(3)
+				).Return(&domain.Account{
+					Account: &accountproto.Account{
+						Id:    "bucketeer@example.com",
+						Email: "bucketeer@example.com",
+						Name:  "test",
+						Role:  accountproto.Account_EDITOR,
+					},
+				}, nil).Times(2)
 			},
 			input: &accountproto.GetMeByEmailV2Request{
 				Email: "bucketeer@example.com",
 			},
-			expected:    "",
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expected:    "bucketeer@example.com",
+			expectedErr: nil,
 		},
 	}
 
@@ -367,11 +384,16 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccount(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.Account{
+					Account: &accountproto.Account{
+						Id:    "bucketeer@example.com",
+						Email: "bucketeer@example.com",
+						Name:  "test",
+						Role:  accountproto.Account_OWNER,
+					},
+				}, nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.CreateAdminAccountRequest{
@@ -390,14 +412,13 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows).Times(2)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccount(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row).Times(2)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrAccountNotFound).Times(2)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAdminAccountAlreadyExists)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -417,14 +438,13 @@ func TestCreateAdminAccountMySQL(t *testing.T) {
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows).Times(2)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccount(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row).Times(2)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrAccountNotFound).Times(2)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -496,9 +516,8 @@ func TestEnableAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAdminAccountNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -511,10 +530,9 @@ func TestEnableAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("test"))
 			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.EnableAdminAccountRequest{
@@ -526,9 +544,8 @@ func TestEnableAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -599,9 +616,8 @@ func TestDisableAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAdminAccountNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -614,10 +630,9 @@ func TestDisableAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(errors.New("error"))
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("test"))
 			},
 			ctxRole: accountproto.Account_OWNER,
 			req: &accountproto.DisableAdminAccountRequest{
@@ -629,9 +644,8 @@ func TestDisableAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -701,9 +715,8 @@ func TestConvertAccountMySQL(t *testing.T) {
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -723,9 +736,8 @@ func TestConvertAccountMySQL(t *testing.T) {
 					Environments: getEnvironments(t),
 					Cursor:       "",
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			ctxRole: accountproto.Account_OWNER,
@@ -791,11 +803,9 @@ func TestGetAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrAdminAccountNotFound)
 			},
 			req: &accountproto.GetAdminAccountRequest{
 				Email: "service@example.com",
@@ -805,11 +815,16 @@ func TestGetAdminAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Account{
+					Account: &accountproto.Account{
+						Id:    "bucketeer@example.com",
+						Email: "bucketeer@example.com",
+						Name:  "test",
+						Role:  accountproto.Account_OWNER,
+					},
+				}, nil)
 			},
 			req: &accountproto.GetAdminAccountRequest{
 				Email: "bucketeer@example.com",
@@ -868,9 +883,9 @@ func TestListAdminAccountsMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAdminAccounts(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:       &accountproto.ListAdminAccountsRequest{},
 			expected:    nil,
@@ -879,18 +894,10 @@ func TestListAdminAccountsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAdminAccounts(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.Account{}, 0, int64(0), nil)
+
 			},
 			input:       &accountproto.ListAdminAccountsRequest{PageSize: 2, Cursor: ""},
 			expected:    &accountproto.ListAdminAccountsResponse{Accounts: []*accountproto.Account{}, Cursor: "0", TotalCount: 0},

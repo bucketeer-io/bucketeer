@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
 package v2
 
 import (
@@ -31,36 +30,6 @@ var (
 	ErrAccountUnexpectedAffectedRows = errors.New("account: account unexpected affected rows")
 )
 
-type AccountStorage interface {
-	CreateAccount(ctx context.Context, a *domain.Account, environmentNamespace string) error
-	UpdateAccount(ctx context.Context, a *domain.Account, environmentNamespace string) error
-	GetAccount(ctx context.Context, id, environmentNamespace string) (*domain.Account, error)
-	ListAccounts(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*proto.Account, int, int64, error)
-	CreateAccountV2(ctx context.Context, a *domain.AccountV2) error
-	UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error
-	DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error
-	GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error)
-	ListAccountsV2(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*proto.AccountV2, int, int64, error)
-}
-
-type accountStorage struct {
-	qe mysql.QueryExecer
-}
-
-func NewAccountStorage(qe mysql.QueryExecer) AccountStorage {
-	return &accountStorage{qe}
-}
-
 func (s *accountStorage) CreateAccount(ctx context.Context, a *domain.Account, environmentNamespace string) error {
 	query := `
 		INSERT INTO account (
@@ -77,7 +46,7 @@ func (s *accountStorage) CreateAccount(ctx context.Context, a *domain.Account, e
 			?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
-	_, err := s.qe.ExecContext(
+	_, err := s.qe().ExecContext(
 		ctx,
 		query,
 		a.Id,
@@ -115,7 +84,7 @@ func (s *accountStorage) UpdateAccount(ctx context.Context, a *domain.Account, e
 			id = ? AND
 			environment_namespace = ?
 	`
-	result, err := s.qe.ExecContext(
+	result, err := s.qe().ExecContext(
 		ctx,
 		query,
 		a.Email,
@@ -160,7 +129,7 @@ func (s *accountStorage) GetAccount(ctx context.Context, id, environmentNamespac
 			id = ? AND
 			environment_namespace = ?
 	`
-	err := s.qe.QueryRowContext(
+	err := s.qe().QueryRowContext(
 		ctx,
 		query,
 		id,
@@ -209,7 +178,7 @@ func (s *accountStorage) ListAccounts(
 		%s %s %s
 		`, whereSQL, orderBySQL, limitOffsetSQL,
 	)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe().QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -247,7 +216,7 @@ func (s *accountStorage) ListAccounts(
 		%s %s
 		`, whereSQL, orderBySQL,
 	)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe().QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -270,7 +239,7 @@ func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV
 			?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
-	_, err := s.qe.ExecContext(
+	_, err := s.qe().ExecContext(
 		ctx,
 		query,
 		a.Email,
@@ -307,7 +276,7 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 			email = ? AND
 			organization_id = ?
 	`
-	result, err := s.qe.ExecContext(
+	result, err := s.qe().ExecContext(
 		ctx,
 		query,
 		a.Name,
@@ -340,7 +309,7 @@ func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV
 			email = ? AND
 			organization_id = ?
 	`
-	result, err := s.qe.ExecContext(
+	result, err := s.qe().ExecContext(
 		ctx,
 		query,
 		a.Email,
@@ -379,7 +348,7 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 			email = ? AND
 			organization_id = ?
 	`
-	err := s.qe.QueryRowContext(
+	err := s.qe().QueryRowContext(
 		ctx,
 		query,
 		email,
@@ -430,7 +399,7 @@ func (s *accountStorage) ListAccountsV2(
 		%s %s %s
 		`, whereSQL, orderBySQL, limitOffsetSQL,
 	)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe().QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -469,7 +438,7 @@ func (s *accountStorage) ListAccountsV2(
 		%s %s
 		`, whereSQL, orderBySQL,
 	)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe().QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

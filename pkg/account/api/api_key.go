@@ -61,30 +61,12 @@ func (s *AccountService) CreateAPIKey(
 		}
 		return nil, dt.Err()
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		apiKeyStorage := v2as.NewAPIKeyStorage(tx)
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
 		handler := command.NewAPIKeyCommandHandler(editor, key, s.publisher, req.EnvironmentNamespace)
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return apiKeyStorage.CreateAPIKey(ctx, key, req.EnvironmentNamespace)
+		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentNamespace)
 	})
 	if err != nil {
 		if err == v2as.ErrAPIKeyAlreadyExists {
@@ -275,19 +257,8 @@ func (s *AccountService) updateAPIKeyMySQL(
 	id, environmentNamespace string,
 	cmd command.Command,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return err
-	}
-	return s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		apiKeyStorage := v2as.NewAPIKeyStorage(tx)
-		apiKey, err := apiKeyStorage.GetAPIKey(ctx, id, environmentNamespace)
+	return s.accountStorage.RunInTransaction(ctx, func() error {
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, id, environmentNamespace)
 		if err != nil {
 			return err
 		}
@@ -295,7 +266,7 @@ func (s *AccountService) updateAPIKeyMySQL(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return apiKeyStorage.UpdateAPIKey(ctx, apiKey, environmentNamespace)
+		return s.accountStorage.UpdateAPIKey(ctx, apiKey, environmentNamespace)
 	})
 }
 
@@ -315,8 +286,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		}
 		return nil, dt.Err()
 	}
-	apiKeyStorage := v2as.NewAPIKeyStorage(s.mysqlClient)
-	apiKey, err := apiKeyStorage.GetAPIKey(ctx, req.Id, req.EnvironmentNamespace)
+	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2as.ErrAPIKeyNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -390,8 +360,7 @@ func (s *AccountService) ListAPIKeys(
 		}
 		return nil, dt.Err()
 	}
-	apiKeyStorage := v2as.NewAPIKeyStorage(s.mysqlClient)
-	apiKeys, nextCursor, totalCount, err := apiKeyStorage.ListAPIKeys(
+	apiKeys, nextCursor, totalCount, err := s.accountStorage.ListAPIKeys(
 		ctx,
 		whereParts,
 		orders,
@@ -531,13 +500,12 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		return nil, dt.Err()
 	}
 	projectSet := s.makeProjectSet(projects)
-	apiKeyStorage := v2as.NewAPIKeyStorage(s.mysqlClient)
 	for _, e := range environments {
 		p, ok := projectSet[e.ProjectId]
 		if !ok || p.Disabled {
 			continue
 		}
-		apiKey, err := apiKeyStorage.GetAPIKey(ctx, req.Id, e.Id)
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id)
 		if err != nil {
 			if err == v2as.ErrAPIKeyNotFound {
 				continue

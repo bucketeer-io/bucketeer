@@ -93,30 +93,12 @@ func (s *AccountService) CreateAccount(
 		}
 		return nil, dt.Err()
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		accountStorage := v2as.NewAccountStorage(tx)
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
 		handler := command.NewAccountCommandHandler(editor, account, s.publisher, req.EnvironmentNamespace)
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return accountStorage.CreateAccount(ctx, account, req.EnvironmentNamespace)
+		return s.accountStorage.CreateAccount(ctx, account, req.EnvironmentNamespace)
 	})
 	if err != nil {
 		if err == v2as.ErrAccountAlreadyExists {
@@ -301,19 +283,8 @@ func (s *AccountService) updateAccountMySQL(
 	cmd command.Command,
 	id, environmentNamespace string,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return err
-	}
-	return s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		accountStorage := v2as.NewAccountStorage(tx)
-		account, err := accountStorage.GetAccount(ctx, id, environmentNamespace)
+	return s.accountStorage.RunInTransaction(ctx, func() error {
+		account, err := s.accountStorage.GetAccount(ctx, id, environmentNamespace)
 		if err != nil {
 			return err
 		}
@@ -321,7 +292,7 @@ func (s *AccountService) updateAccountMySQL(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return accountStorage.UpdateAccount(ctx, account, environmentNamespace)
+		return s.accountStorage.UpdateAccount(ctx, account, environmentNamespace)
 	})
 }
 
@@ -356,8 +327,7 @@ func (s *AccountService) getAccount(
 	email, environmentNamespace string,
 	localizer locale.Localizer,
 ) (*domain.Account, error) {
-	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
-	account, err := accountStorage.GetAccount(ctx, email, environmentNamespace)
+	account, err := s.accountStorage.GetAccount(ctx, email, environmentNamespace)
 	if err != nil {
 		if err == v2as.ErrAccountNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -435,8 +405,7 @@ func (s *AccountService) ListAccounts(
 		}
 		return nil, dt.Err()
 	}
-	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
-	accounts, nextCursor, totalCount, err := accountStorage.ListAccounts(
+	accounts, nextCursor, totalCount, err := s.accountStorage.ListAccounts(
 		ctx,
 		whereParts,
 		orders,
@@ -526,30 +495,12 @@ func (s *AccountService) CreateAccountV2(
 		req.Command.Email, req.Command.Name, req.Command.AvatarImageUrl, req.OrganizationId,
 		req.Command.OrganizationRole, req.Command.EnvironmentRoles,
 	)
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		accountStorage := v2as.NewAccountStorage(tx)
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
 		handler := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return accountStorage.CreateAccountV2(ctx, account)
+		return s.accountStorage.CreateAccountV2(ctx, account)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
@@ -787,19 +738,8 @@ func (s *AccountService) updateAccountV2MySQL(
 	commands []command.Command,
 	email, organizationID string,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return err
-	}
-	return s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		accountStorage := v2as.NewAccountStorage(tx)
-		account, err := accountStorage.GetAccountV2(ctx, email, organizationID)
+	return s.accountStorage.RunInTransaction(ctx, func() error {
+		account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
 		if err != nil {
 			return err
 		}
@@ -809,7 +749,7 @@ func (s *AccountService) updateAccountV2MySQL(
 				return err
 			}
 		}
-		return accountStorage.UpdateAccountV2(ctx, account)
+		return s.accountStorage.UpdateAccountV2(ctx, account)
 	})
 }
 
@@ -838,19 +778,8 @@ func (s *AccountService) DeleteAccountV2(
 		)
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return nil, err
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		accountStorage := v2as.NewAccountStorage(tx)
-		account, err := accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
+		account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
 		if err != nil {
 			return err
 		}
@@ -858,7 +787,7 @@ func (s *AccountService) DeleteAccountV2(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return accountStorage.DeleteAccountV2(ctx, account)
+		return s.accountStorage.DeleteAccountV2(ctx, account)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
@@ -928,8 +857,7 @@ func (s *AccountService) getAccountV2(
 	email, organizationID string,
 	localizer locale.Localizer,
 ) (*domain.AccountV2, error) {
-	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
-	account, err := accountStorage.GetAccountV2(ctx, email, organizationID)
+	account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -1011,8 +939,7 @@ func (s *AccountService) ListAccountsV2(
 		}
 		return nil, dt.Err()
 	}
-	accountStorage := v2as.NewAccountStorage(s.mysqlClient)
-	accounts, nextCursor, totalCount, err := accountStorage.ListAccountsV2(
+	accounts, nextCursor, totalCount, err := s.accountStorage.ListAccountsV2(
 		ctx,
 		whereParts,
 		orders,
