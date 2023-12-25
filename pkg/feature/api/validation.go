@@ -1422,7 +1422,7 @@ func validateCreateFlagTriggerCommand(cmd *featureproto.CreateFlagTriggerCommand
 		return dt.Err()
 	}
 	if cmd.FeatureId == "" {
-		dt, err := statusMissingFeatureID.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusMissingTriggerFeatureID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
 		})
@@ -1431,8 +1431,28 @@ func validateCreateFlagTriggerCommand(cmd *featureproto.CreateFlagTriggerCommand
 		}
 		return dt.Err()
 	}
+	if cmd.Type == featureproto.FlagTrigger_Type_UNKNOWN {
+		dt, err := statusMissingTriggerType.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "type"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if cmd.Action == featureproto.FlagTrigger_Action_UNKNOWN {
+		dt, err := statusMissingTriggerAction.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "action"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
 	if cmd.Description == "" {
-		dt, err := statusMissingDescription.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusMissingTriggerDescription.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "description"),
 		})
@@ -1459,7 +1479,7 @@ func validateUpdateFlagTriggerCommand(
 		return dt.Err()
 	}
 	if cmd.Description == "" {
-		dt, err := statusMissingDescription.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusMissingTriggerDescription.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "description"),
 		})
@@ -1543,7 +1563,7 @@ func validateGetFlagTriggerRequest(req *featureproto.GetFlagTriggerRequest, loca
 
 func validateListFlagTriggersRequest(req *featureproto.ListFlagTriggersRequest, localizer locale.Localizer) error {
 	if req.FeatureId == "" {
-		dt, err := statusMissingFeatureID.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusMissingTriggerFeatureID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.RequiredFieldTemplate),
 		})
