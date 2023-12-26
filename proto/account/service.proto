@@ -360,7 +360,8 @@ service AccountService {
   rpc UpdateAccountV2(UpdateAccountV2Request) returns (UpdateAccountV2Response);
   rpc DeleteAccountV2(DeleteAccountV2Request) returns (DeleteAccountV2Response);
   rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response);
-  rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest) returns (GetAccountV2ByEnvironmentIDResponse);
+  rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
+      returns (GetAccountV2ByEnvironmentIDResponse);
   rpc ListAccountsV2(ListAccountsV2Request) returns (ListAccountsV2Response);
 
   rpc CreateAPIKey(CreateAPIKeyRequest) returns (CreateAPIKeyResponse);
