@@ -12,6 +12,7 @@ import { evaluationTimeseriesCountSlice } from './evaluationTimeseriesCount';
 import { experimentResultSlice } from './experimentResult';
 import { experimentsSlice } from './experiments';
 import { featuresSlice } from './features';
+import { flagTriggersSlice } from './flagTriggers';
 import { goalsSlice } from './goals';
 import { meSlice } from './me';
 import { myOrganizationSlice } from './myOrganization';
@@ -47,6 +48,7 @@ export const reducers = combineReducers({
   toasts: toastsSlice.reducer,
   tags: tagsSlice.reducer,
   myOrganization: myOrganizationSlice.reducer,
+  flagTriggers: flagTriggersSlice.reducer,
 });
 
 export type AppState = ReturnType<typeof reducers>;
