@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"time"
 
 	"go.uber.org/zap"
@@ -36,6 +35,7 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
 const (
