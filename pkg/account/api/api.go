@@ -59,11 +59,10 @@ func WithLogger(logger *zap.Logger) Option {
 
 type AccountService struct {
 	environmentClient environmentclient.Client
-	//mysqlClient       mysql.Client
-	accountStorage v2.AccountStorage
-	publisher      publisher.Publisher
-	opts           *options
-	logger         *zap.Logger
+	accountStorage    v2.AccountStorage
+	publisher         publisher.Publisher
+	opts              *options
+	logger            *zap.Logger
 }
 
 func NewAccountService(
@@ -307,6 +306,74 @@ func (s *AccountService) checkOrganizationRole(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("organizationID", organizationID),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
+	return editor, nil
+}
+
+func (s *AccountService) checkOrganizationRoleByEnvironmentID(
+	ctx context.Context,
+	requiredRole proto.AccountV2_Role_Organization,
+	environmentID string,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
+	editor, err := role.CheckOrganizationRole(ctx, requiredRole, func(email string) (*proto.GetAccountV2Response, error) {
+		account, err := s.getAccountV2ByEnvironmentID(ctx, email, environmentID, localizer)
+		if err != nil {
+			return nil, err
+		}
+		return &proto.GetAccountV2Response{Account: account.AccountV2}, nil
+	})
+	if err != nil {
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			s.logger.Info(
+				"Unauthenticated",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", environmentID),
+				)...,
+			)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		case codes.PermissionDenied:
+			s.logger.Info(
+				"Permission denied",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", environmentID),
+				)...,
+			)
+			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		default:
+			s.logger.Error(
+				"Failed to check role",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", environmentID),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

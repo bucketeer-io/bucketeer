@@ -16,12 +16,30 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
+)
+
+var (
+	//go:embbed sql/account_v2/insert_account_v2.sql
+	insertAccountV2SQL string
+	//go:embbed sql/account_v2/update_account_v2.sql
+	updateAccountV2SQL string
+	//go:embbed sql/account_v2/delete_account_v2.sql
+	deleteAccountV2SQL string
+	//go:embbed sql/account_v2/select_account_v2.sql
+	selectAccountV2SQL string
+	//go:embbed sql/account_v2/select_account_v2_by_environment_id.sql
+	selectAccountV2ByEnvironmentIDSQL string
+	//go:embbed sql/account_v2/select_accounts_v2.sql
+	selectAccountsV2SQL string
+	//go:embbed sql/account_v2/count.sql
+	countAccountsV2SQL string
 )
 
 var (
@@ -224,24 +242,9 @@ func (s *accountStorage) ListAccounts(
 }
 
 func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	query := `
-		INSERT INTO account_v2 (
-			email,
-			name,
-			avatar_image_url,
-			organization_id,
-			organization_role,
-			environment_roles,
-			disabled,
-			created_at,
-			updated_at
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe().ExecContext(
 		ctx,
-		query,
+		insertAccountV2SQL,
 		a.Email,
 		a.Name,
 		a.AvatarImageUrl,
@@ -262,23 +265,9 @@ func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV
 }
 
 func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	query := `
-		UPDATE 
-			account_v2
-		SET
-			name = ?,
-			avatar_image_url = ?,
-			organization_role = ?,
-			environment_roles = ?,
-			disabled = ?,
-			updated_at = ?
-		WHERE
-			email = ? AND
-			organization_id = ?
-	`
 	result, err := s.qe().ExecContext(
 		ctx,
-		query,
+		updateAccountV2SQL,
 		a.Name,
 		a.AvatarImageUrl,
 		int32(a.OrganizationRole),
@@ -302,16 +291,9 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 }
 
 func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	query := `
-		DELETE FROM
-			account_v2
-		WHERE
-			email = ? AND
-			organization_id = ?
-	`
 	result, err := s.qe().ExecContext(
 		ctx,
-		query,
+		deleteAccountV2SQL,
 		a.Email,
 		a.OrganizationId,
 	)
@@ -331,28 +313,43 @@ func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV
 func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error) {
 	account := proto.AccountV2{}
 	var organizationRole int32
-	query := `
-		SELECT
-			email,
-			name,
-			avatar_image_url,
-			organization_id,
-			organization_role,
-			environment_roles,
-			disabled,
-			created_at,
-			updated_at
-		FROM
-			account_v2
-		WHERE
-			email = ? AND
-			organization_id = ?
-	`
 	err := s.qe().QueryRowContext(
 		ctx,
-		query,
+		selectAccountV2SQL,
 		email,
 		organizationID,
+	).Scan(
+		&account.Email,
+		&account.Name,
+		&account.AvatarImageUrl,
+		&account.OrganizationId,
+		&organizationRole,
+		&mysql.JSONObject{Val: &account.EnvironmentRoles},
+		&account.Disabled,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrAccountNotFound
+		}
+		return nil, err
+	}
+	account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
+	return &domain.AccountV2{AccountV2: &account}, nil
+}
+
+func (s *accountStorage) GetAccountV2ByEnvironmentID(
+	ctx context.Context,
+	email, environmentID string,
+) (*domain.AccountV2, error) {
+	account := proto.AccountV2{}
+	var organizationRole int32
+	err := s.qe().QueryRowContext(
+		ctx,
+		selectAccountV2ByEnvironmentIDSQL,
+		email,
+		environmentID,
 	).Scan(
 		&account.Email,
 		&account.Name,
@@ -383,21 +380,11 @@ func (s *accountStorage) ListAccountsV2(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			email,
-			name,
-			avatar_image_url,
-			organization_id,
-			organization_role,
-			environment_roles,
-			disabled,
-			created_at,
-			updated_at
-		FROM
-			account_v2
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
+	query := fmt.Sprintf(
+		selectAccountsV2SQL,
+		whereSQL,
+		orderBySQL,
+		limitOffsetSQL,
 	)
 	rows, err := s.qe().QueryContext(ctx, query, whereArgs...)
 	if err != nil {
@@ -430,14 +417,7 @@ func (s *accountStorage) ListAccountsV2(
 	}
 	nextOffset := offset + len(accounts)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			account_v2
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
+	countQuery := fmt.Sprintf(countAccountsV2SQL, whereSQL, orderBySQL)
 	err = s.qe().QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

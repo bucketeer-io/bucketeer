@@ -219,6 +219,15 @@ message GetAccountV2Response {
   AccountV2 account = 1;
 }
 
+message GetAccountV2ByEnvironmentIDRequest {
+  string email = 1;
+  string environment_id = 2;
+}
+
+message GetAccountV2ByEnvironmentIDResponse {
+  AccountV2 account = 1;
+}
+
 message ListAccountsV2Request {
   enum OrderBy {
     DEFAULT = 0;
@@ -351,6 +360,8 @@ service AccountService {
   rpc UpdateAccountV2(UpdateAccountV2Request) returns (UpdateAccountV2Response);
   rpc DeleteAccountV2(DeleteAccountV2Request) returns (DeleteAccountV2Response);
   rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response);
+  rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
+      returns (GetAccountV2ByEnvironmentIDResponse);
   rpc ListAccountsV2(ListAccountsV2Request) returns (ListAccountsV2Response);
 
   rpc CreateAPIKey(CreateAPIKeyRequest) returns (CreateAPIKeyResponse);

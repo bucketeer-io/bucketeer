@@ -719,3 +719,40 @@ func validateGetAccountV2Request(req *accountproto.GetAccountV2Request, localize
 	}
 	return nil
 }
+
+func validateGetAccountV2ByEnvironmentIDRequest(
+	req *accountproto.GetAccountV2ByEnvironmentIDRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Email == "" {
+		dt, err := statusEmailIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if !verifyEmailFormat(req.Email) {
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.EnvironmentId == "" {
+		dt, err := statusMissingEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
