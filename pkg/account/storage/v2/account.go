@@ -26,19 +26,19 @@ import (
 )
 
 var (
-	//go:embbed sql/account_v2/insert_account_v2.sql
+	//go:embed sql/account_v2/insert_account_v2.sql
 	insertAccountV2SQL string
-	//go:embbed sql/account_v2/update_account_v2.sql
+	//go:embed sql/account_v2/update_account_v2.sql
 	updateAccountV2SQL string
-	//go:embbed sql/account_v2/delete_account_v2.sql
+	//go:embed sql/account_v2/delete_account_v2.sql
 	deleteAccountV2SQL string
-	//go:embbed sql/account_v2/select_account_v2.sql
+	//go:embed sql/account_v2/select_account_v2.sql
 	selectAccountV2SQL string
-	//go:embbed sql/account_v2/select_account_v2_by_environment_id.sql
+	//go:embed sql/account_v2/select_account_v2_by_environment_id.sql
 	selectAccountV2ByEnvironmentIDSQL string
-	//go:embbed sql/account_v2/select_accounts_v2.sql
+	//go:embed sql/account_v2/select_accounts_v2.sql
 	selectAccountsV2SQL string
-	//go:embbed sql/account_v2/count.sql
+	//go:embed sql/account_v2/count_accounts_v2.sql
 	countAccountsV2SQL string
 )
 
