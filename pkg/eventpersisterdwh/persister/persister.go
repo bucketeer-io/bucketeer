@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
+	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
 const (
@@ -62,6 +63,7 @@ type PersisterDWH struct {
 	group               errgroup.Group
 	doneCh              chan struct{}
 	writer              Writer
+	location            *time.Location
 	opts                *options
 }
 
@@ -141,6 +143,7 @@ func NewPersisterDWH(
 	r metrics.Registerer,
 	writer Writer,
 	mysqlClient mysql.Client,
+	location *time.Location,
 	opts ...Option,
 ) *PersisterDWH {
 	dopts := &options{
@@ -167,6 +170,7 @@ func NewPersisterDWH(
 		cancel:      cancel,
 		doneCh:      make(chan struct{}),
 		writer:      writer,
+		location:    location,
 		opts:        dopts,
 	}
 }
@@ -269,10 +273,18 @@ func (p *PersisterDWH) IsRunning() bool {
 }
 
 func (p *PersisterDWH) checkRunningExperiments(ctx context.Context) (bool, error) {
+	var count int
+	now := time.Now().In(p.location)
 	experimentStorage := storage.NewExperimentStorage(p.mysqlClient)
-	count, err := experimentStorage.CountRunningExperiment(ctx)
+	experiments, err := experimentStorage.ListRunningExperiments(ctx)
 	if err != nil {
 		return false, err
+	}
+	for _, experiment := range experiments {
+		if experiment.Status == exproto.Experiment_STOPPED && now.Unix()-experiment.StopAt > 2*day {
+			continue
+		}
+		count++
 	}
 	return count > 0, nil
 }
