@@ -39,7 +39,7 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(
 		cmd.Id,
-		"create flag trigger test",
+		newTriggerDescription(t),
 		featureproto.FlagTrigger_Action_ON,
 	)
 	resp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
@@ -71,7 +71,7 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(
 		command.Id,
-		"create flag trigger test",
+		newTriggerDescription(t),
 		featureproto.FlagTrigger_Action_ON,
 	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
@@ -107,7 +107,7 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(
 		command.Id,
-		"create flag trigger test",
+		newTriggerDescription(t),
 		featureproto.FlagTrigger_Action_ON,
 	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
@@ -156,7 +156,7 @@ func TestResetFlagTrigger(t *testing.T) {
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(
 		command.Id,
-		"create flag trigger test",
+		newTriggerDescription(t),
 		featureproto.FlagTrigger_Action_ON,
 	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
@@ -184,7 +184,7 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	// Create flag trigger
 	createFlagTriggerCommand := newCreateFlagTriggerCmd(
 		command.Id,
-		"create flag trigger test",
+		newTriggerDescription(t),
 		featureproto.FlagTrigger_Action_ON,
 	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
@@ -220,7 +220,7 @@ func TestListFlagTriggers(t *testing.T) {
 		EnvironmentNamespace: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
 			command.Id,
-			"create flag trigger test 1",
+			newTriggerDescription(t),
 			featureproto.FlagTrigger_Action_ON,
 		),
 	})
@@ -232,7 +232,7 @@ func TestListFlagTriggers(t *testing.T) {
 		EnvironmentNamespace: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
 			command.Id,
-			"create flag trigger test 2",
+			newTriggerDescription(t),
 			featureproto.FlagTrigger_Action_ON,
 		),
 	})
@@ -288,7 +288,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 		EnvironmentNamespace: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
 			command.Id,
-			"webhook flag trigger test action: on",
+			newTriggerDescription(t),
 			featureproto.FlagTrigger_Action_ON,
 		),
 	})
@@ -323,7 +323,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 		EnvironmentNamespace: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
 			command.Id,
-			"webhook flag trigger test action: off",
+			newTriggerDescription(t),
 			featureproto.FlagTrigger_Action_OFF,
 		),
 	})
@@ -420,4 +420,12 @@ func createFeatureFlagTrigger(
 		t.Fatal(err)
 	}
 	return resp
+}
+
+func newTriggerDescription(t *testing.T) string {
+	t.Helper()
+	if *testID != "" {
+		return fmt.Sprintf("%s-%s-trigger-description", prefixID, *testID)
+	}
+	return fmt.Sprintf("%s-trigger-description", prefixID)
 }
