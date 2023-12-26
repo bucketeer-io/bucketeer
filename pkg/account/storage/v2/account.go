@@ -374,7 +374,10 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 	return &domain.AccountV2{AccountV2: &account}, nil
 }
 
-func (s *accountStorage) GetAccountV2ByEnvironmentID(ctx context.Context, email, environmentID string) (*domain.AccountV2, error) {
+func (s *accountStorage) GetAccountV2ByEnvironmentID(
+	ctx context.Context,
+	email, environmentID string,
+) (*domain.AccountV2, error) {
 	account := proto.AccountV2{}
 	var organizationRole int32
 	query := `
