@@ -743,6 +743,9 @@ func (s *AutoOpsService) validateTargetAutoOpsRules(
 		return err
 	}
 	for _, r := range rules {
+		if r.TriggeredAt > 0 {
+			continue
+		}
 		for _, c := range r.Clauses {
 			// Return an error when Clause is DatetimeClause or WebhookClause.
 			if ptypes.Is(c.Clause, domain.DatetimeClause) {
