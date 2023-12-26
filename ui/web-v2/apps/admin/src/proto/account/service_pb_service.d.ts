@@ -184,6 +184,15 @@ type AccountServiceGetAccountV2 = {
   readonly responseType: typeof proto_account_service_pb.GetAccountV2Response;
 };
 
+type AccountServiceGetAccountV2ByEnvironmentID = {
+  readonly methodName: string;
+  readonly service: typeof AccountService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_account_service_pb.GetAccountV2ByEnvironmentIDRequest;
+  readonly responseType: typeof proto_account_service_pb.GetAccountV2ByEnvironmentIDResponse;
+};
+
 type AccountServiceListAccountsV2 = {
   readonly methodName: string;
   readonly service: typeof AccountService;
@@ -278,6 +287,7 @@ export class AccountService {
   static readonly UpdateAccountV2: AccountServiceUpdateAccountV2;
   static readonly DeleteAccountV2: AccountServiceDeleteAccountV2;
   static readonly GetAccountV2: AccountServiceGetAccountV2;
+  static readonly GetAccountV2ByEnvironmentID: AccountServiceGetAccountV2ByEnvironmentID;
   static readonly ListAccountsV2: AccountServiceListAccountsV2;
   static readonly CreateAPIKey: AccountServiceCreateAPIKey;
   static readonly ChangeAPIKeyName: AccountServiceChangeAPIKeyName;
@@ -499,6 +509,15 @@ export class AccountServiceClient {
   getAccountV2(
     requestMessage: proto_account_service_pb.GetAccountV2Request,
     callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetAccountV2Response|null) => void
+  ): UnaryResponse;
+  getAccountV2ByEnvironmentID(
+    requestMessage: proto_account_service_pb.GetAccountV2ByEnvironmentIDRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetAccountV2ByEnvironmentIDResponse|null) => void
+  ): UnaryResponse;
+  getAccountV2ByEnvironmentID(
+    requestMessage: proto_account_service_pb.GetAccountV2ByEnvironmentIDRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetAccountV2ByEnvironmentIDResponse|null) => void
   ): UnaryResponse;
   listAccountsV2(
     requestMessage: proto_account_service_pb.ListAccountsV2Request,

@@ -987,6 +987,52 @@ export namespace GetAccountV2Response {
   }
 }
 
+export class GetAccountV2ByEnvironmentIDRequest extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetAccountV2ByEnvironmentIDRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetAccountV2ByEnvironmentIDRequest): GetAccountV2ByEnvironmentIDRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetAccountV2ByEnvironmentIDRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetAccountV2ByEnvironmentIDRequest;
+  static deserializeBinaryFromReader(message: GetAccountV2ByEnvironmentIDRequest, reader: jspb.BinaryReader): GetAccountV2ByEnvironmentIDRequest;
+}
+
+export namespace GetAccountV2ByEnvironmentIDRequest {
+  export type AsObject = {
+    email: string,
+    environmentId: string,
+  }
+}
+
+export class GetAccountV2ByEnvironmentIDResponse extends jspb.Message {
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): proto_account_account_pb.AccountV2 | undefined;
+  setAccount(value?: proto_account_account_pb.AccountV2): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetAccountV2ByEnvironmentIDResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GetAccountV2ByEnvironmentIDResponse): GetAccountV2ByEnvironmentIDResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetAccountV2ByEnvironmentIDResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetAccountV2ByEnvironmentIDResponse;
+  static deserializeBinaryFromReader(message: GetAccountV2ByEnvironmentIDResponse, reader: jspb.BinaryReader): GetAccountV2ByEnvironmentIDResponse;
+}
+
+export namespace GetAccountV2ByEnvironmentIDResponse {
+  export type AsObject = {
+    account?: proto_account_account_pb.AccountV2.AsObject,
+  }
+}
+
 export class ListAccountsV2Request extends jspb.Message {
   getPageSize(): number;
   setPageSize(value: number): void;

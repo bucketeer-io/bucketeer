@@ -1146,6 +1146,31 @@
             ]
           },
           {
+            "name": "GetAccountV2ByEnvironmentIDRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetAccountV2ByEnvironmentIDResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "AccountV2"
+              }
+            ]
+          },
+          {
             "name": "ListAccountsV2Request",
             "fields": [
               {
@@ -1515,6 +1540,11 @@
                 "name": "GetAccountV2",
                 "in_type": "GetAccountV2Request",
                 "out_type": "GetAccountV2Response"
+              },
+              {
+                "name": "GetAccountV2ByEnvironmentID",
+                "in_type": "GetAccountV2ByEnvironmentIDRequest",
+                "out_type": "GetAccountV2ByEnvironmentIDResponse"
               },
               {
                 "name": "ListAccountsV2",
@@ -2693,12 +2723,14 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause"
+                "type": "ProgressiveRolloutManualScheduleClause",
+                "optional": true
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause"
+                "type": "ProgressiveRolloutTemplateScheduleClause",
+                "optional": true
               }
             ]
           },
@@ -3489,12 +3521,14 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status"
+                "type": "ProgressiveRollout.Status",
+                "optional": true
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type"
+                "type": "ProgressiveRollout.Type",
+                "optional": true
               }
             ]
           },
