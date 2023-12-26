@@ -225,7 +225,19 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                 <p className="text-yellow-700 text-sm mt-4">
                   {f(
                     messages.autoOps.progressiveRolloutWarningMessages
-                      .moreInformation
+                      .moreInformation,
+                    {
+                      link: (
+                        <a
+                          href="https://docs.bucketeer.io/feature-flags/creating-feature-flags/auto-operation/rollout"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline text-primary"
+                        >
+                          {f(messages.feature.documentation)}
+                        </a>
+                      ),
+                    }
                   )}
                 </p>
               </div>

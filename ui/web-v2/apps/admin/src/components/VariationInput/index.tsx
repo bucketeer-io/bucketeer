@@ -58,11 +58,16 @@ type RulesAppliedVariationList = {
 };
 export interface VariationInputProps {
   typeDisabled: boolean;
+  isProgressiveRolloutsRunning?: boolean;
   rulesAppliedVariationList?: RulesAppliedVariationList;
 }
 
 export const VariationInput: FC<VariationInputProps> = memo(
-  ({ typeDisabled, rulesAppliedVariationList }) => {
+  ({
+    typeDisabled,
+    rulesAppliedVariationList,
+    isProgressiveRolloutsRunning,
+  }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
     const methods = useFormContext();
@@ -86,7 +91,9 @@ export const VariationInput: FC<VariationInputProps> = memo(
     });
     const variationType = watch('variationType');
     const disabledAddBtn =
-      variationType == Feature.VariationType.BOOLEAN.toString();
+      variationType == Feature.VariationType.BOOLEAN.toString() ||
+      isProgressiveRolloutsRunning;
+
     const { onVariationId, onVariationIds, offVariationId } =
       rulesAppliedVariationList;
 

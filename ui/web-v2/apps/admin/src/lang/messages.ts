@@ -492,7 +492,7 @@ export const messages = {
       }),
       moreInformation: defineMessage({
         id: 'progressiveRolloutWarningMessages.moreInformation',
-        defaultMessage: 'For more information, please see the documentation.',
+        defaultMessage: 'For more information, please see the {link}.',
       }),
     },
   },
@@ -1536,6 +1536,15 @@ export const messages = {
       id: 'feature.targetingDescription',
       defaultMessage:
         'Enable targeting settings. You can configure targeting users, complex rules, default strategy, and off variation.',
+    }),
+    documentation: defineMessage({
+      id: 'feature.documentation',
+      defaultMessage: 'Documentation',
+    }),
+    isProgressiveRolloutsRunning: defineMessage({
+      id: 'feature.isProgressiveRolloutsRunning',
+      defaultMessage:
+        'While a progressive rollout is in progress, new variations cannot be added, but changes can be made.',
     }),
     flagIsPrerequisite: defineMessage({
       id: 'feature.flagIsPrerequisite',
