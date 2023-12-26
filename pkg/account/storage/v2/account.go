@@ -374,6 +374,56 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 	return &domain.AccountV2{AccountV2: &account}, nil
 }
 
+func (s *accountStorage) GetAccountV2ByEnvironmentID(ctx context.Context, email, environmentID string) (*domain.AccountV2, error) {
+	account := proto.AccountV2{}
+	var organizationRole int32
+	query := `
+		SELECT
+			a.email,
+			a.name,
+			a.avatar_image_url,
+			a.organization_id,
+			a.organization_role,
+			a.environment_roles,
+			a.disabled,
+			a.created_at,
+			a.updated_at
+		FROM
+			account_v2 AS a
+		INNER JOIN
+			environment_v2 AS e
+		ON
+			a.organization_id = e.organization_id
+		WHERE
+			a.email = ? AND
+			e.id = ?
+	`
+	err := s.qe().QueryRowContext(
+		ctx,
+		query,
+		email,
+		environmentID,
+	).Scan(
+		&account.Email,
+		&account.Name,
+		&account.AvatarImageUrl,
+		&account.OrganizationId,
+		&organizationRole,
+		&mysql.JSONObject{Val: &account.EnvironmentRoles},
+		&account.Disabled,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrAccountNotFound
+		}
+		return nil, err
+	}
+	account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
+	return &domain.AccountV2{AccountV2: &account}, nil
+}
+
 func (s *accountStorage) ListAccountsV2(
 	ctx context.Context,
 	whereParts []mysql.WherePart,

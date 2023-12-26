@@ -889,6 +889,75 @@ func (s *AccountService) getAccountV2(
 	return account, nil
 }
 
+func (s *AccountService) GetAccountV2ByEnvironmentID(
+	ctx context.Context,
+	req *accountproto.GetAccountV2ByEnvironmentIDRequest,
+) (*accountproto.GetAccountV2ByEnvironmentIDResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		req.EnvironmentId,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateGetAccountV2ByEnvironmentIDRequest(req, localizer); err != nil {
+		s.logger.Error(
+			"Failed to get account by environment id",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("EnvironmentId", req.EnvironmentId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		return nil, err
+	}
+	account, err := s.getAccountV2ByEnvironmentID(ctx, req.Email, req.EnvironmentId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	return &accountproto.GetAccountV2ByEnvironmentIDResponse{Account: account.AccountV2}, nil
+}
+
+func (s *AccountService) getAccountV2ByEnvironmentID(
+	ctx context.Context,
+	email, environmentID string,
+	localizer locale.Localizer,
+) (*domain.AccountV2, error) {
+	account, err := s.accountStorage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to get account by environment id",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentID", environmentID),
+				zap.String("email", email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return account, nil
+}
+
 func (s *AccountService) ListAccountsV2(
 	ctx context.Context,
 	req *accountproto.ListAccountsV2Request,

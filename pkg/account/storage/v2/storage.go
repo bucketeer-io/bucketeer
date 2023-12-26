@@ -39,6 +39,7 @@ type AccountStorage interface {
 	UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error
 	DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error
 	GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error)
+	GetAccountV2ByEnvironmentID(ctx context.Context, email, environmentID string) (*domain.AccountV2, error)
 	ListAccountsV2(
 		ctx context.Context,
 		whereParts []mysql.WherePart,

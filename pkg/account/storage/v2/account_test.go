@@ -494,6 +494,69 @@ func TestGetAccountV2(t *testing.T) {
 	}
 }
 
+func TestGetAccountV2ByEnvironmentID(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		desc          string
+		setup         func(*accountStorage)
+		email         string
+		environmentID string
+		expectedErr   error
+	}{
+		{
+			desc: "ErrAccountNotFound",
+			setup: func(s *accountStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			email:         "test@example.com",
+			environmentID: "env-0",
+			expectedErr:   ErrAccountNotFound,
+		},
+		{
+			desc: "Error",
+			setup: func(s *accountStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			email:         "test@example.com",
+			environmentID: "env-0",
+			expectedErr:   errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *accountStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			email:         "test@example.com",
+			environmentID: "env-0",
+			expectedErr:   nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newAccountStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			_, err := storage.GetAccountV2ByEnvironmentID(context.Background(), p.email, p.environmentID)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestListAccountsV2(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

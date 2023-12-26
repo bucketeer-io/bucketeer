@@ -449,6 +449,26 @@ func (mr *MockClientMockRecorder) GetAccountV2(ctx, in interface{}, opts ...inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountV2", reflect.TypeOf((*MockClient)(nil).GetAccountV2), varargs...)
 }
 
+// GetAccountV2ByEnvironmentID mocks base method.
+func (m *MockClient) GetAccountV2ByEnvironmentID(ctx context.Context, in *account.GetAccountV2ByEnvironmentIDRequest, opts ...grpc.CallOption) (*account.GetAccountV2ByEnvironmentIDResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAccountV2ByEnvironmentID", varargs...)
+	ret0, _ := ret[0].(*account.GetAccountV2ByEnvironmentIDResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountV2ByEnvironmentID indicates an expected call of GetAccountV2ByEnvironmentID.
+func (mr *MockClientMockRecorder) GetAccountV2ByEnvironmentID(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountV2ByEnvironmentID", reflect.TypeOf((*MockClient)(nil).GetAccountV2ByEnvironmentID), varargs...)
+}
+
 // GetAdminAccount mocks base method.
 func (m *MockClient) GetAdminAccount(ctx context.Context, in *account.GetAdminAccountRequest, opts ...grpc.CallOption) (*account.GetAdminAccountResponse, error) {
 	m.ctrl.T.Helper()
