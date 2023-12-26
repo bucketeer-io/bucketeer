@@ -180,7 +180,7 @@ func (p *PersisterDWH) Run() error {
 	for {
 		select {
 		case <-timer.C:
-			// check if there are not been triggerd auto ops rules
+			// check if there are running experiment
 			exist, err := p.checkRunningExperiments(p.ctx)
 			if err != nil {
 				p.logger.Error("Failed to check experiments existence", zap.Error(err))
@@ -203,7 +203,14 @@ func (p *PersisterDWH) Run() error {
 			}
 			timer.Reset(p.opts.checkInterval)
 		case <-p.ctx.Done():
-			p.runningPullerCancel()
+			if p.IsRunning() {
+				p.unsubscribe()
+				err := p.group.Wait()
+				if err != nil {
+					p.logger.Error("Waiting for puller to finish error", zap.Error(err))
+					return err
+				}
+			}
 			return nil
 		}
 	}

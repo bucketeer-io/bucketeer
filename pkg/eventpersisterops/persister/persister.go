@@ -188,7 +188,14 @@ func (p *persister) Run() error {
 			}
 			timer.Reset(p.opts.checkInterval)
 		case <-p.ctx.Done():
-			p.runningPullerCancel()
+			if p.IsRunning() {
+				p.unsubscribe()
+				err := p.group.Wait()
+				if err != nil {
+					p.logger.Error("Waiting for puller to finish error", zap.Error(err))
+					return err
+				}
+			}
 			return nil
 		}
 	}
