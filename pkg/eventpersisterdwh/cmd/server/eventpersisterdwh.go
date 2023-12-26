@@ -228,7 +228,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		registerer,
 		writer,
 		mysqlClient,
-		location,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),

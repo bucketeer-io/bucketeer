@@ -20,7 +20,6 @@ import (
 	_ "embed"
 
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
 var (
@@ -29,7 +28,7 @@ var (
 )
 
 type ExperimentStorage interface {
-	ListRunningExperiments(ctx context.Context) ([]*proto.Experiment, error)
+	CountRunningExperiments(ctx context.Context) (int, error)
 }
 
 type experimentStorage struct {
@@ -40,23 +39,11 @@ func NewExperimentStorage(qe mysql.QueryExecer) ExperimentStorage {
 	return &experimentStorage{qe: qe}
 }
 
-func (e experimentStorage) ListRunningExperiments(ctx context.Context) ([]*proto.Experiment, error) {
-	rows, err := e.qe.QueryContext(ctx, countExperimentSql)
+func (e experimentStorage) CountRunningExperiments(ctx context.Context) (int, error) {
+	var count int
+	err := e.qe.QueryRowContext(ctx, countExperimentSql).Scan(&count)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	defer rows.Close()
-	experiments := make([]*proto.Experiment, 0)
-	for rows.Next() {
-		var experiment proto.Experiment
-		if err := rows.Scan(
-			&experiment.Id,
-			&experiment.Status,
-			&experiment.StopAt,
-		); err != nil {
-			return nil, err
-		}
-		experiments = append(experiments, &experiment)
-	}
-	return experiments, nil
+	return count, nil
 }
