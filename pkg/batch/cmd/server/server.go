@@ -73,6 +73,9 @@ type server struct {
 	mysqlHost   *string
 	mysqlPort   *int
 	mysqlDBName *string
+	// MySQL admin
+	mysqlAdminUser *string
+	mysqlAdminPass *string
 	// gRPC service
 	environmentService          *string
 	experimentService           *string
@@ -110,12 +113,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"refresh-interval",
 			"Interval between refreshing target objects.",
 		).Default("1m").Duration(),
-		webURL:      cmd.Flag("web-url", "Web console URL.").Required().String(),
-		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		webURL:         cmd.Flag("web-url", "Web console URL.").Required().String(),
+		mysqlUser:      cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:      cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:      cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:      cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:    cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		mysqlAdminUser: cmd.Flag("mysql-admin-user", "MySQL admin user.").Required().String(),
+		mysqlAdminPass: cmd.Flag("mysql-admin-pass", "MySQL admin password.").Required().String(),
 		environmentService: cmd.Flag(
 			"environment-service",
 			"bucketeer-environment-service address.",
@@ -193,6 +198,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	registerer := metrics.DefaultRegisterer()
 
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
+	if err != nil {
+		return err
+	}
+	mysqlAdminClient, err := s.createAdminMySQLClient(ctx, registerer, logger)
 	if err != nil {
 		return err
 	}
@@ -392,7 +401,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		mau.NewMAUPartitionDeleter(
-			mysqlClient,
+			mysqlAdminClient,
 			location,
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
@@ -457,6 +466,23 @@ func (s *server) createMySQLClient(
 	return mysql.NewClient(
 		ctx,
 		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost,
+		*s.mysqlPort,
+		*s.mysqlDBName,
+		mysql.WithLogger(logger),
+		mysql.WithMetrics(registerer),
+	)
+}
+
+func (s *server) createAdminMySQLClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (mysql.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return mysql.NewClient(
+		ctx,
+		*s.mysqlAdminUser, *s.mysqlAdminPass, *s.mysqlHost,
 		*s.mysqlPort,
 		*s.mysqlDBName,
 		mysql.WithLogger(logger),

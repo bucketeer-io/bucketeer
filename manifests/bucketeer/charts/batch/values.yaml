@@ -13,6 +13,8 @@ env:
   mysqlHost:
   mysqlPort:
   mysqlDBName:
+  mysqlAdminUser:
+  mysqlAdminPass:
   notificationService: localhost:9001
   environmentService: localhost:9001
   autoOpsService: localhost:9001
