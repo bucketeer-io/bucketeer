@@ -173,23 +173,29 @@ func (p *persister) Run() error {
 				continue
 			}
 			if exist {
+				p.logger.Debug("There are not been triggered auto ops rules")
 				if !p.IsRunning() {
 					subscription <- struct{}{}
+					p.logger.Debug("Puller is not running, start pulling messages")
 				}
 			} else {
+				p.logger.Debug("There are no not been triggered auto ops rules")
 				if p.IsRunning() {
 					p.unsubscribe()
 					err := p.group.Wait()
 					if err != nil {
 						p.logger.Error("Waiting for puller to finish error", zap.Error(err))
 					}
+					p.logger.Debug("Puller is running, stop pulling messages")
 					p.rateLimitedPuller = puller.NewRateLimitedPuller(p.puller, p.opts.maxMPS)
 					p.group = errgroup.Group{}
 				}
 			}
 			timer.Reset(p.opts.checkInterval)
 		case <-p.ctx.Done():
+			p.logger.Info("Context is done")
 			if p.IsRunning() {
+				p.logger.Info("Puller is running, stop pulling messages")
 				p.unsubscribe()
 				err := p.group.Wait()
 				if err != nil {
@@ -226,6 +232,7 @@ func (p *persister) subscribe(subscription chan struct{}) {
 		select {
 		case <-subscription:
 			p.isRunning = true
+			p.logger.Debug("Puller start subscribing")
 			ctx, cancel := context.WithCancel(context.Background())
 			p.runningPullerCtx = ctx
 			p.runningPullerCancel = cancel
@@ -239,6 +246,7 @@ func (p *persister) subscribe(subscription chan struct{}) {
 			if err != nil {
 				p.logger.Error("Running puller error", zap.Error(err))
 			}
+			p.logger.Debug("Puller stopped subscribing")
 			p.isRunning = false
 		case <-p.ctx.Done():
 			return
