@@ -96,6 +96,10 @@ spec:
               value: "{{ .Values.env.mysqlPort }}"
             - name: BUCKETEER_BATCH_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
+            - name: BUCKETEER_BATCH_MYSQL_ADMIN_USER
+              value: "{{ .Values.env.mysqlAdminUser }}"
+            - name: BUCKETEER_BATCH_MYSQL_ADMIN_PASS
+              value: "{{ .Values.env.mysqlAdminPass }}"
             - name: BUCKETEER_BATCH_WEB_URL
               value: "{{ .Values.env.webURL }}"
             - name: BUCKETEER_BATCH_LOG_LEVEL
