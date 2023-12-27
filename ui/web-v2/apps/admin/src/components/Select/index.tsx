@@ -18,6 +18,7 @@ export interface SelectProps {
   onChange: ((option: Option) => void) | ((option: Option[]) => void);
   placeholder?: string;
   customControl?: React.ReactNode;
+  formatOptionLabel?: (options: Option) => void;
 }
 
 export const Select: FC<SelectProps> = memo(
@@ -33,6 +34,7 @@ export const Select: FC<SelectProps> = memo(
     value,
     placeholder,
     customControl,
+    formatOptionLabel,
   }) => {
     const textColor = '#3F3F46';
     const textColorDisabled = '#6B7280';
@@ -132,6 +134,7 @@ export const Select: FC<SelectProps> = memo(
         placeholder={placeholder ? placeholder : ''}
         value={value}
         onChange={onChange}
+        formatOptionLabel={formatOptionLabel}
       />
     );
   }

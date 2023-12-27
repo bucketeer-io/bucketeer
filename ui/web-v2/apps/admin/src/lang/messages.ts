@@ -521,10 +521,6 @@ export const messages = {
       id: 'trigger.action',
       defaultMessage: 'Action',
     }),
-    save: defineMessage({
-      id: 'trigger.save',
-      defaultMessage: 'Save',
-    }),
     flagTarget: defineMessage({
       id: 'trigger.flagTarget',
       defaultMessage: 'Flag Target',
@@ -700,6 +696,10 @@ export const messages = {
     edit: defineMessage({
       id: 'button.edit',
       defaultMessage: 'Edit',
+    }),
+    save: defineMessage({
+      id: 'button.save',
+      defaultMessage: 'Save',
     }),
     result: defineMessage({
       id: 'button.result',

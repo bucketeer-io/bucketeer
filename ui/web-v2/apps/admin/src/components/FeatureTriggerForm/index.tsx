@@ -1,3 +1,4 @@
+import { intl } from '@/lang';
 import { messages } from '@/lang/messages';
 import { AppState } from '@/modules';
 import {
@@ -40,10 +41,6 @@ import { RelativeDateText } from '../RelativeDateText';
 import { Select } from '../Select';
 
 const triggerTypeOptions = [
-  // {
-  //   value: FlagTrigger.Type.TYPE_UNKNOWN.toString(),
-  //   label: 'Unknown',
-  // },
   {
     value: FlagTrigger.Type.TYPE_WEBHOOK.toString(),
     label: 'Webhook',
@@ -53,16 +50,12 @@ const triggerTypeOptions = [
 const actionOptions = [
   {
     value: FlagTrigger.Action.ACTION_OFF.toString(),
-    label: 'Action Off',
+    label: intl.formatMessage(messages.trigger.turnTheFlagOFF),
   },
   {
     value: FlagTrigger.Action.ACTION_ON.toString(),
-    label: 'Action On',
+    label: intl.formatMessage(messages.trigger.turnTheFlagON),
   },
-  // {
-  //   value: FlagTrigger.Action.ACTION_UNKNOWN.toString(),
-  //   label: 'Action Unknown',
-  // },
 ];
 
 interface FeatureTriggerFormProps {
@@ -74,15 +67,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
     const dispatch = useDispatch<AppDispatch>();
     const { formatMessage: f } = useIntl();
     const methods = useFormContext();
-    const {
-      control,
-      formState: { errors, isDirty },
-      watch,
-      handleSubmit,
-      register,
-      reset,
-      setValue,
-    } = methods;
+    const { reset } = methods;
     const currentEnvironment = useCurrentEnvironment();
 
     const isLoading = useSelector<AppState, boolean>(
@@ -179,7 +164,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                 key={flagTriggerWithUrl.flagTrigger.id}
                 className="p-5 border border-[#CBD5E1] rounded-lg flex space-x-3"
               >
-                <WebhookSvg className="mt-1" />
+                <WebhookSvg className="w-6 h-6" />
                 <div className="space-y-3 flex-1">
                   <div className="flex justify-between">
                     <p className="text-[#475569]">
@@ -271,27 +256,18 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                       </p>
                       <p className="text-gray-700 mt-1">
                         {FlagTrigger.Action.ACTION_OFF ===
-                          flagTriggerWithUrl.flagTrigger.action && 'OFF -> ON'}
+                          flagTriggerWithUrl.flagTrigger.action && 'on -> off'}
                         {FlagTrigger.Action.ACTION_ON ===
-                          flagTriggerWithUrl.flagTrigger.action && 'ON -> OFF'}
-                        {/* {FlagTrigger.Action.ACTION_UNKNOWN ===
-                        flagTriggerWithUrl.flagTrigger.action && 'UNKNOWN'} */}
+                          flagTriggerWithUrl.flagTrigger.action && 'off -> on'}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-400 uppercase text-sm">
                         {f(messages.trigger.triggerURL)}
                       </p>
-                      <a
-                        className="text-primary mt-1"
-                        href={flagTriggerWithUrl.url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <span className="underline">
-                          {flagTriggerWithUrl.url}
-                        </span>
-                      </a>
+                      <p className="text-gray-700 mt-1">
+                        {flagTriggerWithUrl.url}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-400 uppercase text-sm">
@@ -367,7 +343,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
     const methods = useFormContext();
     const {
       control,
-      formState: { errors, isDirty, isValid },
+      formState: { errors, isValid },
       watch,
       handleSubmit,
       register,
@@ -390,8 +366,8 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
         createFlagTrigger({
           environmentNamespace: currentEnvironment.id,
           featureId,
-          triggerType: data.triggerType.value,
-          action: data.action.value,
+          triggerType: data.triggerType,
+          action: data.action,
           description: data.description,
         })
       ).then((response) => {
@@ -421,7 +397,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
     );
 
     return (
-      <div className="space-y-4 mt-4">
+      <div className="space-y-4 mt-6">
         <div>
           <div className="flex space-x-2 items-center mb-1">
             <label htmlFor="triggerType" className="text-sm text=[#64748B]">
@@ -444,11 +420,21 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
             control={control}
             render={({ field }) => (
               <Select
-                onChange={(o) => field.onChange(o.value)}
                 options={triggerTypeOptions}
+                onChange={(o) => field.onChange(o.value)}
                 value={triggerTypeOptions.find((o) => o.value === field.value)}
-                isSearchable={false}
                 disabled={!!flagTriggerWithUrl}
+                isSearchable={false}
+                formatOptionLabel={({ label, value }) => {
+                  return (
+                    <div className="flex space-x-4 items-center">
+                      {value === FlagTrigger.Type.TYPE_WEBHOOK.toString() && (
+                        <WebhookSvg className="w-6 h-6" />
+                      )}
+                      <span className="flex-1 truncate">{label}</span>
+                    </div>
+                  );
+                }}
               />
             )}
           />
@@ -508,7 +494,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
         </div>
         <div className="flex space-x-4">
           <button onClick={close} className="btn-cancel">
-            <span>Cancel</span>
+            <span>{f(messages.button.cancel)}</span>
           </button>
           {flagTriggerWithUrl ? (
             <button
@@ -516,7 +502,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
               className="btn-submit"
               disabled={!isValid}
             >
-              <span>{f(messages.trigger.save)}</span>
+              <span>{f(messages.button.save)}</span>
             </button>
           ) : (
             <button
@@ -524,7 +510,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
               className="btn-submit"
               disabled={!isValid}
             >
-              <span>Submit</span>
+              <span>{f(messages.button.submit)}</span>
               {/* <span>{f(messages.trigger.save)}</span> */}
             </button>
           )}

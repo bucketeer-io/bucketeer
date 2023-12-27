@@ -1,4 +1,5 @@
 import { FeatureTriggerForm } from '@/components/FeatureTriggerForm';
+import { FlagTrigger } from '@/proto/feature/flag_trigger_pb';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo } from 'react';
@@ -27,7 +28,7 @@ export const FeatureTriggerPage: FC<FeatureTriggerPageProps> = memo(
     const methods = useForm({
       resolver: yupResolver(triggerFormSchema),
       defaultValues: {
-        triggerType: null,
+        triggerType: FlagTrigger.Type.TYPE_WEBHOOK.toString(),
         action: null,
         description: '',
       },

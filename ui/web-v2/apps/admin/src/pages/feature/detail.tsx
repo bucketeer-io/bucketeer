@@ -2,7 +2,12 @@ import {
   listAutoOpsRules,
   selectAll as selectAllAutoOpsRules,
 } from '@/modules/autoOpsRules';
+import {
+  listFlagTriggers,
+  selectAll as selectAllFlagTriggers,
+} from '@/modules/flagTriggers';
 import { AutoOpsRule } from '@/proto/autoops/auto_ops_rule_pb';
+import { ListFlagTriggersResponse } from '@/proto/feature/service_pb';
 import { SerializedError } from '@reduxjs/toolkit';
 import { FC, memo, useEffect } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -64,10 +69,6 @@ export const FeatureDetailPage: FC = memo(() => {
     ],
     shallowEqual
   );
-  const isAutoOpsRuleLoading = useSelector<AppState, boolean>(
-    (state) => state.autoOpsRules.loading,
-    shallowEqual
-  );
   const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
     (state) =>
       selectAllAutoOpsRules(state.autoOpsRules).filter(
@@ -75,6 +76,10 @@ export const FeatureDetailPage: FC = memo(() => {
       ),
     shallowEqual
   );
+  const flagTriggers = useSelector<
+    AppState,
+    ListFlagTriggersResponse.FlagTriggerWithUrl.AsObject[]
+  >((state) => selectAllFlagTriggers(state.flagTriggers), shallowEqual);
 
   useEffect(() => {
     if (featureId) {
@@ -90,16 +95,18 @@ export const FeatureDetailPage: FC = memo(() => {
           environmentNamespace: currentEnvironment.id,
         })
       );
+      dispatch(
+        listFlagTriggers({
+          featureId: featureId,
+          environmentNamespace: currentEnvironment.id,
+        })
+      );
     }
   }, [featureId, dispatch, currentEnvironment]);
 
-  if (!feature || isAutoOpsRuleLoading) {
+  if (!feature) {
     return <div>loading</div>;
   }
-
-  const activeOperationsLength = autoOpsRules.filter(
-    (rule) => !rule.triggeredAt
-  ).length;
 
   return (
     <div className="bg-white h-full">
@@ -107,30 +114,40 @@ export const FeatureDetailPage: FC = memo(() => {
         <FeatureHeader featureId={featureId} />
         <div className="hidden sm:block">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            {createTabs().map((tab, idx) => (
-              <NavLink
-                key={idx}
-                className="
-                    tab-item
-                    flex items-center
-                    border-transparent
-                    text-gray-500
-                    hover:text-gray-700
-                    whitespace-nowrap py-4 px-1 border-b-2
-                    font-medium text-sm"
-                to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${tab.to}`}
-              >
-                {tab.message}
-                {tab.isNew &&
-                  (activeOperationsLength === 0 ? (
+            {createTabs().map((tab, idx) => {
+              let length;
+
+              if (tab.to === PAGE_PATH_FEATURE_AUTOOPS) {
+                length = autoOpsRules.filter(
+                  (rule) => !rule.triggeredAt
+                ).length;
+              } else if (tab.to === PAGE_PATH_FEATURE_TRIGGER) {
+                length = flagTriggers.length;
+              }
+
+              return (
+                <NavLink
+                  key={idx}
+                  className="
+                      tab-item
+                      flex items-center
+                      border-transparent
+                      text-gray-500
+                      hover:text-gray-700
+                      whitespace-nowrap py-4 px-1 border-b-2
+                      font-medium text-sm"
+                  to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${tab.to}`}
+                >
+                  {tab.message}
+                  {length === 0 && (
                     <div className="rounded-sm bg-[#F3F9FD] text-[#399CE4] px-2 py-[6px] text-sm inline-block ml-3">
                       New
                     </div>
-                  ) : (
-                    <span className="ml-1">({activeOperationsLength})</span>
-                  ))}
-              </NavLink>
-            ))}
+                  )}
+                  {length > 0 && <span className="ml-1">({length})</span>}
+                </NavLink>
+              );
+            })}
           </nav>
         </div>
       </div>
@@ -187,7 +204,6 @@ export const FeatureDetailPage: FC = memo(() => {
 export interface TabItem {
   readonly message: string;
   readonly to: string;
-  readonly isNew: boolean;
 }
 
 const createTabs = (): Array<TabItem> => {
@@ -195,42 +211,34 @@ const createTabs = (): Array<TabItem> => {
     {
       message: intl.formatMessage(messages.feature.tab.targeting),
       to: PAGE_PATH_FEATURE_TARGETING,
-      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.variations),
       to: PAGE_PATH_FEATURE_VARIATION,
-      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.autoOps),
       to: PAGE_PATH_FEATURE_AUTOOPS,
-      isNew: true,
     },
     {
       message: intl.formatMessage(messages.feature.tab.trigger),
       to: PAGE_PATH_FEATURE_TRIGGER,
-      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.experiments),
       to: PAGE_PATH_FEATURE_EXPERIMENTS,
-      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.evaluation),
       to: PAGE_PATH_FEATURE_EVALUATION,
-      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.history),
       to: PAGE_PATH_FEATURE_HISTORY,
-      isNew: false,
     },
     {
       message: intl.formatMessage(messages.feature.tab.settings),
       to: PAGE_PATH_FEATURE_SETTING,
-      isNew: false,
     },
   ];
 };
