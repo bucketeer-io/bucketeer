@@ -160,14 +160,15 @@ func NewPersisterDWH(
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &PersisterDWH{
-		puller:      p,
-		mysqlClient: mysqlClient,
-		logger:      dopts.logger.Named("persister"),
-		ctx:         ctx,
-		cancel:      cancel,
-		doneCh:      make(chan struct{}),
-		writer:      writer,
-		opts:        dopts,
+		puller:            p,
+		rateLimitedPuller: puller.NewRateLimitedPuller(p, dopts.maxMPS),
+		mysqlClient:       mysqlClient,
+		logger:            dopts.logger.Named("persister"),
+		ctx:               ctx,
+		cancel:            cancel,
+		doneCh:            make(chan struct{}),
+		writer:            writer,
+		opts:              dopts,
 	}
 }
 

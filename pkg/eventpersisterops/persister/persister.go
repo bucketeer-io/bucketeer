@@ -145,14 +145,15 @@ func NewPersister(
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &persister{
-		ctx:         ctx,
-		cancel:      cancel,
-		updater:     updater,
-		mysqlClient: mysqlClient,
-		puller:      p,
-		doneCh:      make(chan struct{}),
-		logger:      dopts.logger.Named("persister"),
-		opts:        dopts,
+		ctx:               ctx,
+		cancel:            cancel,
+		updater:           updater,
+		mysqlClient:       mysqlClient,
+		puller:            p,
+		rateLimitedPuller: puller.NewRateLimitedPuller(p, dopts.maxMPS),
+		doneCh:            make(chan struct{}),
+		logger:            dopts.logger.Named("persister"),
+		opts:              dopts,
 	}
 }
 
