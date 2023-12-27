@@ -49,6 +49,16 @@ spec:
               value: "{{ template "event-persister-goal-events-ops.fullname" . }}"
             - name: BUCKETEER_EVENT_PERSISTER_OPS_PROJECT
               value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_EVENT_PERSISTER_OPS_MYSQL_USER
+              value: "{{ .Values.env.mysqlUser }}"
+            - name: BUCKETEER_EVENT_PERSISTER_OPS_MYSQL_PASS
+              value: "{{ .Values.env.mysqlPass }}"
+            - name: BUCKETEER_EVENT_PERSISTER_OPS_MYSQL_HOST
+              value: "{{ .Values.env.mysqlHost }}"
+            - name: BUCKETEER_EVENT_PERSISTER_OPS_MYSQL_PORT
+              value: "{{ .Values.env.mysqlPort }}"
+            - name: BUCKETEER_EVENT_PERSISTER_OPS_MYSQL_DB_NAME
+              value: "{{ .Values.env.mysqlDbName }}"
             - name: BUCKETEER_EVENT_PERSISTER_OPS_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_EVENT_PERSISTER_OPS_AUTO_OPS_SERVICE

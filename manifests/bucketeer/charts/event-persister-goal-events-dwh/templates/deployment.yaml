@@ -47,6 +47,16 @@ spec:
           env:
             - name: BUCKETEER_EVENT_PERSISTER_DWH_SERVICE_NAME
               value: "{{ template "event-persister-goal-events-dwh.fullname" . }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_MYSQL_USER
+              value: "{{ .Values.env.mysqlUser }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_MYSQL_PASS
+              value: "{{ .Values.env.mysqlPass }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_MYSQL_HOST
+              value: "{{ .Values.env.mysqlHost }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_MYSQL_PORT
+              value: "{{ .Values.env.mysqlPort }}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_MYSQL_DB_NAME
+              value: "{{ .Values.env.mysqlDbName }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_PROJECT
               value: "{{ .Values.env.project }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_FEATURE_SERVICE

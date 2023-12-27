@@ -14,6 +14,11 @@ env:
   metricsPort: 9002
   timezone: UTC
   # egress services
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
   experimentService: localhost:9001
   featureService: localhost:9001
   # option

@@ -144,11 +144,11 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"redis-pool-max-active",
 			"Maximum number of connections allocated by the pool at a given time.",
 		).Required().Int(),
-		mysqlUser:   cmd.Flag("mysql-user", "").String(),
-		mysqlPass:   cmd.Flag("mysql-pass", "").String(),
-		mysqlHost:   cmd.Flag("mysql-host", "").String(),
-		mysqlPort:   cmd.Flag("mysql-port", "").Int(),
-		mysqlDbName: cmd.Flag("mysql-dbname", "").String(),
+		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDbName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server

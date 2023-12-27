@@ -12,6 +12,11 @@ env:
   # egress services
   featureService: localhost:9001
   autoOpsService: localhost:9001
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
   # rpc
   port: 9090
   metricsPort: 9002
