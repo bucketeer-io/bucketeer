@@ -533,6 +533,8 @@
   "trigger.resetURL": "Reset URL",
   "trigger.triggerType": "Trigger type",
   "trigger.triggerURL": "Trigger URL",
+  "trigger.triggerUrlDescription": "Once you leave this page, the URL will be hidden.",
+  "trigger.triggerUrlTitle": "Copy and save this URL.",
   "trigger.triggeredTimes": "Triggered Times",
   "trigger.turnTheFlagOFF": "Turn the flag OFF",
   "trigger.turnTheFlagON": "Turn the flag ON",

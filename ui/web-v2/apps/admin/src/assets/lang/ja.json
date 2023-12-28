@@ -533,6 +533,8 @@
   "trigger.resetURL": "URLをリセット",
   "trigger.triggerType": "トリガータイプ",
   "trigger.triggerURL": "トリガーURL",
+  "trigger.triggerUrlDescription": "このページを離れますとURLが表示されなくなります。",
+  "trigger.triggerUrlTitle": "URLをコピーし、保管してください。",
   "trigger.triggeredTimes": "実行回数",
   "trigger.turnTheFlagOFF": "フラグを無効化する",
   "trigger.turnTheFlagON": "フラグを有効化する",

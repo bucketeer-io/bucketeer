@@ -39,7 +39,6 @@ import { ReactComponent as WebhookSvg } from '../../assets/svg/webhook.svg';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import { CopyChip } from '../CopyChip';
 import { DetailSkeleton } from '../DetailSkeleton';
-import { HoverPopover } from '../HoverPopover';
 import { RelativeDateText } from '../RelativeDateText';
 import { Select } from '../Select';
 
@@ -167,6 +166,9 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                 featureId={featureId}
                 fetchFlagTriggers={fetchFlagTriggers}
                 flagTriggerWithUrl={flagTriggerWithUrl}
+                setSelectedFlagTriggerForCopyUrl={
+                  setSelectedFlagTriggerForCopyUrl
+                }
               />
             ) : (
               <div
@@ -263,7 +265,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                     flagTriggerWithUrl.flagTrigger.id ? (
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span>Trigger URL</span>
+                          <span>{f(messages.trigger.triggerURL)}</span>
                           <div className="flex space-x-4 text-gray-400">
                             <CopyChip
                               key={selectedFlagTriggerForCopyUrl.url}
@@ -294,11 +296,10 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                             <div className="ml-3 flex-1">
                               <p className="text-sm text-yellow-700">
                                 <p className="font-medium">
-                                  Copy and save this URL.
+                                  {f(messages.trigger.triggerUrlTitle)}
                                 </p>
                                 <p>
-                                  Once you leave this page, the URL will be
-                                  hidden.
+                                  {f(messages.trigger.triggerUrlDescription)}
                                 </p>
                               </p>
                             </div>
@@ -399,7 +400,7 @@ interface AddUpdateTriggerProps {
   flagTriggerWithUrl?: CreateFlagTriggerResponse.AsObject;
   featureId: string;
   fetchFlagTriggers: () => void;
-  setSelectedFlagTriggerForCopyUrl?: React.Dispatch<
+  setSelectedFlagTriggerForCopyUrl: React.Dispatch<
     React.SetStateAction<CopyUrl>
   >;
 }
@@ -467,6 +468,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
           fetchFlagTriggers();
           reset();
           close();
+          setSelectedFlagTriggerForCopyUrl(null);
         });
       },
       [flagTriggerWithUrl]
@@ -479,17 +481,8 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
             <label htmlFor="triggerType" className="text-sm text=[#64748B]">
               {f(messages.trigger.triggerType)}
             </label>
-            <HoverPopover
-              render={() => {
-                return (
-                  <div className="shadow p-2 rounded bg-white text-sm whitespace-nowrap -ml-28 mt-[-60px]">
-                    Trigger type popover message
-                  </div>
-                );
-              }}
-            >
-              <InformationCircleIcon width={18} className="text-gray-400" />
-            </HoverPopover>
+
+            <InformationCircleIcon width={18} className="text-gray-400" />
           </div>
           <Controller
             name="triggerType"
@@ -520,17 +513,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
             <label htmlFor="triggerType" className="text-sm text=[#64748B]">
               {f(messages.trigger.action)}
             </label>
-            <HoverPopover
-              render={() => {
-                return (
-                  <div className="shadow p-2 rounded bg-white text-sm whitespace-nowrap -ml-28 mt-[-60px]">
-                    Action popover message
-                  </div>
-                );
-              }}
-            >
-              <InformationCircleIcon width={18} className="text-gray-400" />
-            </HoverPopover>
+            <InformationCircleIcon width={18} className="text-gray-400" />
           </div>
           <Controller
             name="action"

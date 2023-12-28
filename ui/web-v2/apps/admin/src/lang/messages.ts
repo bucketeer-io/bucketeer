@@ -561,6 +561,14 @@ export const messages = {
       id: 'trigger.deleteTrigger',
       defaultMessage: 'Delete Trigger',
     }),
+    triggerUrlTitle: defineMessage({
+      id: 'trigger.triggerUrlTitle',
+      defaultMessage: 'Copy and save this URL.',
+    }),
+    triggerUrlDescription: defineMessage({
+      id: 'trigger.triggerUrlDescription',
+      defaultMessage: 'Once you leave this page, the URL will be hidden.',
+    }),
   },
   maintainer: defineMessage({
     id: 'maintainer',
