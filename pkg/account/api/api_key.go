@@ -532,6 +532,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 				EnvironmentNamespace: e.Id,
 				ApiKey:               apiKey.APIKey,
 				ProjectId:            p.Id,
+				EnvironmentV2:        e,
 			},
 		}, nil
 	}

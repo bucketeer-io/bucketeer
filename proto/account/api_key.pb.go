@@ -21,6 +21,7 @@
 package account
 
 import (
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -176,6 +177,7 @@ type EnvironmentAPIKey struct {
 	ApiKey               *APIKey `protobuf:"bytes,2,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
 	EnvironmentDisabled  bool    `protobuf:"varint,3,opt,name=environment_disabled,json=environmentDisabled,proto3" json:"environment_disabled,omitempty"`
 	ProjectId            string  `protobuf:"bytes,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	EnvironmentV2        *environmentproto.EnvironmentV2 `protobuf:"bytes,5,opt,name=environment,json=environment,proto3" json:"environment,omitempty"`
 }
 
 func (x *EnvironmentAPIKey) Reset() {
