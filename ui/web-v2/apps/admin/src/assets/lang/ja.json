@@ -529,7 +529,6 @@
   "trigger.disableTrigger": "トリガーを無効化する",
   "trigger.editDescription": "説明を変更",
   "trigger.enableTrigger": "トリガーを有効化する",
-  "trigger.flagTarget": "フラグターゲット",
   "trigger.lastTriggered": "最終実行日",
   "trigger.resetURL": "URLをリセット",
   "trigger.triggerType": "トリガータイプ",

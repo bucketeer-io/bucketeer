@@ -521,10 +521,6 @@ export const messages = {
       id: 'trigger.action',
       defaultMessage: 'Action',
     }),
-    flagTarget: defineMessage({
-      id: 'trigger.flagTarget',
-      defaultMessage: 'Flag Target',
-    }),
     triggerURL: defineMessage({
       id: 'trigger.triggerURL',
       defaultMessage: 'Trigger URL',

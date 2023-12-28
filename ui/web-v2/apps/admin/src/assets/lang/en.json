@@ -529,7 +529,6 @@
   "trigger.disableTrigger": "Disable Trigger",
   "trigger.editDescription": "Edit description",
   "trigger.enableTrigger": "Enable Trigger",
-  "trigger.flagTarget": "Flag Target",
   "trigger.lastTriggered": "Last Triggered",
   "trigger.resetURL": "Reset URL",
   "trigger.triggerType": "Trigger type",

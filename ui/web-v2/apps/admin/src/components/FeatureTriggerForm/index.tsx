@@ -27,7 +27,9 @@ import {
   TrashIcon,
   PencilAltIcon,
   CheckCircleIcon,
+  XIcon,
 } from '@heroicons/react/outline';
+import { FileCopyOutlined } from '@material-ui/icons';
 import { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { useIntl } from 'react-intl';
@@ -35,6 +37,7 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { ReactComponent as WebhookSvg } from '../../assets/svg/webhook.svg';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
+import { CopyChip } from '../CopyChip';
 import { DetailSkeleton } from '../DetailSkeleton';
 import { HoverPopover } from '../HoverPopover';
 import { RelativeDateText } from '../RelativeDateText';
@@ -58,6 +61,10 @@ const actionOptions = [
   },
 ];
 
+interface CopyUrl {
+  id: string;
+  url: string;
+}
 interface FeatureTriggerFormProps {
   featureId: string;
 }
@@ -79,8 +86,10 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
     >((state) => selectAll(state.flagTriggers), shallowEqual);
 
     const [isAddTriggerOpen, setIsAddTriggerOpen] = useState(false);
-    const [selectedFlagTriggerWithUrl, setSelectedFlagTriggerWithUrl] =
+    const [selectedFlagTriggerForUpdate, setSelectedFlagTriggerForUpdate] =
       useState<CreateFlagTriggerResponse.AsObject>(null);
+    const [selectedFlagTriggerForCopyUrl, setSelectedFlagTriggerForCopyUrl] =
+      useState<CopyUrl>(null);
 
     const fetchFlagTriggers = useCallback(() => {
       dispatch(
@@ -148,12 +157,12 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
           </p>
           {flagTriggers.map((flagTriggerWithUrl) =>
             flagTriggerWithUrl.flagTrigger.id ===
-            selectedFlagTriggerWithUrl?.flagTrigger?.id ? (
+            selectedFlagTriggerForUpdate?.flagTrigger?.id ? (
               <AddUpdateTrigger
                 key={flagTriggerWithUrl.flagTrigger.id}
                 close={() => {
                   reset();
-                  setSelectedFlagTriggerWithUrl(null);
+                  setSelectedFlagTriggerForUpdate(null);
                 }}
                 featureId={featureId}
                 fetchFlagTriggers={fetchFlagTriggers}
@@ -164,8 +173,8 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                 key={flagTriggerWithUrl.flagTrigger.id}
                 className="p-5 border border-[#CBD5E1] rounded-lg flex space-x-3"
               >
-                <WebhookSvg className="w-6 h-6" />
-                <div className="space-y-3 flex-1">
+                <WebhookSvg className="w-6 h-6 flex-shrink-0" />
+                <div className="flex-1">
                   <div className="flex justify-between">
                     <p className="text-[#475569]">
                       {
@@ -187,7 +196,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                           onClick={() => {
                             setIsAddTriggerOpen(false);
                             reset();
-                            setSelectedFlagTriggerWithUrl(flagTriggerWithUrl);
+                            setSelectedFlagTriggerForUpdate(flagTriggerWithUrl);
                           }}
                           className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
                         >
@@ -249,53 +258,105 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                   <p className="text-[#728BA3]">
                     {flagTriggerWithUrl.flagTrigger.description}
                   </p>
-                  <div className="flex pt-3 border-t border-gray-200 justify-between">
-                    <div>
-                      <p className="text-gray-400 uppercase text-sm">
-                        {f(messages.trigger.flagTarget)}
-                      </p>
-                      <p className="text-gray-700 mt-1">
-                        {FlagTrigger.Action.ACTION_OFF ===
-                          flagTriggerWithUrl.flagTrigger.action && 'on -> off'}
-                        {FlagTrigger.Action.ACTION_ON ===
-                          flagTriggerWithUrl.flagTrigger.action && 'off -> on'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 uppercase text-sm">
-                        {f(messages.trigger.triggerURL)}
-                      </p>
-                      <p className="text-gray-700 mt-1">
-                        {flagTriggerWithUrl.url}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 uppercase text-sm">
-                        {f(messages.trigger.triggeredTimes)}
-                      </p>
-                      <p className="text-gray-700 mt-1">
-                        {flagTriggerWithUrl.flagTrigger.triggerCount}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 uppercase text-sm">
-                        {f(messages.trigger.lastTriggered)}
-                      </p>
-                      <p className="text-gray-700 mt-1">
-                        {flagTriggerWithUrl.flagTrigger.lastTriggeredAt ? (
-                          <RelativeDateText
-                            date={
-                              new Date(
-                                flagTriggerWithUrl.flagTrigger.lastTriggeredAt *
-                                  1000
-                              )
-                            }
-                          />
-                        ) : (
-                          '-'
-                        )}
-                      </p>
-                    </div>
+                  <div className="pt-3 border-t border-gray-200">
+                    {selectedFlagTriggerForCopyUrl?.id ===
+                    flagTriggerWithUrl.flagTrigger.id ? (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span>Trigger URL</span>
+                          <div className="flex space-x-4 text-gray-400">
+                            <CopyChip
+                              key={selectedFlagTriggerForCopyUrl.url}
+                              text={selectedFlagTriggerForCopyUrl.url}
+                            >
+                              <FileCopyOutlined fontSize="small" />
+                            </CopyChip>
+                            <XIcon
+                              width={22}
+                              className="cursor-pointer"
+                              onClick={() =>
+                                setSelectedFlagTriggerForCopyUrl(null)
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-500 break-words">
+                          {selectedFlagTriggerForCopyUrl.url}
+                        </div>
+                        <div className="bg-yellow-50 p-4 border-l-4 border-yellow-400">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <InformationCircleIcon
+                                className="h-5 w-5 text-yellow-400"
+                                aria-hidden="true"
+                              />
+                            </div>
+                            <div className="ml-3 flex-1">
+                              <p className="text-sm text-yellow-700">
+                                <p className="font-medium">
+                                  Copy and save this URL.
+                                </p>
+                                <p>
+                                  Once you leave this page, the URL will be
+                                  hidden.
+                                </p>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between">
+                        <div>
+                          <p className="text-gray-400 uppercase text-sm">
+                            {f(messages.trigger.action)}
+                          </p>
+                          <p className="text-gray-700 mt-1">
+                            {FlagTrigger.Action.ACTION_OFF ===
+                              flagTriggerWithUrl.flagTrigger.action &&
+                              f(messages.trigger.turnTheFlagOFF)}
+                            {FlagTrigger.Action.ACTION_ON ===
+                              flagTriggerWithUrl.flagTrigger.action &&
+                              f(messages.trigger.turnTheFlagON)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 uppercase text-sm">
+                            {f(messages.trigger.triggerURL)}
+                          </p>
+                          <p className="text-gray-700 mt-1">
+                            {flagTriggerWithUrl.url}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 uppercase text-sm">
+                            {f(messages.trigger.triggeredTimes)}
+                          </p>
+                          <p className="text-gray-700 mt-1">
+                            {flagTriggerWithUrl.flagTrigger.triggerCount}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 uppercase text-sm">
+                            {f(messages.trigger.lastTriggered)}
+                          </p>
+                          <p className="text-gray-700 mt-1">
+                            {flagTriggerWithUrl.flagTrigger.lastTriggeredAt ? (
+                              <RelativeDateText
+                                date={
+                                  new Date(
+                                    flagTriggerWithUrl.flagTrigger
+                                      .lastTriggeredAt * 1000
+                                  )
+                                }
+                              />
+                            ) : (
+                              '-'
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -309,13 +370,16 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
               }}
               featureId={featureId}
               fetchFlagTriggers={fetchFlagTriggers}
+              setSelectedFlagTriggerForCopyUrl={
+                setSelectedFlagTriggerForCopyUrl
+              }
             />
           )}
-          {(!isAddTriggerOpen || selectedFlagTriggerWithUrl) && (
+          {(!isAddTriggerOpen || selectedFlagTriggerForUpdate) && (
             <button
               onClick={() => {
                 reset();
-                setSelectedFlagTriggerWithUrl(null);
+                setSelectedFlagTriggerForUpdate(null);
                 setIsAddTriggerOpen(true);
               }}
               className="text-primary flex items-center space-x-2 py-1"
@@ -335,9 +399,18 @@ interface AddUpdateTriggerProps {
   flagTriggerWithUrl?: CreateFlagTriggerResponse.AsObject;
   featureId: string;
   fetchFlagTriggers: () => void;
+  setSelectedFlagTriggerForCopyUrl?: React.Dispatch<
+    React.SetStateAction<CopyUrl>
+  >;
 }
 const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
-  ({ close, flagTriggerWithUrl, featureId, fetchFlagTriggers }) => {
+  ({
+    close,
+    flagTriggerWithUrl,
+    featureId,
+    fetchFlagTriggers,
+    setSelectedFlagTriggerForCopyUrl,
+  }) => {
     const dispatch = useDispatch<AppDispatch>();
     const { formatMessage: f } = useIntl();
     const methods = useFormContext();
@@ -372,7 +445,10 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
         })
       ).then((response) => {
         const payload = response.payload as CreateFlagTriggerResponse.AsObject;
-        console.log('url', payload.url);
+        setSelectedFlagTriggerForCopyUrl({
+          id: payload.flagTrigger.id,
+          url: payload.url,
+        });
         fetchFlagTriggers();
         reset();
         close();
@@ -511,7 +587,6 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
               disabled={!isValid}
             >
               <span>{f(messages.button.submit)}</span>
-              {/* <span>{f(messages.trigger.save)}</span> */}
             </button>
           )}
         </div>
