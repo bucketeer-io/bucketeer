@@ -39,4 +39,5 @@ message FlagTrigger {
   bool disabled = 10;
   int64 created_at = 11;
   int64 updated_at = 12;
+  string token = 13;
 }

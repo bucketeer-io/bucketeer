@@ -20,19 +20,46 @@ import (
 	"testing"
 
 	"go.uber.org/mock/gomock"
+
+	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
+	proto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 func TestFeatureServiceGenerateTriggerURL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	featureService := createFeatureServiceNew(mockController)
-	triggerURL, err := featureService.generateTriggerURL(context.Background(), nil, true)
+	trigger, err := domain.NewFlagTrigger(
+		"test",
+		&proto.CreateFlagTriggerCommand{
+			FeatureId:   "test",
+			Type:        proto.FlagTrigger_Type_WEBHOOK,
+			Action:      proto.FlagTrigger_Action_ON,
+			Description: "test",
+		},
+	)
 	if err != nil {
-		t.Errorf("generateTriggerURL() error = %v", err)
+		t.Errorf("NewFlagTrigger() error = %v", err)
+	}
+	err = trigger.GenerateToken()
+	if err != nil {
+		t.Errorf("GenerateToken() error = %v", err)
+	}
+	t.Logf("GenerateToken() token = %v", trigger.Token)
+	triggerURL, err := featureService.generateTriggerURL(context.Background(), trigger.Token, false)
+	if err != nil {
+		t.Errorf("generateTriggerURL() [full] error = %v", err)
 	}
 	if triggerURL == "" {
-		t.Errorf("generateTriggerURL() triggerURL is empty")
+		t.Errorf("generateTriggerURL() [full] triggerURL is empty")
 	}
-	t.Logf("generateTriggerURL() triggerURL = %v", triggerURL)
-
+	t.Logf("generateTriggerURL() [full] triggerURL = %v", triggerURL)
+	triggerURL, err = featureService.generateTriggerURL(context.Background(), trigger.Token, true)
+	if err != nil {
+		t.Errorf("generateTriggerURL() [masked] error = %v", err)
+	}
+	if triggerURL == "" {
+		t.Errorf("generateTriggerURL() [masked] triggerURL is empty")
+	}
+	t.Logf("generateTriggerURL() [masked] triggerURL = %v", triggerURL)
 }

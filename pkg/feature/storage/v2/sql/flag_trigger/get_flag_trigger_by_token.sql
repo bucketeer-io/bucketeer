@@ -1,5 +1,6 @@
 SELECT id,
        feature_id,
+       environment_namespace,
        type,
        `action`,
        description,
@@ -10,4 +11,5 @@ SELECT id,
        disabled,
        created_at,
        updated_at
-FROM flag_trigger %s %s %s
+from flag_trigger
+where token = ?

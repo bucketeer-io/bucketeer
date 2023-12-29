@@ -16,6 +16,8 @@
 package domain
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
@@ -86,5 +88,24 @@ func (ft *FlagTrigger) UpdateTriggerUsage() error {
 	ft.LastTriggeredAt = unix
 	ft.UpdatedAt = unix
 	ft.TriggerCount = ft.TriggerCount + 1
+	return nil
+}
+
+func (ft *FlagTrigger) GenerateToken() error {
+	secret := NewFlagTriggerSecret(
+		ft.GetId(),
+		ft.GetFeatureId(),
+		ft.GetEnvironmentNamespace(),
+		ft.GetUuid(),
+		int(ft.GetAction()),
+	)
+	encoded, err := secret.Marshal()
+	if err != nil {
+		return err
+	}
+	h := sha256.New()
+	h.Write(encoded)
+	hashed := h.Sum(nil)
+	ft.Token = base64.RawURLEncoding.EncodeToString(hashed)
 	return nil
 }

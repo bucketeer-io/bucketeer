@@ -13630,6 +13630,11 @@
                 "id": 12,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 13,
+                "name": "token",
+                "type": "string"
               }
             ]
           }

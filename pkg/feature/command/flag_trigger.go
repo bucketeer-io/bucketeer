@@ -75,6 +75,9 @@ func (f *flagTriggerCommandHandler) create(
 	ctx context.Context,
 	cmd *proto.CreateFlagTriggerCommand,
 ) error {
+	if err := f.flagTrigger.GenerateToken(); err != nil {
+		return err
+	}
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_CREATED, &eventproto.FlagTriggerCreatedEvent{
 		Id:                   f.flagTrigger.Id,
 		FeatureId:            f.flagTrigger.FeatureId,
@@ -93,6 +96,9 @@ func (f *flagTriggerCommandHandler) reset(
 	cmd *proto.ResetFlagTriggerCommand,
 ) error {
 	if err := f.flagTrigger.ResetUUID(); err != nil {
+		return err
+	}
+	if err := f.flagTrigger.GenerateToken(); err != nil {
 		return err
 	}
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_RESET, &eventproto.FlagTriggerResetEvent{

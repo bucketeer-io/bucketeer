@@ -36,6 +36,8 @@ var (
 	deleteFlagTriggerSQL string
 	//go:embed sql/flag_trigger/get_flag_trigger.sql
 	getFlagTriggerSQL string
+	//go:embed sql/flag_trigger/get_flag_trigger_by_token.sql
+	getFlagTriggerByTokenSQL string
 	//go:embed sql/flag_trigger/list_flag_trigger.sql
 	listFlagTriggersSQL string
 	//go:embed sql/flag_trigger/count_flag_trigger.sql
@@ -53,6 +55,7 @@ type FlagTriggerStorage interface {
 	UpdateFlagTrigger(ctx context.Context, flagTrigger *domain.FlagTrigger) error
 	DeleteFlagTrigger(ctx context.Context, id, environmentNamespace string) error
 	GetFlagTrigger(ctx context.Context, id, environmentNamespace string) (*domain.FlagTrigger, error)
+	GetFlagTriggerByToken(ctx context.Context, token string) (*domain.FlagTrigger, error)
 	ListFlagTriggers(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -85,6 +88,7 @@ func (f flagTriggerStorage) CreateFlagTrigger(
 		flagTrigger.TriggerCount,
 		flagTrigger.LastTriggeredAt,
 		flagTrigger.Uuid,
+		flagTrigger.Token,
 		flagTrigger.Disabled,
 		flagTrigger.CreatedAt,
 		flagTrigger.UpdatedAt,
@@ -107,6 +111,7 @@ func (f flagTriggerStorage) UpdateFlagTrigger(ctx context.Context, flagTrigger *
 		flagTrigger.TriggerCount,
 		flagTrigger.LastTriggeredAt,
 		flagTrigger.Uuid,
+		flagTrigger.Token,
 		flagTrigger.Disabled,
 		flagTrigger.CreatedAt,
 		flagTrigger.UpdatedAt,
@@ -167,6 +172,40 @@ func (f flagTriggerStorage) GetFlagTrigger(
 		&trigger.TriggerCount,
 		&trigger.LastTriggeredAt,
 		&trigger.Uuid,
+		&trigger.Token,
+		&trigger.Disabled,
+		&trigger.CreatedAt,
+		&trigger.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrFlagTriggerNotFound
+		}
+		return nil, err
+	}
+	return &domain.FlagTrigger{FlagTrigger: &trigger}, nil
+}
+
+func (f flagTriggerStorage) GetFlagTriggerByToken(
+	ctx context.Context,
+	token string,
+) (*domain.FlagTrigger, error) {
+	trigger := proto.FlagTrigger{}
+	err := f.qe.QueryRowContext(
+		ctx,
+		getFlagTriggerByTokenSQL,
+		token,
+	).Scan(
+		&trigger.Id,
+		&trigger.FeatureId,
+		&trigger.EnvironmentNamespace,
+		&trigger.Type,
+		&trigger.Action,
+		&trigger.Description,
+		&trigger.TriggerCount,
+		&trigger.LastTriggeredAt,
+		&trigger.Uuid,
+		&trigger.Token,
 		&trigger.Disabled,
 		&trigger.CreatedAt,
 		&trigger.UpdatedAt,
@@ -207,6 +246,7 @@ func (f flagTriggerStorage) ListFlagTriggers(
 			&trigger.TriggerCount,
 			&trigger.LastTriggeredAt,
 			&trigger.Uuid,
+			&trigger.Token,
 			&trigger.Disabled,
 			&trigger.CreatedAt,
 			&trigger.UpdatedAt,

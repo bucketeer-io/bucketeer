@@ -40,6 +40,9 @@ export class FlagTrigger extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getToken(): string;
+  setToken(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTrigger.AsObject;
   static toObject(includeInstance: boolean, msg: FlagTrigger): FlagTrigger.AsObject;
@@ -64,6 +67,7 @@ export namespace FlagTrigger {
     disabled: boolean,
     createdAt: number,
     updatedAt: number,
+    token: string,
   }
 
   export interface TypeMap {
