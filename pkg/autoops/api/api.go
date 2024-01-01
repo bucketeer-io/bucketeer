@@ -1463,26 +1463,3 @@ func (s *AutoOpsService) checkRole(
 	}
 	return editor, nil
 }
-
-func (s *AutoOpsService) reportInternalServerError(
-	ctx context.Context,
-	err error,
-	environmentNamespace string,
-	localizer locale.Localizer,
-) error {
-	s.logger.Error(
-		"Internal server error",
-		log.FieldsFromImcomingContext(ctx).AddFields(
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-		)...,
-	)
-	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.InternalServerError),
-	})
-	if err != nil {
-		return statusInternal.Err()
-	}
-	return dt.Err()
-}
