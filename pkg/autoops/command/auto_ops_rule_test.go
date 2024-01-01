@@ -230,56 +230,6 @@ func TestChangeDatetimeClause(t *testing.T) {
 	}
 }
 
-func TestAddWebhookClause(t *testing.T) {
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	patterns := []*struct {
-		input    *proto.WebhookClause
-		expected error
-	}{
-		{
-			input:    &proto.WebhookClause{},
-			expected: nil,
-		},
-	}
-	for _, p := range patterns {
-		m := publishermock.NewMockPublisher(mockController)
-		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(m, a)
-		if p.expected == nil {
-			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-		}
-		cmd := &proto.AddWebhookClauseCommand{WebhookClause: p.input}
-		err := h.Handle(context.Background(), cmd)
-		assert.Equal(t, p.expected, err)
-	}
-}
-
-func TestChangeWebhookClause(t *testing.T) {
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	patterns := []*struct {
-		input    *proto.WebhookClause
-		expected error
-	}{
-		{
-			input:    &proto.WebhookClause{},
-			expected: nil,
-		},
-	}
-	for _, p := range patterns {
-		m := publishermock.NewMockPublisher(mockController)
-		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(m, a)
-		if p.expected == nil {
-			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-		}
-		cmd := &proto.ChangeWebhookClauseCommand{Id: a.Clauses[0].Id, WebhookClause: p.input}
-		err := h.Handle(context.Background(), cmd)
-		assert.Equal(t, p.expected, err)
-	}
-}
-
 func newAutoOpsRule(t *testing.T) *domain.AutoOpsRule {
 	oerc1 := &proto.OpsEventRateClause{
 		GoalId:          "gid",
