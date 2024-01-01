@@ -20,7 +20,6 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
 import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/command.proto";
 import "proto/autoops/ops_count.proto";
-import "proto/autoops/webhook.proto";
 import "proto/autoops/progressive_rollout.proto";
 
 message GetAutoOpsRuleRequest {
@@ -69,8 +68,6 @@ message UpdateAutoOpsRuleRequest {
   repeated DeleteClauseCommand delete_clause_commands = 6;
   repeated AddDatetimeClauseCommand add_datetime_clause_commands = 7;
   repeated ChangeDatetimeClauseCommand change_datetime_clause_commands = 8;
-  repeated AddWebhookClauseCommand add_webhook_clause_commands = 9;
-  repeated ChangeWebhookClauseCommand change_webhook_clause_commands = 10;
 }
 
 message UpdateAutoOpsRuleResponse {}
@@ -97,68 +94,6 @@ message ListOpsCountsRequest {
 message ListOpsCountsResponse {
   string cursor = 1;
   repeated OpsCount ops_counts = 2;
-}
-
-message CreateWebhookRequest {
-  string environment_namespace = 1;
-  CreateWebhookCommand command = 2;
-}
-
-message CreateWebhookResponse {
-  Webhook webhook = 1;
-  string url = 2;
-}
-
-message GetWebhookRequest {
-  string id = 1;
-  string environment_namespace = 2;
-}
-
-message GetWebhookResponse {
-  Webhook webhook = 1;
-  string url = 2;
-}
-
-message UpdateWebhookRequest {
-  string id = 1;
-  string environment_namespace = 2;
-  ChangeWebhookNameCommand changeWebhookNameCommand = 3;
-  ChangeWebhookDescriptionCommand changeWebhookDescriptionCommand = 4;
-}
-
-message UpdateWebhookResponse {}
-
-message DeleteWebhookRequest {
-  string id = 1;
-  string environment_namespace = 2;
-  DeleteWebhookCommand command = 3;
-}
-
-message DeleteWebhookResponse {}
-
-message ListWebhooksRequest {
-  enum OrderBy {
-    DEFAULT = 0;
-    NAME = 1;
-    CREATED_AT = 2;
-    UPDATED_AT = 3;
-  }
-  enum OrderDirection {
-    ASC = 0;
-    DESC = 1;
-  }
-  string environment_namespace = 1;
-  int64 page_size = 2;
-  string cursor = 3;
-  OrderBy order_by = 4;
-  OrderDirection order_direction = 5;
-  string search_keyword = 6;
-}
-
-message ListWebhooksResponse {
-  repeated Webhook webhooks = 1;
-  string cursor = 2;
-  int64 total_count = 3;
 }
 
 message CreateProgressiveRolloutRequest {
@@ -232,11 +167,6 @@ service AutoOpsService {
       returns (UpdateAutoOpsRuleResponse) {}
   rpc ExecuteAutoOps(ExecuteAutoOpsRequest) returns (ExecuteAutoOpsResponse) {}
   rpc ListOpsCounts(ListOpsCountsRequest) returns (ListOpsCountsResponse) {}
-  rpc CreateWebhook(CreateWebhookRequest) returns (CreateWebhookResponse) {}
-  rpc GetWebhook(GetWebhookRequest) returns (GetWebhookResponse) {}
-  rpc UpdateWebhook(UpdateWebhookRequest) returns (UpdateWebhookResponse) {}
-  rpc DeleteWebhook(DeleteWebhookRequest) returns (DeleteWebhookResponse) {}
-  rpc ListWebhooks(ListWebhooksRequest) returns (ListWebhooksResponse) {}
   rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
       returns (CreateProgressiveRolloutResponse) {}
   rpc GetProgressiveRollout(GetProgressiveRolloutRequest)

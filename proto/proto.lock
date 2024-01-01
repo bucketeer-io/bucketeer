@@ -2787,69 +2787,6 @@
             ]
           },
           {
-            "name": "CreateWebhookCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "description",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeWebhookNameCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeWebhookDescriptionCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "description",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "DeleteWebhookCommand"
-          },
-          {
-            "name": "AddWebhookClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "webhook_clause",
-                "type": "WebhookClause"
-              }
-            ]
-          },
-          {
-            "name": "ChangeWebhookClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "webhook_clause",
-                "type": "WebhookClause"
-              }
-            ]
-          },
-          {
             "name": "CreateProgressiveRolloutCommand",
             "fields": [
               {
@@ -3076,38 +3013,6 @@
       "def": {
         "enums": [
           {
-            "name": "ListWebhooksRequest.OrderBy",
-            "enum_fields": [
-              {
-                "name": "DEFAULT"
-              },
-              {
-                "name": "NAME",
-                "integer": 1
-              },
-              {
-                "name": "CREATED_AT",
-                "integer": 2
-              },
-              {
-                "name": "UPDATED_AT",
-                "integer": 3
-              }
-            ]
-          },
-          {
-            "name": "ListWebhooksRequest.OrderDirection",
-            "enum_fields": [
-              {
-                "name": "ASC"
-              },
-              {
-                "name": "DESC",
-                "integer": 1
-              }
-            ]
-          },
-          {
             "name": "ListProgressiveRolloutsRequest.OrderBy",
             "enum_fields": [
               {
@@ -3292,18 +3197,6 @@
                 "name": "change_datetime_clause_commands",
                 "type": "ChangeDatetimeClauseCommand",
                 "is_repeated": true
-              },
-              {
-                "id": 9,
-                "name": "add_webhook_clause_commands",
-                "type": "AddWebhookClauseCommand",
-                "is_repeated": true
-              },
-              {
-                "id": 10,
-                "name": "change_webhook_clause_commands",
-                "type": "ChangeWebhookClauseCommand",
-                "is_repeated": true
               }
             ]
           },
@@ -3385,173 +3278,6 @@
                 "name": "ops_counts",
                 "type": "OpsCount",
                 "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "CreateWebhookRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "CreateWebhookCommand"
-              }
-            ]
-          },
-          {
-            "name": "CreateWebhookResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "webhook",
-                "type": "Webhook"
-              },
-              {
-                "id": 2,
-                "name": "url",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetWebhookRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetWebhookResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "webhook",
-                "type": "Webhook"
-              },
-              {
-                "id": 2,
-                "name": "url",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "UpdateWebhookRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "changeWebhookNameCommand",
-                "type": "ChangeWebhookNameCommand"
-              },
-              {
-                "id": 4,
-                "name": "changeWebhookDescriptionCommand",
-                "type": "ChangeWebhookDescriptionCommand"
-              }
-            ]
-          },
-          {
-            "name": "UpdateWebhookResponse"
-          },
-          {
-            "name": "DeleteWebhookRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "command",
-                "type": "DeleteWebhookCommand"
-              }
-            ]
-          },
-          {
-            "name": "DeleteWebhookResponse"
-          },
-          {
-            "name": "ListWebhooksRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 3,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "order_by",
-                "type": "OrderBy"
-              },
-              {
-                "id": 5,
-                "name": "order_direction",
-                "type": "OrderDirection"
-              },
-              {
-                "id": 6,
-                "name": "search_keyword",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ListWebhooksResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "webhooks",
-                "type": "Webhook",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "total_count",
-                "type": "int64"
               }
             ]
           },
@@ -3754,31 +3480,6 @@
                 "out_type": "ListOpsCountsResponse"
               },
               {
-                "name": "CreateWebhook",
-                "in_type": "CreateWebhookRequest",
-                "out_type": "CreateWebhookResponse"
-              },
-              {
-                "name": "GetWebhook",
-                "in_type": "GetWebhookRequest",
-                "out_type": "GetWebhookResponse"
-              },
-              {
-                "name": "UpdateWebhook",
-                "in_type": "UpdateWebhookRequest",
-                "out_type": "UpdateWebhookResponse"
-              },
-              {
-                "name": "DeleteWebhook",
-                "in_type": "DeleteWebhookRequest",
-                "out_type": "DeleteWebhookResponse"
-              },
-              {
-                "name": "ListWebhooks",
-                "in_type": "ListWebhooksRequest",
-                "out_type": "ListWebhooksResponse"
-              },
-              {
                 "name": "CreateProgressiveRollout",
                 "in_type": "CreateProgressiveRolloutRequest",
                 "out_type": "CreateProgressiveRolloutResponse"
@@ -3817,56 +3518,7 @@
             "path": "proto/autoops/ops_count.proto"
           },
           {
-            "path": "proto/autoops/webhook.proto"
-          },
-          {
             "path": "proto/autoops/progressive_rollout.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.autoops"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/autoops"
-          }
-        ]
-      }
-    },
-    {
-      "protopath": "autoops:/:webhook.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "Webhook",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "created_at",
-                "type": "int64"
-              },
-              {
-                "id": 5,
-                "name": "updated_at",
-                "type": "int64"
-              }
-            ]
           }
         ],
         "package": {

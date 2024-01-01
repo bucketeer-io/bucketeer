@@ -58,30 +58,6 @@ message ChangeDatetimeClauseCommand {
   DatetimeClause datetime_clause = 2;
 }
 
-message CreateWebhookCommand {
-  string name = 1;
-  string description = 2;
-}
-
-message ChangeWebhookNameCommand {
-  string name = 1;
-}
-
-message ChangeWebhookDescriptionCommand {
-  string description = 1;
-}
-
-message DeleteWebhookCommand {}
-
-message AddWebhookClauseCommand {
-  WebhookClause webhook_clause = 1;
-}
-
-message ChangeWebhookClauseCommand {
-  string id = 1;
-  WebhookClause webhook_clause = 2;
-}
-
 message CreateProgressiveRolloutCommand {
   string feature_id = 1;
   optional ProgressiveRolloutManualScheduleClause

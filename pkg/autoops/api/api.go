@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -31,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/crypto"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -60,16 +58,14 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type AutoOpsService struct {
-	mysqlClient       mysql.Client
-	featureClient     featureclient.Client
-	experimentClient  experimentclient.Client
-	accountClient     accountclient.Client
-	authClient        authclient.Client
-	publisher         publisher.Publisher
-	webhookBaseURL    *url.URL
-	webhookCryptoUtil crypto.EncrypterDecrypter
-	opts              *options
-	logger            *zap.Logger
+	mysqlClient      mysql.Client
+	featureClient    featureclient.Client
+	experimentClient experimentclient.Client
+	accountClient    accountclient.Client
+	authClient       authclient.Client
+	publisher        publisher.Publisher
+	opts             *options
+	logger           *zap.Logger
 }
 
 func NewAutoOpsService(
@@ -79,8 +75,6 @@ func NewAutoOpsService(
 	accountClient accountclient.Client,
 	authClient authclient.Client,
 	publisher publisher.Publisher,
-	webhookBaseURL *url.URL,
-	webhookCryptoUtil crypto.EncrypterDecrypter,
 	opts ...Option,
 ) *AutoOpsService {
 	dopts := &options{
@@ -90,16 +84,14 @@ func NewAutoOpsService(
 		opt(dopts)
 	}
 	return &AutoOpsService{
-		mysqlClient:       mysqlClient,
-		featureClient:     featureClient,
-		experimentClient:  experimentClient,
-		accountClient:     accountClient,
-		authClient:        authClient,
-		publisher:         publisher,
-		webhookBaseURL:    webhookBaseURL,
-		opts:              dopts,
-		webhookCryptoUtil: webhookCryptoUtil,
-		logger:            dopts.logger.Named("api"),
+		mysqlClient:      mysqlClient,
+		featureClient:    featureClient,
+		experimentClient: experimentClient,
+		accountClient:    accountClient,
+		authClient:       authClient,
+		publisher:        publisher,
+		opts:             dopts,
+		logger:           dopts.logger.Named("api"),
 	}
 }
 
@@ -891,46 +883,6 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			return err
 		}
 	}
-	for _, c := range req.AddWebhookClauseCommands {
-		if c.WebhookClause == nil {
-			dt, err := statusWebhookClauseRequired.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_clause"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-		if err := s.validateWebhookClause(c.WebhookClause, localizer); err != nil {
-			return err
-		}
-	}
-	for _, c := range req.ChangeWebhookClauseCommands {
-		if c.Id == "" {
-			dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-		if c.WebhookClause == nil {
-			dt, err := statusWebhookClauseRequired.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_clause"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-		if err := s.validateWebhookClause(c.WebhookClause, localizer); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -940,9 +892,7 @@ func (s *AutoOpsService) isNoUpdateAutoOpsRuleCommand(req *autoopsproto.UpdateAu
 		len(req.ChangeOpsEventRateClauseCommands) == 0 &&
 		len(req.DeleteClauseCommands) == 0 &&
 		len(req.AddDatetimeClauseCommands) == 0 &&
-		len(req.ChangeDatetimeClauseCommands) == 0 &&
-		len(req.AddWebhookClauseCommands) == 0 &&
-		len(req.ChangeWebhookClauseCommands) == 0
+		len(req.ChangeDatetimeClauseCommands) == 0
 }
 
 func (s *AutoOpsService) createUpdateAutoOpsRuleCommands(req *autoopsproto.UpdateAutoOpsRuleRequest) []command.Command {
@@ -960,12 +910,6 @@ func (s *AutoOpsService) createUpdateAutoOpsRuleCommands(req *autoopsproto.Updat
 		commands = append(commands, c)
 	}
 	for _, c := range req.ChangeDatetimeClauseCommands {
-		commands = append(commands, c)
-	}
-	for _, c := range req.AddWebhookClauseCommands {
-		commands = append(commands, c)
-	}
-	for _, c := range req.ChangeWebhookClauseCommands {
 		commands = append(commands, c)
 	}
 	for _, c := range req.DeleteClauseCommands {
