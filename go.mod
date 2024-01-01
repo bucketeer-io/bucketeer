@@ -22,7 +22,7 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.6.0
 	github.com/googleapis/gax-go/v2 v2.12.0
-	github.com/itchyny/gojq v0.12.13
+	github.com/itchyny/gojq v0.12.14
 	github.com/lib/pq v1.10.9
 	github.com/mna/redisc v1.3.2
 	github.com/nicksnyder/go-i18n/v2 v2.2.2
