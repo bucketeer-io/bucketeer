@@ -101,7 +101,7 @@
     "@nrwl/linter": "12.5.2",
     "@nrwl/react": "12.5.2",
     "@nrwl/tao": "12.5.2",
-    "@nrwl/web": "12.5.2",
+    "@nrwl/web": "17.2.8",
     "@nrwl/workspace": "12.5.2",
     "@testing-library/react": "11.2.7",
     "@types/jest": "26.0.24",
