@@ -169,7 +169,6 @@ func createAutoOpsRule(t *testing.T) *AutoOpsRule {
 		[]*autoopsproto.DatetimeClause{
 			{Time: 0},
 		},
-		[]*autoopsproto.WebhookClause{},
 	)
 	require.NoError(t, err)
 	return aor
@@ -240,54 +239,6 @@ func TestExtractDatetimeClauses(t *testing.T) {
 	}}
 	expected := []*autoopsproto.DatetimeClause{dc1, dc2}
 	actual, err := autoOpsRule.ExtractDatetimeClauses()
-	assert.NoError(t, err)
-	assert.Equal(t, len(expected), len(actual))
-	for i, a := range actual {
-		assert.True(t, proto.Equal(expected[i], a))
-	}
-}
-
-func TestExtractWebhookClauses(t *testing.T) {
-	wc1 := &autoopsproto.WebhookClause{
-		WebhookId: "foo-id",
-		Conditions: []*autoopsproto.WebhookClause_Condition{
-			{
-				Filter:   ".foo.bar",
-				Value:    "foobaz",
-				Operator: autoopsproto.WebhookClause_Condition_EQUAL,
-			},
-		},
-	}
-	c1, err := ptypes.MarshalAny(wc1)
-	require.NoError(t, err)
-	wc2 := &autoopsproto.WebhookClause{
-		WebhookId: "bar-id",
-		Conditions: []*autoopsproto.WebhookClause_Condition{
-			{
-				Filter:   ".bar.foo",
-				Value:    "barbaz",
-				Operator: autoopsproto.WebhookClause_Condition_NOT_EQUAL,
-			},
-		},
-	}
-	c2, err := ptypes.MarshalAny(wc2)
-	require.NoError(t, err)
-	oerc1 := &autoopsproto.OpsEventRateClause{
-		VariationId:     "vid1",
-		GoalId:          "gid1",
-		MinCount:        int64(10),
-		ThreadsholdRate: float64(0.5),
-		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
-	}
-	c3, err := ptypes.MarshalAny(oerc1)
-	require.NoError(t, err)
-	autoOpsRule := &AutoOpsRule{&autoopsproto.AutoOpsRule{
-		Id:        "id-0",
-		FeatureId: "fid-0",
-		Clauses:   []*autoopsproto.Clause{{Clause: c1}, {Clause: c2}, {Clause: c3}},
-	}}
-	expected := []*autoopsproto.WebhookClause{wc1, wc2}
-	actual, err := autoOpsRule.ExtractWebhookClauses()
 	assert.NoError(t, err)
 	assert.Equal(t, len(expected), len(actual))
 	for i, a := range actual {

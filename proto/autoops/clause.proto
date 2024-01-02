@@ -41,24 +41,6 @@ message DatetimeClause {
   int64 time = 1;
 }
 
-message WebhookClause {
-  message Condition {
-    enum Operator {
-      EQUAL = 0;
-      NOT_EQUAL = 1;
-      MORE_THAN = 2;
-      MORE_THAN_OR_EQUAL = 3;
-      LESS_THAN = 4;
-      LESS_THAN_OR_EQUAL = 5;
-    }
-    string filter = 1;
-    string value = 2;
-    Operator operator = 3;
-  }
-  string webhook_id = 1;
-  repeated Condition conditions = 2;
-}
-
 message ProgressiveRolloutSchedule {
   string schedule_id = 1;
   int64 execute_at = 2;

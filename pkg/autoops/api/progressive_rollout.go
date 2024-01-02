@@ -751,9 +751,6 @@ func (s *AutoOpsService) validateTargetAutoOpsRules(
 			if ptypes.Is(c.Clause, domain.DatetimeClause) {
 				return errProgressiveRolloutAutoOpsHasDatetime
 			}
-			if ptypes.Is(c.Clause, domain.WebhookClause) {
-				return errProgressiveRolloutAutoOpsHasWebhook
-			}
 		}
 	}
 	return nil

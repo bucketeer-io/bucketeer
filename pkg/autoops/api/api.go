@@ -116,7 +116,6 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		req.Command.OpsType,
 		req.Command.OpsEventRateClauses,
 		req.Command.DatetimeClauses,
-		req.Command.WebhookClauses,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -326,8 +325,7 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 		return dt.Err()
 	}
 	if len(req.Command.OpsEventRateClauses) == 0 &&
-		len(req.Command.DatetimeClauses) == 0 &&
-		len(req.Command.WebhookClauses) == 0 {
+		len(req.Command.DatetimeClauses) == 0 {
 		dt, err := statusClauseRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause"),
@@ -353,9 +351,6 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 	if err := s.validateDatetimeClauses(req.Command.DatetimeClauses, localizer); err != nil {
 		return err
 	}
-	if err := s.validateWebhookClauses(req.Command.WebhookClauses, localizer); err != nil {
-		return err
-	}
 	runningProgressiveRolloutExists, err := s.existsRunningProgressiveRollout(
 		ctx,
 		req.Command.FeatureId,
@@ -372,7 +367,7 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 		}
 		return dt.Err()
 	}
-	if runningProgressiveRolloutExists && (len(req.Command.DatetimeClauses) == 0 || len(req.Command.WebhookClauses) == 0) {
+	if runningProgressiveRolloutExists && len(req.Command.DatetimeClauses) == 0 {
 		dt, err := statusWaitingOrRunningProgressiveRolloutExists.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.AutoOpsWaitingOrRunningExperimentExists),
@@ -466,75 +461,6 @@ func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeCla
 			return statusInternal.Err()
 		}
 		return dt.Err()
-	}
-	return nil
-}
-
-func (s *AutoOpsService) validateWebhookClauses(
-	clauses []*autoopsproto.WebhookClause,
-	localizer locale.Localizer,
-) error {
-	for _, c := range clauses {
-		if err := s.validateWebhookClause(c, localizer); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *AutoOpsService) validateWebhookClause(clause *autoopsproto.WebhookClause, localizer locale.Localizer) error {
-	if clause.WebhookId == "" {
-		dt, err := statusWebhookClauseWebhookIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if len(clause.Conditions) == 0 {
-		dt, err := statusWebhookClauseConditionRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	for _, c := range clause.Conditions {
-		if c.Filter == "" {
-			dt, err := statusWebhookClauseConditionFilterRequired.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition_filter"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-		if c.Value == "" {
-			dt, err := statusWebhookClauseConditionValueRequired.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition_value"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-		_, ok := autoopsproto.WebhookClause_Condition_Operator_name[int32(c.Operator)]
-		if !ok {
-			dt, err := statusWebhookClauseConditionInvalidOperator.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "condition_operator"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
 	}
 	return nil
 }

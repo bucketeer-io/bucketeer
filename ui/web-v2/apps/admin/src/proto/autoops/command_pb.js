@@ -339,7 +339,7 @@ if (goog.DEBUG && !COMPILED) {
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.autoops.CreateAutoOpsRuleCommand.repeatedFields_ = [3,4,5];
+proto.bucketeer.autoops.CreateAutoOpsRuleCommand.repeatedFields_ = [3,4];
 
 
 
@@ -377,9 +377,7 @@ proto.bucketeer.autoops.CreateAutoOpsRuleCommand.toObject = function(includeInst
     opsEventRateClausesList: jspb.Message.toObjectList(msg.getOpsEventRateClausesList(),
     proto_autoops_clause_pb.OpsEventRateClause.toObject, includeInstance),
     datetimeClausesList: jspb.Message.toObjectList(msg.getDatetimeClausesList(),
-    proto_autoops_clause_pb.DatetimeClause.toObject, includeInstance),
-    webhookClausesList: jspb.Message.toObjectList(msg.getWebhookClausesList(),
-    proto_autoops_clause_pb.WebhookClause.toObject, includeInstance)
+    proto_autoops_clause_pb.DatetimeClause.toObject, includeInstance)
   };
 
   if (includeInstance) {
@@ -433,11 +431,6 @@ proto.bucketeer.autoops.CreateAutoOpsRuleCommand.deserializeBinaryFromReader = f
       var value = new proto_autoops_clause_pb.DatetimeClause;
       reader.readMessage(value,proto_autoops_clause_pb.DatetimeClause.deserializeBinaryFromReader);
       msg.addDatetimeClauses(value);
-      break;
-    case 5:
-      var value = new proto_autoops_clause_pb.WebhookClause;
-      reader.readMessage(value,proto_autoops_clause_pb.WebhookClause.deserializeBinaryFromReader);
-      msg.addWebhookClauses(value);
       break;
     default:
       reader.skipField();
@@ -496,14 +489,6 @@ proto.bucketeer.autoops.CreateAutoOpsRuleCommand.serializeBinaryToWriter = funct
       4,
       f,
       proto_autoops_clause_pb.DatetimeClause.serializeBinaryToWriter
-    );
-  }
-  f = message.getWebhookClausesList();
-  if (f.length > 0) {
-    writer.writeRepeatedMessage(
-      5,
-      f,
-      proto_autoops_clause_pb.WebhookClause.serializeBinaryToWriter
     );
   }
 };
@@ -618,44 +603,6 @@ proto.bucketeer.autoops.CreateAutoOpsRuleCommand.prototype.addDatetimeClauses = 
  */
 proto.bucketeer.autoops.CreateAutoOpsRuleCommand.prototype.clearDatetimeClausesList = function() {
   return this.setDatetimeClausesList([]);
-};
-
-
-/**
- * repeated WebhookClause webhook_clauses = 5;
- * @return {!Array<!proto.bucketeer.autoops.WebhookClause>}
- */
-proto.bucketeer.autoops.CreateAutoOpsRuleCommand.prototype.getWebhookClausesList = function() {
-  return /** @type{!Array<!proto.bucketeer.autoops.WebhookClause>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto_autoops_clause_pb.WebhookClause, 5));
-};
-
-
-/**
- * @param {!Array<!proto.bucketeer.autoops.WebhookClause>} value
- * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleCommand} returns this
-*/
-proto.bucketeer.autoops.CreateAutoOpsRuleCommand.prototype.setWebhookClausesList = function(value) {
-  return jspb.Message.setRepeatedWrapperField(this, 5, value);
-};
-
-
-/**
- * @param {!proto.bucketeer.autoops.WebhookClause=} opt_value
- * @param {number=} opt_index
- * @return {!proto.bucketeer.autoops.WebhookClause}
- */
-proto.bucketeer.autoops.CreateAutoOpsRuleCommand.prototype.addWebhookClauses = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 5, opt_value, proto.bucketeer.autoops.WebhookClause, opt_index);
-};
-
-
-/**
- * Clears the list making it empty but non-null.
- * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleCommand} returns this
- */
-proto.bucketeer.autoops.CreateAutoOpsRuleCommand.prototype.clearWebhookClausesList = function() {
-  return this.setWebhookClausesList([]);
 };
 
 

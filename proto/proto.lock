@@ -2444,34 +2444,6 @@
             ]
           },
           {
-            "name": "Condition.Operator",
-            "enum_fields": [
-              {
-                "name": "EQUAL"
-              },
-              {
-                "name": "NOT_EQUAL",
-                "integer": 1
-              },
-              {
-                "name": "MORE_THAN",
-                "integer": 2
-              },
-              {
-                "name": "MORE_THAN_OR_EQUAL",
-                "integer": 3
-              },
-              {
-                "name": "LESS_THAN",
-                "integer": 4
-              },
-              {
-                "name": "LESS_THAN_OR_EQUAL",
-                "integer": 5
-              }
-            ]
-          },
-          {
             "name": "ProgressiveRolloutTemplateScheduleClause.Interval",
             "enum_fields": [
               {
@@ -2548,44 +2520,6 @@
                 "id": 1,
                 "name": "time",
                 "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "WebhookClause",
-            "fields": [
-              {
-                "id": 1,
-                "name": "webhook_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "conditions",
-                "type": "Condition",
-                "is_repeated": true
-              }
-            ],
-            "messages": [
-              {
-                "name": "Condition",
-                "fields": [
-                  {
-                    "id": 1,
-                    "name": "filter",
-                    "type": "string"
-                  },
-                  {
-                    "id": 2,
-                    "name": "value",
-                    "type": "string"
-                  },
-                  {
-                    "id": 3,
-                    "name": "operator",
-                    "type": "Operator"
-                  }
-                ]
               }
             ]
           },
@@ -2700,12 +2634,6 @@
                 "id": 4,
                 "name": "datetime_clauses",
                 "type": "DatetimeClause",
-                "is_repeated": true
-              },
-              {
-                "id": 5,
-                "name": "webhook_clauses",
-                "type": "WebhookClause",
                 "is_repeated": true
               }
             ]
@@ -8840,106 +8768,6 @@
                 "id": 1,
                 "name": "feature_id",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "WebhookCreatedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "created_at",
-                "type": "int64"
-              },
-              {
-                "id": 5,
-                "name": "updated_at",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "WebhookDeletedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "WebhookNameChangedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "WebhookDescriptionChangedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "description",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "WebhookClauseAddedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "clause_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "webhook_clause",
-                "type": "bucketeer.autoops.WebhookClause"
-              }
-            ]
-          },
-          {
-            "name": "WebhookClauseChangedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "clause_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "webhook_clause",
-                "type": "bucketeer.autoops.WebhookClause"
               }
             ]
           },

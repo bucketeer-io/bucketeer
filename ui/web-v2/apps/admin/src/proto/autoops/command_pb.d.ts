@@ -22,11 +22,6 @@ export class CreateAutoOpsRuleCommand extends jspb.Message {
   setDatetimeClausesList(value: Array<proto_autoops_clause_pb.DatetimeClause>): void;
   addDatetimeClauses(value?: proto_autoops_clause_pb.DatetimeClause, index?: number): proto_autoops_clause_pb.DatetimeClause;
 
-  clearWebhookClausesList(): void;
-  getWebhookClausesList(): Array<proto_autoops_clause_pb.WebhookClause>;
-  setWebhookClausesList(value: Array<proto_autoops_clause_pb.WebhookClause>): void;
-  addWebhookClauses(value?: proto_autoops_clause_pb.WebhookClause, index?: number): proto_autoops_clause_pb.WebhookClause;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAutoOpsRuleCommand.AsObject;
   static toObject(includeInstance: boolean, msg: CreateAutoOpsRuleCommand): CreateAutoOpsRuleCommand.AsObject;
@@ -43,7 +38,6 @@ export namespace CreateAutoOpsRuleCommand {
     opsType: proto_autoops_auto_ops_rule_pb.OpsTypeMap[keyof proto_autoops_auto_ops_rule_pb.OpsTypeMap],
     opsEventRateClausesList: Array<proto_autoops_clause_pb.OpsEventRateClause.AsObject>,
     datetimeClausesList: Array<proto_autoops_clause_pb.DatetimeClause.AsObject>,
-    webhookClausesList: Array<proto_autoops_clause_pb.WebhookClause.AsObject>,
   }
 }
 
