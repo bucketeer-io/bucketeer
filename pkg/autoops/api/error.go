@@ -69,10 +69,6 @@ var (
 		codes.NotFound,
 		"autoops: ops event rate clause goal does not exist",
 	)
-	statusWebhookClauseRequired = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause is required",
-	)
 	statusWebhookClauseWebhookIDRequired = gstatus.New(
 		codes.InvalidArgument,
 		"autoops: webhook clause wehook id is required",

@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"errors"
-	"net/url"
 	"testing"
 	"time"
 
@@ -45,24 +44,6 @@ import (
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
-var testWebhookURL = func() *url.URL {
-	u, err := url.Parse("https://bucketeer.io/hook")
-	if err != nil {
-		panic(err)
-	}
-	return u
-}()
-
-type dummyWebhookCryptoUtil struct{}
-
-func (u *dummyWebhookCryptoUtil) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
-	return []byte(data), nil
-}
-
-func (u *dummyWebhookCryptoUtil) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
-	return []byte(data), nil
-}
-
 func TestNewAutoOpsService(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -81,8 +62,6 @@ func TestNewAutoOpsService(t *testing.T) {
 		accountClientMock,
 		authClientMock,
 		p,
-		testWebhookURL,
-		&dummyWebhookCryptoUtil{},
 		WithLogger(logger),
 	)
 	assert.IsType(t, &AutoOpsService{}, s)
@@ -538,32 +517,6 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusDatetimeClauseInvalidTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
 		},
 		{
-			desc: "err: ErrWebhookClauseRequired",
-			req: &autoopsproto.UpdateAutoOpsRuleRequest{
-				Id:                       "aid1",
-				AddWebhookClauseCommands: []*autoopsproto.AddWebhookClauseCommand{{}},
-			},
-			expected:    nil,
-			expectedErr: createError(statusWebhookClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_clause")),
-		},
-		{
-			desc: "err: ChangeWebhookClauseCommand: ErrWebhookClauseWebhookClauseConditionRequired",
-			req: &autoopsproto.UpdateAutoOpsRuleRequest{
-				Id: "aid1",
-				ChangeWebhookClauseCommands: []*autoopsproto.ChangeWebhookClauseCommand{
-					{
-						Id: "aid",
-						WebhookClause: &autoopsproto.WebhookClause{
-							WebhookId:  "foo-id",
-							Conditions: []*autoopsproto.WebhookClause_Condition{},
-						},
-					},
-				},
-			},
-			expected:    nil,
-			expectedErr: createError(statusWebhookClauseConditionRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition")),
-		},
-		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
@@ -949,8 +902,6 @@ func createAutoOpsService(c *gomock.Controller, db storage.Client) *AutoOpsServi
 		accountClientMock,
 		authClientMock,
 		p,
-		testWebhookURL,
-		&dummyWebhookCryptoUtil{},
 		WithLogger(logger),
 	)
 }
