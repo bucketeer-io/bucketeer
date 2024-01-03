@@ -23,7 +23,6 @@ import { pushSlice } from './pushes';
 import { segmentsSlice } from './segments';
 import { tagsSlice } from './tags';
 import { toastsSlice } from './toasts';
-import { webhookSlice } from './webhooks';
 
 export const reducers = combineReducers({
   accounts: accountsSlice.reducer,
@@ -42,7 +41,6 @@ export const reducers = combineReducers({
   notification: notificationSlice.reducer,
   projects: projectsSlice.reducer,
   push: pushSlice.reducer,
-  webhook: webhookSlice.reducer,
   segments: segmentsSlice.reducer,
   me: meSlice.reducer,
   toasts: toastsSlice.reducer,

@@ -69,26 +69,6 @@ var (
 		codes.NotFound,
 		"autoops: ops event rate clause goal does not exist",
 	)
-	statusWebhookClauseWebhookIDRequired = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause wehook id is required",
-	)
-	statusWebhookClauseConditionRequired = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause condition is required",
-	)
-	statusWebhookClauseConditionFilterRequired = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause condition filter is required",
-	)
-	statusWebhookClauseConditionValueRequired = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause condition value is required",
-	)
-	statusWebhookClauseConditionInvalidOperator = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause condition oerator is invalid",
-	)
 	statusAlreadyExists               = gstatus.New(codes.AlreadyExists, "autoops: already exists")
 	statusUnauthenticated             = gstatus.New(codes.Unauthenticated, "autoops: unauthenticated")
 	statusPermissionDenied            = gstatus.New(codes.PermissionDenied, "autoops: permission denied")

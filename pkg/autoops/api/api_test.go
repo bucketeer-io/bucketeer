@@ -242,66 +242,6 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusDatetimeClauseInvalidTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
 		},
 		{
-			desc: "err: ErrWebhookClauseWebhookIDRequired",
-			req: &autoopsproto.CreateAutoOpsRuleRequest{
-				Command: &autoopsproto.CreateAutoOpsRuleCommand{
-					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
-					WebhookClauses: []*autoopsproto.WebhookClause{
-						{
-							WebhookId: "",
-							Conditions: []*autoopsproto.WebhookClause_Condition{
-								{
-									Filter:   ".foo.bar",
-									Value:    "foobaz",
-									Operator: autoopsproto.WebhookClause_Condition_EQUAL,
-								},
-							},
-						},
-					},
-				},
-			},
-			expectedErr: createError(statusWebhookClauseWebhookIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_id")),
-		},
-		{
-			desc: "err: ErrWebhookClauseWebhookClauseConditionRequired",
-			req: &autoopsproto.CreateAutoOpsRuleRequest{
-				Command: &autoopsproto.CreateAutoOpsRuleCommand{
-					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
-					WebhookClauses: []*autoopsproto.WebhookClause{
-						{
-							WebhookId:  "webhook-1",
-							Conditions: []*autoopsproto.WebhookClause_Condition{},
-						},
-					},
-				},
-			},
-			expectedErr: createError(statusWebhookClauseConditionRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition")),
-		},
-		{
-			desc: "err: ErrWebhookClauseWebhookClauseConditionFilterRequired",
-			req: &autoopsproto.CreateAutoOpsRuleRequest{
-				Command: &autoopsproto.CreateAutoOpsRuleCommand{
-					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
-					WebhookClauses: []*autoopsproto.WebhookClause{
-						{
-							WebhookId: "foo-id",
-							Conditions: []*autoopsproto.WebhookClause_Condition{
-								{
-									Filter:   "",
-									Value:    "foobaz",
-									Operator: autoopsproto.WebhookClause_Condition_EQUAL,
-								},
-							},
-						},
-					},
-				},
-			},
-			expectedErr: createError(statusWebhookClauseConditionFilterRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "condition_filter")),
-		},
-		{
 			desc: "err: internal error",
 			setup: func(s *AutoOpsService) {
 				rows := mysqlmock.NewMockRows(mockController)
@@ -332,18 +272,6 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
 						{Time: time.Now().AddDate(0, 0, 1).Unix()},
-					},
-					WebhookClauses: []*autoopsproto.WebhookClause{
-						{
-							WebhookId: "foo-id",
-							Conditions: []*autoopsproto.WebhookClause_Condition{
-								{
-									Filter:   ".foo.bar",
-									Value:    "foobaz",
-									Operator: autoopsproto.WebhookClause_Condition_EQUAL,
-								},
-							},
-						},
 					},
 				},
 			},
@@ -387,18 +315,6 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
 						{Time: time.Now().AddDate(0, 0, 1).Unix()},
-					},
-					WebhookClauses: []*autoopsproto.WebhookClause{
-						{
-							WebhookId: "foo-id",
-							Conditions: []*autoopsproto.WebhookClause_Condition{
-								{
-									Filter:   ".foo.bar",
-									Value:    "foobaz",
-									Operator: autoopsproto.WebhookClause_Condition_EQUAL,
-								},
-							},
-						},
 					},
 				},
 			},
