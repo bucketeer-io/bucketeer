@@ -37,7 +37,6 @@ const (
 	urlTemplateEnvironment       = "%s/%s/admin/environments/%s"
 	urlTemplateAdminAccount      = "%s/%s/admin/accounts/%s"
 	urlTemplateProject           = "%s/%s/admin/projects/%s"
-	urlTemplateWebhook           = "%s/%s/settings/intergrations/webhook/%s"
 	urlTemplateOrganization      = "%s/%s/admin/organizations/%s"
 	defaultEnvironmentID         = "bucketeer"
 )
