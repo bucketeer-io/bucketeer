@@ -1078,54 +1078,6 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Project),
 			),
 		}
-	case proto.Event_WEBHOOK_CREATED:
-		return &proto.LocalizedMessage{
-			Locale: localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(
-				locale.CreatedTemplate,
-				localizer.MustLocalizeWithTemplate(locale.Webhook),
-			),
-		}
-	case proto.Event_WEBHOOK_DELETED:
-		return &proto.LocalizedMessage{
-			Locale: localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(
-				locale.DeletedTemplate,
-				localizer.MustLocalizeWithTemplate(locale.Webhook),
-			),
-		}
-	case proto.Event_WEBHOOK_NAME_CHANGED:
-		return &proto.LocalizedMessage{
-			Locale: localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(
-				locale.NameUpdatedTemplate,
-				localizer.MustLocalizeWithTemplate(locale.Webhook),
-			),
-		}
-	case proto.Event_WEBHOOK_DESCRIPTION_CHANGED:
-		return &proto.LocalizedMessage{
-			Locale: localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(
-				locale.DescriptionUpdatedTemplate,
-				localizer.MustLocalizeWithTemplate(locale.Webhook),
-			),
-		}
-	case proto.Event_WEBHOOK_CLAUSE_ADDED:
-		return &proto.LocalizedMessage{
-			Locale: localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(
-				locale.AddedTemplate,
-				localizer.MustLocalizeWithTemplate(locale.WebhookRule),
-			),
-		}
-	case proto.Event_WEBHOOK_CLAUSE_CHANGED:
-		return &proto.LocalizedMessage{
-			Locale: localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(
-				locale.ChangedTemplate,
-				localizer.MustLocalizeWithTemplate(locale.WebhookRule),
-			),
-		}
 	case proto.Event_PROGRESSIVE_ROLLOUT_CREATED:
 		return &proto.LocalizedMessage{
 			Locale:  locale.Ja,
