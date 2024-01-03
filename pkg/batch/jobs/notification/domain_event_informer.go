@@ -324,8 +324,6 @@ func (i *domainEventInformer) convSourceType(
 		return notificationproto.Subscription_DOMAIN_EVENT_ADMIN_SUBSCRIPTION, nil
 	case domaineventproto.Event_PROJECT:
 		return notificationproto.Subscription_DOMAIN_EVENT_PROJECT, nil
-	case domaineventproto.Event_WEBHOOK:
-		return notificationproto.Subscription_DOMAIN_EVENT_WEBHOOK, nil
 	case domaineventproto.Event_PROGRESSIVE_ROLLOUT:
 		return notificationproto.Subscription_DOMAIN_EVENT_PROGRESSIVE_ROLLOUT, nil
 	case domaineventproto.Event_ORGANIZATION:
