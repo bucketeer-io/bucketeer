@@ -5619,10 +5619,6 @@
                 "integer": 12
               },
               {
-                "name": "WEBHOOK",
-                "integer": 13
-              },
-              {
                 "name": "PROGRESSIVE_ROLLOUT",
                 "integer": 14
               },
@@ -5634,6 +5630,9 @@
                 "name": "FLAG_TRIGGER",
                 "integer": 16
               }
+            ],
+            "reserved_ids": [
+              13
             ]
           },
           {
@@ -6175,30 +6174,6 @@
                 "integer": 1206
               },
               {
-                "name": "WEBHOOK_CREATED",
-                "integer": 1300
-              },
-              {
-                "name": "WEBHOOK_DELETED",
-                "integer": 1301
-              },
-              {
-                "name": "WEBHOOK_NAME_CHANGED",
-                "integer": 1302
-              },
-              {
-                "name": "WEBHOOK_DESCRIPTION_CHANGED",
-                "integer": 1303
-              },
-              {
-                "name": "WEBHOOK_CLAUSE_ADDED",
-                "integer": 1304
-              },
-              {
-                "name": "WEBHOOK_CLAUSE_CHANGED",
-                "integer": 1305
-              },
-              {
                 "name": "PROGRESSIVE_ROLLOUT_CREATED",
                 "integer": 1400
               },
@@ -6270,6 +6245,14 @@
                 "name": "FLAG_TRIGGER_USAGE_UPDATED",
                 "integer": 1607
               }
+            ],
+            "reserved_ids": [
+              1300,
+              1301,
+              1302,
+              1303,
+              1304,
+              1305
             ]
           }
         ],
