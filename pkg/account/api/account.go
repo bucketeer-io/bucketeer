@@ -89,7 +89,6 @@ func (s *AccountService) CreateAccount(
 		}
 		return nil, dt.Err()
 	}
-	accountV2 := domain.ConvertAccountV2(account, req.EnvironmentNamespace, orgID)
 	// check if an Admin Account that has the same email already exists
 	_, err = s.getAdminAccount(ctx, account.Id, localizer)
 	if status.Code(err) != codes.NotFound {
@@ -122,16 +121,7 @@ func (s *AccountService) CreateAccount(
 			return err
 		}
 		// TODO: temporary implementation: double write account v2
-		handlerV2 := command.NewAccountV2CommandHandler(editor, accountV2, s.publisher, orgID)
-		if err := handlerV2.Handle(ctx, accountproto.CreateAccountV2Command{
-			Email:            accountV2.Email,
-			Name:             accountV2.Email,
-			AvatarImageUrl:   accountV2.AvatarImageUrl,
-			OrganizationRole: accountV2.OrganizationRole,
-			EnvironmentRoles: accountV2.EnvironmentRoles,
-		}); err != nil {
-			return err
-		}
+		accountV2 := domain.ConvertAccountV2(account, req.EnvironmentNamespace, orgID)
 		return s.accountStorage.CreateAccountV2(ctx, accountV2)
 	})
 	if err != nil {
