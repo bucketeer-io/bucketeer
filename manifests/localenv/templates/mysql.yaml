@@ -1,9 +1,9 @@
-apiVersion: v1  
-kind: Secret  
-metadata:  
+apiVersion: v1
+kind: Secret
+metadata:
   name: mysql-secrets
-type: Opaque  
-data:  
+type: Opaque
+data:
   mysql-root-password: YnVja2V0ZWVy
   mysql-password: YnVja2V0ZWVy
 
@@ -247,6 +247,25 @@ data:
     UNLOCK TABLES;
 
     --
+    -- Table structure for table `organization`
+    --
+
+    DROP TABLE IF EXISTS `organization`;
+    CREATE TABLE IF NOT EXISTS `organization` (
+      `id`          VARCHAR(255) NOT NULL,
+      `name`        VARCHAR(255) NOT NULL,
+      `url_code`    VARCHAR(255) NOT NULL,
+      `description` TEXT         NOT NULL,
+      `disabled`    TINYINT(1)   NOT NULL DEFAULT '0',
+      `archived`    TINYINT(1)   NOT NULL DEFAULT '0',
+      `trial`       TINYINT(1)   NOT NULL DEFAULT '0',
+      `created_at`  BIGINT(20)   NOT NULL,
+      `updated_at`  BIGINT(20)   NOT NULL,
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `unique_url_code` (`url_code`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+    --
     -- Table structure for table `environment_v2`
     --
 
@@ -257,6 +276,7 @@ data:
       `url_code` varchar(255) COLLATE utf8mb4_bin NOT NULL,
       `description` text COLLATE utf8mb4_bin NOT NULL,
       `project_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `organization_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
       `archived` tinyint(1) NOT NULL DEFAULT '0',
       `created_at` bigint NOT NULL,
       `updated_at` bigint NOT NULL,
@@ -270,7 +290,7 @@ data:
     --
 
     LOCK TABLES `environment_v2` WRITE;
-    INSERT INTO `environment_v2` VALUES ('e2e','e2e','e2e','Description 1693543371','default',0,1570007450,1693543371);
+    INSERT INTO `environment_v2` VALUES ('e2e','e2e','e2e','Description 1693543371','default','',0,1570007450,1693543371);
     UNLOCK TABLES;
 
     --
@@ -522,3 +542,29 @@ data:
       PRIMARY KEY (`id`),
       KEY `idx_environment_namespace` (`environment_namespace`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+
+    --
+    -- Table structure for table `flag_trigger`
+    --
+
+    DROP TABLE IF EXISTS `flag_trigger`;
+    create table flag_trigger
+    (
+        id                    varchar(255)            not null,
+        feature_id            varchar(255)            not null,
+        environment_namespace varchar(255)            not null,
+        type                  int                     not null,
+        action                tinyint(1) not null,
+        description           text                    not null,
+        trigger_count         int                     not null,
+        last_triggered_at     bigint                  not null,
+        uuid                  varchar(512) default '' not null,
+        token                 varchar(512) default '' not null,
+        disabled              tinyint(1) default 0 not null,
+        created_at            bigint                  not null,
+        updated_at            bigint                  not null,
+        primary key (id, environment_namespace),
+        constraint foreign_flag_triggers_feature_id_environment_namespace
+            foreign key (feature_id, environment_namespace) references feature (id, environment_namespace)
+    ) collate = utf8mb4_bin;
