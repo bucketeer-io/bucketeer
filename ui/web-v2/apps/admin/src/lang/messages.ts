@@ -569,6 +569,31 @@ export const messages = {
       id: 'trigger.triggerUrlDescription',
       defaultMessage: 'Once you leave this page, the URL will be hidden.',
     }),
+    deleteTriggerDialogTitle: defineMessage({
+      id: 'trigger.deleteTriggerDialogTitle',
+      defaultMessage: 'Delete Trigger',
+    }),
+    deleteTriggerDialogMessage: defineMessage({
+      id: 'trigger.deleteTriggerDialogMessage',
+      defaultMessage: 'The trigger will be deleted permanently.',
+    }),
+    deleteTriggerDialogBtnLabel: defineMessage({
+      id: 'trigger.deleteTriggerDialogBtnTxt',
+      defaultMessage: 'Delete',
+    }),
+    resetTriggerDialogTitle: defineMessage({
+      id: 'trigger.resetTriggerDialogTitle',
+      defaultMessage: 'Reset Trigger URL',
+    }),
+    resetTriggerDialogMessage: defineMessage({
+      id: 'trigger.resetTriggerDialogMessage',
+      defaultMessage:
+        'The current URL will become invalid. Ensure that you copy and save the new URL.',
+    }),
+    resetTriggerDialogBtnLabel: defineMessage({
+      id: 'trigger.resetTriggerDialogBtnLabel',
+      defaultMessage: 'Reset',
+    }),
   },
   maintainer: defineMessage({
     id: 'maintainer',

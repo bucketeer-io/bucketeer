@@ -30,7 +30,7 @@ import {
   XIcon,
 } from '@heroicons/react/outline';
 import { FileCopyOutlined } from '@material-ui/icons';
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -41,6 +41,8 @@ import { CopyChip } from '../CopyChip';
 import { DetailSkeleton } from '../DetailSkeleton';
 import { RelativeDateText } from '../RelativeDateText';
 import { Select } from '../Select';
+import { TriggerDeleteDialog } from '../TriggerDeleteDialog';
+import { TriggerResetDialog } from '../TriggerResetDialog';
 
 const triggerTypeOptions = [
   {
@@ -75,6 +77,10 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
     const methods = useFormContext();
     const { reset } = methods;
     const currentEnvironment = useCurrentEnvironment();
+    const [isDeleteConfirmDialogOpen, setIsDeleteConfirmDialogOpen] =
+      useState(false);
+    const [isResetConfirmDialogOpen, setIsResetConfirmDialogOpen] =
+      useState(false);
 
     const isLoading = useSelector<AppState, boolean>(
       (state) => state.flagTriggers.loading
@@ -85,7 +91,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
     >((state) => selectAll(state.flagTriggers), shallowEqual);
 
     const [isAddTriggerOpen, setIsAddTriggerOpen] = useState(false);
-    const [selectedFlagTriggerForUpdate, setSelectedFlagTriggerForUpdate] =
+    const [selectedFlagTrigger, setSelectedFlagTrigger] =
       useState<CreateFlagTriggerResponse.AsObject>(null);
     const [selectedFlagTriggerForCopyUrl, setSelectedFlagTriggerForCopyUrl] =
       useState<CopyUrl>(null);
@@ -103,23 +109,28 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       fetchFlagTriggers();
     }, []);
 
-    const handleDelete = useCallback((flagTriggerId) => {
+    const handleDelete = () => {
+      setIsDeleteConfirmDialogOpen(false);
+      setSelectedFlagTrigger(null);
       dispatch(
         deleteFlagTrigger({
-          id: flagTriggerId,
+          id: selectedFlagTrigger.flagTrigger.id,
           environmentNamespace: currentEnvironment.id,
         })
       ).then(() => fetchFlagTriggers());
-    }, []);
+    };
 
-    const handleReset = useCallback((flagTriggerId) => {
+    const handleReset = () => {
+      setIsResetConfirmDialogOpen(false);
+      setSelectedFlagTrigger(null);
+      setSelectedFlagTriggerForCopyUrl(null);
       dispatch(
         resetFlagTrigger({
-          id: flagTriggerId,
+          id: selectedFlagTrigger.flagTrigger.id,
           environmentNamespace: currentEnvironment.id,
         })
       ).then(() => fetchFlagTriggers());
-    }, []);
+    };
 
     const handleEnable = useCallback((flagTriggerId) => {
       dispatch(
@@ -148,249 +159,272 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
     }
 
     return (
-      <div className="px-10 py-6 bg-white">
-        <div className="shadow-md space-y-4 p-5 rounded-sm">
-          <p className="text-[#334155]">{f(messages.feature.tab.trigger)}</p>
-          <p className="text-sm text-[#728BA3]">
-            {f(messages.trigger.description)}
-          </p>
-          {flagTriggers.map((flagTriggerWithUrl) =>
-            flagTriggerWithUrl.flagTrigger.id ===
-            selectedFlagTriggerForUpdate?.flagTrigger?.id ? (
+      <>
+        <div className="px-10 py-6 bg-white">
+          <div className="shadow-md space-y-4 p-5 rounded-sm">
+            <p className="text-[#334155]">{f(messages.feature.tab.trigger)}</p>
+            <p className="text-sm text-[#728BA3]">
+              {f(messages.trigger.description)}
+            </p>
+            {flagTriggers.map((flagTriggerWithUrl) =>
+              flagTriggerWithUrl.flagTrigger.id ===
+                selectedFlagTrigger?.flagTrigger?.id &&
+              !isDeleteConfirmDialogOpen &&
+              !isResetConfirmDialogOpen ? (
+                <AddUpdateTrigger
+                  key={flagTriggerWithUrl.flagTrigger.id}
+                  close={() => {
+                    reset();
+                    setSelectedFlagTrigger(null);
+                  }}
+                  featureId={featureId}
+                  fetchFlagTriggers={fetchFlagTriggers}
+                  flagTriggerWithUrl={flagTriggerWithUrl}
+                  setSelectedFlagTriggerForCopyUrl={
+                    setSelectedFlagTriggerForCopyUrl
+                  }
+                />
+              ) : (
+                <div
+                  key={flagTriggerWithUrl.flagTrigger.id}
+                  className="p-5 border border-[#CBD5E1] rounded-lg flex space-x-3"
+                >
+                  <WebhookSvg className="w-6 h-6 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <p className="text-[#475569]">
+                        {
+                          triggerTypeOptions.find(
+                            (d) =>
+                              d.value ===
+                              flagTriggerWithUrl.flagTrigger.type.toString()
+                          )?.label
+                        }
+                      </p>
+                      <Popover className="relative flex">
+                        <Popover.Button>
+                          <div className="flex items-center cursor-pointer text-gray-500">
+                            <DotsHorizontalIcon width={20} />
+                          </div>
+                        </Popover.Button>
+                        <Popover.Panel className="absolute z-10 bg-white text-gray-500 right-0 top-7 rounded-lg p-1 whitespace-nowrap shadow-md">
+                          <button
+                            onClick={() => {
+                              setIsAddTriggerOpen(false);
+                              reset();
+                              setSelectedFlagTrigger(flagTriggerWithUrl);
+                            }}
+                            className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
+                          >
+                            <PencilAltIcon width={20} />
+                            <span className="text-sm">
+                              {f(messages.trigger.editDescription)}
+                            </span>
+                          </button>
+                          {flagTriggerWithUrl.flagTrigger.disabled ? (
+                            <button
+                              onClick={() =>
+                                handleEnable(flagTriggerWithUrl.flagTrigger.id)
+                              }
+                              className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
+                            >
+                              <CheckCircleIcon width={20} />
+                              <span className="text-sm">
+                                {f(messages.trigger.enableTrigger)}
+                              </span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                handleDisable(flagTriggerWithUrl.flagTrigger.id)
+                              }
+                              className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
+                            >
+                              <BanIcon width={20} />
+                              <span className="text-sm">
+                                {f(messages.trigger.disableTrigger)}
+                              </span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setIsResetConfirmDialogOpen(true);
+                              setSelectedFlagTrigger(flagTriggerWithUrl);
+                            }}
+                            className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
+                          >
+                            <RefreshIcon width={20} />
+                            <span className="text-sm">
+                              {f(messages.trigger.resetURL)}
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsDeleteConfirmDialogOpen(true);
+                              setSelectedFlagTrigger(flagTriggerWithUrl);
+                            }}
+                            className="flex space-x-3 w-full px-2 py-1.5 items-center text-red-500 hover:bg-red-100"
+                          >
+                            <TrashIcon width={20} />
+                            <span className="text-sm">
+                              {f(messages.trigger.deleteTrigger)}
+                            </span>
+                          </button>
+                        </Popover.Panel>
+                      </Popover>
+                    </div>
+                    <p className="text-[#728BA3]">
+                      {flagTriggerWithUrl.flagTrigger.description}
+                    </p>
+                    <div className="pt-3 border-t border-gray-200">
+                      {selectedFlagTriggerForCopyUrl?.id ===
+                      flagTriggerWithUrl.flagTrigger.id ? (
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span>{f(messages.trigger.triggerURL)}</span>
+                            <div className="flex space-x-4 text-gray-400">
+                              <CopyChip
+                                key={selectedFlagTriggerForCopyUrl.url}
+                                text={selectedFlagTriggerForCopyUrl.url}
+                              >
+                                <FileCopyOutlined fontSize="small" />
+                              </CopyChip>
+                              <XIcon
+                                width={22}
+                                className="cursor-pointer"
+                                onClick={() =>
+                                  setSelectedFlagTriggerForCopyUrl(null)
+                                }
+                              />
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-500 break-words">
+                            {selectedFlagTriggerForCopyUrl.url}
+                          </div>
+                          <div className="bg-yellow-50 p-4 border-l-4 border-yellow-400">
+                            <div className="flex">
+                              <div className="flex-shrink-0">
+                                <InformationCircleIcon
+                                  className="h-5 w-5 text-yellow-400"
+                                  aria-hidden="true"
+                                />
+                              </div>
+                              <div className="ml-3 flex-1">
+                                <p className="text-sm text-yellow-700">
+                                  <p className="font-medium">
+                                    {f(messages.trigger.triggerUrlTitle)}
+                                  </p>
+                                  <p>
+                                    {f(messages.trigger.triggerUrlDescription)}
+                                  </p>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between">
+                          <div>
+                            <p className="text-gray-400 uppercase text-sm">
+                              {f(messages.trigger.action)}
+                            </p>
+                            <p className="text-gray-700 mt-1">
+                              {FlagTrigger.Action.ACTION_OFF ===
+                                flagTriggerWithUrl.flagTrigger.action &&
+                                f(messages.trigger.turnTheFlagOFF)}
+                              {FlagTrigger.Action.ACTION_ON ===
+                                flagTriggerWithUrl.flagTrigger.action &&
+                                f(messages.trigger.turnTheFlagON)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400 uppercase text-sm">
+                              {f(messages.trigger.triggerURL)}
+                            </p>
+                            <p className="text-gray-700 mt-1">
+                              {flagTriggerWithUrl.url}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400 uppercase text-sm">
+                              {f(messages.trigger.triggeredTimes)}
+                            </p>
+                            <p className="text-gray-700 mt-1">
+                              {flagTriggerWithUrl.flagTrigger.triggerCount}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400 uppercase text-sm">
+                              {f(messages.trigger.lastTriggered)}
+                            </p>
+                            <p className="text-gray-700 mt-1">
+                              {flagTriggerWithUrl.flagTrigger
+                                .lastTriggeredAt ? (
+                                <RelativeDateText
+                                  date={
+                                    new Date(
+                                      flagTriggerWithUrl.flagTrigger
+                                        .lastTriggeredAt * 1000
+                                    )
+                                  }
+                                />
+                              ) : (
+                                '-'
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
+            {isAddTriggerOpen && (
               <AddUpdateTrigger
-                key={flagTriggerWithUrl.flagTrigger.id}
                 close={() => {
                   reset();
-                  setSelectedFlagTriggerForUpdate(null);
+                  setIsAddTriggerOpen(false);
                 }}
                 featureId={featureId}
                 fetchFlagTriggers={fetchFlagTriggers}
-                flagTriggerWithUrl={flagTriggerWithUrl}
                 setSelectedFlagTriggerForCopyUrl={
                   setSelectedFlagTriggerForCopyUrl
                 }
               />
-            ) : (
-              <div
-                key={flagTriggerWithUrl.flagTrigger.id}
-                className="p-5 border border-[#CBD5E1] rounded-lg flex space-x-3"
+            )}
+            {(!isAddTriggerOpen || selectedFlagTrigger) && (
+              <button
+                onClick={() => {
+                  reset();
+                  setSelectedFlagTrigger(null);
+                  setIsAddTriggerOpen(true);
+                }}
+                className="text-primary flex items-center space-x-2 py-1"
               >
-                <WebhookSvg className="w-6 h-6 flex-shrink-0" />
-                <div className="flex-1">
-                  <div className="flex justify-between">
-                    <p className="text-[#475569]">
-                      {
-                        triggerTypeOptions.find(
-                          (d) =>
-                            d.value ===
-                            flagTriggerWithUrl.flagTrigger.type.toString()
-                        )?.label
-                      }
-                    </p>
-                    <Popover className="relative flex">
-                      <Popover.Button>
-                        <div className="flex items-center cursor-pointer text-gray-500">
-                          <DotsHorizontalIcon width={20} />
-                        </div>
-                      </Popover.Button>
-                      <Popover.Panel className="absolute z-10 bg-white text-gray-500 right-0 top-7 rounded-lg p-1 whitespace-nowrap shadow-md">
-                        <button
-                          onClick={() => {
-                            setIsAddTriggerOpen(false);
-                            reset();
-                            setSelectedFlagTriggerForUpdate(flagTriggerWithUrl);
-                          }}
-                          className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
-                        >
-                          <PencilAltIcon width={20} />
-                          <span className="text-sm">
-                            {f(messages.trigger.editDescription)}
-                          </span>
-                        </button>
-                        {flagTriggerWithUrl.flagTrigger.disabled ? (
-                          <button
-                            onClick={() =>
-                              handleEnable(flagTriggerWithUrl.flagTrigger.id)
-                            }
-                            className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
-                          >
-                            <CheckCircleIcon width={20} />
-                            <span className="text-sm">
-                              {f(messages.trigger.enableTrigger)}
-                            </span>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() =>
-                              handleDisable(flagTriggerWithUrl.flagTrigger.id)
-                            }
-                            className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
-                          >
-                            <BanIcon width={20} />
-                            <span className="text-sm">
-                              {f(messages.trigger.disableTrigger)}
-                            </span>
-                          </button>
-                        )}
-                        <button
-                          onClick={() =>
-                            handleReset(flagTriggerWithUrl.flagTrigger.id)
-                          }
-                          className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
-                        >
-                          <RefreshIcon width={20} />
-                          <span className="text-sm">
-                            {f(messages.trigger.resetURL)}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDelete(flagTriggerWithUrl.flagTrigger.id)
-                          }
-                          className="flex space-x-3 w-full px-2 py-1.5 items-center text-red-500 hover:bg-red-100"
-                        >
-                          <TrashIcon width={20} />
-                          <span className="text-sm">
-                            {f(messages.trigger.deleteTrigger)}
-                          </span>
-                        </button>
-                      </Popover.Panel>
-                    </Popover>
-                  </div>
-                  <p className="text-[#728BA3]">
-                    {flagTriggerWithUrl.flagTrigger.description}
-                  </p>
-                  <div className="pt-3 border-t border-gray-200">
-                    {selectedFlagTriggerForCopyUrl?.id ===
-                    flagTriggerWithUrl.flagTrigger.id ? (
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span>{f(messages.trigger.triggerURL)}</span>
-                          <div className="flex space-x-4 text-gray-400">
-                            <CopyChip
-                              key={selectedFlagTriggerForCopyUrl.url}
-                              text={selectedFlagTriggerForCopyUrl.url}
-                            >
-                              <FileCopyOutlined fontSize="small" />
-                            </CopyChip>
-                            <XIcon
-                              width={22}
-                              className="cursor-pointer"
-                              onClick={() =>
-                                setSelectedFlagTriggerForCopyUrl(null)
-                              }
-                            />
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-500 break-words">
-                          {selectedFlagTriggerForCopyUrl.url}
-                        </div>
-                        <div className="bg-yellow-50 p-4 border-l-4 border-yellow-400">
-                          <div className="flex">
-                            <div className="flex-shrink-0">
-                              <InformationCircleIcon
-                                className="h-5 w-5 text-yellow-400"
-                                aria-hidden="true"
-                              />
-                            </div>
-                            <div className="ml-3 flex-1">
-                              <p className="text-sm text-yellow-700">
-                                <p className="font-medium">
-                                  {f(messages.trigger.triggerUrlTitle)}
-                                </p>
-                                <p>
-                                  {f(messages.trigger.triggerUrlDescription)}
-                                </p>
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex justify-between">
-                        <div>
-                          <p className="text-gray-400 uppercase text-sm">
-                            {f(messages.trigger.action)}
-                          </p>
-                          <p className="text-gray-700 mt-1">
-                            {FlagTrigger.Action.ACTION_OFF ===
-                              flagTriggerWithUrl.flagTrigger.action &&
-                              f(messages.trigger.turnTheFlagOFF)}
-                            {FlagTrigger.Action.ACTION_ON ===
-                              flagTriggerWithUrl.flagTrigger.action &&
-                              f(messages.trigger.turnTheFlagON)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 uppercase text-sm">
-                            {f(messages.trigger.triggerURL)}
-                          </p>
-                          <p className="text-gray-700 mt-1">
-                            {flagTriggerWithUrl.url}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 uppercase text-sm">
-                            {f(messages.trigger.triggeredTimes)}
-                          </p>
-                          <p className="text-gray-700 mt-1">
-                            {flagTriggerWithUrl.flagTrigger.triggerCount}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 uppercase text-sm">
-                            {f(messages.trigger.lastTriggered)}
-                          </p>
-                          <p className="text-gray-700 mt-1">
-                            {flagTriggerWithUrl.flagTrigger.lastTriggeredAt ? (
-                              <RelativeDateText
-                                date={
-                                  new Date(
-                                    flagTriggerWithUrl.flagTrigger
-                                      .lastTriggeredAt * 1000
-                                  )
-                                }
-                              />
-                            ) : (
-                              '-'
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          )}
-          {isAddTriggerOpen && (
-            <AddUpdateTrigger
-              close={() => {
-                reset();
-                setIsAddTriggerOpen(false);
-              }}
-              featureId={featureId}
-              fetchFlagTriggers={fetchFlagTriggers}
-              setSelectedFlagTriggerForCopyUrl={
-                setSelectedFlagTriggerForCopyUrl
-              }
-            />
-          )}
-          {(!isAddTriggerOpen || selectedFlagTriggerForUpdate) && (
-            <button
-              onClick={() => {
-                reset();
-                setSelectedFlagTriggerForUpdate(null);
-                setIsAddTriggerOpen(true);
-              }}
-              className="text-primary flex items-center space-x-2 py-1"
-            >
-              <PlusIcon width={20} />
-              <span>{f(messages.trigger.addTrigger)}</span>
-            </button>
-          )}
+                <PlusIcon width={20} />
+                <span>{f(messages.trigger.addTrigger)}</span>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+        <TriggerDeleteDialog
+          open={isDeleteConfirmDialogOpen}
+          onConfirm={handleDelete}
+          onClose={() => {
+            setIsDeleteConfirmDialogOpen(false);
+            setSelectedFlagTrigger(null);
+          }}
+        />
+        <TriggerResetDialog
+          open={isResetConfirmDialogOpen}
+          onConfirm={handleReset}
+          onClose={() => {
+            setIsResetConfirmDialogOpen(false);
+            setSelectedFlagTrigger(null);
+          }}
+        />
+      </>
     );
   }
 );
