@@ -799,9 +799,9 @@ func (s *FeatureService) FlagTriggerWebhook(
 	request *featureproto.FlagTriggerWebhookRequest,
 ) (*featureproto.FlagTriggerWebhookResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	secret := request.GetSecret()
+	token := request.GetToken()
 	resp := &featureproto.FlagTriggerWebhookResponse{}
-	if secret == "" {
+	if token == "" {
 		s.logger.Error(
 			"Failed to get secret from query",
 			log.FieldsFromImcomingContext(ctx)...,
@@ -816,7 +816,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 		return nil, dt.Err()
 	}
 	storage := v2fs.NewFlagTriggerStorage(s.mysqlClient)
-	trigger, err := storage.GetFlagTriggerByToken(ctx, secret)
+	trigger, err := storage.GetFlagTriggerByToken(ctx, token)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get flag trigger",

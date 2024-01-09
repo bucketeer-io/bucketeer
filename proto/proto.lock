@@ -9486,6 +9486,11 @@
                 "id": 9,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "token",
+                "type": "string"
               }
             ]
           },
@@ -9510,6 +9515,11 @@
               {
                 "id": 4,
                 "name": "uuid",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "token",
                 "type": "string"
               }
             ]
@@ -15284,7 +15294,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "secret",
+                "name": "token",
                 "type": "string"
               }
             ]

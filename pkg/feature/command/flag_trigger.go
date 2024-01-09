@@ -88,6 +88,7 @@ func (f *flagTriggerCommandHandler) create(
 		Uuid:                 f.flagTrigger.Uuid,
 		CreatedAt:            f.flagTrigger.CreatedAt,
 		UpdatedAt:            f.flagTrigger.UpdatedAt,
+		Token:                f.flagTrigger.Token,
 	})
 }
 
@@ -106,6 +107,7 @@ func (f *flagTriggerCommandHandler) reset(
 		FeatureId:            f.flagTrigger.FeatureId,
 		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
 		Uuid:                 f.flagTrigger.Uuid,
+		Token:                f.flagTrigger.Token,
 	})
 }
 

@@ -4397,6 +4397,9 @@ export class FlagTriggerCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getToken(): string;
+  setToken(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerCreatedEvent.AsObject;
   static toObject(includeInstance: boolean, msg: FlagTriggerCreatedEvent): FlagTriggerCreatedEvent.AsObject;
@@ -4418,6 +4421,7 @@ export namespace FlagTriggerCreatedEvent {
     uuid: string,
     createdAt: number,
     updatedAt: number,
+    token: string,
   }
 }
 
@@ -4433,6 +4437,9 @@ export class FlagTriggerResetEvent extends jspb.Message {
 
   getUuid(): string;
   setUuid(value: string): void;
+
+  getToken(): string;
+  setToken(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerResetEvent.AsObject;
@@ -4450,6 +4457,7 @@ export namespace FlagTriggerResetEvent {
     featureId: string,
     environmentNamespace: string,
     uuid: string,
+    token: string,
   }
 }
 

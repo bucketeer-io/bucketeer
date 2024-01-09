@@ -1075,6 +1075,7 @@ message FlagTriggerCreatedEvent {
   string uuid = 7;
   int64 created_at = 8;
   int64 updated_at = 9;
+  string token = 10;
 }
 
 message FlagTriggerResetEvent {
@@ -1082,6 +1083,7 @@ message FlagTriggerResetEvent {
   string feature_id = 2;
   string environment_namespace = 3;
   string uuid = 4;
+  string token = 5;
 }
 
 message FlagTriggerDescriptionChangedEvent {

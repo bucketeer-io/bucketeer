@@ -429,7 +429,7 @@ message ListFlagTriggersResponse {
 }
 
 message FlagTriggerWebhookRequest {
-  string secret = 1;
+  string token = 1;
 }
 
 message FlagTriggerWebhookResponse {}
