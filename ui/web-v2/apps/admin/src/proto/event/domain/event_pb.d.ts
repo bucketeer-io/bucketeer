@@ -4388,17 +4388,14 @@ export class FlagTriggerCreatedEvent extends jspb.Message {
   getDescription(): string;
   setDescription(value: string): void;
 
-  getUuid(): string;
-  setUuid(value: string): void;
+  getToken(): string;
+  setToken(value: string): void;
 
   getCreatedAt(): number;
   setCreatedAt(value: number): void;
 
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
-
-  getToken(): string;
-  setToken(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerCreatedEvent.AsObject;
@@ -4418,10 +4415,9 @@ export namespace FlagTriggerCreatedEvent {
     type: proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap],
     action: proto_feature_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.ActionMap],
     description: string,
-    uuid: string,
+    token: string,
     createdAt: number,
     updatedAt: number,
-    token: string,
   }
 }
 
@@ -4434,9 +4430,6 @@ export class FlagTriggerResetEvent extends jspb.Message {
 
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
-
-  getUuid(): string;
-  setUuid(value: string): void;
 
   getToken(): string;
   setToken(value: string): void;
@@ -4456,7 +4449,6 @@ export namespace FlagTriggerResetEvent {
     id: string,
     featureId: string,
     environmentNamespace: string,
-    uuid: string,
     token: string,
   }
 }

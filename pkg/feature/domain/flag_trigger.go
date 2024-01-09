@@ -37,10 +37,6 @@ func NewFlagTrigger(
 	if err != nil {
 		return nil, err
 	}
-	triggerUUID, err := uuid.NewUUID()
-	if err != nil {
-		return nil, err
-	}
 	return &FlagTrigger{&proto.FlagTrigger{
 		Id:                   triggerID.String(),
 		FeatureId:            cmd.FeatureId,
@@ -48,7 +44,6 @@ func NewFlagTrigger(
 		Type:                 cmd.Type,
 		Action:               cmd.Action,
 		Description:          cmd.Description,
-		Uuid:                 triggerUUID.String(),
 		Disabled:             false,
 		CreatedAt:            now,
 		UpdatedAt:            now,
@@ -73,16 +68,6 @@ func (ft *FlagTrigger) Enable() error {
 	return nil
 }
 
-func (ft *FlagTrigger) ResetUUID() error {
-	newTriggerUuid, err := uuid.NewUUID()
-	if err != nil {
-		return err
-	}
-	ft.Uuid = newTriggerUuid.String()
-	ft.UpdatedAt = time.Now().Unix()
-	return nil
-}
-
 func (ft *FlagTrigger) UpdateTriggerUsage() error {
 	unix := time.Now().Unix()
 	ft.LastTriggeredAt = unix
@@ -92,11 +77,15 @@ func (ft *FlagTrigger) UpdateTriggerUsage() error {
 }
 
 func (ft *FlagTrigger) GenerateToken() error {
+	newTriggerUuid, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
 	secret := NewFlagTriggerSecret(
 		ft.GetId(),
 		ft.GetFeatureId(),
 		ft.GetEnvironmentNamespace(),
-		ft.GetUuid(),
+		newTriggerUuid.String(),
 		int(ft.GetAction()),
 	)
 	encoded, err := secret.Marshal()

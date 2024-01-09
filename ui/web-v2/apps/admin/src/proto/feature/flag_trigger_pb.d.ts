@@ -28,8 +28,8 @@ export class FlagTrigger extends jspb.Message {
   getLastTriggeredAt(): number;
   setLastTriggeredAt(value: number): void;
 
-  getUuid(): string;
-  setUuid(value: string): void;
+  getToken(): string;
+  setToken(value: string): void;
 
   getDisabled(): boolean;
   setDisabled(value: boolean): void;
@@ -39,9 +39,6 @@ export class FlagTrigger extends jspb.Message {
 
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
-
-  getToken(): string;
-  setToken(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTrigger.AsObject;
@@ -63,11 +60,10 @@ export namespace FlagTrigger {
     description: string,
     triggerCount: number,
     lastTriggeredAt: number,
-    uuid: string,
+    token: string,
     disabled: boolean,
     createdAt: number,
     updatedAt: number,
-    token: string,
   }
 
   export interface TypeMap {

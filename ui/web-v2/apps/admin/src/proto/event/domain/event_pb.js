@@ -32427,10 +32427,9 @@ proto.bucketeer.event.domain.FlagTriggerCreatedEvent.toObject = function(include
     type: jspb.Message.getFieldWithDefault(msg, 4, 0),
     action: jspb.Message.getFieldWithDefault(msg, 5, 0),
     description: jspb.Message.getFieldWithDefault(msg, 6, ""),
-    uuid: jspb.Message.getFieldWithDefault(msg, 7, ""),
+    token: jspb.Message.getFieldWithDefault(msg, 7, ""),
     createdAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
-    updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0),
-    token: jspb.Message.getFieldWithDefault(msg, 10, "")
+    updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0)
   };
 
   if (includeInstance) {
@@ -32493,7 +32492,7 @@ proto.bucketeer.event.domain.FlagTriggerCreatedEvent.deserializeBinaryFromReader
       break;
     case 7:
       var value = /** @type {string} */ (reader.readString());
-      msg.setUuid(value);
+      msg.setToken(value);
       break;
     case 8:
       var value = /** @type {number} */ (reader.readInt64());
@@ -32502,10 +32501,6 @@ proto.bucketeer.event.domain.FlagTriggerCreatedEvent.deserializeBinaryFromReader
     case 9:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setUpdatedAt(value);
-      break;
-    case 10:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setToken(value);
       break;
     default:
       reader.skipField();
@@ -32578,7 +32573,7 @@ proto.bucketeer.event.domain.FlagTriggerCreatedEvent.serializeBinaryToWriter = f
       f
     );
   }
-  f = message.getUuid();
+  f = message.getToken();
   if (f.length > 0) {
     writer.writeString(
       7,
@@ -32596,13 +32591,6 @@ proto.bucketeer.event.domain.FlagTriggerCreatedEvent.serializeBinaryToWriter = f
   if (f !== 0) {
     writer.writeInt64(
       9,
-      f
-    );
-  }
-  f = message.getToken();
-  if (f.length > 0) {
-    writer.writeString(
-      10,
       f
     );
   }
@@ -32718,10 +32706,10 @@ proto.bucketeer.event.domain.FlagTriggerCreatedEvent.prototype.setDescription = 
 
 
 /**
- * optional string uuid = 7;
+ * optional string token = 7;
  * @return {string}
  */
-proto.bucketeer.event.domain.FlagTriggerCreatedEvent.prototype.getUuid = function() {
+proto.bucketeer.event.domain.FlagTriggerCreatedEvent.prototype.getToken = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
 };
 
@@ -32730,7 +32718,7 @@ proto.bucketeer.event.domain.FlagTriggerCreatedEvent.prototype.getUuid = functio
  * @param {string} value
  * @return {!proto.bucketeer.event.domain.FlagTriggerCreatedEvent} returns this
  */
-proto.bucketeer.event.domain.FlagTriggerCreatedEvent.prototype.setUuid = function(value) {
+proto.bucketeer.event.domain.FlagTriggerCreatedEvent.prototype.setToken = function(value) {
   return jspb.Message.setProto3StringField(this, 7, value);
 };
 
@@ -32771,24 +32759,6 @@ proto.bucketeer.event.domain.FlagTriggerCreatedEvent.prototype.setUpdatedAt = fu
 };
 
 
-/**
- * optional string token = 10;
- * @return {string}
- */
-proto.bucketeer.event.domain.FlagTriggerCreatedEvent.prototype.getToken = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.event.domain.FlagTriggerCreatedEvent} returns this
- */
-proto.bucketeer.event.domain.FlagTriggerCreatedEvent.prototype.setToken = function(value) {
-  return jspb.Message.setProto3StringField(this, 10, value);
-};
-
-
 
 
 
@@ -32824,8 +32794,7 @@ proto.bucketeer.event.domain.FlagTriggerResetEvent.toObject = function(includeIn
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
     featureId: jspb.Message.getFieldWithDefault(msg, 2, ""),
     environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    uuid: jspb.Message.getFieldWithDefault(msg, 4, ""),
-    token: jspb.Message.getFieldWithDefault(msg, 5, "")
+    token: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -32875,10 +32844,6 @@ proto.bucketeer.event.domain.FlagTriggerResetEvent.deserializeBinaryFromReader =
       msg.setEnvironmentNamespace(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setUuid(value);
-      break;
-    case 5:
       var value = /** @type {string} */ (reader.readString());
       msg.setToken(value);
       break;
@@ -32932,17 +32897,10 @@ proto.bucketeer.event.domain.FlagTriggerResetEvent.serializeBinaryToWriter = fun
       f
     );
   }
-  f = message.getUuid();
-  if (f.length > 0) {
-    writer.writeString(
-      4,
-      f
-    );
-  }
   f = message.getToken();
   if (f.length > 0) {
     writer.writeString(
-      5,
+      4,
       f
     );
   }
@@ -33004,10 +32962,10 @@ proto.bucketeer.event.domain.FlagTriggerResetEvent.prototype.setEnvironmentNames
 
 
 /**
- * optional string uuid = 4;
+ * optional string token = 4;
  * @return {string}
  */
-proto.bucketeer.event.domain.FlagTriggerResetEvent.prototype.getUuid = function() {
+proto.bucketeer.event.domain.FlagTriggerResetEvent.prototype.getToken = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
 };
 
@@ -33016,26 +32974,8 @@ proto.bucketeer.event.domain.FlagTriggerResetEvent.prototype.getUuid = function(
  * @param {string} value
  * @return {!proto.bucketeer.event.domain.FlagTriggerResetEvent} returns this
  */
-proto.bucketeer.event.domain.FlagTriggerResetEvent.prototype.setUuid = function(value) {
-  return jspb.Message.setProto3StringField(this, 4, value);
-};
-
-
-/**
- * optional string token = 5;
- * @return {string}
- */
-proto.bucketeer.event.domain.FlagTriggerResetEvent.prototype.getToken = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.event.domain.FlagTriggerResetEvent} returns this
- */
 proto.bucketeer.event.domain.FlagTriggerResetEvent.prototype.setToken = function(value) {
-  return jspb.Message.setProto3StringField(this, 5, value);
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 

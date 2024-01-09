@@ -85,7 +85,6 @@ func (f *flagTriggerCommandHandler) create(
 		Type:                 f.flagTrigger.Type,
 		Action:               f.flagTrigger.Action,
 		Description:          f.flagTrigger.Description,
-		Uuid:                 f.flagTrigger.Uuid,
 		CreatedAt:            f.flagTrigger.CreatedAt,
 		UpdatedAt:            f.flagTrigger.UpdatedAt,
 		Token:                f.flagTrigger.Token,
@@ -96,9 +95,6 @@ func (f *flagTriggerCommandHandler) reset(
 	ctx context.Context,
 	cmd *proto.ResetFlagTriggerCommand,
 ) error {
-	if err := f.flagTrigger.ResetUUID(); err != nil {
-		return err
-	}
 	if err := f.flagTrigger.GenerateToken(); err != nil {
 		return err
 	}
@@ -106,7 +102,6 @@ func (f *flagTriggerCommandHandler) reset(
 		Id:                   f.flagTrigger.Id,
 		FeatureId:            f.flagTrigger.FeatureId,
 		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
-		Uuid:                 f.flagTrigger.Uuid,
 		Token:                f.flagTrigger.Token,
 	})
 }

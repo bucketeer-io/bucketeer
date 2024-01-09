@@ -1072,18 +1072,16 @@ message FlagTriggerCreatedEvent {
   bucketeer.feature.FlagTrigger.Type type = 4;
   bucketeer.feature.FlagTrigger.Action action = 5;
   string description = 6;
-  string uuid = 7;
+  string token = 7;
   int64 created_at = 8;
   int64 updated_at = 9;
-  string token = 10;
 }
 
 message FlagTriggerResetEvent {
   string id = 1;
   string feature_id = 2;
   string environment_namespace = 3;
-  string uuid = 4;
-  string token = 5;
+  string token = 4;
 }
 
 message FlagTriggerDescriptionChangedEvent {
