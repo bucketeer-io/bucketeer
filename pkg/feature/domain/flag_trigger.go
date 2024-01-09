@@ -81,19 +81,8 @@ func (ft *FlagTrigger) GenerateToken() error {
 	if err != nil {
 		return err
 	}
-	secret := NewFlagTriggerSecret(
-		ft.GetId(),
-		ft.GetFeatureId(),
-		ft.GetEnvironmentNamespace(),
-		newTriggerUuid.String(),
-		int(ft.GetAction()),
-	)
-	encoded, err := secret.Marshal()
-	if err != nil {
-		return err
-	}
 	h := sha256.New()
-	h.Write(encoded)
+	h.Write([]byte(newTriggerUuid.String()))
 	hashed := h.Sum(nil)
 	ft.Token = base64.RawURLEncoding.EncodeToString(hashed)
 	return nil
