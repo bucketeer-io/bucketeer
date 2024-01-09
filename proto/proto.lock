@@ -15522,7 +15522,7 @@
                     "aggregated": [
                       {
                         "name": "post",
-                        "value": "/webhook/{secret}"
+                        "value": "/webhook/{token}"
                       }
                     ]
                   }
