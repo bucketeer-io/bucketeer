@@ -173,13 +173,13 @@ func (p *persister) Run() error {
 				continue
 			}
 			if exist {
-				p.logger.Debug("There are not been triggered auto ops rules")
+				p.logger.Debug("There are untriggered auto ops rules")
 				if !p.IsRunning() {
 					subscription <- struct{}{}
 					p.logger.Debug("Puller is not running, start pulling messages")
 				}
 			} else {
-				p.logger.Debug("There are no not been triggered auto ops rules")
+				p.logger.Debug("There are no untriggered auto ops rules")
 				if p.IsRunning() {
 					p.unsubscribe()
 					err := p.group.Wait()
@@ -193,9 +193,9 @@ func (p *persister) Run() error {
 			}
 			timer.Reset(p.opts.checkInterval)
 		case <-p.ctx.Done():
-			p.logger.Info("Context is done")
+			p.logger.Debug("Context is done")
 			if p.IsRunning() {
-				p.logger.Info("Puller is running, stop pulling messages")
+				p.logger.Debug("Puller is running, stop pulling messages")
 				p.unsubscribe()
 				err := p.group.Wait()
 				if err != nil {

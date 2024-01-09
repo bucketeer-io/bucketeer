@@ -208,9 +208,9 @@ func (p *PersisterDWH) Run() error {
 			}
 			timer.Reset(p.opts.checkInterval)
 		case <-p.ctx.Done():
-			p.logger.Info("Context is done")
+			p.logger.Debug("Context is done")
 			if p.IsRunning() {
-				p.logger.Info("Puller is running, stop pulling messages")
+				p.logger.Debug("Puller is running, stop pulling messages")
 				p.unsubscribe()
 				err := p.group.Wait()
 				if err != nil {
