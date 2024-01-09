@@ -35,6 +35,7 @@ var (
 	statusMissingAPIKeyName       = gstatus.New(codes.InvalidArgument, "account: apikey name must be not empty")
 	statusInvalidOrderBy          = gstatus.New(codes.InvalidArgument, "account: order_by is invalid")
 	statusNotFound                = gstatus.New(codes.NotFound, "account: not found")
+	statusEnvironmentNotFound     = gstatus.New(codes.NotFound, "account: environment is not found")
 	statusAlreadyExists           = gstatus.New(codes.AlreadyExists, "account: already exists")
 	statusUnauthenticated         = gstatus.New(codes.Unauthenticated, "account: unauthenticated")
 	statusPermissionDenied        = gstatus.New(codes.PermissionDenied, "account: permission denied")

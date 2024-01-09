@@ -16,6 +16,7 @@ package domain
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -133,4 +134,185 @@ func TestDisableV2(t *testing.T) {
 	)
 	a.Disable()
 	assert.Equal(t, true, a.Disabled)
+}
+
+func TestConvertAccountV2(t *testing.T) {
+	now := time.Now().Unix()
+	patterns := []struct {
+		desc                     string
+		fromRole                 proto.Account_Role
+		expectedOrganizationRole proto.AccountV2_Role_Organization
+		expectedEnvironmentRole  proto.AccountV2_Role_Environment
+	}{
+		{
+			desc:                     "convert from viewer",
+			fromRole:                 proto.Account_VIEWER,
+			expectedOrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			expectedEnvironmentRole:  proto.AccountV2_Role_Environment_VIEWER,
+		},
+		{
+			desc:                     "convert from editor",
+			fromRole:                 proto.Account_EDITOR,
+			expectedOrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+			expectedEnvironmentRole:  proto.AccountV2_Role_Environment_EDITOR,
+		},
+		{
+			desc:                     "convert from owner",
+			fromRole:                 proto.Account_OWNER,
+			expectedOrganizationRole: proto.AccountV2_Role_Organization_ADMIN,
+			expectedEnvironmentRole:  proto.AccountV2_Role_Environment_EDITOR,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			from := &Account{&proto.Account{
+				Id:        "email",
+				Email:     "email",
+				Role:      proto.Account_UNASSIGNED,
+				CreatedAt: now,
+				UpdatedAt: now,
+			}}
+			from.Role = p.fromRole
+			expected := &AccountV2{
+				&proto.AccountV2{
+					Email:            "email",
+					Name:             "",
+					AvatarImageUrl:   "",
+					OrganizationId:   "organizationID",
+					OrganizationRole: proto.AccountV2_Role_Organization_UNASSIGNED,
+					EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "environmentID",
+							Role:          proto.AccountV2_Role_Environment_UNASSIGNED,
+						},
+					},
+					CreatedAt: now,
+					UpdatedAt: now,
+				},
+			}
+			expected.OrganizationRole = p.expectedOrganizationRole
+			expected.EnvironmentRoles[0].Role = p.expectedEnvironmentRole
+			actual := ConvertAccountV2(from, "environmentID", "organizationID")
+			assert.Equal(t, expected, actual)
+		})
+	}
+}
+
+func TestPatchAccountV2EnvironmentRoles(t *testing.T) {
+	now := time.Now().Unix()
+	patterns := []struct {
+		desc          string
+		EnvironmentID string
+		Role          proto.Account_Role
+		expectedRoles []*proto.AccountV2_EnvironmentRole
+	}{
+		{
+			desc:          "append a new role",
+			EnvironmentID: "environmentID2",
+			Role:          proto.Account_EDITOR,
+			expectedRoles: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID1",
+					Role:          proto.AccountV2_Role_Environment_VIEWER,
+				},
+				{
+					EnvironmentId: "environmentID2",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
+		},
+		{
+			desc:          "replace a role",
+			EnvironmentID: "environmentID1",
+			Role:          proto.Account_EDITOR,
+			expectedRoles: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID1",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
+		},
+		{
+			desc:          "no change",
+			EnvironmentID: "environmentID1",
+			Role:          proto.Account_VIEWER,
+			expectedRoles: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID1",
+					Role:          proto.AccountV2_Role_Environment_VIEWER,
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := &AccountV2{
+				&proto.AccountV2{
+					Email:            "email",
+					Name:             "",
+					AvatarImageUrl:   "",
+					OrganizationId:   "organizationID",
+					OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "environmentID1",
+							Role:          proto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					CreatedAt: now,
+					UpdatedAt: now,
+				},
+			}
+			actual.PatchAccountV2EnvironmentRoles(p.EnvironmentID, p.Role)
+			assert.Equal(t, p.expectedRoles, actual.EnvironmentRoles)
+		})
+	}
+}
+
+func TestRemoveAccountV2EnvironmentRole(t *testing.T) {
+	now := time.Now().Unix()
+	patterns := []struct {
+		desc          string
+		EnvironmentID string
+		expectedRoles []*proto.AccountV2_EnvironmentRole
+	}{
+		{
+			desc:          "remove a role",
+			EnvironmentID: "environmentID1",
+			expectedRoles: []*proto.AccountV2_EnvironmentRole{},
+		},
+		{
+			desc:          "no change",
+			EnvironmentID: "environmentID2",
+			expectedRoles: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID1",
+					Role:          proto.AccountV2_Role_Environment_VIEWER,
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := &AccountV2{
+				&proto.AccountV2{
+					Email:            "email",
+					Name:             "",
+					AvatarImageUrl:   "",
+					OrganizationId:   "organizationID",
+					OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "environmentID1",
+							Role:          proto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					CreatedAt: now,
+					UpdatedAt: now,
+				},
+			}
+			actual.RemoveAccountV2EnvironmentRole(p.EnvironmentID)
+			assert.Equal(t, p.expectedRoles, actual.EnvironmentRoles)
+		})
+	}
 }

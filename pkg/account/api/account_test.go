@@ -29,13 +29,14 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
+	ecmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
 func TestCreateAccountMySQL(t *testing.T) {
@@ -56,6 +57,13 @@ func TestCreateAccountMySQL(t *testing.T) {
 		})
 		require.NoError(t, err)
 		return st.Err()
+	}
+	envs := []*environmentproto.EnvironmentV2{
+		{
+			Id:             "ns0",
+			Name:           "env0",
+			OrganizationId: "org0",
+		},
 	}
 
 	patterns := []struct {
@@ -95,6 +103,13 @@ func TestCreateAccountMySQL(t *testing.T) {
 		{
 			desc: "errAlreadyExists_AdminAccount",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.Account{
@@ -117,6 +132,13 @@ func TestCreateAccountMySQL(t *testing.T) {
 		{
 			desc: "errAlreadyExists_EnvironmentAccount",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrAdminAccountNotFound)
@@ -134,6 +156,13 @@ func TestCreateAccountMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrAdminAccountNotFound)
@@ -154,6 +183,13 @@ func TestCreateAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrAdminAccountNotFound)
@@ -204,6 +240,13 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 		require.NoError(t, err)
 		return st.Err()
 	}
+	envs := []*environmentproto.EnvironmentV2{
+		{
+			Id:             "ns0",
+			Name:           "env0",
+			OrganizationId: "org0",
+		},
+	}
 
 	patterns := []struct {
 		desc        string
@@ -234,6 +277,13 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
@@ -251,6 +301,13 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
@@ -268,6 +325,13 @@ func TestChangeAccountRoleMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -315,6 +379,13 @@ func TestEnableAccountMySQL(t *testing.T) {
 		require.NoError(t, err)
 		return st.Err()
 	}
+	envs := []*environmentproto.EnvironmentV2{
+		{
+			Id:             "ns0",
+			Name:           "env0",
+			OrganizationId: "org0",
+		},
+	}
 
 	patterns := []struct {
 		desc        string
@@ -345,6 +416,13 @@ func TestEnableAccountMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
@@ -363,6 +441,13 @@ func TestEnableAccountMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
@@ -378,6 +463,13 @@ func TestEnableAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -423,6 +515,13 @@ func TestDisableAccountMySQL(t *testing.T) {
 		require.NoError(t, err)
 		return st.Err()
 	}
+	envs := []*environmentproto.EnvironmentV2{
+		{
+			Id:             "ns0",
+			Name:           "env0",
+			OrganizationId: "org0",
+		},
+	}
 
 	patterns := []struct {
 		desc        string
@@ -453,6 +552,13 @@ func TestDisableAccountMySQL(t *testing.T) {
 		{
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
@@ -468,6 +574,13 @@ func TestDisableAccountMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
@@ -483,6 +596,13 @@ func TestDisableAccountMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListEnvironmentsV2Response{
+					Environments: envs,
+					Cursor:       "1",
+					TotalCount:   1,
+				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
