@@ -543,6 +543,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		)
 		return nil, err
 	}
+	trigger.FlagTrigger.Token = ""
 	return &featureproto.ResetFlagTriggerResponse{
 		FlagTrigger: trigger.FlagTrigger,
 		Url:         triggerURL,
@@ -685,6 +686,7 @@ func (s *FeatureService) GetFlagTrigger(
 		)
 		return nil, err
 	}
+	trigger.FlagTrigger.Token = ""
 	return &featureproto.GetFlagTriggerResponse{
 		FlagTrigger: trigger.FlagTrigger,
 		Url:         triggerURL,
