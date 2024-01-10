@@ -63,69 +63,90 @@ func TestCheckRole(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	env := "ns0"
 
 	patterns := []struct {
+		desc                string
 		inputCtx            context.Context
-		inputRequiredRole   accountproto.Account_Role
-		inputGetAccountFunc func(email string) (*accountproto.GetAccountResponse, error)
+		inputRequiredRole   accountproto.AccountV2_Role_Environment
+		inputGetAccountFunc func(email string) (*accountproto.AccountV2, error)
 		expected            *eventproto.Editor
 		expectedErr         error
 	}{
 		{
+			desc:              "unauthenticated: no token",
 			inputCtx:          context.Background(),
-			inputRequiredRole: accountproto.Account_EDITOR,
+			inputRequiredRole: accountproto.AccountV2_Role_Environment_EDITOR,
 			expected:          nil,
 			expectedErr:       ErrUnauthenticated,
 		},
 		{
+			desc:              "unauthenticated: account not found",
 			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_UNASSIGNED}),
-			inputRequiredRole: accountproto.Account_EDITOR,
-			inputGetAccountFunc: func(email string) (*accountproto.GetAccountResponse, error) {
+			inputRequiredRole: accountproto.AccountV2_Role_Environment_EDITOR,
+			inputGetAccountFunc: func(email string) (*accountproto.AccountV2, error) {
 				return nil, status.Error(codes.NotFound, "")
 			},
 			expected:    nil,
 			expectedErr: ErrUnauthenticated,
 		},
 		{
+			desc:              "internalError",
 			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_UNASSIGNED}),
-			inputRequiredRole: accountproto.Account_EDITOR,
-			inputGetAccountFunc: func(email string) (*accountproto.GetAccountResponse, error) {
+			inputRequiredRole: accountproto.AccountV2_Role_Environment_EDITOR,
+			inputGetAccountFunc: func(email string) (*accountproto.AccountV2, error) {
 				return nil, status.Error(codes.Internal, "")
 			},
 			expected:    nil,
 			expectedErr: ErrInternal,
 		},
 		{
+			desc:              "permissionDenied",
 			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_UNASSIGNED}),
-			inputRequiredRole: accountproto.Account_EDITOR,
-			inputGetAccountFunc: func(email string) (*accountproto.GetAccountResponse, error) {
-				return &accountproto.GetAccountResponse{
-					Account: &accountproto.Account{Email: "test@example.com", Role: accountproto.Account_VIEWER},
-				}, nil
+			inputRequiredRole: accountproto.AccountV2_Role_Environment_EDITOR,
+			inputGetAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				resp := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+					Account: &accountproto.AccountV2{
+						Email:            "test@example.com",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
+					},
+				}
+				return resp.Account, nil
 			},
 			expected:    nil,
 			expectedErr: ErrPermissionDenied,
 		},
 		{
+			desc:              "success",
 			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_UNASSIGNED}),
-			inputRequiredRole: accountproto.Account_EDITOR,
-			inputGetAccountFunc: func(email string) (*accountproto.GetAccountResponse, error) {
-				return &accountproto.GetAccountResponse{
-					Account: &accountproto.Account{Email: "test@example.com", Role: accountproto.Account_EDITOR},
-				}, nil
+			inputRequiredRole: accountproto.AccountV2_Role_Environment_EDITOR,
+			inputGetAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				resp := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+					Account: &accountproto.AccountV2{
+						Email:            "test@example.com",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+							},
+						},
+					},
+				}
+				return resp.Account, nil
 			},
 			expected:    &eventproto.Editor{Email: "test@example.com", IsAdmin: false},
 			expectedErr: nil,
 		},
-		{
-			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_OWNER}),
-			inputRequiredRole: accountproto.Account_OWNER,
-			expected:          &eventproto.Editor{Email: "test@example.com", IsAdmin: true},
-			expectedErr:       nil,
-		},
 	}
 	for _, p := range patterns {
-		editor, err := CheckRole(p.inputCtx, p.inputRequiredRole, p.inputGetAccountFunc)
+		editor, err := CheckRole(p.inputCtx, p.inputRequiredRole, env, p.inputGetAccountFunc)
 		assert.Equal(t, p.expectedErr, err)
 		assert.Equal(t, p.expected, editor)
 	}

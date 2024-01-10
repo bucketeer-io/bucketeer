@@ -80,7 +80,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrInvalidCursor",
 			setup:       nil,
-			input:       &proto.ListAuditLogsRequest{Cursor: "XXX"},
+			input:       &proto.ListAuditLogsRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
 			expected:    nil,
 			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
@@ -91,7 +91,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
-			input:       &proto.ListAuditLogsRequest{},
+			input:       &proto.ListAuditLogsRequest{EnvironmentNamespace: "ns0"},
 			expected:    nil,
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -218,7 +218,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrInvalidCursor",
 			setup:       nil,
-			input:       &proto.ListFeatureHistoryRequest{Cursor: "XXX"},
+			input:       &proto.ListFeatureHistoryRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
 			expected:    nil,
 			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
@@ -229,7 +229,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
-			input:       &proto.ListFeatureHistoryRequest{},
+			input:       &proto.ListFeatureHistoryRequest{EnvironmentNamespace: "ns0"},
 			expected:    nil,
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -265,13 +265,19 @@ func newAuditLogService(t *testing.T, mockController *gomock.Controller) *auditl
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	accountClientMock := accountclientmock.NewMockClient(mockController)
-	ar := &accountproto.GetAccountResponse{
-		Account: &accountproto.Account{
-			Email: "email",
-			Role:  accountproto.Account_VIEWER,
+	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "ns0",
+					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
 		},
 	}
-	accountClientMock.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &auditlogService{
 		accountClient:     accountClientMock,
 		mysqlStorage:      v2alsmock.NewMockAuditLogStorage(mockController),
