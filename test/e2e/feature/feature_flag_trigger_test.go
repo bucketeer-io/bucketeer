@@ -80,7 +80,7 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		Id:                   createResp.FlagTrigger.Id,
 		EnvironmentNamespace: *environmentNamespace,
 		ChangeFlagTriggerDescriptionCommand: &featureproto.ChangeFlagTriggerDescriptionCommand{
-			Description: "change flag trigger description test",
+			Description: newTriggerDescription(t),
 		},
 	}
 	_, err := client.UpdateFlagTrigger(context.Background(), updateFlagTriggerReq)
