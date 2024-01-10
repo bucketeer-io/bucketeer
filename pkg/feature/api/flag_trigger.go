@@ -42,6 +42,11 @@ const (
 	maskURI                = "********"
 )
 
+var webhookEditor = &eventproto.Editor{
+	Email:   "webhook",
+	IsAdmin: false,
+}
+
 func (s *FeatureService) CreateFlagTrigger(
 	ctx context.Context,
 	request *featureproto.CreateFlagTriggerRequest,
@@ -847,12 +852,6 @@ func (s *FeatureService) FlagTriggerWebhook(
 		}
 		return nil, dt.Err()
 	}
-	editor, err := s.checkRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		trigger.EnvironmentNamespace,
-		localizer,
-	)
 	if err != nil {
 		return nil, err
 	}
@@ -894,7 +893,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 		}
 		return nil, dt.Err()
 	}
-	err = s.updateTriggerUsageInfo(ctx, editor, trigger)
+	err = s.updateTriggerUsageInfo(ctx, webhookEditor, trigger)
 	if err != nil {
 		dt, err := statusTriggerUsageUpdateFailed.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -973,6 +972,7 @@ func (s *FeatureService) enableFeature(
 		environmentNamespace,
 		"",
 		localizer,
+		webhookEditor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
@@ -1000,6 +1000,7 @@ func (s *FeatureService) disableFeature(
 		environmentNamespace,
 		"",
 		localizer,
+		webhookEditor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
