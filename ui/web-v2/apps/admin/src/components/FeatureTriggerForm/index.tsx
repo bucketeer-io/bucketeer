@@ -579,11 +579,6 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
             className="input-textarea w-full"
             disabled={!editable}
           />
-          <p className="input-error">
-            {errors.description?.message && (
-              <span role="alert">{errors.description?.message}</span>
-            )}
-          </p>
         </div>
         <div className="flex space-x-4">
           <button onClick={close} className="btn-cancel">

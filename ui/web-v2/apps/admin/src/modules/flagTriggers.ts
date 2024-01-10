@@ -80,6 +80,7 @@ export const listFlagTriggers = createAsyncThunk<
   const request = new ListFlagTriggersRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setFeatureId(params.featureId);
+  request.setOrderDirection(ListFlagTriggersRequest.OrderDirection.DESC);
   await setupAuthToken();
   const result = await flagTriggersGrpc.listFlagTriggers(request);
   return result.response.toObject();

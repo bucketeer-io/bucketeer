@@ -310,5 +310,5 @@ export const targetingFormSchema = yup.object().shape({
 export const triggerFormSchema = yup.object().shape({
   triggerType: yup.string().nullable().required(),
   action: yup.string().nullable().required(),
-  description: yup.string().required(),
+  description: yup.string(),
 });
