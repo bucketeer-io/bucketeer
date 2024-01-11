@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -598,19 +597,19 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 	if getAdminAccountRes != nil && getAdminAccountRes.Account != nil {
 		adminAccountExists = true
 	}
-	envIDs := []string{
-		fmt.Sprintf("%s-development", project.Name),
-		fmt.Sprintf("%s-staging", project.Name),
-		fmt.Sprintf("%s-production", project.Name),
+	envNames := []string{
+		"Development",
+		"Production",
 	}
-	for _, envID := range envIDs {
+	for _, name := range envNames {
+		envURLCode := strings.ToLower(name)
 		createEnvCmdV2 := &environmentproto.CreateEnvironmentV2Command{
-			Name:        envID,
-			UrlCode:     envID,
+			Name:        name,
+			UrlCode:     envURLCode,
 			ProjectId:   project.Id,
 			Description: "",
 		}
-		envV2, err := domain.NewEnvironmentV2(envID, envID, "", project.Id, project.OrganizationId, s.logger)
+		envV2, err := domain.NewEnvironmentV2(name, envURLCode, "", project.Id, project.OrganizationId, s.logger)
 		if err != nil {
 			return err
 		}
