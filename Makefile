@@ -147,9 +147,18 @@ $(GO_APP_BUILD_TARGETS): build-%:
 .PHONY: build-go
 build-go: $(GO_APP_BUILD_TARGETS)
 
+# Make sure bucketeer-httpstan is already running. If not, run "make run-httpstan".
 .PHONY: test-go
 test-go:
 	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/...
+
+.PHONY: start-httpstan
+start-httpstan:
+	docker run --name bucketeer-httpstan -p 8080:8080 -d ghcr.io/bucketeer-io/bucketeer-httpstan:0.0.1
+
+.PHONY: stop-httpstan
+stop-httpstan:
+	docker stop bucketeer-httpstan
 
 #############################
 # UI/WEB
