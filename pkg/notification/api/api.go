@@ -132,24 +132,16 @@ func (s *NotificationService) checkAdminRole(
 
 func (s *NotificationService) checkRole(
 	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Environment,
+	requiredRole accountproto.Account_Role,
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(
-		ctx,
-		requiredRole,
-		environmentNamespace,
-		func(email string) (*accountproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentNamespace,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
+	editor, err := role.CheckRole(ctx, requiredRole, func(email string) (*accountproto.GetAccountResponse, error) {
+		return s.accountClient.GetAccount(ctx, &accountproto.GetAccountRequest{
+			Email:                email,
+			EnvironmentNamespace: environmentNamespace,
 		})
+	})
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:

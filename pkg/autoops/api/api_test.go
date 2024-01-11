@@ -704,7 +704,7 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 	}{
 		{
 			desc:        "err: ErrIDRequired",
-			req:         &autoopsproto.GetAutoOpsRuleRequest{EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.GetAutoOpsRuleRequest{},
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
@@ -921,23 +921,13 @@ func createAutoOpsService(c *gomock.Controller, db storage.Client) *AutoOpsServi
 	mysqlClientMock := mysqlmock.NewMockClient(c)
 	featureClientMock := featureclientmock.NewMockClient(c)
 	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "ns0",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-				},
-				{
-					EnvironmentId: "",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-				},
-			},
+	ar := &accountproto.GetAccountResponse{
+		Account: &accountproto.Account{
+			Email: "email",
+			Role:  accountproto.Account_VIEWER,
 		},
 	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	accountClientMock.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	experimentClientMock := experimentclientmock.NewMockClient(c)
 	authClientMock := authclientmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
