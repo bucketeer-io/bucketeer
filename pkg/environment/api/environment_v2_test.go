@@ -214,7 +214,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 
 	envExpected, err := domain.NewEnvironmentV2(
 		"Env Name-dev01",
-		"url-code_.01",
+		"url-code-01",
 		"description",
 		"project-id01",
 		"organization-id01",

@@ -36,7 +36,7 @@ import (
 
 var (
 	maxOrganizationNameLength = 50
-	organizationUrlCodeRegex  = regexp.MustCompile("^[a-z0-9-_.]{1,50}$")
+	organizationUrlCodeRegex  = regexp.MustCompile("^[a-z0-9-]{1,50}$")
 )
 
 func (s *EnvironmentService) GetOrganization(

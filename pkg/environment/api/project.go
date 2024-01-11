@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -38,7 +39,7 @@ import (
 
 var (
 	maxProjectNameLength = 50
-	projectUrlCodeRegex  = regexp.MustCompile("^[a-z0-9-_.]{1,50}$")
+	projectUrlCodeRegex  = regexp.MustCompile("^[a-z0-9-]{1,50}$")
 
 	//nolint:lll
 	emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
@@ -602,7 +603,7 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 		"Production",
 	}
 	for _, name := range envNames {
-		envURLCode := strings.ToLower(name)
+		envURLCode := fmt.Sprintf("%s-%s", project.UrlCode, strings.ToLower(name))
 		createEnvCmdV2 := &environmentproto.CreateEnvironmentV2Command{
 			Name:        name,
 			UrlCode:     envURLCode,
