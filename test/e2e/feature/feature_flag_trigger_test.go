@@ -75,6 +75,8 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		featureproto.FlagTrigger_Action_ON,
 	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
+	// Wait for updating to change timestamp in description
+	time.Sleep(1 * time.Second)
 	// Update flag trigger
 	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
 		Id:                   createResp.FlagTrigger.Id,
@@ -424,8 +426,9 @@ func createFeatureFlagTrigger(
 
 func newTriggerDescription(t *testing.T) string {
 	t.Helper()
+	now := time.Now()
 	if *testID != "" {
-		return fmt.Sprintf("%s-%s-trigger-description", prefixID, *testID)
+		return fmt.Sprintf("%s-%s-%v-trigger-description", prefixID, *testID, now.Unix())
 	}
-	return fmt.Sprintf("%s-trigger-description", prefixID)
+	return fmt.Sprintf("%s-%v-trigger-description", prefixID, now.Unix())
 }
