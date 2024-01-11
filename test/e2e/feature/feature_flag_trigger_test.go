@@ -75,6 +75,8 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		featureproto.FlagTrigger_Action_ON,
 	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
+	// Wait for updating to change timestamp in description
+	time.Sleep(1 * time.Second)
 	// Update flag trigger
 	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
 		Id:                   createResp.FlagTrigger.Id,
