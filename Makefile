@@ -152,9 +152,13 @@ build-go: $(GO_APP_BUILD_TARGETS)
 test-go:
 	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/...
 
-.PHONY: run-httpstan
-run-httpstan:
-	docker run -p 8080:8080 -d ghcr.io/bucketeer-io/bucketeer-httpstan:0.0.1
+.PHONY: start-httpstan
+start-httpstan:
+	docker run --name bucketeer-httpstan -p 8080:8080 -d ghcr.io/bucketeer-io/bucketeer-httpstan:0.0.1
+
+.PHONY: stop-httpstan
+stop-httpstan:
+	docker stop bucketeer-httpstan
 
 #############################
 # UI/WEB
