@@ -35,7 +35,7 @@ import (
 
 var (
 	maxEnvironmentNameLength = 50
-	environmentUrlCodeRegex  = regexp.MustCompile("^[a-z0-9-_.]{1,50}$")
+	environmentUrlCodeRegex  = regexp.MustCompile("^[a-z0-9-]{1,50}$")
 )
 
 func (s *EnvironmentService) GetEnvironmentV2(
