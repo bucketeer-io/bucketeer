@@ -39,7 +39,12 @@ func (s *AccountService) CreateAccount(
 	req *accountproto.CreateAccountRequest,
 ) (*accountproto.CreateAccountResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.EnvironmentNamespace,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +164,12 @@ func (s *AccountService) ChangeAccountRole(
 	req *accountproto.ChangeAccountRoleRequest,
 ) (*accountproto.ChangeAccountRoleResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.EnvironmentNamespace,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +257,12 @@ func (s *AccountService) EnableAccount(
 	req *accountproto.EnableAccountRequest,
 ) (*accountproto.EnableAccountResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.EnvironmentNamespace,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +350,12 @@ func (s *AccountService) DisableAccount(
 	req *accountproto.DisableAccountRequest,
 ) (*accountproto.DisableAccountResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.Account_OWNER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		req.EnvironmentNamespace,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -423,7 +443,7 @@ func (s *AccountService) GetAccount(
 	req *accountproto.GetAccountRequest,
 ) (*accountproto.GetAccountResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -486,7 +506,7 @@ func (s *AccountService) ListAccounts(
 	req *accountproto.ListAccountsRequest,
 ) (*accountproto.ListAccountsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}

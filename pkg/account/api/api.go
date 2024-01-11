@@ -187,17 +187,22 @@ func (s *AccountService) checkAdminRole(ctx context.Context, localizer locale.Lo
 
 func (s *AccountService) checkRole(
 	ctx context.Context,
-	requiredRole proto.Account_Role,
+	requiredRole proto.AccountV2_Role_Environment,
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(ctx, requiredRole, func(email string) (*proto.GetAccountResponse, error) {
-		account, err := s.getAccount(ctx, email, environmentNamespace, localizer)
-		if err != nil {
-			return nil, err
-		}
-		return &proto.GetAccountResponse{Account: account.Account}, nil
-	})
+	editor, err := role.CheckRole(
+		ctx,
+		requiredRole,
+		environmentNamespace,
+		func(email string) (*proto.AccountV2, error) {
+			account, err := s.getAccountV2ByEnvironmentID(ctx, email, environmentNamespace, localizer)
+			if err != nil {
+				return nil, err
+			}
+			return account.AccountV2, nil
+		},
+	)
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:

@@ -933,7 +933,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 	}{
 		{
 			desc:        "err: ErrIDRequired",
-			req:         &autoopsproto.GetProgressiveRolloutRequest{},
+			req:         &autoopsproto.GetProgressiveRolloutRequest{EnvironmentNamespace: "ns0"},
 			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
