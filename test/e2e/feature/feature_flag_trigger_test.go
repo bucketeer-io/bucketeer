@@ -20,15 +20,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
-
-var authorizationKey = "authorization"
 
 func TestCreateFeatureFlagTrigger(t *testing.T) {
 	t.Parallel()
@@ -358,10 +355,6 @@ func TestFeatureFlagWebhook(t *testing.T) {
 }
 
 func sendPostRequestIgnoreSSL(targetURL string) (*http.Response, error) {
-	data, err := os.ReadFile(*serviceTokenPath)
-	if err != nil {
-		return nil, err
-	}
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -370,7 +363,6 @@ func sendPostRequestIgnoreSSL(targetURL string) (*http.Response, error) {
 		},
 	}
 	req, err := http.NewRequest("POST", targetURL, strings.NewReader(""))
-	req.Header.Add(authorizationKey, fmt.Sprintf("bearer %s", string(data)))
 	if err != nil {
 		return nil, err
 	}
