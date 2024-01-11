@@ -943,7 +943,15 @@ func (s *FeatureService) EnableFeature(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer, editor); err != nil {
+	if err := s.updateFeature(
+		ctx,
+		req.Command,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Comment,
+		localizer,
+		editor,
+	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to enable feature",
@@ -972,7 +980,15 @@ func (s *FeatureService) DisableFeature(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer, editor); err != nil {
+	if err := s.updateFeature(
+		ctx,
+		req.Command,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Comment,
+		localizer,
+		editor,
+	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to disable feature",
