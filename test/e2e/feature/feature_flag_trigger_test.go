@@ -424,8 +424,9 @@ func createFeatureFlagTrigger(
 
 func newTriggerDescription(t *testing.T) string {
 	t.Helper()
+	now := time.Now()
 	if *testID != "" {
-		return fmt.Sprintf("%s-%s-trigger-description", prefixID, *testID)
+		return fmt.Sprintf("%s-%s-%v-trigger-description", prefixID, *testID, now.Unix())
 	}
-	return fmt.Sprintf("%s-trigger-description", prefixID)
+	return fmt.Sprintf("%s-%v-trigger-description", prefixID, now.Unix())
 }
