@@ -57,6 +57,29 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 	if resp.GetUrl() == "" {
 		t.Fatal("unexpected empty url")
 	}
+	createFlagTriggerWithoutDescCmd := newCreateFlagTriggerCmd(
+		cmd.Id,
+		"",
+		featureproto.FlagTrigger_Action_ON,
+	)
+	resp = createFeatureFlagTrigger(t, client, createFlagTriggerWithoutDescCmd)
+	if resp.FlagTrigger.FeatureId != cmd.Id {
+		t.Fatalf("unexpected flag feature id: %s, feature id: %s", resp.FlagTrigger.FeatureId, cmd.Id)
+	}
+	if resp.FlagTrigger.Type != createFlagTriggerWithoutDescCmd.Type {
+		t.Fatalf("unexpected trigger type: %s, type: %s",
+			resp.FlagTrigger.Type, createFlagTriggerWithoutDescCmd.Type)
+	}
+	if resp.FlagTrigger.Action != createFlagTriggerWithoutDescCmd.Action {
+		t.Fatalf("unexpected trigger action: %s, action: %s",
+			resp.FlagTrigger.Action, createFlagTriggerWithoutDescCmd.Action)
+	}
+	if resp.FlagTrigger.Description != "" {
+		t.Fatalf("unexpected trigger description: %s, ", resp.FlagTrigger.Description)
+	}
+	if resp.GetUrl() == "" {
+		t.Fatal("unexpected empty url")
+	}
 }
 
 func TestUpdateFlagTrigger(t *testing.T) {
