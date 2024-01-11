@@ -939,7 +939,7 @@ func (s *FeatureService) EnableFeature(
 	if err := validateEnableFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -976,7 +976,7 @@ func (s *FeatureService) DisableFeature(
 	if err := validateDisableFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1034,7 +1034,7 @@ func (s *FeatureService) ArchiveFeature(
 	if err := validateArchiveFeatureRequest(req, features, localizer); err != nil {
 		return nil, err
 	}
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1069,7 +1069,7 @@ func (s *FeatureService) UnarchiveFeature(
 	if err := validateUnarchiveFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1104,7 +1104,7 @@ func (s *FeatureService) DeleteFeature(
 	if err := validateDeleteFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
