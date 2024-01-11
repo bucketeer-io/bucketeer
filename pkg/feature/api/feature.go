@@ -1022,7 +1022,15 @@ func (s *FeatureService) ArchiveFeature(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer, editor); err != nil {
+	if err := s.updateFeature(
+		ctx,
+		req.Command,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Comment,
+		localizer,
+		editor,
+	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to archive feature",
@@ -1049,7 +1057,15 @@ func (s *FeatureService) UnarchiveFeature(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer, editor); err != nil {
+	if err := s.updateFeature(
+		ctx,
+		req.Command,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Comment,
+		localizer,
+		editor,
+	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to unarchive feature",
@@ -1076,7 +1092,15 @@ func (s *FeatureService) DeleteFeature(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer, editor); err != nil {
+	if err := s.updateFeature(
+		ctx,
+		req.Command,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Comment,
+		localizer,
+		editor,
+	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to delete feature",

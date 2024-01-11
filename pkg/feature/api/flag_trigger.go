@@ -147,6 +147,7 @@ func (s *FeatureService) CreateFlagTrigger(
 		)
 		return nil, err
 	}
+	flagTrigger.FlagTrigger.Token = ""
 	return &featureproto.CreateFlagTriggerResponse{
 		FlagTrigger: flagTrigger.FlagTrigger,
 		Url:         triggerURL,
@@ -759,6 +760,7 @@ func (s *FeatureService) ListFlagTriggers(
 			)
 			return nil, err
 		}
+		trigger.Token = ""
 		triggerWithUrls = append(triggerWithUrls, &featureproto.ListFlagTriggersResponse_FlagTriggerWithUrl{
 			FlagTrigger: trigger,
 			Url:         triggerURL,
