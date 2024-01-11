@@ -599,7 +599,6 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 	}
 	envNames := []string{
 		"Development",
-		"Staging",
 		"Production",
 	}
 	for _, name := range envNames {
