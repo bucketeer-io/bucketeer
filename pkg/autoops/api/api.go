@@ -112,7 +112,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	req *autoopsproto.CreateAutoOpsRuleRequest,
 ) (*autoopsproto.CreateAutoOpsRuleResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -552,7 +552,7 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	req *autoopsproto.DeleteAutoOpsRuleRequest,
 ) (*autoopsproto.DeleteAutoOpsRuleResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -647,7 +647,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	req *autoopsproto.UpdateAutoOpsRuleRequest,
 ) (*autoopsproto.UpdateAutoOpsRuleResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -979,7 +979,7 @@ func (s *AutoOpsService) GetAutoOpsRule(
 	req *autoopsproto.GetAutoOpsRuleRequest,
 ) (*autoopsproto.GetAutoOpsRuleResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1045,7 +1045,7 @@ func (s *AutoOpsService) ListAutoOpsRules(
 	req *autoopsproto.ListAutoOpsRulesRequest,
 ) (*autoopsproto.ListAutoOpsRulesResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1136,7 +1136,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	req *autoopsproto.ExecuteAutoOpsRequest,
 ) (*autoopsproto.ExecuteAutoOpsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.Account_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1320,7 +1320,7 @@ func (s *AutoOpsService) ListOpsCounts(
 	req *autoopsproto.ListOpsCountsRequest,
 ) (*autoopsproto.ListOpsCountsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1447,16 +1447,24 @@ func (s *AutoOpsService) getGoal(
 
 func (s *AutoOpsService) checkRole(
 	ctx context.Context,
-	requiredRole accountproto.Account_Role,
+	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(ctx, requiredRole, func(email string) (*accountproto.GetAccountResponse, error) {
-		return s.accountClient.GetAccount(ctx, &accountproto.GetAccountRequest{
-			Email:                email,
-			EnvironmentNamespace: environmentNamespace,
+	editor, err := role.CheckRole(
+		ctx,
+		requiredRole,
+		environmentNamespace,
+		func(email string) (*accountproto.AccountV2, error) {
+			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
+				Email:         email,
+				EnvironmentId: environmentNamespace,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return resp.Account, nil
 		})
-	})
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:

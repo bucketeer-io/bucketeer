@@ -39,34 +39,53 @@ func CheckAdminRole(ctx context.Context) (*eventproto.Editor, error) {
 	if !token.IsAdmin() {
 		return nil, ErrPermissionDenied
 	}
-	return checkRole(token.Email, accountproto.Account_OWNER, accountproto.Account_OWNER, true)
+	return &eventproto.Editor{
+		Email:   token.Email,
+		IsAdmin: true,
+	}, nil
 }
 
 func CheckRole(
 	ctx context.Context,
-	requiredRole accountproto.Account_Role,
-	getAccountFunc func(email string) (*accountproto.GetAccountResponse, error),
+	requiredRole accountproto.AccountV2_Role_Environment,
+	environmentID string,
+	getAccountFunc func(email string) (*accountproto.AccountV2, error),
 ) (*eventproto.Editor, error) {
 	token, ok := rpc.GetIDToken(ctx)
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
+	// TODO remove this condition after migration to AccountV2
 	if !token.IsAdmin() {
 		// get account for the environment namespace
-		resp, err := getAccountFunc(token.Email)
+		account, err := getAccountFunc(token.Email)
 		if err != nil {
 			if code := status.Code(err); code == codes.NotFound {
 				return nil, ErrUnauthenticated
 			}
 			return nil, ErrInternal
 		}
-		return checkRole(resp.Account.Email, resp.Account.Role, requiredRole, false)
+		accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
+		return checkRole(account.Email, accountEnvRole, requiredRole, false)
 	}
-	return checkRole(token.Email, accountproto.Account_OWNER, requiredRole, true)
+	return checkRole(token.Email, accountproto.AccountV2_Role_Environment_EDITOR, requiredRole, true)
 }
 
-func checkRole(email string, role, requiredRole accountproto.Account_Role, isAdmin bool) (*eventproto.Editor, error) {
-	if role == accountproto.Account_UNASSIGNED || role < requiredRole {
+func getRole(roles []*accountproto.AccountV2_EnvironmentRole, envID string) accountproto.AccountV2_Role_Environment {
+	for _, role := range roles {
+		if role.EnvironmentId == envID {
+			return role.Role
+		}
+	}
+	return accountproto.AccountV2_Role_Environment_UNASSIGNED
+}
+
+func checkRole(
+	email string,
+	role, requiredRole accountproto.AccountV2_Role_Environment,
+	isAdmin bool,
+) (*eventproto.Editor, error) {
+	if role < requiredRole {
 		return nil, ErrPermissionDenied
 	}
 	return &eventproto.Editor{

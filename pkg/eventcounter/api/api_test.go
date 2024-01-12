@@ -1744,13 +1744,23 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller) *ev
 	)
 	reg := metrics.DefaultRegisterer()
 	accountClientMock := accountclientmock.NewMockClient(mockController)
-	ar := &accountproto.GetAccountResponse{
-		Account: &accountproto.Account{
-			Email: "email",
-			Role:  accountproto.Account_VIEWER,
+	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "ns0",
+					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+				},
+				{
+					EnvironmentId: "",
+					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
 		},
 	}
-	accountClientMock.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &eventCounterService{
 		experimentClient:             experimentclientmock.NewMockClient(mockController),
 		featureClient:                featureclientmock.NewMockClient(mockController),
