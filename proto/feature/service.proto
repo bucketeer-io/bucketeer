@@ -502,7 +502,7 @@ service FeatureService {
   rpc FlagTriggerWebhook(FlagTriggerWebhookRequest)
       returns (FlagTriggerWebhookResponse) {
     option (google.api.http) = {
-      post: "/webhook/{token}"
+      post: "/webhook/triggers/{token}"
     };
   }
 }

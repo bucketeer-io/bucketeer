@@ -15507,7 +15507,7 @@
                     "aggregated": [
                       {
                         "name": "post",
-                        "value": "/webhook/{token}"
+                        "value": "/webhook/triggers/{token}"
                       }
                     ]
                   }
