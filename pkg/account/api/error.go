@@ -25,7 +25,6 @@ var (
 	statusNoCommand               = gstatus.New(codes.InvalidArgument, "account: command must not be empty")
 	statusMissingAccountID        = gstatus.New(codes.InvalidArgument, "account: account id must be specified")
 	statusMissingOrganizationID   = gstatus.New(codes.InvalidArgument, "account: organization id must be specified")
-	statusMissingEnvironmentID    = gstatus.New(codes.InvalidArgument, "account: environment id must be specified")
 	statusEmailIsEmpty            = gstatus.New(codes.InvalidArgument, "account: email is empty")
 	statusInvalidEmail            = gstatus.New(codes.InvalidArgument, "account: invalid email format")
 	statusNameIsEmpty             = gstatus.New(codes.InvalidArgument, "account: name is empty")
