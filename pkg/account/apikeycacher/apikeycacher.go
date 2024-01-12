@@ -268,7 +268,7 @@ func (c *EnvAPIKeyCacher) handleAPIKeyEvent(msg *puller.Message, event *domainev
 		)
 		return
 	}
-	if err := c.refresh(apiKeyID, event.EnvironmentNamespace, false, envResp.Environment.ProjectId, envResp.Environment); err != nil {
+	if err := c.refresh(apiKeyID, false, envResp.Environment.ProjectId, envResp.Environment); err != nil {
 		msg.Nack()
 		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 		c.logger.Error("Failed to refresh api key",
@@ -305,7 +305,7 @@ func (c *EnvAPIKeyCacher) handleProjectEvent(msg *puller.Message, event *domaine
 		return
 	}
 	for _, environment := range environments {
-		if err := c.refreshAll(environment.Id, environmentDisabled, projectID, environment); err != nil {
+		if err := c.refreshAll(environmentDisabled, projectID, environment); err != nil {
 			msg.Nack()
 			handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 			c.logger.Error("Failed to refresh all api keys in the environment",
@@ -360,7 +360,7 @@ func (c *EnvAPIKeyCacher) handleEnvironmentEvent(msg *puller.Message, event *dom
 		)
 		return
 	}
-	if err := c.refreshAll(environmentID, true, envResp.Environment.ProjectId, envResp.Environment); err != nil {
+	if err := c.refreshAll(true, envResp.Environment.ProjectId, envResp.Environment); err != nil {
 		msg.Nack()
 		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
 		c.logger.Error("Failed to refresh all api keys in the environment",
@@ -384,14 +384,14 @@ func (c *EnvAPIKeyCacher) unmarshalMessage(msg *puller.Message) (*domainevent.Ev
 }
 
 func (c *EnvAPIKeyCacher) refresh(
-	apiKeyID, environmentNamespace string,
+	apiKeyID string,
 	environmentDisabled bool,
 	projectID string,
 	environment *environmentproto.EnvironmentV2,
 ) error {
 	req := &acproto.GetAPIKeyRequest{
 		Id:                   apiKeyID,
-		EnvironmentNamespace: environmentNamespace,
+		EnvironmentNamespace: environment.Id,
 	}
 	resp, err := c.accountClient.GetAPIKey(c.ctx, req)
 	if err != nil {
@@ -406,8 +406,8 @@ func (c *EnvAPIKeyCacher) refresh(
 	return c.upsert(envAPIKey)
 }
 
-func (c *EnvAPIKeyCacher) refreshAll(environmentNamespace string, environmentDisabled bool, projectID string, environment *environmentproto.EnvironmentV2) error {
-	apiKeys, err := c.listAPIKeys(environmentNamespace)
+func (c *EnvAPIKeyCacher) refreshAll(environmentDisabled bool, projectID string, environment *environmentproto.EnvironmentV2) error {
+	apiKeys, err := c.listAPIKeys(environment.Id)
 	if err != nil {
 		return fmt.Errorf("failed to list api keys: %w", err)
 	}
