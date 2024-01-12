@@ -888,7 +888,8 @@ func (s *FeatureService) FlagTriggerWebhook(
 		return nil, dt.Err()
 	}
 	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON {
-		if feature.GetEnabled() == false {
+		// check if feature is already enabled
+		if !feature.GetEnabled() {
 			err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
 			if err != nil {
 				dt, err := statusTriggerEnableFailed.WithDetails(&errdetails.LocalizedMessage{
@@ -902,7 +903,8 @@ func (s *FeatureService) FlagTriggerWebhook(
 			}
 		}
 	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF {
-		if feature.GetEnabled() == true {
+		// check if feature is already disabled
+		if feature.GetEnabled() {
 			err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
 			if err != nil {
 				dt, err := statusTriggerDisableFailed.WithDetails(&errdetails.LocalizedMessage{
