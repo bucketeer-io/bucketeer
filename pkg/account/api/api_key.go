@@ -36,7 +36,12 @@ func (s *AccountService) CreateAPIKey(
 	req *proto.CreateAPIKeyRequest,
 ) (*proto.CreateAPIKeyResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		proto.AccountV2_Role_Organization_ADMIN,
+		req.EnvironmentNamespace,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +110,12 @@ func (s *AccountService) ChangeAPIKeyName(
 	req *proto.ChangeAPIKeyNameRequest,
 ) (*proto.ChangeAPIKeyNameResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		proto.AccountV2_Role_Organization_ADMIN,
+		req.EnvironmentNamespace,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +166,12 @@ func (s *AccountService) EnableAPIKey(
 	req *proto.EnableAPIKeyRequest,
 ) (*proto.EnableAPIKeyResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		proto.AccountV2_Role_Organization_ADMIN,
+		req.EnvironmentNamespace,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +221,12 @@ func (s *AccountService) DisableAPIKey(
 	req *proto.DisableAPIKeyRequest,
 ) (*proto.DisableAPIKeyResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, proto.Account_OWNER, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		proto.AccountV2_Role_Organization_ADMIN,
+		req.EnvironmentNamespace,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +292,7 @@ func (s *AccountService) updateAPIKeyMySQL(
 
 func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequest) (*proto.GetAPIKeyResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, proto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkRole(ctx, proto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +343,7 @@ func (s *AccountService) ListAPIKeys(
 	req *proto.ListAPIKeysRequest,
 ) (*proto.ListAPIKeysResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, proto.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkRole(ctx, proto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}

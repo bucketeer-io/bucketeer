@@ -724,6 +724,7 @@ func validateGetAccountV2ByEnvironmentIDRequest(
 	req *accountproto.GetAccountV2ByEnvironmentIDRequest,
 	localizer locale.Localizer,
 ) error {
+	// We don't check the environmentID because there is environment with empty ID.
 	if req.Email == "" {
 		dt, err := statusEmailIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -738,16 +739,6 @@ func validateGetAccountV2ByEnvironmentIDRequest(
 		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.EnvironmentId == "" {
-		dt, err := statusMissingEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id"),
 		})
 		if err != nil {
 			return statusInternal.Err()

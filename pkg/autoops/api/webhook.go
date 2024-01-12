@@ -44,7 +44,7 @@ func (s *AutoOpsService) CreateWebhook(
 	req *autoopspb.CreateWebhookRequest,
 ) (*autoopspb.CreateWebhookResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountpb.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (s *AutoOpsService) GetWebhook(
 	req *autoopspb.GetWebhookRequest,
 ) (*autoopspb.GetWebhookResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountpb.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkRole(ctx, accountpb.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +231,7 @@ func (s *AutoOpsService) ListWebhooks(
 	req *autoopspb.ListWebhooksRequest,
 ) (*autoopspb.ListWebhooksResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountpb.Account_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkRole(ctx, accountpb.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func (s *AutoOpsService) UpdateWebhook(
 	req *autoopspb.UpdateWebhookRequest,
 ) (*autoopspb.UpdateWebhookResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountpb.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -431,7 +431,7 @@ func (s *AutoOpsService) DeleteWebhook(
 	req *autoopspb.DeleteWebhookRequest,
 ) (*autoopspb.DeleteWebhookResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountpb.Account_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkRole(ctx, accountpb.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}

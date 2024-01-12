@@ -86,16 +86,24 @@ func (s *experimentService) Register(server *grpc.Server) {
 
 func (s *experimentService) checkRole(
 	ctx context.Context,
-	requiredRole accountproto.Account_Role,
+	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(ctx, requiredRole, func(email string) (*accountproto.GetAccountResponse, error) {
-		return s.accountClient.GetAccount(ctx, &accountproto.GetAccountRequest{
-			Email:                email,
-			EnvironmentNamespace: environmentNamespace,
+	editor, err := role.CheckRole(
+		ctx,
+		requiredRole,
+		environmentNamespace,
+		func(email string) (*accountproto.AccountV2, error) {
+			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
+				Email:         email,
+				EnvironmentId: environmentNamespace,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return resp.Account, nil
 		})
-	})
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:

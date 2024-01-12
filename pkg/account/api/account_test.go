@@ -1812,24 +1812,6 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
-			desc: "errEnvironmentIDIsEmpty",
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						Name:             "test",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-					},
-				}, nil)
-			},
-			req: &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email: "bucketeer@example.com",
-			},
-			expectedErr: createError(statusMissingEnvironmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id")),
-		},
-		{
 			desc: "errAccountNotFound",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(

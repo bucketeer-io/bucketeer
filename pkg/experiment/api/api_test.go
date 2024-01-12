@@ -73,13 +73,19 @@ func createExperimentService(c *gomock.Controller, s storage.Client) *experiment
 	}
 	featureClientMock.EXPECT().GetFeatures(gomock.Any(), gomock.Any()).Return(fsr, nil).AnyTimes()
 	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountResponse{
-		Account: &accountproto.Account{
-			Email: "email",
-			Role:  accountproto.Account_VIEWER,
+	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "ns0",
+					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
 		},
 	}
-	accountClientMock.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	mysqlClient := mysqlmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
