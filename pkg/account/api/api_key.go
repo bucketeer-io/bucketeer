@@ -529,10 +529,9 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		}
 		return &proto.GetAPIKeyBySearchingAllEnvironmentsResponse{
 			EnvironmentApiKey: &proto.EnvironmentAPIKey{
-				EnvironmentNamespace: e.Id,
-				ApiKey:               apiKey.APIKey,
-				ProjectId:            p.Id,
-				EnvironmentV2:        e,
+				ApiKey:      apiKey.APIKey,
+				ProjectId:   p.Id,
+				Environment: e,
 			},
 		}, nil
 	}
