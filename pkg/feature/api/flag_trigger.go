@@ -857,7 +857,37 @@ func (s *FeatureService) FlagTriggerWebhook(
 	if err != nil {
 		return nil, err
 	}
-	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON {
+	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
+	feature, err := featureStorage.GetFeature(ctx, trigger.FeatureId, trigger.EnvironmentNamespace)
+	if err != nil {
+		if errors.Is(err, v2fs.ErrFeatureNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to get feature",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", trigger.FeatureId),
+				zap.String("environmentNamespace", trigger.EnvironmentNamespace),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON && feature.GetEnabled() == false {
 		err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
 		if err != nil {
 			dt, err := statusTriggerEnableFailed.WithDetails(&errdetails.LocalizedMessage{
@@ -869,7 +899,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 			}
 			return nil, dt.Err()
 		}
-	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF {
+	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF && feature.GetEnabled() == true {
 		err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
 		if err != nil {
 			dt, err := statusTriggerDisableFailed.WithDetails(&errdetails.LocalizedMessage{
