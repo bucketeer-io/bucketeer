@@ -74,6 +74,9 @@ export class ListEnvironmentsV2Request extends jspb.Message {
   getSearchKeyword(): string;
   setSearchKeyword(value: string): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListEnvironmentsV2Request.AsObject;
   static toObject(includeInstance: boolean, msg: ListEnvironmentsV2Request): ListEnvironmentsV2Request.AsObject;
@@ -93,6 +96,7 @@ export namespace ListEnvironmentsV2Request {
     projectId: string,
     archived?: google_protobuf_wrappers_pb.BoolValue.AsObject,
     searchKeyword: string,
+    organizationId: string,
   }
 
   export interface OrderByMap {
@@ -383,6 +387,9 @@ export class ListProjectsRequest extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListProjectsRequest.AsObject;
   static toObject(includeInstance: boolean, msg: ListProjectsRequest): ListProjectsRequest.AsObject;
@@ -401,6 +408,7 @@ export namespace ListProjectsRequest {
     orderDirection: ListProjectsRequest.OrderDirectionMap[keyof ListProjectsRequest.OrderDirectionMap],
     searchKeyword: string,
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject,
+    organizationId: string,
   }
 
   export interface OrderByMap {

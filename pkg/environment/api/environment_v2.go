@@ -98,6 +98,9 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 	if req.ProjectId != "" {
 		whereParts = append(whereParts, mysql.NewFilter("project_id", "=", req.ProjectId))
 	}
+	if req.OrganizationId != "" {
+		whereParts = append(whereParts, mysql.NewFilter("organization_id", "=", req.OrganizationId))
+	}
 	if req.Archived != nil {
 		whereParts = append(whereParts, mysql.NewFilter("archived", "=", req.Archived.Value))
 	}

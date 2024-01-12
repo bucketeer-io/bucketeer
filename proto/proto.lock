@@ -4442,6 +4442,11 @@
                 "id": 7,
                 "name": "search_keyword",
                 "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "organization_id",
+                "type": "string"
               }
             ]
           },
@@ -4597,6 +4602,11 @@
                 "id": 6,
                 "name": "disabled",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 7,
+                "name": "organization_id",
+                "type": "string"
               }
             ]
           },
