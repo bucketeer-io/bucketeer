@@ -241,6 +241,7 @@ func (f flagTriggerStorage) ListFlagTriggers(
 			&trigger.Description,
 			&trigger.TriggerCount,
 			&trigger.LastTriggeredAt,
+			&trigger.Token,
 			&trigger.Disabled,
 			&trigger.CreatedAt,
 			&trigger.UpdatedAt,

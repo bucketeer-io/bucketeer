@@ -69,7 +69,7 @@ const (
 	gcp                           = "gcp"
 	aws                           = "aws"
 	autoOpsWebhookPath            = "hook"
-	featureFlagTriggerWebhookPath = "webhook"
+	featureFlagTriggerWebhookPath = "webhook/triggers"
 	healthCheckTimeout            = 1 * time.Second
 	clientDialTimeout             = 30 * time.Second
 	serverShutDownTimeout         = 10 * time.Second
