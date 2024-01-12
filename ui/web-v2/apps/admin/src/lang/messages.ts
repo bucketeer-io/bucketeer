@@ -505,9 +505,14 @@ export const messages = {
     }),
   },
   trigger: {
+    documentation: defineMessage({
+      id: 'trigger.documentation',
+      defaultMessage: 'documentation',
+    }),
     description: defineMessage({
       id: 'trigger.description',
-      defaultMessage: 'Use triggers to turn a flag on or off remotely',
+      defaultMessage:
+        'Use triggers to turn a flag on or off remotely. See the {link}',
     }),
     addTrigger: defineMessage({
       id: 'trigger.addTrigger',
@@ -515,7 +520,7 @@ export const messages = {
     }),
     triggerType: defineMessage({
       id: 'trigger.triggerType',
-      defaultMessage: 'Trigger type',
+      defaultMessage: 'Type',
     }),
     action: defineMessage({
       id: 'trigger.action',
@@ -1813,9 +1818,9 @@ export const messages = {
         id: 'feature.tab.autoOps',
         defaultMessage: 'Auto Operations',
       }),
-      trigger: defineMessage({
-        id: 'feature.tab.trigger',
-        defaultMessage: 'Trigger',
+      triggers: defineMessage({
+        id: 'feature.tab.triggers',
+        defaultMessage: 'Triggers',
       }),
       evaluation: defineMessage({
         id: 'feature.tab.evaluation',
@@ -2803,5 +2808,9 @@ export const messages = {
   urlCode: defineMessage({
     id: 'urlCode',
     defaultMessage: 'URL code',
+  }),
+  fullStop: defineMessage({
+    id: 'fullStop',
+    defaultMessage: '.',
   }),
 };

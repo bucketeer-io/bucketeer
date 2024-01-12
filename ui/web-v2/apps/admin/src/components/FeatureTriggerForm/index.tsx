@@ -15,12 +15,13 @@ import { FlagTrigger } from '@/proto/feature/flag_trigger_pb';
 import {
   CreateFlagTriggerResponse,
   ListFlagTriggersResponse,
+  ResetFlagTriggerResponse,
 } from '@/proto/feature/service_pb';
 import { AppDispatch } from '@/store';
+import { classNames } from '@/utils/css';
 import { Popover } from '@headlessui/react';
 import {
   DotsHorizontalIcon,
-  InformationCircleIcon,
   PlusIcon,
   BanIcon,
   RefreshIcon,
@@ -29,17 +30,21 @@ import {
   CheckCircleIcon,
   XIcon,
   ClockIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/outline';
+import { ExclamationCircleIcon } from '@heroicons/react/solid';
 import { FileCopyOutlined } from '@material-ui/icons';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
+import { ReactComponent as OpenInNewSvg } from '../../assets/svg/open-new-tab.svg';
 import { ReactComponent as WebhookSvg } from '../../assets/svg/webhook.svg';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import { CopyChip } from '../CopyChip';
 import { DetailSkeleton } from '../DetailSkeleton';
+import { HoverPopover } from '../HoverPopover';
 import { RelativeDateText } from '../RelativeDateText';
 import { Select } from '../Select';
 import { TriggerDeleteDialog } from '../TriggerDeleteDialog';
@@ -130,7 +135,14 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
           id: selectedFlagTrigger.flagTrigger.id,
           environmentNamespace: currentEnvironment.id,
         })
-      ).then(() => fetchFlagTriggers());
+      ).then((response) => {
+        const payload = response.payload as ResetFlagTriggerResponse.AsObject;
+        setSelectedFlagTriggerForCopyUrl({
+          id: payload.flagTrigger.id,
+          url: payload.url,
+        });
+        fetchFlagTriggers();
+      });
     };
 
     const handleEnable = useCallback((flagTriggerId) => {
@@ -163,10 +175,25 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       <>
         <div className="px-10 py-6 bg-white">
           <div className="shadow-md space-y-4 p-5 rounded-sm">
-            <p className="text-[#334155]">{f(messages.feature.tab.trigger)}</p>
-            <p className="text-sm text-[#728BA3]">
-              {f(messages.trigger.description)}
-            </p>
+            <p className="text-[#334155]">{f(messages.feature.tab.triggers)}</p>
+            <div className="flex">
+              <p className="text-sm text-[#728BA3] flex items-center">
+                {f(messages.trigger.description, {
+                  link: (
+                    <a
+                      href="https://docs.bucketeer.io"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline text-primary flex items-center space-x-1 ml-1"
+                    >
+                      <span>{f(messages.trigger.documentation)}</span>
+                      <OpenInNewSvg />
+                    </a>
+                  ),
+                })}
+                {f(messages.fullStop)}
+              </p>
+            </div>
             {flagTriggers.map((flagTriggerWithUrl) =>
               flagTriggerWithUrl.flagTrigger.id ===
                 selectedFlagTrigger?.flagTrigger?.id &&
@@ -332,14 +359,14 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                                 key={selectedFlagTriggerForCopyUrl?.url}
                                 text={selectedFlagTriggerForCopyUrl?.url}
                               >
-                                <div className="flex text-gray-400 border border-[#CBD5E1] h-[44px] px-[10px] items-center rounded-lg">
+                                <div className="flex text-gray-400 border cursor-pointer hover:border-gray-400 border-[#CBD5E1] h-[44px] px-[10px] items-center rounded-lg">
                                   <FileCopyOutlined fontSize="small" />
                                 </div>
                               </CopyChip>
                             </div>
                           </div>
                           <div className="flex mt-3 items-center space-x-2">
-                            <InformationCircleIcon
+                            <ExclamationCircleIcon
                               className="h-4 w-4 text-yellow-500"
                               aria-hidden="true"
                             />
@@ -545,8 +572,22 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
             <label htmlFor="triggerType" className="text-sm text=[#64748B]">
               {f(messages.trigger.triggerType)}
             </label>
-
-            <InformationCircleIcon width={18} className="text-gray-400" />
+            <HoverPopover
+              render={() => {
+                return (
+                  <div
+                    className={classNames(
+                      'bg-gray-900 text-white p-2 text-xs',
+                      'rounded cursor-pointer whitespace-pre'
+                    )}
+                  >
+                    <span>Tooltip</span>
+                  </div>
+                );
+              }}
+            >
+              <InformationCircleIcon width={18} className="text-gray-400" />
+            </HoverPopover>
           </div>
           <Controller
             name="triggerType"
@@ -577,7 +618,22 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
             <label htmlFor="triggerType" className="text-sm text=[#64748B]">
               {f(messages.trigger.action)}
             </label>
-            <InformationCircleIcon width={18} className="text-gray-400" />
+            <HoverPopover
+              render={() => {
+                return (
+                  <div
+                    className={classNames(
+                      'bg-gray-900 text-white p-2 text-xs',
+                      'rounded cursor-pointer whitespace-pre'
+                    )}
+                  >
+                    <span>Tooltip</span>
+                  </div>
+                );
+              }}
+            >
+              <InformationCircleIcon width={18} className="text-gray-400" />
+            </HoverPopover>
           </div>
           <Controller
             name="action"

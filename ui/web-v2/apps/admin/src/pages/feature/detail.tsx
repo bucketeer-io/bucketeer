@@ -221,7 +221,7 @@ const createTabs = (): Array<TabItem> => {
       to: PAGE_PATH_FEATURE_AUTOOPS,
     },
     {
-      message: intl.formatMessage(messages.feature.tab.trigger),
+      message: intl.formatMessage(messages.feature.tab.triggers),
       to: PAGE_PATH_FEATURE_TRIGGER,
     },
     {

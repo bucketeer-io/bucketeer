@@ -17,6 +17,7 @@ import {
   ResetFlagTriggerRequest,
   DisableFlagTriggerRequest,
   EnableFlagTriggerRequest,
+  ResetFlagTriggerResponse,
 } from '@/proto/feature/service_pb';
 import {
   createSlice,
@@ -134,7 +135,7 @@ export interface ResetFlagTriggerParams {
 }
 
 export const resetFlagTrigger = createAsyncThunk<
-  void,
+  ResetFlagTriggerResponse.AsObject,
   ResetFlagTriggerParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/reset`, async (params) => {
@@ -144,7 +145,8 @@ export const resetFlagTrigger = createAsyncThunk<
   const command = new ResetFlagTriggerCommand();
   request.setResetFlagTriggerCommand(command);
   await setupAuthToken();
-  await flagTriggersGrpc.resetFlagTrigger(request);
+  const result = await flagTriggersGrpc.resetFlagTrigger(request);
+  return result.response.toObject();
 });
 
 export interface EnableFlagTriggerParams {
