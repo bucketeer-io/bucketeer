@@ -887,29 +887,33 @@ func (s *FeatureService) FlagTriggerWebhook(
 		}
 		return nil, dt.Err()
 	}
-	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON && feature.GetEnabled() == false {
-		err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
-		if err != nil {
-			dt, err := statusTriggerEnableFailed.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
+	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON {
+		if feature.GetEnabled() == false {
+			err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
 			if err != nil {
-				return nil, statusInternal.Err()
+				dt, err := statusTriggerEnableFailed.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.InternalServerError),
+				})
+				if err != nil {
+					return nil, statusInternal.Err()
+				}
+				return nil, dt.Err()
 			}
-			return nil, dt.Err()
 		}
-	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF && feature.GetEnabled() == true {
-		err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
-		if err != nil {
-			dt, err := statusTriggerDisableFailed.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
+	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF {
+		if feature.GetEnabled() == true {
+			err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
 			if err != nil {
-				return nil, statusInternal.Err()
+				dt, err := statusTriggerDisableFailed.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.InternalServerError),
+				})
+				if err != nil {
+					return nil, statusInternal.Err()
+				}
+				return nil, dt.Err()
 			}
-			return nil, dt.Err()
 		}
 	} else {
 		s.logger.Error(
