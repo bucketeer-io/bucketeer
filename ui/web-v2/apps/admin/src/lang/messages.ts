@@ -594,6 +594,10 @@ export const messages = {
       id: 'trigger.resetTriggerDialogBtnLabel',
       defaultMessage: 'Reset',
     }),
+    updated: defineMessage({
+      id: 'trigger.updated',
+      defaultMessage: 'Updated',
+    }),
   },
   maintainer: defineMessage({
     id: 'maintainer',
