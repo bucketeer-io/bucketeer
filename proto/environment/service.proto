@@ -52,6 +52,7 @@ message ListEnvironmentsV2Request {
   string project_id = 5;
   google.protobuf.BoolValue archived = 6;
   string search_keyword = 7;
+  string organization_id = 8;
 }
 
 message ListEnvironmentsV2Response {
@@ -117,6 +118,7 @@ message ListProjectsRequest {
   OrderDirection order_direction = 4;
   string search_keyword = 5;
   google.protobuf.BoolValue disabled = 6;
+  string organization_id = 7;
 }
 
 message ListProjectsResponse {
