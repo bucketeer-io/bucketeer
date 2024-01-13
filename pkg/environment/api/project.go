@@ -241,7 +241,7 @@ func (s *EnvironmentService) CreateProject(
 	urlCode := strings.TrimSpace(req.Command.UrlCode)
 	// TODO: Temporary implementations that create Organization at the same time as Project.
 	// This should be removed when the Organization management page is added.
-	organization, err := domain.NewOrganization(name, urlCode, req.Command.Description, false)
+	organization, err := domain.NewOrganization(name, urlCode, req.Command.Description, false, false)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create organization",
@@ -437,7 +437,7 @@ func (s *EnvironmentService) CreateTrialProject(
 	}
 	// TODO: Temporary implementations that create Organization at the same time as Project.
 	// This should be removed when the Organization management page is added.
-	organization, err := domain.NewOrganization(name, urlCode, "", true)
+	organization, err := domain.NewOrganization(name, urlCode, "", true, false)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create organization",

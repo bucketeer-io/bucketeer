@@ -232,7 +232,13 @@ func (s *EnvironmentService) CreateOrganization(
 	}
 	name := strings.TrimSpace(req.Command.Name)
 	urlCode := strings.TrimSpace(req.Command.UrlCode)
-	organization, err := domain.NewOrganization(name, urlCode, req.Command.Description, req.Command.IsTrial)
+	organization, err := domain.NewOrganization(
+		name,
+		urlCode,
+		req.Command.Description,
+		req.Command.IsTrial,
+		req.Command.IsSystemAdmin,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create organization",
@@ -325,6 +331,15 @@ func (s *EnvironmentService) createOrganization(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		orgStorage := v2es.NewOrganizationStorage(tx)
+		if organization.Organization.SystemAdmin {
+			org, err := orgStorage.GetSystemAdminOrganization(ctx)
+			if err != nil {
+				return err
+			}
+			if org != nil {
+				return v2es.ErrOrganizationAlreadyExists
+			}
+		}
 		handler := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
@@ -484,6 +499,22 @@ func (s *EnvironmentService) updateOrganization(
 		return orgStorage.UpdateOrganization(ctx, organization)
 	})
 	if err != nil {
+		s.logger.Error(
+			"Failed to update organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		if errors.Is(err, domain.ErrCannotArchiveSystemAdmin) || errors.Is(err, domain.ErrCannotDisableSystemAdmin) {
+			dt, err := statusCannotUpdateSystemAdmin.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
 		if errors.Is(err, v2es.ErrOrganizationNotFound) || errors.Is(err, v2es.ErrOrganizationUnexpectedAffectedRows) {
 			dt, err := statusOrganizationNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -494,12 +525,6 @@ func (s *EnvironmentService) updateOrganization(
 			}
 			return dt.Err()
 		}
-		s.logger.Error(
-			"Failed to update organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),

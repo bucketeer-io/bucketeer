@@ -41,6 +41,7 @@ var (
 	)
 	statusInvalidOrganizationName    = gstatus.New(codes.InvalidArgument, "environment: invalid organization name")
 	statusInvalidOrganizationUrlCode = gstatus.New(codes.InvalidArgument, "environment: invalid organization url code")
+	statusCannotUpdateSystemAdmin    = gstatus.New(codes.InvalidArgument, "environment: cannot update system admin organization")
 	statusEnvironmentNotFound        = gstatus.New(codes.NotFound, "environment: environment not found")
 	statusProjectNotFound            = gstatus.New(codes.NotFound, "environment: project not found")
 	statusOrganizationNotFound       = gstatus.New(codes.NotFound, "environment: organization not found")
