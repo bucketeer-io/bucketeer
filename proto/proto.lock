@@ -4006,6 +4006,11 @@
                 "id": 4,
                 "name": "is_trial",
                 "type": "bool"
+              },
+              {
+                "id": 5,
+                "name": "is_system_admin",
+                "type": "bool"
               }
             ]
           },
@@ -4173,6 +4178,11 @@
                 "id": 9,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "system_admin",
+                "type": "bool"
               }
             ]
           }
