@@ -202,11 +202,29 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "MyOrganization",
+            "fields": [
+              {
+                "id": 1,
+                "name": "organization",
+                "type": "environment.Organization"
+              },
+              {
+                "id": 2,
+                "name": "account",
+                "type": "AccountV2"
+              }
+            ]
           }
         ],
         "imports": [
           {
             "path": "proto/environment/environment.proto"
+          },
+          {
+            "path": "proto/environment/organization.proto"
           }
         ],
         "package": {
@@ -633,6 +651,27 @@
           }
         ],
         "messages": [
+          {
+            "name": "GetMyOrganizationsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetMyOrganizationsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "my_organizations",
+                "type": "MyOrganization",
+                "is_repeated": true
+              }
+            ]
+          },
           {
             "name": "GetMeV2Request"
           },
@@ -1441,6 +1480,11 @@
           {
             "name": "AccountService",
             "rpcs": [
+              {
+                "name": "GetMyOrganizations",
+                "in_type": "GetMyOrganizationsRequest",
+                "out_type": "GetMyOrganizationsResponse"
+              },
               {
                 "name": "GetMeV2",
                 "in_type": "GetMeV2Request",

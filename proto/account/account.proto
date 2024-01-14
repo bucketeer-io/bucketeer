@@ -18,6 +18,7 @@ package bucketeer.account;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/account";
 
 import "proto/environment/environment.proto";
+import "proto/environment/organization.proto";
 
 message Account {
   enum Role {
@@ -70,4 +71,9 @@ message EnvironmentRoleV2 {
   Account.Role role = 2;
   bool trial_project = 3;
   int64 trial_started_at = 4;  // optional
+}
+
+message MyOrganization {
+  environment.Organization organization = 1;
+  AccountV2 account = 2;
 }

@@ -3,6 +3,7 @@
 
 import * as jspb from "google-protobuf";
 import * as proto_environment_environment_pb from "../../proto/environment/environment_pb";
+import * as proto_environment_organization_pb from "../../proto/environment/organization_pb";
 
 export class Account extends jspb.Message {
   getId(): string;
@@ -203,6 +204,34 @@ export namespace EnvironmentRoleV2 {
     role: Account.RoleMap[keyof Account.RoleMap],
     trialProject: boolean,
     trialStartedAt: number,
+  }
+}
+
+export class MyOrganization extends jspb.Message {
+  hasOrganization(): boolean;
+  clearOrganization(): void;
+  getOrganization(): proto_environment_organization_pb.Organization | undefined;
+  setOrganization(value?: proto_environment_organization_pb.Organization): void;
+
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): AccountV2 | undefined;
+  setAccount(value?: AccountV2): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MyOrganization.AsObject;
+  static toObject(includeInstance: boolean, msg: MyOrganization): MyOrganization.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MyOrganization, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MyOrganization;
+  static deserializeBinaryFromReader(message: MyOrganization, reader: jspb.BinaryReader): MyOrganization;
+}
+
+export namespace MyOrganization {
+  export type AsObject = {
+    organization?: proto_environment_organization_pb.Organization.AsObject,
+    account?: AccountV2.AsObject,
   }
 }
 
