@@ -23,6 +23,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
 var (
@@ -40,6 +41,8 @@ var (
 	selectAccountsV2SQL string
 	//go:embed sql/account_v2/count_accounts_v2.sql
 	countAccountsV2SQL string
+	//go:embed sql/account_v2/select_accounts_with_organization.sql
+	selectAccountsWithOrganizationSQL string
 )
 
 var (
@@ -369,6 +372,56 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 	}
 	account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
 	return &domain.AccountV2{AccountV2: &account}, nil
+}
+
+func (s *accountStorage) GetAccountsWithOrganization(
+	ctx context.Context,
+	email string,
+) ([]*domain.AccountWithOrganization, error) {
+	rows, err := s.qe().QueryContext(ctx, selectAccountsWithOrganizationSQL, email)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	accountsWithOrg := make([]*domain.AccountWithOrganization, 0)
+	for rows.Next() {
+		account := proto.AccountV2{}
+		organization := environmentproto.Organization{}
+		var organizationRole int32
+		err := rows.Scan(
+			&account.Email,
+			&account.Name,
+			&account.AvatarImageUrl,
+			&account.OrganizationId,
+			&organizationRole,
+			&mysql.JSONObject{Val: &account.EnvironmentRoles},
+			&account.Disabled,
+			&account.CreatedAt,
+			&account.UpdatedAt,
+			&organization.Id,
+			&organization.Name,
+			&organization.UrlCode,
+			&organization.Description,
+			&organization.Disabled,
+			&organization.Archived,
+			&organization.Trial,
+			&organization.SystemAdmin,
+			&organization.CreatedAt,
+			&organization.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
+		accountsWithOrg = append(accountsWithOrg, &domain.AccountWithOrganization{
+			AccountV2:    &account,
+			Organization: &organization,
+		})
+	}
+	if rows.Err() != nil {
+		return nil, err
+	}
+	return accountsWithOrg, nil
 }
 
 func (s *accountStorage) ListAccountsV2(

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
 type Account struct {
@@ -26,6 +27,11 @@ type Account struct {
 
 type AccountV2 struct {
 	*proto.AccountV2
+}
+
+type AccountWithOrganization struct {
+	*proto.AccountV2
+	*environmentproto.Organization
 }
 
 func NewAccount(email string, role proto.Account_Role) (*Account, error) {

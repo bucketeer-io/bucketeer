@@ -736,3 +736,33 @@ func (s *AccountService) newAdminAccountListOrders(
 	}
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
+
+func (s *AccountService) GetMyOrganizations(
+	ctx context.Context,
+	req *accountproto.GetMyOrganizationsRequest,
+) (*accountproto.GetMyOrganizationsResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, req.Email)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get accounts with organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	myOrgs := make([]*accountproto.MyOrganization, 0, len(accountsWithOrg))
+	for _, accWithOrg := range accountsWithOrg {
+		myOrgs = append(myOrgs, &accountproto.MyOrganization{
+			Organization: accWithOrg.Organization,
+			Account:      accWithOrg.AccountV2,
+		})
+	}
+	return &accountproto.GetMyOrganizationsResponse{MyOrganizations: myOrgs}, nil
+}

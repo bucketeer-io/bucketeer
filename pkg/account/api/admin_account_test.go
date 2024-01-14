@@ -917,6 +917,69 @@ func TestListAdminAccountsMySQL(t *testing.T) {
 	}
 }
 
+func TestGetMyOrganizationsMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithDefaultToken(t, accountproto.Account_OWNER)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AccountService)
+		input       *accountproto.GetMyOrganizationsRequest
+		expected    *accountproto.GetMyOrganizationsResponse
+		expectedErr error
+	}{
+		{
+			desc: "errInternal",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("test"))
+			},
+			input:       &accountproto.GetMyOrganizationsRequest{},
+			expected:    nil,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return([]*domain.AccountWithOrganization{}, nil)
+
+			},
+			input:       &accountproto.GetMyOrganizationsRequest{Email: "bucketeer@example.com"},
+			expected:    &accountproto.GetMyOrganizationsResponse{MyOrganizations: []*accountproto.MyOrganization{}},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			actual, err := service.GetMyOrganizations(ctx, p.input)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+			assert.Equal(t, p.expected, actual, p.desc)
+		})
+	}
+}
+
 func getProjects(t *testing.T) []*environmentproto.Project {
 	t.Helper()
 	return []*environmentproto.Project{
