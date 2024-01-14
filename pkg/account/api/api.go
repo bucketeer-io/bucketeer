@@ -88,6 +88,16 @@ func (s *AccountService) Register(server *grpc.Server) {
 	proto.RegisterAccountServiceServer(server, s)
 }
 
+func (s *AccountService) makeEnvironmentSet(
+	environments []*environmentproto.EnvironmentV2,
+) map[string]*environmentproto.EnvironmentV2 {
+	environmentSet := make(map[string]*environmentproto.EnvironmentV2)
+	for _, e := range environments {
+		environmentSet[e.Id] = e
+	}
+	return environmentSet
+}
+
 func (s *AccountService) makeProjectSet(projects []*environmentproto.Project) map[string]*environmentproto.Project {
 	projectSet := make(map[string]*environmentproto.Project)
 	for _, p := range projects {
@@ -135,6 +145,68 @@ func (s *AccountService) listEnvironments(ctx context.Context) ([]*environmentpr
 		}
 		cursor = resp.Cursor
 	}
+}
+
+func (s *AccountService) listProjectsByOrganizationID(
+	ctx context.Context,
+	organizationID string,
+) ([]*environmentproto.Project, error) {
+	var projects []*environmentproto.Project
+	cursor := ""
+	for {
+		resp, err := s.environmentClient.ListProjects(ctx, &environmentproto.ListProjectsRequest{
+			PageSize:       listRequestPageSize,
+			Cursor:         cursor,
+			OrganizationId: organizationID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		projects = append(projects, resp.Projects...)
+		projectSize := len(resp.Projects)
+		if projectSize == 0 || projectSize < listRequestPageSize {
+			return projects, nil
+		}
+		cursor = resp.Cursor
+	}
+}
+
+func (s *AccountService) listEnvironmentsByOrganizationID(
+	ctx context.Context,
+	organizationID string,
+) ([]*environmentproto.EnvironmentV2, error) {
+	var environments []*environmentproto.EnvironmentV2
+	cursor := ""
+	for {
+		resp, err := s.environmentClient.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
+			PageSize:       listRequestPageSize,
+			Cursor:         cursor,
+			OrganizationId: organizationID,
+			Archived:       wrapperspb.Bool(false),
+		})
+		if err != nil {
+			return nil, err
+		}
+		environments = append(environments, resp.Environments...)
+		environmentSize := len(resp.Environments)
+		if environmentSize == 0 || environmentSize < listRequestPageSize {
+			return environments, nil
+		}
+		cursor = resp.Cursor
+	}
+}
+
+func (s *AccountService) getOrganization(
+	ctx context.Context,
+	id string,
+) (*environmentproto.Organization, error) {
+	resp, err := s.environmentClient.GetOrganization(ctx, &environmentproto.GetOrganizationRequest{
+		Id: id,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Organization, nil
 }
 
 func (s *AccountService) checkAdminRole(ctx context.Context, localizer locale.Localizer) (*eventproto.Editor, error) {
