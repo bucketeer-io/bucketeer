@@ -24,7 +24,6 @@ import "proto/account/api_key.proto";
 import "proto/account/command.proto";
 
 message GetMyOrganizationsRequest {
-  string email = 1;
 }
 
 message GetMyOrganizationsResponse {

@@ -8,9 +8,6 @@ import * as proto_account_api_key_pb from "../../proto/account/api_key_pb";
 import * as proto_account_command_pb from "../../proto/account/command_pb";
 
 export class GetMyOrganizationsRequest extends jspb.Message {
-  getEmail(): string;
-  setEmail(value: string): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetMyOrganizationsRequest.AsObject;
   static toObject(includeInstance: boolean, msg: GetMyOrganizationsRequest): GetMyOrganizationsRequest.AsObject;
@@ -23,7 +20,6 @@ export class GetMyOrganizationsRequest extends jspb.Message {
 
 export namespace GetMyOrganizationsRequest {
   export type AsObject = {
-    email: string,
   }
 }
 

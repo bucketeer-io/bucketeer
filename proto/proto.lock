@@ -652,14 +652,7 @@
         ],
         "messages": [
           {
-            "name": "GetMyOrganizationsRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              }
-            ]
+            "name": "GetMyOrganizationsRequest"
           },
           {
             "name": "GetMyOrganizationsResponse",

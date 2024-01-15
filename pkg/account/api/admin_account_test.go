@@ -962,7 +962,7 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 				).Return([]*domain.AccountWithOrganization{}, nil)
 
 			},
-			input:       &accountproto.GetMyOrganizationsRequest{Email: "bucketeer@example.com"},
+			input:       &accountproto.GetMyOrganizationsRequest{},
 			expected:    &accountproto.GetMyOrganizationsResponse{MyOrganizations: []*accountproto.MyOrganization{}},
 			expectedErr: nil,
 		},

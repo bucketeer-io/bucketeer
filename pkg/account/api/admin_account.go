@@ -739,10 +739,21 @@ func (s *AccountService) newAdminAccountListOrders(
 
 func (s *AccountService) GetMyOrganizations(
 	ctx context.Context,
-	req *accountproto.GetMyOrganizationsRequest,
+	_ *accountproto.GetMyOrganizationsRequest,
 ) (*accountproto.GetMyOrganizationsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, req.Email)
+	t, ok := rpc.GetIDToken(ctx)
+	if !ok {
+		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, t.Email)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get accounts with organization",

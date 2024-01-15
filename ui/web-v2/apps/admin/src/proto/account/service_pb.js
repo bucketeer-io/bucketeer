@@ -1367,7 +1367,7 @@ proto.bucketeer.account.GetMyOrganizationsRequest.prototype.toObject = function(
  */
 proto.bucketeer.account.GetMyOrganizationsRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    email: jspb.Message.getFieldWithDefault(msg, 1, "")
+
   };
 
   if (includeInstance) {
@@ -1404,10 +1404,6 @@ proto.bucketeer.account.GetMyOrganizationsRequest.deserializeBinaryFromReader = 
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setEmail(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -1437,31 +1433,6 @@ proto.bucketeer.account.GetMyOrganizationsRequest.prototype.serializeBinary = fu
  */
 proto.bucketeer.account.GetMyOrganizationsRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getEmail();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
-};
-
-
-/**
- * optional string email = 1;
- * @return {string}
- */
-proto.bucketeer.account.GetMyOrganizationsRequest.prototype.getEmail = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.account.GetMyOrganizationsRequest} returns this
- */
-proto.bucketeer.account.GetMyOrganizationsRequest.prototype.setEmail = function(value) {
-  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
