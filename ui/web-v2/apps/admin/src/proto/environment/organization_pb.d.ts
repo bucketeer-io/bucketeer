@@ -31,6 +31,9 @@ export class Organization extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getSystemAdmin(): boolean;
+  setSystemAdmin(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Organization.AsObject;
   static toObject(includeInstance: boolean, msg: Organization): Organization.AsObject;
@@ -52,6 +55,7 @@ export namespace Organization {
     trial: boolean,
     createdAt: number,
     updatedAt: number,
+    systemAdmin: boolean,
   }
 }
 

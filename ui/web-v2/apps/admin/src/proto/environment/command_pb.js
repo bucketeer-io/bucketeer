@@ -2181,7 +2181,8 @@ proto.bucketeer.environment.CreateOrganizationCommand.toObject = function(includ
     name: jspb.Message.getFieldWithDefault(msg, 1, ""),
     urlCode: jspb.Message.getFieldWithDefault(msg, 2, ""),
     description: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    isTrial: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
+    isTrial: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
+    isSystemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
   };
 
   if (includeInstance) {
@@ -2233,6 +2234,10 @@ proto.bucketeer.environment.CreateOrganizationCommand.deserializeBinaryFromReade
     case 4:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setIsTrial(value);
+      break;
+    case 5:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setIsSystemAdmin(value);
       break;
     default:
       reader.skipField();
@@ -2288,6 +2293,13 @@ proto.bucketeer.environment.CreateOrganizationCommand.serializeBinaryToWriter = 
   if (f) {
     writer.writeBool(
       4,
+      f
+    );
+  }
+  f = message.getIsSystemAdmin();
+  if (f) {
+    writer.writeBool(
+      5,
       f
     );
   }
@@ -2363,6 +2375,24 @@ proto.bucketeer.environment.CreateOrganizationCommand.prototype.getIsTrial = fun
  */
 proto.bucketeer.environment.CreateOrganizationCommand.prototype.setIsTrial = function(value) {
   return jspb.Message.setProto3BooleanField(this, 4, value);
+};
+
+
+/**
+ * optional bool is_system_admin = 5;
+ * @return {boolean}
+ */
+proto.bucketeer.environment.CreateOrganizationCommand.prototype.getIsSystemAdmin = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 5, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.environment.CreateOrganizationCommand} returns this
+ */
+proto.bucketeer.environment.CreateOrganizationCommand.prototype.setIsSystemAdmin = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 5, value);
 };
 
 

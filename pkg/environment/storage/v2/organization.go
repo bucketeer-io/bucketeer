@@ -17,12 +17,28 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
+)
+
+var (
+	//go:embed sql/organization/insert_organization.sql
+	insertOrganizationSQL string
+	//go:embed sql/organization/update_organization.sql
+	updateOrganizationSQL string
+	//go:embed sql/organization/select_organization.sql
+	selectOrganizationSQL string
+	//go:embed sql/organization/select_system_admin_organization.sql
+	selectSystemAdminOrganizationSQL string
+	//go:embed sql/organization/select_organizations.sql
+	selectOrganizationsSQL string
+	//go:embed sql/organization/count_organizations.sql
+	countOrganizationsSQL string
 )
 
 var (
@@ -35,6 +51,7 @@ type OrganizationStorage interface {
 	CreateOrganization(ctx context.Context, p *domain.Organization) error
 	UpdateOrganization(ctx context.Context, p *domain.Organization) error
 	GetOrganization(ctx context.Context, id string) (*domain.Organization, error)
+	GetSystemAdminOrganization(ctx context.Context) (*domain.Organization, error)
 	ListOrganizations(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -51,37 +68,23 @@ func NewOrganizationStorage(qe mysql.QueryExecer) OrganizationStorage {
 	return &organizationStorage{qe}
 }
 
-func (s *organizationStorage) CreateOrganization(ctx context.Context, p *domain.Organization) error {
-	query := `
-		INSERT INTO organization (
-			id,
-			name,
-			url_code,
-			description,
-			disabled,
-			archived,
-			trial,
-			created_at,
-			updated_at
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
+func (s *organizationStorage) CreateOrganization(ctx context.Context, o *domain.Organization) error {
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
-		p.Id,
-		p.Name,
-		p.UrlCode,
-		p.Description,
-		p.Disabled,
-		p.Archived,
-		p.Trial,
-		p.CreatedAt,
-		p.UpdatedAt,
+		insertOrganizationSQL,
+		o.Id,
+		o.Name,
+		o.UrlCode,
+		o.Description,
+		o.Disabled,
+		o.Archived,
+		o.Trial,
+		o.SystemAdmin,
+		o.CreatedAt,
+		o.UpdatedAt,
 	)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrOrganizationAlreadyExists
 		}
 		return err
@@ -90,23 +93,9 @@ func (s *organizationStorage) CreateOrganization(ctx context.Context, p *domain.
 }
 
 func (s *organizationStorage) UpdateOrganization(ctx context.Context, o *domain.Organization) error {
-	query := `
-		UPDATE 
-			organization
-		SET
-			name = ?,
-			description = ?,
-			disabled = ?,
-			archived = ?,
-			trial = ?,
-			created_at = ?,
-			updated_at = ?
-		WHERE
-			id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateOrganizationSQL,
 		o.Name,
 		o.Description,
 		o.Disabled,
@@ -131,25 +120,9 @@ func (s *organizationStorage) UpdateOrganization(ctx context.Context, o *domain.
 
 func (s *organizationStorage) GetOrganization(ctx context.Context, id string) (*domain.Organization, error) {
 	organization := proto.Organization{}
-	query := `
-		SELECT
-			id,
-			name,
-			url_code,
-			description,
-			disabled,
-			archived,
-			trial,
-			created_at,
-			updated_at
-		FROM
-			organization
-		WHERE
-			id = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectOrganizationSQL,
 		id,
 	).Scan(
 		&organization.Id,
@@ -159,11 +132,38 @@ func (s *organizationStorage) GetOrganization(ctx context.Context, id string) (*
 		&organization.Disabled,
 		&organization.Archived,
 		&organization.Trial,
+		&organization.SystemAdmin,
 		&organization.CreatedAt,
 		&organization.UpdatedAt,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrOrganizationNotFound
+		}
+		return nil, err
+	}
+	return &domain.Organization{Organization: &organization}, nil
+}
+
+func (s *organizationStorage) GetSystemAdminOrganization(ctx context.Context) (*domain.Organization, error) {
+	organization := proto.Organization{}
+	err := s.qe.QueryRowContext(
+		ctx,
+		selectSystemAdminOrganizationSQL,
+	).Scan(
+		&organization.Id,
+		&organization.Name,
+		&organization.UrlCode,
+		&organization.Description,
+		&organization.Disabled,
+		&organization.Archived,
+		&organization.Trial,
+		&organization.SystemAdmin,
+		&organization.CreatedAt,
+		&organization.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrOrganizationNotFound
 		}
 		return nil, err
@@ -180,22 +180,7 @@ func (s *organizationStorage) ListOrganizations(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			name,
-			url_code,
-			description,
-			disabled,
-			archived,
-			trial,
-			created_at,
-			updated_at
-		FROM
-			organization
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectOrganizationsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -212,6 +197,7 @@ func (s *organizationStorage) ListOrganizations(
 			&organization.Disabled,
 			&organization.Archived,
 			&organization.Trial,
+			&organization.SystemAdmin,
 			&organization.CreatedAt,
 			&organization.UpdatedAt,
 		)
@@ -225,14 +211,7 @@ func (s *organizationStorage) ListOrganizations(
 	}
 	nextOffset := offset + len(organizations)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			organization
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
+	countQuery := fmt.Sprintf(countOrganizationsSQL, whereSQL, orderBySQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

@@ -489,6 +489,26 @@ func (mr *MockClientMockRecorder) GetAdminAccount(ctx, in interface{}, opts ...i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdminAccount", reflect.TypeOf((*MockClient)(nil).GetAdminAccount), varargs...)
 }
 
+// GetMe mocks base method.
+func (m *MockClient) GetMe(ctx context.Context, in *account.GetMeRequest, opts ...grpc.CallOption) (*account.GetMeResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMe", varargs...)
+	ret0, _ := ret[0].(*account.GetMeResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMe indicates an expected call of GetMe.
+func (mr *MockClientMockRecorder) GetMe(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMe", reflect.TypeOf((*MockClient)(nil).GetMe), varargs...)
+}
+
 // GetMeByEmailV2 mocks base method.
 func (m *MockClient) GetMeByEmailV2(ctx context.Context, in *account.GetMeByEmailV2Request, opts ...grpc.CallOption) (*account.GetMeV2Response, error) {
 	m.ctrl.T.Helper()
@@ -527,6 +547,26 @@ func (mr *MockClientMockRecorder) GetMeV2(ctx, in interface{}, opts ...interface
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMeV2", reflect.TypeOf((*MockClient)(nil).GetMeV2), varargs...)
+}
+
+// GetMyOrganizations mocks base method.
+func (m *MockClient) GetMyOrganizations(ctx context.Context, in *account.GetMyOrganizationsRequest, opts ...grpc.CallOption) (*account.GetMyOrganizationsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMyOrganizations", varargs...)
+	ret0, _ := ret[0].(*account.GetMyOrganizationsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMyOrganizations indicates an expected call of GetMyOrganizations.
+func (mr *MockClientMockRecorder) GetMyOrganizations(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMyOrganizations", reflect.TypeOf((*MockClient)(nil).GetMyOrganizations), varargs...)
 }
 
 // ListAPIKeys mocks base method.

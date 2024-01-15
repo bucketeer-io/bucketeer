@@ -25,6 +25,20 @@ import "proto/account/command.proto";
 
 // account is retrieved by IDToken.
 // it's called from WebUI.
+message GetMeRequest {
+  string organization_id = 1;
+}
+
+message GetMeResponse {
+  ConsoleAccount account = 1;
+}
+
+message GetMyOrganizationsRequest {}
+
+message GetMyOrganizationsResponse {
+  repeated MyOrganization my_organizations = 1;
+}
+
 message GetMeV2Request {}
 
 // account is retrieved by email.
@@ -332,6 +346,9 @@ message GetAPIKeyBySearchingAllEnvironmentsResponse {
 }
 
 service AccountService {
+  rpc GetMe(GetMeRequest) returns (GetMeResponse);
+  rpc GetMyOrganizations(GetMyOrganizationsRequest)
+      returns (GetMyOrganizationsResponse);
   rpc GetMeV2(GetMeV2Request) returns (GetMeV2Response);
   rpc GetMeByEmailV2(GetMeByEmailV2Request) returns (GetMeV2Response);
   rpc CreateAdminAccount(CreateAdminAccountRequest)

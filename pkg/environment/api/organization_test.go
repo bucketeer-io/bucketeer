@@ -206,6 +206,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 		"url-code",
 		"description",
 		false,
+		false,
 	)
 	require.NoError(t, err)
 	trialOrgExpected, err := domain.NewOrganization(
@@ -213,6 +214,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 		"url-code2",
 		"description2",
 		true,
+		false,
 	)
 	require.NoError(t, err)
 
@@ -622,6 +624,20 @@ func TestDisableOrganizationMySQL(t *testing.T) {
 			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
+			desc: "err: ErrCannotUpdateSystemAdmin",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(domain.ErrCannotDisableSystemAdmin)
+			},
+			req: &proto.DisableOrganizationRequest{
+				Id:      "id-0",
+				Command: &proto.DisableOrganizationCommand{},
+			},
+			expectedErr: createError(statusCannotUpdateSystemAdmin, localizer.MustLocalize(locale.InvalidArgumentError)),
+		},
+		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
@@ -716,6 +732,20 @@ func TestArchiveOrganizationMySQL(t *testing.T) {
 				Command: &proto.ArchiveOrganizationCommand{},
 			},
 			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "err: ErrCannotUpdateSystemAdmin",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(domain.ErrCannotArchiveSystemAdmin)
+			},
+			req: &proto.ArchiveOrganizationRequest{
+				Id:      "id-0",
+				Command: &proto.ArchiveOrganizationCommand{},
+			},
+			expectedErr: createError(statusCannotUpdateSystemAdmin, localizer.MustLocalize(locale.InvalidArgumentError)),
 		},
 		{
 			desc: "err: ErrInternal",

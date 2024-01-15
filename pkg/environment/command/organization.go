@@ -110,14 +110,18 @@ func (h *organizationCommandHandler) enable(ctx context.Context, cmd *proto.Enab
 }
 
 func (h *organizationCommandHandler) disable(ctx context.Context, cmd *proto.DisableOrganizationCommand) error {
-	h.organization.Disable()
+	if err := h.organization.Disable(); err != nil {
+		return err
+	}
 	return h.send(ctx, eventproto.Event_ORGANIZATION_DISABLED, &eventproto.OrganizationDisabledEvent{
 		Id: h.organization.Id,
 	})
 }
 
 func (h *organizationCommandHandler) archive(ctx context.Context, cmd *proto.ArchiveOrganizationCommand) error {
-	h.organization.Archive()
+	if err := h.organization.Archive(); err != nil {
+		return err
+	}
 	return h.send(ctx, eventproto.Event_ORGANIZATION_ARCHIVED, &eventproto.OrganizationArchivedEvent{
 		Id: h.organization.Id,
 	})
