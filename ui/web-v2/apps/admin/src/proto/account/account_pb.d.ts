@@ -3,6 +3,8 @@
 
 import * as jspb from "google-protobuf";
 import * as proto_environment_environment_pb from "../../proto/environment/environment_pb";
+import * as proto_environment_project_pb from "../../proto/environment/project_pb";
+import * as proto_environment_organization_pb from "../../proto/environment/organization_pb";
 
 export class Account extends jspb.Message {
   getId(): string;
@@ -203,6 +205,114 @@ export namespace EnvironmentRoleV2 {
     role: Account.RoleMap[keyof Account.RoleMap],
     trialProject: boolean,
     trialStartedAt: number,
+  }
+}
+
+export class ConsoleAccount extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getAvatarUrl(): string;
+  setAvatarUrl(value: string): void;
+
+  getIsSystemAdmin(): boolean;
+  setIsSystemAdmin(value: boolean): void;
+
+  hasOrganization(): boolean;
+  clearOrganization(): void;
+  getOrganization(): proto_environment_organization_pb.Organization | undefined;
+  setOrganization(value?: proto_environment_organization_pb.Organization): void;
+
+  getOrganizationRole(): AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap];
+  setOrganizationRole(value: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap]): void;
+
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<ConsoleAccount.EnvironmentRole>;
+  setEnvironmentRolesList(value: Array<ConsoleAccount.EnvironmentRole>): void;
+  addEnvironmentRoles(value?: ConsoleAccount.EnvironmentRole, index?: number): ConsoleAccount.EnvironmentRole;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ConsoleAccount.AsObject;
+  static toObject(includeInstance: boolean, msg: ConsoleAccount): ConsoleAccount.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ConsoleAccount, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ConsoleAccount;
+  static deserializeBinaryFromReader(message: ConsoleAccount, reader: jspb.BinaryReader): ConsoleAccount;
+}
+
+export namespace ConsoleAccount {
+  export type AsObject = {
+    email: string,
+    name: string,
+    avatarUrl: string,
+    isSystemAdmin: boolean,
+    organization?: proto_environment_organization_pb.Organization.AsObject,
+    organizationRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap],
+    environmentRolesList: Array<ConsoleAccount.EnvironmentRole.AsObject>,
+  }
+
+  export class EnvironmentRole extends jspb.Message {
+    hasEnvironment(): boolean;
+    clearEnvironment(): void;
+    getEnvironment(): proto_environment_environment_pb.EnvironmentV2 | undefined;
+    setEnvironment(value?: proto_environment_environment_pb.EnvironmentV2): void;
+
+    hasProject(): boolean;
+    clearProject(): void;
+    getProject(): proto_environment_project_pb.Project | undefined;
+    setProject(value?: proto_environment_project_pb.Project): void;
+
+    getRole(): AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap];
+    setRole(value: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap]): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): EnvironmentRole.AsObject;
+    static toObject(includeInstance: boolean, msg: EnvironmentRole): EnvironmentRole.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: EnvironmentRole, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): EnvironmentRole;
+    static deserializeBinaryFromReader(message: EnvironmentRole, reader: jspb.BinaryReader): EnvironmentRole;
+  }
+
+  export namespace EnvironmentRole {
+    export type AsObject = {
+      environment?: proto_environment_environment_pb.EnvironmentV2.AsObject,
+      project?: proto_environment_project_pb.Project.AsObject,
+      role: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap],
+    }
+  }
+}
+
+export class MyOrganization extends jspb.Message {
+  hasOrganization(): boolean;
+  clearOrganization(): void;
+  getOrganization(): proto_environment_organization_pb.Organization | undefined;
+  setOrganization(value?: proto_environment_organization_pb.Organization): void;
+
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): AccountV2 | undefined;
+  setAccount(value?: AccountV2): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MyOrganization.AsObject;
+  static toObject(includeInstance: boolean, msg: MyOrganization): MyOrganization.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MyOrganization, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MyOrganization;
+  static deserializeBinaryFromReader(message: MyOrganization, reader: jspb.BinaryReader): MyOrganization;
+}
+
+export namespace MyOrganization {
+  export type AsObject = {
+    organization?: proto_environment_organization_pb.Organization.AsObject,
+    account?: AccountV2.AsObject,
   }
 }
 

@@ -736,3 +736,220 @@ func (s *AccountService) newAdminAccountListOrders(
 	}
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
+
+func (s *AccountService) GetMe(
+	ctx context.Context,
+	req *accountproto.GetMeRequest,
+) (*accountproto.GetMeResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	t, ok := rpc.GetIDToken(ctx)
+	if !ok {
+		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if !verifyEmailFormat(t.Email) {
+		s.logger.Error(
+			"Email inside IDToken has an invalid format",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", t.Email))...,
+		)
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	projects, err := s.listProjectsByOrganizationID(ctx, req.OrganizationId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get project list",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	environments, err := s.listEnvironmentsByOrganizationID(ctx, req.OrganizationId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get environment list",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	organization, err := s.getOrganization(ctx, req.OrganizationId)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			s.logger.Error(
+				"Organization not found",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", req.OrganizationId),
+				)...,
+			)
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to get organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	// admin account response
+	adminAccount, err := s.getAdminAccount(ctx, t.Email, localizer) // TODO replace
+	if err != nil && status.Code(err) != codes.NotFound {
+		return nil, err
+	}
+	if adminAccount != nil && !adminAccount.Disabled && !adminAccount.Deleted {
+		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
+			Email:            adminAccount.Email,
+			Name:             adminAccount.Name,
+			AvatarUrl:        "", // TODO: Once we change a way to get admin account, we should set it here.
+			IsSystemAdmin:    true,
+			Organization:     organization,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			EnvironmentRoles: adminEnvRoles,
+		}}, nil
+	}
+	// non admin account response
+	account, err := s.getAccountV2(ctx, t.Email, req.OrganizationId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	envRoles := s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
+	return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
+		Email:            account.Email,
+		Name:             account.Name,
+		AvatarUrl:        account.AvatarImageUrl,
+		IsSystemAdmin:    false,
+		Organization:     organization,
+		OrganizationRole: account.OrganizationRole,
+		EnvironmentRoles: envRoles,
+	}}, nil
+}
+
+func (s *AccountService) getAdminConsoleAccountEnvironmentRoles(
+	environments []*environmentproto.EnvironmentV2,
+	projects []*environmentproto.Project,
+) []*accountproto.ConsoleAccount_EnvironmentRole {
+	projectSet := s.makeProjectSet(projects)
+	environmentRoles := make([]*accountproto.ConsoleAccount_EnvironmentRole, 0, len(environments))
+	for _, e := range environments {
+		if e.Archived {
+			continue
+		}
+		p, ok := projectSet[e.ProjectId]
+		if !ok || p.Disabled {
+			continue
+		}
+		er := &accountproto.ConsoleAccount_EnvironmentRole{
+			Environment: e,
+			Project:     p,
+			Role:        accountproto.AccountV2_Role_Environment_EDITOR,
+		}
+		environmentRoles = append(environmentRoles, er)
+	}
+	return environmentRoles
+}
+
+func (s *AccountService) getConsoleAccountEnvironmentRoles(
+	roles []*accountproto.AccountV2_EnvironmentRole,
+	environments []*environmentproto.EnvironmentV2,
+	projects []*environmentproto.Project,
+) []*accountproto.ConsoleAccount_EnvironmentRole {
+	envSet := s.makeEnvironmentSet(environments)
+	projectSet := s.makeProjectSet(projects)
+	environmentRoles := make([]*accountproto.ConsoleAccount_EnvironmentRole, 0, len(roles))
+	for _, r := range roles {
+		env, ok := envSet[r.EnvironmentId]
+		if !ok || env.Archived {
+			continue
+		}
+		project, ok := projectSet[env.ProjectId]
+		if !ok || project.Disabled {
+			continue
+		}
+		environmentRoles = append(environmentRoles, &accountproto.ConsoleAccount_EnvironmentRole{
+			Environment: env,
+			Role:        r.Role,
+			Project:     project,
+		})
+	}
+	return environmentRoles
+}
+
+func (s *AccountService) GetMyOrganizations(
+	ctx context.Context,
+	_ *accountproto.GetMyOrganizationsRequest,
+) (*accountproto.GetMyOrganizationsResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	t, ok := rpc.GetIDToken(ctx)
+	if !ok {
+		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, t.Email)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get accounts with organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	myOrgs := make([]*accountproto.MyOrganization, 0, len(accountsWithOrg))
+	for _, accWithOrg := range accountsWithOrg {
+		myOrgs = append(myOrgs, &accountproto.MyOrganization{
+			Organization: accWithOrg.Organization,
+			Account:      accWithOrg.AccountV2,
+		})
+	}
+	return &accountproto.GetMyOrganizationsResponse{MyOrganizations: myOrgs}, nil
+}

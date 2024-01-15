@@ -67,6 +67,21 @@ func (mr *MockOrganizationStorageMockRecorder) GetOrganization(ctx, id interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganization", reflect.TypeOf((*MockOrganizationStorage)(nil).GetOrganization), ctx, id)
 }
 
+// GetSystemAdminOrganization mocks base method.
+func (m *MockOrganizationStorage) GetSystemAdminOrganization(ctx context.Context) (*domain.Organization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSystemAdminOrganization", ctx)
+	ret0, _ := ret[0].(*domain.Organization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSystemAdminOrganization indicates an expected call of GetSystemAdminOrganization.
+func (mr *MockOrganizationStorageMockRecorder) GetSystemAdminOrganization(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSystemAdminOrganization", reflect.TypeOf((*MockOrganizationStorage)(nil).GetSystemAdminOrganization), ctx)
+}
+
 // ListOrganizations mocks base method.
 func (m *MockOrganizationStorage) ListOrganizations(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*environment.Organization, int, int64, error) {
 	m.ctrl.T.Helper()

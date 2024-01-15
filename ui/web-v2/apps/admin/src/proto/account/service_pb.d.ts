@@ -7,6 +7,86 @@ import * as proto_account_account_pb from "../../proto/account/account_pb";
 import * as proto_account_api_key_pb from "../../proto/account/api_key_pb";
 import * as proto_account_command_pb from "../../proto/account/command_pb";
 
+export class GetMeRequest extends jspb.Message {
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetMeRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetMeRequest): GetMeRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetMeRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetMeRequest;
+  static deserializeBinaryFromReader(message: GetMeRequest, reader: jspb.BinaryReader): GetMeRequest;
+}
+
+export namespace GetMeRequest {
+  export type AsObject = {
+    organizationId: string,
+  }
+}
+
+export class GetMeResponse extends jspb.Message {
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): proto_account_account_pb.ConsoleAccount | undefined;
+  setAccount(value?: proto_account_account_pb.ConsoleAccount): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetMeResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GetMeResponse): GetMeResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetMeResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetMeResponse;
+  static deserializeBinaryFromReader(message: GetMeResponse, reader: jspb.BinaryReader): GetMeResponse;
+}
+
+export namespace GetMeResponse {
+  export type AsObject = {
+    account?: proto_account_account_pb.ConsoleAccount.AsObject,
+  }
+}
+
+export class GetMyOrganizationsRequest extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetMyOrganizationsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetMyOrganizationsRequest): GetMyOrganizationsRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetMyOrganizationsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetMyOrganizationsRequest;
+  static deserializeBinaryFromReader(message: GetMyOrganizationsRequest, reader: jspb.BinaryReader): GetMyOrganizationsRequest;
+}
+
+export namespace GetMyOrganizationsRequest {
+  export type AsObject = {
+  }
+}
+
+export class GetMyOrganizationsResponse extends jspb.Message {
+  clearMyOrganizationsList(): void;
+  getMyOrganizationsList(): Array<proto_account_account_pb.MyOrganization>;
+  setMyOrganizationsList(value: Array<proto_account_account_pb.MyOrganization>): void;
+  addMyOrganizations(value?: proto_account_account_pb.MyOrganization, index?: number): proto_account_account_pb.MyOrganization;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetMyOrganizationsResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GetMyOrganizationsResponse): GetMyOrganizationsResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetMyOrganizationsResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetMyOrganizationsResponse;
+  static deserializeBinaryFromReader(message: GetMyOrganizationsResponse, reader: jspb.BinaryReader): GetMyOrganizationsResponse;
+}
+
+export namespace GetMyOrganizationsResponse {
+  export type AsObject = {
+    myOrganizationsList: Array<proto_account_account_pb.MyOrganization.AsObject>,
+  }
+}
+
 export class GetMeV2Request extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetMeV2Request.AsObject;
