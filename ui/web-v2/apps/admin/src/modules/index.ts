@@ -14,6 +14,7 @@ import { experimentsSlice } from './experiments';
 import { featuresSlice } from './features';
 import { goalsSlice } from './goals';
 import { meSlice } from './me';
+import { myOrganizationSlice } from './myOrganization';
 import { notificationSlice } from './notifications';
 import { opsCountsSlice } from './opsCounts';
 import { projectsSlice } from './projects';
@@ -45,6 +46,7 @@ export const reducers = combineReducers({
   me: meSlice.reducer,
   toasts: toastsSlice.reducer,
   tags: tagsSlice.reducer,
+  myOrganization: myOrganizationSlice.reducer,
 });
 
 export type AppState = ReturnType<typeof reducers>;

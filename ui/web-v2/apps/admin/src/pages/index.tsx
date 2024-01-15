@@ -1,7 +1,15 @@
+import { Select } from '@/components/Select';
 import { GOOGLE_TAG_MANAGER_ID } from '@/config';
+import { AppState } from '@/modules';
+import { fetchMyOrganizations } from '@/modules/myOrganization';
+import { MyOrganization } from '@/proto/account/account_pb';
+import {
+  getOrganizationId,
+  settOrganizationId,
+} from '@/storage/organizationId';
 import React, { FC, useEffect, memo, useState, useCallback } from 'react';
 import TagManager from 'react-gtm-module';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Route,
   Switch,
@@ -84,45 +92,126 @@ export const Root: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
   const [pageKey, setPageKey] = useState<string>(uuid());
   const me = useMe();
+  const myOrganization = useSelector<AppState, MyOrganization.AsObject[]>(
+    (state) => state.myOrganization.myOrganization
+  );
+  const [selectedOrganization, setSelectedOrganization] = useState(null);
 
+  const token = hasToken();
   const handleChangePageKey = useCallback(() => {
     setPageKey(uuid());
   }, [setPageKey]);
 
   useEffect(() => {
-    if (!hasToken()) {
+    if (!token) {
       dispatch(setupAuthToken());
       return;
     }
-    if (!me.isLogin) {
-      // TODO
-      dispatch(fetchMe({organizationId: "ORGANIZATION_ID_SELECTED_BY_USER"}));
-    }
-  });
-  if (!me.isLogin) {
-    return null;
-  }
 
-  return (
-    <div className="flex flex-row w-full h-full bg-gray-100">
-      <div className="flex-none w-64">
-        <SideMenu onClickNavLink={handleChangePageKey} />{' '}
+    const organizationId = getOrganizationId();
+
+    if (organizationId) {
+      dispatch(fetchMe({ organizationId }));
+    } else {
+      dispatch(fetchMyOrganizations());
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (myOrganization.length === 1) {
+      settOrganizationId(myOrganization[0].organization.id);
+      dispatch(fetchMe({ organizationId: myOrganization[0].organization.id }));
+    }
+  }, [myOrganization]);
+
+  const handleSubmit = () => {
+    settOrganizationId(selectedOrganization.value);
+    dispatch(fetchMe({ organizationId: selectedOrganization.value }));
+  };
+
+  if (me.isLogin) {
+    return (
+      <div className="flex flex-row w-full h-full bg-gray-100">
+        <div className="flex-none w-64">
+          <SideMenu onClickNavLink={handleChangePageKey} />{' '}
+        </div>
+        <div className="flex-grow min-w-128 shadow-lg overflow-y-auto">
+          <Switch>
+            <Route path={PAGE_PATH_ADMIN} component={AdminRoot} />
+            <Route
+              key={pageKey}
+              path={'/:environmentUrlCode?'}
+              component={EnvironmentRoot}
+            />
+            <Route path="*">
+              <NotFound />
+            </Route>
+          </Switch>
+        </div>
       </div>
-      <div className="flex-grow min-w-128 shadow-lg overflow-y-auto">
-        <Switch>
-          <Route path={PAGE_PATH_ADMIN} component={AdminRoot} />
-          <Route
-            key={pageKey}
-            path={'/:environmentUrlCode?'}
-            component={EnvironmentRoot}
-          />
-          <Route path="*">
-            <NotFound />
-          </Route>
-        </Switch>
+    );
+  }
+  if (token && myOrganization.length > 1) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-[#ece6fb]">
+        <img
+          src="/assets/img-block_left.png"
+          alt="img block left"
+          className="absolute left-[-10%] top-[-50%] z-0 w-[1000px] h-[1000px]"
+        />
+        <img
+          src="/assets/img-block_right.png"
+          alt="img block right"
+          className="absolute right-[-10%] bottom-[-50%] z-0 w-[1000px] h-[1000px]"
+        />
+        <div className="p-6 w-full z-10 flex justify-center">
+          <div className="flex flex-col lg:flex-row rounded-[14px] shadow-lg w-full lg:w-[900px] h-[400px] overflow-hidden">
+            <div className="flex-1 flex items-center justify-center bg-primary">
+              <img src="/assets/logo.png" alt="bucketeer logo" />
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center bg-white">
+              <div>
+                <h2 className="font-medium">Select your Organization</h2>
+                <div className="flex space-x-2 mt-2">
+                  <div className="w-56">
+                    <Select
+                      placeholder="Select your organization"
+                      options={myOrganization.map((m) => ({
+                        label: m.organization.name,
+                        value: m.organization.id,
+                      }))}
+                      onChange={(o) => setSelectedOrganization(o)}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-submit"
+                    disabled={!selectedOrganization}
+                    onClick={handleSubmit}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <p className="text-primary font">
+            ©2023 The Bucketeer Authors All Rights Reserved.{' '}
+            <a
+              href="https://github.com/bucketeer-io/bucketeer/blob/master/LICENSE"
+              target="_blank"
+              className="underline"
+            >
+              Privacy Policy
+            </a>
+          </p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+  return null;
 });
 
 export const AdminRoot: FC = memo(() => {
@@ -164,7 +253,8 @@ export const EnvironmentRoot: FC = memo(() => {
     return null;
   }
   const environmentRole = me.consoleAccount.environmentRolesList.find(
-    (environmentRole) => environmentRole.environment.urlCode === environmentUrlCode
+    (environmentRole) =>
+      environmentRole.environment.urlCode === environmentUrlCode
   );
   if (!environmentRole) {
     return <NotFound />;
