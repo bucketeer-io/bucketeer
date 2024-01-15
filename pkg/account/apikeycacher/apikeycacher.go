@@ -406,7 +406,11 @@ func (c *EnvAPIKeyCacher) refresh(
 	return c.upsert(envAPIKey)
 }
 
-func (c *EnvAPIKeyCacher) refreshAll(environmentDisabled bool, projectID string, environment *environmentproto.EnvironmentV2) error {
+func (c *EnvAPIKeyCacher) refreshAll(
+	environmentDisabled bool,
+	projectID string,
+	environment *environmentproto.EnvironmentV2,
+) error {
 	apiKeys, err := c.listAPIKeys(environment.Id)
 	if err != nil {
 		return fmt.Errorf("failed to list api keys: %w", err)
