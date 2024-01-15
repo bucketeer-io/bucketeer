@@ -190,6 +190,7 @@ func (p *PersisterDWH) Run() error {
 			if exist {
 				p.logger.Debug("There are running experiments")
 				if !p.IsRunning() {
+					p.group = errgroup.Group{}
 					subscription <- struct{}{}
 					p.logger.Debug("Puller is not running, start pulling messages")
 				}
@@ -198,12 +199,7 @@ func (p *PersisterDWH) Run() error {
 				if p.IsRunning() {
 					p.logger.Debug("Puller is running, stop pulling messages")
 					p.unsubscribe()
-					err := p.group.Wait()
-					if err != nil {
-						p.logger.Error("Waiting for puller to finish error", zap.Error(err))
-					}
 					p.rateLimitedPuller = puller.NewRateLimitedPuller(p.puller, p.opts.maxMPS)
-					p.group = errgroup.Group{}
 				}
 			}
 			timer.Reset(p.opts.checkInterval)
@@ -212,11 +208,6 @@ func (p *PersisterDWH) Run() error {
 			if p.IsRunning() {
 				p.logger.Debug("Puller is running, stop pulling messages")
 				p.unsubscribe()
-				err := p.group.Wait()
-				if err != nil {
-					p.logger.Error("Waiting for puller to finish error", zap.Error(err))
-					return err
-				}
 			}
 			return nil
 		}
@@ -234,8 +225,8 @@ func (p *PersisterDWH) Check(ctx context.Context) health.Status {
 		p.logger.Error("Unhealthy due to context Done is closed", zap.Error(p.ctx.Err()))
 		return health.Unhealthy
 	default:
-		if p.group.FinishedCount() > 0 {
-			p.logger.Error("Unhealthy", zap.Int32("FinishedCount", p.group.FinishedCount()))
+		if p.group.FailedCount() > 0 {
+			p.logger.Error("Unhealthy", zap.Int32("FailedCount", p.group.FailedCount()))
 			return health.Unhealthy
 		}
 		return health.Healthy
