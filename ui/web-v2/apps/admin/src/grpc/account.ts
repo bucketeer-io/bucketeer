@@ -14,8 +14,12 @@ import {
   EnableAccountResponse,
   GetAccountRequest,
   GetAccountResponse,
+  GetMeRequest,
+  GetMeResponse,
   GetMeV2Request,
   GetMeV2Response,
+  GetMyOrganizationsRequest,
+  GetMyOrganizationsResponse,
   ListAccountsRequest,
   ListAccountsResponse,
 } from '../proto/account/service_pb';
@@ -28,6 +32,44 @@ import { extractErrorMessage } from './messages';
 import { getMetaDataForClient as getMetaData } from './utils';
 
 const client = new AccountServiceClient(urls.GRPC);
+
+export interface GetMeResult {
+  request: GetMeRequest;
+  response: GetMeResponse;
+}
+
+export function getMe(request: GetMeRequest): Promise<GetMeResult> {
+  return new Promise((resolve: (result: GetMeResult) => void, reject): void => {
+    client.getMe(request, getMetaData(), (error, response): void => {
+      if (isNotNull(error) || isNull(response)) {
+        reject(
+          new AccountServiceError(extractErrorMessage(error), request, error)
+        );
+      } else {
+        resolve({ request, response });
+      }
+    });
+  });
+}
+
+export interface GetMyOrganizationsResult {
+  request: GetMyOrganizationsRequest;
+  response: GetMyOrganizationsResponse;
+}
+
+export function getMyOrganizations(request: GetMyOrganizationsRequest): Promise<GetMyOrganizationsResult> {
+  return new Promise((resolve: (result: GetMyOrganizationsResult) => void, reject): void => {
+    client.getMyOrganizations(request, getMetaData(), (error, response): void => {
+      if (isNotNull(error) || isNull(response)) {
+        reject(
+          new AccountServiceError(extractErrorMessage(error), request, error)
+        );
+      } else {
+        resolve({ request, response });
+      }
+    });
+  });
+}
 
 export interface GetMeV2Result {
   request: GetMeV2Request;

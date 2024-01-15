@@ -95,7 +95,8 @@ export const Root: FC = memo(() => {
       return;
     }
     if (!me.isLogin) {
-      dispatch(fetchMe());
+      // TODO
+      dispatch(fetchMe({organizationId: "ORGANIZATION_ID_SELECTED_BY_USER"}));
     }
   });
   if (!me.isLogin) {
@@ -162,13 +163,13 @@ export const EnvironmentRoot: FC = memo(() => {
   if (!me.isLogin) {
     return null;
   }
-  const environment = me.environmentRoles.find(
+  const environmentRole = me.consoleAccount.environmentRolesList.find(
     (environmentRole) => environmentRole.environment.urlCode === environmentUrlCode
   );
-  if (!environment) {
+  if (!environmentRole) {
     return <NotFound />;
   }
-  dispatch(setCurrentEnvironment(environment.environment.id));
+  dispatch(setCurrentEnvironment(environmentRole.environment.id));
 
   return (
     <>
