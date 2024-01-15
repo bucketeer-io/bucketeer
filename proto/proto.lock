@@ -204,6 +204,69 @@
             ]
           },
           {
+            "name": "ConsoleAccount",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "avatar_url",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "is_system_admin",
+                "type": "bool"
+              },
+              {
+                "id": 5,
+                "name": "organization",
+                "type": "environment.Organization"
+              },
+              {
+                "id": 6,
+                "name": "organization_role",
+                "type": "AccountV2.Role.Organization"
+              },
+              {
+                "id": 7,
+                "name": "environment_roles",
+                "type": "EnvironmentRole",
+                "is_repeated": true
+              }
+            ],
+            "messages": [
+              {
+                "name": "EnvironmentRole",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "environment",
+                    "type": "environment.EnvironmentV2"
+                  },
+                  {
+                    "id": 2,
+                    "name": "project",
+                    "type": "environment.Project"
+                  },
+                  {
+                    "id": 3,
+                    "name": "role",
+                    "type": "AccountV2.Role.Environment"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "name": "MyOrganization",
             "fields": [
               {
@@ -222,6 +285,9 @@
         "imports": [
           {
             "path": "proto/environment/environment.proto"
+          },
+          {
+            "path": "proto/environment/project.proto"
           },
           {
             "path": "proto/environment/organization.proto"
@@ -651,6 +717,26 @@
           }
         ],
         "messages": [
+          {
+            "name": "GetMeRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "organization_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetMeResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "ConsoleAccount"
+              }
+            ]
+          },
           {
             "name": "GetMyOrganizationsRequest"
           },
@@ -1473,6 +1559,11 @@
           {
             "name": "AccountService",
             "rpcs": [
+              {
+                "name": "GetMe",
+                "in_type": "GetMeRequest",
+                "out_type": "GetMeResponse"
+              },
               {
                 "name": "GetMyOrganizations",
                 "in_type": "GetMyOrganizationsRequest",
