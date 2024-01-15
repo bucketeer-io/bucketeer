@@ -62,7 +62,6 @@ import (
 const (
 	command                       = "server"
 	gcp                           = "gcp"
-	aws                           = "aws"
 	featureFlagTriggerWebhookPath = "webhook/triggers"
 	healthCheckTimeout            = 1 * time.Second
 	clientDialTimeout             = 30 * time.Second
