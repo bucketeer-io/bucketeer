@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	"testing"
 	"time"
 
@@ -156,16 +157,16 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
-						ApiKey:               &accountproto.APIKey{Id: "id-0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey:      &accountproto.APIKey{Id: "id-0"},
 					}, nil)
 			},
 			ctx: metadata.NewIncomingContext(context.TODO(), metadata.MD{
 				"authorization": []string{"test-key"},
 			}),
 			expected: &accountproto.EnvironmentAPIKey{
-				EnvironmentNamespace: "ns0",
-				ApiKey:               &accountproto.APIKey{Id: "id-0"},
+				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+				ApiKey:      &accountproto.APIKey{Id: "id-0"},
 			},
 			expectedErr: nil,
 		},
@@ -204,8 +205,8 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetAPIKeyBySearchingAllEnvironments(gomock.Any(), gomock.Any()).Return(
 					&accountproto.GetAPIKeyBySearchingAllEnvironmentsResponse{EnvironmentApiKey: &accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
-						ApiKey:               &accountproto.APIKey{Id: "id-0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey:      &accountproto.APIKey{Id: "id-0"},
 					}}, nil)
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Put(gomock.Any()).Return(nil)
 			},
@@ -213,8 +214,8 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 				"authorization": []string{"test-key"},
 			}),
 			expected: &accountproto.EnvironmentAPIKey{
-				EnvironmentNamespace: "ns0",
-				ApiKey:               &accountproto.APIKey{Id: "id-0"},
+				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+				ApiKey:      &accountproto.APIKey{Id: "id-0"},
 			},
 			expectedErr: nil,
 		},
@@ -281,7 +282,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 		{
 			desc: "ErrBadRole",
 			inputEnvAPIKey: &accountproto.EnvironmentAPIKey{
-				EnvironmentNamespace: "ns0",
+				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 				ApiKey: &accountproto.APIKey{
 					Id:       "id-0",
 					Role:     accountproto.APIKey_SERVICE,
@@ -294,7 +295,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 		{
 			desc: "ErrDisabledAPIKey: environment disabled",
 			inputEnvAPIKey: &accountproto.EnvironmentAPIKey{
-				EnvironmentNamespace: "ns0",
+				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 				ApiKey: &accountproto.APIKey{
 					Id:       "id-0",
 					Role:     accountproto.APIKey_SDK,
@@ -308,7 +309,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 		{
 			desc: "ErrDisabledAPIKey: api key disabled",
 			inputEnvAPIKey: &accountproto.EnvironmentAPIKey{
-				EnvironmentNamespace: "ns0",
+				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 				ApiKey: &accountproto.APIKey{
 					Id:       "id-0",
 					Role:     accountproto.APIKey_SDK,
@@ -322,7 +323,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 		{
 			desc: "no error",
 			inputEnvAPIKey: &accountproto.EnvironmentAPIKey{
-				EnvironmentNamespace: "ns0",
+				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 				ApiKey: &accountproto.APIKey{
 					Id:       "id-0",
 					Role:     accountproto.APIKey_SDK,
@@ -481,36 +482,36 @@ func TestGrpcGetFeaturesFromCache(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc                 string
-		setup                func(*cachev3mock.MockFeaturesCache)
-		environmentNamespace string
-		expected             *featureproto.Features
-		expectedErr          error
+		desc          string
+		setup         func(*cachev3mock.MockFeaturesCache)
+		environmentId string
+		expected      *featureproto.Features
+		expectedErr   error
 	}{
 		{
 			desc: "no error",
 			setup: func(mtf *cachev3mock.MockFeaturesCache) {
 				mtf.EXPECT().Get(gomock.Any()).Return(&featureproto.Features{}, nil)
 			},
-			environmentNamespace: "ns0",
-			expected:             &featureproto.Features{},
-			expectedErr:          nil,
+			environmentId: "ns0",
+			expected:      &featureproto.Features{},
+			expectedErr:   nil,
 		},
 		{
 			desc: "error",
 			setup: func(mtf *cachev3mock.MockFeaturesCache) {
 				mtf.EXPECT().Get(gomock.Any()).Return(nil, cache.ErrNotFound)
 			},
-			environmentNamespace: "ns0",
-			expected:             nil,
-			expectedErr:          cache.ErrNotFound,
+			environmentId: "ns0",
+			expected:      nil,
+			expectedErr:   cache.ErrNotFound,
 		},
 	}
 	for _, p := range patterns {
 		mtfc := cachev3mock.NewMockFeaturesCache(mockController)
 		p.setup(mtfc)
 		gs := grpcGatewayService{featuresCache: mtfc}
-		actual, err := gs.getFeaturesFromCache(context.Background(), p.environmentNamespace)
+		actual, err := gs.getFeaturesFromCache(context.Background(), p.environmentId)
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
@@ -526,11 +527,11 @@ func TestGrpcGetFeatures(t *testing.T) {
 	thirtyOneDaysAgo := now.Add(-31 * 24 * time.Hour)
 
 	patterns := []struct {
-		desc                 string
-		setup                func(*grpcGatewayService)
-		environmentNamespace string
-		expected             []*featureproto.Feature
-		expectedErr          error
+		desc          string
+		setup         func(*grpcGatewayService)
+		environmentId string
+		expected      []*featureproto.Feature
+		expectedErr   error
 	}{
 		{
 			desc: "exists in redis",
@@ -540,9 +541,9 @@ func TestGrpcGetFeatures(t *testing.T) {
 						Features: []*featureproto.Feature{{}},
 					}, nil)
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
-			expected:             []*featureproto.Feature{{}},
+			environmentId: "ns0",
+			expectedErr:   nil,
+			expected:      []*featureproto.Feature{{}},
 		},
 		{
 			desc: "listFeatures fails",
@@ -552,9 +553,9 @@ func TestGrpcGetFeatures(t *testing.T) {
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
 			},
-			environmentNamespace: "ns0",
-			expected:             nil,
-			expectedErr:          ErrInternal,
+			environmentId: "ns0",
+			expected:      nil,
+			expectedErr:   ErrInternal,
 		},
 		{
 			desc: "success",
@@ -570,7 +571,7 @@ func TestGrpcGetFeatures(t *testing.T) {
 					}}, nil)
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 			},
-			environmentNamespace: "ns0",
+			environmentId: "ns0",
 			expected: []*featureproto.Feature{
 				{
 					Id:      "id-0",
@@ -608,7 +609,7 @@ func TestGrpcGetFeatures(t *testing.T) {
 					}}, nil)
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 			},
-			environmentNamespace: "ns0",
+			environmentId: "ns0",
 			expected: []*featureproto.Feature{
 				{
 					Id:      "id-0",
@@ -654,7 +655,7 @@ func TestGrpcGetFeatures(t *testing.T) {
 					}}, nil)
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 			},
-			environmentNamespace: "ns0",
+			environmentId: "ns0",
 			expected: []*featureproto.Feature{
 				{
 					Id:       "id-0",
@@ -675,7 +676,7 @@ func TestGrpcGetFeatures(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			gs := newGrpcGatewayServiceWithMock(t, mockController)
 			p.setup(gs)
-			actual, err := gs.getFeatures(context.Background(), p.environmentNamespace)
+			actual, err := gs.getFeatures(context.Background(), p.environmentId)
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
@@ -717,7 +718,7 @@ func TestGrpcTrack(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -804,7 +805,7 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -831,7 +832,7 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -848,7 +849,7 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -902,7 +903,7 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1107,7 +1108,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1139,7 +1140,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1173,7 +1174,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1206,7 +1207,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1237,7 +1238,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1300,7 +1301,7 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1456,7 +1457,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1526,7 +1527,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1637,7 +1638,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1734,7 +1735,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1805,7 +1806,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -1946,7 +1947,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -2053,7 +2054,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -2160,7 +2161,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -2265,7 +2266,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -2415,7 +2416,7 @@ func TestGrpcGetEvaluation(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -2482,7 +2483,7 @@ func TestGrpcGetEvaluation(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -2574,7 +2575,7 @@ func TestGrpcGetEvaluation(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -2754,7 +2755,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -2770,7 +2771,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -2792,7 +2793,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,
@@ -2830,7 +2831,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						EnvironmentNamespace: "ns0",
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK,

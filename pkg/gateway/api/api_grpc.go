@@ -220,7 +220,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 			"Failed to generate uuid for goal event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("goalId", goalEvent.GoalId),
 			)...,
 		)
@@ -233,7 +233,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 			"Failed to marshal goal event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("goalId", goalEvent.GoalId),
 			)...,
 		)
@@ -242,7 +242,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 	event := &eventproto.Event{
 		Id:                   id.String(),
 		Event:                goal,
-		EnvironmentNamespace: envAPIKey.EnvironmentNamespace,
+		EnvironmentNamespace: envAPIKey.Environment.Id,
 	}
 	if err := s.goalPublisher.Publish(ctx, event); err != nil {
 		if err == publisher.ErrBadMessage {
@@ -254,7 +254,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 			"Failed to publish goal event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("eventId", event.Id),
 				zap.String("goalId", goalEvent.GoalId),
 			)...,
@@ -295,21 +295,21 @@ func (s *grpcGatewayService) GetEvaluations(
 		return nil, err
 	}
 	projectID := envAPIKey.ProjectId
-	environmentNamespace := envAPIKey.EnvironmentNamespace
+	environmentId := envAPIKey.Environment.Id
 	if err := s.validateGetEvaluationsRequest(req); err != nil {
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationBadRequest).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationBadRequest).Inc()
 		return nil, err
 	}
-	s.publishUser(ctx, environmentNamespace, req.Tag, req.User, req.SourceId)
+	s.publishUser(ctx, environmentId, req.Tag, req.User, req.SourceId)
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
-		environmentNamespace,
+		environmentId,
 		func() (interface{}, error) {
-			return s.getFeatures(ctx, environmentNamespace)
+			return s.getFeatures(ctx, environmentId)
 		},
 	)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationInternalError).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -317,7 +317,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	activeFeatures := s.filterOutArchivedFeatures(features)
 	filteredByTag := s.filterByTag(activeFeatures, req.Tag)
 	if len(features) == 0 {
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationNoFeatures).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationNoFeatures).Inc()
 		return &gwproto.GetEvaluationsResponse{
 			State:             featureproto.UserEvaluations_FULL,
 			Evaluations:       s.emptyUserEvaluations(),
@@ -326,11 +326,11 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
 	if req.UserEvaluationsId == ueid {
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationNone).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationNone).Inc()
 		s.logger.Debug(
 			"Features length when UEID is the same",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 				zap.String("tag", req.Tag),
 				zap.Int("featuresLength", len(features)),
 				zap.Int("activeFeaturesLength", len(activeFeatures)),
@@ -343,14 +343,14 @@ func (s *grpcGatewayService) GetEvaluations(
 			UserEvaluationsId: ueid,
 		}, nil
 	}
-	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, environmentNamespace)
+	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, environmentId)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationInternalError).Inc()
 		s.logger.Error(
 			"Failed to get segment users map",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 			)...,
 		)
 		return nil, err
@@ -361,7 +361,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	if req.UserEvaluationCondition == nil {
 		// Old evaluation requires tag to be set.
 		if req.Tag == "" {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationBadRequest).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationBadRequest).Inc()
 			return nil, ErrTagRequired
 		}
 		evaluations, err = featuredomain.EvaluateFeatures(
@@ -371,18 +371,18 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("userId", req.User.Id),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentID", environmentId),
 				)...,
 			)
 			return nil, ErrInternal
 		}
-		evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationOld).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationOld).Inc()
 	} else {
 		evaluations, err = featuredomain.EvaluateFeaturesByEvaluatedAt(
 			features,
@@ -394,27 +394,27 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationInternalError).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("userId", req.User.Id),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentID", environmentId),
 				)...,
 			)
 			return nil, ErrInternal
 		}
 		if evaluations.ForceUpdate {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationAll).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationAll).Inc()
 		} else {
-			evaluationsCounter.WithLabelValues(projectID, environmentNamespace, req.Tag, evaluationDiff).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationDiff).Inc()
 		}
 	}
 	s.logger.Debug(
 		"Features length when UEID is different",
 		log.FieldsFromImcomingContext(ctx).AddFields(
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentID", environmentId),
 			zap.String("tag", req.Tag),
 			zap.Int("featuresLength", len(features)),
 			zap.Int("activeFeaturesLength", len(activeFeatures)),
@@ -452,12 +452,12 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err := s.validateGetEvaluationRequest(req); err != nil {
 		return nil, err
 	}
-	s.publishUser(ctx, envAPIKey.EnvironmentNamespace, req.Tag, req.User, req.SourceId)
+	s.publishUser(ctx, envAPIKey.Environment.Id, req.Tag, req.User, req.SourceId)
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
-		envAPIKey.EnvironmentNamespace,
+		envAPIKey.Environment.Id,
 		func() (interface{}, error) {
-			return s.getFeatures(ctx, envAPIKey.EnvironmentNamespace)
+			return s.getFeatures(ctx, envAPIKey.Environment.Id)
 		},
 	)
 	if err != nil {
@@ -469,13 +469,13 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		return nil, err
 	}
-	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, envAPIKey.EnvironmentNamespace)
+	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, envAPIKey.Environment.Id)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get segment users map",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentID", envAPIKey.Environment.Id),
 			)...,
 		)
 		return nil, err
@@ -486,7 +486,7 @@ func (s *grpcGatewayService) GetEvaluation(
 			"Failed to evaluate",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentID", envAPIKey.Environment.Id),
 			)...,
 		)
 		return nil, err
@@ -496,7 +496,7 @@ func (s *grpcGatewayService) GetEvaluation(
 			"Failed to evaluate features",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("userId", req.User.Id),
 				zap.String("featureId", req.FeatureId),
 			)...,
@@ -562,7 +562,7 @@ func (s *grpcGatewayService) validateGetEvaluationRequest(req *gwproto.GetEvalua
 
 func (s *grpcGatewayService) publishUser(
 	ctx context.Context,
-	environmentNamespace,
+	environmentId,
 	tag string,
 	user *userproto.User,
 	sourceID eventproto.SourceId,
@@ -571,12 +571,12 @@ func (s *grpcGatewayService) publishUser(
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), s.opts.pubsubTimeout)
 		defer cancel()
-		if err := s.publishUserEvent(ctx, user, tag, environmentNamespace, sourceID); err != nil {
+		if err := s.publishUserEvent(ctx, user, tag, environmentId, sourceID); err != nil {
 			s.logger.Error(
 				"Failed to publish UserEvent",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentID", environmentId),
 				)...,
 			)
 		}
@@ -586,7 +586,7 @@ func (s *grpcGatewayService) publishUser(
 func (s *grpcGatewayService) publishUserEvent(
 	ctx context.Context,
 	user *userproto.User,
-	tag, environmentNamespace string,
+	tag, environmentId string,
 	sourceID eventproto.SourceId,
 ) error {
 	id, err := uuid.NewUUID()
@@ -600,7 +600,7 @@ func (s *grpcGatewayService) publishUserEvent(
 		UserId:               user.Id,
 		LastSeen:             time.Now().Unix(),
 		Data:                 nil, // We set nil until we decide again what to do with the user metadata.
-		EnvironmentNamespace: environmentNamespace,
+		EnvironmentNamespace: environmentId,
 	}
 	ue, err := ptypes.MarshalAny(userEvent)
 	if err != nil {
@@ -609,16 +609,16 @@ func (s *grpcGatewayService) publishUserEvent(
 	event := &eventproto.Event{
 		Id:                   id.String(),
 		Event:                ue,
-		EnvironmentNamespace: environmentNamespace,
+		EnvironmentNamespace: environmentId,
 	}
 	return s.userPublisher.Publish(ctx, event)
 }
 
 func (s *grpcGatewayService) getFeatures(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*featureproto.Feature, error) {
-	fs, err := s.getFeaturesFromCache(ctx, environmentNamespace)
+	fs, err := s.getFeaturesFromCache(ctx, environmentId)
 	if err == nil {
 		return fs.Features, nil
 	}
@@ -626,26 +626,26 @@ func (s *grpcGatewayService) getFeatures(
 		"No cached data for Features",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentID", environmentId),
 		)...,
 	)
-	features, err := s.listFeatures(ctx, environmentNamespace)
+	features, err := s.listFeatures(ctx, environmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve features from storage",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 			)...,
 		)
 		return nil, ErrInternal
 	}
-	if err := s.featuresCache.Put(&featureproto.Features{Features: features}, environmentNamespace); err != nil {
+	if err := s.featuresCache.Put(&featureproto.Features{Features: features}, environmentId); err != nil {
 		s.logger.Error(
 			"Failed to cache features",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 			)...,
 		)
 	}
@@ -654,7 +654,7 @@ func (s *grpcGatewayService) getFeatures(
 
 func (s *grpcGatewayService) listFeatures(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*featureproto.Feature, error) {
 	features := []*featureproto.Feature{}
 	cursor := ""
@@ -662,7 +662,7 @@ func (s *grpcGatewayService) listFeatures(
 		resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
 			PageSize:             listRequestSize,
 			Cursor:               cursor,
-			EnvironmentNamespace: environmentNamespace,
+			EnvironmentNamespace: environmentId,
 		})
 		if err != nil {
 			return nil, err
@@ -688,9 +688,9 @@ func (s *grpcGatewayService) listFeatures(
 
 func (s *grpcGatewayService) getFeaturesFromCache(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) (*featureproto.Features, error) {
-	features, err := s.featuresCache.Get(environmentNamespace)
+	features, err := s.featuresCache.Get(environmentId)
 	if err == nil {
 		cacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeHit).Inc()
 		return features, nil
@@ -703,7 +703,7 @@ func (s *grpcGatewayService) getSegmentUsersMap(
 	ctx context.Context,
 	user *userproto.User,
 	features []*featureproto.Feature,
-	environmentNamespace string,
+	environmentId string,
 ) (map[string][]*featureproto.SegmentUser, error) {
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
@@ -712,13 +712,13 @@ func (s *grpcGatewayService) getSegmentUsersMap(
 			mapIDs[id] = struct{}{}
 		}
 	}
-	segmentUsersMap, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentNamespace)
+	segmentUsersMap, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 			)...,
 		)
 		return nil, err
@@ -730,15 +730,15 @@ func (s *grpcGatewayService) listSegmentUsers(
 	ctx context.Context,
 	userID string,
 	mapSegmentIDs map[string]struct{},
-	environmentNamespace string,
+	environmentId string,
 ) (map[string][]*featureproto.SegmentUser, error) {
 	if len(mapSegmentIDs) == 0 {
 		return nil, nil
 	}
 	users := make(map[string][]*featureproto.SegmentUser)
 	for segmentID := range mapSegmentIDs {
-		s, err, _ := s.flightgroup.Do(s.segmentFlightID(environmentNamespace, segmentID), func() (interface{}, error) {
-			return s.getSegmentUsers(ctx, segmentID, environmentNamespace)
+		s, err, _ := s.flightgroup.Do(s.segmentFlightID(environmentId, segmentID), func() (interface{}, error) {
+			return s.getSegmentUsers(ctx, segmentID, environmentId)
 		})
 		if err != nil {
 			return nil, err
@@ -749,15 +749,15 @@ func (s *grpcGatewayService) listSegmentUsers(
 	return users, nil
 }
 
-func (s *grpcGatewayService) segmentFlightID(environmentNamespace, segmentID string) string {
-	return environmentNamespace + ":" + segmentID
+func (s *grpcGatewayService) segmentFlightID(environmentId, segmentID string) string {
+	return environmentId + ":" + segmentID
 }
 
 func (s *grpcGatewayService) getSegmentUsers(
 	ctx context.Context,
-	segmentID, environmentNamespace string,
+	segmentID, environmentId string,
 ) ([]*featureproto.SegmentUser, error) {
-	segmentUsers, err := s.getSegmentUsersFromCache(segmentID, environmentNamespace)
+	segmentUsers, err := s.getSegmentUsersFromCache(segmentID, environmentId)
 	if err == nil {
 		return segmentUsers, nil
 	}
@@ -765,13 +765,13 @@ func (s *grpcGatewayService) getSegmentUsers(
 		"No cached data for SegmentUsers",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentID", environmentId),
 			zap.String("segmentId", segmentID),
 		)...,
 	)
 	req := &featureproto.ListSegmentUsersRequest{
 		SegmentId:            segmentID,
-		EnvironmentNamespace: environmentNamespace,
+		EnvironmentNamespace: environmentId,
 	}
 	res, err := s.featureClient.ListSegmentUsers(ctx, req)
 	if err != nil {
@@ -779,7 +779,7 @@ func (s *grpcGatewayService) getSegmentUsers(
 			"Failed to retrieve segment users from storage",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 				zap.String("segmentId", segmentID),
 			)...,
 		)
@@ -789,12 +789,12 @@ func (s *grpcGatewayService) getSegmentUsers(
 		SegmentId: segmentID,
 		Users:     res.Users,
 	}
-	if err := s.segmentUsersCache.Put(su, environmentNamespace); err != nil {
+	if err := s.segmentUsersCache.Put(su, environmentId); err != nil {
 		s.logger.Error(
 			"Failed to cache segment users",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 				zap.String("segmentId", segmentID),
 			)...,
 		)
@@ -803,9 +803,9 @@ func (s *grpcGatewayService) getSegmentUsers(
 }
 
 func (s *grpcGatewayService) getSegmentUsersFromCache(
-	segmentID, environmentNamespace string,
+	segmentID, environmentId string,
 ) ([]*featureproto.SegmentUser, error) {
-	segment, err := s.segmentUsersCache.Get(segmentID, environmentNamespace)
+	segment, err := s.segmentUsersCache.Get(segmentID, environmentId)
 	if err == nil {
 		cacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerExternal, codeHit).Inc()
 		return segment.Users, nil
@@ -850,7 +850,7 @@ func (s *grpcGatewayService) RegisterEvents(
 				"Failed to publish event",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+					zap.String("environmentID", envAPIKey.Environment.Id),
 					zap.String("eventType", typ),
 					zap.String("id", id),
 				)...,
@@ -866,7 +866,7 @@ func (s *grpcGatewayService) RegisterEvents(
 		return errs
 	}
 	for i, event := range req.Events {
-		event.EnvironmentNamespace = envAPIKey.EnvironmentNamespace
+		event.EnvironmentNamespace = envAPIKey.Environment.Id
 		if event.Id == "" {
 			return nil, ErrMissingEventID
 		}
@@ -935,7 +935,7 @@ func (s *grpcGatewayService) RegisterEvents(
 		}
 	}
 	// MetricsEvents are saved asynchronously for performance, since there is no user impact even if they are lost.
-	s.saveMetricsEventsAsync(metricsEvents, envAPIKey.ProjectId, envAPIKey.EnvironmentNamespace)
+	s.saveMetricsEventsAsync(metricsEvents, envAPIKey.ProjectId, envAPIKey.Environment.Id)
 	goalErrors := publish(s.goalPublisher, goalMessages, typeGoal)
 	evalErrors := publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
 	errs = s.mergeMaps(errs, goalErrors, evalErrors)
@@ -1089,7 +1089,7 @@ func getEnvironmentAPIKey(
 			"Failed to cache environment APIKey",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentNamespace", envAPIKey.Environment.Id),
 			)...,
 		)
 	}

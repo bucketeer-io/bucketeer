@@ -240,11 +240,11 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		rest.ReturnFailureResponse(w, err)
 		return
 	}
-	s.publishUser(req.Context(), envAPIKey.EnvironmentNamespace, reqBody.Tag, reqBody.User, reqBody.SourceID)
+	s.publishUser(req.Context(), envAPIKey.Environment.Id, reqBody.Tag, reqBody.User, reqBody.SourceID)
 	f, err, _ := s.flightgroup.Do(
-		envAPIKey.EnvironmentNamespace,
+		envAPIKey.Environment.Id,
 		func() (interface{}, error) {
-			return s.getFeatures(req.Context(), envAPIKey.EnvironmentNamespace)
+			return s.getFeatures(req.Context(), envAPIKey.Environment.Id)
 		},
 	)
 	if err != nil {
@@ -277,7 +277,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		req.Context(),
 		reqBody.User,
 		features,
-		envAPIKey.EnvironmentNamespace,
+		envAPIKey.Environment.Id,
 		reqBody.Tag,
 	)
 	if err != nil {
@@ -285,7 +285,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 			"Failed to evaluate features",
 			log.FieldsFromImcomingContext(req.Context()).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("userId", reqBody.User.Id),
 			)...,
 		)
@@ -307,11 +307,11 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		rest.ReturnFailureResponse(w, err)
 		return
 	}
-	s.publishUser(req.Context(), envAPIKey.EnvironmentNamespace, reqBody.Tag, reqBody.User, reqBody.SourceId)
+	s.publishUser(req.Context(), envAPIKey.Environment.Id, reqBody.Tag, reqBody.User, reqBody.SourceId)
 	f, err, _ := s.flightgroup.Do(
-		envAPIKey.EnvironmentNamespace,
+		envAPIKey.Environment.Id,
 		func() (interface{}, error) {
-			return s.getFeatures(req.Context(), envAPIKey.EnvironmentNamespace)
+			return s.getFeatures(req.Context(), envAPIKey.Environment.Id)
 		},
 	)
 	if err != nil {
@@ -328,7 +328,7 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		req.Context(),
 		reqBody.User,
 		features,
-		envAPIKey.EnvironmentNamespace,
+		envAPIKey.Environment.Id,
 		reqBody.Tag,
 	)
 	if err != nil {
@@ -336,7 +336,7 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 			"Failed to evaluate features",
 			log.FieldsFromImcomingContext(req.Context()).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentID", envAPIKey.Environment.Id),
 				zap.String("userId", reqBody.User.Id),
 				zap.String("featureId", reqBody.FeatureID),
 			)...,
@@ -474,7 +474,7 @@ func (*gatewayService) validateGetEvaluationRequest(body *getEvaluationRequest) 
 
 func (s *gatewayService) publishUser(
 	ctx context.Context,
-	environmentNamespace, tag string,
+	environmentId, tag string,
 	user *userproto.User,
 	sourceID eventproto.SourceId,
 ) {
@@ -482,12 +482,12 @@ func (s *gatewayService) publishUser(
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), s.opts.pubsubTimeout)
 		defer cancel()
-		if err := s.publishUserEvent(ctx, user, tag, environmentNamespace, sourceID); err != nil {
+		if err := s.publishUserEvent(ctx, user, tag, environmentId, sourceID); err != nil {
 			s.logger.Error(
 				"Failed to publish UserEvent",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentID", environmentId),
 				)...,
 			)
 		}
@@ -497,7 +497,7 @@ func (s *gatewayService) publishUser(
 func (s *gatewayService) publishUserEvent(
 	ctx context.Context,
 	user *userproto.User,
-	tag, environmentNamespace string,
+	tag, environmentId string,
 	sourceID eventproto.SourceId,
 ) error {
 	id, err := uuid.NewUUID()
@@ -511,7 +511,7 @@ func (s *gatewayService) publishUserEvent(
 		UserId:               user.Id,
 		LastSeen:             time.Now().Unix(),
 		Data:                 nil, // We set nil until we decide again what to do with the user metadata.
-		EnvironmentNamespace: environmentNamespace,
+		EnvironmentNamespace: environmentId,
 	}
 	ue, err := ptypes.MarshalAny(userEvent)
 	if err != nil {
@@ -520,7 +520,7 @@ func (s *gatewayService) publishUserEvent(
 	event := &eventproto.Event{
 		Id:                   id.String(),
 		Event:                ue,
-		EnvironmentNamespace: environmentNamespace,
+		EnvironmentNamespace: environmentId,
 	}
 	return s.userPublisher.Publish(ctx, event)
 }
@@ -626,7 +626,7 @@ func (s *gatewayService) getEnvironmentAPIKey(
 			"Failed to cache environment APIKey",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+				zap.String("environmentID", envAPIKey.Environment.Id),
 			)...,
 		)
 	}
@@ -637,7 +637,7 @@ func (s *gatewayService) evaluateFeatures(
 	ctx context.Context,
 	user *userproto.User,
 	features []*featureproto.Feature,
-	environmentNamespace, tag string,
+	environmentId, tag string,
 ) (*featureproto.UserEvaluations, error) {
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
@@ -646,13 +646,13 @@ func (s *gatewayService) evaluateFeatures(
 			mapIDs[id] = struct{}{}
 		}
 	}
-	mapSegmentUsers, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentNamespace)
+	mapSegmentUsers, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 			)...,
 		)
 		return nil, err
@@ -663,7 +663,7 @@ func (s *gatewayService) evaluateFeatures(
 			"Failed to evaluate",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 			)...,
 		)
 	}
@@ -674,15 +674,15 @@ func (s *gatewayService) listSegmentUsers(
 	ctx context.Context,
 	userID string,
 	mapSegmentIDs map[string]struct{},
-	environmentNamespace string,
+	environmentId string,
 ) (map[string][]*featureproto.SegmentUser, error) {
 	if len(mapSegmentIDs) == 0 {
 		return nil, nil
 	}
 	users := make(map[string][]*featureproto.SegmentUser)
 	for segmentID := range mapSegmentIDs {
-		s, err, _ := s.flightgroup.Do(s.segmentFlightID(environmentNamespace, segmentID), func() (interface{}, error) {
-			return s.getSegmentUsers(ctx, segmentID, environmentNamespace)
+		s, err, _ := s.flightgroup.Do(s.segmentFlightID(environmentId, segmentID), func() (interface{}, error) {
+			return s.getSegmentUsers(ctx, segmentID, environmentId)
 		})
 		if err != nil {
 			return nil, err
@@ -693,15 +693,15 @@ func (s *gatewayService) listSegmentUsers(
 	return users, nil
 }
 
-func (s *gatewayService) segmentFlightID(environmentNamespace, segmentID string) string {
-	return fmt.Sprintf("%s:%s", environmentNamespace, segmentID)
+func (s *gatewayService) segmentFlightID(environmentId, segmentID string) string {
+	return fmt.Sprintf("%s:%s", environmentId, segmentID)
 }
 
 func (s *gatewayService) getSegmentUsers(
 	ctx context.Context,
-	segmentID, environmentNamespace string,
+	segmentID, environmentId string,
 ) ([]*featureproto.SegmentUser, error) {
-	segmentUsers, err := s.getSegmentUsersFromCache(segmentID, environmentNamespace)
+	segmentUsers, err := s.getSegmentUsersFromCache(segmentID, environmentId)
 	if err == nil {
 		return segmentUsers, nil
 	}
@@ -709,13 +709,13 @@ func (s *gatewayService) getSegmentUsers(
 		"No cached data for SegmentUsers",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentID", environmentId),
 			zap.String("segmentId", segmentID),
 		)...,
 	)
 	req := &featureproto.ListSegmentUsersRequest{
 		SegmentId:            segmentID,
-		EnvironmentNamespace: environmentNamespace,
+		EnvironmentNamespace: environmentId,
 	}
 	res, err := s.featureClient.ListSegmentUsers(ctx, req)
 	if err != nil {
@@ -723,7 +723,7 @@ func (s *gatewayService) getSegmentUsers(
 			"Failed to retrieve segment users from storage",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 				zap.String("segmentId", segmentID),
 			)...,
 		)
@@ -733,12 +733,12 @@ func (s *gatewayService) getSegmentUsers(
 		SegmentId: segmentID,
 		Users:     res.Users,
 	}
-	if err := s.segmentUsersCache.Put(su, environmentNamespace); err != nil {
+	if err := s.segmentUsersCache.Put(su, environmentId); err != nil {
 		s.logger.Error(
 			"Failed to cache segment users",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 				zap.String("segmentId", segmentID),
 			)...,
 		)
@@ -747,9 +747,9 @@ func (s *gatewayService) getSegmentUsers(
 }
 
 func (s *gatewayService) getSegmentUsersFromCache(
-	segmentID, environmentNamespace string,
+	segmentID, environmentId string,
 ) ([]*featureproto.SegmentUser, error) {
-	segment, err := s.segmentUsersCache.Get(segmentID, environmentNamespace)
+	segment, err := s.segmentUsersCache.Get(segmentID, environmentId)
 	if err == nil {
 		return segment.Users, nil
 	}
@@ -758,9 +758,9 @@ func (s *gatewayService) getSegmentUsersFromCache(
 
 func (s *gatewayService) getFeatures(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*featureproto.Feature, error) {
-	fs, err := s.getFeaturesFromCache(ctx, environmentNamespace)
+	fs, err := s.getFeaturesFromCache(ctx, environmentId)
 	if err == nil {
 		return fs.Features, nil
 	}
@@ -768,26 +768,26 @@ func (s *gatewayService) getFeatures(
 		"No cached data for Features",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentID", environmentId),
 		)...,
 	)
-	features, err := s.listFeatures(ctx, environmentNamespace)
+	features, err := s.listFeatures(ctx, environmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve features from storage",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 			)...,
 		)
 		return nil, errInternal
 	}
-	if err := s.featuresCache.Put(&featureproto.Features{Features: features}, environmentNamespace); err != nil {
+	if err := s.featuresCache.Put(&featureproto.Features{Features: features}, environmentId); err != nil {
 		s.logger.Error(
 			"Failed to cache features",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentID", environmentId),
 			)...,
 		)
 	}
@@ -796,9 +796,9 @@ func (s *gatewayService) getFeatures(
 
 func (s *gatewayService) getFeaturesFromCache(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) (*featureproto.Features, error) {
-	features, err := s.featuresCache.Get(environmentNamespace)
+	features, err := s.featuresCache.Get(environmentId)
 	if err == nil {
 		restCacheCounter.WithLabelValues(callerGatewayService, typeFeatures, cacheLayerExternal, codeHit).Inc()
 		return features, nil
@@ -809,7 +809,7 @@ func (s *gatewayService) getFeaturesFromCache(
 
 func (s *gatewayService) listFeatures(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*featureproto.Feature, error) {
 	features := []*featureproto.Feature{}
 	cursor := ""
@@ -817,7 +817,7 @@ func (s *gatewayService) listFeatures(
 		resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
 			PageSize:             listRequestSize,
 			Cursor:               cursor,
-			EnvironmentNamespace: environmentNamespace,
+			EnvironmentNamespace: environmentId,
 		})
 		if err != nil {
 			return nil, err
@@ -865,7 +865,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				"Failed to publish event",
 				log.FieldsFromImcomingContext(req.Context()).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", envAPIKey.EnvironmentNamespace),
+					zap.String("environmentID", envAPIKey.Environment.Id),
 					zap.String("id", id),
 				)...,
 			)
@@ -879,7 +879,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 		restEventCounter.WithLabelValues(callerGatewayService, typ, codeOK).Add(float64(len(messages) - len(errors)))
 	}
 	for _, event := range reqBody.Events {
-		event.EnvironmentNamespace = envAPIKey.EnvironmentNamespace
+		event.EnvironmentNamespace = envAPIKey.Environment.Id
 		if event.ID == "" {
 			rest.ReturnFailureResponse(w, errMissingEventID)
 			return
