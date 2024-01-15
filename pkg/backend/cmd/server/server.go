@@ -34,7 +34,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/crypto"
 	environmentapi "github.com/bucketeer-io/bucketeer/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	eventcounterapi "github.com/bucketeer-io/bucketeer/pkg/eventcounter/api"
@@ -793,27 +792,4 @@ func (s *server) createFeatureService(
 	)
 
 	return featureService, nil
-}
-
-func (s *server) createCryptoUtil(
-	ctx context.Context,
-) (crypto.EncrypterDecrypter, error) {
-	var (
-		cryptoUtil crypto.EncrypterDecrypter
-		err        error
-	)
-	switch *s.cloudService {
-	case gcp:
-		cryptoUtil, err = crypto.NewCloudKMSCrypto(ctx, *s.webhookKMSResourceName)
-		if err != nil {
-			return nil, err
-		}
-	case aws:
-		// TODO: Get region from command-line flags
-		cryptoUtil, err = crypto.NewAwsKMSCrypto(ctx, *s.webhookKMSResourceName, "ap-northeast-1")
-		if err != nil {
-			return nil, err
-		}
-	}
-	return cryptoUtil, nil
 }
