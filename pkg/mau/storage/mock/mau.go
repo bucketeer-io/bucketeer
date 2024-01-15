@@ -34,6 +34,20 @@ func (m *MockMAUStorage) EXPECT() *MockMAUStorageMockRecorder {
 	return m.recorder
 }
 
+// CreatePartition mocks base method.
+func (m *MockMAUStorage) CreatePartition(ctx context.Context, partition, lessThan string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePartition", ctx, partition, lessThan)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreatePartition indicates an expected call of CreatePartition.
+func (mr *MockMAUStorageMockRecorder) CreatePartition(ctx, partition, lessThan interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePartition", reflect.TypeOf((*MockMAUStorage)(nil).CreatePartition), ctx, partition, lessThan)
+}
+
 // DeleteRecords mocks base method.
 func (m *MockMAUStorage) DeleteRecords(ctx context.Context, partition string) error {
 	m.ctrl.T.Helper()

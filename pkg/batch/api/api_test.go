@@ -562,6 +562,12 @@ func newBatchService(t *testing.T,
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		mau.NewMAUPartitionCreator(
+			mysqlMockClient,
+			jpLocation,
+			jobs.WithTimeout(60*time.Minute),
+			jobs.WithLogger(logger),
+		),
 		nil, // we don't test domainEventInformer in unit test
 		logger,
 	)

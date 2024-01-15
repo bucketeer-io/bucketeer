@@ -26,6 +26,7 @@ type MAUStorage interface {
 	DeleteRecords(ctx context.Context, partition string) error
 	RebuildPartition(ctx context.Context, partition string) error
 	DropPartition(ctx context.Context, partition string) error
+	CreatePartition(ctx context.Context, partition, lessThan string) error
 }
 
 type mauStorage struct {
@@ -56,6 +57,14 @@ func (s *mauStorage) RebuildPartition(ctx context.Context, partition string) err
 
 func (s *mauStorage) DropPartition(ctx context.Context, partition string) error {
 	query := fmt.Sprintf(`ALTER TABLE mau DROP PARTITION %s`, partition)
+	_, err := s.qe.ExecContext(ctx, query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (s *mauStorage) CreatePartition(ctx context.Context, partition, lessThan string) error {
+	query := fmt.Sprintf(`ALTER TABLE mau ADD PARTITION(PARTITION %s VALUES LESS THAN ('%s'))`, partition, lessThan)
 	_, err := s.qe.ExecContext(ctx, query)
 	if err != nil {
 		return err
