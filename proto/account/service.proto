@@ -33,8 +33,7 @@ message GetMeResponse {
   ConsoleAccount account = 1;
 }
 
-message GetMyOrganizationsRequest {
-}
+message GetMyOrganizationsRequest {}
 
 message GetMyOrganizationsResponse {
   repeated MyOrganization my_organizations = 1;
@@ -348,7 +347,8 @@ message GetAPIKeyBySearchingAllEnvironmentsResponse {
 
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
-  rpc GetMyOrganizations(GetMyOrganizationsRequest) returns (GetMyOrganizationsResponse);
+  rpc GetMyOrganizations(GetMyOrganizationsRequest)
+      returns (GetMyOrganizationsResponse);
   rpc GetMeV2(GetMeV2Request) returns (GetMeV2Response);
   rpc GetMeByEmailV2(GetMeByEmailV2Request) returns (GetMeV2Response);
   rpc CreateAdminAccount(CreateAdminAccountRequest)
