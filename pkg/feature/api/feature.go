@@ -939,7 +939,19 @@ func (s *FeatureService) EnableFeature(
 	if err := validateEnableFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.updateFeature(
+		ctx,
+		req.Command,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Comment,
+		localizer,
+		editor,
+	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to enable feature",
@@ -964,7 +976,19 @@ func (s *FeatureService) DisableFeature(
 	if err := validateDisableFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.updateFeature(
+		ctx,
+		req.Command,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Comment,
+		localizer,
+		editor,
+	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to disable feature",
@@ -1010,7 +1034,19 @@ func (s *FeatureService) ArchiveFeature(
 	if err := validateArchiveFeatureRequest(req, features, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.updateFeature(
+		ctx,
+		req.Command,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Comment,
+		localizer,
+		editor,
+	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to archive feature",
@@ -1033,7 +1069,19 @@ func (s *FeatureService) UnarchiveFeature(
 	if err := validateUnarchiveFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.updateFeature(
+		ctx,
+		req.Command,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Comment,
+		localizer,
+		editor,
+	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to unarchive feature",
@@ -1056,7 +1104,19 @@ func (s *FeatureService) DeleteFeature(
 	if err := validateDeleteFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateFeature(ctx, req.Command, req.Id, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.updateFeature(
+		ctx,
+		req.Command,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Comment,
+		localizer,
+		editor,
+	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to delete feature",
@@ -1076,11 +1136,8 @@ func (s *FeatureService) updateFeature(
 	cmd command.Command,
 	id, environmentNamespace, comment string,
 	localizer locale.Localizer,
+	editor *eventproto.Editor,
 ) error {
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, environmentNamespace, localizer)
-	if err != nil {
-		return err
-	}
 	if id == "" {
 		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

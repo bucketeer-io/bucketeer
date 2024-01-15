@@ -16,6 +16,8 @@
 package domain
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
@@ -35,10 +37,6 @@ func NewFlagTrigger(
 	if err != nil {
 		return nil, err
 	}
-	triggerUUID, err := uuid.NewUUID()
-	if err != nil {
-		return nil, err
-	}
 	return &FlagTrigger{&proto.FlagTrigger{
 		Id:                   triggerID.String(),
 		FeatureId:            cmd.FeatureId,
@@ -46,7 +44,6 @@ func NewFlagTrigger(
 		Type:                 cmd.Type,
 		Action:               cmd.Action,
 		Description:          cmd.Description,
-		Uuid:                 triggerUUID.String(),
 		Disabled:             false,
 		CreatedAt:            now,
 		UpdatedAt:            now,
@@ -71,20 +68,22 @@ func (ft *FlagTrigger) Enable() error {
 	return nil
 }
 
-func (ft *FlagTrigger) ResetUUID() error {
-	newTriggerUuid, err := uuid.NewUUID()
-	if err != nil {
-		return err
-	}
-	ft.Uuid = newTriggerUuid.String()
-	ft.UpdatedAt = time.Now().Unix()
-	return nil
-}
-
 func (ft *FlagTrigger) UpdateTriggerUsage() error {
 	unix := time.Now().Unix()
 	ft.LastTriggeredAt = unix
 	ft.UpdatedAt = unix
 	ft.TriggerCount = ft.TriggerCount + 1
+	return nil
+}
+
+func (ft *FlagTrigger) GenerateToken() error {
+	newTriggerUuid, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+	h := sha256.New()
+	h.Write([]byte(newTriggerUuid.String()))
+	hashed := h.Sum(nil)
+	ft.Token = base64.RawURLEncoding.EncodeToString(hashed)
 	return nil
 }

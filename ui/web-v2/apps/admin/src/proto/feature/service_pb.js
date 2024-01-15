@@ -15087,7 +15087,7 @@ proto.bucketeer.feature.FlagTriggerWebhookRequest.prototype.toObject = function(
  */
 proto.bucketeer.feature.FlagTriggerWebhookRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    secret: jspb.Message.getFieldWithDefault(msg, 1, "")
+    token: jspb.Message.getFieldWithDefault(msg, 1, "")
   };
 
   if (includeInstance) {
@@ -15126,7 +15126,7 @@ proto.bucketeer.feature.FlagTriggerWebhookRequest.deserializeBinaryFromReader = 
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setSecret(value);
+      msg.setToken(value);
       break;
     default:
       reader.skipField();
@@ -15157,7 +15157,7 @@ proto.bucketeer.feature.FlagTriggerWebhookRequest.prototype.serializeBinary = fu
  */
 proto.bucketeer.feature.FlagTriggerWebhookRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getSecret();
+  f = message.getToken();
   if (f.length > 0) {
     writer.writeString(
       1,
@@ -15168,10 +15168,10 @@ proto.bucketeer.feature.FlagTriggerWebhookRequest.serializeBinaryToWriter = func
 
 
 /**
- * optional string secret = 1;
+ * optional string token = 1;
  * @return {string}
  */
-proto.bucketeer.feature.FlagTriggerWebhookRequest.prototype.getSecret = function() {
+proto.bucketeer.feature.FlagTriggerWebhookRequest.prototype.getToken = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
@@ -15180,7 +15180,7 @@ proto.bucketeer.feature.FlagTriggerWebhookRequest.prototype.getSecret = function
  * @param {string} value
  * @return {!proto.bucketeer.feature.FlagTriggerWebhookRequest} returns this
  */
-proto.bucketeer.feature.FlagTriggerWebhookRequest.prototype.setSecret = function(value) {
+proto.bucketeer.feature.FlagTriggerWebhookRequest.prototype.setToken = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 

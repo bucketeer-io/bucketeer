@@ -11,5 +11,4 @@ SELECT id,
        created_at,
        updated_at
 from flag_trigger
-where id = ?
-  AND environment_namespace = ?
+where token = ?

@@ -134,8 +134,6 @@ var (
 	statusMissingTriggerDescription = gstatus.New(codes.InvalidArgument, "feature: missing trigger description")
 	statusMissingTriggerID          = gstatus.New(codes.InvalidArgument, "feature: missing trigger id")
 	statusSecretRequired            = gstatus.New(codes.InvalidArgument, "feature: trigger secret is required")
-	statusSecretInvalid             = gstatus.New(codes.InvalidArgument, "feature: trigger secret is invalid")
-	statusSecretMismatch            = gstatus.New(codes.InvalidArgument, "feature: trigger secret mismatch")
 	statusTriggerAlreadyDisabled    = gstatus.New(codes.FailedPrecondition, "feature: trigger already disabled")
 	statusTriggerNotFound           = gstatus.New(codes.NotFound, "feature: trigger not found")
 	statusTriggerDisableFailed      = gstatus.New(codes.Internal, "feature: trigger disable failed")

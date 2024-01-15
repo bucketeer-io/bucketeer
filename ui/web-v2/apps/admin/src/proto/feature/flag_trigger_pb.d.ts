@@ -28,8 +28,8 @@ export class FlagTrigger extends jspb.Message {
   getLastTriggeredAt(): number;
   setLastTriggeredAt(value: number): void;
 
-  getUuid(): string;
-  setUuid(value: string): void;
+  getToken(): string;
+  setToken(value: string): void;
 
   getDisabled(): boolean;
   setDisabled(value: boolean): void;
@@ -60,7 +60,7 @@ export namespace FlagTrigger {
     description: string,
     triggerCount: number,
     lastTriggeredAt: number,
-    uuid: string,
+    token: string,
     disabled: boolean,
     createdAt: number,
     updatedAt: number,

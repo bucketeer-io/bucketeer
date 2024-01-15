@@ -81,6 +81,21 @@ func (mr *MockFlagTriggerStorageMockRecorder) GetFlagTrigger(ctx, id, environmen
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).GetFlagTrigger), ctx, id, environmentNamespace)
 }
 
+// GetFlagTriggerByToken mocks base method.
+func (m *MockFlagTriggerStorage) GetFlagTriggerByToken(ctx context.Context, token string) (*domain.FlagTrigger, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFlagTriggerByToken", ctx, token)
+	ret0, _ := ret[0].(*domain.FlagTrigger)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFlagTriggerByToken indicates an expected call of GetFlagTriggerByToken.
+func (mr *MockFlagTriggerStorageMockRecorder) GetFlagTriggerByToken(ctx, token interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagTriggerByToken", reflect.TypeOf((*MockFlagTriggerStorage)(nil).GetFlagTriggerByToken), ctx, token)
+}
+
 // ListFlagTriggers mocks base method.
 func (m *MockFlagTriggerStorage) ListFlagTriggers(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*feature.FlagTrigger, int, int64, error) {
 	m.ctrl.T.Helper()

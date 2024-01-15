@@ -30,7 +30,10 @@ type tokenKey struct{}
 
 var Key = tokenKey{}
 
-const healthServiceName = "/grpc.health.v1.Health/"
+const (
+	healthServiceName      = "/grpc.health.v1.Health/"
+	flagTriggerWebhookName = "/bucketeer.feature.FeatureService/FlagTriggerWebhook"
+)
 
 func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterceptor {
 	return func(
@@ -39,7 +42,8 @@ func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterce
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		if strings.HasPrefix(info.FullMethod, healthServiceName) {
+		if strings.HasPrefix(info.FullMethod, healthServiceName) ||
+			strings.HasPrefix(info.FullMethod, flagTriggerWebhookName) {
 			return handler(ctx, req)
 		}
 		md, ok := metadata.FromIncomingContext(ctx)
