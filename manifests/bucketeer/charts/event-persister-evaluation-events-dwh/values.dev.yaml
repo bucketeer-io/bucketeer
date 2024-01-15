@@ -30,7 +30,11 @@ env:
   pullerMaxOutstandingBytes: "1000000000"
   # bigquery
   bigQueryDataSet: bucketeer
-
+  redis:
+    serverName: event-persister
+    addr: localenv-redis-headless.default.svc.cluster.local:6379
+    poolMaxIdle: 25
+    poolMaxActive: 25
 
 tls:
   service:
