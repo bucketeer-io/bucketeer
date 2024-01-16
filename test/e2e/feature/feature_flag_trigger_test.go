@@ -20,15 +20,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
-
-var authorizationKey = "authorization"
 
 func TestCreateFeatureFlagTrigger(t *testing.T) {
 	t.Parallel()
@@ -56,6 +53,29 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 	if resp.FlagTrigger.Description != createFlagTriggerCommand.Description {
 		t.Fatalf("unexpected trigger description: %s, description: %s",
 			resp.FlagTrigger.Description, createFlagTriggerCommand.Description)
+	}
+	if resp.GetUrl() == "" {
+		t.Fatal("unexpected empty url")
+	}
+	createFlagTriggerWithoutDescCmd := newCreateFlagTriggerCmd(
+		cmd.Id,
+		"",
+		featureproto.FlagTrigger_Action_ON,
+	)
+	resp = createFeatureFlagTrigger(t, client, createFlagTriggerWithoutDescCmd)
+	if resp.FlagTrigger.FeatureId != cmd.Id {
+		t.Fatalf("unexpected flag feature id: %s, feature id: %s", resp.FlagTrigger.FeatureId, cmd.Id)
+	}
+	if resp.FlagTrigger.Type != createFlagTriggerWithoutDescCmd.Type {
+		t.Fatalf("unexpected trigger type: %s, type: %s",
+			resp.FlagTrigger.Type, createFlagTriggerWithoutDescCmd.Type)
+	}
+	if resp.FlagTrigger.Action != createFlagTriggerWithoutDescCmd.Action {
+		t.Fatalf("unexpected trigger action: %s, action: %s",
+			resp.FlagTrigger.Action, createFlagTriggerWithoutDescCmd.Action)
+	}
+	if resp.FlagTrigger.Description != "" {
+		t.Fatalf("unexpected trigger description: %s, ", resp.FlagTrigger.Description)
 	}
 	if resp.GetUrl() == "" {
 		t.Fatal("unexpected empty url")
@@ -358,10 +378,6 @@ func TestFeatureFlagWebhook(t *testing.T) {
 }
 
 func sendPostRequestIgnoreSSL(targetURL string) (*http.Response, error) {
-	data, err := os.ReadFile(*serviceTokenPath)
-	if err != nil {
-		return nil, err
-	}
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -370,7 +386,6 @@ func sendPostRequestIgnoreSSL(targetURL string) (*http.Response, error) {
 		},
 	}
 	req, err := http.NewRequest("POST", targetURL, strings.NewReader(""))
-	req.Header.Add(authorizationKey, fmt.Sprintf("bearer %s", string(data)))
 	if err != nil {
 		return nil, err
 	}

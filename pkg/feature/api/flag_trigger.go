@@ -17,7 +17,6 @@ package api
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"strconv"
@@ -38,7 +37,15 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
-const maskURI = "********"
+const (
+	numOfSecretCharsToShow = 5
+	maskURI                = "********"
+)
+
+var webhookEditor = &eventproto.Editor{
+	Email:   "webhook",
+	IsAdmin: false,
+}
 
 func (s *FeatureService) CreateFlagTrigger(
 	ctx context.Context,
@@ -132,14 +139,7 @@ func (s *FeatureService) CreateFlagTrigger(
 		}
 		return nil, dt.Err()
 	}
-	flagTriggerSecret := domain.NewFlagTriggerSecret(
-		flagTrigger.GetId(),
-		request.CreateFlagTriggerCommand.FeatureId,
-		request.EnvironmentNamespace,
-		flagTrigger.GetUuid(),
-		int(request.CreateFlagTriggerCommand.Action),
-	)
-	triggerURL, err := s.generateTriggerURL(ctx, flagTriggerSecret, false)
+	triggerURL, err := s.generateTriggerURL(ctx, flagTrigger.Token, false)
 	if err != nil {
 		s.logger.Error(
 			"Failed to generate trigger url",
@@ -147,6 +147,7 @@ func (s *FeatureService) CreateFlagTrigger(
 		)
 		return nil, err
 	}
+	flagTrigger.FlagTrigger.Token = ""
 	return &featureproto.CreateFlagTriggerResponse{
 		FlagTrigger: flagTrigger.FlagTrigger,
 		Url:         triggerURL,
@@ -540,14 +541,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		}
 		return nil, err
 	}
-	flagTriggerSecret := domain.NewFlagTriggerSecret(
-		trigger.Id,
-		trigger.FeatureId,
-		trigger.EnvironmentNamespace,
-		trigger.Uuid,
-		int(trigger.Action),
-	)
-	triggerURL, err := s.generateTriggerURL(ctx, flagTriggerSecret, false)
+	triggerURL, err := s.generateTriggerURL(ctx, trigger.Token, false)
 	if err != nil {
 		s.logger.Error(
 			"Failed to begin transaction",
@@ -555,6 +549,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		)
 		return nil, err
 	}
+	trigger.FlagTrigger.Token = ""
 	return &featureproto.ResetFlagTriggerResponse{
 		FlagTrigger: trigger.FlagTrigger,
 		Url:         triggerURL,
@@ -689,14 +684,7 @@ func (s *FeatureService) GetFlagTrigger(
 		}
 		return nil, err
 	}
-	flagTriggerSecret := domain.NewFlagTriggerSecret(
-		trigger.Id,
-		trigger.FeatureId,
-		trigger.EnvironmentNamespace,
-		trigger.Uuid,
-		int(trigger.Action),
-	)
-	triggerURL, err := s.generateTriggerURL(ctx, flagTriggerSecret, true)
+	triggerURL, err := s.generateTriggerURL(ctx, trigger.Token, true)
 	if err != nil {
 		s.logger.Error(
 			"Failed to generate trigger url",
@@ -704,6 +692,7 @@ func (s *FeatureService) GetFlagTrigger(
 		)
 		return nil, err
 	}
+	trigger.FlagTrigger.Token = ""
 	return &featureproto.GetFlagTriggerResponse{
 		FlagTrigger: trigger.FlagTrigger,
 		Url:         triggerURL,
@@ -763,14 +752,7 @@ func (s *FeatureService) ListFlagTriggers(
 	)
 	triggerWithUrls := make([]*featureproto.ListFlagTriggersResponse_FlagTriggerWithUrl, 0, len(flagTriggers))
 	for _, trigger := range flagTriggers {
-		flagTriggerSecret := domain.NewFlagTriggerSecret(
-			trigger.Id,
-			trigger.FeatureId,
-			trigger.EnvironmentNamespace,
-			trigger.Uuid,
-			int(trigger.Action),
-		)
-		triggerURL, err := s.generateTriggerURL(ctx, flagTriggerSecret, true)
+		triggerURL, err := s.generateTriggerURL(ctx, trigger.Token, true)
 		if err != nil {
 			s.logger.Error(
 				"Failed to generate trigger url",
@@ -778,6 +760,7 @@ func (s *FeatureService) ListFlagTriggers(
 			)
 			return nil, err
 		}
+		trigger.Token = ""
 		triggerWithUrls = append(triggerWithUrls, &featureproto.ListFlagTriggersResponse_FlagTriggerWithUrl{
 			FlagTrigger: trigger,
 			Url:         triggerURL,
@@ -825,9 +808,9 @@ func (s *FeatureService) FlagTriggerWebhook(
 	request *featureproto.FlagTriggerWebhookRequest,
 ) (*featureproto.FlagTriggerWebhookResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	secret := request.GetSecret()
+	token := request.GetToken()
 	resp := &featureproto.FlagTriggerWebhookResponse{}
-	if secret == "" {
+	if token == "" {
 		s.logger.Error(
 			"Failed to get secret from query",
 			log.FieldsFromImcomingContext(ctx)...,
@@ -841,23 +824,8 @@ func (s *FeatureService) FlagTriggerWebhook(
 		}
 		return nil, dt.Err()
 	}
-	triggerSecret, err := s.decryptSecret(ctx, secret)
-	if err != nil {
-		s.logger.Error(
-			"Failed to decrypt trigger secret",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusSecretInvalid.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	storage := v2fs.NewFlagTriggerStorage(s.mysqlClient)
-	trigger, err := storage.GetFlagTrigger(ctx, triggerSecret.GetID(), triggerSecret.GetEnvironmentNamespace())
+	trigger, err := storage.GetFlagTriggerByToken(ctx, token)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get flag trigger",
@@ -886,26 +854,33 @@ func (s *FeatureService) FlagTriggerWebhook(
 		}
 		return nil, dt.Err()
 	}
-	editor, err := s.checkRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		trigger.EnvironmentNamespace,
-		localizer,
-	)
 	if err != nil {
 		return nil, err
 	}
-	// check trigger secret
-	if trigger.GetFeatureId() != triggerSecret.GetFeatureID() ||
-		int(trigger.GetAction()) != triggerSecret.GetAction() ||
-		trigger.GetUuid() != triggerSecret.GetUUID() {
+	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
+	feature, err := featureStorage.GetFeature(ctx, trigger.FeatureId, trigger.EnvironmentNamespace)
+	if err != nil {
+		if errors.Is(err, v2fs.ErrFeatureNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
 		s.logger.Error(
-			"Failed to auth trigger secret",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			"Failed to get feature",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", trigger.FeatureId),
+				zap.String("environmentNamespace", trigger.EnvironmentNamespace),
+			)...,
 		)
-		dt, err := statusSecretMismatch.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
+			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
 			return nil, statusInternal.Err()
@@ -913,28 +888,34 @@ func (s *FeatureService) FlagTriggerWebhook(
 		return nil, dt.Err()
 	}
 	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON {
-		err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
-		if err != nil {
-			dt, err := statusTriggerEnableFailed.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
+		// check if feature is already enabled
+		if !feature.GetEnabled() {
+			err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
 			if err != nil {
-				return nil, statusInternal.Err()
+				dt, err := statusTriggerEnableFailed.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.InternalServerError),
+				})
+				if err != nil {
+					return nil, statusInternal.Err()
+				}
+				return nil, dt.Err()
 			}
-			return nil, dt.Err()
 		}
 	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF {
-		err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
-		if err != nil {
-			dt, err := statusTriggerDisableFailed.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
+		// check if feature is already disabled
+		if feature.GetEnabled() {
+			err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
 			if err != nil {
-				return nil, statusInternal.Err()
+				dt, err := statusTriggerDisableFailed.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.InternalServerError),
+				})
+				if err != nil {
+					return nil, statusInternal.Err()
+				}
+				return nil, dt.Err()
 			}
-			return nil, dt.Err()
 		}
 	} else {
 		s.logger.Error(
@@ -950,7 +931,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 		}
 		return nil, dt.Err()
 	}
-	err = s.updateTriggerUsageInfo(ctx, editor, trigger)
+	err = s.updateTriggerUsageInfo(ctx, webhookEditor, trigger)
 	if err != nil {
 		dt, err := statusTriggerUsageUpdateFailed.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -962,37 +943,6 @@ func (s *FeatureService) FlagTriggerWebhook(
 		return nil, dt.Err()
 	}
 	return resp, nil
-}
-
-func (s *FeatureService) decryptSecret(
-	ctx context.Context,
-	secret string,
-) (*domain.FlagTriggerSecret, error) {
-	decoded, err := base64.RawURLEncoding.DecodeString(secret)
-	if err != nil {
-		s.logger.Error(
-			"Failed to decode encrypted secret",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	decrypted, err := s.triggerCryptoUtil.Decrypt(ctx, decoded)
-	if err != nil {
-		s.logger.Error(
-			"Failed to decrypt encrypted secret",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	triggerSecret, err := domain.UnmarshalFlagTriggerSecret(decrypted)
-	if err != nil {
-		s.logger.Error(
-			"Failed to unmarshal trigger url secret",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	return triggerSecret, nil
 }
 
 func (s *FeatureService) updateTriggerUsageInfo(
@@ -1060,6 +1010,7 @@ func (s *FeatureService) enableFeature(
 		environmentNamespace,
 		"",
 		localizer,
+		webhookEditor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
@@ -1087,6 +1038,7 @@ func (s *FeatureService) disableFeature(
 		environmentNamespace,
 		"",
 		localizer,
+		webhookEditor,
 	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
@@ -1104,21 +1056,12 @@ func (s *FeatureService) disableFeature(
 
 func (s *FeatureService) generateTriggerURL(
 	ctx context.Context,
-	flagTriggerSecret *domain.FlagTriggerSecret,
+	token string,
 	masked bool,
 ) (string, error) {
-	encoded, err := flagTriggerSecret.Marshal()
-	if err != nil {
-		return "", err
-	}
 	if masked {
-		return fmt.Sprintf("%s/%s", s.triggerURL, maskURI), nil
+		return fmt.Sprintf("%s/%s", s.triggerURL, token[:numOfSecretCharsToShow]+maskURI), nil
 	} else {
-		encrypted, err := s.triggerCryptoUtil.Encrypt(ctx, encoded)
-		if err != nil {
-			return "", err
-		}
-		secret := base64.RawURLEncoding.EncodeToString(encrypted)
-		return fmt.Sprintf("%s/%s", s.triggerURL, secret), nil
+		return fmt.Sprintf("%s/%s", s.triggerURL, token), nil
 	}
 }

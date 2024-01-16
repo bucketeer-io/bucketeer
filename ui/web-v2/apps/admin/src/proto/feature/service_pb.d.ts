@@ -1983,8 +1983,8 @@ export namespace ListFlagTriggersResponse {
 }
 
 export class FlagTriggerWebhookRequest extends jspb.Message {
-  getSecret(): string;
-  setSecret(value: string): void;
+  getToken(): string;
+  setToken(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerWebhookRequest.AsObject;
@@ -1998,7 +1998,7 @@ export class FlagTriggerWebhookRequest extends jspb.Message {
 
 export namespace FlagTriggerWebhookRequest {
   export type AsObject = {
-    secret: string,
+    token: string,
   }
 }
 

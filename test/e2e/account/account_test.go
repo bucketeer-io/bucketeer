@@ -89,6 +89,19 @@ func TestListAccounts(t *testing.T) {
 	defer cancel()
 	c := newAccountClient(t)
 	defer c.Close()
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateAccountV2Command{
+			Name:             name,
+			Email:            email,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	pageSize := int64(1)
 	resp, err := c.ListAccountsV2(ctx, &accountproto.ListAccountsV2Request{
 		OrganizationId: defaultOrganizationID,

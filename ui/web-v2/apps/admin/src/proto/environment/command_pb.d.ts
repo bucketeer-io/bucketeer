@@ -272,6 +272,9 @@ export class CreateOrganizationCommand extends jspb.Message {
   getIsTrial(): boolean;
   setIsTrial(value: boolean): void;
 
+  getIsSystemAdmin(): boolean;
+  setIsSystemAdmin(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateOrganizationCommand.AsObject;
   static toObject(includeInstance: boolean, msg: CreateOrganizationCommand): CreateOrganizationCommand.AsObject;
@@ -288,6 +291,7 @@ export namespace CreateOrganizationCommand {
     urlCode: string,
     description: string,
     isTrial: boolean,
+    isSystemAdmin: boolean,
   }
 }
 

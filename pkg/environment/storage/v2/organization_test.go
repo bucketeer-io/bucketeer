@@ -203,6 +203,61 @@ func TestGetOrganization(t *testing.T) {
 	}
 }
 
+func TestGetSystemAdminOrganization(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		desc        string
+		setup       func(*organizationStorage)
+		expectedErr error
+	}{
+		{
+			desc: "ErrOrganizationNotFound",
+			setup: func(s *organizationStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			expectedErr: ErrOrganizationNotFound,
+		},
+		{
+			desc: "Error",
+			setup: func(s *organizationStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *organizationStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newOrganizationStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			_, err := storage.GetSystemAdminOrganization(context.Background())
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestListOrganizations(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

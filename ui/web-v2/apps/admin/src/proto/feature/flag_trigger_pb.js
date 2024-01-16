@@ -85,7 +85,7 @@ proto.bucketeer.feature.FlagTrigger.toObject = function(includeInstance, msg) {
     description: jspb.Message.getFieldWithDefault(msg, 6, ""),
     triggerCount: jspb.Message.getFieldWithDefault(msg, 7, 0),
     lastTriggeredAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
-    uuid: jspb.Message.getFieldWithDefault(msg, 9, ""),
+    token: jspb.Message.getFieldWithDefault(msg, 9, ""),
     disabled: jspb.Message.getBooleanFieldWithDefault(msg, 10, false),
     createdAt: jspb.Message.getFieldWithDefault(msg, 11, 0),
     updatedAt: jspb.Message.getFieldWithDefault(msg, 12, 0)
@@ -159,7 +159,7 @@ proto.bucketeer.feature.FlagTrigger.deserializeBinaryFromReader = function(msg, 
       break;
     case 9:
       var value = /** @type {string} */ (reader.readString());
-      msg.setUuid(value);
+      msg.setToken(value);
       break;
     case 10:
       var value = /** @type {boolean} */ (reader.readBool());
@@ -258,7 +258,7 @@ proto.bucketeer.feature.FlagTrigger.serializeBinaryToWriter = function(message, 
       f
     );
   }
-  f = message.getUuid();
+  f = message.getToken();
   if (f.length > 0) {
     writer.writeString(
       9,
@@ -451,10 +451,10 @@ proto.bucketeer.feature.FlagTrigger.prototype.setLastTriggeredAt = function(valu
 
 
 /**
- * optional string uuid = 9;
+ * optional string token = 9;
  * @return {string}
  */
-proto.bucketeer.feature.FlagTrigger.prototype.getUuid = function() {
+proto.bucketeer.feature.FlagTrigger.prototype.getToken = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
 };
 
@@ -463,7 +463,7 @@ proto.bucketeer.feature.FlagTrigger.prototype.getUuid = function() {
  * @param {string} value
  * @return {!proto.bucketeer.feature.FlagTrigger} returns this
  */
-proto.bucketeer.feature.FlagTrigger.prototype.setUuid = function(value) {
+proto.bucketeer.feature.FlagTrigger.prototype.setToken = function(value) {
   return jspb.Message.setProto3StringField(this, 9, value);
 };
 

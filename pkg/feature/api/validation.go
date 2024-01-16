@@ -1451,16 +1451,6 @@ func validateCreateFlagTriggerCommand(cmd *featureproto.CreateFlagTriggerCommand
 		}
 		return dt.Err()
 	}
-	if cmd.Description == "" {
-		dt, err := statusMissingTriggerDescription.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "description"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 

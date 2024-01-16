@@ -83,7 +83,8 @@ proto.bucketeer.environment.Organization.toObject = function(includeInstance, ms
     archived: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
     trial: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
     createdAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
-    updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0)
+    updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0),
+    systemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 10, false)
   };
 
   if (includeInstance) {
@@ -155,6 +156,10 @@ proto.bucketeer.environment.Organization.deserializeBinaryFromReader = function(
     case 9:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setUpdatedAt(value);
+      break;
+    case 10:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setSystemAdmin(value);
       break;
     default:
       reader.skipField();
@@ -245,6 +250,13 @@ proto.bucketeer.environment.Organization.serializeBinaryToWriter = function(mess
   if (f !== 0) {
     writer.writeInt64(
       9,
+      f
+    );
+  }
+  f = message.getSystemAdmin();
+  if (f) {
+    writer.writeBool(
+      10,
       f
     );
   }
@@ -410,6 +422,24 @@ proto.bucketeer.environment.Organization.prototype.getUpdatedAt = function() {
  */
 proto.bucketeer.environment.Organization.prototype.setUpdatedAt = function(value) {
   return jspb.Message.setProto3IntField(this, 9, value);
+};
+
+
+/**
+ * optional bool system_admin = 10;
+ * @return {boolean}
+ */
+proto.bucketeer.environment.Organization.prototype.getSystemAdmin = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 10, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.environment.Organization} returns this
+ */
+proto.bucketeer.environment.Organization.prototype.setSystemAdmin = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 10, value);
 };
 
 

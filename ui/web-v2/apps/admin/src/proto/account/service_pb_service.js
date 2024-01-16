@@ -10,6 +10,24 @@ var AccountService = (function () {
   return AccountService;
 }());
 
+AccountService.GetMe = {
+  methodName: "GetMe",
+  service: AccountService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_account_service_pb.GetMeRequest,
+  responseType: proto_account_service_pb.GetMeResponse
+};
+
+AccountService.GetMyOrganizations = {
+  methodName: "GetMyOrganizations",
+  service: AccountService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_account_service_pb.GetMyOrganizationsRequest,
+  responseType: proto_account_service_pb.GetMyOrganizationsResponse
+};
+
 AccountService.GetMeV2 = {
   methodName: "GetMeV2",
   service: AccountService,
@@ -277,6 +295,68 @@ function AccountServiceClient(serviceHost, options) {
   this.serviceHost = serviceHost;
   this.options = options || {};
 }
+
+AccountServiceClient.prototype.getMe = function getMe(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AccountService.GetMe, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+AccountServiceClient.prototype.getMyOrganizations = function getMyOrganizations(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AccountService.GetMyOrganizations, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
 
 AccountServiceClient.prototype.getMeV2 = function getMeV2(requestMessage, metadata, callback) {
   if (arguments.length === 2) {
