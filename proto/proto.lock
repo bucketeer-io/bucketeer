@@ -265,21 +265,6 @@
                 ]
               }
             ]
-          },
-          {
-            "name": "MyOrganization",
-            "fields": [
-              {
-                "id": 1,
-                "name": "organization",
-                "type": "environment.Organization"
-              },
-              {
-                "id": 2,
-                "name": "account",
-                "type": "AccountV2"
-              }
-            ]
           }
         ],
         "imports": [
@@ -745,8 +730,8 @@
             "fields": [
               {
                 "id": 1,
-                "name": "my_organizations",
-                "type": "MyOrganization",
+                "name": "organizations",
+                "type": "environment.Organization",
                 "is_repeated": true
               }
             ]
@@ -1729,6 +1714,9 @@
           },
           {
             "path": "proto/account/command.proto"
+          },
+          {
+            "path": "proto/environment/organization.proto"
           }
         ],
         "package": {
@@ -2851,12 +2839,14 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause"
+                "type": "ProgressiveRolloutManualScheduleClause",
+                "optional": true
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause"
+                "type": "ProgressiveRolloutTemplateScheduleClause",
+                "optional": true
               }
             ]
           },
@@ -3647,12 +3637,14 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status"
+                "type": "ProgressiveRollout.Status",
+                "optional": true
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type"
+                "type": "ProgressiveRollout.Type",
+                "optional": true
               }
             ]
           },

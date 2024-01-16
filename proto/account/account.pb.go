@@ -568,61 +568,6 @@ func (x *ConsoleAccount) GetEnvironmentRoles() []*ConsoleAccount_EnvironmentRole
 	return nil
 }
 
-type MyOrganization struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Organization *environment.Organization `protobuf:"bytes,1,opt,name=organization,proto3" json:"organization,omitempty"`
-	Account      *AccountV2                `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
-}
-
-func (x *MyOrganization) Reset() {
-	*x = MyOrganization{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_account_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *MyOrganization) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MyOrganization) ProtoMessage() {}
-
-func (x *MyOrganization) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_account_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MyOrganization.ProtoReflect.Descriptor instead.
-func (*MyOrganization) Descriptor() ([]byte, []int) {
-	return file_proto_account_account_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *MyOrganization) GetOrganization() *environment.Organization {
-	if x != nil {
-		return x.Organization
-	}
-	return nil
-}
-
-func (x *MyOrganization) GetAccount() *AccountV2 {
-	if x != nil {
-		return x.Account
-	}
-	return nil
-}
-
 type AccountV2_Role struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -632,7 +577,7 @@ type AccountV2_Role struct {
 func (x *AccountV2_Role) Reset() {
 	*x = AccountV2_Role{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_account_proto_msgTypes[5]
+		mi := &file_proto_account_account_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -645,7 +590,7 @@ func (x *AccountV2_Role) String() string {
 func (*AccountV2_Role) ProtoMessage() {}
 
 func (x *AccountV2_Role) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_account_proto_msgTypes[5]
+	mi := &file_proto_account_account_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -673,7 +618,7 @@ type AccountV2_EnvironmentRole struct {
 func (x *AccountV2_EnvironmentRole) Reset() {
 	*x = AccountV2_EnvironmentRole{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_account_proto_msgTypes[6]
+		mi := &file_proto_account_account_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -686,7 +631,7 @@ func (x *AccountV2_EnvironmentRole) String() string {
 func (*AccountV2_EnvironmentRole) ProtoMessage() {}
 
 func (x *AccountV2_EnvironmentRole) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_account_proto_msgTypes[6]
+	mi := &file_proto_account_account_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -729,7 +674,7 @@ type ConsoleAccount_EnvironmentRole struct {
 func (x *ConsoleAccount_EnvironmentRole) Reset() {
 	*x = ConsoleAccount_EnvironmentRole{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_account_proto_msgTypes[7]
+		mi := &file_proto_account_account_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -742,7 +687,7 @@ func (x *ConsoleAccount_EnvironmentRole) String() string {
 func (*ConsoleAccount_EnvironmentRole) ProtoMessage() {}
 
 func (x *ConsoleAccount_EnvironmentRole) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_account_proto_msgTypes[7]
+	mi := &file_proto_account_account_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -909,20 +854,11 @@ var file_proto_account_account_proto_rawDesc = []byte{
 	0x72, 0x6f, 0x6c, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x2d, 0x2e, 0x62, 0x75, 0x63,
 	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x41,
 	0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x2e, 0x45, 0x6e,
-	0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x22,
-	0x91, 0x01, 0x0a, 0x0e, 0x4d, 0x79, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x12, 0x47, 0x0a, 0x0c, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65,
-	0x74, 0x65, 0x65, 0x72, 0x2e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74,
-	0x2e, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0c, 0x6f,
-	0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x36, 0x0a, 0x07, 0x61,
-	0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x62,
-	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
-	0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x52, 0x07, 0x61, 0x63, 0x63, 0x6f,
-	0x75, 0x6e, 0x74, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62,
-	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61,
-	0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x42,
+	0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75,
+	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65,
+	0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x63, 0x63, 0x6f, 0x75,
+	0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -938,7 +874,7 @@ func file_proto_account_account_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_account_account_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_proto_account_account_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_proto_account_account_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proto_account_account_proto_goTypes = []interface{}{
 	(Account_Role)(0),                      // 0: bucketeer.account.Account.Role
 	(AccountV2_Role_Environment)(0),        // 1: bucketeer.account.AccountV2.Role.Environment
@@ -947,34 +883,31 @@ var file_proto_account_account_proto_goTypes = []interface{}{
 	(*AccountV2)(nil),                      // 4: bucketeer.account.AccountV2
 	(*EnvironmentRoleV2)(nil),              // 5: bucketeer.account.EnvironmentRoleV2
 	(*ConsoleAccount)(nil),                 // 6: bucketeer.account.ConsoleAccount
-	(*MyOrganization)(nil),                 // 7: bucketeer.account.MyOrganization
-	(*AccountV2_Role)(nil),                 // 8: bucketeer.account.AccountV2.Role
-	(*AccountV2_EnvironmentRole)(nil),      // 9: bucketeer.account.AccountV2.EnvironmentRole
-	(*ConsoleAccount_EnvironmentRole)(nil), // 10: bucketeer.account.ConsoleAccount.EnvironmentRole
-	(*environment.EnvironmentV2)(nil),      // 11: bucketeer.environment.EnvironmentV2
-	(*environment.Organization)(nil),       // 12: bucketeer.environment.Organization
-	(*environment.Project)(nil),            // 13: bucketeer.environment.Project
+	(*AccountV2_Role)(nil),                 // 7: bucketeer.account.AccountV2.Role
+	(*AccountV2_EnvironmentRole)(nil),      // 8: bucketeer.account.AccountV2.EnvironmentRole
+	(*ConsoleAccount_EnvironmentRole)(nil), // 9: bucketeer.account.ConsoleAccount.EnvironmentRole
+	(*environment.EnvironmentV2)(nil),      // 10: bucketeer.environment.EnvironmentV2
+	(*environment.Organization)(nil),       // 11: bucketeer.environment.Organization
+	(*environment.Project)(nil),            // 12: bucketeer.environment.Project
 }
 var file_proto_account_account_proto_depIdxs = []int32{
 	0,  // 0: bucketeer.account.Account.role:type_name -> bucketeer.account.Account.Role
 	2,  // 1: bucketeer.account.AccountV2.organization_role:type_name -> bucketeer.account.AccountV2.Role.Organization
-	9,  // 2: bucketeer.account.AccountV2.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
-	11, // 3: bucketeer.account.EnvironmentRoleV2.environment:type_name -> bucketeer.environment.EnvironmentV2
+	8,  // 2: bucketeer.account.AccountV2.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
+	10, // 3: bucketeer.account.EnvironmentRoleV2.environment:type_name -> bucketeer.environment.EnvironmentV2
 	0,  // 4: bucketeer.account.EnvironmentRoleV2.role:type_name -> bucketeer.account.Account.Role
-	12, // 5: bucketeer.account.ConsoleAccount.organization:type_name -> bucketeer.environment.Organization
+	11, // 5: bucketeer.account.ConsoleAccount.organization:type_name -> bucketeer.environment.Organization
 	2,  // 6: bucketeer.account.ConsoleAccount.organization_role:type_name -> bucketeer.account.AccountV2.Role.Organization
-	10, // 7: bucketeer.account.ConsoleAccount.environment_roles:type_name -> bucketeer.account.ConsoleAccount.EnvironmentRole
-	12, // 8: bucketeer.account.MyOrganization.organization:type_name -> bucketeer.environment.Organization
-	4,  // 9: bucketeer.account.MyOrganization.account:type_name -> bucketeer.account.AccountV2
-	1,  // 10: bucketeer.account.AccountV2.EnvironmentRole.role:type_name -> bucketeer.account.AccountV2.Role.Environment
-	11, // 11: bucketeer.account.ConsoleAccount.EnvironmentRole.environment:type_name -> bucketeer.environment.EnvironmentV2
-	13, // 12: bucketeer.account.ConsoleAccount.EnvironmentRole.project:type_name -> bucketeer.environment.Project
-	1,  // 13: bucketeer.account.ConsoleAccount.EnvironmentRole.role:type_name -> bucketeer.account.AccountV2.Role.Environment
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	9,  // 7: bucketeer.account.ConsoleAccount.environment_roles:type_name -> bucketeer.account.ConsoleAccount.EnvironmentRole
+	1,  // 8: bucketeer.account.AccountV2.EnvironmentRole.role:type_name -> bucketeer.account.AccountV2.Role.Environment
+	10, // 9: bucketeer.account.ConsoleAccount.EnvironmentRole.environment:type_name -> bucketeer.environment.EnvironmentV2
+	12, // 10: bucketeer.account.ConsoleAccount.EnvironmentRole.project:type_name -> bucketeer.environment.Project
+	1,  // 11: bucketeer.account.ConsoleAccount.EnvironmentRole.role:type_name -> bucketeer.account.AccountV2.Role.Environment
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_proto_account_account_proto_init() }
@@ -1032,18 +965,6 @@ func file_proto_account_account_proto_init() {
 			}
 		}
 		file_proto_account_account_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MyOrganization); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_account_account_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AccountV2_Role); i {
 			case 0:
 				return &v.state
@@ -1055,7 +976,7 @@ func file_proto_account_account_proto_init() {
 				return nil
 			}
 		}
-		file_proto_account_account_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_account_account_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AccountV2_EnvironmentRole); i {
 			case 0:
 				return &v.state
@@ -1067,7 +988,7 @@ func file_proto_account_account_proto_init() {
 				return nil
 			}
 		}
-		file_proto_account_account_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_account_account_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ConsoleAccount_EnvironmentRole); i {
 			case 0:
 				return &v.state
@@ -1086,7 +1007,7 @@ func file_proto_account_account_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_account_account_proto_rawDesc,
 			NumEnums:      3,
-			NumMessages:   8,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

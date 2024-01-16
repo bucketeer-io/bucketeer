@@ -29,6 +29,8 @@ var proto_account_api_key_pb = require('../../proto/account/api_key_pb.js');
 goog.object.extend(proto, proto_account_api_key_pb);
 var proto_account_command_pb = require('../../proto/account/command_pb.js');
 goog.object.extend(proto, proto_account_command_pb);
+var proto_environment_organization_pb = require('../../proto/environment/organization_pb.js');
+goog.object.extend(proto, proto_environment_organization_pb);
 goog.exportSymbol('proto.bucketeer.account.ChangeAPIKeyNameRequest', null, global);
 goog.exportSymbol('proto.bucketeer.account.ChangeAPIKeyNameResponse', null, global);
 goog.exportSymbol('proto.bucketeer.account.ChangeAccountRoleRequest', null, global);
@@ -1800,8 +1802,8 @@ proto.bucketeer.account.GetMyOrganizationsResponse.prototype.toObject = function
  */
 proto.bucketeer.account.GetMyOrganizationsResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    myOrganizationsList: jspb.Message.toObjectList(msg.getMyOrganizationsList(),
-    proto_account_account_pb.MyOrganization.toObject, includeInstance)
+    organizationsList: jspb.Message.toObjectList(msg.getOrganizationsList(),
+    proto_environment_organization_pb.Organization.toObject, includeInstance)
   };
 
   if (includeInstance) {
@@ -1839,9 +1841,9 @@ proto.bucketeer.account.GetMyOrganizationsResponse.deserializeBinaryFromReader =
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = new proto_account_account_pb.MyOrganization;
-      reader.readMessage(value,proto_account_account_pb.MyOrganization.deserializeBinaryFromReader);
-      msg.addMyOrganizations(value);
+      var value = new proto_environment_organization_pb.Organization;
+      reader.readMessage(value,proto_environment_organization_pb.Organization.deserializeBinaryFromReader);
+      msg.addOrganizations(value);
       break;
     default:
       reader.skipField();
@@ -1872,43 +1874,43 @@ proto.bucketeer.account.GetMyOrganizationsResponse.prototype.serializeBinary = f
  */
 proto.bucketeer.account.GetMyOrganizationsResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getMyOrganizationsList();
+  f = message.getOrganizationsList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
       1,
       f,
-      proto_account_account_pb.MyOrganization.serializeBinaryToWriter
+      proto_environment_organization_pb.Organization.serializeBinaryToWriter
     );
   }
 };
 
 
 /**
- * repeated MyOrganization my_organizations = 1;
- * @return {!Array<!proto.bucketeer.account.MyOrganization>}
+ * repeated bucketeer.environment.Organization organizations = 1;
+ * @return {!Array<!proto.bucketeer.environment.Organization>}
  */
-proto.bucketeer.account.GetMyOrganizationsResponse.prototype.getMyOrganizationsList = function() {
-  return /** @type{!Array<!proto.bucketeer.account.MyOrganization>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto_account_account_pb.MyOrganization, 1));
+proto.bucketeer.account.GetMyOrganizationsResponse.prototype.getOrganizationsList = function() {
+  return /** @type{!Array<!proto.bucketeer.environment.Organization>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto_environment_organization_pb.Organization, 1));
 };
 
 
 /**
- * @param {!Array<!proto.bucketeer.account.MyOrganization>} value
+ * @param {!Array<!proto.bucketeer.environment.Organization>} value
  * @return {!proto.bucketeer.account.GetMyOrganizationsResponse} returns this
 */
-proto.bucketeer.account.GetMyOrganizationsResponse.prototype.setMyOrganizationsList = function(value) {
+proto.bucketeer.account.GetMyOrganizationsResponse.prototype.setOrganizationsList = function(value) {
   return jspb.Message.setRepeatedWrapperField(this, 1, value);
 };
 
 
 /**
- * @param {!proto.bucketeer.account.MyOrganization=} opt_value
+ * @param {!proto.bucketeer.environment.Organization=} opt_value
  * @param {number=} opt_index
- * @return {!proto.bucketeer.account.MyOrganization}
+ * @return {!proto.bucketeer.environment.Organization}
  */
-proto.bucketeer.account.GetMyOrganizationsResponse.prototype.addMyOrganizations = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 1, opt_value, proto.bucketeer.account.MyOrganization, opt_index);
+proto.bucketeer.account.GetMyOrganizationsResponse.prototype.addOrganizations = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 1, opt_value, proto.bucketeer.environment.Organization, opt_index);
 };
 
 
@@ -1916,8 +1918,8 @@ proto.bucketeer.account.GetMyOrganizationsResponse.prototype.addMyOrganizations 
  * Clears the list making it empty but non-null.
  * @return {!proto.bucketeer.account.GetMyOrganizationsResponse} returns this
  */
-proto.bucketeer.account.GetMyOrganizationsResponse.prototype.clearMyOrganizationsList = function() {
-  return this.setMyOrganizationsList([]);
+proto.bucketeer.account.GetMyOrganizationsResponse.prototype.clearOrganizationsList = function() {
+  return this.setOrganizationsList([]);
 };
 
 

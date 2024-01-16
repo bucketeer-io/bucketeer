@@ -6,6 +6,7 @@ import * as google_protobuf_wrappers_pb from "google-protobuf/google/protobuf/wr
 import * as proto_account_account_pb from "../../proto/account/account_pb";
 import * as proto_account_api_key_pb from "../../proto/account/api_key_pb";
 import * as proto_account_command_pb from "../../proto/account/command_pb";
+import * as proto_environment_organization_pb from "../../proto/environment/organization_pb";
 
 export class GetMeRequest extends jspb.Message {
   getOrganizationId(): string;
@@ -66,10 +67,10 @@ export namespace GetMyOrganizationsRequest {
 }
 
 export class GetMyOrganizationsResponse extends jspb.Message {
-  clearMyOrganizationsList(): void;
-  getMyOrganizationsList(): Array<proto_account_account_pb.MyOrganization>;
-  setMyOrganizationsList(value: Array<proto_account_account_pb.MyOrganization>): void;
-  addMyOrganizations(value?: proto_account_account_pb.MyOrganization, index?: number): proto_account_account_pb.MyOrganization;
+  clearOrganizationsList(): void;
+  getOrganizationsList(): Array<proto_environment_organization_pb.Organization>;
+  setOrganizationsList(value: Array<proto_environment_organization_pb.Organization>): void;
+  addOrganizations(value?: proto_environment_organization_pb.Organization, index?: number): proto_environment_organization_pb.Organization;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetMyOrganizationsResponse.AsObject;
@@ -83,7 +84,7 @@ export class GetMyOrganizationsResponse extends jspb.Message {
 
 export namespace GetMyOrganizationsResponse {
   export type AsObject = {
-    myOrganizationsList: Array<proto_account_account_pb.MyOrganization.AsObject>,
+    organizationsList: Array<proto_environment_organization_pb.Organization.AsObject>,
   }
 }
 
