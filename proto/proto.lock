@@ -265,21 +265,6 @@
                 ]
               }
             ]
-          },
-          {
-            "name": "MyOrganization",
-            "fields": [
-              {
-                "id": 1,
-                "name": "organization",
-                "type": "environment.Organization"
-              },
-              {
-                "id": 2,
-                "name": "account",
-                "type": "AccountV2"
-              }
-            ]
           }
         ],
         "imports": [
@@ -761,8 +746,8 @@
             "fields": [
               {
                 "id": 1,
-                "name": "my_organizations",
-                "type": "MyOrganization",
+                "name": "organizations",
+                "type": "environment.Organization",
                 "is_repeated": true
               }
             ]
@@ -1745,6 +1730,9 @@
           },
           {
             "path": "proto/account/command.proto"
+          },
+          {
+            "path": "proto/environment/organization.proto"
           }
         ],
         "package": {
