@@ -31,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
@@ -161,7 +160,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	puller, err := s.createPuller(ctx, logger)
+	pubsubClient, err := s.createPubsubClient(ctx, logger)
 	if err != nil {
 		return err
 	}
@@ -224,10 +223,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	p := persister.NewPersisterDWH(
-		puller,
+		pubsubClient,
 		registerer,
 		writer,
 		mysqlClient,
+		*s.subscription,
+		*s.topic,
+		*s.pullerNumGoroutines,
+		*s.pullerMaxOutstandingMessages,
+		*s.pullerMaxOutstandingBytes,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
@@ -249,6 +253,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		health.WithCheck("metrics", metrics.Check),
 		health.WithCheck("persister", p.Check),
 		health.WithCheck("redis", redisV3Client.Check),
+		health.WithCheck("subscription", func(ctx context.Context) health.Status {
+			exists, err := pubsubClient.SubscriptionExists(*s.subscription)
+			if err != nil {
+				logger.Error("Failed to check subscription",
+					zap.Error(err),
+					zap.String("subscription", *s.subscription),
+				)
+				return health.Unhealthy
+			}
+			if !exists {
+				logger.Info("Subscription does not exist",
+					zap.String("subscription", *s.subscription),
+				)
+				return health.Unhealthy
+			}
+			return health.Healthy
+		}),
 	)
 	go healthChecker.Run(ctx)
 
@@ -271,19 +292,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	return nil
 }
 
-func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.Puller, error) {
+func (s *server) createPubsubClient(
+	ctx context.Context,
+	logger *zap.Logger,
+) (*pubsub.Client, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	client, err := pubsub.NewClient(ctx, *s.project, pubsub.WithLogger(logger))
+	pubsubClient, err := pubsub.NewClient(ctx, *s.project, pubsub.WithLogger(logger))
 	if err != nil {
 		logger.Error("Failed to create PubSub client", zap.Error(err))
 		return nil, err
 	}
-	return client.CreatePuller(*s.subscription, *s.topic,
-		pubsub.WithNumGoroutines(*s.pullerNumGoroutines),
-		pubsub.WithMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
-		pubsub.WithMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
-	)
+	return pubsubClient, nil
 }
 
 func (s *server) newBigQueryWriter(

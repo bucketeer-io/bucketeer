@@ -31,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
@@ -145,7 +144,7 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	registerer := metrics.DefaultRegisterer()
 
-	puller, err := s.createPuller(ctx, logger)
+	pubsubClient, err := s.createPubsubClient(ctx, logger)
 	if err != nil {
 		return err
 	}
@@ -214,7 +213,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	p := persister.NewPersister(
 		updater,
 		mysqlClient,
-		puller,
+		pubsubClient,
+		*s.subscription,
+		*s.topic,
+		*s.pullerNumGoroutines,
+		*s.pullerMaxOutstandingMessages,
+		*s.pullerMaxOutstandingBytes,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
@@ -254,19 +258,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	return nil
 }
 
-func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.Puller, error) {
+func (s *server) createPubsubClient(ctx context.Context, logger *zap.Logger) (*pubsub.Client, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	client, err := pubsub.NewClient(ctx, *s.project, pubsub.WithLogger(logger))
+	pubsubClient, err := pubsub.NewClient(ctx, *s.project, pubsub.WithLogger(logger))
 	if err != nil {
 		logger.Error("Failed to create PubSub client", zap.Error(err))
 		return nil, err
 	}
-	return client.CreatePuller(*s.subscription, *s.topic,
-		pubsub.WithNumGoroutines(*s.pullerNumGoroutines),
-		pubsub.WithMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
-		pubsub.WithMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
-	)
+	return pubsubClient, nil
 }
 
 func (s *server) newUserCountUpdater(

@@ -17,6 +17,7 @@ package pubsub
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"cloud.google.com/go/pubsub"
@@ -249,4 +250,34 @@ func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) 
 		lastErr = err
 	}
 	return nil, lastErr
+}
+
+func (c *Client) SubscriptionExists(id string) (bool, error) {
+	sub := c.Client.Subscription(id)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	exists, err := sub.Exists(ctx)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func (c *Client) DeleteSubscription(id string) error {
+	sub := c.Client.Subscription(id)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err := sub.Delete(ctx)
+	return err
+}
+
+func (c *Client) DeleteSubscriptionIfExist(id string) error {
+	exists, err := c.SubscriptionExists(id)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("subscription %s does not exist", id)
+	}
+	return c.DeleteSubscription(id)
 }

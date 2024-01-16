@@ -27,6 +27,7 @@ import (
 	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -50,19 +51,24 @@ var (
 )
 
 type PersisterDWH struct {
-	puller              puller.Puller
-	logger              *zap.Logger
-	ctx                 context.Context
-	mysqlClient         mysql.Client
-	runningPullerCtx    context.Context
-	runningPullerCancel func()
-	isRunning           bool
-	rateLimitedPuller   puller.RateLimitedPuller
-	cancel              func()
-	group               errgroup.Group
-	doneCh              chan struct{}
-	writer              Writer
-	opts                *options
+	client                       *pubsub.Client
+	topic                        string
+	subscription                 string
+	pullerNumGoroutines          int
+	pullerMaxOutstandingMessages int
+	pullerMaxOutstandingBytes    int
+	logger                       *zap.Logger
+	ctx                          context.Context
+	mysqlClient                  mysql.Client
+	runningPullerCtx             context.Context
+	runningPullerCancel          func()
+	isRunning                    bool
+	rateLimitedPuller            puller.RateLimitedPuller
+	cancel                       func()
+	group                        errgroup.Group
+	doneCh                       chan struct{}
+	writer                       Writer
+	opts                         *options
 }
 
 type eventMap map[string]proto.Message
@@ -137,10 +143,15 @@ func WithBatchSize(size int) Option {
 }
 
 func NewPersisterDWH(
-	p puller.Puller,
+	client *pubsub.Client,
 	r metrics.Registerer,
 	writer Writer,
 	mysqlClient mysql.Client,
+	subscription string,
+	topic string,
+	pullerNumGoroutines int,
+	pullerMaxOutstandingMessages int,
+	pullerMaxOutstandingBytes int,
 	opts ...Option,
 ) *PersisterDWH {
 	dopts := &options{
@@ -160,15 +171,19 @@ func NewPersisterDWH(
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &PersisterDWH{
-		puller:            p,
-		rateLimitedPuller: puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		mysqlClient:       mysqlClient,
-		logger:            dopts.logger.Named("persister"),
-		ctx:               ctx,
-		cancel:            cancel,
-		doneCh:            make(chan struct{}),
-		writer:            writer,
-		opts:              dopts,
+		client:                       client,
+		topic:                        topic,
+		subscription:                 subscription,
+		pullerNumGoroutines:          pullerNumGoroutines,
+		pullerMaxOutstandingMessages: pullerMaxOutstandingMessages,
+		pullerMaxOutstandingBytes:    pullerMaxOutstandingBytes,
+		mysqlClient:                  mysqlClient,
+		logger:                       dopts.logger.Named("persister"),
+		ctx:                          ctx,
+		cancel:                       cancel,
+		doneCh:                       make(chan struct{}),
+		writer:                       writer,
+		opts:                         dopts,
 	}
 }
 
@@ -191,6 +206,11 @@ func (p *PersisterDWH) Run() error {
 				p.logger.Debug("There are running experiments")
 				if !p.IsRunning() {
 					p.group = errgroup.Group{}
+					err := p.createNewPuller()
+					if err != nil {
+						p.logger.Error("Failed to create new puller", zap.Error(err))
+						return err
+					}
 					subscription <- struct{}{}
 					p.logger.Debug("Puller is not running, start pulling messages")
 				}
@@ -199,7 +219,6 @@ func (p *PersisterDWH) Run() error {
 				if p.IsRunning() {
 					p.logger.Debug("Puller is running, stop pulling messages")
 					p.unsubscribe()
-					p.rateLimitedPuller = puller.NewRateLimitedPuller(p.puller, p.opts.maxMPS)
 				}
 			}
 			timer.Reset(p.opts.checkInterval)
@@ -233,6 +252,19 @@ func (p *PersisterDWH) Check(ctx context.Context) health.Status {
 	}
 }
 
+func (p *PersisterDWH) createNewPuller() error {
+	pubsubPuller, err := p.client.CreatePuller(p.subscription, p.topic,
+		pubsub.WithNumGoroutines(p.pullerNumGoroutines),
+		pubsub.WithMaxOutstandingMessages(p.pullerMaxOutstandingMessages),
+		pubsub.WithMaxOutstandingBytes(p.pullerMaxOutstandingBytes),
+	)
+	if err != nil {
+		return err
+	}
+	p.rateLimitedPuller = puller.NewRateLimitedPuller(pubsubPuller, p.opts.maxMPS)
+	return nil
+}
+
 func (p *PersisterDWH) subscribe(subscription chan struct{}) {
 	for {
 		select {
@@ -262,6 +294,10 @@ func (p *PersisterDWH) subscribe(subscription chan struct{}) {
 
 func (p *PersisterDWH) unsubscribe() {
 	p.runningPullerCancel()
+	err := p.client.DeleteSubscriptionIfExist(p.subscription)
+	if err != nil {
+		p.logger.Error("Failed to delete subscription", zap.Error(err))
+	}
 }
 
 func (p *PersisterDWH) IsRunning() bool {

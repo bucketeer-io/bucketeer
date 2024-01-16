@@ -19,6 +19,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
@@ -46,19 +48,24 @@ type eventMap map[string]proto.Message
 type environmentEventMap map[string]eventMap
 
 type persister struct {
-	ctx                 context.Context
-	cancel              func()
-	updater             Updater
-	puller              puller.Puller
-	mysqlClient         mysql.Client
-	runningPullerCtx    context.Context
-	runningPullerCancel func()
-	isRunning           bool
-	rateLimitedPuller   puller.RateLimitedPuller
-	group               errgroup.Group
-	doneCh              chan struct{}
-	logger              *zap.Logger
-	opts                *options
+	client                       *pubsub.Client
+	topic                        string
+	subscription                 string
+	pullerNumGoroutines          int
+	pullerMaxOutstandingMessages int
+	pullerMaxOutstandingBytes    int
+	ctx                          context.Context
+	cancel                       func()
+	updater                      Updater
+	mysqlClient                  mysql.Client
+	runningPullerCtx             context.Context
+	runningPullerCancel          func()
+	isRunning                    bool
+	rateLimitedPuller            puller.RateLimitedPuller
+	group                        errgroup.Group
+	doneCh                       chan struct{}
+	logger                       *zap.Logger
+	opts                         *options
 }
 
 type options struct {
@@ -125,7 +132,12 @@ func WithLogger(l *zap.Logger) Option {
 func NewPersister(
 	updater Updater,
 	mysqlClient mysql.Client,
-	p puller.Puller,
+	client *pubsub.Client,
+	subscription string,
+	topic string,
+	pullerNumGoroutines int,
+	pullerMaxOutstandingMessages int,
+	pullerMaxOutstandingBytes int,
 	opts ...Option,
 ) *persister {
 	dopts := &options{
@@ -145,15 +157,19 @@ func NewPersister(
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	return &persister{
-		ctx:               ctx,
-		cancel:            cancel,
-		updater:           updater,
-		mysqlClient:       mysqlClient,
-		puller:            p,
-		rateLimitedPuller: puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		doneCh:            make(chan struct{}),
-		logger:            dopts.logger.Named("persister"),
-		opts:              dopts,
+		client:                       client,
+		topic:                        topic,
+		subscription:                 subscription,
+		pullerNumGoroutines:          pullerNumGoroutines,
+		pullerMaxOutstandingMessages: pullerMaxOutstandingMessages,
+		pullerMaxOutstandingBytes:    pullerMaxOutstandingBytes,
+		ctx:                          ctx,
+		cancel:                       cancel,
+		updater:                      updater,
+		mysqlClient:                  mysqlClient,
+		doneCh:                       make(chan struct{}),
+		logger:                       dopts.logger.Named("persister"),
+		opts:                         dopts,
 	}
 }
 
@@ -176,6 +192,11 @@ func (p *persister) Run() error {
 				p.logger.Debug("There are untriggered auto ops rules")
 				if !p.IsRunning() {
 					p.group = errgroup.Group{}
+					err := p.createNewPuller()
+					if err != nil {
+						p.logger.Error("Failed to create new puller", zap.Error(err))
+						return err
+					}
 					subscription <- struct{}{}
 					p.logger.Debug("Puller is not running, start pulling messages")
 				}
@@ -184,7 +205,6 @@ func (p *persister) Run() error {
 				if p.IsRunning() {
 					p.logger.Debug("Puller is running, stop pulling messages")
 					p.unsubscribe()
-					p.rateLimitedPuller = puller.NewRateLimitedPuller(p.puller, p.opts.maxMPS)
 				}
 			}
 			timer.Reset(p.opts.checkInterval)
@@ -218,6 +238,19 @@ func (p *persister) Check(ctx context.Context) health.Status {
 	}
 }
 
+func (p *persister) createNewPuller() error {
+	pubsubPuller, err := p.client.CreatePuller(p.subscription, p.topic,
+		pubsub.WithNumGoroutines(p.pullerNumGoroutines),
+		pubsub.WithMaxOutstandingMessages(p.pullerMaxOutstandingMessages),
+		pubsub.WithMaxOutstandingBytes(p.pullerMaxOutstandingBytes),
+	)
+	if err != nil {
+		return err
+	}
+	p.rateLimitedPuller = puller.NewRateLimitedPuller(pubsubPuller, p.opts.maxMPS)
+	return nil
+}
+
 func (p *persister) subscribe(subscription chan struct{}) {
 	for {
 		select {
@@ -247,6 +280,10 @@ func (p *persister) subscribe(subscription chan struct{}) {
 
 func (p *persister) unsubscribe() {
 	p.runningPullerCancel()
+	err := p.client.DeleteSubscriptionIfExist(p.subscription)
+	if err != nil {
+		p.logger.Error("Failed to delete subscription", zap.Error(err))
+	}
 }
 
 func (p *persister) IsRunning() bool {
