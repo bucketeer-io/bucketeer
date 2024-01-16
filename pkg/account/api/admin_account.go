@@ -953,7 +953,18 @@ func (s *AccountService) GetMyOrganizations(
 				Archived: wrapperspb.Bool(false),
 			})
 		if err != nil {
-			return nil, err
+			s.logger.Error(
+				"Failed to get organizations",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
 		return &accountproto.GetMyOrganizationsResponse{Organizations: resp.Organizations}, nil
 	}
