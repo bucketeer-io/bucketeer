@@ -32,7 +32,7 @@ message APIKey {
 }
 
 message EnvironmentAPIKey {
-  string environment_namespace = 1  [deprecated = true];
+  string environment_namespace = 1 [deprecated = true];
   APIKey api_key = 2;
   bool environment_disabled = 3;
   string project_id = 4;
