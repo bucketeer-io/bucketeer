@@ -2,6 +2,7 @@
 // file: proto/account/api_key.proto
 
 import * as jspb from "google-protobuf";
+import * as proto_environment_environment_pb from "../../proto/environment/environment_pb";
 
 export class APIKey extends jspb.Message {
   getId(): string;
@@ -65,6 +66,11 @@ export class EnvironmentAPIKey extends jspb.Message {
   getProjectId(): string;
   setProjectId(value: string): void;
 
+  hasEnvironment(): boolean;
+  clearEnvironment(): void;
+  getEnvironment(): proto_environment_environment_pb.EnvironmentV2 | undefined;
+  setEnvironment(value?: proto_environment_environment_pb.EnvironmentV2): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnvironmentAPIKey.AsObject;
   static toObject(includeInstance: boolean, msg: EnvironmentAPIKey): EnvironmentAPIKey.AsObject;
@@ -81,6 +87,7 @@ export namespace EnvironmentAPIKey {
     apiKey?: APIKey.AsObject,
     environmentDisabled: boolean,
     projectId: string,
+    environment?: proto_environment_environment_pb.EnvironmentV2.AsObject,
   }
 }
 

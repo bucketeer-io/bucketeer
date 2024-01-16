@@ -19,12 +19,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

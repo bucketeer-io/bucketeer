@@ -18,9 +18,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	"testing"
 	"time"
+
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"

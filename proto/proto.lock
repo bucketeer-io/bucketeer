@@ -279,7 +279,13 @@
               {
                 "id": 1,
                 "name": "environment_namespace",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 2,
@@ -295,8 +301,18 @@
                 "id": 4,
                 "name": "project_id",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "environment",
+                "type": "environment.EnvironmentV2"
               }
             ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/environment/environment.proto"
           }
         ],
         "package": {
@@ -2723,14 +2739,12 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutManualScheduleClause"
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ]
           },
@@ -3521,14 +3535,12 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status",
-                "optional": true
+                "type": "ProgressiveRollout.Status"
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type",
-                "optional": true
+                "type": "ProgressiveRollout.Type"
               }
             ]
           },

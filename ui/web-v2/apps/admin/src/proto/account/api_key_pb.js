@@ -21,6 +21,8 @@ var global =
     (function () { return this; }).call(null) ||
     Function('return this')();
 
+var proto_environment_environment_pb = require('../../proto/environment/environment_pb.js');
+goog.object.extend(proto, proto_environment_environment_pb);
 goog.exportSymbol('proto.bucketeer.account.APIKey', null, global);
 goog.exportSymbol('proto.bucketeer.account.APIKey.Role', null, global);
 goog.exportSymbol('proto.bucketeer.account.EnvironmentAPIKey', null, global);
@@ -389,7 +391,8 @@ proto.bucketeer.account.EnvironmentAPIKey.toObject = function(includeInstance, m
     environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
     apiKey: (f = msg.getApiKey()) && proto.bucketeer.account.APIKey.toObject(includeInstance, f),
     environmentDisabled: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
-    projectId: jspb.Message.getFieldWithDefault(msg, 4, "")
+    projectId: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    environment: (f = msg.getEnvironment()) && proto_environment_environment_pb.EnvironmentV2.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -442,6 +445,11 @@ proto.bucketeer.account.EnvironmentAPIKey.deserializeBinaryFromReader = function
     case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setProjectId(value);
+      break;
+    case 5:
+      var value = new proto_environment_environment_pb.EnvironmentV2;
+      reader.readMessage(value,proto_environment_environment_pb.EnvironmentV2.deserializeBinaryFromReader);
+      msg.setEnvironment(value);
       break;
     default:
       reader.skipField();
@@ -499,6 +507,14 @@ proto.bucketeer.account.EnvironmentAPIKey.serializeBinaryToWriter = function(mes
     writer.writeString(
       4,
       f
+    );
+  }
+  f = message.getEnvironment();
+  if (f != null) {
+    writer.writeMessage(
+      5,
+      f,
+      proto_environment_environment_pb.EnvironmentV2.serializeBinaryToWriter
     );
   }
 };
@@ -592,6 +608,43 @@ proto.bucketeer.account.EnvironmentAPIKey.prototype.getProjectId = function() {
  */
 proto.bucketeer.account.EnvironmentAPIKey.prototype.setProjectId = function(value) {
   return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional bucketeer.environment.EnvironmentV2 environment = 5;
+ * @return {?proto.bucketeer.environment.EnvironmentV2}
+ */
+proto.bucketeer.account.EnvironmentAPIKey.prototype.getEnvironment = function() {
+  return /** @type{?proto.bucketeer.environment.EnvironmentV2} */ (
+    jspb.Message.getWrapperField(this, proto_environment_environment_pb.EnvironmentV2, 5));
+};
+
+
+/**
+ * @param {?proto.bucketeer.environment.EnvironmentV2|undefined} value
+ * @return {!proto.bucketeer.account.EnvironmentAPIKey} returns this
+*/
+proto.bucketeer.account.EnvironmentAPIKey.prototype.setEnvironment = function(value) {
+  return jspb.Message.setWrapperField(this, 5, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.EnvironmentAPIKey} returns this
+ */
+proto.bucketeer.account.EnvironmentAPIKey.prototype.clearEnvironment = function() {
+  return this.setEnvironment(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.EnvironmentAPIKey.prototype.hasEnvironment = function() {
+  return jspb.Message.getField(this, 5) != null;
 };
 
 
