@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { shallowEqual, useSelector } from 'react-redux';
 
-import { getMe, getMyOrganizations } from '../grpc/account';
-import { AccountV2, ConsoleAccount, MyOrganization } from '../proto/account/account_pb';
-import { GetMeRequest, GetMyOrganizationsRequest } from '../proto/account/service_pb';
+import { getMe } from '../grpc/account';
+import { AccountV2, ConsoleAccount } from '../proto/account/account_pb';
+import { GetMeRequest } from '../proto/account/service_pb';
 import { EnvironmentV2 } from '../proto/environment/environment_pb';
 import {
   getCurrentEnvironmentId,
@@ -41,17 +41,13 @@ export const fetchMe = createAsyncThunk<
   };
 });
 
-export const fetchMyOrganizations = createAsyncThunk<
-  Array<MyOrganization.AsObject>
->('me/fetchMyOrganizations', async () => {
-  const request = new GetMyOrganizationsRequest();
-  const res = await getMyOrganizations(request);
-  return res.response.toObject().myOrganizationsList;
-});
-
 export const meSlice = createSlice({
   name: MODULE_NAME,
-  initialState: { isAdmin: false, isLogin: false, consoleAccount: null } as MeState,
+  initialState: {
+    isAdmin: false,
+    isLogin: false,
+    consoleAccount: null,
+  } as MeState,
   reducers: {
     clearMe(state) {
       return { isAdmin: false, isLogin: false, consoleAccount: null };
@@ -65,9 +61,11 @@ export const meSlice = createSlice({
     builder
       .addCase(fetchMe.fulfilled, (_, action) => {
         // Since some old environments have empty id, so accept empty and reject only null or undefined
-        const curEnvId = (getCurrentEnvironmentId() != (null || undefined))
-          ? getCurrentEnvironmentId()
-          : action.payload.consoleAccount.environmentRolesList[0].environment.id;
+        const curEnvId =
+          getCurrentEnvironmentId() != (null || undefined)
+            ? getCurrentEnvironmentId()
+            : action.payload.consoleAccount.environmentRolesList[0].environment
+                .id;
         setCurrentEnvironmentId(curEnvId);
         return action.payload;
       })
@@ -80,12 +78,15 @@ export const meSlice = createSlice({
 export const useMe = (): MeState =>
   useSelector<AppState, MeState>((state) => state.me);
 
-const currentEnvironmentRole = (state: AppState): ConsoleAccount.EnvironmentRole.AsObject => {
+const currentEnvironmentRole = (
+  state: AppState
+): ConsoleAccount.EnvironmentRole.AsObject => {
   if ('consoleAccount' in state.me) {
     // Since some old environments have empty id, so accept empty and reject only null or undefined
-    const curEnvId = (getCurrentEnvironmentId() != (null || undefined))
-      ? getCurrentEnvironmentId()
-      : state.me.consoleAccount.environmentRolesList[0].environment.id;
+    const curEnvId =
+      getCurrentEnvironmentId() != (null || undefined)
+        ? getCurrentEnvironmentId()
+        : state.me.consoleAccount.environmentRolesList[0].environment.id;
     let curEnvRole = state.me.consoleAccount.environmentRolesList.find(
       (environmentRole) => environmentRole.environment.id === curEnvId
     );
@@ -94,7 +95,7 @@ const currentEnvironmentRole = (state: AppState): ConsoleAccount.EnvironmentRole
     }
     return curEnvRole;
   }
-}
+};
 
 export const useCurrentEnvironment = (): EnvironmentV2.AsObject => {
   return useSelector<AppState, EnvironmentV2.AsObject>((state: AppState) => {
@@ -117,9 +118,7 @@ export const useIsEditable = (): boolean => {
   return useSelector<AppState, boolean>((state: AppState) => {
     if (state.me.consoleAccount.isSystemAdmin) return true;
     const envRole = currentEnvironmentRole(state);
-    return (
-      envRole.role === AccountV2.Role.Environment.ENVIRONMENT_EDITOR
-    );
+    return envRole.role === AccountV2.Role.Environment.ENVIRONMENT_EDITOR;
   }, shallowEqual);
 };
 
@@ -133,9 +132,7 @@ export const useIsOwner = (): boolean => {
     //   state.me.consoleAccount.organizationRole === AccountV2.Role.Organization.ORGANIZATION_ADMIN
     // )
     const envRole = currentEnvironmentRole(state);
-    return (
-      envRole.role === AccountV2.Role.Environment.ENVIRONMENT_EDITOR
-    );
+    return envRole.role === AccountV2.Role.Environment.ENVIRONMENT_EDITOR;
   }, shallowEqual);
 };
 
