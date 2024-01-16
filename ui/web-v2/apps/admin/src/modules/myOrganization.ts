@@ -1,17 +1,17 @@
+import { Organization } from "@/proto/environment/organization_pb";
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 import { getMyOrganizations } from '../grpc/account';
-import { MyOrganization } from '../proto/account/account_pb';
 import { GetMyOrganizationsRequest } from '../proto/account/service_pb';
 
 const MODULE_NAME = 'myOrganization';
 
 export const fetchMyOrganizations = createAsyncThunk<
-  Array<MyOrganization.AsObject>
+  Array<Organization.AsObject>
 >('me/fetchMyOrganizations', async () => {
   const request = new GetMyOrganizationsRequest();
   const res = await getMyOrganizations(request);
-  return res.response.toObject().myOrganizationsList;
+  return res.response.toObject().organizationsList;
 });
 
 export const myOrganizationSlice = createSlice({

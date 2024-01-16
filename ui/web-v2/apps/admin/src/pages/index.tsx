@@ -2,7 +2,7 @@ import { Select } from '@/components/Select';
 import { GOOGLE_TAG_MANAGER_ID } from '@/config';
 import { AppState } from '@/modules';
 import { fetchMyOrganizations } from '@/modules/myOrganization';
-import { MyOrganization } from '@/proto/account/account_pb';
+import { Organization } from "@/proto/environment/organization_pb";
 import {
   getOrganizationId,
   settOrganizationId,
@@ -92,7 +92,7 @@ export const Root: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
   const [pageKey, setPageKey] = useState<string>(uuid());
   const me = useMe();
-  const myOrganization = useSelector<AppState, MyOrganization.AsObject[]>(
+  const myOrganization = useSelector<AppState, Organization.AsObject[]>(
     (state) => state.myOrganization.myOrganization
   );
   const [selectedOrganization, setSelectedOrganization] = useState(null);
@@ -119,8 +119,8 @@ export const Root: FC = memo(() => {
 
   useEffect(() => {
     if (myOrganization.length === 1) {
-      settOrganizationId(myOrganization[0].organization.id);
-      dispatch(fetchMe({ organizationId: myOrganization[0].organization.id }));
+      settOrganizationId(myOrganization[0].id);
+      dispatch(fetchMe({ organizationId: myOrganization[0].id }));
     }
   }, [myOrganization]);
 
@@ -176,9 +176,9 @@ export const Root: FC = memo(() => {
                   <div className="w-56">
                     <Select
                       placeholder="Select your organization"
-                      options={myOrganization.map((m) => ({
-                        label: m.organization.name,
-                        value: m.organization.id,
+                      options={myOrganization.map((org) => ({
+                        label: org.name,
+                        value: org.id,
                       }))}
                       onChange={(o) => setSelectedOrganization(o)}
                     />
