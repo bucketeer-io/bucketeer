@@ -19,8 +19,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
@@ -29,6 +27,7 @@ import (
 	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersisterops/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
