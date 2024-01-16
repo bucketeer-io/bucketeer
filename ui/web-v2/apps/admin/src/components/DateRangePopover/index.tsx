@@ -4,7 +4,7 @@ import './dateRangeStyles.css';
 import { isLanguageJapanese } from '@/lang/getSelectedLanguage';
 import { AuditLogSearchOptions } from '@/types/auditLog';
 import { Popover, Transition } from '@headlessui/react';
-import { SelectorIcon, XIcon } from '@heroicons/react/solid';
+import { SelectorIcon, XIcon, ChevronDownIcon } from '@heroicons/react/solid';
 import en from 'date-fns/locale/en-US';
 import ja from 'date-fns/locale/ja';
 import dayjs from 'dayjs';
@@ -102,7 +102,9 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
       return from.format('MMM D, YYYY');
     };
 
-    const handleClear = () => {
+    const handleClear = (e) => {
+      console.log(e);
+      e.stopPropagation();
       setRanges([
         {
           startDate: new Date(),
@@ -157,46 +159,62 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
             <Popover.Button ref={referenceElement}>
               <div
                 className={classNames(
-                  'group pl-3 pr-2 py-2',
+                  'group',
                   'rounded-md inline-flex items-center',
-                  'hover:bg-gray-100',
                   'h-10',
                   'text-sm text-gray-700',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75',
-                  `${isDateSelected && 'border'}`
+                  'border border-gray-300'
                 )}
               >
                 {isDateSelected ? (
-                  <div className="flex">
-                    <span>
-                      {f(messages.auditLog.filter.dates)}: {getSelectedDate()}
-                    </span>
-                    <SelectorIcon
-                      className="w-5 h-5 text-gray-400 ml-2"
-                      aria-hidden="true"
-                    />
+                  <div className="flex items-center">
+                    <div className="pl-3 flex">
+                      <span>
+                        {/* {f(messages.auditLog.filter.dates)}: {getSelectedDate()} */}
+                        Show: {getSelectedDate()}
+                      </span>
+                      <button
+                        onClick={handleClear}
+                        className="px-3 text-gray-400 hover:text-gray-500"
+                      >
+                        <XIcon className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
+                    <div className="h-6 bg-gray-300 w-[1px]" />
+                    <div className="px-2">
+                      <ChevronDownIcon
+                        className="w-5 h-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </div>
                   </div>
                 ) : (
-                  <>
-                    <span className="text-sm">{f(messages.filter.filter)}</span>
-                    <SelectorIcon
-                      className="w-5 h-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </>
+                  <div className="flex items-center">
+                    <div className="px-3">
+                      {/* <span className="text-sm">{f(messages.filter.filter)}</span> */}
+                      <span>Show: Most recent</span>
+                    </div>
+                    <div className="h-6 bg-gray-300 w-[1px]" />
+                    <div className="px-2">
+                      <ChevronDownIcon
+                        className="w-5 h-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             </Popover.Button>
-            {isDateSelected && (
+            {/* {isDateSelected && (
               <button
                 type="button"
-                className="inline-flex items-center ml-2 rounded-md bg-white py-2.5 px-3.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
+                className="inline-flex border border-gray-300 items-center ml-2 rounded-md bg-white py-2.5 px-3.5 text-sm text-gray-900 hover:bg-gray-50"
                 onClick={handleClear}
               >
                 Clear
                 <XIcon className="ml-1 h-4 w-4" aria-hidden="true" />
               </button>
-            )}
+            )} */}
             <div
               ref={popperElement}
               style={popper.styles.popper}

@@ -91,8 +91,8 @@ export const AuditLogIndexPage: FC = memo(() => {
     const cursor = (page - 1) * AUDITLOG_LIST_PAGE_SIZE;
     const from = searchOptions.from ? Number(searchOptions.from) : null;
     const to = searchOptions.to ? Number(searchOptions.to) : null;
-    const resource = searchOptions.resource
-      ? Number(searchOptions.resource)
+    const entityType = searchOptions.entityType
+      ? Number(searchOptions.entityType)
       : null;
 
     dispatch(
@@ -105,7 +105,7 @@ export const AuditLogIndexPage: FC = memo(() => {
         orderDirection: sort.orderDirection,
         from: from,
         to: to,
-        resource: resource,
+        entityType,
       })
     );
   }, [dispatch, searchOptions, currentEnvironment]);

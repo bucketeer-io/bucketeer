@@ -1,5 +1,5 @@
 import React, { FC, memo } from 'react';
-import ReactSelect from 'react-select';
+import ReactSelect, { components } from 'react-select';
 
 export interface Option {
   value: string;
@@ -17,6 +17,7 @@ export interface SelectProps {
   className?: string;
   onChange: ((option: Option) => void) | ((option: Option[]) => void);
   placeholder?: string;
+  customControl?: React.ReactNode;
 }
 
 export const Select: FC<SelectProps> = memo(
@@ -31,6 +32,7 @@ export const Select: FC<SelectProps> = memo(
     options,
     value,
     placeholder,
+    customControl,
   }) => {
     const textColor = '#3F3F46';
     const textColorDisabled = '#6B7280';
@@ -87,6 +89,29 @@ export const Select: FC<SelectProps> = memo(
         color: isDisabled ? textColorDisabled : textColor,
       }),
     };
+
+    if (customControl) {
+      return (
+        <ReactSelect
+          options={options}
+          className={className}
+          classNamePrefix="react-select"
+          styles={colourStyles}
+          components={{
+            Control: customControl,
+          }}
+          isDisabled={isLoading || disabled}
+          isClearable={clearable}
+          isMulti={isMulti}
+          isSearchable={isSearchable}
+          isLoading={isLoading}
+          placeholder={placeholder ? placeholder : ''}
+          value={value}
+          onChange={onChange}
+        />
+      );
+    }
+
     return (
       <ReactSelect
         options={options}
