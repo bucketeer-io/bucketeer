@@ -88,8 +88,3 @@ message ConsoleAccount {
   AccountV2.Role.Organization organization_role = 6;
   repeated EnvironmentRole environment_roles = 7;
 }
-
-message MyOrganization {
-  environment.Organization organization = 1;
-  AccountV2 account = 2;
-}

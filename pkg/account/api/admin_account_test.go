@@ -1123,10 +1123,45 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
 					gomock.Any(), gomock.Any(),
 				).Return([]*domain.AccountWithOrganization{}, nil)
-
 			},
 			input:       &accountproto.GetMyOrganizationsRequest{},
-			expected:    &accountproto.GetMyOrganizationsResponse{MyOrganizations: []*accountproto.MyOrganization{}},
+			expected:    &accountproto.GetMyOrganizationsResponse{Organizations: []*environmentproto.Organization{}},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: including system admin organization",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:          "org0",
+							SystemAdmin: true,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email: "bucketeer@example.com",
+						},
+					},
+				}, nil)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListOrganizationsResponse{
+					Organizations: []*environmentproto.Organization{
+						{
+							Id:          "org0",
+							SystemAdmin: true,
+						},
+					},
+				}, nil)
+			},
+			input: &accountproto.GetMyOrganizationsRequest{},
+			expected: &accountproto.GetMyOrganizationsResponse{Organizations: []*environmentproto.Organization{
+				{
+					Id:          "org0",
+					SystemAdmin: true,
+				},
+			}},
 			expectedErr: nil,
 		},
 	}

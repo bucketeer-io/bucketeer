@@ -22,6 +22,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
@@ -944,12 +945,35 @@ func (s *AccountService) GetMyOrganizations(
 		}
 		return nil, dt.Err()
 	}
-	myOrgs := make([]*accountproto.MyOrganization, 0, len(accountsWithOrg))
-	for _, accWithOrg := range accountsWithOrg {
-		myOrgs = append(myOrgs, &accountproto.MyOrganization{
-			Organization: accWithOrg.Organization,
-			Account:      accWithOrg.AccountV2,
-		})
+	if s.containsSystemAdminOrganization(accountsWithOrg) {
+		resp, err := s.environmentClient.ListOrganizations(
+			ctx,
+			&environmentproto.ListOrganizationsRequest{
+				Disabled: wrapperspb.Bool(false),
+				Archived: wrapperspb.Bool(false),
+			})
+		if err != nil {
+			return nil, err
+		}
+		return &accountproto.GetMyOrganizationsResponse{Organizations: resp.Organizations}, nil
 	}
-	return &accountproto.GetMyOrganizationsResponse{MyOrganizations: myOrgs}, nil
+	myOrgs := make([]*environmentproto.Organization, 0, len(accountsWithOrg))
+	for _, accWithOrg := range accountsWithOrg {
+		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Organization.Archived {
+			continue
+		}
+		myOrgs = append(myOrgs, accWithOrg.Organization)
+	}
+	return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
+}
+
+func (s *AccountService) containsSystemAdminOrganization(
+	organizations []*domain.AccountWithOrganization,
+) bool {
+	for _, org := range organizations {
+		if org.Organization.SystemAdmin {
+			return true
+		}
+	}
+	return false
 }
