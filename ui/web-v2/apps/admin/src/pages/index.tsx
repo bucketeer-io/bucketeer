@@ -2,7 +2,7 @@ import { Select } from '@/components/Select';
 import { GOOGLE_TAG_MANAGER_ID } from '@/config';
 import { AppState } from '@/modules';
 import { fetchMyOrganizations } from '@/modules/myOrganization';
-import { Organization } from "@/proto/environment/organization_pb";
+import { Organization } from '@/proto/environment/organization_pb';
 import {
   getOrganizationId,
   settOrganizationId,
@@ -165,11 +165,11 @@ export const Root: FC = memo(() => {
           className="absolute right-[-10%] bottom-[-50%] z-0 w-[1000px] h-[1000px]"
         />
         <div className="p-6 w-full z-10 flex justify-center">
-          <div className="flex flex-col lg:flex-row rounded-[14px] shadow-lg w-full lg:w-[900px] h-[400px] overflow-hidden">
-            <div className="flex-1 flex items-center justify-center bg-primary">
+          <div className="flex flex-col lg:flex-row rounded-[14px] shadow-lg w-full lg:w-[900px] h-[400px]">
+            <div className="flex-1 flex items-center justify-center bg-primary rounded-l-2xl">
               <img src="/assets/logo.png" alt="bucketeer logo" />
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center bg-white">
+            <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-r-2xl">
               <div>
                 <h2 className="font-medium">Select your Organization</h2>
                 <div className="flex space-x-2 mt-2">
