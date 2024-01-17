@@ -275,7 +275,12 @@ func (p *PersisterDWH) subscribe(subscription chan struct{}) {
 			p.runningPullerCtx = ctx
 			p.runningPullerCancel = cancel
 			p.group.Go(func() error {
-				return p.rateLimitedPuller.Run(ctx)
+				err := p.rateLimitedPuller.Run(ctx)
+				if err != nil {
+					p.logger.Error("Puller pulling messages error", zap.Error(err))
+					return err
+				}
+				return nil
 			})
 			for i := 0; i < p.opts.numWorkers; i++ {
 				p.group.Go(p.batch)

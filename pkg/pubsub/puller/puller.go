@@ -75,7 +75,10 @@ func (p *puller) Pull(ctx context.Context, f func(context.Context, *Message)) er
 			Nack:       msg.Nack})
 	})
 	if err != nil {
-		p.logger.Error("Failed to receive message", zap.Error(err))
+		p.logger.Error("Failed to receive message",
+			zap.Error(err),
+			zap.String("subscription", p.subscription.String()),
+		)
 		return err
 	}
 	return nil
