@@ -364,7 +364,7 @@
   "input.projectId": "プロジェクトID",
   "input.role": "権限",
   "maintainer": "フラグ管理者",
-  "mostRecent": "表示 最新",
+  "mostRecent": "直近",
   "name": "名前",
   "no": "いいえ",
   "noData.title": "まだ{title}がありません。",

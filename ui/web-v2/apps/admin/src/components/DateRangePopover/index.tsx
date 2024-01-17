@@ -4,7 +4,7 @@ import './dateRangeStyles.css';
 import { isLanguageJapanese } from '@/lang/getSelectedLanguage';
 import { AuditLogSearchOptions } from '@/types/auditLog';
 import { Popover, Transition } from '@headlessui/react';
-import { SelectorIcon, XIcon, ChevronDownIcon } from '@heroicons/react/solid';
+import { XIcon, ChevronDownIcon } from '@heroicons/react/solid';
 import en from 'date-fns/locale/en-US';
 import ja from 'date-fns/locale/ja';
 import dayjs from 'dayjs';
@@ -14,7 +14,7 @@ import {
   defaultStaticRanges,
   createStaticRanges,
 } from 'react-date-range';
-import { useIntl } from 'react-intl';
+import { FormattedDate, useIntl } from 'react-intl';
 import { usePopper } from 'react-popper';
 
 import { messages } from '../../lang/messages';
@@ -89,17 +89,48 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
       const isSameDay = from.isSame(to, 'day');
 
       if (!isSameYear) {
-        return `${from.format('MMM D, YYYY')} - ${to.format('MMM D, YYYY')}`;
+        return (
+          <>
+            <FormattedDate
+              value={from.toDate()}
+              year="numeric"
+              month="short"
+              day="numeric"
+            />
+            <span className="mx-1">-</span>
+            <FormattedDate
+              value={to.toDate()}
+              year="numeric"
+              month="short"
+              day="numeric"
+            />
+          </>
+        );
       }
 
-      if (!isSameMonth) {
-        return `${from.format('MMM D')} - ${to.format('MMM D, YYYY')}`;
+      if (!isSameMonth || !isSameDay) {
+        return (
+          <>
+            <FormattedDate value={from.toDate()} month="short" day="numeric" />
+            <span className="mx-1">-</span>
+            <FormattedDate
+              value={to.toDate()}
+              year="numeric"
+              month="short"
+              day="numeric"
+            />
+          </>
+        );
       }
 
-      if (!isSameDay) {
-        return `${from.format('MMM D')} - ${to.format('D, YYYY')}`;
-      }
-      return from.format('MMM D, YYYY');
+      return (
+        <FormattedDate
+          value={from.toDate()}
+          year="numeric"
+          month="short"
+          day="numeric"
+        />
+      );
     };
 
     const handleClear = (e) => {
@@ -169,12 +200,11 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
                 {isDateSelected ? (
                   <div className="flex items-center">
                     <div className="pl-3 flex">
-                      <span>
-                        {f(messages.show)}: {getSelectedDate()}
-                      </span>
+                      <span>{f(messages.show)}:&nbsp;</span>
+                      {getSelectedDate()}
                       <button
                         onClick={handleClear}
-                        className="px-3 text-gray-400 hover:text-gray-500"
+                        className="px-3 text-gray-500 hover:text-gray-600 mt-[1px]"
                       >
                         <XIcon className="h-4 w-4" aria-hidden="true" />
                       </button>
@@ -206,16 +236,6 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
                 )}
               </div>
             </Popover.Button>
-            {/* {isDateSelected && (
-              <button
-                type="button"
-                className="inline-flex border border-gray-300 items-center ml-2 rounded-md bg-white py-2.5 px-3.5 text-sm text-gray-900 hover:bg-gray-50"
-                onClick={handleClear}
-              >
-                Clear
-                <XIcon className="ml-1 h-4 w-4" aria-hidden="true" />
-              </button>
-            )} */}
             <div
               ref={popperElement}
               style={popper.styles.popper}
