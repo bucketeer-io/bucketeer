@@ -17,6 +17,7 @@ import {
   useRouteMatch,
   useParams,
   useLocation,
+  useHistory,
 } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 
@@ -96,6 +97,7 @@ export const Root: FC = memo(() => {
     (state) => state.myOrganization.myOrganization
   );
   const [selectedOrganization, setSelectedOrganization] = useState(null);
+  const history = useHistory();
 
   const token = hasToken();
   const handleChangePageKey = useCallback(() => {
@@ -126,7 +128,9 @@ export const Root: FC = memo(() => {
 
   const handleSubmit = () => {
     settOrganizationId(selectedOrganization.value);
-    dispatch(fetchMe({ organizationId: selectedOrganization.value }));
+    dispatch(fetchMe({ organizationId: selectedOrganization.value })).then(() =>
+      history.push(PAGE_PATH_ROOT)
+    );
   };
 
   if (me.isLogin) {
