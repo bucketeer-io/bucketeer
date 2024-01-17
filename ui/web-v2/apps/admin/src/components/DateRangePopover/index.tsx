@@ -84,52 +84,35 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
       const from = dayjs(new Date(options.from * 1000));
       const to = dayjs(new Date(options.to * 1000));
 
-      const isSameYear = from.isSame(to, 'year');
-      const isSameMonth = from.isSame(to, 'month');
       const isSameDay = from.isSame(to, 'day');
 
-      if (!isSameYear) {
+      if (isSameDay) {
         return (
-          <>
-            <FormattedDate
-              value={from.toDate()}
-              year="numeric"
-              month="short"
-              day="numeric"
-            />
-            <span className="mx-1">-</span>
-            <FormattedDate
-              value={to.toDate()}
-              year="numeric"
-              month="short"
-              day="numeric"
-            />
-          </>
-        );
-      }
-
-      if (!isSameMonth || !isSameDay) {
-        return (
-          <>
-            <FormattedDate value={from.toDate()} month="short" day="numeric" />
-            <span className="mx-1">-</span>
-            <FormattedDate
-              value={to.toDate()}
-              year="numeric"
-              month="short"
-              day="numeric"
-            />
-          </>
+          <FormattedDate
+            value={from.toDate()}
+            year="numeric"
+            month="short"
+            day="numeric"
+          />
         );
       }
 
       return (
-        <FormattedDate
-          value={from.toDate()}
-          year="numeric"
-          month="short"
-          day="numeric"
-        />
+        <>
+          <FormattedDate
+            value={from.toDate()}
+            year="numeric"
+            month="short"
+            day="numeric"
+          />
+          <span className="mx-1">-</span>
+          <FormattedDate
+            value={to.toDate()}
+            year="numeric"
+            month="short"
+            day="numeric"
+          />
+        </>
       );
     };
 
