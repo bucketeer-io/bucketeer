@@ -1,3 +1,4 @@
+import { clearOrganizationId } from '@/storage/organizationId';
 import MUAccountCircleIcon from '@material-ui/icons/AccountCircle';
 import MUBarChart from '@material-ui/icons/BarChart';
 import MUFlagIcon from '@material-ui/icons/Flag';
@@ -177,6 +178,7 @@ export const SideMenu: FC<Props> = memo(({ onClickNavLink }) => {
   const currentEnvironment = useCurrentEnvironment();
 
   const handleLogout = useCallback(async () => {
+    clearOrganizationId();
     dispatch(clearMe());
     dispatch(clearToken());
     history.push(PAGE_PATH_ROOT);
@@ -196,17 +198,18 @@ export const SideMenu: FC<Props> = memo(({ onClickNavLink }) => {
         <EnvironmentSelect />
       </div>
       <div className="flex-grow">
-        {createMenuItems(me.isAdmin, currentEnvironment.urlCode).map((item, i) =>
-          isMenuItem(item) ? (
-            <div key={i} className="py-1">
-              <SideMenuItem item={item} onClick={onClickNavLink} />
-            </div>
-          ) : (
-            <div
-              key={i}
-              className="py-1 mb-2 shadow-md border-b border-purple-600"
-            />
-          )
+        {createMenuItems(me.isAdmin, currentEnvironment.urlCode).map(
+          (item, i) =>
+            isMenuItem(item) ? (
+              <div key={i} className="py-1">
+                <SideMenuItem item={item} onClick={onClickNavLink} />
+              </div>
+            ) : (
+              <div
+                key={i}
+                className="py-1 mb-2 shadow-md border-b border-purple-600"
+              />
+            )
         )}
       </div>
       <div className="bg-purple-600 h-12 items-center">
