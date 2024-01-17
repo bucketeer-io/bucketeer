@@ -162,7 +162,7 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
                   'group',
                   'rounded-md inline-flex items-center',
                   'h-10',
-                  'text-sm text-gray-700',
+                  'text-sm',
                   'border border-gray-300'
                 )}
               >
@@ -170,8 +170,7 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
                   <div className="flex items-center">
                     <div className="pl-3 flex">
                       <span>
-                        {/* {f(messages.auditLog.filter.dates)}: {getSelectedDate()} */}
-                        Show: {getSelectedDate()}
+                        {f(messages.show)}: {getSelectedDate()}
                       </span>
                       <button
                         onClick={handleClear}
@@ -191,8 +190,10 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
                 ) : (
                   <div className="flex items-center">
                     <div className="px-3">
-                      {/* <span className="text-sm">{f(messages.filter.filter)}</span> */}
-                      <span>Show: Most recent</span>
+                      <span>{f(messages.show)}:</span>
+                      <span className="text-[#808080] ml-2">
+                        {f(messages.mostRecent)}
+                      </span>
                     </div>
                     <div className="h-6 bg-gray-300 w-[1px]" />
                     <div className="px-2">

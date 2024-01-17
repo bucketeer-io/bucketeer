@@ -5,7 +5,6 @@ import { components } from 'react-select';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
-import { Event } from '../../proto/event/domain/event_pb';
 import { AuditLogSearchOptions } from '../../types/auditLog';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
@@ -16,22 +15,6 @@ import { DateRangePopover } from '../DateRangePopover';
 import { SearchInput } from '../SearchInput';
 import { Option, Select } from '../Select';
 import { SortItem, SortSelect } from '../SortSelect';
-
-const entityTypeOptions: Option[] = [
-  { value: Event.EntityType.FEATURE.toString(), label: 'Feature Flag' },
-  { value: Event.EntityType.GOAL.toString(), label: 'Goal' },
-  { value: Event.EntityType.EXPERIMENT.toString(), label: 'Experiment' },
-  { value: Event.EntityType.SEGMENT.toString(), label: 'User Segment' },
-  { value: Event.EntityType.ACCOUNT.toString(), label: 'Account' },
-  { value: Event.EntityType.APIKEY.toString(), label: 'API Key' },
-  { value: Event.EntityType.AUTOOPS_RULE.toString(), label: 'Auto Operation' },
-  {
-    value: Event.EntityType.PROGRESSIVE_ROLLOUT.toString(),
-    label: 'Progressive Rollout',
-  },
-  { value: Event.EntityType.PUSH.toString(), label: 'Push' },
-  { value: Event.EntityType.SUBSCRIPTION.toString(), label: 'Subscription' },
-];
 
 const sortItems: SortItem[] = [
   {
@@ -47,10 +30,12 @@ const sortItems: SortItem[] = [
 export interface AuditLogSearchProps {
   options: AuditLogSearchOptions;
   onChange: (options: AuditLogSearchOptions) => void;
+  showEntityTypeFilter?: boolean;
+  entityTypeOptions?: Option[];
 }
 
 export const AuditLogSearch: FC<AuditLogSearchProps> = memo(
-  ({ options, onChange }) => {
+  ({ options, onChange, showEntityTypeFilter, entityTypeOptions }) => {
     const [selectedEntityType, setSelectedEntityType] = useState<Option>(
       options.entityType
         ? entityTypeOptions.find(
@@ -76,7 +61,7 @@ export const AuditLogSearch: FC<AuditLogSearchProps> = memo(
 
     const ControlComponent = ({ children, ...props }) => (
       <components.Control {...props}>
-        <span className="ml-2">Action:</span> {children}
+        <span className="ml-2">{f(messages.action)}:</span> {children}
       </components.Control>
     );
 
@@ -101,15 +86,17 @@ export const AuditLogSearch: FC<AuditLogSearchProps> = memo(
                 }
               />
             </div>
-            <Select
-              placeholder="All"
-              clearable
-              options={entityTypeOptions}
-              className={classNames('flex-none w-[262px]')}
-              value={selectedEntityType}
-              onChange={handleEntityType}
-              customControl={ControlComponent}
-            />
+            {showEntityTypeFilter && (
+              <Select
+                placeholder={f(messages.all)}
+                clearable
+                options={entityTypeOptions}
+                className={classNames('flex-none w-[262px]')}
+                value={selectedEntityType}
+                onChange={handleEntityType}
+                customControl={ControlComponent}
+              />
+            )}
             <div className="flex-none relative">
               <DateRangePopover
                 options={options}

@@ -1,3 +1,6 @@
+import { Option } from '@/components/Select';
+import { intl } from '@/lang';
+import { Event } from '@/proto/event/domain/event_pb';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -44,6 +47,25 @@ const createSort = (sortOption?: AuditLogSortOption): Sort => {
       };
   }
 };
+
+const entityTypeOptions: Option[] = [
+  {
+    value: Event.EntityType.ENVIRONMENT.toString(),
+    label: intl.formatMessage(messages.sourceType.environment),
+  },
+  {
+    value: Event.EntityType.ADMIN_ACCOUNT.toString(),
+    label: intl.formatMessage(messages.sourceType.adminAccount),
+  },
+  {
+    value: Event.EntityType.ADMIN_SUBSCRIPTION.toString(),
+    label: intl.formatMessage(messages.sourceType.adminSubscription),
+  },
+  {
+    value: Event.EntityType.PROJECT.toString(),
+    label: intl.formatMessage(messages.sourceType.project),
+  },
+];
 
 export const AdminAuditLogIndexPage: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
@@ -136,6 +158,8 @@ export const AdminAuditLogIndexPage: FC = memo(() => {
       </div>
       <div className="m-10">
         <AuditLogList
+          showEntityTypeFilter
+          entityTypeOptions={entityTypeOptions}
           searchOptions={searchOptions}
           onChangePage={handlePageChange}
           onChangeSearchOptions={handleSearchOptionsChange}

@@ -1,3 +1,5 @@
+import { Option } from '@/components/Select';
+import { intl } from '@/lang';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -15,6 +17,7 @@ import {
 } from '../../modules/auditLogs';
 import { useCurrentEnvironment } from '../../modules/me';
 import { ListAuditLogsRequest } from '../../proto/auditlog/service_pb';
+import { Event } from '../../proto/event/domain/event_pb';
 import { AppDispatch } from '../../store';
 import { AuditLogSortOption, isAuditLogSortOption } from '../../types/auditLog';
 import { SORT_OPTIONS_CREATED_AT_ASC } from '../../types/list';
@@ -22,6 +25,49 @@ import {
   useSearchParams,
   stringifySearchParams,
 } from '../../utils/search-params';
+
+const entityTypeOptions: Option[] = [
+  {
+    value: Event.EntityType.FEATURE.toString(),
+    label: intl.formatMessage(messages.sourceType.featureFlag),
+  },
+  {
+    value: Event.EntityType.GOAL.toString(),
+    label: intl.formatMessage(messages.sourceType.goal),
+  },
+  {
+    value: Event.EntityType.EXPERIMENT.toString(),
+    label: intl.formatMessage(messages.sourceType.experiment),
+  },
+  {
+    value: Event.EntityType.SEGMENT.toString(),
+    label: intl.formatMessage(messages.sourceType.segment),
+  },
+  {
+    value: Event.EntityType.ACCOUNT.toString(),
+    label: intl.formatMessage(messages.sourceType.account),
+  },
+  {
+    value: Event.EntityType.APIKEY.toString(),
+    label: intl.formatMessage(messages.sourceType.apiKey),
+  },
+  {
+    value: Event.EntityType.AUTOOPS_RULE.toString(),
+    label: intl.formatMessage(messages.sourceType.autoOperation),
+  },
+  {
+    value: Event.EntityType.PROGRESSIVE_ROLLOUT.toString(),
+    label: intl.formatMessage(messages.sourceType.progressiveRollout),
+  },
+  {
+    value: Event.EntityType.PUSH.toString(),
+    label: intl.formatMessage(messages.sourceType.push),
+  },
+  {
+    value: Event.EntityType.SUBSCRIPTION.toString(),
+    label: intl.formatMessage(messages.sourceType.subscription),
+  },
+];
 
 interface Sort {
   orderBy: OrderBy;
@@ -120,6 +166,8 @@ export const AuditLogIndexPage: FC = memo(() => {
       </div>
       <div className="m-10">
         <AuditLogList
+          showEntityTypeFilter
+          entityTypeOptions={entityTypeOptions}
           searchOptions={searchOptions}
           onChangePage={handlePageChange}
           onChangeSearchOptions={handleSearchOptionsChange}

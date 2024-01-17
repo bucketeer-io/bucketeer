@@ -13,15 +13,24 @@ import { AuditLogSearch } from '../AuditLogSearch';
 import { ListSkeleton } from '../ListSkeleton';
 import { Pagination } from '../Pagination';
 import { RelativeDateText } from '../RelativeDateText';
+import { Option } from '../Select';
 
 export interface AuditLogListProps {
   searchOptions: AuditLogSearchOptions;
   onChangePage: (page: number) => void;
   onChangeSearchOptions: (options: AuditLogSearchOptions) => void;
+  showEntityTypeFilter?: boolean;
+  entityTypeOptions?: Option[];
 }
 
 export const AuditLogList: FC<AuditLogListProps> = memo(
-  ({ searchOptions, onChangePage, onChangeSearchOptions }) => {
+  ({
+    searchOptions,
+    onChangePage,
+    onChangeSearchOptions,
+    showEntityTypeFilter,
+    entityTypeOptions,
+  }) => {
     const auditLogs = useSelector<AppState, AuditLog.AsObject[]>(
       (state) => selectAll(state.auditLog),
       shallowEqual
@@ -41,6 +50,8 @@ export const AuditLogList: FC<AuditLogListProps> = memo(
           <AuditLogSearch
             options={searchOptions}
             onChange={onChangeSearchOptions}
+            showEntityTypeFilter={showEntityTypeFilter}
+            entityTypeOptions={entityTypeOptions}
           />
         </div>
         {isLoading ? (
@@ -101,7 +112,7 @@ const NoData: FC<NoDataProps> = ({ searchOptions }) => {
         <p className="mt-2">{f(messages.noResult.dateRange.description)}</p>
       </div>
     );
-  } else if (searchOptions.q || searchOptions.resource) {
+  } else if (searchOptions.q || searchOptions.entityType) {
     return (
       <div className="my-10 flex justify-center">
         <div className="text-gray-700">
