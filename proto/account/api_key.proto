@@ -16,6 +16,7 @@ syntax = "proto3";
 
 package bucketeer.account;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/account";
+import "proto/environment/environment.proto";
 
 message APIKey {
   enum Role {
@@ -31,8 +32,9 @@ message APIKey {
 }
 
 message EnvironmentAPIKey {
-  string environment_namespace = 1;
+  string environment_namespace = 1 [deprecated = true];
   APIKey api_key = 2;
   bool environment_disabled = 3;
   string project_id = 4;
+  environment.EnvironmentV2 environment = 5;
 }

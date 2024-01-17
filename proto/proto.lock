@@ -348,7 +348,13 @@
               {
                 "id": 1,
                 "name": "environment_namespace",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 2,
@@ -364,8 +370,18 @@
                 "id": 4,
                 "name": "project_id",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "environment",
+                "type": "environment.EnvironmentV2"
               }
             ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/environment/environment.proto"
           }
         ],
         "package": {

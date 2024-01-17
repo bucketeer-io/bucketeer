@@ -50,12 +50,12 @@ var (
 )
 
 func (s *grpcGatewayService) saveMetricsEventsAsync(
-	metricsEvents []*eventproto.MetricsEvent, projectID, environmentNamespace string,
+	metricsEvents []*eventproto.MetricsEvent, projectID, environmentUrlCode string,
 ) {
 	// TODO: using buffered channel to reduce the number of go routines
 	go func() {
 		for i := range metricsEvents {
-			if err := s.saveMetrics(metricsEvents[i], projectID, environmentNamespace); err != nil {
+			if err := s.saveMetrics(metricsEvents[i], projectID, environmentUrlCode); err != nil {
 				s.logger.Error("Failed to store metrics event to prometheus client", zap.Error(err))
 				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeNonRepeatableError).Inc()
 			} else {
@@ -65,64 +65,64 @@ func (s *grpcGatewayService) saveMetricsEventsAsync(
 	}()
 }
 
-func (s *grpcGatewayService) saveMetrics(event *eventproto.MetricsEvent, projectID, environmentNamespace string) error {
+func (s *grpcGatewayService) saveMetrics(event *eventproto.MetricsEvent, projectID, environmentUrlCode string) error {
 	// TODO: Remove after deleting the api-gateway REST server
 	if ptypes.Is(event.Event, getEvaluationLatencyMetricsEventP) {
-		return s.saveGetEvaluationLatencyMetricsEvent(event, environmentNamespace)
+		return s.saveGetEvaluationLatencyMetricsEvent(event, environmentUrlCode)
 	}
 	// TODO: Remove after deleting the api-gateway REST server
 	if ptypes.Is(event.Event, getEvaluationSizeMetricsEventP) {
-		return s.saveGetEvaluationSizeMetricsEvent(event, environmentNamespace)
+		return s.saveGetEvaluationSizeMetricsEvent(event, environmentUrlCode)
 	}
 	// TODO: Remove after deleting the api-gateway REST server
 	if ptypes.Is(event.Event, timeoutErrorCountMetricsEventP) {
-		return s.saveTimeoutErrorCountMetricsEvent(event, environmentNamespace)
+		return s.saveTimeoutErrorCountMetricsEvent(event, environmentUrlCode)
 	}
 	// TODO: Remove after deleting the api-gateway REST server
 	if ptypes.Is(event.Event, internalErrorCountMetricsEventP) {
-		return s.saveInternalErrorCountMetricsEvent(event, environmentNamespace)
+		return s.saveInternalErrorCountMetricsEvent(event, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, latencyMetricsEventP) {
-		return s.saveLatencyMetricsEvent(event, projectID, environmentNamespace)
+		return s.saveLatencyMetricsEvent(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, sizeMetricsEventP) {
-		return s.saveSizeMetricsEvent(event, projectID, environmentNamespace)
+		return s.saveSizeMetricsEvent(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, badRequestErrorMetricsEventP) {
-		return s.saveBadRequestError(event, projectID, environmentNamespace)
+		return s.saveBadRequestError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, unauthorizedErrorMetricsEventP) {
-		return s.saveUnauthorizedError(event, projectID, environmentNamespace)
+		return s.saveUnauthorizedError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, forbiddenErrorMetricsEventP) {
-		return s.saveForbiddenError(event, projectID, environmentNamespace)
+		return s.saveForbiddenError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, notFoundErrorMetricsEventP) {
-		return s.saveNotFoundError(event, projectID, environmentNamespace)
+		return s.saveNotFoundError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, clientClosedRequestErrorMetricsEventP) {
-		return s.saveClientClosedRequestError(event, projectID, environmentNamespace)
+		return s.saveClientClosedRequestError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, internalServerErrorMetricsEventP) {
-		return s.saveInternalServerError(event, projectID, environmentNamespace)
+		return s.saveInternalServerError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, serviceUnavailableErrorMetricsEventP) {
-		return s.saveServiceUnavailableError(event, projectID, environmentNamespace)
+		return s.saveServiceUnavailableError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, timeoutErrorMetricsEventP) {
-		return s.saveTimeoutError(event, projectID, environmentNamespace)
+		return s.saveTimeoutError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, internalErrorMetricsEventP) {
-		return s.saveInternalError(event, projectID, environmentNamespace)
+		return s.saveInternalError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, networkErrorMetricsEventP) {
-		return s.saveNetworkError(event, projectID, environmentNamespace)
+		return s.saveNetworkError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, internalSdkErrorMetricsEventP) {
-		return s.saveInternalSdkError(event, projectID, environmentNamespace)
+		return s.saveInternalSdkError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, unknownErrorMetricsEventP) {
-		return s.saveUnknownError(event, projectID, environmentNamespace)
+		return s.saveUnknownError(event, projectID, environmentUrlCode)
 	}
 	return MetricsSaveErrUnknownEvent
 }
