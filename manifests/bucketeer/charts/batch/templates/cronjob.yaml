@@ -637,7 +637,7 @@ spec:
               secret:
                 secretName: {{ template "service-token-secret" . }}
           containers:
-            - name: experiment-calculator
+            - name: mau-summarizer
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
               volumeMounts:
@@ -698,7 +698,7 @@ spec:
               secret:
                 secretName: {{ template "service-token-secret" . }}
           containers:
-            - name: experiment-calculator
+            - name: mau-partition-deleter
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
               volumeMounts:
@@ -758,7 +758,7 @@ spec:
               secret:
                 secretName: {{ template "service-token-secret" . }}
           containers:
-            - name: experiment-calculator
+            - name: mau-partition-creator
               image: curlimages/curl:8.1.2
               imagePullPolicy: IfNotPresent
               volumeMounts:
