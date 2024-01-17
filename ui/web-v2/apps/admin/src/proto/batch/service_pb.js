@@ -312,7 +312,8 @@ proto.bucketeer.batch.BatchJob = {
   PROGRESSIVEROLLOUTWATCHER: 8,
   EXPERIMENTCALCULATOR: 9,
   MAUSUMMARIZER: 10,
-  MAUPARTITIONDELETER: 11
+  MAUPARTITIONDELETER: 11,
+  MAUPARTITIONCREATOR: 12
 };
 
 goog.object.extend(exports, proto.bucketeer.batch);

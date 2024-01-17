@@ -397,6 +397,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
 		),
+		mau.NewMAUPartitionCreator(
+			mysqlClient,
+			location,
+			jobs.WithTimeout(60*time.Minute),
+			jobs.WithLogger(logger),
+		),
 		notification.NewDomainEventInformer(
 			environmentClient,
 			notificationSender,

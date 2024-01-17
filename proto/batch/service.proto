@@ -30,6 +30,7 @@ enum BatchJob {
   ExperimentCalculator = 9;
   MauSummarizer = 10;
   MauPartitionDeleter = 11;
+  MauPartitionCreator = 12;
 }
 
 message BatchJobRequest {

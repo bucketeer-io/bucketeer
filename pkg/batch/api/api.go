@@ -43,6 +43,7 @@ type batchService struct {
 	experimentCalculator      jobs.Job
 	mauSummarizer             jobs.Job
 	mauPartitionDeleter       jobs.Job
+	mauPartitionCreator       jobs.Job
 	domainEventInformer       jobs.Job
 	logger                    *zap.Logger
 }
@@ -52,7 +53,7 @@ func NewBatchService(
 	featureStaleWatcher, mauCountWatcher, datetimeWatcher,
 	eventCountWatcher, progressiveRolloutWatcher,
 	redisCounterDeleter, experimentCalculator,
-	mauSummarizer, mauPartitionDeleter,
+	mauSummarizer, mauPartitionDeleter, mauPartitionCreator,
 	domainEventInformer jobs.Job,
 	logger *zap.Logger,
 ) *batchService {
@@ -68,6 +69,7 @@ func NewBatchService(
 		experimentCalculator:      experimentCalculator,
 		mauSummarizer:             mauSummarizer,
 		mauPartitionDeleter:       mauPartitionDeleter,
+		mauPartitionCreator:       mauPartitionCreator,
 		domainEventInformer:       domainEventInformer,
 		logger:                    logger.Named("batch-service"),
 	}
@@ -101,6 +103,8 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.mauSummarizer.Run(ctx)
 	case batch.BatchJob_MauPartitionDeleter:
 		err = s.mauPartitionDeleter.Run(ctx)
+	case batch.BatchJob_MauPartitionCreator:
+		err = s.mauPartitionCreator.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromImcomingContext(ctx).AddFields(

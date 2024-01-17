@@ -52,6 +52,7 @@ export interface BatchJobMap {
   EXPERIMENTCALCULATOR: 9;
   MAUSUMMARIZER: 10;
   MAUPARTITIONDELETER: 11;
+  MAUPARTITIONCREATOR: 12;
 }
 
 export const BatchJob: BatchJobMap;
