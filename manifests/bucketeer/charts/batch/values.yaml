@@ -105,3 +105,4 @@ cronjob:
   experimentCalculatorSchedule: "*/30 * * * *"
   mauSummarizerSchedule: "30 0 * * *"
   mauPartitionDeleterSchedule: "0 2 1 * *"
+  mauPartitionCreatorSchedule: "0 2 2 * *"
