@@ -253,23 +253,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		health.WithCheck("metrics", metrics.Check),
 		health.WithCheck("persister", p.Check),
 		health.WithCheck("redis", redisV3Client.Check),
-		health.WithCheck("subscription", func(ctx context.Context) health.Status {
-			exists, err := pubsubClient.SubscriptionExists(*s.subscription)
-			if err != nil {
-				logger.Error("Failed to check subscription",
-					zap.Error(err),
-					zap.String("subscription", *s.subscription),
-				)
-				return health.Unhealthy
-			}
-			if !exists {
-				logger.Info("Subscription does not exist",
-					zap.String("subscription", *s.subscription),
-				)
-				return health.Unhealthy
-			}
-			return health.Healthy
-		}),
 	)
 	go healthChecker.Run(ctx)
 
