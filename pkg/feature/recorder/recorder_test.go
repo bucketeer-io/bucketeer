@@ -33,6 +33,10 @@ import (
 
 type PullerMock struct{}
 
+func (p *PullerMock) SubscriptionName() string {
+	return "subscription"
+}
+
 func (p *PullerMock) Pull(ctx context.Context, f func(context.Context, *puller.Message)) error {
 	timer := time.NewTimer(time.Millisecond * 100)
 	for {
