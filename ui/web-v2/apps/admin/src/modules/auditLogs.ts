@@ -78,7 +78,7 @@ export interface ListAuditLogsParams {
   searchKeyword?: string;
   from: number;
   to: number;
-  resource?: number;
+  entityType?: number;
 }
 
 export const listAuditLogs = createAsyncThunk<
@@ -95,8 +95,8 @@ export const listAuditLogs = createAsyncThunk<
   request.setSearchKeyword(params.searchKeyword);
   request.setFrom(params.from);
   request.setTo(params.to);
-  params.resource != null &&
-    request.setEntityType(new Int32Value().setValue(params.resource));
+  params.entityType != null &&
+    request.setEntityType(new Int32Value().setValue(params.entityType));
   await setupAuthToken();
   const result = await auditLogGrpc.listAuditLogs(request);
   return result.response.toObject();

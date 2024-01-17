@@ -602,6 +602,22 @@ export const messages = {
     id: 'seeMore',
     defaultMessage: 'See more',
   }),
+  action: defineMessage({
+    id: 'action',
+    defaultMessage: 'Action',
+  }),
+  all: defineMessage({
+    id: 'all',
+    defaultMessage: 'All',
+  }),
+  show: defineMessage({
+    id: 'show',
+    defaultMessage: 'Show',
+  }),
+  mostRecent: defineMessage({
+    id: 'mostRecent',
+    defaultMessage: 'Most Recent',
+  }),
   button: {
     archive: defineMessage({
       id: 'button.archive',
@@ -2542,6 +2558,10 @@ export const messages = {
       id: 'sourceType.adminAccountDescription',
       defaultMessage: 'Get notified when someone adds or updates an account',
     }),
+    adminSubscription: defineMessage({
+      id: 'sourceType.adminSubscription',
+      defaultMessage: 'Subscription',
+    }),
     adminNotification: defineMessage({
       id: 'sourceType.adminNotification',
       defaultMessage: 'Notification',
@@ -2566,6 +2586,18 @@ export const messages = {
     autoOpsDescription: defineMessage({
       id: 'sourceType.autoOpsDescription',
       defaultMessage: 'Get notified when the Auto-Ops is triggered',
+    }),
+    autoOperation: defineMessage({
+      id: 'sourceType.autoOperation',
+      defaultMessage: 'Auto Operation',
+    }),
+    progressiveRollout: defineMessage({
+      id: 'sourceType.progressiveRollout',
+      defaultMessage: 'Progressive Rollout',
+    }),
+    subscription: defineMessage({
+      id: 'sourceType.subscription',
+      defaultMessage: 'Subscription',
     }),
     environment: defineMessage({
       id: 'sourceType.environment',
