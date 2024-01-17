@@ -49,3 +49,17 @@ func (mr *MockPullerMockRecorder) Pull(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pull", reflect.TypeOf((*MockPuller)(nil).Pull), arg0, arg1)
 }
+
+// SubscriptionName mocks base method.
+func (m *MockPuller) SubscriptionName() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SubscriptionName")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// SubscriptionName indicates an expected call of SubscriptionName.
+func (mr *MockPullerMockRecorder) SubscriptionName() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscriptionName", reflect.TypeOf((*MockPuller)(nil).SubscriptionName))
+}
