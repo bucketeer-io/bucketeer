@@ -298,11 +298,11 @@ func (p *PersisterDWH) subscribe(subscription chan struct{}) {
 }
 
 func (p *PersisterDWH) unsubscribe() {
-	p.runningPullerCancel()
-	err := p.client.DeleteSubscriptionIfExist(p.subscription)
+	err := p.client.DetachSubscription(p.rateLimitedPuller.SubscriptionName())
 	if err != nil {
-		p.logger.Error("Failed to delete subscription", zap.Error(err))
+		p.logger.Error("Failed to detach subscription", zap.Error(err))
 	}
+	p.runningPullerCancel()
 }
 
 func (p *PersisterDWH) IsRunning() bool {

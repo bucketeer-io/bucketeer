@@ -33,6 +33,7 @@ type Message struct {
 
 type Puller interface {
 	Pull(context.Context, func(context.Context, *Message)) error
+	SubscriptionName() string
 }
 
 type options struct {
@@ -82,4 +83,8 @@ func (p *puller) Pull(ctx context.Context, f func(context.Context, *Message)) er
 		return err
 	}
 	return nil
+}
+
+func (p *puller) SubscriptionName() string {
+	return p.subscription.String()
 }
