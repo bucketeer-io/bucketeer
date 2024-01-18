@@ -213,7 +213,13 @@ func (p *persister) Run() error {
 								p.logger.Error("Failed to delete subscription", zap.Error(err))
 								return err
 							}
+						} else {
+							p.logger.Debug("Subscription is not detached, subscribe to it directly",
+								zap.String("subscription", p.subscription))
 						}
+					} else {
+						p.logger.Debug("Subscription does not exist, create it",
+							zap.String("subscription", p.subscription))
 					}
 					err = p.createNewPuller()
 					if err != nil {

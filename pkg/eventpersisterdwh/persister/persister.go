@@ -228,8 +228,15 @@ func (p *PersisterDWH) Run() error {
 								p.logger.Error("Failed to delete subscription", zap.Error(err))
 								return err
 							}
+						} else {
+							p.logger.Debug("Subscription is not detached, subscribe to it directly",
+								zap.String("subscription", p.subscription))
 						}
+					} else {
+						p.logger.Debug("Subscription does not exist, create it",
+							zap.String("subscription", p.subscription))
 					}
+					// if subscription does not exist, createNewPuller function will create it
 					err = p.createNewPuller()
 					if err != nil {
 						p.logger.Error("Failed to create new puller", zap.Error(err))
