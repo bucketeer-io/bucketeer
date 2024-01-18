@@ -212,6 +212,7 @@ func (p *PersisterDWH) Run() error {
 						return err
 					}
 					if exists {
+						p.logger.Debug("Subscription exists", zap.String("subscription", p.subscription))
 						detached, err := p.client.SubscriptionDetached(p.subscription)
 						if err != nil {
 							p.logger.Error("Failed to check subscription detachment", zap.Error(err))
@@ -219,6 +220,9 @@ func (p *PersisterDWH) Run() error {
 						}
 						// if subscription is detached, delete it before subscribing
 						if detached {
+							p.logger.Debug("Subscription is detached, delete it",
+								zap.String("subscription", p.subscription),
+							)
 							err := p.client.DeleteSubscriptionIfExist(p.subscription)
 							if err != nil {
 								p.logger.Error("Failed to delete subscription", zap.Error(err))
