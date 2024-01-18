@@ -35,6 +35,7 @@ import {
   OrderBy,
   OrderDirection,
   updateExperiment,
+  stopExperiment,
 } from '../../modules/experiments';
 import { useCurrentEnvironment } from '../../modules/me';
 import {
@@ -109,6 +110,8 @@ export const ExperimentIndexPage: FC = memo(() => {
   const [open, setOpen] = useState(isNew || isUpdate);
   const [isArchiveConfirmDialogOpen, setIsArchiveConfirmDialogOpen] =
     useState(false);
+  const [isStopConfirmDialogOpen, setIsStopConfirmDialogOpen] = useState(false);
+  const [experimentIdForStop, setExperimentIdForStop] = useState<string>('');
   const [experiment, getExperimentError] = useSelector<
     AppState,
     [Experiment.AsObject | undefined, SerializedError | null]
@@ -313,6 +316,11 @@ export const ExperimentIndexPage: FC = memo(() => {
     [dispatch]
   );
 
+  const handleClickStop = useCallback((experiment: Experiment.AsObject) => {
+    setExperimentIdForStop(experiment.id);
+    setIsStopConfirmDialogOpen(true);
+  }, []);
+
   const handleArchive = useCallback(
     async (data) => {
       dispatch(
@@ -328,6 +336,18 @@ export const ExperimentIndexPage: FC = memo(() => {
     },
     [dispatch, archiveReset, setIsArchiveConfirmDialogOpen]
   );
+
+  const handleStop = useCallback(async () => {
+    dispatch(
+      stopExperiment({
+        environmentNamespace: currentEnvironment.id,
+        experimentId: experimentIdForStop,
+      })
+    ).then(() => {
+      updateExperimentList(null, 1);
+      setIsStopConfirmDialogOpen(false);
+    });
+  }, [dispatch, experimentIdForStop]);
 
   useEffect(() => {
     if (isUpdate) {
@@ -378,6 +398,7 @@ export const ExperimentIndexPage: FC = memo(() => {
           onUpdate={handleOpenUpdate}
           onChangeSearchOptions={handleSearchOptionsChange}
           onArchive={handleClickArchive}
+          onStop={handleClickStop}
         />
       </div>
       <Overlay open={open} onClose={handleClose}>
@@ -408,6 +429,15 @@ export const ExperimentIndexPage: FC = memo(() => {
             archiveMethod.getValues().experiment &&
             archiveMethod.getValues().experiment.name,
         })}
+        onCloseButton={f(messages.button.cancel)}
+        onConfirmButton={f(messages.button.submit)}
+      />
+      <ConfirmDialog
+        open={isStopConfirmDialogOpen}
+        title={f(messages.experiment.stop.dialog.title)}
+        description={f(messages.experiment.stop.dialog.description)}
+        onConfirm={handleStop}
+        onClose={() => setIsStopConfirmDialogOpen(false)}
         onCloseButton={f(messages.button.cancel)}
         onConfirmButton={f(messages.button.submit)}
       />

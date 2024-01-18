@@ -1,3 +1,4 @@
+import { BanIcon } from '@heroicons/react/solid';
 import MUArchiveIcon from '@material-ui/icons/Archive';
 import { FC, memo } from 'react';
 import { useIntl } from 'react-intl';
@@ -31,6 +32,7 @@ export interface ExperimentListProps {
   onAdd: () => void;
   onUpdate: (e: Experiment.AsObject) => void;
   onArchive: (e: Experiment.AsObject) => void;
+  onStop: (e: Experiment.AsObject) => void;
 }
 
 export const ExperimentList: FC<ExperimentListProps> = memo(
@@ -41,6 +43,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
     onAdd,
     onUpdate,
     onArchive,
+    onStop,
   }) => {
     const { formatMessage: f, formatDate, formatTime } = useIntl();
     const history = useHistory();
@@ -58,8 +61,20 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
       (state) => state.experiments.totalCount,
       shallowEqual
     );
-    const createMenuItems = (): Array<MenuItem> => {
+    const createMenuItems = (
+      experimentSatus: Experiment.StatusMap[keyof Experiment.StatusMap]
+    ): Array<MenuItem> => {
       const items: Array<MenuItem> = [];
+      if (
+        experimentSatus === Experiment.Status.WAITING ||
+        experimentSatus === Experiment.Status.RUNNING
+      ) {
+        items.push({
+          action: MenuActions.STOP,
+          name: intl.formatMessage(messages.experiment.stop.button),
+          iconElement: <BanIcon />,
+        });
+      }
       items.push({
         action: MenuActions.ARCHIVE,
         name: intl.formatMessage(messages.experiment.action.archive),
@@ -206,10 +221,15 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
                               switch (action) {
                                 case MenuActions.ARCHIVE:
                                   onArchive(experiment);
+                                  break;
+                                case MenuActions.STOP:
+                                  onStop(experiment);
+                                  break;
+                                default:
                                   return;
                               }
                             }}
-                            menuItems={createMenuItems()}
+                            menuItems={createMenuItems(experiment.status)}
                           />
                         </td>
                       )}

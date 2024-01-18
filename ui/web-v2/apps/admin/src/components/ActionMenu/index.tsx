@@ -10,6 +10,7 @@ export enum MenuActions {
   CONVERT_PROJECT,
   DELETE,
   DOWNLOAD,
+  STOP,
 }
 
 export interface MenuItem {
