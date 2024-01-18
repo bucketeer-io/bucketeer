@@ -17,6 +17,7 @@ package persister
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -292,6 +293,18 @@ func (p *persister) subscribe(subscription chan struct{}) {
 			p.group.Go(func() error {
 				err := p.rateLimitedPuller.Run(ctx)
 				if err != nil {
+					if strings.Contains(err.Error(), "FailedPrecondition") {
+						p.logger.Debug("Subscription is detached",
+							zap.String("subscription", p.subscription))
+						p.runningPullerCancel()
+						return nil
+					}
+					if strings.Contains(err.Error(), "NotFound") {
+						p.logger.Debug("Subscription does not exist",
+							zap.String("subscription", p.subscription))
+						p.runningPullerCancel()
+						return nil
+					}
 					p.logger.Error("Puller pulling messages error", zap.Error(err))
 					return err
 				}
