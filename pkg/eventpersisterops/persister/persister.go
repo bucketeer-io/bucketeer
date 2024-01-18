@@ -317,10 +317,14 @@ func (p *persister) unsubscribe() {
 	err := p.client.DetachSubscription(p.rateLimitedPuller.SubscriptionName())
 	if err != nil {
 		p.logger.Error("Failed to detach subscription", zap.Error(err))
+	} else {
+		p.logger.Debug("Subscription detached", zap.String("subscription", p.subscription))
 	}
 	err = p.client.DeleteSubscriptionIfExist(p.subscription)
 	if err != nil {
 		p.logger.Error("Failed to delete subscription", zap.Error(err))
+	} else {
+		p.logger.Debug("Subscription deleted", zap.String("subscription", p.subscription))
 	}
 }
 
