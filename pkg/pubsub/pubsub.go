@@ -263,6 +263,17 @@ func (c *Client) SubscriptionExists(id string) (bool, error) {
 	return exists, nil
 }
 
+func (c *Client) SubscriptionDetached(id string) (bool, error) {
+	sub := c.Client.Subscription(id)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	conf, err := sub.Config(ctx)
+	if err != nil {
+		return false, err
+	}
+	return conf.Detached, nil
+}
+
 func (c *Client) DeleteSubscription(id string) error {
 	sub := c.Client.Subscription(id)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

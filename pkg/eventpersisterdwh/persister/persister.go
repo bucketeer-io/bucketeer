@@ -206,7 +206,27 @@ func (p *PersisterDWH) Run() error {
 				p.logger.Debug("There are running experiments")
 				if !p.IsRunning() {
 					p.group = errgroup.Group{}
-					err := p.createNewPuller()
+					exists, err := p.client.SubscriptionExists(p.subscription)
+					if err != nil {
+						p.logger.Error("Failed to check subscription existence", zap.Error(err))
+						return err
+					}
+					if exists {
+						detached, err := p.client.SubscriptionDetached(p.subscription)
+						if err != nil {
+							p.logger.Error("Failed to check subscription detachment", zap.Error(err))
+							return err
+						}
+						// if subscription is detached, delete it before subscribing
+						if detached {
+							err := p.client.DeleteSubscriptionIfExist(p.subscription)
+							if err != nil {
+								p.logger.Error("Failed to delete subscription", zap.Error(err))
+								return err
+							}
+						}
+					}
+					err = p.createNewPuller()
 					if err != nil {
 						p.logger.Error("Failed to create new puller", zap.Error(err))
 						return err
@@ -298,11 +318,15 @@ func (p *PersisterDWH) subscribe(subscription chan struct{}) {
 }
 
 func (p *PersisterDWH) unsubscribe() {
+	p.runningPullerCancel()
 	err := p.client.DetachSubscription(p.rateLimitedPuller.SubscriptionName())
 	if err != nil {
 		p.logger.Error("Failed to detach subscription", zap.Error(err))
 	}
-	p.runningPullerCancel()
+	err = p.client.DeleteSubscriptionIfExist(p.subscription)
+	if err != nil {
+		p.logger.Error("Failed to delete subscription", zap.Error(err))
+	}
 }
 
 func (p *PersisterDWH) IsRunning() bool {
