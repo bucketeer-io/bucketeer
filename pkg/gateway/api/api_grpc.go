@@ -935,7 +935,7 @@ func (s *grpcGatewayService) RegisterEvents(
 		}
 	}
 	// MetricsEvents are saved asynchronously for performance, since there is no user impact even if they are lost.
-	s.saveMetricsEventsAsync(metricsEvents, envAPIKey.ProjectId, envAPIKey.Environment.Id)
+	s.saveMetricsEventsAsync(metricsEvents, envAPIKey.ProjectId, envAPIKey.Environment.UrlCode)
 	goalErrors := publish(s.goalPublisher, goalMessages, typeGoal)
 	evalErrors := publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
 	errs = s.mergeMaps(errs, goalErrors, evalErrors)
