@@ -44,6 +44,11 @@ var (
 	ErrUnexpectedMessageType  = errors.New("eventpersister: unexpected message type")
 )
 
+const (
+	notFound      = "NotFound"
+	alreadyExists = "AlreadyExists"
+)
+
 type eventMap map[string]proto.Message
 type environmentEventMap map[string]eventMap
 
@@ -192,38 +197,13 @@ func (p *persister) Run() error {
 				p.logger.Debug("There are untriggered auto ops rules")
 				if !p.IsRunning() {
 					p.group = errgroup.Group{}
-					exists, err := p.client.SubscriptionExists(p.subscription)
-					if err != nil {
-						p.logger.Error("Failed to check subscription existence", zap.Error(err))
-						return err
-					}
-					if exists {
-						p.logger.Debug("Subscription exists", zap.String("subscription", p.subscription))
-						detached, err := p.client.SubscriptionDetached(p.subscription)
-						if err != nil {
-							p.logger.Error("Failed to check subscription detachment", zap.Error(err))
-							return err
-						}
-						// if subscription is detached, delete it before subscribing
-						if detached {
-							p.logger.Debug("Subscription is detached, delete it",
-								zap.String("subscription", p.subscription),
-							)
-							err := p.client.DeleteSubscriptionIfExist(p.subscription)
-							if err != nil {
-								p.logger.Error("Failed to delete subscription", zap.Error(err))
-								return err
-							}
-						} else {
-							p.logger.Debug("Subscription is not detached, subscribe to it directly",
-								zap.String("subscription", p.subscription))
-						}
-					} else {
-						p.logger.Debug("Subscription does not exist, create it",
-							zap.String("subscription", p.subscription))
-					}
 					err = p.createNewPuller()
 					if err != nil {
+						if strings.Contains(err.Error(), alreadyExists) {
+							p.logger.Debug("Subscription already exists",
+								zap.String("subscription", p.subscription))
+							continue
+						}
 						p.logger.Error("Failed to create new puller", zap.Error(err))
 						return err
 					}
@@ -235,6 +215,13 @@ func (p *persister) Run() error {
 				if p.IsRunning() {
 					p.logger.Debug("Puller is running, stop pulling messages")
 					p.unsubscribe()
+				}
+				// delete subscription if subscription exists
+				err := p.client.DeleteSubscriptionIfExist(p.subscription)
+				if err != nil {
+					p.logger.Error("Failed to delete subscription", zap.Error(err))
+				} else {
+					p.logger.Debug("Subscription deleted", zap.String("subscription", p.subscription))
 				}
 			}
 			timer.Reset(p.opts.checkInterval)
@@ -293,16 +280,10 @@ func (p *persister) subscribe(subscription chan struct{}) {
 			p.group.Go(func() error {
 				err := p.rateLimitedPuller.Run(ctx)
 				if err != nil {
-					if strings.Contains(err.Error(), "FailedPrecondition") {
-						p.logger.Debug("Subscription is detached",
-							zap.String("subscription", p.subscription))
-						p.runningPullerCancel()
-						return nil
-					}
-					if strings.Contains(err.Error(), "NotFound") {
+					if strings.Contains(err.Error(), notFound) {
 						p.logger.Debug("Subscription does not exist",
 							zap.String("subscription", p.subscription))
-						p.runningPullerCancel()
+						p.unsubscribe()
 						return nil
 					}
 					p.logger.Error("Puller pulling messages error", zap.Error(err))
@@ -327,18 +308,6 @@ func (p *persister) subscribe(subscription chan struct{}) {
 
 func (p *persister) unsubscribe() {
 	p.runningPullerCancel()
-	err := p.client.DetachSubscription(p.rateLimitedPuller.SubscriptionName())
-	if err != nil {
-		p.logger.Error("Failed to detach subscription", zap.Error(err))
-	} else {
-		p.logger.Debug("Subscription detached", zap.String("subscription", p.subscription))
-	}
-	err = p.client.DeleteSubscriptionIfExist(p.subscription)
-	if err != nil {
-		p.logger.Error("Failed to delete subscription", zap.Error(err))
-	} else {
-		p.logger.Debug("Subscription deleted", zap.String("subscription", p.subscription))
-	}
 }
 
 func (p *persister) IsRunning() bool {
