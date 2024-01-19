@@ -234,7 +234,7 @@ export const FeatureList: FC<FeatureListProps> = memo(
     onArchive,
     onClone,
   }) => {
-    const { formatMessage: f, formatDate } = useIntl();
+    const { formatMessage: f } = useIntl();
     const currentEnvironment = useCurrentEnvironment();
     const editable = useIsEditable();
     const isFeatureLoading = useSelector<AppState, boolean>(

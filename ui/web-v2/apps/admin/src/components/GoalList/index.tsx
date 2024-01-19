@@ -47,7 +47,7 @@ export const GoalList: FC<GoalListProps> = memo(
     onUpdate,
     onArchive,
   }) => {
-    const { formatMessage: f, formatDate, formatTime } = useIntl();
+    const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
     const goals = useSelector<AppState, Goal.AsObject[]>(
       (state) => selectAll(state.goals),

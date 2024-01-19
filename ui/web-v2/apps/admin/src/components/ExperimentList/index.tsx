@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils/date';
 import { BanIcon } from '@heroicons/react/solid';
 import MUArchiveIcon from '@material-ui/icons/Archive';
 import { FC, memo } from 'react';
@@ -45,7 +46,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
     onArchive,
     onStop,
   }) => {
-    const { formatMessage: f, formatDate, formatTime } = useIntl();
+    const { formatMessage: f } = useIntl();
     const history = useHistory();
     const currentEnvironment = useCurrentEnvironment();
     const editable = useIsEditable();
@@ -171,9 +172,9 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
                         </div>
                         <div className="text-xs text-gray-700">
                           {`${f(messages.experiment.period)}: `}
-                          {`${formatDate(startAt)} ${formatTime(
-                            startAt
-                          )} - ${formatDate(endAt)} ${formatTime(endAt)}`}
+                          {`${formatDate({ date: startAt })} - ${formatDate({
+                            date: endAt,
+                          })}`}
                         </div>
                       </td>
                       <td

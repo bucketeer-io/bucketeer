@@ -39,7 +39,7 @@ export const APIKeyList: FC<APIKeyListProps> = memo(
     onAdd,
     onUpdate,
   }) => {
-    const { formatMessage: f, formatDate, formatTime } = useIntl();
+    const { formatMessage: f } = useIntl();
     const editable = useIsOwner();
     const currentEnvironment = useCurrentEnvironment();
     const apiKeys = useSelector<AppState, APIKey.AsObject[]>(
