@@ -44,6 +44,10 @@ var (
 	ErrUnexpectedMessageType  = errors.New("eventpersister: unexpected message type")
 )
 
+const (
+	pubsubErrNotFound = "NotFound"
+)
+
 type eventMap map[string]proto.Message
 type environmentEventMap map[string]eventMap
 
@@ -270,7 +274,7 @@ func (p *persister) subscribe(subscription chan struct{}) {
 			p.group.Go(func() error {
 				err := p.rateLimitedPuller.Run(ctx)
 				if err != nil {
-					if strings.Contains(err.Error(), pubsub.RPCErrNotFound) {
+					if strings.Contains(err.Error(), pubsubErrNotFound) {
 						p.logger.Debug("Subscription does not exist",
 							zap.String("subscription", p.subscription))
 						p.unsubscribe()

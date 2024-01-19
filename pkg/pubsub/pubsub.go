@@ -34,8 +34,7 @@ var (
 )
 
 const (
-	RPCErrNotFound      = "NotFound"
-	RPCErrAlreadyExists = "AlreadyExists"
+	rpcErrAlreadyExists = "AlreadyExists"
 )
 
 type Client struct {
@@ -252,7 +251,7 @@ func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) 
 		if err == nil {
 			return sub, nil
 		}
-		if strings.Contains(err.Error(), RPCErrAlreadyExists) {
+		if strings.Contains(err.Error(), rpcErrAlreadyExists) {
 			c.logger.Debug("Subscription already exists, use it directly",
 				zap.String("subscription", id),
 				zap.String("topic", topicID),

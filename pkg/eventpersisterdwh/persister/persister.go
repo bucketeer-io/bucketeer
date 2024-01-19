@@ -37,6 +37,8 @@ import (
 
 const (
 	day = 24 * 60 * 60
+
+	pubsubErrNotFound = "NotFound"
 )
 
 var (
@@ -285,7 +287,7 @@ func (p *PersisterDWH) subscribe(subscription chan struct{}) {
 			p.group.Go(func() error {
 				err := p.rateLimitedPuller.Run(ctx)
 				if err != nil {
-					if strings.Contains(err.Error(), pubsub.RPCErrNotFound) {
+					if strings.Contains(err.Error(), pubsubErrNotFound) {
 						p.logger.Debug("Subscription does not exist",
 							zap.String("subscription", p.subscription))
 						p.unsubscribe()
