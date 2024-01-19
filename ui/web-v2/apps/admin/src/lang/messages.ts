@@ -568,7 +568,7 @@ export const messages = {
     }),
     triggerUrlTitle: defineMessage({
       id: 'trigger.triggerUrlTitle',
-      defaultMessage: 'Copy and save this URL.',
+      defaultMessage: 'Copy and store this URL.',
     }),
     triggerUrlDescription: defineMessage({
       id: 'trigger.triggerUrlDescription',
@@ -593,7 +593,7 @@ export const messages = {
     resetTriggerDialogMessage: defineMessage({
       id: 'trigger.resetTriggerDialogMessage',
       defaultMessage:
-        'The current URL will become invalid. Ensure that you copy and save the new URL.',
+        'The current URL will become invalid. Ensure that you copy and store the new URL.',
     }),
     resetTriggerDialogBtnLabel: defineMessage({
       id: 'trigger.resetTriggerDialogBtnLabel',

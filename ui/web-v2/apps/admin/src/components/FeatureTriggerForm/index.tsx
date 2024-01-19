@@ -181,7 +181,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                 {f(messages.trigger.description, {
                   link: (
                     <a
-                      href="https://docs.bucketeer.io"
+                      href="https://docs.bucketeer.io/feature-flags/creating-feature-flags/triggers"
                       target="_blank"
                       rel="noreferrer"
                       className="underline text-primary flex items-center space-x-1 ml-1"
