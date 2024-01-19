@@ -17,6 +17,7 @@ package pubsub
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/pubsub"
@@ -30,6 +31,11 @@ import (
 
 var (
 	ErrInvalidTopic = errors.New("pubsub: invalid topic")
+)
+
+const (
+	RPCErrNotFound      = "NotFound"
+	RPCErrAlreadyExists = "AlreadyExists"
 )
 
 type Client struct {
@@ -244,6 +250,13 @@ func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) 
 			Topic: topic,
 		})
 		if err == nil {
+			return sub, nil
+		}
+		if strings.Contains(err.Error(), RPCErrAlreadyExists) {
+			c.logger.Debug("Subscription already exists, use it directly",
+				zap.String("subscription", id),
+				zap.String("topic", topicID),
+			)
 			return sub, nil
 		}
 		lastErr = err

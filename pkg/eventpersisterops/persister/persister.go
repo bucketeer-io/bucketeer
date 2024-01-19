@@ -44,11 +44,6 @@ var (
 	ErrUnexpectedMessageType  = errors.New("eventpersister: unexpected message type")
 )
 
-const (
-	notFound      = "NotFound"
-	alreadyExists = "AlreadyExists"
-)
-
 type eventMap map[string]proto.Message
 type environmentEventMap map[string]eventMap
 
@@ -199,11 +194,6 @@ func (p *persister) Run() error {
 					p.group = errgroup.Group{}
 					err = p.createNewPuller()
 					if err != nil {
-						if strings.Contains(err.Error(), alreadyExists) {
-							p.logger.Debug("Subscription already exists",
-								zap.String("subscription", p.subscription))
-							continue
-						}
 						p.logger.Error("Failed to create new puller", zap.Error(err))
 						return err
 					}
@@ -280,7 +270,7 @@ func (p *persister) subscribe(subscription chan struct{}) {
 			p.group.Go(func() error {
 				err := p.rateLimitedPuller.Run(ctx)
 				if err != nil {
-					if strings.Contains(err.Error(), notFound) {
+					if strings.Contains(err.Error(), pubsub.RPCErrNotFound) {
 						p.logger.Debug("Subscription does not exist",
 							zap.String("subscription", p.subscription))
 						p.unsubscribe()
