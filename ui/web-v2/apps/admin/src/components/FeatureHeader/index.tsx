@@ -43,7 +43,7 @@ export const FeatureHeader: FC<FeatureHeaderProps> = memo(({ featureId }) => {
   const detailPath = location.pathname.substring(
     location.pathname.lastIndexOf('/') + 1
   );
-  const { formatMessage: f, formatDate, formatTime } = useIntl();
+  const { formatMessage: f } = useIntl();
   const currentEnvironment = useCurrentEnvironment();
   const [feature, getFeatureError] = useSelector<
     AppState,

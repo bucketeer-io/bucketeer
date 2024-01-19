@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils/date';
 import { Dialog, Transition } from '@headlessui/react';
 import { PlusIcon, SelectorIcon } from '@heroicons/react/solid';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -238,7 +239,7 @@ interface ExperimentDetailProps {
 
 export const ExperimentDetail: FC<ExperimentDetailProps> = memo(
   ({ experiment, onStopExperiment }) => {
-    const { formatMessage: f, formatDate, formatTime } = useIntl();
+    const { formatMessage: f, formatTime } = useIntl();
     const startAt = new Date(experiment.startAt * 1000);
     const endAt =
       experiment.status === Experiment.Status.FORCE_STOPPED
@@ -252,9 +253,9 @@ export const ExperimentDetail: FC<ExperimentDetailProps> = memo(
           <div className="flex-grow" />
           <div className="inline-flex justify-center text-sm">
             {`${f(messages.experiment.period)}
-            ${formatDate(startAt)} ${formatTime(startAt)} - ${formatDate(
-              endAt
-            )} ${formatTime(endAt)}`}
+            ${formatDate({ date: startAt })} - ${formatDate({
+              date: endAt,
+            })}`}
           </div>
         </div>
         {experiment.description && (

@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils/date';
 import MUAutorenewIcon from '@material-ui/icons/Autorenew';
 import { FC, memo } from 'react';
 import { useIntl } from 'react-intl';
@@ -38,7 +39,7 @@ export const ProjectList: FC<ProjectListProps> = memo(
     onUpdate,
     onConvert,
   }) => {
-    const { formatMessage: f, formatDate } = useIntl();
+    const { formatMessage: f } = useIntl();
     const projects = useSelector<AppState, Project.AsObject[]>(
       (state) => selectAll(state.projects),
       shallowEqual
@@ -146,10 +147,17 @@ export const ProjectList: FC<ProjectListProps> = memo(
                         {project.trial && (
                           <div className="text-xs text-gray-700">
                             {`${f(messages.adminProject.trialPeriod)}: `}
-                            {`${formatDate(new Date(project.createdAt * 1000))}
-                          - ${formatDate(
-                            addDays(new Date(project.createdAt * 1000), 179)
-                          )}`}
+                            {`${formatDate({
+                              date: new Date(project.createdAt * 1000),
+                              showDateOnly: true,
+                            })}
+                          - ${formatDate({
+                            date: addDays(
+                              new Date(project.createdAt * 1000),
+                              179
+                            ),
+                            showDateOnly: true,
+                          })}`}
                           </div>
                         )}
                       </td>

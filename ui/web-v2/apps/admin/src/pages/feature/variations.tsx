@@ -102,7 +102,7 @@ interface FeatureVariationsPageProps {
 
 export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
   ({ featureId }) => {
-    const { formatMessage: f, formatDate } = useIntl();
+    const { formatMessage: f } = useIntl();
     const dispatch = useDispatch<AppDispatch>();
     const isFeatureLoading = useSelector<AppState, boolean>(
       (state) => state.features.loading
