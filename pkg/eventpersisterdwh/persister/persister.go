@@ -224,11 +224,26 @@ func (p *PersisterDWH) Run() error {
 					p.unsubscribe()
 				}
 				// delete subscription if subscription exists
-				err := p.client.DeleteSubscriptionIfExist(p.subscription)
+				exists, err := p.client.SubscriptionExists(p.subscription)
 				if err != nil {
-					p.logger.Error("Failed to delete subscription", zap.Error(err))
+					p.logger.Error("Failed to check subscription existence", zap.Error(err))
+					continue
+				}
+				if exists {
+					p.logger.Debug("Subscription exists, delete it now",
+						zap.String("subscription", p.subscription),
+					)
+					err = p.client.DeleteSubscription(p.subscription)
+					if err != nil {
+						p.logger.Error("Failed to delete subscription", zap.Error(err))
+						continue
+					} else {
+						p.logger.Debug("Subscription deleted successfully",
+							zap.String("subscription", p.subscription),
+						)
+					}
 				} else {
-					p.logger.Debug("Subscription deleted", zap.String("subscription", p.subscription))
+					p.logger.Debug("Subscription does not exist", zap.String("subscription", p.subscription))
 				}
 			}
 			timer.Reset(p.opts.checkInterval)
