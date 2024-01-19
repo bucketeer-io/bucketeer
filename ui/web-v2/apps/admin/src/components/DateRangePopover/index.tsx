@@ -15,7 +15,6 @@ import {
   createStaticRanges,
 } from 'react-date-range';
 import { FormattedDate, useIntl } from 'react-intl';
-import { usePopper } from 'react-popper';
 
 import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
@@ -53,9 +52,6 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
     const { formatMessage: f } = useIntl();
     const referenceElement = useRef<HTMLButtonElement | null>(null);
     const popperElement = useRef<HTMLDivElement | null>(null);
-    const popper = usePopper(referenceElement.current, popperElement.current, {
-      placement: 'bottom-start',
-    });
     const [ranges, setRanges] = useState([
       {
         startDate: new Date(),
@@ -168,129 +164,119 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
 
     return (
       <Popover>
-        {({ open }) => (
-          <>
-            <Popover.Button ref={referenceElement}>
+        <Popover.Button ref={referenceElement}>
+          <div
+            className={classNames(
+              'group',
+              'rounded-md inline-flex items-center',
+              'h-10',
+              'text-sm',
+              'border border-gray-300'
+            )}
+          >
+            {isDateSelected ? (
+              <div className="flex items-center">
+                <div className="pl-3 flex">
+                  <span>{f(messages.show)}:&nbsp;</span>
+                  {getSelectedDate()}
+                  <button
+                    onClick={handleClear}
+                    className="px-3 text-gray-500 hover:text-gray-600 mt-[1px]"
+                  >
+                    <XIcon className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="h-6 bg-gray-300 w-[1px]" />
+                <div className="px-2">
+                  <ChevronDownIcon
+                    className="w-5 h-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <div className="px-3">
+                  <span>{f(messages.show)}:</span>
+                  <span className="text-[#808080] ml-2">
+                    {f(messages.mostRecent)}
+                  </span>
+                </div>
+                <div className="h-6 bg-gray-300 w-[1px]" />
+                <div className="px-2">
+                  <ChevronDownIcon
+                    className="w-5 h-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </Popover.Button>
+        <Transition
+          as={Fragment}
+          enter="transition ease-out duration-200"
+          enterFrom="opacity-0 translate-y-1"
+          enterTo="opacity-100 translate-y-0"
+          leave="transition ease-in duration-150"
+          leaveFrom="opacity-100 translate-y-0"
+          leaveTo="opacity-0 translate-y-1"
+        >
+          <Popover.Panel
+            className={classNames(
+              'absolute z-10 mt-2',
+              'max-w-lg px-4',
+              'transform sm:px-0 lg:max-w-5xl shadow-lg'
+            )}
+          >
+            {({ close }) => (
               <div
                 className={classNames(
-                  'group',
-                  'rounded-md inline-flex items-center',
-                  'h-10',
-                  'text-sm',
-                  'border border-gray-300'
+                  'overflow-hidden rounded-lg',
+                  'ring-1 ring-black ring-opacity-5'
                 )}
               >
-                {isDateSelected ? (
-                  <div className="flex items-center">
-                    <div className="pl-3 flex">
-                      <span>{f(messages.show)}:&nbsp;</span>
-                      {getSelectedDate()}
-                      <button
-                        onClick={handleClear}
-                        className="px-3 text-gray-500 hover:text-gray-600 mt-[1px]"
-                      >
-                        <XIcon className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </div>
-                    <div className="h-6 bg-gray-300 w-[1px]" />
-                    <div className="px-2">
-                      <ChevronDownIcon
-                        className="w-5 h-5 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </div>
+                <div className="bg-gray-100">
+                  <div className="flex">
+                    <DateRangePicker
+                      onChange={(item: any) => {
+                        setRanges([item.selection]);
+                      }}
+                      showSelectionPreview={true}
+                      moveRangeOnFirstSelection={false}
+                      months={2}
+                      ranges={ranges}
+                      direction="horizontal"
+                      rangeColors={['#5d3597']}
+                      inputRanges={[]} // hide input ranges
+                      locale={isLanguageJapanese ? ja : en}
+                      staticRanges={staticRanges}
+                    />
                   </div>
-                ) : (
-                  <div className="flex items-center">
-                    <div className="px-3">
-                      <span>{f(messages.show)}:</span>
-                      <span className="text-[#808080] ml-2">
-                        {f(messages.mostRecent)}
-                      </span>
-                    </div>
-                    <div className="h-6 bg-gray-300 w-[1px]" />
-                    <div className="px-2">
-                      <ChevronDownIcon
-                        className="w-5 h-5 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Popover.Button>
-            <div
-              ref={popperElement}
-              style={popper.styles.popper}
-              {...popper.attributes.popper}
-            >
-              <Transition
-                as={Fragment}
-                enter="transition ease-out duration-200"
-                enterFrom="opacity-0 translate-y-1"
-                enterTo="opacity-100 translate-y-0"
-                leave="transition ease-in duration-150"
-                leaveFrom="opacity-100 translate-y-0"
-                leaveTo="opacity-0 translate-y-1"
-              >
-                <Popover.Panel
-                  className={classNames(
-                    'absolute z-10',
-                    'max-w-lg px-4 mt-3',
-                    'transform sm:px-0 lg:max-w-5xl shadow-lg'
-                  )}
-                >
-                  {({ close }) => (
-                    <div
-                      className={classNames(
-                        'overflow-hidden rounded-lg',
-                        'ring-1 ring-black ring-opacity-5'
-                      )}
+                  <div className="flex justify-end py-2 pr-2 space-x-2 border-t border-gray-300">
+                    <button
+                      type="button"
+                      className="btn-cancel"
+                      onClick={() => close()}
                     >
-                      <div className="bg-gray-100">
-                        <div className="flex">
-                          <DateRangePicker
-                            onChange={(item: any) => {
-                              setRanges([item.selection]);
-                            }}
-                            showSelectionPreview={true}
-                            moveRangeOnFirstSelection={false}
-                            months={2}
-                            ranges={ranges}
-                            direction="horizontal"
-                            rangeColors={['#5d3597']}
-                            inputRanges={[]} // hide input ranges
-                            locale={isLanguageJapanese ? ja : en}
-                            staticRanges={staticRanges}
-                          />
-                        </div>
-                        <div className="flex justify-end py-2 pr-2 space-x-2 border-t border-gray-300">
-                          <button
-                            type="button"
-                            className="btn-cancel"
-                            onClick={() => close()}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-submit"
-                            onClick={() => {
-                              close();
-                              handleApply();
-                            }}
-                          >
-                            Apply
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </Popover.Panel>
-              </Transition>
-            </div>
-          </>
-        )}
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-submit"
+                      onClick={() => {
+                        close();
+                        handleApply();
+                      }}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Popover.Panel>
+        </Transition>
       </Popover>
     );
   }
