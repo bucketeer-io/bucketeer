@@ -1143,6 +1143,11 @@ export class ListAccountsV2Request extends jspb.Message {
   getRole(): google_protobuf_wrappers_pb.Int32Value | undefined;
   setRole(value?: google_protobuf_wrappers_pb.Int32Value): void;
 
+  hasEnvironmentId(): boolean;
+  clearEnvironmentId(): void;
+  getEnvironmentId(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setEnvironmentId(value?: google_protobuf_wrappers_pb.StringValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAccountsV2Request.AsObject;
   static toObject(includeInstance: boolean, msg: ListAccountsV2Request): ListAccountsV2Request.AsObject;
@@ -1163,6 +1168,7 @@ export namespace ListAccountsV2Request {
     searchKeyword: string,
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject,
     role?: google_protobuf_wrappers_pb.Int32Value.AsObject,
+    environmentId?: google_protobuf_wrappers_pb.StringValue.AsObject,
   }
 
   export interface OrderByMap {

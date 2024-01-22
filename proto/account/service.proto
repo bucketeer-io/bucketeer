@@ -262,6 +262,7 @@ message ListAccountsV2Request {
   string search_keyword = 6;
   google.protobuf.BoolValue disabled = 7;
   google.protobuf.Int32Value role = 8;
+  google.protobuf.StringValue environment_id = 9;
 }
 
 message ListAccountsV2Response {

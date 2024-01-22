@@ -154,6 +154,16 @@ func TestJSONFilterSQLString(t *testing.T) {
 			expectedArgs: []interface{}{"[1, 3]"},
 		},
 		{
+			desc: "Success: JSONContainsJSON",
+			input: &JSONFilter{
+				Column: "enums",
+				Func:   JSONContainsJSON,
+				Values: []interface{}{"{\"key1\":\"val1\", \"key2\":\"val2\"}"},
+			},
+			expectedSQL:  "JSON_CONTAINS(enums, ?)",
+			expectedArgs: []interface{}{"[{\"key1\":\"val1\", \"key2\":\"val2\"}]"},
+		},
+		{
 			desc: "Success: JSONContainsString",
 			input: &JSONFilter{
 				Column: "enums",

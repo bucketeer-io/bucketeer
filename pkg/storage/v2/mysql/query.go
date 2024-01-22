@@ -114,6 +114,7 @@ const (
 	JSONContainsString
 	JSONLengthGreaterThan
 	JSONLengthSmallerThan
+	JSONContainsJSON
 )
 
 type JSONFilter struct {
@@ -157,6 +158,19 @@ func (f *JSONFilter) SQLString() (sql string, args []interface{}) {
 				sb.WriteString(", ")
 			}
 			sb.WriteString(fmt.Sprintf(`"%s"`, v))
+		}
+		sb.WriteString("]")
+		args = append(args, sb.String())
+		return
+	case JSONContainsJSON:
+		sql = fmt.Sprintf("JSON_CONTAINS(%s, ?)", f.Column)
+		var sb strings.Builder
+		sb.WriteString("[")
+		for i, v := range f.Values {
+			if i != 0 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(fmt.Sprint(v))
 		}
 		sb.WriteString("]")
 		args = append(args, sb.String())

@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -1138,6 +1139,11 @@ func (s *AccountService) ListAccountsV2(
 	}
 	if req.Role != nil {
 		whereParts = append(whereParts, mysql.NewFilter("role", "=", req.Role.Value))
+	}
+	if req.EnvironmentId != nil {
+		values := make([]interface{}, 1)
+		values[0] = fmt.Sprintf("{\"environment_id\": \"%s\"}", req.EnvironmentId.Value)
+		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"email"}, req.SearchKeyword))
