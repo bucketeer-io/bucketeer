@@ -28,9 +28,8 @@ jobs:
         env:
           BUILDX_NO_DEFAULT_ATTESTATIONS: true
         with:
-          imageName: ghcr.io/ubisoft-potato/bucketeer-devcontainer
-          cacheFrom: ghcr.io/ubisoft-potato/bucketeer-devcontainer
+          imageName: ghcr.io/bucketeer-io/bucketeer-devcontainer
+          cacheFrom: ghcr.io/bucketeer-io/bucketeer-devcontainer
           platform: linux/amd64,linux/arm64
           subFolder: .github
           push: always
-
