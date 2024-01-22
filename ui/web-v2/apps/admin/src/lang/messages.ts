@@ -504,6 +504,106 @@ export const messages = {
       defaultMessage: 'Evaluation Count',
     }),
   },
+  trigger: {
+    documentation: defineMessage({
+      id: 'trigger.documentation',
+      defaultMessage: 'documentation',
+    }),
+    description: defineMessage({
+      id: 'trigger.description',
+      defaultMessage:
+        'Use triggers to turn a flag on or off remotely. See the {link}',
+    }),
+    addTrigger: defineMessage({
+      id: 'trigger.addTrigger',
+      defaultMessage: 'Add Trigger',
+    }),
+    triggerType: defineMessage({
+      id: 'trigger.triggerType',
+      defaultMessage: 'Type',
+    }),
+    action: defineMessage({
+      id: 'trigger.action',
+      defaultMessage: 'Action',
+    }),
+    triggerURL: defineMessage({
+      id: 'trigger.triggerURL',
+      defaultMessage: 'Trigger URL',
+    }),
+    triggeredTimes: defineMessage({
+      id: 'trigger.triggeredTimes',
+      defaultMessage: 'Triggered Times',
+    }),
+    lastTriggered: defineMessage({
+      id: 'trigger.lastTriggered',
+      defaultMessage: 'Last Triggered',
+    }),
+    turnTheFlagON: defineMessage({
+      id: 'trigger.turnTheFlagON',
+      defaultMessage: 'Turn the flag ON',
+    }),
+    turnTheFlagOFF: defineMessage({
+      id: 'trigger.turnTheFlagOFF',
+      defaultMessage: 'Turn the flag OFF',
+    }),
+    editDescription: defineMessage({
+      id: 'trigger.editDescription',
+      defaultMessage: 'Edit description',
+    }),
+    enableTrigger: defineMessage({
+      id: 'trigger.enableTrigger',
+      defaultMessage: 'Enable Trigger',
+    }),
+    disableTrigger: defineMessage({
+      id: 'trigger.disableTrigger',
+      defaultMessage: 'Disable Trigger',
+    }),
+    resetURL: defineMessage({
+      id: 'trigger.resetURL',
+      defaultMessage: 'Reset URL',
+    }),
+    deleteTrigger: defineMessage({
+      id: 'trigger.deleteTrigger',
+      defaultMessage: 'Delete Trigger',
+    }),
+    triggerUrlTitle: defineMessage({
+      id: 'trigger.triggerUrlTitle',
+      defaultMessage: 'Copy and store this URL.',
+    }),
+    triggerUrlDescription: defineMessage({
+      id: 'trigger.triggerUrlDescription',
+      defaultMessage: 'Once you leave this page, the URL will be hidden.',
+    }),
+    deleteTriggerDialogTitle: defineMessage({
+      id: 'trigger.deleteTriggerDialogTitle',
+      defaultMessage: 'Delete Trigger',
+    }),
+    deleteTriggerDialogMessage: defineMessage({
+      id: 'trigger.deleteTriggerDialogMessage',
+      defaultMessage: 'The trigger will be deleted permanently.',
+    }),
+    deleteTriggerDialogBtnLabel: defineMessage({
+      id: 'trigger.deleteTriggerDialogBtnTxt',
+      defaultMessage: 'Delete',
+    }),
+    resetTriggerDialogTitle: defineMessage({
+      id: 'trigger.resetTriggerDialogTitle',
+      defaultMessage: 'Reset Trigger URL',
+    }),
+    resetTriggerDialogMessage: defineMessage({
+      id: 'trigger.resetTriggerDialogMessage',
+      defaultMessage:
+        'The current URL will become invalid. Ensure that you copy and store the new URL.',
+    }),
+    resetTriggerDialogBtnLabel: defineMessage({
+      id: 'trigger.resetTriggerDialogBtnLabel',
+      defaultMessage: 'Reset',
+    }),
+    updated: defineMessage({
+      id: 'trigger.updated',
+      defaultMessage: 'Updated',
+    }),
+  },
   maintainer: defineMessage({
     id: 'maintainer',
     defaultMessage: 'Maintainer',
@@ -634,6 +734,10 @@ export const messages = {
     edit: defineMessage({
       id: 'button.edit',
       defaultMessage: 'Edit',
+    }),
+    save: defineMessage({
+      id: 'button.save',
+      defaultMessage: 'Save',
     }),
     result: defineMessage({
       id: 'button.result',
@@ -1714,6 +1818,10 @@ export const messages = {
         id: 'feature.tab.autoOps',
         defaultMessage: 'Auto Operations',
       }),
+      triggers: defineMessage({
+        id: 'feature.tab.triggers',
+        defaultMessage: 'Triggers',
+      }),
       evaluation: defineMessage({
         id: 'feature.tab.evaluation',
         defaultMessage: 'Evaluation',
@@ -2700,5 +2808,9 @@ export const messages = {
   urlCode: defineMessage({
     id: 'urlCode',
     defaultMessage: 'URL code',
+  }),
+  fullStop: defineMessage({
+    id: 'fullStop',
+    defaultMessage: '.',
   }),
 };

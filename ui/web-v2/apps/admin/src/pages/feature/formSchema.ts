@@ -306,3 +306,9 @@ export const targetingFormSchema = yup.object().shape({
   resetSampling: yup.bool(),
   comment: yup.string().required(),
 });
+
+export const triggerFormSchema = yup.object().shape({
+  triggerType: yup.string().nullable().required(),
+  action: yup.string().nullable().required(),
+  description: yup.string(),
+});

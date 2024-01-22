@@ -103,6 +103,7 @@
     "@nrwl/tao": "12.5.2",
     "@nrwl/web": "12.5.2",
     "@nrwl/workspace": "12.5.2",
+    "@tailwindcss/line-clamp": "^0.4.4",
     "@testing-library/react": "11.2.7",
     "@types/jest": "26.0.24",
     "@types/node": "14.14.33",

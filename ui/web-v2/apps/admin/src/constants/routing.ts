@@ -26,6 +26,7 @@ export const PAGE_PATH_FEATURE_SETTING = '/setting';
 export const PAGE_PATH_FEATURE_EXPERIMENTS = '/experiments';
 export const PAGE_PATH_FEATURE_EVALUATION = '/evaluation';
 export const PAGE_PATH_FEATURE_AUTOOPS = '/autoops';
+export const PAGE_PATH_FEATURE_TRIGGER = '/trigger';
 export const PAGE_PATH_FEATURE_HISTORY = '/history';
 
 export const PAGE_PATH_AUTH_CALLBACK = '/auth/callback';
