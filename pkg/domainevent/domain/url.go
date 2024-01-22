@@ -37,7 +37,6 @@ const (
 	urlTemplateEnvironment       = "%s/%s/admin/environments/%s"
 	urlTemplateAdminAccount      = "%s/%s/admin/accounts/%s"
 	urlTemplateProject           = "%s/%s/admin/projects/%s"
-	urlTemplateWebhook           = "%s/%s/settings/intergrations/webhook/%s"
 	urlTemplateOrganization      = "%s/%s/admin/organizations/%s"
 	defaultEnvironmentID         = "bucketeer"
 )
@@ -74,8 +73,6 @@ func URL(entityType proto.Event_EntityType, url, environmentID, id string) (stri
 		return fmt.Sprintf(urlTemplateAdminAccount, url, defaultEnvironmentID, id), nil
 	case proto.Event_PROJECT:
 		return fmt.Sprintf(urlTemplateProject, url, defaultEnvironmentID, id), nil
-	case proto.Event_WEBHOOK:
-		return fmt.Sprintf(urlTemplateWebhook, url, defaultEnvironmentID, id), nil
 	case proto.Event_ORGANIZATION:
 		return fmt.Sprintf(urlTemplateOrganization, url, defaultEnvironmentID, id), nil
 	case proto.Event_FLAG_TRIGGER:

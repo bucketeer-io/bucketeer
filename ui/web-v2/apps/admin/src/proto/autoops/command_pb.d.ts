@@ -22,11 +22,6 @@ export class CreateAutoOpsRuleCommand extends jspb.Message {
   setDatetimeClausesList(value: Array<proto_autoops_clause_pb.DatetimeClause>): void;
   addDatetimeClauses(value?: proto_autoops_clause_pb.DatetimeClause, index?: number): proto_autoops_clause_pb.DatetimeClause;
 
-  clearWebhookClausesList(): void;
-  getWebhookClausesList(): Array<proto_autoops_clause_pb.WebhookClause>;
-  setWebhookClausesList(value: Array<proto_autoops_clause_pb.WebhookClause>): void;
-  addWebhookClauses(value?: proto_autoops_clause_pb.WebhookClause, index?: number): proto_autoops_clause_pb.WebhookClause;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAutoOpsRuleCommand.AsObject;
   static toObject(includeInstance: boolean, msg: CreateAutoOpsRuleCommand): CreateAutoOpsRuleCommand.AsObject;
@@ -43,7 +38,6 @@ export namespace CreateAutoOpsRuleCommand {
     opsType: proto_autoops_auto_ops_rule_pb.OpsTypeMap[keyof proto_autoops_auto_ops_rule_pb.OpsTypeMap],
     opsEventRateClausesList: Array<proto_autoops_clause_pb.OpsEventRateClause.AsObject>,
     datetimeClausesList: Array<proto_autoops_clause_pb.DatetimeClause.AsObject>,
-    webhookClausesList: Array<proto_autoops_clause_pb.WebhookClause.AsObject>,
   }
 }
 
@@ -212,134 +206,6 @@ export namespace ChangeDatetimeClauseCommand {
   export type AsObject = {
     id: string,
     datetimeClause?: proto_autoops_clause_pb.DatetimeClause.AsObject,
-  }
-}
-
-export class CreateWebhookCommand extends jspb.Message {
-  getName(): string;
-  setName(value: string): void;
-
-  getDescription(): string;
-  setDescription(value: string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): CreateWebhookCommand.AsObject;
-  static toObject(includeInstance: boolean, msg: CreateWebhookCommand): CreateWebhookCommand.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: CreateWebhookCommand, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): CreateWebhookCommand;
-  static deserializeBinaryFromReader(message: CreateWebhookCommand, reader: jspb.BinaryReader): CreateWebhookCommand;
-}
-
-export namespace CreateWebhookCommand {
-  export type AsObject = {
-    name: string,
-    description: string,
-  }
-}
-
-export class ChangeWebhookNameCommand extends jspb.Message {
-  getName(): string;
-  setName(value: string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ChangeWebhookNameCommand.AsObject;
-  static toObject(includeInstance: boolean, msg: ChangeWebhookNameCommand): ChangeWebhookNameCommand.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: ChangeWebhookNameCommand, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ChangeWebhookNameCommand;
-  static deserializeBinaryFromReader(message: ChangeWebhookNameCommand, reader: jspb.BinaryReader): ChangeWebhookNameCommand;
-}
-
-export namespace ChangeWebhookNameCommand {
-  export type AsObject = {
-    name: string,
-  }
-}
-
-export class ChangeWebhookDescriptionCommand extends jspb.Message {
-  getDescription(): string;
-  setDescription(value: string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ChangeWebhookDescriptionCommand.AsObject;
-  static toObject(includeInstance: boolean, msg: ChangeWebhookDescriptionCommand): ChangeWebhookDescriptionCommand.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: ChangeWebhookDescriptionCommand, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ChangeWebhookDescriptionCommand;
-  static deserializeBinaryFromReader(message: ChangeWebhookDescriptionCommand, reader: jspb.BinaryReader): ChangeWebhookDescriptionCommand;
-}
-
-export namespace ChangeWebhookDescriptionCommand {
-  export type AsObject = {
-    description: string,
-  }
-}
-
-export class DeleteWebhookCommand extends jspb.Message {
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): DeleteWebhookCommand.AsObject;
-  static toObject(includeInstance: boolean, msg: DeleteWebhookCommand): DeleteWebhookCommand.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: DeleteWebhookCommand, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): DeleteWebhookCommand;
-  static deserializeBinaryFromReader(message: DeleteWebhookCommand, reader: jspb.BinaryReader): DeleteWebhookCommand;
-}
-
-export namespace DeleteWebhookCommand {
-  export type AsObject = {
-  }
-}
-
-export class AddWebhookClauseCommand extends jspb.Message {
-  hasWebhookClause(): boolean;
-  clearWebhookClause(): void;
-  getWebhookClause(): proto_autoops_clause_pb.WebhookClause | undefined;
-  setWebhookClause(value?: proto_autoops_clause_pb.WebhookClause): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): AddWebhookClauseCommand.AsObject;
-  static toObject(includeInstance: boolean, msg: AddWebhookClauseCommand): AddWebhookClauseCommand.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: AddWebhookClauseCommand, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): AddWebhookClauseCommand;
-  static deserializeBinaryFromReader(message: AddWebhookClauseCommand, reader: jspb.BinaryReader): AddWebhookClauseCommand;
-}
-
-export namespace AddWebhookClauseCommand {
-  export type AsObject = {
-    webhookClause?: proto_autoops_clause_pb.WebhookClause.AsObject,
-  }
-}
-
-export class ChangeWebhookClauseCommand extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
-  hasWebhookClause(): boolean;
-  clearWebhookClause(): void;
-  getWebhookClause(): proto_autoops_clause_pb.WebhookClause | undefined;
-  setWebhookClause(value?: proto_autoops_clause_pb.WebhookClause): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ChangeWebhookClauseCommand.AsObject;
-  static toObject(includeInstance: boolean, msg: ChangeWebhookClauseCommand): ChangeWebhookClauseCommand.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: ChangeWebhookClauseCommand, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ChangeWebhookClauseCommand;
-  static deserializeBinaryFromReader(message: ChangeWebhookClauseCommand, reader: jspb.BinaryReader): ChangeWebhookClauseCommand;
-}
-
-export namespace ChangeWebhookClauseCommand {
-  export type AsObject = {
-    id: string,
-    webhookClause?: proto_autoops_clause_pb.WebhookClause.AsObject,
   }
 }
 

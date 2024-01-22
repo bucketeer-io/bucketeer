@@ -67,10 +67,6 @@ func (h *autoOpsRuleCommandHandler) Handle(ctx context.Context, cmd Command) err
 		return h.addDatetimeClause(ctx, c)
 	case *proto.ChangeDatetimeClauseCommand:
 		return h.changeDatetimeClause(ctx, c)
-	case *proto.AddWebhookClauseCommand:
-		return h.addWebhookClause(ctx, c)
-	case *proto.ChangeWebhookClauseCommand:
-		return h.changeWebhookClause(ctx, c)
 	}
 	return errUnknownCommand
 }
@@ -170,33 +166,6 @@ func (h *autoOpsRuleCommandHandler) changeDatetimeClause(
 	return h.send(ctx, eventproto.Event_DATETIME_CLAUSE_CHANGED, &eventproto.DatetimeClauseChangedEvent{
 		ClauseId:       cmd.Id,
 		DatetimeClause: cmd.DatetimeClause,
-	})
-}
-
-func (h *autoOpsRuleCommandHandler) addWebhookClause(
-	ctx context.Context,
-	cmd *proto.AddWebhookClauseCommand,
-) error {
-	clause, err := h.autoOpsRule.AddWebhookClause(cmd.WebhookClause)
-	if err != nil {
-		return err
-	}
-	return h.send(ctx, eventproto.Event_WEBHOOK_CLAUSE_ADDED, &eventproto.WebhookClauseAddedEvent{
-		ClauseId:      clause.Id,
-		WebhookClause: cmd.WebhookClause,
-	})
-}
-
-func (h *autoOpsRuleCommandHandler) changeWebhookClause(
-	ctx context.Context,
-	cmd *proto.ChangeWebhookClauseCommand,
-) error {
-	if err := h.autoOpsRule.ChangeWebhookClause(cmd.Id, cmd.WebhookClause); err != nil {
-		return err
-	}
-	return h.send(ctx, eventproto.Event_WEBHOOK_CLAUSE_CHANGED, &eventproto.WebhookClauseChangedEvent{
-		ClauseId:      cmd.Id,
-		WebhookClause: cmd.WebhookClause,
 	})
 }
 

@@ -110,7 +110,7 @@ func TestCreateAndListAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -159,7 +159,7 @@ func TestGetAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -208,7 +208,7 @@ func TestDeleteAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -245,7 +245,7 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -286,7 +286,7 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -322,7 +322,7 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -358,7 +358,7 @@ func TestOpsEventRateBatch(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -390,167 +390,13 @@ func TestDatetimeBatch(t *testing.T) {
 	featureID := createFeatureID(t)
 	createFeature(ctx, t, featureClient, featureID)
 	clause := createDatetimeClause(t)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, nil, []*autoopsproto.DatetimeClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, nil, []*autoopsproto.DatetimeClause{clause})
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
-}
-
-func TestCreateAndListWebhook(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-
-	name := newWebhookName(t)
-	description := newUUID(t)
-	resp := createWebhook(ctx, t, autoOpsClient, name, description)
-	webhooks := listWebhooks(ctx, t, autoOpsClient)
-	var actual *autoopsproto.Webhook
-	for _, w := range webhooks {
-		if w.Id == resp.Webhook.Id {
-			actual = w
-			break
-		}
-	}
-	if actual == nil {
-		t.Fatal("webhook is nil")
-	}
-	if actual.Id == "" {
-		t.Fatal("id is empty")
-	}
-	if actual.Name != name {
-		t.Fatalf("diffrent name, expected: %v, actual: %v", name, actual.Name)
-	}
-	if actual.Description != description {
-		t.Fatalf("diffrent description, expected: %v, actual: %v", description, actual.Description)
-	}
-}
-
-func TestGetWebhook(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-
-	name := newWebhookName(t)
-	description := newUUID(t)
-	resp := createWebhook(ctx, t, autoOpsClient, name, description)
-	actual := getWebhook(ctx, t, autoOpsClient, resp.Webhook.Id)
-	if actual == nil {
-		t.Fatal("webhook is nil")
-	}
-	if actual.Id == "" {
-		t.Fatal("id is empty")
-	}
-	if actual.Name != name {
-		t.Fatalf("diffrent name, expected: %v, actual: %v", name, actual.Name)
-	}
-	if actual.Description != description {
-		t.Fatalf("diffrent description, expected: %v, actual: %v", description, actual.Description)
-	}
-}
-
-func TestUpdateWebhook(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-
-	name := newWebhookName(t)
-	description := newUUID(t)
-	resp := createWebhook(ctx, t, autoOpsClient, name, description)
-	webhook := getWebhook(ctx, t, autoOpsClient, resp.Webhook.Id)
-	if webhook == nil {
-		t.Fatal("webhook is nil")
-	}
-	newDesc := newUUID(t)
-	newName := newWebhookName(t)
-	updateWebhookDescription(ctx, t, autoOpsClient, resp.Webhook.Id, newDesc)
-	updateWebhookName(ctx, t, autoOpsClient, resp.Webhook.Id, newName)
-	actual := getWebhook(ctx, t, autoOpsClient, resp.Webhook.Id)
-	if actual.Id == "" {
-		t.Fatal("id is empty")
-	}
-	if actual.Name != newName {
-		t.Fatalf("diffrent name, expected: %v, actual: %v", name, actual.Name)
-	}
-	if actual.Description != newDesc {
-		t.Fatalf("diffrent description, expected: %v, actual: %v", description, actual.Description)
-	}
-}
-
-func TestDeleteWebhook(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-
-	name := newWebhookName(t)
-	description := newUUID(t)
-	resp := createWebhook(ctx, t, autoOpsClient, name, description)
-	webhook := getWebhook(ctx, t, autoOpsClient, resp.Webhook.Id)
-	if webhook == nil {
-		t.Fatal("webhook is nil")
-	}
-	deleteWebhook(ctx, t, autoOpsClient, resp.Webhook.Id)
-	getResp, err := autoOpsClient.GetWebhook(ctx, &autoopsproto.GetWebhookRequest{
-		Id:                   resp.Webhook.Id,
-		EnvironmentNamespace: *environmentNamespace,
-	})
-	if getResp != nil {
-		t.Fatal("webhook is not deleted")
-	}
-	if status.Code(err) != codes.NotFound {
-		t.Fatalf("different error code, expected: %s, actual: %s", codes.NotFound, status.Code(err))
-	}
-}
-
-func TestHttpWebhook(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
-
-	name := newWebhookName(t)
-	description := newUUID(t)
-	resp := createWebhook(ctx, t, autoOpsClient, name, description)
-	webhook := getWebhook(ctx, t, autoOpsClient, resp.Webhook.Id)
-	if webhook == nil {
-		t.Fatal("webhook is nil")
-	}
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	condition := createWebhookClause_Condition(autoopsproto.WebhookClause_Condition_EQUAL, `.body."Alert id"`, `123`)
-	clause := createWebhookClause(resp.Webhook.Id, []*autoopsproto.WebhookClause_Condition{condition})
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, nil, nil, []*autoopsproto.WebhookClause{clause})
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	expectedNum := 1
-	if len(autoOpsRules) != expectedNum {
-		t.Fatal("not enough rules")
-	}
-
-	sendHttpWebhook(t, resp.Url, `{"body":{"Alert id": 123}}`)
-	feature := getFeature(t, featureClient, featureID)
-	if feature.Enabled == true {
-		t.Fatalf("feature is enabled")
-	}
-	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at is empty")
-	}
 }
 
 func sendHttpWebhook(t *testing.T, url, payload string) {
@@ -607,27 +453,6 @@ func createDatetimeClause(t *testing.T) *autoopsproto.DatetimeClause {
 	}
 }
 
-func createWebhookClause(
-	webhookID string,
-	condition []*autoopsproto.WebhookClause_Condition,
-) *autoopsproto.WebhookClause {
-	return &autoopsproto.WebhookClause{
-		WebhookId:  webhookID,
-		Conditions: condition,
-	}
-}
-
-func createWebhookClause_Condition(
-	operator autoopsproto.WebhookClause_Condition_Operator,
-	filter, value string,
-) *autoopsproto.WebhookClause_Condition {
-	return &autoopsproto.WebhookClause_Condition{
-		Filter:   filter,
-		Value:    value,
-		Operator: operator,
-	}
-}
-
 func createAutoOpsRule(
 	ctx context.Context,
 	t *testing.T,
@@ -635,7 +460,6 @@ func createAutoOpsRule(
 	featureID string,
 	oercs []*autoopsproto.OpsEventRateClause,
 	dcs []*autoopsproto.DatetimeClause,
-	wc []*autoopsproto.WebhookClause,
 ) {
 	t.Helper()
 	cmd := &autoopsproto.CreateAutoOpsRuleCommand{
@@ -643,7 +467,6 @@ func createAutoOpsRule(
 		OpsType:             autoopsproto.OpsType_DISABLE_FEATURE,
 		OpsEventRateClauses: oercs,
 		DatetimeClauses:     dcs,
-		WebhookClauses:      wc,
 	}
 	_, err := client.CreateAutoOpsRule(ctx, &autoopsproto.CreateAutoOpsRuleRequest{
 		EnvironmentNamespace: *environmentNamespace,
@@ -652,27 +475,6 @@ func createAutoOpsRule(
 	if err != nil {
 		t.Fatal(err)
 	}
-}
-
-func createWebhook(
-	ctx context.Context,
-	t *testing.T,
-	client autoopsclient.Client,
-	name, description string,
-) *autoopsproto.CreateWebhookResponse {
-	t.Helper()
-	cmd := &autoopsproto.CreateWebhookCommand{
-		Name:        name,
-		Description: description,
-	}
-	resp, err := client.CreateWebhook(ctx, &autoopsproto.CreateWebhookRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Command:              cmd,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return resp
 }
 
 func newAutoOpsClient(t *testing.T) autoopsclient.Client {
@@ -814,30 +616,6 @@ func listAutoOpsRulesByFeatureID(t *testing.T, client autoopsclient.Client, feat
 	return resp.AutoOpsRules
 }
 
-func listWebhooks(ctx context.Context, t *testing.T, client autoopsclient.Client) []*autoopsproto.Webhook {
-	t.Helper()
-	resp, err := client.ListWebhooks(ctx, &autoopsproto.ListWebhooksRequest{
-		PageSize:             int64(500),
-		EnvironmentNamespace: *environmentNamespace,
-	})
-	if err != nil {
-		t.Fatal("failed to list webhooks", err)
-	}
-	return resp.Webhooks
-}
-
-func getWebhook(ctx context.Context, t *testing.T, client autoopsclient.Client, id string) *autoopsproto.Webhook {
-	t.Helper()
-	resp, err := client.GetWebhook(ctx, &autoopsproto.GetWebhookRequest{
-		Id:                   id,
-		EnvironmentNamespace: *environmentNamespace,
-	})
-	if err != nil {
-		t.Fatal("failed to get webhook", err)
-	}
-	return resp.Webhook
-}
-
 func getAutoOpsRules(t *testing.T, id string) *autoopsproto.AutoOpsRule {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -854,34 +632,6 @@ func getAutoOpsRules(t *testing.T, id string) *autoopsproto.AutoOpsRule {
 	return resp.AutoOpsRule
 }
 
-func updateWebhookDescription(ctx context.Context, t *testing.T, client autoopsclient.Client, id, desc string) {
-	t.Helper()
-	_, err := client.UpdateWebhook(ctx, &autoopsproto.UpdateWebhookRequest{
-		Id:                   id,
-		EnvironmentNamespace: *environmentNamespace,
-		ChangeWebhookDescriptionCommand: &autoopsproto.ChangeWebhookDescriptionCommand{
-			Description: desc,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func updateWebhookName(ctx context.Context, t *testing.T, client autoopsclient.Client, id, name string) {
-	t.Helper()
-	_, err := client.UpdateWebhook(ctx, &autoopsproto.UpdateWebhookRequest{
-		Id:                   id,
-		EnvironmentNamespace: *environmentNamespace,
-		ChangeWebhookNameCommand: &autoopsproto.ChangeWebhookNameCommand{
-			Name: name,
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func deleteAutoOpsRules(t *testing.T, client autoopsclient.Client, id string) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -893,18 +643,6 @@ func deleteAutoOpsRules(t *testing.T, client autoopsclient.Client, id string) {
 	})
 	if err != nil {
 		t.Fatal("failed to list auto ops rules", err)
-	}
-}
-
-func deleteWebhook(ctx context.Context, t *testing.T, client autoopsclient.Client, id string) {
-	t.Helper()
-	_, err := client.DeleteWebhook(ctx, &autoopsproto.DeleteWebhookRequest{
-		Id:                   id,
-		EnvironmentNamespace: *environmentNamespace,
-		Command:              &autoopsproto.DeleteWebhookCommand{},
-	})
-	if err != nil {
-		t.Fatal(err)
 	}
 }
 

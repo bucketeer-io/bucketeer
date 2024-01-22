@@ -23,7 +23,6 @@ var (
 	statusInternal          = gstatus.New(codes.Internal, "autoops: internal")
 	statusUnknownOpsType    = gstatus.New(codes.Internal, "autoops: unknown ops type")
 	statusInvalidCursor     = gstatus.New(codes.InvalidArgument, "autoops: cursor is invalid")
-	statusInvalidOrderBy    = gstatus.New(codes.InvalidArgument, "autoops: order_by is invalid")
 	statusNoCommand         = gstatus.New(codes.InvalidArgument, "autoops: no command")
 	statusIDRequired        = gstatus.New(codes.InvalidArgument, "autoops: id must be specified")
 	statusFeatureIDRequired = gstatus.New(
@@ -70,35 +69,9 @@ var (
 		codes.NotFound,
 		"autoops: ops event rate clause goal does not exist",
 	)
-	statusWebhookNotFound       = gstatus.New(codes.NotFound, "autoops: webhook not found")
-	statusWebhookClauseRequired = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause is required",
-	)
-	statusWebhookClauseWebhookIDRequired = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause wehook id is required",
-	)
-	statusWebhookClauseConditionRequired = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause condition is required",
-	)
-	statusWebhookClauseConditionFilterRequired = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause condition filter is required",
-	)
-	statusWebhookClauseConditionValueRequired = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause condition value is required",
-	)
-	statusWebhookClauseConditionInvalidOperator = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: webhook clause condition oerator is invalid",
-	)
 	statusAlreadyExists               = gstatus.New(codes.AlreadyExists, "autoops: already exists")
 	statusUnauthenticated             = gstatus.New(codes.Unauthenticated, "autoops: unauthenticated")
 	statusPermissionDenied            = gstatus.New(codes.PermissionDenied, "autoops: permission denied")
-	statusInvalidRequest              = gstatus.New(codes.InvalidArgument, "autoops: invalid request")
 	statusProgressiveRolloutNoCommand = gstatus.New(
 		codes.InvalidArgument,
 		"autoops: no command for a progressive rollout",

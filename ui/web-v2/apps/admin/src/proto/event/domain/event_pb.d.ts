@@ -96,7 +96,6 @@ export namespace Event {
     SUBSCRIPTION: 10;
     ADMIN_SUBSCRIPTION: 11;
     PROJECT: 12;
-    WEBHOOK: 13;
     PROGRESSIVE_ROLLOUT: 14;
     ORGANIZATION: 15;
     FLAG_TRIGGER: 16;
@@ -239,12 +238,6 @@ export namespace Event {
     PROJECT_TRIAL_CREATED: 1204;
     PROJECT_TRIAL_CONVERTED: 1205;
     PROJECT_RENAMED: 1206;
-    WEBHOOK_CREATED: 1300;
-    WEBHOOK_DELETED: 1301;
-    WEBHOOK_NAME_CHANGED: 1302;
-    WEBHOOK_DESCRIPTION_CHANGED: 1303;
-    WEBHOOK_CLAUSE_ADDED: 1304;
-    WEBHOOK_CLAUSE_CHANGED: 1305;
     PROGRESSIVE_ROLLOUT_CREATED: 1400;
     PROGRESSIVE_ROLLOUT_DELETED: 1401;
     PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED: 1402;
@@ -3955,162 +3948,6 @@ export class PrerequisiteRemovedEvent extends jspb.Message {
 export namespace PrerequisiteRemovedEvent {
   export type AsObject = {
     featureId: string,
-  }
-}
-
-export class WebhookCreatedEvent extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
-  getName(): string;
-  setName(value: string): void;
-
-  getDescription(): string;
-  setDescription(value: string): void;
-
-  getCreatedAt(): number;
-  setCreatedAt(value: number): void;
-
-  getUpdatedAt(): number;
-  setUpdatedAt(value: number): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): WebhookCreatedEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: WebhookCreatedEvent): WebhookCreatedEvent.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: WebhookCreatedEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): WebhookCreatedEvent;
-  static deserializeBinaryFromReader(message: WebhookCreatedEvent, reader: jspb.BinaryReader): WebhookCreatedEvent;
-}
-
-export namespace WebhookCreatedEvent {
-  export type AsObject = {
-    id: string,
-    name: string,
-    description: string,
-    createdAt: number,
-    updatedAt: number,
-  }
-}
-
-export class WebhookDeletedEvent extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): WebhookDeletedEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: WebhookDeletedEvent): WebhookDeletedEvent.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: WebhookDeletedEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): WebhookDeletedEvent;
-  static deserializeBinaryFromReader(message: WebhookDeletedEvent, reader: jspb.BinaryReader): WebhookDeletedEvent;
-}
-
-export namespace WebhookDeletedEvent {
-  export type AsObject = {
-    id: string,
-  }
-}
-
-export class WebhookNameChangedEvent extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
-  getName(): string;
-  setName(value: string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): WebhookNameChangedEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: WebhookNameChangedEvent): WebhookNameChangedEvent.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: WebhookNameChangedEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): WebhookNameChangedEvent;
-  static deserializeBinaryFromReader(message: WebhookNameChangedEvent, reader: jspb.BinaryReader): WebhookNameChangedEvent;
-}
-
-export namespace WebhookNameChangedEvent {
-  export type AsObject = {
-    id: string,
-    name: string,
-  }
-}
-
-export class WebhookDescriptionChangedEvent extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
-  getDescription(): string;
-  setDescription(value: string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): WebhookDescriptionChangedEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: WebhookDescriptionChangedEvent): WebhookDescriptionChangedEvent.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: WebhookDescriptionChangedEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): WebhookDescriptionChangedEvent;
-  static deserializeBinaryFromReader(message: WebhookDescriptionChangedEvent, reader: jspb.BinaryReader): WebhookDescriptionChangedEvent;
-}
-
-export namespace WebhookDescriptionChangedEvent {
-  export type AsObject = {
-    id: string,
-    description: string,
-  }
-}
-
-export class WebhookClauseAddedEvent extends jspb.Message {
-  getClauseId(): string;
-  setClauseId(value: string): void;
-
-  hasWebhookClause(): boolean;
-  clearWebhookClause(): void;
-  getWebhookClause(): proto_autoops_clause_pb.WebhookClause | undefined;
-  setWebhookClause(value?: proto_autoops_clause_pb.WebhookClause): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): WebhookClauseAddedEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: WebhookClauseAddedEvent): WebhookClauseAddedEvent.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: WebhookClauseAddedEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): WebhookClauseAddedEvent;
-  static deserializeBinaryFromReader(message: WebhookClauseAddedEvent, reader: jspb.BinaryReader): WebhookClauseAddedEvent;
-}
-
-export namespace WebhookClauseAddedEvent {
-  export type AsObject = {
-    clauseId: string,
-    webhookClause?: proto_autoops_clause_pb.WebhookClause.AsObject,
-  }
-}
-
-export class WebhookClauseChangedEvent extends jspb.Message {
-  getClauseId(): string;
-  setClauseId(value: string): void;
-
-  hasWebhookClause(): boolean;
-  clearWebhookClause(): void;
-  getWebhookClause(): proto_autoops_clause_pb.WebhookClause | undefined;
-  setWebhookClause(value?: proto_autoops_clause_pb.WebhookClause): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): WebhookClauseChangedEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: WebhookClauseChangedEvent): WebhookClauseChangedEvent.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: WebhookClauseChangedEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): WebhookClauseChangedEvent;
-  static deserializeBinaryFromReader(message: WebhookClauseChangedEvent, reader: jspb.BinaryReader): WebhookClauseChangedEvent;
-}
-
-export namespace WebhookClauseChangedEvent {
-  export type AsObject = {
-    clauseId: string,
-    webhookClause?: proto_autoops_clause_pb.WebhookClause.AsObject,
   }
 }
 

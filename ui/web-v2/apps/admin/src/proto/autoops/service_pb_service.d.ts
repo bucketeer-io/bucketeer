@@ -67,51 +67,6 @@ type AutoOpsServiceListOpsCounts = {
   readonly responseType: typeof proto_autoops_service_pb.ListOpsCountsResponse;
 };
 
-type AutoOpsServiceCreateWebhook = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.CreateWebhookRequest;
-  readonly responseType: typeof proto_autoops_service_pb.CreateWebhookResponse;
-};
-
-type AutoOpsServiceGetWebhook = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.GetWebhookRequest;
-  readonly responseType: typeof proto_autoops_service_pb.GetWebhookResponse;
-};
-
-type AutoOpsServiceUpdateWebhook = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.UpdateWebhookRequest;
-  readonly responseType: typeof proto_autoops_service_pb.UpdateWebhookResponse;
-};
-
-type AutoOpsServiceDeleteWebhook = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.DeleteWebhookRequest;
-  readonly responseType: typeof proto_autoops_service_pb.DeleteWebhookResponse;
-};
-
-type AutoOpsServiceListWebhooks = {
-  readonly methodName: string;
-  readonly service: typeof AutoOpsService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_autoops_service_pb.ListWebhooksRequest;
-  readonly responseType: typeof proto_autoops_service_pb.ListWebhooksResponse;
-};
-
 type AutoOpsServiceCreateProgressiveRollout = {
   readonly methodName: string;
   readonly service: typeof AutoOpsService;
@@ -166,11 +121,6 @@ export class AutoOpsService {
   static readonly UpdateAutoOpsRule: AutoOpsServiceUpdateAutoOpsRule;
   static readonly ExecuteAutoOps: AutoOpsServiceExecuteAutoOps;
   static readonly ListOpsCounts: AutoOpsServiceListOpsCounts;
-  static readonly CreateWebhook: AutoOpsServiceCreateWebhook;
-  static readonly GetWebhook: AutoOpsServiceGetWebhook;
-  static readonly UpdateWebhook: AutoOpsServiceUpdateWebhook;
-  static readonly DeleteWebhook: AutoOpsServiceDeleteWebhook;
-  static readonly ListWebhooks: AutoOpsServiceListWebhooks;
   static readonly CreateProgressiveRollout: AutoOpsServiceCreateProgressiveRollout;
   static readonly GetProgressiveRollout: AutoOpsServiceGetProgressiveRollout;
   static readonly DeleteProgressiveRollout: AutoOpsServiceDeleteProgressiveRollout;
@@ -272,51 +222,6 @@ export class AutoOpsServiceClient {
   listOpsCounts(
     requestMessage: proto_autoops_service_pb.ListOpsCountsRequest,
     callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ListOpsCountsResponse|null) => void
-  ): UnaryResponse;
-  createWebhook(
-    requestMessage: proto_autoops_service_pb.CreateWebhookRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.CreateWebhookResponse|null) => void
-  ): UnaryResponse;
-  createWebhook(
-    requestMessage: proto_autoops_service_pb.CreateWebhookRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.CreateWebhookResponse|null) => void
-  ): UnaryResponse;
-  getWebhook(
-    requestMessage: proto_autoops_service_pb.GetWebhookRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.GetWebhookResponse|null) => void
-  ): UnaryResponse;
-  getWebhook(
-    requestMessage: proto_autoops_service_pb.GetWebhookRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.GetWebhookResponse|null) => void
-  ): UnaryResponse;
-  updateWebhook(
-    requestMessage: proto_autoops_service_pb.UpdateWebhookRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.UpdateWebhookResponse|null) => void
-  ): UnaryResponse;
-  updateWebhook(
-    requestMessage: proto_autoops_service_pb.UpdateWebhookRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.UpdateWebhookResponse|null) => void
-  ): UnaryResponse;
-  deleteWebhook(
-    requestMessage: proto_autoops_service_pb.DeleteWebhookRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.DeleteWebhookResponse|null) => void
-  ): UnaryResponse;
-  deleteWebhook(
-    requestMessage: proto_autoops_service_pb.DeleteWebhookRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.DeleteWebhookResponse|null) => void
-  ): UnaryResponse;
-  listWebhooks(
-    requestMessage: proto_autoops_service_pb.ListWebhooksRequest,
-    metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ListWebhooksResponse|null) => void
-  ): UnaryResponse;
-  listWebhooks(
-    requestMessage: proto_autoops_service_pb.ListWebhooksRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.ListWebhooksResponse|null) => void
   ): UnaryResponse;
   createProgressiveRollout(
     requestMessage: proto_autoops_service_pb.CreateProgressiveRolloutRequest,

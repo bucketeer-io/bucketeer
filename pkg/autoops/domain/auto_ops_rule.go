@@ -32,7 +32,6 @@ var (
 
 	OpsEventRateClause = &proto.OpsEventRateClause{}
 	DatetimeClause     = &proto.DatetimeClause{}
-	WebhookClause      = &proto.WebhookClause{}
 )
 
 type AutoOpsRule struct {
@@ -44,7 +43,6 @@ func NewAutoOpsRule(
 	opsType proto.OpsType,
 	opsEventRateClauses []*proto.OpsEventRateClause,
 	datetimeClauses []*proto.DatetimeClause,
-	webhookClauses []*proto.WebhookClause,
 ) (*AutoOpsRule, error) {
 	now := time.Now().Unix()
 	id, err := uuid.NewUUID()
@@ -66,11 +64,6 @@ func NewAutoOpsRule(
 	}
 	for _, c := range datetimeClauses {
 		if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
-			return nil, err
-		}
-	}
-	for _, c := range webhookClauses {
-		if _, err := autoOpsRule.AddWebhookClause(c); err != nil {
 			return nil, err
 		}
 	}
@@ -116,18 +109,6 @@ func (a *AutoOpsRule) AddDatetimeClause(dc *proto.DatetimeClause) (*proto.Clause
 		return nil, err
 	}
 	return a.addClause(ac)
-}
-
-func (a *AutoOpsRule) AddWebhookClause(wc *proto.WebhookClause) (*proto.Clause, error) {
-	ac, err := ptypes.MarshalAny(wc)
-	if err != nil {
-		return nil, err
-	}
-	return a.addClause(ac)
-}
-
-func (a *AutoOpsRule) ChangeWebhookClause(id string, wc *proto.WebhookClause) error {
-	return a.changeClause(id, wc)
 }
 
 func (a *AutoOpsRule) addClause(ac *any.Any) (*proto.Clause, error) {
@@ -233,32 +214,6 @@ func (a *AutoOpsRule) ExtractDatetimeClauses() ([]*proto.DatetimeClause, error) 
 func (a *AutoOpsRule) unmarshalDatetimeClause(clause *proto.Clause) (*proto.DatetimeClause, error) {
 	if ptypes.Is(clause.Clause, DatetimeClause) {
 		c := &proto.DatetimeClause{}
-		if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
-			return nil, err
-		}
-		return c, nil
-	}
-	return nil, nil
-}
-
-func (a *AutoOpsRule) ExtractWebhookClauses() ([]*proto.WebhookClause, error) {
-	webhookClauses := []*proto.WebhookClause{}
-	for _, c := range a.Clauses {
-		webhookClause, err := a.unmarshalWebhookClause(c)
-		if err != nil {
-			return nil, err
-		}
-		if webhookClause == nil {
-			continue
-		}
-		webhookClauses = append(webhookClauses, webhookClause)
-	}
-	return webhookClauses, nil
-}
-
-func (a *AutoOpsRule) unmarshalWebhookClause(clause *proto.Clause) (*proto.WebhookClause, error) {
-	if ptypes.Is(clause.Clause, WebhookClause) {
-		c := &proto.WebhookClause{}
 		if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
 			return nil, err
 		}

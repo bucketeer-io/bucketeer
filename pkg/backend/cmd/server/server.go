@@ -17,9 +17,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"net/url"
-	"path"
 	"regexp"
 	"time"
 
@@ -34,11 +31,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
 	autoopsapi "github.com/bucketeer-io/bucketeer/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
-	"github.com/bucketeer-io/bucketeer/pkg/autoops/webhookhandler"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/crypto"
 	environmentapi "github.com/bucketeer-io/bucketeer/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	eventcounterapi "github.com/bucketeer-io/bucketeer/pkg/eventcounter/api"
@@ -67,8 +62,6 @@ import (
 const (
 	command                       = "server"
 	gcp                           = "gcp"
-	aws                           = "aws"
-	autoOpsWebhookPath            = "hook"
 	featureFlagTriggerWebhookPath = "webhook/triggers"
 	healthCheckTimeout            = 1 * time.Second
 	clientDialTimeout             = 30 * time.Second
@@ -507,16 +500,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go auditLogServer.Run()
 	// autoOpsService
-	autoOpsService, autoOpsWebhookHandler, err := s.createAutoOpsService(
-		ctx,
+	autoOpsService := autoopsapi.NewAutoOpsService(
+		mysqlClient,
+		featureClient,
+		experimentClient,
 		accountClient,
 		authClient,
-		experimentClient,
-		featureClient,
-		mysqlClient,
 		domainTopicPublisher,
-		verifier,
-		logger,
+		autoopsapi.WithLogger(logger),
 	)
 	if err != nil {
 		return err
@@ -527,7 +518,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
-		rpc.WithHandler(fmt.Sprintf("/%s", autoOpsWebhookPath), autoOpsWebhookHandler),
 	)
 	go autoOpsServer.Run()
 	// environmentService
@@ -777,55 +767,6 @@ func (s *server) createAuthService(
 	return authapi.NewAuthService(o, signer, accountClient, serviceOptions...), nil
 }
 
-func (s *server) createAutoOpsService(
-	ctx context.Context,
-	accountClient accountclient.Client,
-	authClient authclient.Client,
-	experimentClient experimentclient.Client,
-	featureClient featureclient.Client,
-	mysqlClient mysql.Client,
-	domainTopicPublisher publisher.Publisher,
-	verifier token.Verifier,
-	logger *zap.Logger,
-) (rpc.Service, http.Handler, error) {
-	u, err := url.Parse(*s.webhookBaseURL)
-	if err != nil {
-		return nil, nil, err
-	}
-	u.Path = path.Join(u.Path, autoOpsWebhookPath)
-
-	webhookCryptoUtil, err := s.createCryptoUtil(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	autoOpsService := autoopsapi.NewAutoOpsService(
-		mysqlClient,
-		featureClient,
-		experimentClient,
-		accountClient,
-		authClient,
-		domainTopicPublisher,
-		u,
-		webhookCryptoUtil,
-		autoopsapi.WithLogger(logger),
-	)
-	autoOpsWebhookHandler, err := webhookhandler.NewHandler(
-		mysqlClient,
-		authClient,
-		featureClient,
-		domainTopicPublisher,
-		verifier,
-		*s.serviceTokenPath,
-		webhookCryptoUtil,
-		webhookhandler.WithLogger(logger),
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	return autoOpsService, autoOpsWebhookHandler, nil
-}
-
 func (s *server) createFeatureService(
 	ctx context.Context,
 	accountClient accountclient.Client,
@@ -850,27 +791,4 @@ func (s *server) createFeatureService(
 	)
 
 	return featureService, nil
-}
-
-func (s *server) createCryptoUtil(
-	ctx context.Context,
-) (crypto.EncrypterDecrypter, error) {
-	var (
-		cryptoUtil crypto.EncrypterDecrypter
-		err        error
-	)
-	switch *s.cloudService {
-	case gcp:
-		cryptoUtil, err = crypto.NewCloudKMSCrypto(ctx, *s.webhookKMSResourceName)
-		if err != nil {
-			return nil, err
-		}
-	case aws:
-		// TODO: Get region from command-line flags
-		cryptoUtil, err = crypto.NewAwsKMSCrypto(ctx, *s.webhookKMSResourceName, "ap-northeast-1")
-		if err != nil {
-			return nil, err
-		}
-	}
-	return cryptoUtil, nil
 }

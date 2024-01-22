@@ -25,7 +25,6 @@ message CreateAutoOpsRuleCommand {
   OpsType ops_type = 2;
   repeated OpsEventRateClause ops_event_rate_clauses = 3;
   repeated DatetimeClause datetime_clauses = 4;
-  repeated WebhookClause webhook_clauses = 5;
 }
 
 message ChangeAutoOpsRuleOpsTypeCommand {
@@ -56,30 +55,6 @@ message AddDatetimeClauseCommand {
 message ChangeDatetimeClauseCommand {
   string id = 1;
   DatetimeClause datetime_clause = 2;
-}
-
-message CreateWebhookCommand {
-  string name = 1;
-  string description = 2;
-}
-
-message ChangeWebhookNameCommand {
-  string name = 1;
-}
-
-message ChangeWebhookDescriptionCommand {
-  string description = 1;
-}
-
-message DeleteWebhookCommand {}
-
-message AddWebhookClauseCommand {
-  WebhookClause webhook_clause = 1;
-}
-
-message ChangeWebhookClauseCommand {
-  string id = 1;
-  WebhookClause webhook_clause = 2;
 }
 
 message CreateProgressiveRolloutCommand {
