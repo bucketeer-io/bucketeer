@@ -195,12 +195,12 @@ func (p *persister) Run() error {
 			if exist {
 				p.logger.Debug("There are untriggered auto ops rules")
 				if !p.IsRunning() {
-					p.group = errgroup.Group{}
 					err = p.createNewPuller()
 					if err != nil {
 						p.logger.Error("Failed to create new puller", zap.Error(err))
 						return err
 					}
+					p.group = errgroup.Group{}
 					subscription <- struct{}{}
 					p.logger.Debug("Puller is not running, start pulling messages")
 				}
@@ -210,7 +210,7 @@ func (p *persister) Run() error {
 					p.logger.Debug("Puller is running, stop pulling messages")
 					p.unsubscribe()
 				}
-				// delete subscription if subscription exists
+				// delete subscription if it exists
 				exists, err := p.client.SubscriptionExists(p.subscription)
 				if err != nil {
 					p.logger.Error("Failed to check subscription existence", zap.Error(err))
@@ -282,7 +282,7 @@ func (p *persister) subscribe(subscription chan struct{}) {
 		select {
 		case <-subscription:
 			p.isRunning = true
-			p.logger.Debug("Puller start subscribing")
+			p.logger.Debug("Puller started subscribing")
 			ctx, cancel := context.WithCancel(context.Background())
 			p.runningPullerCtx = ctx
 			p.runningPullerCancel = cancel
@@ -290,12 +290,12 @@ func (p *persister) subscribe(subscription chan struct{}) {
 				err := p.rateLimitedPuller.Run(ctx)
 				if err != nil {
 					if strings.Contains(err.Error(), pubsubErrNotFound) {
-						p.logger.Debug("Subscription does not exist",
+						p.logger.Debug("Failed to pull messages. Subscription does not exist",
 							zap.String("subscription", p.subscription))
 						p.unsubscribe()
 						return nil
 					}
-					p.logger.Error("Puller pulling messages error", zap.Error(err))
+					p.logger.Error("Failed to pull messages", zap.Error(err))
 					return err
 				}
 				return nil
@@ -305,7 +305,7 @@ func (p *persister) subscribe(subscription chan struct{}) {
 			}
 			err := p.group.Wait()
 			if err != nil {
-				p.logger.Error("Running puller error", zap.Error(err))
+				p.logger.Error("Failed while running pull messages", zap.Error(err))
 			}
 			p.logger.Debug("Puller stopped subscribing")
 			p.isRunning = false

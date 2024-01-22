@@ -240,6 +240,7 @@ func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) 
 	for retry.WaitNext() {
 		ok, err := sub.Exists(ctx)
 		if err != nil {
+			lastErr = err
 			continue
 		}
 		if ok {
@@ -278,8 +279,7 @@ func (c *Client) DeleteSubscription(id string) error {
 	sub := c.Client.Subscription(id)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err := sub.Delete(ctx)
-	return err
+	return sub.Delete(ctx)
 }
 
 func (c *Client) DeleteSubscriptionIfExist(id string) error {
