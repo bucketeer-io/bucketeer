@@ -112,22 +112,6 @@ var (
 		codes.InvalidArgument,
 		"autoops: interval is unknown for a progressive rollout",
 	)
-	statusProgressiveRolloutFeatureDisabled = gstatus.New(
-		codes.FailedPrecondition,
-		"autoops: can not create a progressive rollout when the feature is disabled",
-	)
-	statusProgressiveRolloutFeatureHasPrerequisitess = gstatus.New(
-		codes.FailedPrecondition,
-		"autoops: can not create a progressive rollout when the feature has prerequisites",
-	)
-	statusProgressiveRolloutFeatureHasIndividualTargeting = gstatus.New(
-		codes.FailedPrecondition,
-		"autoops: can not create a progressive rollout when the feature has targets",
-	)
-	statusProgressiveRolloutFeatureHasRules = gstatus.New(
-		codes.FailedPrecondition,
-		"autoops: can not create a progressive rollout when the feature flag has targeting rules set",
-	)
 	statusProgressiveRolloutAutoOpsHasDatetime = gstatus.New(
 		codes.FailedPrecondition,
 		"autoops: can not create a progressive rollout when a schedule is set in the auto ops",
@@ -175,9 +159,5 @@ var (
 	statusProgressiveRolloutScheduleIDRequired = gstatus.New(
 		codes.InvalidArgument,
 		"autoops: schedule id must be specified for a progressive rollout",
-	)
-	statusWaitingOrRunningProgressiveRolloutExists = gstatus.New(
-		codes.FailedPrecondition,
-		"autoops: progressive rollout in waiting or running status exists",
 	)
 )

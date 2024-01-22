@@ -124,6 +124,7 @@ const (
 	AutoOpsInvalidScheduleSpans             = "AutoOpsInvalidScheduleSpans"
 	AutoOpsInvalidVariationSize             = "AutoOpsInvalidVariationSize"
 	AutoOpsWaitingOrRunningExperimentExists = "AutoOpsWaitingOrRunningExperimentExists"
+	AutoOpsProgressiveRolloutInProgress     = "AutoOpsProgressiveRolloutInProgress"
 )
 
 // domain events

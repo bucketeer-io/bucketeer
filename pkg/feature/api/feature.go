@@ -875,7 +875,7 @@ func (s *FeatureService) existsRunningProgressiveRollout(
 	ctx context.Context,
 	featureID, environmentNamespace string,
 ) (bool, error) {
-	progressiveRollouts, err := s.listProgressiveRollouts(ctx, environmentNamespace, featureID)
+	progressiveRollouts, err := s.listProgressiveRollouts(ctx, featureID, environmentNamespace)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list progressiveRollouts",
@@ -1158,9 +1158,6 @@ func (s *FeatureService) updateFeature(
 		}
 		return dt.Err()
 	}
-	if err := s.validateFeatureStatus(ctx, id, environmentNamespace, localizer); err != nil {
-		return err
-	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -1389,8 +1386,15 @@ func (s *FeatureService) UpdateFeatureVariations(
 			return err
 		}
 		for _, cmd := range commands {
-			if err := validateFeatureVariationsCommand(features, cmd, localizer); err != nil {
-				s.logger.Info(
+			if err := s.validateFeatureVariationsCommand(
+				ctx,
+				features,
+				req.EnvironmentNamespace,
+				req.Id,
+				cmd,
+				localizer,
+			); err != nil {
+				s.logger.Error(
 					"Invalid argument",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
@@ -1596,7 +1600,14 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			return err
 		}
 		for _, cmd := range commands {
-			if err := validateFeatureTargetingCommand(features, f, cmd, localizer); err != nil {
+			if err := s.validateFeatureTargetingCommand(
+				ctx,
+				req.EnvironmentNamespace,
+				features,
+				f,
+				cmd,
+				localizer,
+			); err != nil {
 				s.logger.Info(
 					"Invalid argument",
 					log.FieldsFromImcomingContext(ctx).AddFields(
