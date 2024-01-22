@@ -6198,6 +6198,10 @@
                 "integer": 38
               },
               {
+                "name": "FEATURE_RULES_ORDER_CHANGED",
+                "integer": 39
+              },
+              {
                 "name": "GOAL_CREATED",
                 "integer": 100
               },
@@ -7124,6 +7128,22 @@
                 "id": 3,
                 "name": "strategy",
                 "type": "bucketeer.feature.Strategy"
+              }
+            ]
+          },
+          {
+            "name": "FeatureRulesOrderChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "rule_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -12748,6 +12768,17 @@
                 "id": 3,
                 "name": "strategy",
                 "type": "Strategy"
+              }
+            ]
+          },
+          {
+            "name": "ChangeRulesOrderCommand",
+            "fields": [
+              {
+                "id": 2,
+                "name": "rule_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },

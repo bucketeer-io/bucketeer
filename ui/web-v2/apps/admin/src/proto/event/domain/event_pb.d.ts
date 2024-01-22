@@ -142,6 +142,7 @@ export namespace Event {
     PREREQUISITE_ADDED: 36;
     PREREQUISITE_REMOVED: 37;
     PREREQUISITE_VARIATION_CHANGED: 38;
+    FEATURE_RULES_ORDER_CHANGED: 39;
     GOAL_CREATED: 100;
     GOAL_RENAMED: 101;
     GOAL_DESCRIPTION_CHANGED: 102;
@@ -852,6 +853,32 @@ export namespace FeatureChangeRuleStrategyEvent {
     featureId: string,
     ruleId: string,
     strategy?: proto_feature_strategy_pb.Strategy.AsObject,
+  }
+}
+
+export class FeatureRulesOrderChangedEvent extends jspb.Message {
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  clearRuleIdsList(): void;
+  getRuleIdsList(): Array<string>;
+  setRuleIdsList(value: Array<string>): void;
+  addRuleIds(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FeatureRulesOrderChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FeatureRulesOrderChangedEvent): FeatureRulesOrderChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FeatureRulesOrderChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FeatureRulesOrderChangedEvent;
+  static deserializeBinaryFromReader(message: FeatureRulesOrderChangedEvent, reader: jspb.BinaryReader): FeatureRulesOrderChangedEvent;
+}
+
+export namespace FeatureRulesOrderChangedEvent {
+  export type AsObject = {
+    featureId: string,
+    ruleIdsList: Array<string>,
   }
 }
 

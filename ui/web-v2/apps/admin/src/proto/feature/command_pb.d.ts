@@ -541,6 +541,28 @@ export namespace ChangeRuleStrategyCommand {
   }
 }
 
+export class ChangeRulesOrderCommand extends jspb.Message {
+  clearRuleIdsList(): void;
+  getRuleIdsList(): Array<string>;
+  setRuleIdsList(value: Array<string>): void;
+  addRuleIds(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeRulesOrderCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: ChangeRulesOrderCommand): ChangeRulesOrderCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ChangeRulesOrderCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeRulesOrderCommand;
+  static deserializeBinaryFromReader(message: ChangeRulesOrderCommand, reader: jspb.BinaryReader): ChangeRulesOrderCommand;
+}
+
+export namespace ChangeRulesOrderCommand {
+  export type AsObject = {
+    ruleIdsList: Array<string>,
+  }
+}
+
 export class DeleteRuleCommand extends jspb.Message {
   getId(): string;
   setId(value: string): void;

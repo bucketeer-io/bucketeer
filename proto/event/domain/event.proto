@@ -95,6 +95,7 @@ message Event {
     PREREQUISITE_ADDED = 36;
     PREREQUISITE_REMOVED = 37;
     PREREQUISITE_VARIATION_CHANGED = 38;
+    FEATURE_RULES_ORDER_CHANGED = 39;
     GOAL_CREATED = 100;
     GOAL_RENAMED = 101;
     GOAL_DESCRIPTION_CHANGED = 102;
@@ -347,6 +348,11 @@ message FeatureChangeRuleStrategyEvent {
   string feature_id = 1;
   string rule_id = 2;
   bucketeer.feature.Strategy strategy = 3;
+}
+
+message FeatureRulesOrderChangedEvent {
+  string feature_id = 1;
+  repeated string rule_ids = 2;
 }
 
 message FeatureRuleDeletedEvent {
