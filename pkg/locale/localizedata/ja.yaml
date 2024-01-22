@@ -47,6 +47,7 @@ RuleFixedStrategyVariation: "ルールストラテジーのバリエーション
 RuleOperator: "ルールオペレーター"
 RuleRolloutStrategyVariation: "ルールストラテジーのバリエーション割合"
 RuleStrategy: "ルールストラテジー"
+RulesOrder: "ルール順序"
 Segment: "セグメント"
 SegmentRule: "セグメントルール"
 SegmentRuleAttribute: "セグメントルールのアトリビュート"
