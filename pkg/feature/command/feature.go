@@ -75,6 +75,8 @@ func (h *FeatureCommandHandler) Handle(ctx context.Context, cmd Command) error {
 		return h.AddRule(ctx, c)
 	case *proto.ChangeRuleStrategyCommand:
 		return h.ChangeRuleStrategy(ctx, c)
+	case *proto.ChangeRulesOrderCommand:
+		return h.ChangeRulesOrder(ctx, c)
 	case *proto.DeleteRuleCommand:
 		return h.DeleteRule(ctx, c)
 	case *proto.AddClauseCommand:
@@ -414,6 +416,24 @@ func (h *FeatureCommandHandler) ChangeRuleStrategy(ctx context.Context, cmd *pro
 			FeatureId: h.feature.Id,
 			RuleId:    cmd.RuleId,
 			Strategy:  cmd.Strategy,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	h.Events = append(h.Events, event)
+	return nil
+}
+
+func (h *FeatureCommandHandler) ChangeRulesOrder(ctx context.Context, cmd *proto.ChangeRulesOrderCommand) error {
+	if err := h.feature.ChangeRulesOrder(cmd.RuleIds); err != nil {
+		return err
+	}
+	event, err := h.eventFactory.CreateEvent(
+		eventproto.Event_FEATURE_RULES_ORDER_CHANGED,
+		&eventproto.FeatureRulesOrderChangedEvent{
+			FeatureId: h.feature.Id,
+			RuleIds:   cmd.RuleIds,
 		},
 	)
 	if err != nil {

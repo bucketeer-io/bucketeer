@@ -76,6 +76,7 @@ const (
 	RuleAttribute                = "RuleAttribute"
 	RuleCondition                = "RuleCondition"
 	RuleFixedStrategyVariation   = "RuleFixedStrategyVariation"
+	RulesOrder                   = "RulesOrder"
 	RuleOperator                 = "RuleOperator"
 	RuleRolloutStrategyVariation = "RuleRolloutStrategyVariation"
 	RuleStrategy                 = "RuleStrategy"

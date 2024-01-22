@@ -53,6 +53,8 @@ var (
 	ErrAlreadyEnabled                = errors.New("feature: already enabled")
 	ErrAlreadyDisabled               = errors.New("feature: already disabled")
 	ErrLastUsedInfoNotFound          = errors.New("feature: last used info not found")
+	errRulesOrderSizeNotEqual        = errors.New("feature: rules order size not equal")
+	errRulesOrderDuplicateIDs        = errors.New("feature: rules order contains duplicate ids")
 )
 
 // TODO: think about splitting out ruleset / variation
@@ -312,6 +314,37 @@ func (f *Feature) ChangeRuleStrategy(ruleID string, strategy *feature.Strategy) 
 	f.Rules[idx].Strategy = strategy
 	f.UpdatedAt = time.Now().Unix()
 	return nil
+}
+
+func (f *Feature) ChangeRulesOrder(ruleIDs []string) error {
+	if len(ruleIDs) != len(f.Rules) {
+		return errRulesOrderSizeNotEqual
+	}
+	rules := make([]*feature.Rule, 0, len(ruleIDs))
+	for _, ruleID := range ruleIDs {
+		for _, r := range rules {
+			if r.Id == ruleID {
+				return errRulesOrderDuplicateIDs
+			}
+		}
+		rule, err := f.getRule(ruleID)
+		if err != nil {
+			return errRuleNotFound
+		}
+		rules = append(rules, rule)
+	}
+	f.Rules = rules
+	f.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (f *Feature) getRule(id string) (*feature.Rule, error) {
+	for _, rule := range f.Rules {
+		if rule.Id == id {
+			return rule, nil
+		}
+	}
+	return nil, errRuleNotFound
 }
 
 func validateStrategy(strategy *feature.Strategy, variations []*feature.Variation) error {

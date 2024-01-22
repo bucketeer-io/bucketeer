@@ -210,6 +210,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.RuleRolloutStrategyVariation),
 			),
 		}
+	case proto.Event_FEATURE_RULES_ORDER_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ChangedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.RulesOrder),
+			),
+		}
 	case proto.Event_CLAUSE_ATTRIBUTE_CHANGED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
