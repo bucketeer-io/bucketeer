@@ -142,7 +142,7 @@ func TestPatchEnvironmentRole(t *testing.T) {
 			desc: "append a new role",
 			envRoles: []*proto.AccountV2_EnvironmentRole{
 				{
-					EnvironmentId: "environmentID2",
+					EnvironmentId: "environmentID3",
 					Role:          proto.AccountV2_Role_Environment_EDITOR,
 				},
 			},
@@ -153,6 +153,11 @@ func TestPatchEnvironmentRole(t *testing.T) {
 				},
 				{
 					EnvironmentId: "environmentID2",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+				{
+
+					EnvironmentId: "environmentID3",
 					Role:          proto.AccountV2_Role_Environment_EDITOR,
 				},
 			},
@@ -170,6 +175,10 @@ func TestPatchEnvironmentRole(t *testing.T) {
 					EnvironmentId: "environmentID",
 					Role:          proto.AccountV2_Role_Environment_EDITOR,
 				},
+				{
+					EnvironmentId: "environmentID2",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
 			},
 		},
 		{
@@ -185,6 +194,10 @@ func TestPatchEnvironmentRole(t *testing.T) {
 					EnvironmentId: "environmentID",
 					Role:          proto.AccountV2_Role_Environment_VIEWER,
 				},
+				{
+					EnvironmentId: "environmentID2",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
 			},
 		},
 		{
@@ -192,20 +205,24 @@ func TestPatchEnvironmentRole(t *testing.T) {
 			envRoles: []*proto.AccountV2_EnvironmentRole{
 				{
 					EnvironmentId: "environmentID",
-					Role:          proto.AccountV2_Role_Environment_VIEWER,
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
 				},
 				{
-					EnvironmentId: "environmentID2",
+					EnvironmentId: "environmentID3",
 					Role:          proto.AccountV2_Role_Environment_EDITOR,
 				},
 			},
 			expected: []*proto.AccountV2_EnvironmentRole{
 				{
 					EnvironmentId: "environmentID",
-					Role:          proto.AccountV2_Role_Environment_VIEWER,
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
 				},
 				{
 					EnvironmentId: "environmentID2",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+				{
+					EnvironmentId: "environmentID3",
 					Role:          proto.AccountV2_Role_Environment_EDITOR,
 				},
 			},
@@ -223,6 +240,10 @@ func TestPatchEnvironmentRole(t *testing.T) {
 					{
 						EnvironmentId: "environmentID",
 						Role:          proto.AccountV2_Role_Environment_VIEWER,
+					},
+					{
+						EnvironmentId: "environmentID2",
+						Role:          proto.AccountV2_Role_Environment_EDITOR,
 					},
 				},
 			)
