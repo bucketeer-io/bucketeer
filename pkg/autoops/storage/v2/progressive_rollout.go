@@ -17,12 +17,28 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+)
+
+var (
+	//go:embed sql/ops_progressive_rollout/insert_ops_progressive_rollout.sql
+	insertOpsProgressiveRolloutSQL string
+	//go:embed sql/ops_progressive_rollout/update_ops_progressive_rollout.sql
+	updateOpsProgressiveRolloutSQL string
+	//go:embed sql/ops_progressive_rollout/select_ops_progressive_rollout.sql
+	selectOpsProgressiveRolloutSQL string
+	//go:embed sql/ops_progressive_rollout/select_ops_progressive_rollouts.sql
+	selectOpsProgressiveRolloutsSQL string
+	//go:embed sql/ops_progressive_rollout/count_ops_progressive_rollouts.sql
+	countOpsProgressiveRolloutsSQL string
+	//go:embed sql/ops_progressive_rollout/delete_ops_progressive_rollout.sql
+	deleteOpsProgressiveRolloutSQL string
 )
 
 var (
@@ -64,23 +80,9 @@ func (s *progressiveRolloutStorage) CreateProgressiveRollout(
 	progressiveRollout *domain.ProgressiveRollout,
 	environmentNamespace string,
 ) error {
-	query := `
-		INSERT INTO ops_progressive_rollout (
-			id,
-			feature_id,
-			clause,
-			status,
-			type,
-			created_at,
-			updated_at,
-			environment_namespace
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertOpsProgressiveRolloutSQL,
 		progressiveRollout.Id,
 		progressiveRollout.FeatureId,
 		mysql.JSONObject{Val: progressiveRollout.Clause},
@@ -104,24 +106,9 @@ func (s *progressiveRolloutStorage) GetProgressiveRollout(
 	id, environmentNamespace string,
 ) (*domain.ProgressiveRollout, error) {
 	progressiveRollout := autoopsproto.ProgressiveRollout{}
-	query := `
-		SELECT
-			id,
-			feature_id,
-			clause,
-			status,
-			type,
-			created_at,
-			updated_at
-		FROM
-			ops_progressive_rollout
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectOpsProgressiveRolloutSQL,
 		id,
 		environmentNamespace,
 	).Scan(
@@ -146,16 +133,9 @@ func (s *progressiveRolloutStorage) DeleteProgressiveRollout(
 	ctx context.Context,
 	id, environmentNamespace string,
 ) error {
-	query := `
-		DELETE FROM
-			ops_progressive_rollout
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		deleteOpsProgressiveRolloutSQL,
 		id,
 		environmentNamespace,
 	)
@@ -181,19 +161,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			feature_id,
-			clause,
-			status,
-			type,
-			created_at,
-			updated_at
-		FROM
-			ops_progressive_rollout
-		%s %s %s
-	`, whereSQL, orderBySQL, limitOffsetSQL)
+	query := fmt.Sprintf(selectOpsProgressiveRolloutsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -221,14 +189,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	}
 	nextOffset := offset + len(progressiveRollouts)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			ops_progressive_rollout
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
+	countQuery := fmt.Sprintf(countOpsProgressiveRolloutsSQL, whereSQL, orderBySQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
@@ -241,23 +202,9 @@ func (s *progressiveRolloutStorage) UpdateProgressiveRollout(
 	progressiveRollout *domain.ProgressiveRollout,
 	environmentNamespace string,
 ) error {
-	query := `
-		UPDATE 
-			ops_progressive_rollout
-		SET
-			feature_id = ?,
-			clause = ?,
-			status = ?,
-			type = ?,
-			created_at = ?,
-			updated_at = ?
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateOpsProgressiveRolloutSQL,
 		&progressiveRollout.FeatureId,
 		&mysql.JSONObject{Val: &progressiveRollout.Clause},
 		&progressiveRollout.Status,
