@@ -4,7 +4,7 @@ global:
     imagePullSecrets:
 
 env:
-  logLevel: info
+  logLevel: debug
   profile: false
   gcpEnabled: false
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
