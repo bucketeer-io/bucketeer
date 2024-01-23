@@ -1076,8 +1076,36 @@ func validateCloneFeatureRequest(req *featureproto.CloneFeatureRequest, localize
 	return nil
 }
 
+func validateUpdateFeatureTargetingRequest(
+	req *featureproto.UpdateFeatureTargetingRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Id == "" {
+		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.From == featureproto.UpdateFeatureTargetingRequest_UNKNOWN {
+		dt, err := statusMissingFrom.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "from"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
 func (s *FeatureService) validateFeatureTargetingCommand(
 	ctx context.Context,
+	from featureproto.UpdateFeatureTargetingRequest_From,
 	environmentID string,
 	fs []*featureproto.Feature,
 	tarF *featureproto.Feature,
@@ -1090,7 +1118,7 @@ func (s *FeatureService) validateFeatureTargetingCommand(
 	case *featureproto.ChangeRuleStrategyCommand:
 		return validateChangeRuleStrategy(tarF.Variations, c, localizer)
 	case *featureproto.ChangeDefaultStrategyCommand:
-		return s.validateChangeDefaultStrategy(ctx, environmentID, tarF.Id, tarF.Variations, c, localizer)
+		return s.validateChangeDefaultStrategy(ctx, from, environmentID, tarF.Id, tarF.Variations, c, localizer)
 	case *featureproto.ChangeFixedStrategyCommand:
 		return validateChangeFixedStrategy(c, localizer)
 	case *featureproto.ChangeRolloutStrategyCommand:
@@ -1150,13 +1178,18 @@ func validateChangeRuleStrategy(
 // Otherwise, it could conflict with the rollout rules.
 func (s *FeatureService) validateChangeDefaultStrategy(
 	ctx context.Context,
+	from featureproto.UpdateFeatureTargetingRequest_From,
 	environmentID, featureID string,
 	variations []*featureproto.Variation,
 	cmd *featureproto.ChangeDefaultStrategyCommand,
 	localizer locale.Localizer,
 ) error {
-	if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, featureID, localizer); err != nil {
-		return err
+	// Because the progressive rollout changes the default strategy,
+	// We must check from where the request comes
+	if from == featureproto.UpdateFeatureTargetingRequest_USER {
+		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, featureID, localizer); err != nil {
+			return err
+		}
 	}
 	if cmd.Strategy == nil {
 		dt, err := statusMissingRuleStrategy.WithDetails(&errdetails.LocalizedMessage{
