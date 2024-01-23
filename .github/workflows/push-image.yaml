@@ -27,7 +27,7 @@ on:
       - "CLA.md"
       - "CONTRIBUTING.md"
       - "DEPLOYMENT.md"
-      - ".github/workflows/**"
+      - ".github/**"
 
 env:
   GHCR_REGISTRY: ghcr.io/bucketeer-io
