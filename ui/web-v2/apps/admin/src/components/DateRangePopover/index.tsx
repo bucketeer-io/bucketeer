@@ -113,7 +113,6 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
     };
 
     const handleClear = (e) => {
-      console.log(e);
       e.stopPropagation();
       setRanges([
         {

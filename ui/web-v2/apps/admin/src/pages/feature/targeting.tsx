@@ -6,7 +6,6 @@ import React, { useCallback, useState, FC, memo, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { v4 as uuid } from 'uuid';
 
 import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
 import {
@@ -48,6 +47,7 @@ import {
   ResetSamplingSeedCommand,
   RemovePrerequisiteCommand,
   ChangePrerequisiteVariationCommand,
+  ChangeRulesOrderCommand,
 } from '../../proto/feature/command_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Prerequisite } from '../../proto/feature/prerequisite_pb';
@@ -384,6 +384,7 @@ export function createRuleCommands(org: any, val: any): Command[] {
   const commands: Array<Command> = [];
   const orgIds = org.map((r) => r.id);
   const valIds = val.map((r) => r.id);
+
   org
     .filter((r) => !valIds.includes(r.id))
     .forEach((r) => {
@@ -393,6 +394,7 @@ export function createRuleCommands(org: any, val: any): Command[] {
         createCommand({ message: command, name: 'DeleteRuleCommand' })
       );
     });
+
   val
     .filter((r) => !orgIds.includes(r.id))
     .forEach((r) => {
@@ -402,12 +404,62 @@ export function createRuleCommands(org: any, val: any): Command[] {
         createCommand({ message: command, name: 'AddRuleCommand' })
       );
     });
+
+  let orderChanged = false;
+  const orgIdsAfterDeletedIdsRemoved = orgIds.filter((orgId) =>
+    valIds.includes(orgId)
+  );
+
+  // check if any rule is deleted
+  if (org.find((r) => !valIds.includes(r.id))) {
+    // check if order changed
+    if (
+      !orderChanged &&
+      valIds.slice(0, orgIdsAfterDeletedIdsRemoved.length).toString() !==
+        orgIdsAfterDeletedIdsRemoved.toString()
+    ) {
+      orderChanged = true;
+      commands.push(createChangeRulesOrderCommand(valIds));
+    }
+  }
+
+  // check if any rule is added
+  if (val.find((r) => !orgIds.includes(r.id))) {
+    // check if order changed
+    if (
+      !orderChanged &&
+      orgIdsAfterDeletedIdsRemoved.toString() !==
+        valIds.slice(0, orgIdsAfterDeletedIdsRemoved.length).toString()
+    ) {
+      orderChanged = true;
+      commands.push(createChangeRulesOrderCommand(valIds));
+    }
+  }
+
+  // check if only rule order changed
+  if (
+    !orderChanged &&
+    orgIds.length === valIds.length &&
+    orgIds.every((orgId) => valIds.includes(orgId)) &&
+    orgIds.toString() !== valIds.toString()
+  ) {
+    commands.push(createChangeRulesOrderCommand(valIds));
+  }
   return commands;
 }
 
+const createChangeRulesOrderCommand = (valIds: string[]): Command => {
+  const command = new ChangeRulesOrderCommand();
+  command.setRuleIdsList(valIds);
+  return createCommand({
+    message: command,
+    name: 'ChangeRulesOrderCommand',
+  });
+};
+
 const createRule = (rule: any): Rule => {
   const r = new Rule();
-  r.setId(uuid());
+  r.setId(rule.id);
   r.setStrategy(createStrategy(rule.strategy));
   r.setClausesList(createClauses(rule.clauses));
   return r;
