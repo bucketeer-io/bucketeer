@@ -398,6 +398,24 @@
     {
       "protopath": "account:/:command.proto",
       "def": {
+        "enums": [
+          {
+            "name": "ChangeAccountV2EnvironmentRolesCommand.WriteType",
+            "enum_fields": [
+              {
+                "name": "WriteType_UNSPECIFIED"
+              },
+              {
+                "name": "WriteType_OVERRIDE",
+                "integer": 1
+              },
+              {
+                "name": "WriteType_PATCH",
+                "integer": 2
+              }
+            ]
+          }
+        ],
         "messages": [
           {
             "name": "CreateAdminAccountCommand",
@@ -521,6 +539,11 @@
                 "name": "roles",
                 "type": "account.AccountV2.EnvironmentRole",
                 "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "write_type",
+                "type": "WriteType"
               }
             ]
           },
@@ -2725,12 +2748,14 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause"
+                "type": "ProgressiveRolloutManualScheduleClause",
+                "optional": true
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause"
+                "type": "ProgressiveRolloutTemplateScheduleClause",
+                "optional": true
               }
             ]
           },
@@ -3310,12 +3335,14 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status"
+                "type": "ProgressiveRollout.Status",
+                "optional": true
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type"
+                "type": "ProgressiveRollout.Type",
+                "optional": true
               }
             ]
           },
