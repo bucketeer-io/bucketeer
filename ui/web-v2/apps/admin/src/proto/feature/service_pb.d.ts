@@ -712,6 +712,9 @@ export class UpdateFeatureTargetingRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
+  getFrom(): UpdateFeatureTargetingRequest.FromMap[keyof UpdateFeatureTargetingRequest.FromMap];
+  setFrom(value: UpdateFeatureTargetingRequest.FromMap[keyof UpdateFeatureTargetingRequest.FromMap]): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureTargetingRequest.AsObject;
   static toObject(includeInstance: boolean, msg: UpdateFeatureTargetingRequest): UpdateFeatureTargetingRequest.AsObject;
@@ -728,7 +731,16 @@ export namespace UpdateFeatureTargetingRequest {
     commandsList: Array<proto_feature_command_pb.Command.AsObject>,
     environmentNamespace: string,
     comment: string,
+    from: UpdateFeatureTargetingRequest.FromMap[keyof UpdateFeatureTargetingRequest.FromMap],
   }
+
+  export interface FromMap {
+    UNKNOWN: 0;
+    USER: 1;
+    OPS: 2;
+  }
+
+  export const From: FromMap;
 }
 
 export class UpdateFeatureTargetingResponse extends jspb.Message {

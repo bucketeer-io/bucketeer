@@ -3103,6 +3103,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*FeatureService)
+		from        featureproto.UpdateFeatureTargetingRequest_From
 		strategy    *featureproto.Strategy
 		expectedErr error
 	}{
@@ -3119,6 +3120,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				).Return(nil, errors.New("internal"))
 			},
+			from:     featureproto.UpdateFeatureTargetingRequest_USER,
 			strategy: nil,
 			expectedErr: createError(
 				statusInternal,
@@ -3144,6 +3146,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				}, nil)
 			},
+			from:     featureproto.UpdateFeatureTargetingRequest_USER,
 			strategy: nil,
 			expectedErr: createError(
 				statusProgressiveRolloutWaitingOrRunningState,
@@ -3169,6 +3172,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				}, nil)
 			},
+			from:        featureproto.UpdateFeatureTargetingRequest_USER,
 			strategy:    nil,
 			expectedErr: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
 		},
@@ -3191,6 +3195,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				}, nil)
 			},
+			from: featureproto.UpdateFeatureTargetingRequest_USER,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
@@ -3227,6 +3232,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				}, nil)
 			},
+			from: featureproto.UpdateFeatureTargetingRequest_USER,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
@@ -3245,7 +3251,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 			expectedErr: createError(statusExceededMaxVariationWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_weight")),
 		},
 		{
-			desc: "success",
+			desc: "success: request from user",
 			setup: func(fs *FeatureService) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
@@ -3263,6 +3269,28 @@ func TestChangeDefaultStrategy(t *testing.T) {
 					},
 				}, nil)
 			},
+			from: featureproto.UpdateFeatureTargetingRequest_USER,
+			strategy: &featureproto.Strategy{
+				Type: featureproto.Strategy_ROLLOUT,
+				RolloutStrategy: &featureproto.RolloutStrategy{
+					Variations: []*featureproto.RolloutStrategy_Variation{
+						{
+							Variation: "variation-A",
+							Weight:    30000,
+						},
+						{
+							Variation: "variation-B",
+							Weight:    70000,
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:  "success: request from ops",
+			setup: func(fs *FeatureService) {},
+			from:  featureproto.UpdateFeatureTargetingRequest_OPS,
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
@@ -3288,7 +3316,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 			cmd := &featureproto.ChangeDefaultStrategyCommand{
 				Strategy: p.strategy,
 			}
-			err := service.validateChangeDefaultStrategy(ctx, "envID", f.Id, f.Variations, cmd, localizer)
+			err := service.validateChangeDefaultStrategy(ctx, p.from, "envID", f.Id, f.Variations, cmd, localizer)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

@@ -288,6 +288,7 @@ export const updateFeatureTargeting = createAsyncThunk<
   request.setId(params.id);
   request.setComment(params.comment);
   request.setCommandsList(params.commands);
+  request.setFrom(UpdateFeatureTargetingRequest.From.USER);
 
   await setupAuthToken();
   await featureGrpc.updateFeatureTargeting(request);

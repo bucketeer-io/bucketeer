@@ -1513,15 +1513,8 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	if err != nil {
 		return nil, err
 	}
-	if req.Id == "" {
-		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+	if err := validateUpdateFeatureTargetingRequest(req, localizer); err != nil {
+		return nil, err
 	}
 	commands := make([]command.Command, 0, len(req.Commands))
 	for _, c := range req.Commands {
@@ -1602,6 +1595,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		for _, cmd := range commands {
 			if err := s.validateFeatureTargetingCommand(
 				ctx,
+				req.From,
 				req.EnvironmentNamespace,
 				features,
 				f,

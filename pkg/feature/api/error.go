@@ -23,6 +23,7 @@ import (
 
 var (
 	statusInternal                   = gstatus.New(codes.Internal, "feature: internal")
+	statusMissingFrom                = gstatus.New(codes.InvalidArgument, "feature: missing from")
 	statusMissingID                  = gstatus.New(codes.InvalidArgument, "feature: missing id")
 	statusMissingIDs                 = gstatus.New(codes.InvalidArgument, "feature: missing ids")
 	statusInvalidID                  = gstatus.New(codes.InvalidArgument, "feature: invalid id")

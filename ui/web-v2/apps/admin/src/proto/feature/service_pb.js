@@ -111,6 +111,7 @@ goog.exportSymbol('proto.bucketeer.feature.UnarchiveFeatureResponse', null, glob
 goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureDetailsRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureDetailsResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureTargetingRequest', null, global);
+goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureTargetingRequest.From', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureTargetingResponse', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureVariationsRequest', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UpdateFeatureVariationsResponse', null, global);
@@ -6446,7 +6447,8 @@ proto.bucketeer.feature.UpdateFeatureTargetingRequest.toObject = function(includ
     commandsList: jspb.Message.toObjectList(msg.getCommandsList(),
     proto_feature_command_pb.Command.toObject, includeInstance),
     environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    comment: jspb.Message.getFieldWithDefault(msg, 4, "")
+    comment: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    from: jspb.Message.getFieldWithDefault(msg, 5, 0)
   };
 
   if (includeInstance) {
@@ -6499,6 +6501,10 @@ proto.bucketeer.feature.UpdateFeatureTargetingRequest.deserializeBinaryFromReade
     case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setComment(value);
+      break;
+    case 5:
+      var value = /** @type {!proto.bucketeer.feature.UpdateFeatureTargetingRequest.From} */ (reader.readEnum());
+      msg.setFrom(value);
       break;
     default:
       reader.skipField();
@@ -6558,8 +6564,24 @@ proto.bucketeer.feature.UpdateFeatureTargetingRequest.serializeBinaryToWriter = 
       f
     );
   }
+  f = message.getFrom();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      5,
+      f
+    );
+  }
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.bucketeer.feature.UpdateFeatureTargetingRequest.From = {
+  UNKNOWN: 0,
+  USER: 1,
+  OPS: 2
+};
 
 /**
  * optional string id = 1;
@@ -6650,6 +6672,24 @@ proto.bucketeer.feature.UpdateFeatureTargetingRequest.prototype.getComment = fun
  */
 proto.bucketeer.feature.UpdateFeatureTargetingRequest.prototype.setComment = function(value) {
   return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional From from = 5;
+ * @return {!proto.bucketeer.feature.UpdateFeatureTargetingRequest.From}
+ */
+proto.bucketeer.feature.UpdateFeatureTargetingRequest.prototype.getFrom = function() {
+  return /** @type {!proto.bucketeer.feature.UpdateFeatureTargetingRequest.From} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+};
+
+
+/**
+ * @param {!proto.bucketeer.feature.UpdateFeatureTargetingRequest.From} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureTargetingRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureTargetingRequest.prototype.setFrom = function(value) {
+  return jspb.Message.setProto3EnumField(this, 5, value);
 };
 
 

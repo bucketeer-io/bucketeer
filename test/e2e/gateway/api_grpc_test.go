@@ -999,6 +999,7 @@ func updateFeatureTargeting(t *testing.T, client featureclient.Client, cmd *any.
 			{Command: cmd},
 		},
 		EnvironmentNamespace: *environmentNamespace,
+		From:                 featureproto.UpdateFeatureTargetingRequest_USER,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

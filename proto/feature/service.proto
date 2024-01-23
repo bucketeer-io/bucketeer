@@ -164,10 +164,16 @@ message UpdateFeatureVariationsRequest {
 message UpdateFeatureVariationsResponse {}
 
 message UpdateFeatureTargetingRequest {
+  enum From {
+    UNKNOWN = 0;
+    USER = 1;
+    OPS = 2;
+  }
   string id = 1;
   repeated Command commands = 2;
   string environment_namespace = 3;
   string comment = 4;
+  From from = 5;
 }
 
 message UpdateFeatureTargetingResponse {}

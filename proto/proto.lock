@@ -13524,6 +13524,22 @@
             ]
           },
           {
+            "name": "UpdateFeatureTargetingRequest.From",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "USER",
+                "integer": 1
+              },
+              {
+                "name": "OPS",
+                "integer": 2
+              }
+            ]
+          },
+          {
             "name": "ListSegmentsRequest.OrderBy",
             "enum_fields": [
               {
@@ -14053,6 +14069,11 @@
                 "id": 4,
                 "name": "comment",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "from",
+                "type": "From"
               }
             ]
           },

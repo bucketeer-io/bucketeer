@@ -138,21 +138,17 @@ func updateFeatureTargeting(
 	feature *featureproto.Feature,
 	targetVariationID, environmentNamespace string,
 ) error {
-	cmds, err := getResetFeatureCmds(feature)
+	c, err := getChangeDefaultStrategyCmd(feature, schedule, targetVariationID)
 	if err != nil {
 		return err
 	}
-	c, err := getNewRuleCmd(feature, schedule, targetVariationID)
-	if err != nil {
-		return err
-	}
-	cmds = append(cmds, c)
 	_, err = featureClient.UpdateFeatureTargeting(
 		ctx,
 		&featureproto.UpdateFeatureTargetingRequest{
 			EnvironmentNamespace: environmentNamespace,
 			Id:                   feature.Id,
-			Commands:             cmds,
+			Commands:             []*featureproto.Command{c},
+			From:                 featureproto.UpdateFeatureTargetingRequest_OPS,
 		},
 	)
 	if err != nil {
@@ -161,31 +157,7 @@ func updateFeatureTargeting(
 	return nil
 }
 
-func getResetFeatureCmds(
-	feature *featureproto.Feature,
-) ([]*featureproto.Command, error) {
-	// In resetting feature, we don't delete users in feature.Targets and prerequisite.
-	cmds := make([]*featureproto.DeleteRuleCommand, 0, len(feature.Rules))
-	for _, r := range feature.Rules {
-		c := &featureproto.DeleteRuleCommand{
-			Id: r.Id,
-		}
-		cmds = append(cmds, c)
-	}
-	featureCmds := make([]*featureproto.Command, 0, len(cmds))
-	for _, c := range cmds {
-		ac, err := ptypes.MarshalAny(c)
-		if err != nil {
-			return nil, err
-		}
-		featureCmds = append(featureCmds, &featureproto.Command{
-			Command: ac,
-		})
-	}
-	return featureCmds, nil
-}
-
-func getNewRuleCmd(
+func getChangeDefaultStrategyCmd(
 	feature *featureproto.Feature,
 	schedule *autoopsproto.ProgressiveRolloutSchedule,
 	targetVariationID string,

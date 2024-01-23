@@ -2006,6 +2006,7 @@ func addFeatureIndividualTargeting(t *testing.T, featureID, userID, variationID 
 			},
 		},
 		EnvironmentNamespace: *environmentNamespace,
+		From:                 featureproto.UpdateFeatureTargetingRequest_USER,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
