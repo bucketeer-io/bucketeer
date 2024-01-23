@@ -112,6 +112,66 @@ func TestHandleV2(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			desc: "ChangeAccountV2EnvironmentRolesCommand: WriteType:override success",
+			setup: func(h *accountV2CommandHandler) {
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "env0",
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+				)
+				h.account = a
+				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			input: &accountproto.ChangeAccountV2EnvironmentRolesCommand{
+				Roles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						EnvironmentId: "env0",
+						Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+					},
+				},
+				WriteType: accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_OVERRIDE,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "ChangeAccountV2EnvironmentRolesCommand: WriteType:patch success",
+			setup: func(h *accountV2CommandHandler) {
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "env0",
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+				)
+				h.account = a
+				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			input: &accountproto.ChangeAccountV2EnvironmentRolesCommand{
+				Roles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						EnvironmentId: "env0",
+						Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+					},
+				},
+				WriteType: accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_PATCH,
+			},
+			expectedErr: nil,
+		},
+		{
 			desc: "ChangeAccountV2NameCommand: success",
 			setup: func(h *accountV2CommandHandler) {
 				a := domain.NewAccountV2(

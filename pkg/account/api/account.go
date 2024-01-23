@@ -655,6 +655,23 @@ func (s *AccountService) CreateAccountV2(
 		req.Command.OrganizationRole, req.Command.EnvironmentRoles,
 	)
 	err = s.accountStorage.RunInTransaction(ctx, func() error {
+		// TODO: temporary implementation: double write account v2 ---
+		exist, err := s.accountStorage.GetAccountV2(ctx, account.Email, req.OrganizationId)
+		if err != nil && !errors.Is(err, v2as.ErrAccountNotFound) {
+			return err
+		}
+		if exist != nil {
+			handler := command.NewAccountV2CommandHandler(editor, exist, s.publisher, req.OrganizationId)
+			cmd := &accountproto.ChangeAccountV2EnvironmentRolesCommand{
+				Roles:     account.EnvironmentRoles,
+				WriteType: accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_PATCH,
+			}
+			if err := handler.Handle(ctx, cmd); err != nil {
+				return err
+			}
+			return s.accountStorage.UpdateAccountV2(ctx, exist)
+		}
+		// TODO: temporary implementation end ---
 		handler := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
