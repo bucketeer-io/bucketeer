@@ -903,19 +903,59 @@ func validateDeleteFeatureRequest(req *featureproto.DeleteFeatureRequest, locali
 	return nil
 }
 
-func validateFeatureVariationsCommand(
+// We can't add or remove a variation when a progressive rollout is in progress, but changes can be made.
+func (s *FeatureService) validateFeatureVariationsCommand(
+	ctx context.Context,
 	fs []*featureproto.Feature,
+	environmentID, featureID string,
 	cmd command.Command,
 	localizer locale.Localizer,
 ) error {
 	switch c := cmd.(type) {
+	case *featureproto.AddVariationCommand:
+		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, featureID, localizer); err != nil {
+			return err
+		}
+		return nil
 	case *featureproto.RemoveVariationCommand:
+		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, featureID, localizer); err != nil {
+			return err
+		}
 		return validateVariationCommand(fs, c.Id, localizer)
 	case *featureproto.ChangeVariationValueCommand:
 		return validateVariationCommand(fs, c.Id, localizer)
 	default:
 		return nil
 	}
+}
+
+func (s *FeatureService) checkProgressiveRolloutInProgress(
+	ctx context.Context,
+	environmentID, featureID string,
+	localizer locale.Localizer,
+) error {
+	exists, err := s.existsRunningProgressiveRollout(ctx, featureID, environmentID)
+	if err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if exists {
+		dt, err := statusProgressiveRolloutWaitingOrRunningState.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.AutoOpsProgressiveRolloutInProgress),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }
 
 func validateArchiveFeatureRequest(
@@ -1036,7 +1076,9 @@ func validateCloneFeatureRequest(req *featureproto.CloneFeatureRequest, localize
 	return nil
 }
 
-func validateFeatureTargetingCommand(
+func (s *FeatureService) validateFeatureTargetingCommand(
+	ctx context.Context,
+	environmentID string,
 	fs []*featureproto.Feature,
 	tarF *featureproto.Feature,
 	cmd command.Command,
@@ -1048,7 +1090,7 @@ func validateFeatureTargetingCommand(
 	case *featureproto.ChangeRuleStrategyCommand:
 		return validateChangeRuleStrategy(tarF.Variations, c, localizer)
 	case *featureproto.ChangeDefaultStrategyCommand:
-		return validateChangeDefaultStrategy(tarF.Variations, c, localizer)
+		return s.validateChangeDefaultStrategy(ctx, environmentID, tarF.Id, tarF.Variations, c, localizer)
 	case *featureproto.ChangeFixedStrategyCommand:
 		return validateChangeFixedStrategy(c, localizer)
 	case *featureproto.ChangeRolloutStrategyCommand:
@@ -1104,11 +1146,18 @@ func validateChangeRuleStrategy(
 	return validateStrategy(variations, cmd.Strategy, localizer)
 }
 
-func validateChangeDefaultStrategy(
+// We can't change the default strategy when there is a progressive rollout in progress.
+// Otherwise, it could conflict with the rollout rules.
+func (s *FeatureService) validateChangeDefaultStrategy(
+	ctx context.Context,
+	environmentID, featureID string,
 	variations []*featureproto.Variation,
 	cmd *featureproto.ChangeDefaultStrategyCommand,
 	localizer locale.Localizer,
 ) error {
+	if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, featureID, localizer); err != nil {
+		return err
+	}
 	if cmd.Strategy == nil {
 		dt, err := statusMissingRuleStrategy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1380,27 +1429,6 @@ func (s *FeatureService) validateFeatureStatus(
 		dt, err := statusWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.HasWaitingOrRunningExperiment),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	runningProgressiveRolloutExists, err := s.existsRunningProgressiveRollout(ctx, id, environmentNameSpace)
-	if err != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if runningProgressiveRolloutExists {
-		dt, err := statusWaitingOrRunningProgressiveRolloutExists.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AutoOpsWaitingOrRunningExperimentExists),
 		})
 		if err != nil {
 			return statusInternal.Err()

@@ -94,6 +94,7 @@ AutoOpsHasWebhook: "There is a webhook configured in the auto operations. Please
 AutoOpsInvalidScheduleSpans: "Scheduled time intervals must be at least 5 minutes apart"
 AutoOpsInvalidVariationSize: "Invalid number of variations for feature"
 AutoOpsWaitingOrRunningExperimentExists: "There is a scheduled to start or running experiment. Please stop it before updating the progressive rollout"
+AutoOpsProgressiveRolloutInProgress: "There is a Proressive Rollout in progress. Please delete it before making changes"
 
 # Event Counter errors
 StartAtIsAfterEndAt: "Start at must be before end at"

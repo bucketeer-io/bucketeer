@@ -761,52 +761,10 @@ func (s *AutoOpsService) validateTargetFeature(
 	f *featureproto.Feature,
 	localizer locale.Localizer,
 ) error {
-	if !f.Enabled {
-		dt, err := statusProgressiveRolloutFeatureDisabled.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AutoOpsFeatureDisabled),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
-	}
 	if len(f.Variations) != 2 {
 		dt, err := statusProgressiveRolloutInvalidVariationSize.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.AutoOpsInvalidVariationSize),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
-	}
-	if len(f.Prerequisites) > 0 {
-		dt, err := statusProgressiveRolloutFeatureHasPrerequisitess.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AutoOpsFeatureHasPrerequisites),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
-	}
-	for _, t := range f.Targets {
-		if len(t.Users) > 0 {
-			dt, err := statusProgressiveRolloutFeatureHasIndividualTargeting.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AutoOpsFeatureHasIndividualTargeting),
-			})
-			if err != nil {
-				return statusProgressiveRolloutInternal.Err()
-			}
-			return dt.Err()
-		}
-	}
-	if len(f.Rules) > 0 {
-		dt, err := statusProgressiveRolloutFeatureHasRules.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.AutoOpsFeatureHasRules),
 		})
 		if err != nil {
 			return statusProgressiveRolloutInternal.Err()

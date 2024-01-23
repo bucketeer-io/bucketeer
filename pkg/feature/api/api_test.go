@@ -24,6 +24,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	aoclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
@@ -148,6 +149,7 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 	return &FeatureService{
 		mysqlClient:           mysqlmock.NewMockClient(c),
 		accountClient:         a,
+		autoOpsClient:         aoclientmock.NewMockClient(c),
 		experimentClient:      experimentclientmock.NewMockClient(c),
 		featuresCache:         cachev3mock.NewMockFeaturesCache(c),
 		segmentUsersPublisher: segmentUsersPublisher,

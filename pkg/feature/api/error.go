@@ -122,10 +122,10 @@ var (
 		codes.FailedPrecondition,
 		"feature: can't change or remove this variation because it is used as a prerequsite",
 	)
-	statusInvalidPrerequisite                      = gstatus.New(codes.FailedPrecondition, "feature: invalid prerequisite")
-	statusWaitingOrRunningProgressiveRolloutExists = gstatus.New(
+	statusInvalidPrerequisite                     = gstatus.New(codes.FailedPrecondition, "feature: invalid prerequisite")
+	statusProgressiveRolloutWaitingOrRunningState = gstatus.New(
 		codes.FailedPrecondition,
-		"feature: progressive rollout in waiting or running status exists",
+		"feature: there is a progressive rollout in the waiting or running state",
 	)
 	// flag trigger
 	statusMissingTriggerFeatureID   = gstatus.New(codes.InvalidArgument, "feature: missing trigger feature id")

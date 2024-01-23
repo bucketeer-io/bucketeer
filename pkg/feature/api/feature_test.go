@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	acmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -36,6 +37,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
@@ -3081,7 +3083,10 @@ func TestChangeRolloutStrategy(t *testing.T) {
 
 func TestChangeDefaultStrategy(t *testing.T) {
 	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
 	f := makeFeature("feature-id")
+	environmentID := "envID"
 	ctx := context.TODO()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
@@ -3097,16 +3102,95 @@ func TestChangeDefaultStrategy(t *testing.T) {
 	}
 	patterns := []struct {
 		desc        string
+		setup       func(*FeatureService)
 		strategy    *featureproto.Strategy
 		expectedErr error
 	}{
 		{
-			desc:        "fail: errMissingRuleStrategy",
+			desc: "err: internal error while getting the progressive rollout list",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{f.Id},
+					},
+				).Return(nil, errors.New("internal"))
+			},
+			strategy: nil,
+			expectedErr: createError(
+				statusInternal,
+				localizer.MustLocalizeWithTemplate(locale.InternalServerError),
+			),
+		},
+		{
+			desc: "err: there is a progressive in progressive",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{f.Id},
+					},
+				).Return(&aoproto.ListProgressiveRolloutsResponse{
+					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
+						{
+							Status: aoproto.ProgressiveRollout_WAITING,
+						},
+					},
+				}, nil)
+			},
+			strategy: nil,
+			expectedErr: createError(
+				statusProgressiveRolloutWaitingOrRunningState,
+				localizer.MustLocalizeWithTemplate(locale.AutoOpsProgressiveRolloutInProgress),
+			),
+		},
+		{
+			desc: "fail: errMissingRuleStrategy",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{f.Id},
+					},
+				).Return(&aoproto.ListProgressiveRolloutsResponse{
+					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
+						{
+							Status: aoproto.ProgressiveRollout_FINISHED,
+						},
+					},
+				}, nil)
+			},
 			strategy:    nil,
 			expectedErr: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
 		},
 		{
 			desc: "fail: errIncorrectVariationWeightJaJP: more than total weight",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{f.Id},
+					},
+				).Return(&aoproto.ListProgressiveRolloutsResponse{
+					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
+						{
+							Status: aoproto.ProgressiveRollout_FINISHED,
+						},
+					},
+				}, nil)
+			},
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
@@ -3126,6 +3210,23 @@ func TestChangeDefaultStrategy(t *testing.T) {
 		},
 		{
 			desc: "fail: errIncorrectVariationWeightJaJP: less than total weight",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{f.Id},
+					},
+				).Return(&aoproto.ListProgressiveRolloutsResponse{
+					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
+						{
+							Status: aoproto.ProgressiveRollout_FINISHED,
+						},
+					},
+				}, nil)
+			},
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
@@ -3145,6 +3246,23 @@ func TestChangeDefaultStrategy(t *testing.T) {
 		},
 		{
 			desc: "success",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{f.Id},
+					},
+				).Return(&aoproto.ListProgressiveRolloutsResponse{
+					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
+						{
+							Status: aoproto.ProgressiveRollout_FINISHED,
+						},
+					},
+				}, nil)
+			},
 			strategy: &featureproto.Strategy{
 				Type: featureproto.Strategy_ROLLOUT,
 				RolloutStrategy: &featureproto.RolloutStrategy{
@@ -3165,10 +3283,12 @@ func TestChangeDefaultStrategy(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			service := createFeatureServiceNew(mockController)
+			p.setup(service)
 			cmd := &featureproto.ChangeDefaultStrategyCommand{
 				Strategy: p.strategy,
 			}
-			err := validateChangeDefaultStrategy(f.Variations, cmd, localizer)
+			err := service.validateChangeDefaultStrategy(ctx, "envID", f.Id, f.Variations, cmd, localizer)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -3176,12 +3296,15 @@ func TestChangeDefaultStrategy(t *testing.T) {
 
 func TestValidateFeatureVariationsCommand(t *testing.T) {
 	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
 	fID0 := "fID-0"
 	fID1 := "fID-1"
 	fID2 := "fID-2"
 	fID3 := "fID-3"
 	fID4 := "fID-4"
 	fID5 := "fID-5"
+	environmentID := "envID"
 	ctx := context.TODO()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
@@ -3196,12 +3319,131 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 		return st.Err()
 	}
 	pattens := []*struct {
+		desc        string
+		setup       func(*FeatureService)
 		cmd         command.Command
 		fs          []*featureproto.Feature
 		expectedErr error
 	}{
 		{
-			cmd: &featureproto.CreateFeatureCommand{},
+			desc: "err RemoveVariationCommand: internal error while getting the progressive rollout list",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{fID0},
+					},
+				).Return(nil, errors.New("internal"))
+			},
+			cmd: &featureproto.RemoveVariationCommand{
+				Id: "variation-A",
+			},
+			fs: []*featureproto.Feature{
+				{
+					Id: fID0,
+				},
+			},
+			expectedErr: createError(
+				statusInternal,
+				localizer.MustLocalizeWithTemplate(locale.InternalServerError),
+			),
+		},
+		{
+			desc: "err AddVariationCommand: internal error while getting the progressive rollout list",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{fID0},
+					},
+				).Return(nil, errors.New("internal"))
+			},
+			cmd: &featureproto.AddVariationCommand{
+				Name: "variation-A",
+			},
+			fs: []*featureproto.Feature{
+				{
+					Id: fID0,
+				},
+			},
+			expectedErr: createError(
+				statusInternal,
+				localizer.MustLocalizeWithTemplate(locale.InternalServerError),
+			),
+		},
+		{
+			desc: "err RemoveVariationCommand: there is a progressive in progressive",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{fID0},
+					},
+				).Return(&aoproto.ListProgressiveRolloutsResponse{
+					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
+						{
+							Status: aoproto.ProgressiveRollout_WAITING,
+						},
+					},
+				}, nil)
+			},
+			cmd: &featureproto.RemoveVariationCommand{
+				Id: "variation-A",
+			},
+			fs: []*featureproto.Feature{
+				{
+					Id: fID0,
+				},
+			},
+			expectedErr: createError(
+				statusProgressiveRolloutWaitingOrRunningState,
+				localizer.MustLocalizeWithTemplate(locale.AutoOpsProgressiveRolloutInProgress),
+			),
+		},
+		{
+			desc: "err AddVariationCommand: there is a progressive in progressive",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{fID0},
+					},
+				).Return(&aoproto.ListProgressiveRolloutsResponse{
+					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
+						{
+							Status: aoproto.ProgressiveRollout_RUNNING,
+						},
+					},
+				}, nil)
+			},
+			cmd: &featureproto.AddVariationCommand{
+				Name: "variation-A",
+			},
+			fs: []*featureproto.Feature{
+				{
+					Id: fID0,
+				},
+			},
+			expectedErr: createError(
+				statusProgressiveRolloutWaitingOrRunningState,
+				localizer.MustLocalizeWithTemplate(locale.AutoOpsProgressiveRolloutInProgress),
+			),
+		},
+		{
+			desc: "success: do nothing",
+			cmd:  &featureproto.CreateFeatureCommand{},
 			fs: []*featureproto.Feature{
 				{
 					Id: fID0,
@@ -3210,6 +3452,24 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			desc: "err: statusInvalidChangingVariation",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{fID0},
+					},
+				).Return(&aoproto.ListProgressiveRolloutsResponse{
+					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
+						{
+							Status: aoproto.ProgressiveRollout_FINISHED,
+						},
+					},
+				}, nil)
+			},
 			cmd: &featureproto.RemoveVariationCommand{
 				Id: "variation-A",
 			},
@@ -3261,6 +3521,24 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 			expectedErr: createError(statusInvalidChangingVariation, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation")),
 		},
 		{
+			desc: "success: RemoveVariationCommand",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{fID0},
+					},
+				).Return(&aoproto.ListProgressiveRolloutsResponse{
+					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
+						{
+							Status: aoproto.ProgressiveRollout_FINISHED,
+						},
+					},
+				}, nil)
+			},
 			cmd: &featureproto.RemoveVariationCommand{
 				Id: "variation-A",
 			},
@@ -3304,9 +3582,75 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: AddVariationCommand",
+			setup: func(fs *FeatureService) {
+				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
+					gomock.Any(),
+					&aoproto.ListProgressiveRolloutsRequest{
+						EnvironmentNamespace: environmentID,
+						PageSize:             listRequestSize,
+						Cursor:               "",
+						FeatureIds:           []string{fID0},
+					},
+				).Return(&aoproto.ListProgressiveRolloutsResponse{
+					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
+						{
+							Status: aoproto.ProgressiveRollout_FINISHED,
+						},
+					},
+				}, nil)
+			},
+			cmd: &featureproto.AddVariationCommand{
+				Name: "variation-A",
+			},
+			fs: []*featureproto.Feature{
+				{
+					Id: fID0,
+				},
+				{
+					Id: fID1,
+					Prerequisites: []*featureproto.Prerequisite{
+						{
+							FeatureId: fID2,
+						},
+					},
+				},
+				{
+					Id: fID2,
+				},
+				{
+					Id: fID3,
+					Prerequisites: []*featureproto.Prerequisite{
+						{
+							FeatureId: fID4,
+						},
+						{
+							FeatureId: fID5,
+						},
+					},
+				},
+				{
+					Id: fID4,
+					Prerequisites: []*featureproto.Prerequisite{
+						{
+							FeatureId: fID2,
+						},
+					},
+				},
+				{
+					Id: fID5,
+				},
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range pattens {
-		err := validateFeatureVariationsCommand(p.fs, p.cmd, localizer)
+		service := createFeatureServiceNew(mockController)
+		if p.setup != nil {
+			p.setup(service)
+		}
+		err := service.validateFeatureVariationsCommand(ctx, p.fs, "envID", fID0, p.cmd, localizer)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
