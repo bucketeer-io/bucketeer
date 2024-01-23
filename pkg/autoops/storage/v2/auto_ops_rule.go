@@ -17,12 +17,24 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
+)
+
+var (
+	//go:embed sql/auto_ops_rule/insert_auto_ops_rule.sql
+	insertAutoOpsRuleSQL string
+	//go:embed sql/auto_ops_rule/update_auto_ops_rule.sql
+	updateAutoOpsRuleSQL string
+	//go:embed sql/auto_ops_rule/select_auto_ops_rule.sql
+	selectAutoOpsRuleSQL string
+	//go:embed sql/auto_ops_rule/select_auto_ops_rules.sql
+	selectAutoOpsRulesSQL string
 )
 
 var (
@@ -56,24 +68,9 @@ func (s *autoOpsRuleStorage) CreateAutoOpsRule(
 	e *domain.AutoOpsRule,
 	environmentNamespace string,
 ) error {
-	query := `
-		INSERT INTO auto_ops_rule (
-			id,
-			feature_id,
-			ops_type,
-			clauses,
-			triggered_at,
-			created_at,
-			updated_at,
-			deleted,
-			environment_namespace
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertAutoOpsRuleSQL,
 		e.Id,
 		e.FeatureId,
 		int32(e.OpsType),
@@ -98,24 +95,9 @@ func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
 	e *domain.AutoOpsRule,
 	environmentNamespace string,
 ) error {
-	query := `
-		UPDATE 
-			auto_ops_rule
-		SET
-			feature_id = ?,
-			ops_type = ?,
-			clauses = ?,
-			triggered_at = ?,
-			created_at = ?,
-			updated_at = ?,
-			deleted = ?
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateAutoOpsRuleSQL,
 		e.FeatureId,
 		int32(e.OpsType),
 		mysql.JSONObject{Val: e.Clauses},
@@ -145,25 +127,9 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 ) (*domain.AutoOpsRule, error) {
 	autoOpsRule := proto.AutoOpsRule{}
 	var opsType int32
-	query := `
-		SELECT
-			id,
-			feature_id,
-			ops_type,
-			clauses,
-			triggered_at,
-			created_at,
-			updated_at,
-			deleted
-		FROM
-			auto_ops_rule
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectAutoOpsRuleSQL,
 		id,
 		environmentNamespace,
 	).Scan(
@@ -195,21 +161,7 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			feature_id,
-			ops_type,
-			clauses,
-			triggered_at,
-			created_at,
-			updated_at,
-			deleted
-		FROM
-			auto_ops_rule
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectAutoOpsRulesSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, err
