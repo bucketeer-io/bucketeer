@@ -265,6 +265,8 @@ data:
       UNIQUE KEY `unique_url_code` (`url_code`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
+    INSERT INTO `organization` VALUES ('e2e', 'e2e', 'e2e', 'e2e', 0, 0, 0, 1706092038, 1706092038);
+
     --
     -- Table structure for table `account_v2`
     --
@@ -312,7 +314,7 @@ data:
     --
 
     LOCK TABLES `environment_v2` WRITE;
-    INSERT INTO `environment_v2` VALUES ('e2e','e2e','e2e','Description 1693543371','default','',0,1570007450,1693543371);
+    INSERT INTO `environment_v2` VALUES ('e2e','e2e','e2e','Description 1693543371','default','e2e',0,1570007450,1693543371);
     UNLOCK TABLES;
 
     --
