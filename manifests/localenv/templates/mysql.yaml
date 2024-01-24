@@ -266,6 +266,28 @@ data:
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
     --
+    -- Table structure for table `account_v2`
+    --
+
+    CREATE TABLE IF NOT EXISTS `account_v2` (
+        `email` VARCHAR(255) NOT NULL,
+        `name` VARCHAR(255) NOT NULL,
+        `avatar_image_url` VARCHAR(255) NOT NULL,
+        `organization_id` VARCHAR(255) NOT NULL,
+        `organization_role` INT(11) NOT NULL,
+        `environment_roles` JSON NOT NULL,
+        `disabled` TINYINT(1) NOT NULL DEFAULT '0',
+        `created_at` BIGINT(20) NOT NULL,
+        `updated_at` BIGINT(20) NOT NULL,
+        PRIMARY KEY (`email`, `organization_id`),
+        CONSTRAINT `account_v2_foreign_organization_id`
+        FOREIGN KEY (`organization_id`)
+        REFERENCES `organization` (`id`)
+        ON DELETE NO ACTION
+        ON UPDATE NO ACTION
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+    --
     -- Table structure for table `environment_v2`
     --
 
