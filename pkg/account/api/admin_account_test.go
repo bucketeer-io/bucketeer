@@ -1202,6 +1202,134 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 	}
 }
 
+func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithDefaultToken(t, accountproto.Account_OWNER)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AccountService)
+		input       *accountproto.GetMyOrganizationsByEmailRequest
+		expected    *accountproto.GetMyOrganizationsResponse
+		expectedErr error
+	}{
+		{
+			desc:        "errBadRequest: Invalid email format",
+			input:       &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer"},
+			expected:    nil,
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+		},
+		{
+			desc: "errInternal: GetAccountsWithOrganization",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("test"))
+			},
+			input:       &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer@example.com"},
+			expected:    nil,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "errInternal: GetOrganizations from environment service",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:          "org0",
+							SystemAdmin: true,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email: "bucketeer@example.com",
+						},
+					},
+				}, nil)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("test"))
+			},
+			input:       &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer@example.com"},
+			expected:    nil,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return([]*domain.AccountWithOrganization{}, nil)
+			},
+			input:       &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer@example.com"},
+			expected:    &accountproto.GetMyOrganizationsResponse{Organizations: []*environmentproto.Organization{}},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: including system admin organization",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:          "org0",
+							SystemAdmin: true,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email: "bucketeer@example.com",
+						},
+					},
+				}, nil)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListOrganizationsResponse{
+					Organizations: []*environmentproto.Organization{
+						{
+							Id:          "org0",
+							SystemAdmin: true,
+						},
+					},
+				}, nil)
+			},
+			input: &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer@example.com"},
+			expected: &accountproto.GetMyOrganizationsResponse{Organizations: []*environmentproto.Organization{
+				{
+					Id:          "org0",
+					SystemAdmin: true,
+				},
+			}},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			actual, err := service.GetMyOrganizationsByEmail(ctx, p.input)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+			assert.Equal(t, p.expected, actual, p.desc)
+		})
+	}
+}
+
 func getProjects(t *testing.T) []*environmentproto.Project {
 	t.Helper()
 	return []*environmentproto.Project{

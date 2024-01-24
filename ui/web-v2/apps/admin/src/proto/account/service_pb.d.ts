@@ -66,6 +66,26 @@ export namespace GetMyOrganizationsRequest {
   }
 }
 
+export class GetMyOrganizationsByEmailRequest extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetMyOrganizationsByEmailRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetMyOrganizationsByEmailRequest): GetMyOrganizationsByEmailRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: GetMyOrganizationsByEmailRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetMyOrganizationsByEmailRequest;
+  static deserializeBinaryFromReader(message: GetMyOrganizationsByEmailRequest, reader: jspb.BinaryReader): GetMyOrganizationsByEmailRequest;
+}
+
+export namespace GetMyOrganizationsByEmailRequest {
+  export type AsObject = {
+    email: string,
+  }
+}
+
 export class GetMyOrganizationsResponse extends jspb.Message {
   clearOrganizationsList(): void;
   getOrganizationsList(): Array<proto_environment_organization_pb.Organization>;

@@ -22,6 +22,15 @@ type AccountServiceGetMyOrganizations = {
   readonly responseType: typeof proto_account_service_pb.GetMyOrganizationsResponse;
 };
 
+type AccountServiceGetMyOrganizationsByEmail = {
+  readonly methodName: string;
+  readonly service: typeof AccountService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_account_service_pb.GetMyOrganizationsByEmailRequest;
+  readonly responseType: typeof proto_account_service_pb.GetMyOrganizationsResponse;
+};
+
 type AccountServiceGetMeV2 = {
   readonly methodName: string;
   readonly service: typeof AccountService;
@@ -287,6 +296,7 @@ export class AccountService {
   static readonly serviceName: string;
   static readonly GetMe: AccountServiceGetMe;
   static readonly GetMyOrganizations: AccountServiceGetMyOrganizations;
+  static readonly GetMyOrganizationsByEmail: AccountServiceGetMyOrganizationsByEmail;
   static readonly GetMeV2: AccountServiceGetMeV2;
   static readonly GetMeByEmailV2: AccountServiceGetMeByEmailV2;
   static readonly CreateAdminAccount: AccountServiceCreateAdminAccount;
@@ -366,6 +376,15 @@ export class AccountServiceClient {
   ): UnaryResponse;
   getMyOrganizations(
     requestMessage: proto_account_service_pb.GetMyOrganizationsRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetMyOrganizationsResponse|null) => void
+  ): UnaryResponse;
+  getMyOrganizationsByEmail(
+    requestMessage: proto_account_service_pb.GetMyOrganizationsByEmailRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetMyOrganizationsResponse|null) => void
+  ): UnaryResponse;
+  getMyOrganizationsByEmail(
+    requestMessage: proto_account_service_pb.GetMyOrganizationsByEmailRequest,
     callback: (error: ServiceError|null, responseMessage: proto_account_service_pb.GetMyOrganizationsResponse|null) => void
   ): UnaryResponse;
   getMeV2(

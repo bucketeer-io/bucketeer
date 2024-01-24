@@ -36,6 +36,12 @@ message GetMeResponse {
 
 message GetMyOrganizationsRequest {}
 
+// Retrieve the organization to which the account belongs by email.
+// it's called from another microservice.
+message GetMyOrganizationsByEmailRequest {
+  string email = 1;
+}
+
 message GetMyOrganizationsResponse {
   repeated environment.Organization organizations = 1;
 }
@@ -350,6 +356,8 @@ message GetAPIKeyBySearchingAllEnvironmentsResponse {
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
   rpc GetMyOrganizations(GetMyOrganizationsRequest)
+      returns (GetMyOrganizationsResponse);
+  rpc GetMyOrganizationsByEmail(GetMyOrganizationsByEmailRequest)
       returns (GetMyOrganizationsResponse);
   rpc GetMeV2(GetMeV2Request) returns (GetMeV2Response);
   rpc GetMeByEmailV2(GetMeByEmailV2Request) returns (GetMeV2Response);
