@@ -109,6 +109,150 @@ func TestChangeOrganizationRole(t *testing.T) {
 	assert.Equal(t, proto.AccountV2_Role_Organization_ADMIN, a.OrganizationRole)
 }
 
+func TestChangeEnvironmentRole(t *testing.T) {
+	a := NewAccountV2(
+		"email",
+		"name",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
+	a.ChangeEnvironmentRole([]*proto.AccountV2_EnvironmentRole{
+		{
+			EnvironmentId: "environmentID",
+			Role:          proto.AccountV2_Role_Environment_EDITOR,
+		},
+	})
+	assert.Equal(t, []*proto.AccountV2_EnvironmentRole{
+		{
+			EnvironmentId: "environmentID",
+			Role:          proto.AccountV2_Role_Environment_EDITOR,
+		},
+	}, a.EnvironmentRoles)
+}
+
+func TestPatchEnvironmentRole(t *testing.T) {
+	patterns := []struct {
+		desc     string
+		envRoles []*proto.AccountV2_EnvironmentRole
+		expected []*proto.AccountV2_EnvironmentRole
+	}{
+		{
+			desc: "append a new role",
+			envRoles: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID3",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
+			expected: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID",
+					Role:          proto.AccountV2_Role_Environment_VIEWER,
+				},
+				{
+					EnvironmentId: "environmentID2",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+				{
+
+					EnvironmentId: "environmentID3",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
+		},
+		{
+			desc: "replace a role",
+			envRoles: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
+			expected: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+				{
+					EnvironmentId: "environmentID2",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
+		},
+		{
+			desc: "no change",
+			envRoles: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID",
+					Role:          proto.AccountV2_Role_Environment_VIEWER,
+				},
+			},
+			expected: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID",
+					Role:          proto.AccountV2_Role_Environment_VIEWER,
+				},
+				{
+					EnvironmentId: "environmentID2",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
+		},
+		{
+			desc: "mix",
+			envRoles: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+				{
+					EnvironmentId: "environmentID3",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
+			expected: []*proto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "environmentID",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+				{
+					EnvironmentId: "environmentID2",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+				{
+					EnvironmentId: "environmentID3",
+					Role:          proto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			a := NewAccountV2(
+				"email",
+				"name",
+				"avatarImageURL",
+				"organizationID",
+				proto.AccountV2_Role_Organization_MEMBER,
+				[]*proto.AccountV2_EnvironmentRole{
+					{
+						EnvironmentId: "environmentID",
+						Role:          proto.AccountV2_Role_Environment_VIEWER,
+					},
+					{
+						EnvironmentId: "environmentID2",
+						Role:          proto.AccountV2_Role_Environment_EDITOR,
+					},
+				},
+			)
+			a.PatchEnvironmentRole(p.envRoles)
+			assert.Equal(t, p.expected, a.EnvironmentRoles)
+		})
+	}
+}
+
 func TestEnableV2(t *testing.T) {
 	a := NewAccountV2(
 		"email",

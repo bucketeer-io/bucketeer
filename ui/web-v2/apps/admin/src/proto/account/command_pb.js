@@ -29,6 +29,7 @@ goog.exportSymbol('proto.bucketeer.account.ChangeAPIKeyNameCommand', null, globa
 goog.exportSymbol('proto.bucketeer.account.ChangeAccountRoleCommand', null, global);
 goog.exportSymbol('proto.bucketeer.account.ChangeAccountV2AvatarImageUrlCommand', null, global);
 goog.exportSymbol('proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand', null, global);
+goog.exportSymbol('proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType', null, global);
 goog.exportSymbol('proto.bucketeer.account.ChangeAccountV2NameCommand', null, global);
 goog.exportSymbol('proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand', null, global);
 goog.exportSymbol('proto.bucketeer.account.ConvertAccountCommand', null, global);
@@ -2223,7 +2224,8 @@ proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.prototype.toObjec
 proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.toObject = function(includeInstance, msg) {
   var f, obj = {
     rolesList: jspb.Message.toObjectList(msg.getRolesList(),
-    proto_account_account_pb.AccountV2.EnvironmentRole.toObject, includeInstance)
+    proto_account_account_pb.AccountV2.EnvironmentRole.toObject, includeInstance),
+    writeType: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -2265,6 +2267,10 @@ proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.deserializeBinary
       reader.readMessage(value,proto_account_account_pb.AccountV2.EnvironmentRole.deserializeBinaryFromReader);
       msg.addRoles(value);
       break;
+    case 2:
+      var value = /** @type {!proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType} */ (reader.readEnum());
+      msg.setWriteType(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2302,8 +2308,24 @@ proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.serializeBinaryTo
       proto_account_account_pb.AccountV2.EnvironmentRole.serializeBinaryToWriter
     );
   }
+  f = message.getWriteType();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      2,
+      f
+    );
+  }
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType = {
+  WRITETYPE_UNSPECIFIED: 0,
+  WRITETYPE_OVERRIDE: 1,
+  WRITETYPE_PATCH: 2
+};
 
 /**
  * repeated AccountV2.EnvironmentRole roles = 1;
@@ -2340,6 +2362,24 @@ proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.prototype.addRole
  */
 proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.prototype.clearRolesList = function() {
   return this.setRolesList([]);
+};
+
+
+/**
+ * optional WriteType write_type = 2;
+ * @return {!proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType}
+ */
+proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.prototype.getWriteType = function() {
+  return /** @type {!proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+};
+
+
+/**
+ * @param {!proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType} value
+ * @return {!proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand} returns this
+ */
+proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.prototype.setWriteType = function(value) {
+  return jspb.Message.setProto3EnumField(this, 2, value);
 };
 
 

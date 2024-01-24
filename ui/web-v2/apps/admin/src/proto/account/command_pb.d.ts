@@ -269,6 +269,9 @@ export class ChangeAccountV2EnvironmentRolesCommand extends jspb.Message {
   setRolesList(value: Array<proto_account_account_pb.AccountV2.EnvironmentRole>): void;
   addRoles(value?: proto_account_account_pb.AccountV2.EnvironmentRole, index?: number): proto_account_account_pb.AccountV2.EnvironmentRole;
 
+  getWriteType(): ChangeAccountV2EnvironmentRolesCommand.WriteTypeMap[keyof ChangeAccountV2EnvironmentRolesCommand.WriteTypeMap];
+  setWriteType(value: ChangeAccountV2EnvironmentRolesCommand.WriteTypeMap[keyof ChangeAccountV2EnvironmentRolesCommand.WriteTypeMap]): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ChangeAccountV2EnvironmentRolesCommand.AsObject;
   static toObject(includeInstance: boolean, msg: ChangeAccountV2EnvironmentRolesCommand): ChangeAccountV2EnvironmentRolesCommand.AsObject;
@@ -282,7 +285,16 @@ export class ChangeAccountV2EnvironmentRolesCommand extends jspb.Message {
 export namespace ChangeAccountV2EnvironmentRolesCommand {
   export type AsObject = {
     rolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>,
+    writeType: ChangeAccountV2EnvironmentRolesCommand.WriteTypeMap[keyof ChangeAccountV2EnvironmentRolesCommand.WriteTypeMap],
   }
+
+  export interface WriteTypeMap {
+    WRITETYPE_UNSPECIFIED: 0;
+    WRITETYPE_OVERRIDE: 1;
+    WRITETYPE_PATCH: 2;
+  }
+
+  export const WriteType: WriteTypeMap;
 }
 
 export class EnableAccountV2Command extends jspb.Message {

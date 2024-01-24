@@ -180,6 +180,28 @@ func (a *AccountV2) ChangeEnvironmentRole(roles []*proto.AccountV2_EnvironmentRo
 	return nil
 }
 
+func (a *AccountV2) PatchEnvironmentRole(patchRoles []*proto.AccountV2_EnvironmentRole) error {
+	for _, p := range patchRoles {
+		e := getEnvironmentRole(a.AccountV2.EnvironmentRoles, p.EnvironmentId)
+		if e == nil {
+			a.AccountV2.EnvironmentRoles = append(a.AccountV2.EnvironmentRoles, p)
+			continue
+		}
+		e.Role = p.Role
+	}
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func getEnvironmentRole(roles []*proto.AccountV2_EnvironmentRole, envID string) *proto.AccountV2_EnvironmentRole {
+	for _, r := range roles {
+		if r.EnvironmentId == envID {
+			return r
+		}
+	}
+	return nil
+}
+
 func (a *AccountV2) Enable() error {
 	a.AccountV2.Disabled = false
 	a.UpdatedAt = time.Now().Unix()

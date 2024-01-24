@@ -550,6 +550,21 @@ func validateUpdateAccountV2Request(
 				return dt.Err()
 			}
 		}
+		if c, ok := cmd.(*accountproto.ChangeAccountV2EnvironmentRolesCommand); ok {
+			if c.WriteType == accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_UNSPECIFIED {
+				dt, err := statusInvalidUpdateEnvironmentRolesWriteType.WithDetails(&errdetails.LocalizedMessage{
+					Locale: localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(
+						locale.InvalidArgumentError,
+						"environment_role_write_type",
+					),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+		}
 	}
 	return nil
 }

@@ -66,7 +66,13 @@ message ChangeAccountV2OrganizationRoleCommand {
 }
 
 message ChangeAccountV2EnvironmentRolesCommand {
+  enum WriteType {
+    WriteType_UNSPECIFIED = 0;
+    WriteType_OVERRIDE = 1;
+    WriteType_PATCH = 2;
+  }
   repeated account.AccountV2.EnvironmentRole roles = 1;
+  WriteType write_type = 2;
 }
 
 message EnableAccountV2Command {}
