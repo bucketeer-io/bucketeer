@@ -164,7 +164,7 @@ func TestGetMeV2MySQL(t *testing.T) {
 					},
 					nil,
 				)
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrAdminAccountNotFound)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccount(
@@ -268,7 +268,7 @@ func TestGetMeByEmailV2MySQL(t *testing.T) {
 					},
 					nil,
 				)
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrAdminAccountNotFound)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccount(
@@ -1011,7 +1011,7 @@ func TestGetMeMySQL(t *testing.T) {
 					},
 					nil,
 				)
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccount(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrAdminAccountNotFound)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(

@@ -16,6 +16,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -28,6 +29,11 @@ var (
 	ErrAdminAccountAlreadyExists          = errors.New("account: admin account already exists")
 	ErrAdminAccountNotFound               = errors.New("account: admin account not found")
 	ErrAdminAccountUnexpectedAffectedRows = errors.New("account: admin account unexpected affected rows")
+)
+
+var (
+	//go:embed sql/account_v2/select_admin_account_v2.sql
+	selectAdminAccountV2SQL string
 )
 
 func (s *accountStorage) CreateAdminAccount(ctx context.Context, a *domain.Account) error {
@@ -215,4 +221,32 @@ func (s *accountStorage) ListAdminAccounts(
 		return nil, 0, 0, err
 	}
 	return accounts, nextOffset, totalCount, nil
+}
+
+func (s *accountStorage) GetAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error) {
+	account := proto.AccountV2{}
+	var organizationRole int32
+	err := s.qe().QueryRowContext(
+		ctx,
+		selectAdminAccountV2SQL,
+		email,
+	).Scan(
+		&account.Email,
+		&account.Name,
+		&account.AvatarImageUrl,
+		&account.OrganizationId,
+		&organizationRole,
+		&mysql.JSONObject{Val: &account.EnvironmentRoles},
+		&account.Disabled,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrAdminAccountNotFound
+		}
+		return nil, err
+	}
+	account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
+	return &domain.AccountV2{AccountV2: &account}, nil
 }
