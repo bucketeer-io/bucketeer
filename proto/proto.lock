@@ -765,6 +765,16 @@
             "name": "GetMyOrganizationsRequest"
           },
           {
+            "name": "GetMyOrganizationsByEmailRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "GetMyOrganizationsResponse",
             "fields": [
               {
@@ -1596,6 +1606,11 @@
               {
                 "name": "GetMyOrganizations",
                 "in_type": "GetMyOrganizationsRequest",
+                "out_type": "GetMyOrganizationsResponse"
+              },
+              {
+                "name": "GetMyOrganizationsByEmail",
+                "in_type": "GetMyOrganizationsByEmailRequest",
                 "out_type": "GetMyOrganizationsResponse"
               },
               {
