@@ -193,9 +193,9 @@ func (a *AccountV2) PatchEnvironmentRole(patchRoles []*proto.AccountV2_Environme
 	return nil
 }
 
-func getEnvironmentRole(roles []*proto.AccountV2_EnvironmentRole, environmentID string) *proto.AccountV2_EnvironmentRole {
+func getEnvironmentRole(roles []*proto.AccountV2_EnvironmentRole, envID string) *proto.AccountV2_EnvironmentRole {
 	for _, r := range roles {
-		if r.EnvironmentId == environmentID {
+		if r.EnvironmentId == envID {
 			return r
 		}
 	}
