@@ -10,10 +10,10 @@ SELECT
     a.updated_at
 FROM
     account_v2 AS a
-        INNER JOIN
+INNER JOIN
     organization AS o
-    ON
-            a.organization_id = o.id
+ON
+    a.organization_id = o.id
 WHERE
-        o.system_admin = 1
-  AND a.email = ?
+    o.system_admin = 1
+    AND a.email = ?
