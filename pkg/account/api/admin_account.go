@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -159,11 +160,11 @@ func (s *AccountService) getMeV2(
 		return nil, dt.Err()
 	}
 	// admin account response
-	adminAccount, err := s.getAdminAccount(ctx, email, localizer)
+	adminAccount, err := s.getAdminAccountV2(ctx, email, localizer)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
-	if adminAccount != nil && !adminAccount.Disabled && !adminAccount.Deleted {
+	if adminAccount != nil && !adminAccount.Disabled {
 		environmentRoles, err := s.makeAdminEnvironmentRolesV2(
 			projects,
 			environments,
@@ -831,11 +832,11 @@ func (s *AccountService) GetMe(
 		return nil, dt.Err()
 	}
 	// admin account response
-	adminAccount, err := s.getAdminAccount(ctx, t.Email, localizer) // TODO replace
+	adminAccount, err := s.getAdminAccountV2(ctx, t.Email, localizer)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
-	if adminAccount != nil && !adminAccount.Disabled && !adminAccount.Deleted {
+	if adminAccount != nil && !adminAccount.Disabled {
 		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 			Email:            adminAccount.Email,
@@ -987,4 +988,40 @@ func (s *AccountService) containsSystemAdminOrganization(
 		}
 	}
 	return false
+}
+
+func (s *AccountService) getAdminAccountV2(
+	ctx context.Context,
+	email string,
+	localizer locale.Localizer,
+) (*domain.AccountV2, error) {
+	account, err := s.accountStorage.GetAdminAccountV2(ctx, email)
+	if err != nil {
+		if errors.Is(err, v2as.ErrAdminAccountNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to get admin account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("email", email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return account, nil
 }

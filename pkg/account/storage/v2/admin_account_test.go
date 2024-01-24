@@ -288,3 +288,63 @@ func TestListAdminAccounts(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAdminAccountV2(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		desc        string
+		setup       func(*accountStorage)
+		email       string
+		expectedErr error
+	}{
+		{
+			desc: "ErrAdminAccountNotFound",
+			setup: func(s *accountStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			email:       "bucketeer@example.com",
+			expectedErr: ErrAdminAccountNotFound,
+		},
+		{
+			desc: "Error",
+			setup: func(s *accountStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+
+			},
+			email:       "bucketeer@example.com",
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *accountStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			email:       "bucketeer@example.com",
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newAccountStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			_, err := storage.GetAdminAccountV2(context.Background(), p.email)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
