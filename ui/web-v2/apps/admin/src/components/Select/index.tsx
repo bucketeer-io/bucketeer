@@ -13,12 +13,14 @@ export interface SelectProps {
   isLoading?: boolean;
   isMulti?: boolean;
   isSearchable?: boolean;
-  value?: Option;
+  value?: Option | Option[];
   className?: string;
   onChange: ((option: Option) => void) | ((option: Option[]) => void);
   placeholder?: string;
   customControl?: React.ReactNode;
   formatOptionLabel?: (options: Option) => void;
+  styles?: any;
+  closeMenuOnSelect?: boolean;
 }
 
 export const Select: FC<SelectProps> = memo(
@@ -35,6 +37,8 @@ export const Select: FC<SelectProps> = memo(
     placeholder,
     customControl,
     formatOptionLabel,
+    styles,
+    closeMenuOnSelect,
   }) => {
     const textColor = '#3F3F46';
     const textColorDisabled = '#6B7280';
@@ -90,6 +94,7 @@ export const Select: FC<SelectProps> = memo(
         ...base,
         color: isDisabled ? textColorDisabled : textColor,
       }),
+      ...styles,
     };
 
     if (customControl) {
@@ -110,6 +115,7 @@ export const Select: FC<SelectProps> = memo(
           placeholder={placeholder ? placeholder : ''}
           value={value}
           onChange={onChange}
+          closeMenuOnSelect={closeMenuOnSelect}
         />
       );
     }
@@ -135,6 +141,7 @@ export const Select: FC<SelectProps> = memo(
         value={value}
         onChange={onChange}
         formatOptionLabel={formatOptionLabel}
+        closeMenuOnSelect={closeMenuOnSelect}
       />
     );
   }
