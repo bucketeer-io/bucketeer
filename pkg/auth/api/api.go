@@ -23,8 +23,6 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
@@ -34,6 +32,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
 type options struct {
@@ -350,26 +349,12 @@ func (s *authService) generateToken(
 	if err := s.maybeCheckEmail(ctx, claims.Email, localizer); err != nil {
 		return nil, err
 	}
-	resp, err := s.accountClient.GetMeByEmailV2(ctx, &accountproto.GetMeByEmailV2Request{
+	resp, err := s.accountClient.GetMyOrganizationsByEmail(ctx, &accountproto.GetMyOrganizationsByEmailRequest{
 		Email: claims.Email,
 	})
 	if err != nil {
-		if code := status.Code(err); code == codes.NotFound {
-			s.logger.Warn(
-				"Unabled to generate token for an unapproved account",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", claims.Email))...,
-			)
-			dt, err := statusUnapprovedAccount.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
 		s.logger.Error(
-			"Failed to get account",
+			"Failed to get account's organizations",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("email", claims.Email),
@@ -384,8 +369,22 @@ func (s *authService) generateToken(
 		}
 		return nil, dt.Err()
 	}
+	if len(resp.Organizations) == 0 {
+		s.logger.Warn(
+			"Unabled to generate token for an unapproved account",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", claims.Email))...,
+		)
+		dt, err := statusUnapprovedAccount.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	adminRole := accountproto.Account_UNASSIGNED
-	if resp.IsAdmin {
+	if hasSystemAdminOrganization(resp.Organizations) {
 		adminRole = accountproto.Account_OWNER
 	}
 	idToken := &token.IDToken{
@@ -440,4 +439,13 @@ func (s *authService) maybeCheckEmail(ctx context.Context, email string, localiz
 		return statusInternal.Err()
 	}
 	return dt.Err()
+}
+
+func hasSystemAdminOrganization(orgs []*environmentproto.Organization) bool {
+	for _, org := range orgs {
+		if org.SystemAdmin {
+			return true
+		}
+	}
+	return false
 }
