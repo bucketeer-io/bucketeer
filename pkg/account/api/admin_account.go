@@ -930,7 +930,49 @@ func (s *AccountService) GetMyOrganizations(
 		}
 		return nil, dt.Err()
 	}
-	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, t.Email)
+	myOrgs, err := s.getMyOrganizations(ctx, t.Email, localizer)
+	if err != nil {
+		return nil, err
+	}
+	return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
+}
+
+func (s *AccountService) GetMyOrganizationsByEmail(
+	ctx context.Context,
+	req *accountproto.GetMyOrganizationsByEmailRequest,
+) (*accountproto.GetMyOrganizationsResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkAdminRole(ctx, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if !verifyEmailFormat(req.Email) {
+		s.logger.Error(
+			"Email inside request has an invalid format",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", req.Email))...,
+		)
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	myOrgs, err := s.getMyOrganizations(ctx, req.Email, localizer)
+	if err != nil {
+		return nil, err
+	}
+	return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
+}
+
+func (s *AccountService) getMyOrganizations(
+	ctx context.Context,
+	email string,
+	localizer locale.Localizer,
+) ([]*environmentproto.Organization, error) {
+	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, email)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get accounts with organization",
@@ -966,7 +1008,7 @@ func (s *AccountService) GetMyOrganizations(
 			}
 			return nil, dt.Err()
 		}
-		return &accountproto.GetMyOrganizationsResponse{Organizations: resp.Organizations}, nil
+		return resp.Organizations, nil
 	}
 	myOrgs := make([]*environmentproto.Organization, 0, len(accountsWithOrg))
 	for _, accWithOrg := range accountsWithOrg {
@@ -975,7 +1017,7 @@ func (s *AccountService) GetMyOrganizations(
 		}
 		myOrgs = append(myOrgs, accWithOrg.Organization)
 	}
-	return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
+	return myOrgs, nil
 }
 
 func (s *AccountService) containsSystemAdminOrganization(
