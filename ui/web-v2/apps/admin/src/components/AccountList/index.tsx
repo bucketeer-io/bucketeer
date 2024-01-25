@@ -6,8 +6,8 @@ import { ACCOUNT_LIST_PAGE_SIZE } from '../../constants/account';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll } from '../../modules/accounts';
-import { useIsOwner } from '../../modules/me';
-import { Account } from '../../proto/account/account_pb';
+import { useCurrentEnvironment, useIsOwner } from '../../modules/me';
+import { Account, AccountV2} from '../../proto/account/account_pb';
 import { AccountSearchOptions } from '../../types/account';
 import { classNames } from '../../utils/css';
 import { roleOptions } from '../AccountAddForm';
@@ -23,7 +23,7 @@ export interface AccountListProps {
   onSwitchEnabled: (accountId: string, enabled: boolean) => void;
   onChangeSearchOptions: (options: AccountSearchOptions) => void;
   onAdd: () => void;
-  onUpdate: (a: Account.AsObject) => void;
+  onUpdate: (a: AccountV2.AsObject) => void;
 }
 
 export const AccountList: FC<AccountListProps> = memo(
@@ -37,7 +37,7 @@ export const AccountList: FC<AccountListProps> = memo(
   }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsOwner();
-    const accounts = useSelector<AppState, Account.AsObject[]>(
+    const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAll(state.accounts),
       shallowEqual
     );
@@ -49,6 +49,7 @@ export const AccountList: FC<AccountListProps> = memo(
       (state) => state.accounts.totalCount,
       shallowEqual
     );
+    const currentEnvironment = useCurrentEnvironment();
 
     return (
       <div className="w-full bg-white border border-gray-300 rounded-md">
@@ -112,15 +113,25 @@ export const AccountList: FC<AccountListProps> = memo(
             <table className="table-auto leading-normal">
               <tbody className="text-sm">
                 {accounts.map((account) => {
+                  const envRole = account.environmentRolesList.find(
+                    (r) => r.environmentId === currentEnvironment.id
+                  );
+                  const orgRole = account.organizationRole;
+                  let role = Account.Role.VIEWER.toString();
+                  if (envRole.role == AccountV2.Role.Environment.ENVIRONMENT_EDITOR && orgRole == AccountV2.Role.Organization.ORGANIZATION_OWNER) {
+                    role = Account.Role.OWNER.toString();
+                  } else if (envRole.role == AccountV2.Role.Environment.ENVIRONMENT_EDITOR && orgRole == AccountV2.Role.Organization.ORGANIZATION_MEMBER) {
+                    role = Account.Role.EDITOR.toString();
+                  }
                   return (
-                    <tr key={account.id} className={classNames('p-2')}>
+                    <tr key={account.email} className={classNames('p-2')}>
                       <td className="pl-5 pr-2 py-3 border-b">
                         <div className="flex pb-1">
                           <button
                             className="link whitespace-nowrap"
                             onClick={() => onUpdate(account)}
                           >
-                            {account.id}
+                            {account.email}
                           </button>
                           <div className="flex items-center ml-2 text-xs text-gray-700 whitespace-nowrap">
                             <span className="mr-1">{f(messages.created)}</span>
@@ -140,7 +151,7 @@ export const AccountList: FC<AccountListProps> = memo(
                           <span className="text-xs text-gray-700">
                             {
                               roleOptions.find(
-                                (o) => o.value === account.role.toString()
+                                (o) => o.value === role
                               ).label
                             }
                           </span>
@@ -155,7 +166,7 @@ export const AccountList: FC<AccountListProps> = memo(
                         <Switch
                           enabled={!account.disabled}
                           onChange={() =>
-                            onSwitchEnabled(account.id, account.disabled)
+                            onSwitchEnabled(account.email, account.disabled)
                           }
                           size={'small'}
                           readOnly={!editable}

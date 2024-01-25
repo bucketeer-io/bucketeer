@@ -8,7 +8,7 @@ import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll } from '../../modules/accounts';
 import { useIsOwner } from '../../modules/me';
-import { Account } from '../../proto/account/account_pb';
+import { AccountV2 } from '../../proto/account/account_pb';
 import { AdminAccountSearchOptions } from '../../types/adminAccount';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
@@ -78,7 +78,7 @@ export const AdminAccountSearch: FC<AdminAccountSearchProps> = memo(
       (state) => state.accounts.loading,
       shallowEqual
     );
-    const accounts = useSelector<AppState, Account.AsObject[]>(
+    const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAll(state.accounts),
       shallowEqual
     );

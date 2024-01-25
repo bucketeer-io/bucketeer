@@ -35,7 +35,7 @@ import {
   OrderDirection,
 } from '../../../modules/adminAccounts';
 import { useCurrentEnvironment } from '../../../modules/me';
-import { Account } from '../../../proto/account/account_pb';
+import { AccountV2 } from '../../../proto/account/account_pb';
 import { ListAdminAccountsRequest } from '../../../proto/account/service_pb';
 import { AppDispatch } from '../../../store';
 import { AccountSortOption, isAccountSortOption } from '../../../types/account';
@@ -95,7 +95,7 @@ export const AdminAccountIndexPage: FC = memo(() => {
   const [open, setOpen] = useState(isNew);
   const [account, getAccountError] = useSelector<
     AppState,
-    [Account.AsObject | undefined, SerializedError | null]
+    [AccountV2.AsObject | undefined, SerializedError | null]
   >(
     (state) => [
       selectAccountById(state.accounts, accountId),

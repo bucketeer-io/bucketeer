@@ -38,7 +38,7 @@ import {
   OrderDirection,
 } from '../../modules/accounts';
 import { useCurrentEnvironment } from '../../modules/me';
-import { Account } from '../../proto/account/account_pb';
+import {Account, AccountV2} from '../../proto/account/account_pb';
 import { ListAccountsRequest } from '../../proto/account/service_pb';
 import { AppDispatch } from '../../store';
 import { AccountSortOption, isAccountSortOption } from '../../types/account';
@@ -99,7 +99,7 @@ export const AccountIndexPage: FC = memo(() => {
   const [open, setOpen] = useState(isNew);
   const [account, getAccountError] = useSelector<
     AppState,
-    [Account.AsObject | undefined, SerializedError | null]
+    [AccountV2.AsObject | undefined, SerializedError | null]
   >(
     (state) => [
       selectAccountById(state.accounts, accountId),
@@ -132,14 +132,15 @@ export const AccountIndexPage: FC = memo(() => {
         options && options.enabled ? options.enabled === 'false' : null;
       dispatch(
         listAccounts({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
+          organizationId: currentEnvironment.organizationId,
           pageSize: ACCOUNT_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
           disabled: disabled,
-          role: role,
+          role: role, // TODO roleの数値は変わってるはずなので変更しないと。
         })
       );
     },
@@ -176,20 +177,22 @@ export const AccountIndexPage: FC = memo(() => {
         (() => {
           if (data.enabled) {
             return enableAccount({
-              environmentNamespace: currentEnvironment.id,
-              id: data.accountId,
+              organizationId: currentEnvironment.organizationId,
+              environmentId: currentEnvironment.id,
+              email: data.accountId,
             });
           }
           return disableAccount({
-            environmentNamespace: currentEnvironment.id,
-            id: data.accountId,
+            organizationId: currentEnvironment.organizationId,
+            environmentId: currentEnvironment.id,
+            email: data.accountId,
           });
         })()
       ).then(() => {
         setIsConfirmDialogOpen(false);
         dispatch(
           getAccount({
-            environmentNamespace: currentEnvironment.id,
+            organizationId: currentEnvironment.organizationId,
             email: data.accountId,
           })
         );
@@ -223,14 +226,16 @@ export const AccountIndexPage: FC = memo(() => {
   }, [setOpen, history, location]);
 
   const handleOpenUpdate = useCallback(
-    (a: Account.AsObject) => {
+    (a: AccountV2.AsObject) => {
       setOpen(true);
+      // TODO ちゃんと動くかテストする。
+      const envRole = a.environmentRolesList.find((e) => e.environmentId == currentEnvironment.id);
       resetUpdate({
         email: a.email,
-        role: a.role.toString(),
+        role: envRole.role.toString(),
       });
       history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}/${a.id}`,
+        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}/${a.email}`,
         search: location.search,
       });
     },
@@ -265,11 +270,22 @@ export const AccountIndexPage: FC = memo(() => {
 
   const handleAdd = useCallback(
     async (data) => {
+      // TODO 適切な場所に書きたい。
+      let envRole : AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap] = AccountV2.Role.Environment.ENVIRONMENT_VIEWER;
+      if (data.role == Account.Role.EDITOR.toString() || data.role == Account.Role.OWNER.toString()) {
+        envRole = AccountV2.Role.Environment.ENVIRONMENT_EDITOR;
+      }
+      let orgRole : AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap] = AccountV2.Role.Organization.ORGANIZATION_MEMBER;
+      if (data.role == Account.Role.OWNER.toString()) {
+        orgRole = AccountV2.Role.Organization.ORGANIZATION_OWNER;
+      }
       dispatch(
         createAccount({
-          environmentNamespace: currentEnvironment.id,
+          organizationId: currentEnvironment.organizationId,
           email: data.email,
-          role: data.role,
+          environmentId: currentEnvironment.id,
+          environmentRole: envRole,
+          organizationRole: orgRole,
         })
       ).then(() => {
         resetAdd();
@@ -285,16 +301,27 @@ export const AccountIndexPage: FC = memo(() => {
 
   const handleUpdate = useCallback(
     async (data) => {
+      // TODO 適切な場所に書きたい。
+      let envRole : AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap] = AccountV2.Role.Environment.ENVIRONMENT_VIEWER;
+      if (data.role == Account.Role.EDITOR.toString() || data.role == Account.Role.OWNER.toString()) {
+        envRole = AccountV2.Role.Environment.ENVIRONMENT_EDITOR;
+      }
+      let orgRole : AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap] = AccountV2.Role.Organization.ORGANIZATION_MEMBER;
+      if (data.role == Account.Role.OWNER.toString()) {
+        orgRole = AccountV2.Role.Organization.ORGANIZATION_OWNER;
+      }
       dispatch(
         updateAccount({
-          environmentNamespace: currentEnvironment.id,
-          id: accountId,
-          role: data.role,
+          organizationId: currentEnvironment.organizationId,
+          environmentId: currentEnvironment.id,
+          email: accountId,
+          environmentRole: envRole,
+          organizationRole: orgRole,
         })
       ).then(() => {
         dispatch(
           getAccount({
-            environmentNamespace: currentEnvironment.id,
+            organizationId: currentEnvironment.organizationId,
             email: accountId,
           })
         );

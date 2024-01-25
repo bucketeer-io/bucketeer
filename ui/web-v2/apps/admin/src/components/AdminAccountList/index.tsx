@@ -7,7 +7,7 @@ import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll } from '../../modules/accounts';
 import { useIsOwner } from '../../modules/me';
-import { Account } from '../../proto/account/account_pb';
+import { AccountV2 } from '../../proto/account/account_pb';
 import { AdminAccountSearchOptions } from '../../types/adminAccount';
 import { classNames } from '../../utils/css';
 import { AdminAccountSearch } from '../AdminAccountSearch';
@@ -34,7 +34,7 @@ export const AdminAccountList: FC<AdminAccountListProps> = memo(
   }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsOwner();
-    const accounts = useSelector<AppState, Account.AsObject[]>(
+    const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAll(state.accounts),
       shallowEqual
     );
@@ -110,7 +110,7 @@ export const AdminAccountList: FC<AdminAccountListProps> = memo(
               <tbody className="text-sm">
                 {accounts.map((account) => {
                   return (
-                    <tr key={account.id} className={classNames('p-2')}>
+                    <tr key={account.email} className={classNames('p-2')}>
                       <td className="pl-5 pr-2 py-3 border-b">
                         <div className="flex pb-1">
                           <span
@@ -118,7 +118,7 @@ export const AdminAccountList: FC<AdminAccountListProps> = memo(
                               'text-primary mr-2 whitespace-nowrap'
                             )}
                           >
-                            {account.id}
+                            {account.email}
                           </span>
                           <div className="flex items-center ml-2 text-xs text-gray-700 whitespace-nowrap">
                             <span className="mr-1">{f(messages.created)}</span>
@@ -137,7 +137,7 @@ export const AdminAccountList: FC<AdminAccountListProps> = memo(
                         <Switch
                           enabled={!account.disabled}
                           onChange={() =>
-                            onSwitchEnabled(account.id, account.disabled)
+                            onSwitchEnabled(account.email, account.disabled)
                           }
                           size={'small'}
                           readOnly={!editable}

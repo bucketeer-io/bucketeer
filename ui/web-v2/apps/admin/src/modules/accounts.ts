@@ -10,21 +10,17 @@ import {
 } from 'google-protobuf/google/protobuf/wrappers_pb';
 
 import * as accountGrpc from '../grpc/account';
-import { Account } from '../proto/account/account_pb';
+import {AccountV2} from '../proto/account/account_pb';
 import {
-  EnableAccountCommand,
-  DisableAccountCommand,
-  CreateAccountCommand,
-  ChangeAccountRoleCommand,
+  CreateAccountV2Command,
+  ChangeAccountV2EnvironmentRolesCommand, ChangeAccountV2OrganizationRoleCommand,
 } from '../proto/account/command_pb';
 import {
-  ListAccountsRequest,
-  ListAccountsResponse,
-  GetAccountRequest,
-  EnableAccountRequest,
-  DisableAccountRequest,
-  CreateAccountRequest,
-  ChangeAccountRoleRequest,
+  ListAccountsV2Request,
+  ListAccountsV2Response,
+  GetAccountV2Request,
+  CreateAccountV2Request,
+  UpdateAccountV2Request,
 } from '../proto/account/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -33,8 +29,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'accounts';
 
-export const accountsAdapter = createEntityAdapter<Account.AsObject>({
-  selectId: (segment) => segment.id,
+export const accountsAdapter = createEntityAdapter<AccountV2.AsObject>({
+  selectId: (segment) => segment.email,
 });
 
 export const { selectAll, selectById } = accountsAdapter.getSelectors();
@@ -50,12 +46,13 @@ const initialState = accountsAdapter.getInitialState<{
 });
 
 export type OrderBy =
-  ListAccountsRequest.OrderByMap[keyof ListAccountsRequest.OrderByMap];
+  ListAccountsV2Request.OrderByMap[keyof ListAccountsV2Request.OrderByMap];
 export type OrderDirection =
-  ListAccountsRequest.OrderDirectionMap[keyof ListAccountsRequest.OrderDirectionMap];
+  ListAccountsV2Request.OrderDirectionMap[keyof ListAccountsV2Request.OrderDirectionMap];
 
 interface ListAccountsParams {
-  environmentNamespace: string;
+  environmentId: string;
+  organizationId: string;
   pageSize: number;
   cursor: string;
   orderBy?: OrderBy;
@@ -66,12 +63,13 @@ interface ListAccountsParams {
 }
 
 export const listAccounts = createAsyncThunk<
-  ListAccountsResponse.AsObject,
+  ListAccountsV2Response.AsObject,
   ListAccountsParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
-  const request = new ListAccountsRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  const request = new ListAccountsV2Request();
+  request.setEnvironmentId(params.environmentId);
+  request.setOrganizationId(params.organizationId);
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
   request.setOrderBy(params.orderBy);
@@ -87,17 +85,17 @@ export const listAccounts = createAsyncThunk<
 });
 
 export interface GetAccountParams {
-  environmentNamespace: string;
+  organizationId: string;
   email: string;
 }
 
 export const getAccount = createAsyncThunk<
-  Account.AsObject,
+  AccountV2.AsObject,
   GetAccountParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/get`, async (params) => {
-  const request = new GetAccountRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  const request = new GetAccountV2Request();
+  request.setOrganizationId(params.organizationId);
   request.setEmail(params.email);
   await setupAuthToken();
   const result = await accountGrpc.getAccount(request);
@@ -105,8 +103,9 @@ export const getAccount = createAsyncThunk<
 });
 
 export interface EnableAccountParams {
-  environmentNamespace: string;
-  id: string;
+  organizationId: string;
+  environmentId: string;
+  email: string;
 }
 
 export const enableAccount = createAsyncThunk<
@@ -114,17 +113,25 @@ export const enableAccount = createAsyncThunk<
   EnableAccountParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/enable`, async (params) => {
-  const request = new EnableAccountRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
-  request.setId(params.id);
-  request.setCommand(new EnableAccountCommand());
+  // TODO After migration to console3.0, we should use EnableAccountV2Command
+  const request = new UpdateAccountV2Request();
+  const command = new ChangeAccountV2EnvironmentRolesCommand();
+  const environmentRole = new AccountV2.EnvironmentRole();
+  environmentRole.setEnvironmentId(params.environmentId);
+  environmentRole.setRole(AccountV2.Role.Environment.ENVIRONMENT_EDITOR);
+  command.setRolesList([environmentRole]);
+  command.setWriteType(ChangeAccountV2EnvironmentRolesCommand.WriteType.WRITETYPE_PATCH);
+  request.setChangeEnvironmentRolesCommand(command);
+  request.setOrganizationId(params.organizationId);
+  request.setEmail(params.email);
   await setupAuthToken();
-  await accountGrpc.enableAccount(request);
+  await accountGrpc.updateAccount(request);
 });
 
 export interface DisableAccountParams {
-  environmentNamespace: string;
-  id: string;
+  organizationId: string;
+  environmentId: string;
+  email: string;
 }
 
 export const disableAccount = createAsyncThunk<
@@ -132,18 +139,27 @@ export const disableAccount = createAsyncThunk<
   DisableAccountParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/disable`, async (params) => {
-  const request = new DisableAccountRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
-  request.setId(params.id);
-  request.setCommand(new DisableAccountCommand());
+  // TODO After migration to console3.0, we should use DisableAccountV2Command
+  const request = new UpdateAccountV2Request();
+  const cmd = new ChangeAccountV2EnvironmentRolesCommand();
+  const environmentRole = new AccountV2.EnvironmentRole();
+  environmentRole.setEnvironmentId(params.environmentId);
+  environmentRole.setRole(AccountV2.Role.Environment.ENVIRONMENT_UNASSIGNED);
+  cmd.setRolesList([environmentRole]);
+  cmd.setWriteType(ChangeAccountV2EnvironmentRolesCommand.WriteType.WRITETYPE_PATCH);
+  request.setChangeEnvironmentRolesCommand(cmd);
+  request.setOrganizationId(params.organizationId);
+  request.setEmail(params.email);
   await setupAuthToken();
-  await accountGrpc.disableAccount(request);
+  await accountGrpc.updateAccount(request);
 });
 
 export interface CreateAccountParams {
-  environmentNamespace: string;
+  organizationId: string;
   email: string;
-  role?: Account.RoleMap[keyof Account.RoleMap];
+  organizationRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap];
+  environmentRole: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap];
+  environmentId: string;
 }
 
 export const createAccount = createAsyncThunk<
@@ -151,20 +167,26 @@ export const createAccount = createAsyncThunk<
   CreateAccountParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/add`, async (params) => {
-  const request = new CreateAccountRequest();
-  const cmd = new CreateAccountCommand();
+  const request = new CreateAccountV2Request();
+  const cmd = new CreateAccountV2Command();
+  const environmentRole = new AccountV2.EnvironmentRole();
+  environmentRole.setEnvironmentId(params.environmentId);
+  environmentRole.setRole(params.environmentRole);
+  cmd.setEnvironmentRolesList([environmentRole]);
   cmd.setEmail(params.email);
-  cmd.setRole(params.role);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  cmd.setOrganizationRole(params.organizationRole);
   request.setCommand(cmd);
+  request.setOrganizationId(params.organizationId);
   await setupAuthToken();
   await accountGrpc.createAccount(request);
 });
 
 export interface UpdateAccountParams {
-  environmentNamespace: string;
-  id: string;
-  role?: Account.RoleMap[keyof Account.RoleMap];
+  organizationId: string;
+  email: string;
+  environmentId: string;
+  environmentRole: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap];
+  organizationRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap];
 }
 
 export const updateAccount = createAsyncThunk<
@@ -172,14 +194,21 @@ export const updateAccount = createAsyncThunk<
   UpdateAccountParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/update`, async (params) => {
-  const request = new ChangeAccountRoleRequest();
-  const cmd = new ChangeAccountRoleCommand();
-  cmd.setRole(params.role);
-  request.setEnvironmentNamespace(params.environmentNamespace);
-  request.setId(params.id);
-  request.setCommand(cmd);
+  const request = new UpdateAccountV2Request();
+  const changeEnvRoleCmd = new ChangeAccountV2EnvironmentRolesCommand();
+  const changeOrgRoleCmd = new ChangeAccountV2OrganizationRoleCommand();
+  const environmentRole = new AccountV2.EnvironmentRole();
+  environmentRole.setEnvironmentId(params.environmentId);
+  environmentRole.setRole(params.environmentRole);
+  changeEnvRoleCmd.setRolesList([environmentRole]);
+  changeEnvRoleCmd.setWriteType(ChangeAccountV2EnvironmentRolesCommand.WriteType.WRITETYPE_PATCH);
+  changeOrgRoleCmd.setRole(params.organizationRole);
+  request.setChangeEnvironmentRolesCommand(changeEnvRoleCmd);
+  request.setChangeOrganizationRoleCommand(changeOrgRoleCmd);
+  request.setEmail(params.email);
+  request.setOrganizationId(params.organizationId);
   await setupAuthToken();
-  await accountGrpc.changeAccountRole(request);
+  await accountGrpc.updateAccount(request);
 });
 
 export type AccountsState = typeof initialState;

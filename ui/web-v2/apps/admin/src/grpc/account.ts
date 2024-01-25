@@ -6,22 +6,22 @@ import {
   ChangeAccountRoleResponse,
   ConvertAccountRequest,
   ConvertAccountResponse,
-  CreateAccountRequest,
-  CreateAccountResponse,
-  DisableAccountRequest,
-  DisableAccountResponse,
-  EnableAccountRequest,
-  EnableAccountResponse,
-  GetAccountRequest,
-  GetAccountResponse,
+  CreateAccountV2Request,
+  CreateAccountV2Response,
+  DisableAccountV2Request,
+  DisableAccountV2Response,
+  EnableAccountV2Request,
+  EnableAccountV2Response,
+  GetAccountV2Request,
+  GetAccountV2Response,
   GetMeRequest,
   GetMeResponse,
   GetMeV2Request,
   GetMeV2Response,
   GetMyOrganizationsRequest,
   GetMyOrganizationsResponse,
-  ListAccountsRequest,
-  ListAccountsResponse,
+  ListAccountsV2Request,
+  ListAccountsV2Response, UpdateAccountV2Request, UpdateAccountV2Response,
 } from '../proto/account/service_pb';
 import {
   AccountServiceClient,
@@ -91,16 +91,16 @@ export function getMeV2(request: GetMeV2Request): Promise<GetMeV2Result> {
 }
 
 export interface CreateAccountResult {
-  request: CreateAccountRequest;
-  response: CreateAccountResponse;
+  request: CreateAccountV2Request;
+  response: CreateAccountV2Response;
 }
 
 export function createAccount(
-  request: CreateAccountRequest
+  request: CreateAccountV2Request
 ): Promise<CreateAccountResult> {
   return new Promise(
     (resolve: (result: CreateAccountResult) => void, reject): void => {
-      client.createAccount(request, getMetaData(), (error, response): void => {
+      client.createAccountV2(request, getMetaData(), (error, response): void => {
         if (isNotNull(error) || isNull(response)) {
           reject(
             new AccountServiceError(extractErrorMessage(error), request, error)
@@ -114,16 +114,16 @@ export function createAccount(
 }
 
 export interface EnableAccountResult {
-  request: EnableAccountRequest;
-  response: EnableAccountResponse;
+  request: EnableAccountV2Request;
+  response: EnableAccountV2Response;
 }
 
 export function enableAccount(
-  request: EnableAccountRequest
+  request: EnableAccountV2Request
 ): Promise<EnableAccountResult> {
   return new Promise(
     (resolve: (result: EnableAccountResult) => void, reject): void => {
-      client.enableAccount(request, getMetaData(), (error, response): void => {
+      client.enableAccountV2(request, getMetaData(), (error, response): void => {
         if (isNotNull(error) || isNull(response)) {
           reject(
             new AccountServiceError(extractErrorMessage(error), request, error)
@@ -137,16 +137,16 @@ export function enableAccount(
 }
 
 export interface DisableAccountResult {
-  request: DisableAccountRequest;
-  response: DisableAccountResponse;
+  request: DisableAccountV2Request;
+  response: DisableAccountV2Response;
 }
 
 export function disableAccount(
-  request: DisableAccountRequest
+  request: DisableAccountV2Request
 ): Promise<DisableAccountResult> {
   return new Promise(
     (resolve: (result: DisableAccountResult) => void, reject): void => {
-      client.disableAccount(request, getMetaData(), (error, response): void => {
+      client.disableAccountV2(request, getMetaData(), (error, response): void => {
         if (isNotNull(error) || isNull(response)) {
           reject(
             new AccountServiceError(extractErrorMessage(error), request, error)
@@ -159,17 +159,17 @@ export function disableAccount(
   );
 }
 
-export interface ChangeAccountRoleResult {
-  request: ChangeAccountRoleRequest;
-  response: ChangeAccountRoleResponse;
+export interface UpdateAccountResult {
+  request: UpdateAccountV2Request;
+  response: UpdateAccountV2Response;
 }
 
-export function changeAccountRole(
-  request: ChangeAccountRoleRequest
-): Promise<ChangeAccountRoleResult> {
+export function updateAccount(
+  request: UpdateAccountV2Request
+): Promise<UpdateAccountResult> {
   return new Promise(
-    (resolve: (result: ChangeAccountRoleResult) => void, reject): void => {
-      client.changeAccountRole(
+    (resolve: (result: UpdateAccountResult) => void, reject): void => {
+      client.updateAccountV2(
         request,
         getMetaData(),
         (error, response): void => {
@@ -214,16 +214,16 @@ export function convertAccount(
 }
 
 export interface GetAccountResult {
-  request: GetAccountRequest;
-  response: GetAccountResponse;
+  request: GetAccountV2Request;
+  response: GetAccountV2Response;
 }
 
 export function getAccount(
-  request: GetAccountRequest
+  request: GetAccountV2Request
 ): Promise<GetAccountResult> {
   return new Promise(
     (resolve: (result: GetAccountResult) => void, reject): void => {
-      client.getAccount(request, getMetaData(), (error, response): void => {
+      client.getAccountV2(request, getMetaData(), (error, response): void => {
         if (isNotNull(error) || isNull(response)) {
           reject(
             new AccountServiceError(extractErrorMessage(error), request, error)
@@ -237,16 +237,16 @@ export function getAccount(
 }
 
 export interface ListAccountsResult {
-  request: ListAccountsRequest;
-  response: ListAccountsResponse;
+  request: ListAccountsV2Request;
+  response: ListAccountsV2Response;
 }
 
 export function listAccounts(
-  request: ListAccountsRequest
+  request: ListAccountsV2Request
 ): Promise<ListAccountsResult> {
   return new Promise(
     (resolve: (result: ListAccountsResult) => void, reject): void => {
-      client.listAccounts(request, getMetaData(), (error, response): void => {
+      client.listAccountsV2(request, getMetaData(), (error, response): void => {
         if (isNotNull(error) || isNull(response)) {
           reject(
             new AccountServiceError(extractErrorMessage(error), request, error)
