@@ -110,11 +110,19 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                         </div>
                         <Select
                           placeholder={f(
-                            messages.feature.filter.tagsPlaceholder
+                            selectedFilterType?.value === FilterTypes.TAGS
+                              ? messages.feature.filter.tagsPlaceholder
+                              : messages.select
                           )}
                           closeMenuOnSelect={isMultiFilter ? false : true}
                           className={classNames(
-                            `${isMultiFilter ? 'min-w-[270px]' : 'min-w-max'}`
+                            `${
+                              isMultiFilter
+                                ? 'min-w-[270px]'
+                                : values.length === 0
+                                ? 'min-w-[180px]'
+                                : 'min-w-max'
+                            }`
                           )}
                           options={values}
                           styles={{

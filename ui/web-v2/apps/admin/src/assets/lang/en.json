@@ -462,6 +462,7 @@
   "segment.uploading.message": "Segments can't be updated until the user list has been uploaded.",
   "segment.uploading.title": "Upload in progress",
   "segment.userCount": "users",
+  "select": "Select",
   "settings.list.header.description": "On this page, you can check all settings for this environment. Select a tab to manage the settings.",
   "settings.list.header.title": "Settings",
   "settings.tab.notifications": "Notifications",
