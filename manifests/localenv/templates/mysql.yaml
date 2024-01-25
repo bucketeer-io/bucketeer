@@ -155,6 +155,7 @@ data:
       `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
       `disabled` tinyint(1) NOT NULL DEFAULT '0',
       `trial` tinyint(1) NOT NULL DEFAULT '0',
+      `organization_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
       `creator_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
       `created_at` bigint NOT NULL,
       `updated_at` bigint NOT NULL,
@@ -163,7 +164,7 @@ data:
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
     LOCK TABLES `project` WRITE;
-    INSERT INTO `project` VALUES ('default','Project default','default','Project description',0,0,'okimoto_yuichi@cyberagent.co.jp',1602829513,1693543372);
+    INSERT INTO `project` VALUES ('default','Project default','default','Project description',0,0,'e2e','okimoto_yuichi@cyberagent.co.jp',1602829513,1693543372);
     UNLOCK TABLES;
 
     --
