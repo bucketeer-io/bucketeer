@@ -48,7 +48,6 @@ var (
 		{table: "ops_progressive_rollout", targetField: "feature_id"},
 		{table: "flag_trigger", targetField: "description"},
 		{table: "feature", targetField: "id"},
-		{table: "webhook", targetField: "name"},
 	}
 	targetEntitiesInOrganization = []*mysqlE2EInfo{
 		{table: "account_v2", targetField: "email"},
