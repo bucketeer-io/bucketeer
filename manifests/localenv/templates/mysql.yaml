@@ -260,13 +260,14 @@ data:
       `disabled`    TINYINT(1)   NOT NULL DEFAULT '0',
       `archived`    TINYINT(1)   NOT NULL DEFAULT '0',
       `trial`       TINYINT(1)   NOT NULL DEFAULT '0',
+      `system_admin`  TINYINT(1)   NOT NULL DEFAULT '0',
       `created_at`  BIGINT(20)   NOT NULL,
       `updated_at`  BIGINT(20)   NOT NULL,
       PRIMARY KEY (`id`),
       UNIQUE KEY `unique_url_code` (`url_code`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
-    INSERT INTO `organization` VALUES ('e2e', 'e2e', 'e2e', 'e2e', 0, 0, 0, 1706092038, 1706092038);
+    INSERT INTO `organization` VALUES ('e2e', 'e2e', 'e2e', 'e2e', 0, 0, 0, 0, 1706092038, 1706092038);
 
     --
     -- Table structure for table `account_v2`
