@@ -47,6 +47,7 @@ export interface ListAdminAuditLogsParams {
   from: number;
   to: number;
   resource?: number;
+  entityType?: number;
 }
 
 export const listAdminAuditLogs = createAsyncThunk<
@@ -64,6 +65,8 @@ export const listAdminAuditLogs = createAsyncThunk<
   request.setTo(params.to);
   params.resource != null &&
     request.setEntityType(new Int32Value().setValue(params.resource));
+  params.entityType != null &&
+    request.setEntityType(new Int32Value().setValue(params.entityType));
   await setupAuthToken();
   const result = await auditLogGrpc.listAdminAuditLogs(request);
   return result.response.toObject();

@@ -91,6 +91,7 @@ export const AdminAuditLogIndexPage: FC = memo(() => {
       const to = options && options.to ? Number(options.to) : null;
       const resource =
         options && options.resource ? Number(options.resource) : null;
+      const entityType = options.entityType ? Number(options.entityType) : null;
       dispatch(
         listAdminAuditLogs({
           pageSize: AUDITLOG_LIST_PAGE_SIZE,
@@ -101,6 +102,7 @@ export const AdminAuditLogIndexPage: FC = memo(() => {
           from: from,
           to: to,
           resource: resource,
+          entityType,
         })
       );
     },
