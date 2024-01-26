@@ -2,8 +2,6 @@ import { Nullable, isNotNull, isNull } from 'option-t/lib/Nullable/Nullable';
 
 import { urls } from '../config';
 import {
-  ChangeAccountRoleRequest,
-  ChangeAccountRoleResponse,
   ConvertAccountRequest,
   ConvertAccountResponse,
   CreateAccountV2Request,

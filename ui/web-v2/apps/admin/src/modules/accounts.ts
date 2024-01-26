@@ -7,7 +7,6 @@ import {
 import {
   BoolValue,
   StringValue,
-  Int32Value,
 } from 'google-protobuf/google/protobuf/wrappers_pb';
 
 import * as accountGrpc from '../grpc/account';
