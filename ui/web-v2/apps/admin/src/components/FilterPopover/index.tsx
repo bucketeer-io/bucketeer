@@ -28,10 +28,12 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
     const { formatMessage: f } = useIntl();
     const [selectedFilterType, setSelectedFilterType] = useState<Option>(null);
     const referenceElement = useRef<HTMLButtonElement | null>(null);
-    const [valueOption, setValue] = useState<Option>(values[0]);
-    const [multiValueOption, setMultiValue] = useState<Option[]>([]);
+    const [valueOption, setValueOption] = useState<Option>(null);
+    const [multiValueOption, setMultiValueOption] = useState<Option[]>([]);
 
     const isMultiFilter = selectedFilterType?.value === FilterTypes.TAGS;
+    const isFilterTypeMaintainer =
+      selectedFilterType?.value === FilterTypes.MAINTAINER;
 
     const handleKeyChange = (o: Option) => {
       setSelectedFilterType(o);
@@ -45,14 +47,20 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
           multiValueOption.map((o) => o.value)
         );
       } else {
-        onAdd(selectedFilterType.value, valueOption.value);
+        onAdd(selectedFilterType.value, valueOption?.value);
       }
-      setValue(values[0]);
+      setValueOption(null);
+      setMultiValueOption([]);
+      setSelectedFilterType(null);
     };
 
     useEffect(() => {
-      setValue(values[0]);
-    }, [values, setValue]);
+      if (isFilterTypeMaintainer) {
+        setValueOption(null);
+      } else {
+        setValueOption(values[0]);
+      }
+    }, [values, setValueOption, isFilterTypeMaintainer]);
 
     return (
       <Popover>
@@ -116,13 +124,10 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                           )}
                           closeMenuOnSelect={isMultiFilter ? false : true}
                           className={classNames(
-                            `${
-                              isMultiFilter
-                                ? 'min-w-[270px]'
-                                : values.length === 0
-                                ? 'min-w-[180px]'
-                                : 'min-w-max'
-                            }`
+                            isMultiFilter && 'min-w-[270px]',
+                            isFilterTypeMaintainer
+                              ? 'min-w-[220px]'
+                              : 'min-w-max'
                           )}
                           options={values}
                           styles={{
@@ -142,16 +147,17 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                           value={isMultiFilter ? multiValueOption : valueOption}
                           onChange={(o) => {
                             if (isMultiFilter) {
-                              setMultiValue(o);
+                              setMultiValueOption(o);
                             } else {
-                              setValue(o);
+                              setValueOption(o);
                             }
                           }}
                           isSearchable={
                             selectedFilterType?.value === FilterTypes.TAGS ||
-                            selectedFilterType?.value === FilterTypes.MAINTAINER
+                            isFilterTypeMaintainer
                           }
                           isMulti={isMultiFilter}
+                          clearable={isFilterTypeMaintainer}
                         />
                         <div className={classNames('flex-none ml-4')}>
                           <button
