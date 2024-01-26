@@ -54,10 +54,6 @@ const entityTypeOptions: Option[] = [
     label: intl.formatMessage(messages.sourceType.environment),
   },
   {
-    value: Event.EntityType.ADMIN_ACCOUNT.toString(),
-    label: intl.formatMessage(messages.sourceType.adminAccount),
-  },
-  {
     value: Event.EntityType.ADMIN_SUBSCRIPTION.toString(),
     label: intl.formatMessage(messages.sourceType.adminSubscription),
   },

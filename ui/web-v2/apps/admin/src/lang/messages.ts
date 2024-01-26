@@ -1,96 +1,6 @@
 import { defineMessage } from 'react-intl';
 
 export const messages = {
-  adminAccount: {
-    add: {
-      header: {
-        title: defineMessage({
-          id: 'adminAccount.add.header.title',
-          defaultMessage: 'Create an account',
-        }),
-        description: defineMessage({
-          id: 'adminAccount.add.header.description',
-          defaultMessage:
-            'The admin account has access to all projects and environments.',
-        }),
-      },
-    },
-    confirm: {
-      enableTitle: defineMessage({
-        id: 'adminAccount.confirm.enable.title',
-        defaultMessage: 'Enable account',
-      }),
-      enableDescription: defineMessage({
-        id: 'adminAccount.confirm.enable.description',
-        defaultMessage:
-          'Are you sure you want to enable the {accountId} account?',
-      }),
-      disableTitle: defineMessage({
-        id: 'adminAccount.confirm.disable.title',
-        defaultMessage: 'Disable account',
-      }),
-      disableDescription: defineMessage({
-        id: 'adminAccount.confirm.disable.description',
-        defaultMessage:
-          'Are you sure you want to disable the {accountId} account?',
-      }),
-    },
-    filter: {
-      enabled: defineMessage({
-        id: 'adminAccount.filter.enabled',
-        defaultMessage: 'Enabled',
-      }),
-    },
-    list: {
-      header: {
-        title: defineMessage({
-          id: 'adminAccount.list.header.title',
-          defaultMessage: 'Accounts',
-        }),
-        description: defineMessage({
-          id: 'adminAccount.list.header.description',
-          defaultMessage:
-            'On this tab, you can check all admin accounts, disable or add a new one.',
-        }),
-      },
-      noData: {
-        description: defineMessage({
-          id: 'adminAccount.list.noData.description',
-          defaultMessage: 'You can add new admin accounts.',
-        }),
-      },
-      noResult: {
-        searchKeyword: defineMessage({
-          id: 'adminAccount.list.noResult.searchKeyword',
-          defaultMessage: 'Email',
-        }),
-      },
-    },
-    search: {
-      placeholder: defineMessage({
-        id: 'adminAccount.search.placeholder',
-        defaultMessage: 'Email',
-      }),
-    },
-    sort: {
-      emailAz: defineMessage({
-        id: 'adminAccount.sort.emailAz',
-        defaultMessage: 'Email A-Z',
-      }),
-      emailZa: defineMessage({
-        id: 'adminAccount.sort.emailZa',
-        defaultMessage: 'Email Z-A',
-      }),
-      newest: defineMessage({
-        id: 'adminAccount.sort.newest',
-        defaultMessage: 'Newest',
-      }),
-      oldest: defineMessage({
-        id: 'adminAccount.sort.oldest',
-        defaultMessage: 'Oldest',
-      }),
-    },
-  },
   adminProject: {
     action: {
       convertProject: defineMessage({
@@ -226,10 +136,6 @@ export const messages = {
       },
     },
     tab: {
-      account: defineMessage({
-        id: 'adminSettings.tab.account',
-        defaultMessage: 'Accounts',
-      }),
       auditLogs: defineMessage({
         id: 'adminSettings.tab.auditLogs',
         defaultMessage: 'Audit Logs',
@@ -2568,14 +2474,6 @@ export const messages = {
     }),
     accountDescription: defineMessage({
       id: 'sourceType.accountDescription',
-      defaultMessage: 'Get notified when someone adds or updates an account',
-    }),
-    adminAccount: defineMessage({
-      id: 'sourceType.adminAccount',
-      defaultMessage: 'Account',
-    }),
-    adminAccountDescription: defineMessage({
-      id: 'sourceType.adminAccountDescription',
       defaultMessage: 'Get notified when someone adds or updates an account',
     }),
     adminSubscription: defineMessage({
