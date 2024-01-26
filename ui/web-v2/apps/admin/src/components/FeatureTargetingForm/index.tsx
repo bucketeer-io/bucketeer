@@ -1,5 +1,7 @@
 import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
 import { isLanguageJapanese } from '@/lang/getSelectedLanguage';
+import { selectAll as selectAllProgressiveRollouts } from '@/modules/porgressiveRollout';
+import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import {
   createVariationLabel,
@@ -48,6 +50,7 @@ import { Feature } from '../../proto/feature/feature_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
 import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
+import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
 import { CopyChip } from '../CopyChip';
 import { colourStyles, CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
@@ -332,6 +335,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 <StrategyInput
                   feature={feature}
                   strategyName={'defaultStrategy'}
+                  featureId={featureId}
                 />
                 <p className="input-error">
                   {errors.defaultStrategy?.rolloutStrategy?.message && (
@@ -816,6 +820,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
               <StrategyInput
                 feature={feature}
                 strategyName={`rules.${ruleIdx}.strategy`}
+                featureId={feature.id}
               />
               <p className="input-error">
                 {errors.rules?.[ruleIdx]?.strategy?.rolloutStrategy
@@ -1268,10 +1273,11 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
 export interface StrategyInputProps {
   feature: Feature.AsObject;
   strategyName: string;
+  featureId: string;
 }
 
 export const StrategyInput: FC<StrategyInputProps> = memo(
-  ({ feature, strategyName }) => {
+  ({ feature, strategyName, featureId }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
     const methods = useFormContext();
@@ -1292,6 +1298,17 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
       name: rolloutStrategyName,
       keyName: 'key', // the default keyName is "id" and it conflicts with the variation id field
     });
+    const progressiveRolloutList = useSelector<
+      AppState,
+      ProgressiveRollout.AsObject[]
+    >(
+      (state) =>
+        selectAllProgressiveRollouts(state.progressiveRollout).filter(
+          (rule) => rule.featureId === featureId
+        ),
+      shallowEqual
+    );
+
     const strategyOptions = feature.variationsList.map((v) => {
       return {
         value: v.id,
@@ -1313,15 +1330,38 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
       [update, trigger]
     );
 
+    const isProgressiveRolloutsRunning = !!progressiveRolloutList.find((p) =>
+      isProgressiveRolloutsRunningWaiting(p.status)
+    );
+
+    console.log({ progressiveRolloutList });
+
     return (
       <div>
+        {isProgressiveRolloutsRunning && (
+          <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <InformationCircleIcon
+                  className="h-5 w-5 text-blue-400"
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm text-blue-700">
+                  can't change when a progressive is in progress
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <Controller
           name={optionName}
           control={control}
           render={({ field }) => (
             <Select
               options={strategyOptions}
-              disabled={!editable}
+              disabled={!editable || isProgressiveRolloutsRunning}
               value={selectedOption}
               onChange={field.onChange}
               isSearchable={false}
@@ -1346,7 +1386,7 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
                       )}
                       placeholder={''}
                       onChange={(e) => handleOnChange(idx, s.id, e)}
-                      disabled={!editable}
+                      disabled={!editable || isProgressiveRolloutsRunning}
                     />
                     <span
                       className={classNames(
