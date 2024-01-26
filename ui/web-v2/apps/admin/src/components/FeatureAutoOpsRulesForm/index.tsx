@@ -70,6 +70,7 @@ import {
 import { Feature } from '../../proto/feature/feature_pb';
 import { classNames } from '../../utils/css';
 import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
+import { AutoOpsDeleteDialog } from '../AutoOpsDeleteDialog';
 import { DetailSkeleton } from '../DetailSkeleton';
 import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
@@ -194,6 +195,11 @@ export const getIntervalForDayjs = (
   }
 };
 
+interface SelectedOperation {
+  type: OperationType.AutoOps | OperationType.Progressive;
+  id: string;
+}
+
 interface FeatureAutoOpsRulesFormProps {
   featureId: string;
   refetchAutoOpsRules: () => void;
@@ -209,6 +215,10 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
 
     const [selectedAutoOpsRule, setSelectedAutoOpsRule] =
       useState<AutoOpsRule.AsObject | null>(null);
+    const [isDeleteConfirmDialogOpen, setIsDeleteConfirmDialogOpen] =
+      useState(false);
+    const [selectedOperation, setSelectedOperation] =
+      useState<SelectedOperation>(null);
 
     const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
       (state) =>
@@ -341,6 +351,34 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       refetchProgressiveRollouts();
     }, []);
 
+    const handleOperation = (operation: SelectedOperation) => {
+      setIsDeleteConfirmDialogOpen(true);
+      setSelectedOperation(operation);
+    };
+
+    const handleDelete = () => {
+      setIsDeleteConfirmDialogOpen(false);
+      if (selectedOperation.type === OperationType.AutoOps) {
+        dispatch(
+          deleteAutoOpsRule({
+            environmentNamespace: currentEnvironment.id,
+            id: selectedOperation.id,
+          })
+        ).then(() => {
+          refetchAutoOpsRules();
+        });
+      } else if (selectedOperation.type === OperationType.Progressive) {
+        dispatch(
+          deleteProgressiveRollout({
+            environmentNamespace: currentEnvironment.id,
+            id: selectedOperation.id,
+          })
+        ).then(() => {
+          refetchProgressiveRollouts();
+        });
+      }
+    };
+
     const isActiveTabSelected =
       tabs.find((tab) => tab.selected)?.label === TabLabel.ACTIVE;
 
@@ -399,7 +437,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                       rule={operation as AutoOpsRule.AsObject}
                       isActiveTabSelected={isActiveTabSelected}
                       handleOpenUpdate={handleOpenUpdate}
-                      refetchAutoOpsRules={refetchAutoOpsRules}
+                      handleDelete={handleOperation}
                     />
                   );
                 } else if (
@@ -410,10 +448,10 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                       key={operation.id}
                       featureId={featureId}
                       isActiveTabSelected={isActiveTabSelected}
-                      refetchProgressiveRollouts={refetchProgressiveRollouts}
                       progressiveRollout={
                         operation as ProgressiveRollout.AsObject
                       }
+                      handleDelete={handleOperation}
                     />
                   );
                 }
@@ -433,6 +471,16 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               isProgressiveRolloutSelected={isProgressiveRolloutSelected}
             />
           </Overlay>
+        )}
+        {isDeleteConfirmDialogOpen && (
+          <AutoOpsDeleteDialog
+            open={isDeleteConfirmDialogOpen}
+            onConfirm={handleDelete}
+            onClose={() => {
+              setIsDeleteConfirmDialogOpen(false);
+              setSelectedAutoOpsRule(null);
+            }}
+          />
         )}
       </div>
     );
@@ -570,17 +618,12 @@ const AutoOpsInfos: FC<AutoOpsInfosProps> = memo(
 interface ProgressiveRolloutProps {
   featureId: string;
   isActiveTabSelected: boolean;
-  refetchProgressiveRollouts: () => void;
   progressiveRollout: ProgressiveRollout.AsObject;
+  handleDelete: (arg: SelectedOperation) => void;
 }
 
 const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
-  ({
-    featureId,
-    isActiveTabSelected,
-    refetchProgressiveRollouts,
-    progressiveRollout,
-  }) => {
+  ({ featureId, isActiveTabSelected, progressiveRollout, handleDelete }) => {
     const currentEnvironment = useCurrentEnvironment();
     const dispatch = useDispatch<AppDispatch>();
 
@@ -598,15 +641,6 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
         label: v.value,
       };
     });
-
-    const handleRolloutDelete = (ruleId) => {
-      dispatch(
-        deleteProgressiveRollout({
-          environmentNamespace: currentEnvironment.id,
-          id: ruleId,
-        })
-      ).then(refetchProgressiveRollouts);
-    };
 
     const handleRolloutStop = (ruleId) => {
       // dispatch(
@@ -631,7 +665,12 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
           key={progressiveRollout.id}
           variationOptions={variationOptions}
           rule={progressiveRollout}
-          deleteRule={() => handleRolloutDelete(progressiveRollout.id)}
+          deleteRule={() =>
+            handleDelete({
+              type: OperationType.Progressive,
+              id: progressiveRollout.id,
+            })
+          }
           stopRule={() => handleRolloutStop(progressiveRollout.id)}
           schedulesList={schedulesList}
           increments={increments}
@@ -654,7 +693,12 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
           key={progressiveRollout.id}
           variationOptions={variationOptions}
           rule={progressiveRollout}
-          deleteRule={() => handleRolloutDelete(progressiveRollout.id)}
+          deleteRule={() =>
+            handleDelete({
+              type: OperationType.Progressive,
+              id: progressiveRollout.id,
+            })
+          }
           stopRule={() => handleRolloutStop(progressiveRollout.id)}
           schedulesList={schedulesList}
           variationId={variationId}
@@ -670,15 +714,12 @@ interface OperationProps {
   rule: AutoOpsRule.AsObject;
   isActiveTabSelected: boolean;
   handleOpenUpdate: (arg) => void;
-  refetchAutoOpsRules: () => void;
+  handleDelete: (arg: SelectedOperation) => void;
 }
 
 const Operation: FC<OperationProps> = memo(
-  ({ rule, isActiveTabSelected, handleOpenUpdate, refetchAutoOpsRules }) => {
+  ({ rule, isActiveTabSelected, handleOpenUpdate, handleDelete }) => {
     const { formatMessage: f } = useIntl();
-    const dispatch = useDispatch<AppDispatch>();
-    const currentEnvironment = useCurrentEnvironment();
-
     const opsCounts = useSelector<AppState, OpsCount.AsObject[]>(
       (state) => selectAllOpsCounts(state.opsCounts),
       shallowEqual
@@ -686,15 +727,6 @@ const Operation: FC<OperationProps> = memo(
 
     const { typeUrl } = rule.clausesList[0].clause;
     const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
-
-    const handleDelete = (ruleId) => {
-      dispatch(
-        deleteAutoOpsRule({
-          environmentNamespace: currentEnvironment.id,
-          id: ruleId,
-        })
-      ).then(refetchAutoOpsRules);
-    };
 
     return (
       <div className="rounded-xl shadow px-6 py-4 bg-white">
@@ -734,7 +766,12 @@ const Operation: FC<OperationProps> = memo(
                       </span>
                     </button>
                     <button
-                      onClick={() => handleDelete(rule.id)}
+                      onClick={() =>
+                        handleDelete({
+                          type: OperationType.AutoOps,
+                          id: rule.id,
+                        })
+                      }
                       className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
                     >
                       <TrashIcon width={18} className="text-red-500" />
