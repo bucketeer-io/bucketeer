@@ -30,12 +30,12 @@ go run ./hack/delete-e2e-data-mysql delete \
 
 ```
 make deps
-make docker-build
 
 export PAT=<PERSONAL_ACCESS_TOKEN>
 export GITHUB_USER_NAME=<GITHUB_USER_NAME>
 export TAG=<TAG>
 
+make docker-build
 make docker-push
 ```
 
