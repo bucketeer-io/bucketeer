@@ -462,6 +462,7 @@
   "segment.uploading.message": "ユーザー一覧はアップロード中のため、セグメントユーザーの更新ができません。",
   "segment.uploading.title": "アップロード中",
   "segment.userCount": "ユーザー数",
+  "select": "選択",
   "settings.list.header.description": "このページでは、環境にあるすべての設定を確認できます。タブを選択すると設定の管理ができます。",
   "settings.list.header.title": "設定",
   "settings.tab.notifications": "通知",

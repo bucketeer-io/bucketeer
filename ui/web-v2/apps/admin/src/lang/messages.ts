@@ -2725,4 +2725,8 @@ export const messages = {
     id: 'fullStop',
     defaultMessage: '.',
   }),
+  select: defineMessage({
+    id: 'select',
+    defaultMessage: 'Select',
+  }),
 };
