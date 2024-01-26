@@ -21,7 +21,9 @@ import {
   GetMyOrganizationsRequest,
   GetMyOrganizationsResponse,
   ListAccountsV2Request,
-  ListAccountsV2Response, UpdateAccountV2Request, UpdateAccountV2Response,
+  ListAccountsV2Response,
+  UpdateAccountV2Request,
+  UpdateAccountV2Response,
 } from '../proto/account/service_pb';
 import {
   AccountServiceClient,
@@ -57,18 +59,30 @@ export interface GetMyOrganizationsResult {
   response: GetMyOrganizationsResponse;
 }
 
-export function getMyOrganizations(request: GetMyOrganizationsRequest): Promise<GetMyOrganizationsResult> {
-  return new Promise((resolve: (result: GetMyOrganizationsResult) => void, reject): void => {
-    client.getMyOrganizations(request, getMetaData(), (error, response): void => {
-      if (isNotNull(error) || isNull(response)) {
-        reject(
-          new AccountServiceError(extractErrorMessage(error), request, error)
-        );
-      } else {
-        resolve({ request, response });
-      }
-    });
-  });
+export function getMyOrganizations(
+  request: GetMyOrganizationsRequest
+): Promise<GetMyOrganizationsResult> {
+  return new Promise(
+    (resolve: (result: GetMyOrganizationsResult) => void, reject): void => {
+      client.getMyOrganizations(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AccountServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
+    }
+  );
 }
 
 export interface GetMeV2Result {
@@ -77,17 +91,19 @@ export interface GetMeV2Result {
 }
 
 export function getMeV2(request: GetMeV2Request): Promise<GetMeV2Result> {
-  return new Promise((resolve: (result: GetMeV2Result) => void, reject): void => {
-    client.getMeV2(request, getMetaData(), (error, response): void => {
-      if (isNotNull(error) || isNull(response)) {
-        reject(
-          new AccountServiceError(extractErrorMessage(error), request, error)
-        );
-      } else {
-        resolve({ request, response });
-      }
-    });
-  });
+  return new Promise(
+    (resolve: (result: GetMeV2Result) => void, reject): void => {
+      client.getMeV2(request, getMetaData(), (error, response): void => {
+        if (isNotNull(error) || isNull(response)) {
+          reject(
+            new AccountServiceError(extractErrorMessage(error), request, error)
+          );
+        } else {
+          resolve({ request, response });
+        }
+      });
+    }
+  );
 }
 
 export interface CreateAccountResult {
@@ -100,15 +116,23 @@ export function createAccount(
 ): Promise<CreateAccountResult> {
   return new Promise(
     (resolve: (result: CreateAccountResult) => void, reject): void => {
-      client.createAccountV2(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new AccountServiceError(extractErrorMessage(error), request, error)
-          );
-        } else {
-          resolve({ request, response });
+      client.createAccountV2(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AccountServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
         }
-      });
+      );
     }
   );
 }
@@ -123,15 +147,23 @@ export function enableAccount(
 ): Promise<EnableAccountResult> {
   return new Promise(
     (resolve: (result: EnableAccountResult) => void, reject): void => {
-      client.enableAccountV2(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new AccountServiceError(extractErrorMessage(error), request, error)
-          );
-        } else {
-          resolve({ request, response });
+      client.enableAccountV2(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AccountServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
         }
-      });
+      );
     }
   );
 }
@@ -146,15 +178,23 @@ export function disableAccount(
 ): Promise<DisableAccountResult> {
   return new Promise(
     (resolve: (result: DisableAccountResult) => void, reject): void => {
-      client.disableAccountV2(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new AccountServiceError(extractErrorMessage(error), request, error)
-          );
-        } else {
-          resolve({ request, response });
+      client.disableAccountV2(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AccountServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
         }
-      });
+      );
     }
   );
 }

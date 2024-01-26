@@ -1883,6 +1883,10 @@ export const messages = {
       id: 'input.optional',
       defaultMessage: '(optional)',
     }),
+    name: defineMessage({
+      id: 'input.name',
+      defaultMessage: 'Name',
+    }),
     email: defineMessage({
       id: 'input.email',
       defaultMessage: 'Email',

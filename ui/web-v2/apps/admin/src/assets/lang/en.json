@@ -345,6 +345,7 @@
   "input.error.notNumber": "This must be a number.",
   "input.error.required": "This is required.",
   "input.featureFlag": "Feature Flag",
+  "input.name": "Name",
   "input.optional": "(optional)",
   "input.originEnvironment": "Origin environment",
   "input.projectId": "Project ID",

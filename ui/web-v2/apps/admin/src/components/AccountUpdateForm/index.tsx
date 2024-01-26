@@ -1,33 +1,17 @@
+import { getRoleListV1 } from '@/pages/account';
 import { Dialog } from '@headlessui/react';
 import { FC, memo } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
-import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { useIsEditable, useIsOwner } from '../../modules/me';
-import { Account } from '../../proto/account/account_pb';
 import { Option, Select } from '../Select';
 
 export interface AccountUpdateFormProps {
   onSubmit: () => void;
   onCancel: () => void;
 }
-
-export const roleOptions: Option[] = [
-  {
-    value: Account.Role.VIEWER.toString(),
-    label: intl.formatMessage(messages.account.role.viewer),
-  },
-  {
-    value: Account.Role.EDITOR.toString(),
-    label: intl.formatMessage(messages.account.role.editor),
-  },
-  {
-    value: Account.Role.OWNER.toString(),
-    label: intl.formatMessage(messages.account.role.owner),
-  },
-];
 
 export const AccountUpdateForm: FC<AccountUpdateFormProps> = memo(
   ({ onSubmit, onCancel }) => {
@@ -70,6 +54,27 @@ export const AccountUpdateForm: FC<AccountUpdateFormProps> = memo(
                 "
               >
                 <div className="">
+                  <label htmlFor="name">
+                    <span className="input-label">
+                      {f(messages.input.name)}
+                    </span>
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      {...register('name')}
+                      type="text"
+                      name="name"
+                      id="name"
+                      className="input-text w-full"
+                    />
+                    <p className="input-error">
+                      {errors.name && (
+                        <span role="alert">{errors.name.message}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="">
                   <label htmlFor="email">
                     <span className="input-label">
                       {f(messages.input.email)}
@@ -82,7 +87,7 @@ export const AccountUpdateForm: FC<AccountUpdateFormProps> = memo(
                       name="email"
                       id="email"
                       className="input-text w-full"
-                      disabled={!editable}
+                      disabled={true}
                     />
                     <p className="input-error">
                       {errors.email && (
@@ -105,9 +110,9 @@ export const AccountUpdateForm: FC<AccountUpdateFormProps> = memo(
                         return (
                           <Select
                             onChange={(o: Option) => field.onChange(o.value)}
-                            options={roleOptions}
+                            options={getRoleListV1()}
                             disabled={!editable}
-                            value={roleOptions.find(
+                            value={getRoleListV1().find(
                               (o) => field.value == o.value
                             )}
                             isSearchable={false}

@@ -1,3 +1,4 @@
+import { getRoleV1 } from '@/pages/account';
 import { FC, memo } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
@@ -7,10 +8,9 @@ import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll } from '../../modules/accounts';
 import { useCurrentEnvironment, useIsOwner } from '../../modules/me';
-import { Account, AccountV2} from '../../proto/account/account_pb';
+import { AccountV2 } from '../../proto/account/account_pb';
 import { AccountSearchOptions } from '../../types/account';
 import { classNames } from '../../utils/css';
-import { roleOptions } from '../AccountAddForm';
 import { AccountSearch } from '../AccountSearch';
 import { ListSkeleton } from '../ListSkeleton';
 import { Pagination } from '../Pagination';
@@ -116,13 +116,10 @@ export const AccountList: FC<AccountListProps> = memo(
                   const envRole = account.environmentRolesList.find(
                     (r) => r.environmentId === currentEnvironment.id
                   );
+                  const accountDisabled =
+                    envRole.role ===
+                    AccountV2.Role.Environment.ENVIRONMENT_UNASSIGNED;
                   const orgRole = account.organizationRole;
-                  let role = Account.Role.VIEWER.toString();
-                  if (envRole.role == AccountV2.Role.Environment.ENVIRONMENT_EDITOR && orgRole == AccountV2.Role.Organization.ORGANIZATION_OWNER) {
-                    role = Account.Role.OWNER.toString();
-                  } else if (envRole.role == AccountV2.Role.Environment.ENVIRONMENT_EDITOR && orgRole == AccountV2.Role.Organization.ORGANIZATION_MEMBER) {
-                    role = Account.Role.EDITOR.toString();
-                  }
                   return (
                     <tr key={account.email} className={classNames('p-2')}>
                       <td className="pl-5 pr-2 py-3 border-b">
@@ -149,11 +146,7 @@ export const AccountList: FC<AccountListProps> = memo(
                       >
                         <div className="flex justify-center items-center rounded-md w-16 h-6 bg-gray-200">
                           <span className="text-xs text-gray-700">
-                            {
-                              roleOptions.find(
-                                (o) => o.value === role
-                              ).label
-                            }
+                            {getRoleV1(orgRole, envRole.role).label}
                           </span>
                         </div>
                       </td>
@@ -164,9 +157,9 @@ export const AccountList: FC<AccountListProps> = memo(
                         )}
                       >
                         <Switch
-                          enabled={!account.disabled}
+                          enabled={!accountDisabled}
                           onChange={() =>
-                            onSwitchEnabled(account.email, account.disabled)
+                            onSwitchEnabled(account.email, accountDisabled)
                           }
                           size={'small'}
                           readOnly={!editable}

@@ -6,14 +6,17 @@ import {
 } from '@reduxjs/toolkit';
 import {
   BoolValue,
+  StringValue,
   Int32Value,
 } from 'google-protobuf/google/protobuf/wrappers_pb';
 
 import * as accountGrpc from '../grpc/account';
-import {AccountV2} from '../proto/account/account_pb';
+import { AccountV2 } from '../proto/account/account_pb';
 import {
   CreateAccountV2Command,
-  ChangeAccountV2EnvironmentRolesCommand, ChangeAccountV2OrganizationRoleCommand,
+  ChangeAccountV2NameCommand,
+  ChangeAccountV2EnvironmentRolesCommand,
+  ChangeAccountV2OrganizationRoleCommand,
 } from '../proto/account/command_pb';
 import {
   ListAccountsV2Request,
@@ -68,15 +71,13 @@ export const listAccounts = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListAccountsV2Request();
-  request.setEnvironmentId(params.environmentId);
   request.setOrganizationId(params.organizationId);
+  request.setEnvironmentId(new StringValue().setValue(params.environmentId));
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
   request.setOrderBy(params.orderBy);
   request.setOrderDirection(params.orderDirection);
   request.setSearchKeyword(params.searchKeyword);
-  params.role != null &&
-    request.setRole(new Int32Value().setValue(params.role));
   params.disabled != null &&
     request.setDisabled(new BoolValue().setValue(params.disabled));
   await setupAuthToken();
@@ -118,9 +119,11 @@ export const enableAccount = createAsyncThunk<
   const command = new ChangeAccountV2EnvironmentRolesCommand();
   const environmentRole = new AccountV2.EnvironmentRole();
   environmentRole.setEnvironmentId(params.environmentId);
-  environmentRole.setRole(AccountV2.Role.Environment.ENVIRONMENT_EDITOR);
+  environmentRole.setRole(AccountV2.Role.Environment.ENVIRONMENT_VIEWER);
   command.setRolesList([environmentRole]);
-  command.setWriteType(ChangeAccountV2EnvironmentRolesCommand.WriteType.WRITETYPE_PATCH);
+  command.setWriteType(
+    ChangeAccountV2EnvironmentRolesCommand.WriteType.WRITETYPE_PATCH
+  );
   request.setChangeEnvironmentRolesCommand(command);
   request.setOrganizationId(params.organizationId);
   request.setEmail(params.email);
@@ -139,14 +142,16 @@ export const disableAccount = createAsyncThunk<
   DisableAccountParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/disable`, async (params) => {
-  // TODO After migration to console3.0, we should use DisableAccountV2Command
+  // TODO After migrating to the console 3.0, we should use DisableAccountV2Command
   const request = new UpdateAccountV2Request();
   const cmd = new ChangeAccountV2EnvironmentRolesCommand();
   const environmentRole = new AccountV2.EnvironmentRole();
   environmentRole.setEnvironmentId(params.environmentId);
   environmentRole.setRole(AccountV2.Role.Environment.ENVIRONMENT_UNASSIGNED);
   cmd.setRolesList([environmentRole]);
-  cmd.setWriteType(ChangeAccountV2EnvironmentRolesCommand.WriteType.WRITETYPE_PATCH);
+  cmd.setWriteType(
+    ChangeAccountV2EnvironmentRolesCommand.WriteType.WRITETYPE_PATCH
+  );
   request.setChangeEnvironmentRolesCommand(cmd);
   request.setOrganizationId(params.organizationId);
   request.setEmail(params.email);
@@ -156,6 +161,7 @@ export const disableAccount = createAsyncThunk<
 
 export interface CreateAccountParams {
   organizationId: string;
+  name: string;
   email: string;
   organizationRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap];
   environmentRole: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap];
@@ -173,6 +179,7 @@ export const createAccount = createAsyncThunk<
   environmentRole.setEnvironmentId(params.environmentId);
   environmentRole.setRole(params.environmentRole);
   cmd.setEnvironmentRolesList([environmentRole]);
+  cmd.setName(params.name);
   cmd.setEmail(params.email);
   cmd.setOrganizationRole(params.organizationRole);
   request.setCommand(cmd);
@@ -183,6 +190,7 @@ export const createAccount = createAsyncThunk<
 
 export interface UpdateAccountParams {
   organizationId: string;
+  name: string;
   email: string;
   environmentId: string;
   environmentRole: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap];
@@ -201,10 +209,17 @@ export const updateAccount = createAsyncThunk<
   environmentRole.setEnvironmentId(params.environmentId);
   environmentRole.setRole(params.environmentRole);
   changeEnvRoleCmd.setRolesList([environmentRole]);
-  changeEnvRoleCmd.setWriteType(ChangeAccountV2EnvironmentRolesCommand.WriteType.WRITETYPE_PATCH);
+  changeEnvRoleCmd.setWriteType(
+    ChangeAccountV2EnvironmentRolesCommand.WriteType.WRITETYPE_PATCH
+  );
   changeOrgRoleCmd.setRole(params.organizationRole);
   request.setChangeEnvironmentRolesCommand(changeEnvRoleCmd);
   request.setChangeOrganizationRoleCommand(changeOrgRoleCmd);
+  if (params.name) {
+    const cmd = new ChangeAccountV2NameCommand();
+    cmd.setName(params.name);
+    request.setChangeNameCommand(cmd);
+  }
   request.setEmail(params.email);
   request.setOrganizationId(params.organizationId);
   await setupAuthToken();

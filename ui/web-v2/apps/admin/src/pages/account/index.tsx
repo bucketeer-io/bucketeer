@@ -1,3 +1,5 @@
+import { Option } from '@/components/Select';
+import { intl } from '@/lang';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { useCallback, FC, memo, useEffect, useState } from 'react';
@@ -31,14 +33,14 @@ import {
   listAccounts,
   disableAccount,
   enableAccount,
+  updateAccount,
   getAccount,
   createAccount,
-  updateAccount,
   OrderBy,
   OrderDirection,
 } from '../../modules/accounts';
 import { useCurrentEnvironment } from '../../modules/me';
-import {Account, AccountV2} from '../../proto/account/account_pb';
+import { AccountV2 } from '../../proto/account/account_pb';
 import { ListAccountsRequest } from '../../proto/account/service_pb';
 import { AppDispatch } from '../../store';
 import { AccountSortOption, isAccountSortOption } from '../../types/account';
@@ -82,6 +84,96 @@ const createSort = (sortOption?: AccountSortOption): Sort => {
         orderDirection: ListAccountsRequest.OrderDirection.DESC,
       };
   }
+};
+
+// TODO: Remove this when the console 3.0 is ready
+enum AccountRoleV1 {
+  VIEWER = 0,
+  EDITOR = 1,
+  OWNER = 2,
+}
+
+// TODO: Remove this when the console 3.0 is ready
+export const getRoleListV1 = (): Option[] => {
+  return [
+    {
+      value: AccountRoleV1.VIEWER.toString(),
+      label: intl.formatMessage(messages.account.role.viewer),
+    },
+    {
+      value: AccountRoleV1.EDITOR.toString(),
+      label: intl.formatMessage(messages.account.role.editor),
+    },
+    {
+      value: AccountRoleV1.OWNER.toString(),
+      label: intl.formatMessage(messages.account.role.owner),
+    },
+  ];
+};
+
+// TODO: Remove this when the console 3.0 is ready
+export const getRoleV1 = (
+  orgRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap],
+  envRole: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap]
+): Option => {
+  // If it's a editor
+  if (
+    envRole == AccountV2.Role.Environment.ENVIRONMENT_EDITOR &&
+    orgRole == AccountV2.Role.Organization.ORGANIZATION_MEMBER
+  ) {
+    return {
+      value: AccountRoleV1.EDITOR.toString(),
+      label: intl.formatMessage(messages.account.role.editor),
+    };
+    // If it's an admin
+  } else if (
+    envRole == AccountV2.Role.Environment.ENVIRONMENT_EDITOR &&
+    orgRole == AccountV2.Role.Organization.ORGANIZATION_ADMIN
+  ) {
+    return {
+      value: AccountRoleV1.OWNER.toString(),
+      label: intl.formatMessage(messages.account.role.owner),
+    };
+    // If it's an onwer
+  } else if (
+    envRole == AccountV2.Role.Environment.ENVIRONMENT_EDITOR &&
+    orgRole == AccountV2.Role.Organization.ORGANIZATION_OWNER
+  ) {
+    return {
+      value: AccountRoleV1.OWNER.toString(),
+      label: intl.formatMessage(messages.account.role.owner),
+    };
+  }
+  // Anything else returns viewer
+  return {
+    value: AccountRoleV1.VIEWER.toString(),
+    label: intl.formatMessage(messages.account.role.viewer),
+  };
+};
+
+// TODO: Remove this when the console 3.0 is ready
+export const convertToAccountV2Role = (
+  roleV1: AccountRoleV1
+): [
+  AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap],
+  AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap]
+] => {
+  if (roleV1 == AccountRoleV1.VIEWER) {
+    return [
+      AccountV2.Role.Organization.ORGANIZATION_MEMBER,
+      AccountV2.Role.Environment.ENVIRONMENT_VIEWER,
+    ];
+  }
+  if (roleV1 == AccountRoleV1.EDITOR) {
+    return [
+      AccountV2.Role.Organization.ORGANIZATION_MEMBER,
+      AccountV2.Role.Environment.ENVIRONMENT_EDITOR,
+    ];
+  }
+  return [
+    AccountV2.Role.Organization.ORGANIZATION_ADMIN,
+    AccountV2.Role.Environment.ENVIRONMENT_EDITOR,
+  ];
 };
 
 export const AccountIndexPage: FC = memo(() => {
@@ -140,7 +232,7 @@ export const AccountIndexPage: FC = memo(() => {
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
           disabled: disabled,
-          role: role, // TODO roleの数値は変わってるはずなので変更しないと。
+          role: role,
         })
       );
     },
@@ -228,11 +320,13 @@ export const AccountIndexPage: FC = memo(() => {
   const handleOpenUpdate = useCallback(
     (a: AccountV2.AsObject) => {
       setOpen(true);
-      // TODO ちゃんと動くかテストする。
-      const envRole = a.environmentRolesList.find((e) => e.environmentId == currentEnvironment.id);
+      const envRole = a.environmentRolesList.find(
+        (e) => e.environmentId === currentEnvironment.id
+      );
       resetUpdate({
+        name: a.name,
         email: a.email,
-        role: envRole.role.toString(),
+        role: getRoleV1(a.organizationRole, envRole.role).value,
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}/${a.email}`,
@@ -256,7 +350,11 @@ export const AccountIndexPage: FC = memo(() => {
     resolver: yupResolver(updateFormSchema),
     mode: 'onChange',
   });
-  const { handleSubmit: handleUpdateSubmit, reset: resetUpdate } = updateMethod;
+  const {
+    handleSubmit: handleUpdateSubmit,
+    reset: resetUpdate,
+    formState: { dirtyFields },
+  } = updateMethod;
 
   const handleClose = useCallback(() => {
     resetAdd();
@@ -270,18 +368,11 @@ export const AccountIndexPage: FC = memo(() => {
 
   const handleAdd = useCallback(
     async (data) => {
-      // TODO 適切な場所に書きたい。
-      let envRole : AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap] = AccountV2.Role.Environment.ENVIRONMENT_VIEWER;
-      if (data.role == Account.Role.EDITOR.toString() || data.role == Account.Role.OWNER.toString()) {
-        envRole = AccountV2.Role.Environment.ENVIRONMENT_EDITOR;
-      }
-      let orgRole : AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap] = AccountV2.Role.Organization.ORGANIZATION_MEMBER;
-      if (data.role == Account.Role.OWNER.toString()) {
-        orgRole = AccountV2.Role.Organization.ORGANIZATION_OWNER;
-      }
+      const [orgRole, envRole] = convertToAccountV2Role(data.role);
       dispatch(
         createAccount({
           organizationId: currentEnvironment.organizationId,
+          name: data.name,
           email: data.email,
           environmentId: currentEnvironment.id,
           environmentRole: envRole,
@@ -301,19 +392,16 @@ export const AccountIndexPage: FC = memo(() => {
 
   const handleUpdate = useCallback(
     async (data) => {
-      // TODO 適切な場所に書きたい。
-      let envRole : AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap] = AccountV2.Role.Environment.ENVIRONMENT_VIEWER;
-      if (data.role == Account.Role.EDITOR.toString() || data.role == Account.Role.OWNER.toString()) {
-        envRole = AccountV2.Role.Environment.ENVIRONMENT_EDITOR;
+      let name: string;
+      if (dirtyFields.name) {
+        name = data.name;
       }
-      let orgRole : AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap] = AccountV2.Role.Organization.ORGANIZATION_MEMBER;
-      if (data.role == Account.Role.OWNER.toString()) {
-        orgRole = AccountV2.Role.Organization.ORGANIZATION_OWNER;
-      }
+      const [orgRole, envRole] = convertToAccountV2Role(data.role);
       dispatch(
         updateAccount({
           organizationId: currentEnvironment.organizationId,
           environmentId: currentEnvironment.id,
+          name: name,
           email: accountId,
           environmentRole: envRole,
           organizationRole: orgRole,
@@ -328,7 +416,7 @@ export const AccountIndexPage: FC = memo(() => {
         handleClose();
       });
     },
-    [dispatch, accountId]
+    [dispatch, accountId, dirtyFields]
   );
 
   useEffect(() => {

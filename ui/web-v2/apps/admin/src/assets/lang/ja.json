@@ -345,6 +345,7 @@
   "input.error.notNumber": "数値を入力してください。",
   "input.error.required": "必須項目です。",
   "input.featureFlag": "フィーチャーフラグ",
+  "input.name": "名前",
   "input.optional": "(任意)",
   "input.originEnvironment": "環境元",
   "input.projectId": "プロジェクトID",

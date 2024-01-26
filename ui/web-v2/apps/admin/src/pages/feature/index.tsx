@@ -505,7 +505,8 @@ export const FeatureIndexPage: FC = memo(() => {
     }
     dispatch(
       listAccounts({
-        environmentNamespace: currentEnvironment.id,
+        environmentId: currentEnvironment.id,
+        organizationId: currentEnvironment.organizationId,
         pageSize: FEATURE_ACCOUNT_PAGE_SIZE,
         cursor: '',
       })
