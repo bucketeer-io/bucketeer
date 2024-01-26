@@ -29,6 +29,7 @@ import {
   InformationCircleIcon,
   ArrowNarrowLeftIcon,
   ArrowNarrowRightIcon,
+  BanIcon,
 } from '@heroicons/react/outline';
 import { SerializedError } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
@@ -68,6 +69,7 @@ import {
 } from '../../proto/autoops/clause_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { classNames } from '../../utils/css';
+import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
 import { DetailSkeleton } from '../DetailSkeleton';
 import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
@@ -264,8 +266,8 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           label: TabLabel.ACTIVE,
           value: sortOperations(
             rules.filter((rule) => !rule.triggeredAt),
-            rollouts.filter(
-              (p) => p.status !== ProgressiveRollout.Status.FINISHED
+            rollouts.filter((p) =>
+              isProgressiveRolloutsRunningWaiting(p.status)
             ),
             SORT_TYPE.ASC
           ),
@@ -276,7 +278,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           value: sortOperations(
             rules.filter((rule) => rule.triggeredAt),
             rollouts.filter(
-              (p) => p.status === ProgressiveRollout.Status.FINISHED
+              (p) => !isProgressiveRolloutsRunningWaiting(p.status)
             ),
             SORT_TYPE.DESC
           ),
@@ -606,6 +608,15 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
       ).then(refetchProgressiveRollouts);
     };
 
+    const handleRolloutStop = (ruleId) => {
+      // dispatch(
+      //   deleteProgressiveRollout({
+      //     environmentNamespace: currentEnvironment.id,
+      //     id: ruleId,
+      //   })
+      // ).then(refetchProgressiveRollouts);
+    };
+
     const { value } = progressiveRollout.clause;
 
     if (progressiveRollout.type === ProgressiveRollout.Type.TEMPLATE_SCHEDULE) {
@@ -621,6 +632,7 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
           variationOptions={variationOptions}
           rule={progressiveRollout}
           deleteRule={() => handleRolloutDelete(progressiveRollout.id)}
+          stopRule={() => handleRolloutStop(progressiveRollout.id)}
           schedulesList={schedulesList}
           increments={increments}
           interval={interval}
@@ -643,6 +655,7 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
           variationOptions={variationOptions}
           rule={progressiveRollout}
           deleteRule={() => handleRolloutDelete(progressiveRollout.id)}
+          stopRule={() => handleRolloutStop(progressiveRollout.id)}
           schedulesList={schedulesList}
           variationId={variationId}
           isActiveTabSelected={isActiveTabSelected}
@@ -960,6 +973,7 @@ interface ProgressiveRolloutTemplateScheduleProps {
   variationOptions: Option[];
   rule: ProgressiveRollout.AsObject;
   deleteRule: (ruleId) => void;
+  stopRule: (ruleId) => void;
   schedulesList: ProgressiveRolloutSchedule.AsObject[];
   increments?: number;
   interval?: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap];
@@ -972,6 +986,7 @@ const ProgressiveRolloutComponent = memo(
     variationOptions,
     rule,
     deleteRule,
+    stopRule,
     schedulesList,
     increments,
     interval,
@@ -1049,6 +1064,16 @@ const ProgressiveRolloutComponent = memo(
                     <TrashIcon width={18} className="text-red-500" />
                     <span className="text-red-500 text-sm">
                       {f(messages.autoOps.deleteOperation)}
+                    </span>
+                  </button>
+                  <button
+                    onClick={stopRule}
+                    className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                  >
+                    <BanIcon width={18} className="" />
+                    <span className="text-sm">
+                      {/* {f(messages)} */}
+                      Stop
                     </span>
                   </button>
                 </Popover.Panel>
