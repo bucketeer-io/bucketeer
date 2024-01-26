@@ -1362,13 +1362,18 @@
               },
               {
                 "id": 8,
-                "name": "role",
+                "name": "organization_role",
                 "type": "google.protobuf.Int32Value"
               },
               {
                 "id": 9,
                 "name": "environment_id",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 10,
+                "name": "environment_role",
+                "type": "google.protobuf.Int32Value"
               }
             ]
           },

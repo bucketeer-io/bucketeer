@@ -267,8 +267,9 @@ message ListAccountsV2Request {
   OrderDirection order_direction = 5;
   string search_keyword = 6;
   google.protobuf.BoolValue disabled = 7;
-  google.protobuf.Int32Value role = 8;
+  google.protobuf.Int32Value organization_role = 8;
   google.protobuf.StringValue environment_id = 9;
+  google.protobuf.Int32Value environment_role = 10;
 }
 
 message ListAccountsV2Response {
