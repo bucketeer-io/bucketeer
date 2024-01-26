@@ -1154,12 +1154,20 @@ func (s *AccountService) ListAccountsV2(
 	if req.Disabled != nil {
 		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
 	}
-	if req.Role != nil {
-		whereParts = append(whereParts, mysql.NewFilter("role", "=", req.Role.Value))
+	if req.OrganizationRole != nil {
+		whereParts = append(whereParts, mysql.NewFilter("organization_role", "=", req.OrganizationRole.Value))
 	}
-	if req.EnvironmentId != nil {
+	if req.EnvironmentId != nil && req.EnvironmentRole != nil {
+		values := make([]interface{}, 1)
+		values[0] = fmt.Sprintf("{\"environment_id\": \"%s\", \"role\": %d}", req.EnvironmentId.Value, req.EnvironmentRole.Value) // nolint:lll
+		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
+	} else if req.EnvironmentId != nil {
 		values := make([]interface{}, 1)
 		values[0] = fmt.Sprintf("{\"environment_id\": \"%s\"}", req.EnvironmentId.Value)
+		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
+	} else if req.EnvironmentRole != nil {
+		values := make([]interface{}, 1)
+		values[0] = fmt.Sprintf("{\"role\": %d}", req.EnvironmentRole.Value)
 		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
 	}
 	if req.SearchKeyword != "" {

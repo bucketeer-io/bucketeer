@@ -1158,15 +1158,20 @@ export class ListAccountsV2Request extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
-  hasRole(): boolean;
-  clearRole(): void;
-  getRole(): google_protobuf_wrappers_pb.Int32Value | undefined;
-  setRole(value?: google_protobuf_wrappers_pb.Int32Value): void;
+  hasOrganizationRole(): boolean;
+  clearOrganizationRole(): void;
+  getOrganizationRole(): google_protobuf_wrappers_pb.Int32Value | undefined;
+  setOrganizationRole(value?: google_protobuf_wrappers_pb.Int32Value): void;
 
   hasEnvironmentId(): boolean;
   clearEnvironmentId(): void;
   getEnvironmentId(): google_protobuf_wrappers_pb.StringValue | undefined;
   setEnvironmentId(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasEnvironmentRole(): boolean;
+  clearEnvironmentRole(): void;
+  getEnvironmentRole(): google_protobuf_wrappers_pb.Int32Value | undefined;
+  setEnvironmentRole(value?: google_protobuf_wrappers_pb.Int32Value): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAccountsV2Request.AsObject;
@@ -1187,8 +1192,9 @@ export namespace ListAccountsV2Request {
     orderDirection: ListAccountsV2Request.OrderDirectionMap[keyof ListAccountsV2Request.OrderDirectionMap],
     searchKeyword: string,
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject,
-    role?: google_protobuf_wrappers_pb.Int32Value.AsObject,
+    organizationRole?: google_protobuf_wrappers_pb.Int32Value.AsObject,
     environmentId?: google_protobuf_wrappers_pb.StringValue.AsObject,
+    environmentRole?: google_protobuf_wrappers_pb.Int32Value.AsObject,
   }
 
   export interface OrderByMap {

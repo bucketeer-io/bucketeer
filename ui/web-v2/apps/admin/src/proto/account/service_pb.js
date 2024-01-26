@@ -8987,8 +8987,9 @@ proto.bucketeer.account.ListAccountsV2Request.toObject = function(includeInstanc
     orderDirection: jspb.Message.getFieldWithDefault(msg, 5, 0),
     searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ""),
     disabled: (f = msg.getDisabled()) && google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-    role: (f = msg.getRole()) && google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
-    environmentId: (f = msg.getEnvironmentId()) && google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f)
+    organizationRole: (f = msg.getOrganizationRole()) && google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
+    environmentId: (f = msg.getEnvironmentId()) && google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+    environmentRole: (f = msg.getEnvironmentRole()) && google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -9057,12 +9058,17 @@ proto.bucketeer.account.ListAccountsV2Request.deserializeBinaryFromReader = func
     case 8:
       var value = new google_protobuf_wrappers_pb.Int32Value;
       reader.readMessage(value,google_protobuf_wrappers_pb.Int32Value.deserializeBinaryFromReader);
-      msg.setRole(value);
+      msg.setOrganizationRole(value);
       break;
     case 9:
       var value = new google_protobuf_wrappers_pb.StringValue;
       reader.readMessage(value,google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader);
       msg.setEnvironmentId(value);
+      break;
+    case 10:
+      var value = new google_protobuf_wrappers_pb.Int32Value;
+      reader.readMessage(value,google_protobuf_wrappers_pb.Int32Value.deserializeBinaryFromReader);
+      msg.setEnvironmentRole(value);
       break;
     default:
       reader.skipField();
@@ -9143,7 +9149,7 @@ proto.bucketeer.account.ListAccountsV2Request.serializeBinaryToWriter = function
       google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
     );
   }
-  f = message.getRole();
+  f = message.getOrganizationRole();
   if (f != null) {
     writer.writeMessage(
       8,
@@ -9157,6 +9163,14 @@ proto.bucketeer.account.ListAccountsV2Request.serializeBinaryToWriter = function
       9,
       f,
       google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+    );
+  }
+  f = message.getEnvironmentRole();
+  if (f != null) {
+    writer.writeMessage(
+      10,
+      f,
+      google_protobuf_wrappers_pb.Int32Value.serializeBinaryToWriter
     );
   }
 };
@@ -9326,10 +9340,10 @@ proto.bucketeer.account.ListAccountsV2Request.prototype.hasDisabled = function()
 
 
 /**
- * optional google.protobuf.Int32Value role = 8;
+ * optional google.protobuf.Int32Value organization_role = 8;
  * @return {?proto.google.protobuf.Int32Value}
  */
-proto.bucketeer.account.ListAccountsV2Request.prototype.getRole = function() {
+proto.bucketeer.account.ListAccountsV2Request.prototype.getOrganizationRole = function() {
   return /** @type{?proto.google.protobuf.Int32Value} */ (
     jspb.Message.getWrapperField(this, google_protobuf_wrappers_pb.Int32Value, 8));
 };
@@ -9339,7 +9353,7 @@ proto.bucketeer.account.ListAccountsV2Request.prototype.getRole = function() {
  * @param {?proto.google.protobuf.Int32Value|undefined} value
  * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
 */
-proto.bucketeer.account.ListAccountsV2Request.prototype.setRole = function(value) {
+proto.bucketeer.account.ListAccountsV2Request.prototype.setOrganizationRole = function(value) {
   return jspb.Message.setWrapperField(this, 8, value);
 };
 
@@ -9348,8 +9362,8 @@ proto.bucketeer.account.ListAccountsV2Request.prototype.setRole = function(value
  * Clears the message field making it undefined.
  * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
  */
-proto.bucketeer.account.ListAccountsV2Request.prototype.clearRole = function() {
-  return this.setRole(undefined);
+proto.bucketeer.account.ListAccountsV2Request.prototype.clearOrganizationRole = function() {
+  return this.setOrganizationRole(undefined);
 };
 
 
@@ -9357,7 +9371,7 @@ proto.bucketeer.account.ListAccountsV2Request.prototype.clearRole = function() {
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.bucketeer.account.ListAccountsV2Request.prototype.hasRole = function() {
+proto.bucketeer.account.ListAccountsV2Request.prototype.hasOrganizationRole = function() {
   return jspb.Message.getField(this, 8) != null;
 };
 
@@ -9396,6 +9410,43 @@ proto.bucketeer.account.ListAccountsV2Request.prototype.clearEnvironmentId = fun
  */
 proto.bucketeer.account.ListAccountsV2Request.prototype.hasEnvironmentId = function() {
   return jspb.Message.getField(this, 9) != null;
+};
+
+
+/**
+ * optional google.protobuf.Int32Value environment_role = 10;
+ * @return {?proto.google.protobuf.Int32Value}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getEnvironmentRole = function() {
+  return /** @type{?proto.google.protobuf.Int32Value} */ (
+    jspb.Message.getWrapperField(this, google_protobuf_wrappers_pb.Int32Value, 10));
+};
+
+
+/**
+ * @param {?proto.google.protobuf.Int32Value|undefined} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+*/
+proto.bucketeer.account.ListAccountsV2Request.prototype.setEnvironmentRole = function(value) {
+  return jspb.Message.setWrapperField(this, 10, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.clearEnvironmentRole = function() {
+  return this.setEnvironmentRole(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.hasEnvironmentRole = function() {
+  return jspb.Message.getField(this, 10) != null;
 };
 
 
