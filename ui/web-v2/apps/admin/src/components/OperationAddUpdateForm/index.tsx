@@ -1,6 +1,10 @@
 import { intl } from '@/lang';
 import { AppState } from '@/modules';
 import { selectAll as selectAllAutoOpsRules } from '@/modules/autoOpsRules';
+import {
+  listExperiments,
+  selectAll as selectAllExperiment,
+} from '@/modules/experiments';
 import { useCurrentEnvironment } from '@/modules/me';
 import { selectAll as selectAllProgressiveRollouts } from '@/modules/porgressiveRollout';
 import { AutoOpsRule, OpsType } from '@/proto/autoops/auto_ops_rule_pb';
@@ -19,6 +23,7 @@ import {
   CreateProgressiveRolloutCommand,
 } from '@/proto/autoops/command_pb';
 import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
+import { Experiment } from '@/proto/experiment/experiment_pb';
 import { Feature } from '@/proto/feature/feature_pb';
 import { AppDispatch } from '@/store';
 import { classNames } from '@/utils/css';
@@ -99,6 +104,10 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
         selectAllAutoOpsRules(state.autoOpsRules).filter(
           (rule) => rule.featureId === featureId
         ),
+      shallowEqual
+    );
+    const experiments = useSelector<AppState, Experiment.AsObject[]>(
+      (state) => selectAllExperiment(state.experiments),
       shallowEqual
     );
 
@@ -544,6 +553,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                     progressiveRolloutList,
                     feature,
                     autoOpsRules,
+                    experiments,
                   }))
               }
               onClick={handleSubmit(handleOnSubmit)}

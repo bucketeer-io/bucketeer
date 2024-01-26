@@ -88,8 +88,8 @@ export interface ListExperimentsParams {
   status?: number;
   archived?: boolean;
   maintainer?: string;
-  orderBy: OrderBy;
-  orderDirection: OrderDirection;
+  orderBy?: OrderBy;
+  orderDirection?: OrderDirection;
 }
 
 export const listExperiments = createAsyncThunk<

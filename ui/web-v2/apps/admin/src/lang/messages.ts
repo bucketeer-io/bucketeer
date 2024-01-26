@@ -464,23 +464,6 @@ export const messages = {
         id: 'progressiveRolloutWarningMessages.variations',
         defaultMessage: 'The flag must have only 2 variations',
       }),
-      featureNotEnabled: defineMessage({
-        id: 'progressiveRolloutWarningMessages.featureNotEnabled',
-        defaultMessage:
-          'The feature flag is not enabled. Please enable it before using the progressive rollout',
-      }),
-      prerequisites: defineMessage({
-        id: 'progressiveRolloutWarningMessages.prerequisites',
-        defaultMessage: 'The flag must not have Prerequisites',
-      }),
-      individualTargeting: defineMessage({
-        id: 'progressiveRolloutWarningMessages.individualTargeting',
-        defaultMessage: 'The flag must not have individual targeting',
-      }),
-      targetingRules: defineMessage({
-        id: 'progressiveRolloutWarningMessages.targetingRules',
-        defaultMessage: 'The flag must not have targeting rules',
-      }),
       scheduledOperations: defineMessage({
         id: 'progressiveRolloutWarningMessages.scheduledOperations',
         defaultMessage: 'The flag must not have scheduled operations',

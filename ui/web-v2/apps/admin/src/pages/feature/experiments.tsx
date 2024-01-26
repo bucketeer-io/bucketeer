@@ -1,3 +1,4 @@
+import { isExperimentStatusWaitingRunnning } from '@/components/ExperimentList';
 import { formatDate } from '@/utils/date';
 import { Dialog, Transition } from '@headlessui/react';
 import { PlusIcon, SelectorIcon } from '@heroicons/react/solid';
@@ -278,9 +279,7 @@ export const StatusButton: FC<StatusButtonProps> = memo(
   ({ status, onClick }) => {
     const editable = useIsEditable();
     const { formatMessage: f } = useIntl();
-    const isStoppable =
-      status === Experiment.Status.WAITING ||
-      status === Experiment.Status.RUNNING;
+    const isStoppable = isExperimentStatusWaitingRunnning(status);
 
     return isStoppable ? (
       <HoverPopover

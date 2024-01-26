@@ -1,22 +1,29 @@
 import { messages } from '@/lang/messages';
 import { AppState } from '@/modules';
 import { selectAll as selectAllAutoOpsRules } from '@/modules/autoOpsRules';
-import { useIsEditable } from '@/modules/me';
+import {
+  listExperiments,
+  selectAll as selectAllExperiment,
+} from '@/modules/experiments';
+import { useCurrentEnvironment, useIsEditable } from '@/modules/me';
 import { selectAll as selectAllProgressiveRollouts } from '@/modules/porgressiveRollout';
 import { AutoOpsRule } from '@/proto/autoops/auto_ops_rule_pb';
 import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
+import { Experiment } from '@/proto/experiment/experiment_pb';
 import { Feature } from '@/proto/feature/feature_pb';
+import { AppDispatch } from '@/store';
 import { classNames } from '@/utils/css';
 import { isArraySorted } from '@/utils/isArraySorted';
 import { isIntervals5MinutesApart } from '@/utils/isIntervals5MinutesApart';
 import {
   ExclamationCircleIcon,
+  InformationCircleIcon,
   MinusCircleIcon,
   PlusIcon,
 } from '@heroicons/react/outline';
 import { SerializedError } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
-import React, { memo, FC, useEffect, useCallback } from 'react';
+import React, { memo, FC, useEffect, useCallback, useState } from 'react';
 import {
   Controller,
   useFieldArray,
@@ -24,10 +31,11 @@ import {
   useWatch,
 } from 'react-hook-form';
 import { useIntl } from 'react-intl';
-import { shallowEqual, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { selectById as selectFeatureById } from '../../modules/features';
 import { DatetimePicker } from '../DatetimePicker';
+import { isExperimentStatusWaitingRunnning } from '../ExperimentList';
 import { ClauseType, getIntervalForDayjs } from '../FeatureAutoOpsRulesForm';
 import { ProgressiveRolloutTypeTab } from '../OperationAddUpdateForm';
 import { Option, Select } from '../Select';
@@ -44,26 +52,32 @@ const findScheduleOperation = ({ autoOpsRules }: FindScheduleOperation) => {
   });
 };
 
+export const isProgressiveRolloutsRunningWaiting = (
+  status: ProgressiveRollout.StatusMap[keyof ProgressiveRollout.StatusMap]
+) =>
+  status === ProgressiveRollout.Status.RUNNING ||
+  status === ProgressiveRollout.Status.WAITING;
+
 interface isProgressiveRolloutsWarningsExists {
   feature: Feature.AsObject;
   progressiveRolloutList: ProgressiveRollout.AsObject[];
   autoOpsRules: AutoOpsRule.AsObject[];
+  experiments: Experiment.AsObject[];
 }
 
 export const isProgressiveRolloutsWarningsExists = ({
   feature,
   progressiveRolloutList,
   autoOpsRules,
+  experiments,
 }: isProgressiveRolloutsWarningsExists): boolean => {
   const check =
-    !feature.enabled ||
     feature.variationsList.length > 2 ||
-    feature.prerequisitesList.length > 0 ||
-    feature.targetsList.find((targets) => targets.usersList.length > 0) ||
-    feature.rulesList.length > 0 ||
+    (experiments.length > 0 &&
+      experiments.find((e) => isExperimentStatusWaitingRunnning(e.status))) ||
     (progressiveRolloutList.length > 0 &&
-      progressiveRolloutList.find(
-        (p) => p.status !== ProgressiveRollout.Status.FINISHED
+      progressiveRolloutList.find((p) =>
+        isProgressiveRolloutsRunningWaiting(p.status)
       )) ||
     findScheduleOperation({ autoOpsRules });
   return !!check;
@@ -88,6 +102,9 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
     }) => {
       const { formatMessage: f } = useIntl();
       const editable = useIsEditable();
+      const dispatch = useDispatch<AppDispatch>();
+      const currentEnvironment = useCurrentEnvironment();
+      const [isLoading, setIsLoading] = useState(true);
 
       const methods = useFormContext<any>();
       const { control } = methods;
@@ -119,15 +136,39 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
         shallowEqual
       );
 
+      const experiments = useSelector<AppState, Experiment.AsObject[]>(
+        (state) => selectAllExperiment(state.experiments),
+        shallowEqual
+      );
+
+      useEffect(() => {
+        dispatch(
+          listExperiments({
+            featureId: featureId,
+            environmentNamespace: currentEnvironment.id,
+            searchKeyword: '',
+            pageSize: 1000,
+            cursor: '',
+          })
+        ).then(() => setIsLoading(false));
+      }, [dispatch, featureId, currentEnvironment]);
+
       const isTemplateSelected =
         progressiveRolloutTypeList.find((p) => p.selected).value ===
         ProgressiveRollout.Type.TEMPLATE_SCHEDULE;
+
+      if (isLoading) {
+        return (
+          <div className="w-6 h-6 mt-2 mx-auto border-4 border-t-primary rounded-full animate-spin"></div>
+        );
+      }
 
       if (
         isProgressiveRolloutsWarningsExists({
           feature,
           progressiveRolloutList,
           autoOpsRules,
+          experiments,
         })
       ) {
         return (
@@ -145,16 +186,6 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                 </p>
                 <div className="mt-2 text-sm text-yellow-700">
                   <ul className="list-disc space-y-1 pl-5">
-                    {!feature.enabled ? (
-                      <li>
-                        <p>
-                          {f(
-                            messages.autoOps.progressiveRolloutWarningMessages
-                              .featureNotEnabled
-                          )}
-                        </p>
-                      </li>
-                    ) : null}
                     {feature.variationsList.length > 2 ? (
                       <li>
                         <p>
@@ -165,41 +196,16 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                         </p>
                       </li>
                     ) : null}
-                    {feature.prerequisitesList.length ? (
-                      <li>
-                        <p>
-                          {f(
-                            messages.autoOps.progressiveRolloutWarningMessages
-                              .prerequisites
-                          )}
-                        </p>
-                      </li>
-                    ) : null}
-                    {feature.targetsList.find(
-                      (targets) => targets.usersList.length > 0
+                    {experiments.find((e) =>
+                      isExperimentStatusWaitingRunnning(e.status)
                     ) ? (
                       <li>
-                        <p>
-                          {f(
-                            messages.autoOps.progressiveRolloutWarningMessages
-                              .individualTargeting
-                          )}
-                        </p>
-                      </li>
-                    ) : null}
-                    {feature.rulesList.length > 0 ? (
-                      <li>
-                        <p>
-                          {f(
-                            messages.autoOps.progressiveRolloutWarningMessages
-                              .targetingRules
-                          )}
-                        </p>
+                        <p>Experiment warnings</p>
                       </li>
                     ) : null}
                     {progressiveRolloutList.length > 0 &&
-                    progressiveRolloutList.find(
-                      (p) => p.status !== ProgressiveRollout.Status.FINISHED
+                    progressiveRolloutList.find((p) =>
+                      isProgressiveRolloutsRunningWaiting(p.status)
                     ) ? (
                       <li>
                         <p>
@@ -248,6 +254,23 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
 
       return (
         <div className="mt-4 h-full flex flex-col overflow-hidden">
+          {!feature.enabled && (
+            <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-7">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <InformationCircleIcon
+                    className="h-5 w-5 text-blue-400"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="ml-3 flex-1">
+                  <p className="text-sm text-blue-700">
+                    It will enable the flag when it starts
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex">
             {progressiveRolloutTypeList.map(({ label, selected }, index) => (
               <div
