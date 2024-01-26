@@ -6,10 +6,15 @@ import {
   selectAll as selectAllFeatures,
 } from '@/modules/features';
 import { useCurrentEnvironment } from '@/modules/me';
+import {
+  listProgressiveRollout,
+  selectAll as selectAllProgressiveRollouts,
+} from '@/modules/porgressiveRollout';
 import { addToast } from '@/modules/toasts';
 import { OpsType } from '@/proto/autoops/auto_ops_rule_pb';
 import { DatetimeClause } from '@/proto/autoops/clause_pb';
 import { CreateAutoOpsRuleCommand } from '@/proto/autoops/command_pb';
+import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { Feature } from '@/proto/feature/feature_pb';
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import { AppDispatch } from '@/store';
@@ -30,6 +35,7 @@ import { FEATURE_UPDATE_COMMENT_MAX_LENGTH } from '../../constants/feature';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
+import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
 import { CheckBox } from '../CheckBox';
 import { getFlagStatus, FlagStatus } from '../FeatureList';
 import { Modal } from '../Modal';
@@ -93,6 +99,29 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
     (state) => selectAllFeatures(state.features),
     shallowEqual
   );
+
+  const progressiveRollout = useSelector<
+    AppState,
+    ProgressiveRollout.AsObject[]
+  >(
+    (state) =>
+      selectAllProgressiveRollouts(state.progressiveRollout).filter(
+        (rule) => rule.featureId === featureId
+      ),
+    shallowEqual
+  );
+
+  useEffect(() => {
+    if (isSwitchEnabledConfirm && isEnabled) {
+      console.log('inside');
+      dispatch(
+        listProgressiveRollout({
+          featureId: featureId,
+          environmentNamespace: currentEnvironment.id,
+        })
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (isArchive && open) {
@@ -400,6 +429,27 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
           </div>
         </div>
       )}
+      {isSwitchEnabledConfirm &&
+        isEnabled &&
+        progressiveRollout.find((p) =>
+          isProgressiveRolloutsRunningWaiting(p.status)
+        ) && (
+          <div className="bg-yellow-50 p-4 mt-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <ExclamationIcon
+                  className="h-5 w-5 text-yellow-400"
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-yellow-700">
+                  It will stop the progressive rollout in progress.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       <div className="pt-5">
         <div className="flex justify-end">
           <button

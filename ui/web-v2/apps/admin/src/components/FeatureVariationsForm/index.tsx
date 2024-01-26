@@ -18,6 +18,7 @@ import { selectById as selectFeatureById } from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
+import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
 import { VariationInput } from '../VariationInput';
 
 export type ClauseType = 'compare' | 'segment' | 'date';
@@ -89,8 +90,8 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
     }
 
     const isProgressiveRolloutsRunning =
-      progressiveRollouts.filter(
-        (p) => p.status !== ProgressiveRollout.Status.FINISHED
+      progressiveRollouts.filter((p) =>
+        isProgressiveRolloutsRunningWaiting(p.status)
       ).length > 0;
 
     return (

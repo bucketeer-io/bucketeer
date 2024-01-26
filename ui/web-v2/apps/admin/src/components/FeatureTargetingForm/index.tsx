@@ -1334,8 +1334,6 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
       isProgressiveRolloutsRunningWaiting(p.status)
     );
 
-    console.log({ progressiveRolloutList });
-
     return (
       <div>
         {isProgressiveRolloutsRunning && (
