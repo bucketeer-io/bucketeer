@@ -49,9 +49,6 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
       } else {
         onAdd(selectedFilterType.value, valueOption?.value);
       }
-      setValueOption(null);
-      setMultiValueOption([]);
-      setSelectedFilterType(null);
     };
 
     useEffect(() => {
