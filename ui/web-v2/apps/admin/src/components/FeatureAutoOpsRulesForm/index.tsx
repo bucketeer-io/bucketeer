@@ -75,6 +75,7 @@ import { DetailSkeleton } from '../DetailSkeleton';
 import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
 import { Overlay } from '../Overlay';
+import { ProgressiveRolloutStopDialog } from '../ProgressiveRolloutStopDialog';
 import { Option } from '../Select';
 
 enum SORT_TYPE {
@@ -195,8 +196,8 @@ export const getIntervalForDayjs = (
   }
 };
 
-interface SelectedOperation {
-  type: OperationType.AutoOps | OperationType.Progressive;
+export interface SelectedOperation {
+  type: keyof typeof ClauseType;
   id: string;
 }
 
@@ -216,6 +217,8 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const [selectedAutoOpsRule, setSelectedAutoOpsRule] =
       useState<AutoOpsRule.AsObject | null>(null);
     const [isDeleteConfirmDialogOpen, setIsDeleteConfirmDialogOpen] =
+      useState(false);
+    const [isStopConfirmDialogOpen, setIsStopConfirmDialogOpen] =
       useState(false);
     const [selectedOperation, setSelectedOperation] =
       useState<SelectedOperation>(null);
@@ -260,6 +263,8 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const { handleSubmit } = methods;
 
     const [tabs, setTabs] = useState<Tab[]>([]);
+    const [selectedClauseType, setSelectedClauseType] =
+      useState<keyof ClauseTypeMap>(null);
 
     useEffect(() => {
       const rules = autoOpsRules.map((r) => ({
@@ -351,14 +356,17 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       refetchProgressiveRollouts();
     }, []);
 
-    const handleOperation = (operation: SelectedOperation) => {
+    const handleDelete = (operation: SelectedOperation) => {
       setIsDeleteConfirmDialogOpen(true);
       setSelectedOperation(operation);
     };
 
-    const handleDelete = () => {
+    const handleDeleteConfirm = () => {
       setIsDeleteConfirmDialogOpen(false);
-      if (selectedOperation.type === OperationType.AutoOps) {
+      if (
+        selectedOperation.type === 'DATETIME' ||
+        selectedOperation.type === 'EVENT_RATE'
+      ) {
         dispatch(
           deleteAutoOpsRule({
             environmentNamespace: currentEnvironment.id,
@@ -367,7 +375,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         ).then(() => {
           refetchAutoOpsRules();
         });
-      } else if (selectedOperation.type === OperationType.Progressive) {
+      } else if (selectedOperation.type === 'PROGRESSIVE_ROLLOUT') {
         dispatch(
           deleteProgressiveRollout({
             environmentNamespace: currentEnvironment.id,
@@ -377,6 +385,24 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           refetchProgressiveRollouts();
         });
       }
+    };
+
+    const handleStop = (operation: SelectedOperation) => {
+      setIsStopConfirmDialogOpen(true);
+      setSelectedOperation(operation);
+    };
+
+    const handleStopConfirm = () => {
+      setIsStopConfirmDialogOpen(false);
+
+      // dispatch(
+      //   deleteAutoOpsRule({
+      //     environmentNamespace: currentEnvironment.id,
+      //     id: selectedOperation.id,
+      //   })
+      // ).then(() => {
+      //   refetchAutoOpsRules();
+      // });
     };
 
     const isActiveTabSelected =
@@ -437,7 +463,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                       rule={operation as AutoOpsRule.AsObject}
                       isActiveTabSelected={isActiveTabSelected}
                       handleOpenUpdate={handleOpenUpdate}
-                      handleDelete={handleOperation}
+                      handleDelete={handleDelete}
                     />
                   );
                 } else if (
@@ -451,7 +477,8 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                       progressiveRollout={
                         operation as ProgressiveRollout.AsObject
                       }
-                      handleDelete={handleOperation}
+                      handleDelete={handleDelete}
+                      handleStop={handleStop}
                     />
                   );
                 }
@@ -475,10 +502,21 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         {isDeleteConfirmDialogOpen && (
           <AutoOpsDeleteDialog
             open={isDeleteConfirmDialogOpen}
-            onConfirm={handleDelete}
+            onConfirm={handleDeleteConfirm}
             onClose={() => {
               setIsDeleteConfirmDialogOpen(false);
-              setSelectedAutoOpsRule(null);
+              setSelectedOperation(null);
+            }}
+            selectedOperation={selectedOperation}
+          />
+        )}
+        {isStopConfirmDialogOpen && (
+          <ProgressiveRolloutStopDialog
+            open={isStopConfirmDialogOpen}
+            onConfirm={handleStopConfirm}
+            onClose={() => {
+              setIsStopConfirmDialogOpen(false);
+              setSelectedOperation(null);
             }}
           />
         )}
@@ -620,13 +658,17 @@ interface ProgressiveRolloutProps {
   isActiveTabSelected: boolean;
   progressiveRollout: ProgressiveRollout.AsObject;
   handleDelete: (arg: SelectedOperation) => void;
+  handleStop: (arg: SelectedOperation) => void;
 }
 
 const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
-  ({ featureId, isActiveTabSelected, progressiveRollout, handleDelete }) => {
-    const currentEnvironment = useCurrentEnvironment();
-    const dispatch = useDispatch<AppDispatch>();
-
+  ({
+    featureId,
+    isActiveTabSelected,
+    progressiveRollout,
+    handleDelete,
+    handleStop,
+  }) => {
     const [feature] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
@@ -641,15 +683,6 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
         label: v.value,
       };
     });
-
-    const handleRolloutStop = (ruleId) => {
-      // dispatch(
-      //   deleteProgressiveRollout({
-      //     environmentNamespace: currentEnvironment.id,
-      //     id: ruleId,
-      //   })
-      // ).then(refetchProgressiveRollouts);
-    };
 
     const { value } = progressiveRollout.clause;
 
@@ -667,11 +700,16 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
           rule={progressiveRollout}
           deleteRule={() =>
             handleDelete({
-              type: OperationType.Progressive,
+              type: 'PROGRESSIVE_ROLLOUT',
               id: progressiveRollout.id,
             })
           }
-          stopRule={() => handleRolloutStop(progressiveRollout.id)}
+          stopRule={() =>
+            handleStop({
+              type: 'PROGRESSIVE_ROLLOUT',
+              id: progressiveRollout.id,
+            })
+          }
           schedulesList={schedulesList}
           increments={increments}
           interval={interval}
@@ -695,11 +733,16 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
           rule={progressiveRollout}
           deleteRule={() =>
             handleDelete({
-              type: OperationType.Progressive,
+              type: 'PROGRESSIVE_ROLLOUT',
               id: progressiveRollout.id,
             })
           }
-          stopRule={() => handleRolloutStop(progressiveRollout.id)}
+          stopRule={() =>
+            handleStop({
+              type: 'PROGRESSIVE_ROLLOUT',
+              id: progressiveRollout.id,
+            })
+          }
           schedulesList={schedulesList}
           variationId={variationId}
           isActiveTabSelected={isActiveTabSelected}
@@ -762,21 +805,34 @@ const Operation: FC<OperationProps> = memo(
                     >
                       <PencilIcon width={18} />
                       <span className="text-sm">
-                        {f(messages.autoOps.editOperation)}
+                        {type === ClauseType.DATETIME &&
+                          f(messages.autoOps.editSchedule)}
+                        {type === ClauseType.EVENT_RATE &&
+                          f(messages.autoOps.editKillSwitch)}
                       </span>
                     </button>
                     <button
-                      onClick={() =>
-                        handleDelete({
-                          type: OperationType.AutoOps,
-                          id: rule.id,
-                        })
-                      }
+                      onClick={() => {
+                        if (type === ClauseType.DATETIME) {
+                          handleDelete({
+                            type: 'DATETIME',
+                            id: rule.id,
+                          });
+                        } else if (type === ClauseType.EVENT_RATE) {
+                          handleDelete({
+                            type: 'EVENT_RATE',
+                            id: rule.id,
+                          });
+                        }
+                      }}
                       className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
                     >
                       <TrashIcon width={18} className="text-red-500" />
                       <span className="text-red-500 text-sm">
-                        {f(messages.autoOps.deleteOperation)}
+                        {type === ClauseType.DATETIME &&
+                          f(messages.autoOps.deleteSchedule)}
+                        {type === ClauseType.EVENT_RATE &&
+                          f(messages.autoOps.deleteKillSwitch)}
                       </span>
                     </button>
                   </>
@@ -1100,19 +1156,18 @@ const ProgressiveRolloutComponent = memo(
                   >
                     <TrashIcon width={18} className="text-red-500" />
                     <span className="text-red-500 text-sm">
-                      {f(messages.autoOps.deleteOperation)}
+                      {f(messages.autoOps.deleteProgressiveRollout)}
                     </span>
                   </button>
-                  <button
+                  {/* <button
                     onClick={stopRule}
                     className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
                   >
                     <BanIcon width={18} className="" />
                     <span className="text-sm">
-                      {/* {f(messages)} */}
-                      Stop
+                      {f(messages.autoOps.stopProgressiveRollout)}
                     </span>
-                  </button>
+                  </button> */}
                 </Popover.Panel>
               </Popover>
             )}

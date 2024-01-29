@@ -3,18 +3,21 @@ import { FC } from 'react';
 import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
+import { SelectedOperation } from '../FeatureAutoOpsRulesForm';
 import { Modal } from '../Modal';
 
 interface AutoOpsDeleteDialogProps {
   open: boolean;
   onConfirm: () => void;
   onClose: () => void;
+  selectedOperation: SelectedOperation;
 }
 
 export const AutoOpsDeleteDialog: FC<AutoOpsDeleteDialogProps> = ({
   open,
   onConfirm,
   onClose,
+  selectedOperation,
 }) => {
   const { formatMessage: f } = useIntl();
 
@@ -24,11 +27,21 @@ export const AutoOpsDeleteDialog: FC<AutoOpsDeleteDialogProps> = ({
         as="h3"
         className="text-lg font-medium leading-6 text-gray-700"
       >
-        {f(messages.trigger.deleteTriggerDialogTitle)}
+        {selectedOperation.type === 'DATETIME' &&
+          f(messages.autoOps.deleteSchedule)}
+        {selectedOperation.type === 'EVENT_RATE' &&
+          f(messages.autoOps.deleteKillSwitch)}
+        {selectedOperation.type === 'PROGRESSIVE_ROLLOUT' &&
+          f(messages.autoOps.deleteProgressiveRollout)}
       </Dialog.Title>
       <div className="mt-2">
         <p className="text-sm text-red-500">
-          {f(messages.trigger.deleteTriggerDialogMessage)}
+          {selectedOperation.type === 'DATETIME' &&
+            f(messages.autoOps.deleteScheduleDescription)}
+          {selectedOperation.type === 'EVENT_RATE' &&
+            f(messages.autoOps.deleteKillSwitchDescription)}
+          {selectedOperation.type === 'PROGRESSIVE_ROLLOUT' &&
+            f(messages.autoOps.deleteProgressiveRolloutDescription)}
         </p>
       </div>
       <div className="pt-5">
@@ -42,7 +55,7 @@ export const AutoOpsDeleteDialog: FC<AutoOpsDeleteDialogProps> = ({
             {f(messages.button.cancel)}
           </button>
           <button type="button" className="btn-submit" onClick={onConfirm}>
-            {f(messages.trigger.deleteTriggerDialogBtnLabel)}
+            {f(messages.button.delete)}
           </button>
         </div>
       </div>

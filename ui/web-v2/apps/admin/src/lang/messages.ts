@@ -345,17 +345,49 @@ export const messages = {
         defaultMessage: 'Automate to release a feature progressively',
       }),
     },
-    editOperation: defineMessage({
-      id: 'autoOps.editOperation',
-      defaultMessage: 'Edit Operation',
-    }),
     operationDetails: defineMessage({
       id: 'autoOps.operationDetails',
       defaultMessage: 'Operation Details',
     }),
-    deleteOperation: defineMessage({
-      id: 'autoOps.deleteOperation',
-      defaultMessage: 'Delete Operation',
+    editSchedule: defineMessage({
+      id: 'autoOps.editSchedule',
+      defaultMessage: 'Edit Schedule',
+    }),
+    editKillSwitch: defineMessage({
+      id: 'autoOps.editKillSwitch',
+      defaultMessage: 'Edit Kill Switch',
+    }),
+    deleteSchedule: defineMessage({
+      id: 'autoOps.deleteSchedule',
+      defaultMessage: 'Delete Schedule',
+    }),
+    deleteScheduleDescription: defineMessage({
+      id: 'trigger.deleteScheduleDescription',
+      defaultMessage: 'The schedule will be deleted permanently.',
+    }),
+    deleteKillSwitch: defineMessage({
+      id: 'autoOps.deleteKillSwitch',
+      defaultMessage: 'Delete Kill Switch',
+    }),
+    deleteKillSwitchDescription: defineMessage({
+      id: 'trigger.deleteKillSwitchDescription',
+      defaultMessage: 'The kill switch will be deleted permanently.',
+    }),
+    deleteProgressiveRollout: defineMessage({
+      id: 'autoOps.deleteProgressiveRollout',
+      defaultMessage: 'Delete Progressive Rollout',
+    }),
+    deleteProgressiveRolloutDescription: defineMessage({
+      id: 'trigger.deleteProgressiveRolloutDescription',
+      defaultMessage: 'The progressive rollout will be deleted permanently.',
+    }),
+    stopProgressiveRollout: defineMessage({
+      id: 'autoOps.stopProgressiveRollout',
+      defaultMessage: 'Stop Progressive Rollout',
+    }),
+    stopProgressiveRolloutDescription: defineMessage({
+      id: 'trigger.stopProgressiveRolloutDescription',
+      defaultMessage: 'The progressive rollout will be stopped.',
     }),
     createAnOperation: defineMessage({
       id: 'autoOps.createAnOperation',
@@ -706,6 +738,10 @@ export const messages = {
       id: 'button.add',
       defaultMessage: 'Add',
     }),
+    delete: defineMessage({
+      id: 'button.delete',
+      defaultMessage: 'Delete',
+    }),
     edit: defineMessage({
       id: 'button.edit',
       defaultMessage: 'Edit',
@@ -713,6 +749,10 @@ export const messages = {
     save: defineMessage({
       id: 'button.save',
       defaultMessage: 'Save',
+    }),
+    stop: defineMessage({
+      id: 'button.stop',
+      defaultMessage: 'Stop',
     }),
     result: defineMessage({
       id: 'button.result',
