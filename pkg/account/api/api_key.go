@@ -66,12 +66,12 @@ func (s *AccountService) CreateAPIKey(
 		}
 		return nil, dt.Err()
 	}
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
+	err = s.accountStorage.RunInTransaction(ctx, func(tx mysql.Transaction) error {
 		handler := command.NewAPIKeyCommandHandler(editor, key, s.publisher, req.EnvironmentNamespace)
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentNamespace)
+		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentNamespace, tx)
 	})
 	if err != nil {
 		if err == v2as.ErrAPIKeyAlreadyExists {
@@ -277,8 +277,8 @@ func (s *AccountService) updateAPIKeyMySQL(
 	id, environmentNamespace string,
 	cmd command.Command,
 ) error {
-	return s.accountStorage.RunInTransaction(ctx, func() error {
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, id, environmentNamespace)
+	return s.accountStorage.RunInTransaction(ctx, func(tx mysql.Transaction) error {
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, id, environmentNamespace, tx)
 		if err != nil {
 			return err
 		}
@@ -286,7 +286,7 @@ func (s *AccountService) updateAPIKeyMySQL(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return s.accountStorage.UpdateAPIKey(ctx, apiKey, environmentNamespace)
+		return s.accountStorage.UpdateAPIKey(ctx, apiKey, environmentNamespace, tx)
 	})
 }
 
@@ -306,7 +306,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		}
 		return nil, dt.Err()
 	}
-	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentNamespace)
+	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentNamespace, nil)
 	if err != nil {
 		if err == v2as.ErrAPIKeyNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -386,6 +386,7 @@ func (s *AccountService) ListAPIKeys(
 		orders,
 		limit,
 		offset,
+		nil,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -525,7 +526,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		if !ok || p.Disabled {
 			continue
 		}
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id)
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id, nil)
 		if err != nil {
 			if err == v2as.ErrAPIKeyNotFound {
 				continue

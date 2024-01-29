@@ -464,7 +464,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			desc: "errNotFound",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAPIKey(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrAPIKeyNotFound)
 			},
 			req:      &accountproto.GetAPIKeyRequest{Id: "id"},
@@ -474,7 +474,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAPIKey(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.APIKey{
 					APIKey: &accountproto.APIKey{
 						Id: "id",
@@ -538,7 +538,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			desc: "errInternal",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input:       &accountproto.ListAPIKeysRequest{},
@@ -549,7 +549,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*accountproto.APIKey{}, 0, int64(0), nil)
 			},
 			input:       &accountproto.ListAPIKeysRequest{PageSize: 2, Cursor: ""},

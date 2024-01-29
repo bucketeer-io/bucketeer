@@ -85,7 +85,7 @@ func TestCreateAPIKey(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.CreateAPIKey(context.Background(), p.input, p.environmentNamespace)
+			err := storage.CreateAPIKey(context.Background(), p.input, p.environmentNamespace, nil)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -152,7 +152,7 @@ func TestUpdateAPIKey(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.UpdateAPIKey(context.Background(), p.input, p.environmentNamespace)
+			err := storage.UpdateAPIKey(context.Background(), p.input, p.environmentNamespace, nil)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -216,7 +216,7 @@ func TestGetAPIKey(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetAPIKey(context.Background(), p.id, p.environmentNamespace)
+			_, err := storage.GetAPIKey(context.Background(), p.id, p.environmentNamespace, nil)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -293,6 +293,7 @@ func TestListAPIKeys(t *testing.T) {
 				p.orders,
 				p.limit,
 				p.offset,
+				nil,
 			)
 			assert.Equal(t, p.expected, apiKeys)
 			assert.Equal(t, p.expectedCursor, cursor)

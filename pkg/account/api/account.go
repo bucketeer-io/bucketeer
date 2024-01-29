@@ -103,9 +103,9 @@ func (s *AccountService) CreateAccountV2(
 		req.Command.Email, req.Command.Name, req.Command.AvatarImageUrl, req.OrganizationId,
 		req.Command.OrganizationRole, req.Command.EnvironmentRoles,
 	)
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
+	err = s.accountStorage.RunInTransaction(ctx, func(tx mysql.Transaction) error {
 		// TODO: temporary implementation: double write account v2 ---
-		exist, err := s.accountStorage.GetAccountV2(ctx, account.Email, req.OrganizationId)
+		exist, err := s.accountStorage.GetAccountV2(ctx, account.Email, req.OrganizationId, tx)
 		if err != nil && !errors.Is(err, v2as.ErrAccountNotFound) {
 			return err
 		}
@@ -118,14 +118,14 @@ func (s *AccountService) CreateAccountV2(
 			if err := handler.Handle(ctx, cmd); err != nil {
 				return err
 			}
-			return s.accountStorage.UpdateAccountV2(ctx, exist)
+			return s.accountStorage.UpdateAccountV2(ctx, exist, tx)
 		}
 		// TODO: temporary implementation end ---
 		handler := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return s.accountStorage.CreateAccountV2(ctx, account)
+		return s.accountStorage.CreateAccountV2(ctx, account, tx)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
@@ -363,8 +363,8 @@ func (s *AccountService) updateAccountV2MySQL(
 	commands []command.Command,
 	email, organizationID string,
 ) error {
-	return s.accountStorage.RunInTransaction(ctx, func() error {
-		account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
+	return s.accountStorage.RunInTransaction(ctx, func(tx mysql.Transaction) error {
+		account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID, tx)
 		if err != nil {
 			return err
 		}
@@ -374,7 +374,7 @@ func (s *AccountService) updateAccountV2MySQL(
 				return err
 			}
 		}
-		return s.accountStorage.UpdateAccountV2(ctx, account)
+		return s.accountStorage.UpdateAccountV2(ctx, account, tx)
 	})
 }
 
@@ -403,8 +403,8 @@ func (s *AccountService) DeleteAccountV2(
 		)
 		return nil, err
 	}
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
-		account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
+	err = s.accountStorage.RunInTransaction(ctx, func(tx mysql.Transaction) error {
+		account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId, tx)
 		if err != nil {
 			return err
 		}
@@ -412,7 +412,7 @@ func (s *AccountService) DeleteAccountV2(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return s.accountStorage.DeleteAccountV2(ctx, account)
+		return s.accountStorage.DeleteAccountV2(ctx, account, tx)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
@@ -482,7 +482,7 @@ func (s *AccountService) getAccountV2(
 	email, organizationID string,
 	localizer locale.Localizer,
 ) (*domain.AccountV2, error) {
-	account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
+	account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID, nil)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -551,7 +551,7 @@ func (s *AccountService) getAccountV2ByEnvironmentID(
 	email, environmentID string,
 	localizer locale.Localizer,
 ) (*domain.AccountV2, error) {
-	account, err := s.accountStorage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
+	account, err := s.accountStorage.GetAccountV2ByEnvironmentID(ctx, email, environmentID, nil)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -652,6 +652,7 @@ func (s *AccountService) ListAccountsV2(
 		orders,
 		limit,
 		offset,
+		nil,
 	)
 	if err != nil {
 		s.logger.Error(

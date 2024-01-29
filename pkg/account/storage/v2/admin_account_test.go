@@ -80,7 +80,7 @@ func TestGetAdminAccountV2(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetAdminAccountV2(context.Background(), p.email)
+			_, err := storage.GetAdminAccountV2(context.Background(), p.email, nil)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

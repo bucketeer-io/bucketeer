@@ -51,8 +51,8 @@ var (
 	ErrAccountUnexpectedAffectedRows = errors.New("account: account unexpected affected rows")
 )
 
-func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	_, err := s.qe().ExecContext(
+func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV2, tx mysql.Transaction) error {
+	_, err := s.qe(tx).ExecContext(
 		ctx,
 		insertAccountV2SQL,
 		a.Email,
@@ -74,8 +74,8 @@ func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV
 	return nil
 }
 
-func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	result, err := s.qe().ExecContext(
+func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV2, tx mysql.Transaction) error {
+	result, err := s.qe(tx).ExecContext(
 		ctx,
 		updateAccountV2SQL,
 		a.Name,
@@ -100,8 +100,8 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 	return nil
 }
 
-func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	result, err := s.qe().ExecContext(
+func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV2, tx mysql.Transaction) error {
+	result, err := s.qe(tx).ExecContext(
 		ctx,
 		deleteAccountV2SQL,
 		a.Email,
@@ -120,10 +120,14 @@ func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV
 	return nil
 }
 
-func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error) {
+func (s *accountStorage) GetAccountV2(
+	ctx context.Context,
+	email, organizationID string,
+	tx mysql.Transaction,
+) (*domain.AccountV2, error) {
 	account := proto.AccountV2{}
 	var organizationRole int32
-	err := s.qe().QueryRowContext(
+	err := s.qe(tx).QueryRowContext(
 		ctx,
 		selectAccountV2SQL,
 		email,
@@ -152,10 +156,11 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 func (s *accountStorage) GetAccountV2ByEnvironmentID(
 	ctx context.Context,
 	email, environmentID string,
+	tx mysql.Transaction,
 ) (*domain.AccountV2, error) {
 	account := proto.AccountV2{}
 	var organizationRole int32
-	err := s.qe().QueryRowContext(
+	err := s.qe(tx).QueryRowContext(
 		ctx,
 		selectAccountV2ByEnvironmentIDSQL,
 		email,
@@ -184,8 +189,9 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 func (s *accountStorage) GetAccountsWithOrganization(
 	ctx context.Context,
 	email string,
+	tx mysql.Transaction,
 ) ([]*domain.AccountWithOrganization, error) {
-	rows, err := s.qe().QueryContext(ctx, selectAccountsWithOrganizationSQL, email)
+	rows, err := s.qe(tx).QueryContext(ctx, selectAccountsWithOrganizationSQL, email)
 	if err != nil {
 		return nil, err
 	}
@@ -236,6 +242,7 @@ func (s *accountStorage) ListAccountsV2(
 	whereParts []mysql.WherePart,
 	orders []*mysql.Order,
 	limit, offset int,
+	tx mysql.Transaction,
 ) ([]*proto.AccountV2, int, int64, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
@@ -246,7 +253,7 @@ func (s *accountStorage) ListAccountsV2(
 		orderBySQL,
 		limitOffsetSQL,
 	)
-	rows, err := s.qe().QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe(tx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -278,7 +285,7 @@ func (s *accountStorage) ListAccountsV2(
 	nextOffset := offset + len(accounts)
 	var totalCount int64
 	countQuery := fmt.Sprintf(countAccountsV2SQL, whereSQL, orderBySQL)
-	err = s.qe().QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe(tx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

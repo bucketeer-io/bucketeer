@@ -89,7 +89,7 @@ func TestCreateAccountV2(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.CreateAccountV2(context.Background(), p.input)
+			err := storage.CreateAccountV2(context.Background(), p.input, nil)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -152,7 +152,7 @@ func TestUpdateAccountV2(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.UpdateAccountV2(context.Background(), p.input)
+			err := storage.UpdateAccountV2(context.Background(), p.input, nil)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -215,7 +215,7 @@ func TestGetAccountV2(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetAccountV2(context.Background(), p.email, p.organizationID)
+			_, err := storage.GetAccountV2(context.Background(), p.email, p.organizationID, nil)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -278,7 +278,7 @@ func TestGetAccountV2ByEnvironmentID(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetAccountV2ByEnvironmentID(context.Background(), p.email, p.environmentID)
+			_, err := storage.GetAccountV2ByEnvironmentID(context.Background(), p.email, p.environmentID, nil)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -325,7 +325,7 @@ func TestGetAccountsWithOrganization(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetAccountsWithOrganization(context.Background(), p.email)
+			_, err := storage.GetAccountsWithOrganization(context.Background(), p.email, nil)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -402,6 +402,7 @@ func TestListAccountsV2(t *testing.T) {
 				p.orders,
 				p.limit,
 				p.offset,
+				nil,
 			)
 			assert.Equal(t, p.expected, accounts)
 			assert.Equal(t, p.expectedCursor, cursor)

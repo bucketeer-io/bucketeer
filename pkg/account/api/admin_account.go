@@ -323,7 +323,7 @@ func (s *AccountService) getMyOrganizations(
 	email string,
 	localizer locale.Localizer,
 ) ([]*environmentproto.Organization, error) {
-	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, email)
+	accountsWithOrg, err := s.accountStorage.GetAccountsWithOrganization(ctx, email, nil)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get accounts with organization",
@@ -387,7 +387,7 @@ func (s *AccountService) getAdminAccountV2(
 	email string,
 	localizer locale.Localizer,
 ) (*domain.AccountV2, error) {
-	account, err := s.accountStorage.GetAdminAccountV2(ctx, email)
+	account, err := s.accountStorage.GetAdminAccountV2(ctx, email, nil)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAdminAccountNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{

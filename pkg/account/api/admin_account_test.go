@@ -131,10 +131,10 @@ func TestGetMeMySQL(t *testing.T) {
 					nil,
 				)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAdminAccountV2(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, v2as.ErrAdminAccountNotFound)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
@@ -229,7 +229,7 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 			desc: "errInternal: GetAccountsWithOrganization",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("test"))
 			},
 			input:       &accountproto.GetMyOrganizationsRequest{},
@@ -240,7 +240,7 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 			desc: "errInternal: GetOrganizations from environment service",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*domain.AccountWithOrganization{
 					{
 						Organization: &environmentproto.Organization{
@@ -264,7 +264,7 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*domain.AccountWithOrganization{}, nil)
 			},
 			input:       &accountproto.GetMyOrganizationsRequest{},
@@ -275,7 +275,7 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 			desc: "success: including system admin organization",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*domain.AccountWithOrganization{
 					{
 						Organization: &environmentproto.Organization{
@@ -357,7 +357,7 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 			desc: "errInternal: GetAccountsWithOrganization",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("test"))
 			},
 			input:       &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer@example.com"},
@@ -368,7 +368,7 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 			desc: "errInternal: GetOrganizations from environment service",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*domain.AccountWithOrganization{
 					{
 						Organization: &environmentproto.Organization{
@@ -392,7 +392,7 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*domain.AccountWithOrganization{}, nil)
 			},
 			input:       &accountproto.GetMyOrganizationsByEmailRequest{Email: "bucketeer@example.com"},
@@ -403,7 +403,7 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 			desc: "success: including system admin organization",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*domain.AccountWithOrganization{
 					{
 						Organization: &environmentproto.Organization{

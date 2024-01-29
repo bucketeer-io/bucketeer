@@ -25,28 +25,38 @@ import (
 )
 
 type AccountStorage interface {
-	RunInTransaction(ctx context.Context, f func() error) error
-	CreateAccountV2(ctx context.Context, a *domain.AccountV2) error
-	UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error
-	DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error
-	GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error)
-	GetAccountV2ByEnvironmentID(ctx context.Context, email, environmentID string) (*domain.AccountV2, error)
-	GetAccountsWithOrganization(ctx context.Context, email string) ([]*domain.AccountWithOrganization, error)
+	RunInTransaction(ctx context.Context, f func(transaction mysql.Transaction) error) error
+	CreateAccountV2(ctx context.Context, a *domain.AccountV2, tx mysql.Transaction) error
+	UpdateAccountV2(ctx context.Context, a *domain.AccountV2, tx mysql.Transaction) error
+	DeleteAccountV2(ctx context.Context, a *domain.AccountV2, tx mysql.Transaction) error
+	GetAccountV2(ctx context.Context, email, organizationID string, tx mysql.Transaction) (*domain.AccountV2, error)
+	GetAccountV2ByEnvironmentID(
+		ctx context.Context,
+		email, environmentID string,
+		tx mysql.Transaction,
+	) (*domain.AccountV2, error)
+	GetAccountsWithOrganization(
+		ctx context.Context,
+		email string,
+		tx mysql.Transaction,
+	) ([]*domain.AccountWithOrganization, error)
 	ListAccountsV2(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
 		orders []*mysql.Order,
 		limit, offset int,
+		tx mysql.Transaction,
 	) ([]*proto.AccountV2, int, int64, error)
-	GetAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error)
-	CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error
-	UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error
-	GetAPIKey(ctx context.Context, id, environmentNamespace string) (*domain.APIKey, error)
+	GetAdminAccountV2(ctx context.Context, email string, tx mysql.Transaction) (*domain.AccountV2, error)
+	CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string, tx mysql.Transaction) error
+	UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string, tx mysql.Transaction) error
+	GetAPIKey(ctx context.Context, id, environmentNamespace string, tx mysql.Transaction) (*domain.APIKey, error)
 	ListAPIKeys(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
 		orders []*mysql.Order,
 		limit, offset int,
+		tx mysql.Transaction,
 	) ([]*proto.APIKey, int, int64, error)
 }
 
@@ -59,21 +69,20 @@ func NewAccountStorage(client mysql.Client) AccountStorage {
 	return &accountStorage{client, nil}
 }
 
-func (s *accountStorage) RunInTransaction(ctx context.Context, f func() error) error {
+func (s *accountStorage) RunInTransaction(ctx context.Context, f func(tx mysql.Transaction) error) error {
 	tx, err := s.client.BeginTx(ctx)
 	if err != nil {
 		return fmt.Errorf("account: begin tx: %w", err)
 	}
-	s.tx = tx
-	defer func() {
-		s.tx = nil
-	}()
-	return s.client.RunInTransaction(ctx, tx, f)
+	ff := func() error {
+		return f(tx)
+	}
+	return s.client.RunInTransaction(ctx, tx, ff)
 }
 
-func (s *accountStorage) qe() mysql.QueryExecer {
-	if s.tx != nil {
-		return s.tx
+func (s *accountStorage) qe(tx mysql.Transaction) mysql.QueryExecer {
+	if tx != nil {
+		return tx
 	}
 	return s.client
 }

@@ -30,7 +30,12 @@ var (
 	ErrAPIKeyUnexpectedAffectedRows = errors.New("apiKey: api key unexpected affected rows")
 )
 
-func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
+func (s *accountStorage) CreateAPIKey(
+	ctx context.Context,
+	k *domain.APIKey,
+	environmentNamespace string,
+	tx mysql.Transaction,
+) error {
 	query := `
 		INSERT INTO api_key (
 			id,
@@ -44,7 +49,7 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 			?, ?, ?, ?, ?, ?, ?
 		)
 	`
-	_, err := s.qe().ExecContext(
+	_, err := s.qe(tx).ExecContext(
 		ctx,
 		query,
 		k.Id,
@@ -64,7 +69,12 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
+func (s *accountStorage) UpdateAPIKey(
+	ctx context.Context,
+	k *domain.APIKey,
+	environmentNamespace string,
+	tx mysql.Transaction,
+) error {
 	query := `
 		UPDATE 
 			api_key
@@ -78,7 +88,7 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 			id = ? AND
 			environment_namespace = ?
 	`
-	result, err := s.qe().ExecContext(
+	result, err := s.qe(tx).ExecContext(
 		ctx,
 		query,
 		k.Name,
@@ -102,7 +112,11 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentNamespace string) (*domain.APIKey, error) {
+func (s *accountStorage) GetAPIKey(
+	ctx context.Context,
+	id, environmentNamespace string,
+	tx mysql.Transaction,
+) (*domain.APIKey, error) {
 	apiKey := proto.APIKey{}
 	var role int32
 	query := `
@@ -119,7 +133,7 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentNamespace
 			id = ? AND
 			environment_namespace = ?
 	`
-	err := s.qe().QueryRowContext(
+	err := s.qe(tx).QueryRowContext(
 		ctx,
 		query,
 		id,
@@ -147,6 +161,7 @@ func (s *accountStorage) ListAPIKeys(
 	whereParts []mysql.WherePart,
 	orders []*mysql.Order,
 	limit, offset int,
+	tx mysql.Transaction,
 ) ([]*proto.APIKey, int, int64, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
@@ -164,7 +179,7 @@ func (s *accountStorage) ListAPIKeys(
 		%s %s %s
 		`, whereSQL, orderBySQL, limitOffsetSQL,
 	)
-	rows, err := s.qe().QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe(tx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -200,7 +215,7 @@ func (s *accountStorage) ListAPIKeys(
 		%s %s
 		`, whereSQL, orderBySQL,
 	)
-	err = s.qe().QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe(tx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
