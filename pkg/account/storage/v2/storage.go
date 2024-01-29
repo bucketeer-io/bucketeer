@@ -26,15 +26,6 @@ import (
 
 type AccountStorage interface {
 	RunInTransaction(ctx context.Context, f func() error) error
-	CreateAccount(ctx context.Context, a *domain.Account, environmentNamespace string) error
-	UpdateAccount(ctx context.Context, a *domain.Account, environmentNamespace string) error
-	GetAccount(ctx context.Context, id, environmentNamespace string) (*domain.Account, error)
-	ListAccounts(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*proto.Account, int, int64, error)
 	CreateAccountV2(ctx context.Context, a *domain.AccountV2) error
 	UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error
 	DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error
@@ -47,15 +38,6 @@ type AccountStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.AccountV2, int, int64, error)
-	CreateAdminAccount(ctx context.Context, a *domain.Account) error
-	UpdateAdminAccount(ctx context.Context, a *domain.Account) error
-	GetAdminAccount(ctx context.Context, id string) (*domain.Account, error)
-	ListAdminAccounts(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*proto.Account, int, int64, error)
 	GetAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error)
 	CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error
 	UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error

@@ -20,13 +20,9 @@ import (
 )
 
 var (
-	statusInternal         = gstatus.New(codes.Internal, "account: internal")
-	statusInvalidCursor    = gstatus.New(codes.InvalidArgument, "account: cursor is invalid")
-	statusNoCommand        = gstatus.New(codes.InvalidArgument, "account: command must not be empty")
-	statusMissingAccountID = gstatus.New(
-		codes.InvalidArgument,
-		"account: account id must be specified",
-	)
+	statusInternal              = gstatus.New(codes.Internal, "account: internal")
+	statusInvalidCursor         = gstatus.New(codes.InvalidArgument, "account: cursor is invalid")
+	statusNoCommand             = gstatus.New(codes.InvalidArgument, "account: command must not be empty")
 	statusMissingOrganizationID = gstatus.New(
 		codes.InvalidArgument,
 		"account: organization id must be specified",
@@ -40,12 +36,11 @@ var (
 		codes.InvalidArgument,
 		"account: invalid update environment roles write type",
 	)
-	statusMissingAPIKeyID     = gstatus.New(codes.InvalidArgument, "account: apikey id must be specified")
-	statusMissingAPIKeyName   = gstatus.New(codes.InvalidArgument, "account: apikey name must be not empty")
-	statusInvalidOrderBy      = gstatus.New(codes.InvalidArgument, "account: order_by is invalid")
-	statusNotFound            = gstatus.New(codes.NotFound, "account: not found")
-	statusEnvironmentNotFound = gstatus.New(codes.NotFound, "account: environment is not found")
-	statusAlreadyExists       = gstatus.New(codes.AlreadyExists, "account: already exists")
-	statusUnauthenticated     = gstatus.New(codes.Unauthenticated, "account: unauthenticated")
-	statusPermissionDenied    = gstatus.New(codes.PermissionDenied, "account: permission denied")
+	statusMissingAPIKeyID   = gstatus.New(codes.InvalidArgument, "account: apikey id must be specified")
+	statusMissingAPIKeyName = gstatus.New(codes.InvalidArgument, "account: apikey name must be not empty")
+	statusInvalidOrderBy    = gstatus.New(codes.InvalidArgument, "account: order_by is invalid")
+	statusNotFound          = gstatus.New(codes.NotFound, "account: not found")
+	statusAlreadyExists     = gstatus.New(codes.AlreadyExists, "account: already exists")
+	statusUnauthenticated   = gstatus.New(codes.Unauthenticated, "account: unauthenticated")
+	statusPermissionDenied  = gstatus.New(codes.PermissionDenied, "account: permission denied")
 )
