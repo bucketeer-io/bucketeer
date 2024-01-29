@@ -243,9 +243,9 @@ func (s *segmentStorage) ListSegments(
 	var isInUseStatusSQL string
 	if isInUseStatus != nil {
 		if *isInUseStatus {
-			isInUseStatusSQL = "HAVING is_in_use_status = TRUE"
+			isInUseStatusSQL = "HAVING feature_ids IS NOT NULL"
 		} else {
-			isInUseStatusSQL = "HAVING is_in_use_status = FALSE"
+			isInUseStatusSQL = "HAVING feature_ids IS NULL"
 		}
 	}
 	query := fmt.Sprintf(`
