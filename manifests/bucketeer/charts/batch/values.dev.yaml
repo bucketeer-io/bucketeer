@@ -44,3 +44,48 @@ tls:
 
 serviceToken:
   token:
+
+cronjob:
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  webGatewayAddress: https://web-gateway.default.svc.cluster.local:9000
+  jobs:
+    - name: experiment-status-updater
+      jobId: ExperimentStatusUpdater
+      schedule: "*/30 * * * *"
+    - name: experiment-running-watcher
+      jobId: ExperimentRunningWatcher
+      schedule: "0 1 * * *"
+    - name: feature-stale-watcher
+      jobId: FeatureStaleWatcher
+      schedule: "0 1 * * MON"
+    - name: mau-count-watcher
+      jobId: MauCountWatcher
+      schedule: "0 1 1 * *"
+    - name: ops-datetime-watcher
+      jobId: DatetimeWatcher
+      schedule: "* * * * *"
+    - name: ops-event-count-watcher
+      jobId: EventCountWatcher
+      schedule: "* * * * *"
+    - name: ops-progressive-rollout-watcher
+      jobId: ProgressiveRolloutWatcher
+      schedule: "* * * * *"
+    - name: domain-event-informer
+      jobId: DomainEventInformer
+      schedule: "* * * * *"
+    - name: redis-counter-deleter
+      jobId: RedisCounterDeleter
+      schedule: "0 0 * * *"
+    - name: experiment-calculator
+      jobId: ExperimentCalculator
+      schedule: "* * * * *"
+    - name: mau-summarizer
+      jobId: MauSummarizer
+      schedule: "30 0 * * *"
+    - name: mau-partition-deleter
+      jobId: MauPartitionDeleter
+      schedule: "0 2 1 * *"
+    - name: mau-partition-creator
+      jobId: MauPartitionCreator
+      schedule: "0 2 2 * *"
