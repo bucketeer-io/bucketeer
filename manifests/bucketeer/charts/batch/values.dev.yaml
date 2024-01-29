@@ -52,7 +52,7 @@ cronjob:
   jobs:
     - name: experiment-status-updater
       jobId: ExperimentStatusUpdater
-      schedule: "*/30 * * * *"
+      schedule: "* * * * *"
     - name: experiment-running-watcher
       jobId: ExperimentRunningWatcher
       schedule: "0 1 * * *"
