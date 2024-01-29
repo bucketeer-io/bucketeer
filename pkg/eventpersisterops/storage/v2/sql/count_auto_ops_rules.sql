@@ -1,4 +1,4 @@
-select count(*)
-from auto_ops_rule
-where triggered_at = 0
-  and deleted = 0
+SELECT count(*)
+FROM auto_ops_rule
+WHERE triggered_at = 0
+  AND deleted = 0

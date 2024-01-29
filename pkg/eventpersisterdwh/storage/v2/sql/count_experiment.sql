@@ -13,7 +13,7 @@ SELECT
             experiment
         WHERE
             status = 2
-          AND stop_at > UNIX_TIMESTAMP(
-                DATE_SUB(NOW(), INTERVAL 2 DAY)
-          )
+        AND stop_at > UNIX_TIMESTAMP(
+            DATE_SUB(NOW(), INTERVAL 2 DAY)
+        )
     ) as count;
