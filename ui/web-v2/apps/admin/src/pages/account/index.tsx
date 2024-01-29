@@ -41,7 +41,7 @@ import {
 } from '../../modules/accounts';
 import { useCurrentEnvironment } from '../../modules/me';
 import { AccountV2 } from '../../proto/account/account_pb';
-import { ListAccountsRequest } from '../../proto/account/service_pb';
+import { ListAccountsV2Request } from '../../proto/account/service_pb';
 import { AppDispatch } from '../../store';
 import { AccountSortOption, isAccountSortOption } from '../../types/account';
 import {
@@ -65,23 +65,23 @@ const createSort = (sortOption?: AccountSortOption): Sort => {
   switch (sortOption) {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
-        orderBy: ListAccountsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListAccountsRequest.OrderDirection.ASC,
+        orderBy: ListAccountsV2Request.OrderBy.CREATED_AT,
+        orderDirection: ListAccountsV2Request.OrderDirection.ASC,
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
-        orderBy: ListAccountsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListAccountsRequest.OrderDirection.DESC,
+        orderBy: ListAccountsV2Request.OrderBy.CREATED_AT,
+        orderDirection: ListAccountsV2Request.OrderDirection.DESC,
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
-        orderBy: ListAccountsRequest.OrderBy.EMAIL,
-        orderDirection: ListAccountsRequest.OrderDirection.ASC,
+        orderBy: ListAccountsV2Request.OrderBy.EMAIL,
+        orderDirection: ListAccountsV2Request.OrderDirection.ASC,
       };
     default:
       return {
-        orderBy: ListAccountsRequest.OrderBy.EMAIL,
-        orderDirection: ListAccountsRequest.OrderDirection.DESC,
+        orderBy: ListAccountsV2Request.OrderBy.EMAIL,
+        orderDirection: ListAccountsV2Request.OrderDirection.DESC,
       };
   }
 };
