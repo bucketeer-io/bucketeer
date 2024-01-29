@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -37,7 +38,7 @@ type command struct {
 	email                *string
 	role                 *string
 	environmentNamespace *string
-	isAdmin              *bool
+	organizationID       *string
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
@@ -48,12 +49,12 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		serviceTokenPath:  cmd.Flag("service-token", "Path to service token file.").Required().String(),
 		webGatewayAddress: cmd.Flag("web-gateway", "Address of web-gateway.").Required().String(),
 		email:             cmd.Flag("email", "The email of an account.").Required().String(),
-		role:              cmd.Flag("role", "The role of an account.").Required().Enum("VIEWER", "EDITOR", "OWNER"),
+		role:              cmd.Flag("role", "The role of an environment.").Required().Enum("VIEWER", "EDITOR"),
 		environmentNamespace: cmd.Flag(
 			"environment-namespace",
 			"The environment namespace for Datestore namespace",
 		).Required().String(),
-		isAdmin: cmd.Flag("is-admin", "Is an account admin or not.").Default("false").Bool(),
+		organizationID: cmd.Flag("organization-id", "The organization id").Required().String(),
 	}
 	r.RegisterCommand(command)
 	return command
@@ -65,21 +66,12 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		logger.Error("Failed to create account client", zap.Error(err))
 		return err
 	}
-	role, ok := accountproto.Account_Role_value[*c.role]
+	role, ok := accountproto.AccountV2_Role_Environment_value[*c.role]
 	if !ok {
 		logger.Error("Wrong role parameter", zap.String("role", *c.role))
 		return errors.New("wrong role parameter")
 	}
-	if *c.isAdmin {
-		err := c.createAdminAccount(ctx, client, accountproto.Account_Role(role))
-		if err != nil {
-			logger.Error("Failed to create admin account", zap.Error(err))
-			return err
-		}
-		logger.Info("Admin account created")
-		return nil
-	}
-	err = c.createAccount(ctx, client, accountproto.Account_Role(role))
+	err = c.createAccount(ctx, client, accountproto.AccountV2_Role_Environment(role))
 	if err != nil {
 		logger.Error("Failed to create account", zap.Error(err),
 			zap.String("environmentNamespace", *c.environmentNamespace))
@@ -89,33 +81,28 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	return nil
 }
 
-func (c *command) createAdminAccount(
-	ctx context.Context,
-	client accountclient.Client,
-	role accountproto.Account_Role,
-) error {
-	req := &accountproto.CreateAdminAccountRequest{
-		Command: &accountproto.CreateAdminAccountCommand{Email: *c.email},
-	}
-	if _, err := client.CreateAdminAccount(ctx, req); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (c *command) createAccount(
 	ctx context.Context,
 	client accountclient.Client,
-	role accountproto.Account_Role,
+	role accountproto.AccountV2_Role_Environment,
 ) error {
-	req := &accountproto.CreateAccountRequest{
-		Command: &accountproto.CreateAccountCommand{
-			Email: *c.email,
-			Role:  role,
+	envRoles := []*accountproto.AccountV2_EnvironmentRole{
+		{
+			EnvironmentId: *c.environmentNamespace,
+			Role:          role,
 		},
-		EnvironmentNamespace: *c.environmentNamespace,
 	}
-	if _, err := client.CreateAccount(ctx, req); err != nil {
+	req := &accountproto.CreateAccountV2Request{
+		Command: &accountproto.CreateAccountV2Command{
+			Email:            *c.email,
+			Name:             strings.Split(*c.email, "@")[0],
+			AvatarImageUrl:   "",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			EnvironmentRoles: envRoles,
+		},
+		OrganizationId: *c.organizationID,
+	}
+	if _, err := client.CreateAccountV2(ctx, req); err != nil {
 		return err
 	}
 	return nil

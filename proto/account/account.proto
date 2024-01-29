@@ -67,13 +67,6 @@ message AccountV2 {
   int64 updated_at = 9;
 }
 
-message EnvironmentRoleV2 {
-  environment.EnvironmentV2 environment = 1;
-  Account.Role role = 2;
-  bool trial_project = 3;
-  int64 trial_started_at = 4;  // optional
-}
-
 message ConsoleAccount {
   message EnvironmentRole {
     environment.EnvironmentV2 environment = 1;

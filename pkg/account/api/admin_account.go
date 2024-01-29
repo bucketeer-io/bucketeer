@@ -33,62 +33,6 @@ import (
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
-func (s *AccountService) GetMeV2(
-	ctx context.Context,
-	req *accountproto.GetMeV2Request,
-) (*accountproto.GetMeV2Response, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) GetMeByEmailV2(
-	ctx context.Context,
-	req *accountproto.GetMeByEmailV2Request,
-) (*accountproto.GetMeV2Response, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) CreateAdminAccount(
-	ctx context.Context,
-	req *accountproto.CreateAdminAccountRequest,
-) (*accountproto.CreateAdminAccountResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) EnableAdminAccount(
-	ctx context.Context,
-	req *accountproto.EnableAdminAccountRequest,
-) (*accountproto.EnableAdminAccountResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) DisableAdminAccount(
-	ctx context.Context,
-	req *accountproto.DisableAdminAccountRequest,
-) (*accountproto.DisableAdminAccountResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) ConvertAccount(
-	ctx context.Context,
-	req *accountproto.ConvertAccountRequest,
-) (*accountproto.ConvertAccountResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) GetAdminAccount(
-	ctx context.Context,
-	req *accountproto.GetAdminAccountRequest,
-) (*accountproto.GetAdminAccountResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) ListAdminAccounts(
-	ctx context.Context,
-	req *accountproto.ListAdminAccountsRequest,
-) (*accountproto.ListAdminAccountsResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
 func (s *AccountService) GetMe(
 	ctx context.Context,
 	req *accountproto.GetMeRequest,
