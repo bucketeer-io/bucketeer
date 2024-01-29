@@ -2,8 +2,6 @@ import { Nullable, isNotNull, isNull } from 'option-t/lib/Nullable/Nullable';
 
 import { urls } from '../config';
 import {
-  ConvertAccountRequest,
-  ConvertAccountResponse,
   CreateAccountV2Request,
   CreateAccountV2Response,
   DisableAccountV2Request,
@@ -14,8 +12,6 @@ import {
   GetAccountV2Response,
   GetMeRequest,
   GetMeResponse,
-  GetMeV2Request,
-  GetMeV2Response,
   GetMyOrganizationsRequest,
   GetMyOrganizationsResponse,
   ListAccountsV2Request,
@@ -79,27 +75,6 @@ export function getMyOrganizations(
           }
         }
       );
-    }
-  );
-}
-
-export interface GetMeV2Result {
-  request: GetMeV2Request;
-  response: GetMeV2Response;
-}
-
-export function getMeV2(request: GetMeV2Request): Promise<GetMeV2Result> {
-  return new Promise(
-    (resolve: (result: GetMeV2Result) => void, reject): void => {
-      client.getMeV2(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new AccountServiceError(extractErrorMessage(error), request, error)
-          );
-        } else {
-          resolve({ request, response });
-        }
-      });
     }
   );
 }
@@ -224,29 +199,6 @@ export function updateAccount(
           }
         }
       );
-    }
-  );
-}
-
-export interface ConvertAccountResult {
-  request: ConvertAccountRequest;
-  response: ConvertAccountResponse;
-}
-
-export function convertAccount(
-  request: ConvertAccountRequest
-): Promise<ConvertAccountResult> {
-  return new Promise(
-    (resolve: (result: ConvertAccountResult) => void, reject): void => {
-      client.convertAccount(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new AccountServiceError(extractErrorMessage(error), request, error)
-          );
-        } else {
-          resolve({ request, response });
-        }
-      });
     }
   );
 }
