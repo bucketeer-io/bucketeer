@@ -1,3 +1,4 @@
+import { getRoleV1 } from '@/pages/account';
 import { FC, memo } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
@@ -6,11 +7,10 @@ import { ACCOUNT_LIST_PAGE_SIZE } from '../../constants/account';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll } from '../../modules/accounts';
-import { useIsOwner } from '../../modules/me';
-import { Account } from '../../proto/account/account_pb';
+import { useCurrentEnvironment, useIsOwner } from '../../modules/me';
+import { AccountV2 } from '../../proto/account/account_pb';
 import { AccountSearchOptions } from '../../types/account';
 import { classNames } from '../../utils/css';
-import { roleOptions } from '../AccountAddForm';
 import { AccountSearch } from '../AccountSearch';
 import { ListSkeleton } from '../ListSkeleton';
 import { Pagination } from '../Pagination';
@@ -23,7 +23,7 @@ export interface AccountListProps {
   onSwitchEnabled: (accountId: string, enabled: boolean) => void;
   onChangeSearchOptions: (options: AccountSearchOptions) => void;
   onAdd: () => void;
-  onUpdate: (a: Account.AsObject) => void;
+  onUpdate: (a: AccountV2.AsObject) => void;
 }
 
 export const AccountList: FC<AccountListProps> = memo(
@@ -37,7 +37,7 @@ export const AccountList: FC<AccountListProps> = memo(
   }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsOwner();
-    const accounts = useSelector<AppState, Account.AsObject[]>(
+    const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAll(state.accounts),
       shallowEqual
     );
@@ -49,6 +49,7 @@ export const AccountList: FC<AccountListProps> = memo(
       (state) => state.accounts.totalCount,
       shallowEqual
     );
+    const currentEnvironment = useCurrentEnvironment();
 
     return (
       <div className="w-full bg-white border border-gray-300 rounded-md">
@@ -112,15 +113,22 @@ export const AccountList: FC<AccountListProps> = memo(
             <table className="table-auto leading-normal">
               <tbody className="text-sm">
                 {accounts.map((account) => {
+                  const envRole = account.environmentRolesList.find(
+                    (r) => r.environmentId === currentEnvironment.id
+                  );
+                  const accountDisabled =
+                    envRole.role ===
+                    AccountV2.Role.Environment.ENVIRONMENT_UNASSIGNED;
+                  const orgRole = account.organizationRole;
                   return (
-                    <tr key={account.id} className={classNames('p-2')}>
+                    <tr key={account.email} className={classNames('p-2')}>
                       <td className="pl-5 pr-2 py-3 border-b">
                         <div className="flex pb-1">
                           <button
                             className="link whitespace-nowrap"
                             onClick={() => onUpdate(account)}
                           >
-                            {account.id}
+                            {account.email}
                           </button>
                           <div className="flex items-center ml-2 text-xs text-gray-700 whitespace-nowrap">
                             <span className="mr-1">{f(messages.created)}</span>
@@ -138,11 +146,7 @@ export const AccountList: FC<AccountListProps> = memo(
                       >
                         <div className="flex justify-center items-center rounded-md w-16 h-6 bg-gray-200">
                           <span className="text-xs text-gray-700">
-                            {
-                              roleOptions.find(
-                                (o) => o.value === account.role.toString()
-                              ).label
-                            }
+                            {getRoleV1(orgRole, envRole.role).label}
                           </span>
                         </div>
                       </td>
@@ -153,9 +157,9 @@ export const AccountList: FC<AccountListProps> = memo(
                         )}
                       >
                         <Switch
-                          enabled={!account.disabled}
+                          enabled={!accountDisabled}
                           onChange={() =>
-                            onSwitchEnabled(account.id, account.disabled)
+                            onSwitchEnabled(account.email, accountDisabled)
                           }
                           size={'small'}
                           readOnly={!editable}

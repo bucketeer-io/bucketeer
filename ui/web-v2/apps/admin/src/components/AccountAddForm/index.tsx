@@ -1,37 +1,15 @@
-import { Select } from '@/components/Select';
-import { intl } from '@/lang';
+import { Select, Option } from '@/components/Select';
 import { messages } from '@/lang/messages';
-import { Account } from '@/proto/account/account_pb';
+import { getRoleListV1 } from '@/pages/account';
 import { Dialog } from '@headlessui/react';
 import React, { FC, memo } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
-
 export interface AccountAddFormProps {
   onSubmit: () => void;
   onCancel: () => void;
 }
-
-export interface Option {
-  value: string;
-  label: string;
-}
-
-export const roleOptions: Option[] = [
-  {
-    value: Account.Role.VIEWER.toString(),
-    label: intl.formatMessage(messages.account.role.viewer),
-  },
-  {
-    value: Account.Role.EDITOR.toString(),
-    label: intl.formatMessage(messages.account.role.editor),
-  },
-  {
-    value: Account.Role.OWNER.toString(),
-    label: intl.formatMessage(messages.account.role.owner),
-  },
-];
 
 export const AccountAddForm: FC<AccountAddFormProps> = memo(
   ({ onSubmit, onCancel }) => {
@@ -73,6 +51,27 @@ export const AccountAddForm: FC<AccountAddFormProps> = memo(
                 "
               >
                 <div className="">
+                  <label htmlFor="name">
+                    <span className="input-label">
+                      {f(messages.input.name)}
+                    </span>
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      {...register('name')}
+                      type="text"
+                      name="name"
+                      id="name"
+                      className="input-text w-full"
+                    />
+                    <p className="input-error">
+                      {errors.name && (
+                        <span role="alert">{errors.name.message}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="">
                   <label htmlFor="email">
                     <span className="input-label">
                       {f(messages.input.email)}
@@ -107,7 +106,7 @@ export const AccountAddForm: FC<AccountAddFormProps> = memo(
                         return (
                           <Select
                             onChange={(o: Option) => field.onChange(o.value)}
-                            options={roleOptions}
+                            options={getRoleListV1()}
                             isSearchable={false}
                           />
                         );

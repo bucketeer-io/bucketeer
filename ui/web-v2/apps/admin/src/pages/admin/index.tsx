@@ -18,7 +18,6 @@ import {
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
-import { AdminAccountIndexPage } from '../admin/account';
 import { AdminAuditLogIndexPage } from '../admin/auditLog';
 import { AdminNotificationIndexPage } from '../admin/notification';
 import { AdminProjectIndexPage } from '../admin/projects';
@@ -89,15 +88,6 @@ export const AdminIndexPage: FC = memo(() => {
           <Route
             exact
             path={[
-              `${url}${PAGE_PATH_ACCOUNTS}`,
-              `${url}${PAGE_PATH_ACCOUNTS}/:accountId`,
-            ]}
-          >
-            <AdminAccountIndexPage />
-          </Route>
-          <Route
-            exact
-            path={[
               `${url}${PAGE_PATH_NOTIFICATIONS}`,
               `${url}${PAGE_PATH_NOTIFICATIONS}/:notificationId`,
             ]}
@@ -127,10 +117,6 @@ const createTabs = (): Array<TabItem> => {
     {
       message: intl.formatMessage(messages.adminSettings.tab.environments),
       to: PAGE_PATH_ENVIRONMENTS,
-    },
-    {
-      message: intl.formatMessage(messages.adminSettings.tab.account),
-      to: PAGE_PATH_ACCOUNTS,
     },
     {
       message: intl.formatMessage(messages.adminSettings.tab.notifications),

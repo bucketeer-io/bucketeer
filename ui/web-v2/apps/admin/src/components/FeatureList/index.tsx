@@ -21,7 +21,7 @@ import { selectAll as selectAllAccounts } from '../../modules/accounts';
 import { selectAll as selectAllFeatures } from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import { selectAll as selectAllTags } from '../../modules/tags';
-import { Account } from '../../proto/account/account_pb';
+import { AccountV2 } from '../../proto/account/account_pb';
 import { Feature, Tag } from '../../proto/feature/feature_pb';
 import { FeatureSearchOptions } from '../../types/feature';
 import {
@@ -254,10 +254,6 @@ export const FeatureList: FC<FeatureListProps> = memo(
       (state) => state.features.totalCount,
       shallowEqual
     );
-    const accounts = useSelector<AppState, Account.AsObject[]>(
-      (state) => selectAllAccounts(state.accounts),
-      shallowEqual
-    );
     const relativeDate = new Date();
     const createMenuItems = (archived: boolean): Array<MenuItem> => {
       const items: Array<MenuItem> = [];
@@ -452,7 +448,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       (state) => state.accounts.loading,
       shallowEqual
     );
-    const accounts = useSelector<AppState, Account.AsObject[]>(
+    const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAllAccounts(state.accounts),
       shallowEqual
     );
@@ -478,8 +474,8 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             setFilterValues(
               accounts.map((account) => {
                 return {
-                  value: account.id,
-                  label: account.id,
+                  value: account.email,
+                  label: account.email,
                 };
               })
             );

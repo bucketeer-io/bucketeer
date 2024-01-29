@@ -8,7 +8,7 @@ import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll as selectAllAccounts } from '../../modules/accounts';
 import { useIsEditable } from '../../modules/me';
-import { Account } from '../../proto/account/account_pb';
+import { AccountV2 } from '../../proto/account/account_pb';
 import { Experiment } from '../../proto/experiment/experiment_pb';
 import { ExperimentSearchOptions } from '../../types/experiment';
 import {
@@ -108,7 +108,7 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
       (state) => state.accounts.loading,
       shallowEqual
     );
-    const accounts = useSelector<AppState, Account.AsObject[]>(
+    const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAllAccounts(state.accounts),
       shallowEqual
     );
@@ -127,8 +127,8 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
             setFilterValues(
               accounts.map((account) => {
                 return {
-                  value: account.id,
-                  label: account.id,
+                  value: account.email,
+                  label: account.email,
                 };
               })
             );

@@ -19,13 +19,6 @@ export const SOURCE_TYPE_ITEMS: Option[] = [
     value: Subscription.SourceType.DOMAIN_EVENT_ENVIRONMENT.toString(),
   },
   {
-    label: intl.formatMessage(messages.sourceType.adminAccount),
-    description: intl.formatMessage(
-      messages.sourceType.adminAccountDescription
-    ),
-    value: Subscription.SourceType.DOMAIN_EVENT_ADMIN_ACCOUNT.toString(),
-  },
-  {
     label: intl.formatMessage(messages.sourceType.adminNotification),
     description: intl.formatMessage(
       messages.sourceType.adminNotificationDescription

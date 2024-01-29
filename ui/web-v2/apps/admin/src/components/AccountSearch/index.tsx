@@ -8,7 +8,7 @@ import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll } from '../../modules/accounts';
 import { useIsOwner } from '../../modules/me';
-import { Account } from '../../proto/account/account_pb';
+import { AccountV2 } from '../../proto/account/account_pb';
 import { AccountSearchOptions } from '../../types/account';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
@@ -98,7 +98,7 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
       (state) => state.accounts.loading,
       shallowEqual
     );
-    const accounts = useSelector<AppState, Account.AsObject[]>(
+    const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAll(state.accounts),
       shallowEqual
     );
@@ -158,6 +158,7 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
               }
             />
           </div>
+          {/* TODO: BEcause we switched to account api V2, the filter won't work until we create the console 3.0
           <div className="flex-none mx-2">
             <FilterPopover
               keys={filterOptions}
@@ -165,7 +166,7 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
               onChangeKey={handleFilterKeyChange}
               onAdd={handleFilterAdd}
             />
-          </div>
+          </div> */}
           <div className="flex-grow" />
           <div className="flex-none -mr-2">
             <SortSelect
