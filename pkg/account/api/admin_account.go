@@ -135,7 +135,7 @@ func (s *AccountService) GetMe(
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 			Email:            adminAccount.Email,
 			Name:             adminAccount.Name,
-			AvatarUrl:        "", // TODO: Once we change a way to get admin account, we should set it here.
+			AvatarUrl:        adminAccount.AvatarImageUrl,
 			IsSystemAdmin:    true,
 			Organization:     organization,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
