@@ -583,24 +583,7 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
-	getAdminAccountReq := &accountproto.GetAdminAccountRequest{
-		Email: editor.Email,
-	}
-	getAdminAccountRes, err := s.accountClient.GetAdminAccount(ctx, getAdminAccountReq)
-	if err != nil && status.Code(err) != codes.NotFound {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	adminAccountExists := false
-	if getAdminAccountRes != nil && getAdminAccountRes.Account != nil {
-		adminAccountExists = true
-	}
+	envRoles := make([]*accountproto.AccountV2_EnvironmentRole, 0, 2)
 	envNames := []string{
 		"Development",
 		"Production",
@@ -620,25 +603,31 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 		if err := s.createEnvironmentV2(ctx, createEnvCmdV2, envV2, editor, localizer); err != nil {
 			return err
 		}
-		if !adminAccountExists {
-			createAccountReq := &accountproto.CreateAccountRequest{
-				Command: &accountproto.CreateAccountCommand{
-					Email: editor.Email,
-					Role:  accountproto.Account_OWNER,
-				},
-				EnvironmentNamespace: envV2.Id,
-			}
-			if _, err := s.accountClient.CreateAccount(ctx, createAccountReq); err != nil {
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalize(locale.InternalServerError),
-				})
-				if err != nil {
-					return statusInternal.Err()
-				}
-				return dt.Err()
-			}
+		envRoles = append(envRoles, &accountproto.AccountV2_EnvironmentRole{
+			EnvironmentId: envV2.Id,
+			Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+		})
+	}
+	createAccountReq := &accountproto.CreateAccountV2Request{
+		OrganizationId: project.OrganizationId,
+		Command: &accountproto.CreateAccountV2Command{
+			Email:          editor.Email,
+			Name:           strings.Split(editor.Email, "@")[0],
+			AvatarImageUrl: "",
+			// TODO Once we support new console design, we should set OWNER role.
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			EnvironmentRoles: envRoles,
+		},
+	}
+	if _, err := s.accountClient.CreateAccountV2(ctx, createAccountReq); err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
 		}
+		return dt.Err()
 	}
 	return nil
 }

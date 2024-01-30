@@ -24,9 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 	gstatus "google.golang.org/grpc/status"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
@@ -503,10 +501,8 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil).Times(4)
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAdminAccount(gomock.Any(), gomock.Any()).Return(
-					nil, status.Error(codes.NotFound, "not found"))
-				s.accountClient.(*acmock.MockClient).EXPECT().CreateAccount(gomock.Any(), gomock.Any()).Return(
-					&accountproto.CreateAccountResponse{}, nil).Times(2)
+				s.accountClient.(*acmock.MockClient).EXPECT().CreateAccountV2(gomock.Any(), gomock.Any()).Return(
+					&accountproto.CreateAccountV2Response{}, nil)
 			},
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "Project Name_001", Email: "test@example.com"},
