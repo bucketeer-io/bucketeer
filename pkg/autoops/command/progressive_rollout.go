@@ -54,6 +54,8 @@ func (h *progressiveRolloutCommandHandler) Handle(
 	switch c := cmd.(type) {
 	case *autoopsproto.CreateProgressiveRolloutCommand:
 		return h.create(ctx, c)
+	case *autoopsproto.StopProgressiveRolloutCommand:
+		return h.stop(ctx, c)
 	case *autoopsproto.DeleteProgressiveRolloutCommand:
 		return h.delete(ctx, c)
 	case *autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand:
@@ -76,6 +78,25 @@ func (h *progressiveRolloutCommandHandler) create(
 			CreatedAt: h.progressiveRollout.CreatedAt,
 			UpdatedAt: h.progressiveRollout.UpdatedAt,
 			Type:      h.progressiveRollout.Type,
+		},
+	)
+}
+
+func (h *progressiveRolloutCommandHandler) stop(
+	ctx context.Context,
+	c *autoopsproto.StopProgressiveRolloutCommand,
+) error {
+	if err := h.progressiveRollout.Stop(c.StoppedBy); err != nil {
+		return err
+	}
+	return h.send(
+		ctx,
+		eventproto.Event_PROGRESSIVE_ROLLOUT_STOPPED,
+		&eventproto.ProgressiveRolloutStoppedEvent{
+			Id:        h.progressiveRollout.Id,
+			Status:    h.progressiveRollout.Status,
+			StoppedBy: h.progressiveRollout.StoppedBy,
+			StoppedAt: h.progressiveRollout.StoppedAt,
 		},
 	)
 }
