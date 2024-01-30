@@ -139,13 +139,12 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 	segmentUsersPublisher := publishermock.NewMockPublisher(c)
 	domainPublisher := publishermock.NewMockPublisher(c)
 	a := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountResponse{
-		Account: &accountproto.Account{
+	ar := &accountproto.GetAccountV2Response{
+		Account: &accountproto.AccountV2{
 			Email: "email",
-			Role:  accountproto.Account_VIEWER,
 		},
 	}
-	a.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	a.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &FeatureService{
 		mysqlClient:           mysqlmock.NewMockClient(c),
 		accountClient:         a,

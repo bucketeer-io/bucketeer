@@ -33,48 +33,6 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
-func (s *AccountService) CreateAccount(
-	ctx context.Context,
-	req *accountproto.CreateAccountRequest,
-) (*accountproto.CreateAccountResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) ChangeAccountRole(
-	ctx context.Context,
-	req *accountproto.ChangeAccountRoleRequest,
-) (*accountproto.ChangeAccountRoleResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) EnableAccount(
-	ctx context.Context,
-	req *accountproto.EnableAccountRequest,
-) (*accountproto.EnableAccountResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) DisableAccount(
-	ctx context.Context,
-	req *accountproto.DisableAccountRequest,
-) (*accountproto.DisableAccountResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) GetAccount(
-	ctx context.Context,
-	req *accountproto.GetAccountRequest,
-) (*accountproto.GetAccountResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *AccountService) ListAccounts(
-	ctx context.Context,
-	req *accountproto.ListAccountsRequest,
-) (*accountproto.ListAccountsResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
 func (s *AccountService) CreateAccountV2(
 	ctx context.Context,
 	req *accountproto.CreateAccountV2Request,

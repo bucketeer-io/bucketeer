@@ -20,31 +20,6 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/account";
 import "proto/account/account.proto";
 import "proto/account/api_key.proto";
 
-message CreateAdminAccountCommand {
-  string email = 1;
-}
-
-message EnableAdminAccountCommand {}
-
-message DisableAdminAccountCommand {}
-
-message ConvertAccountCommand {}
-
-message DeleteAccountCommand {}
-
-message CreateAccountCommand {
-  string email = 1;
-  account.Account.Role role = 2;
-}
-
-message ChangeAccountRoleCommand {
-  account.Account.Role role = 1;
-}
-
-message EnableAccountCommand {}
-
-message DisableAccountCommand {}
-
 message CreateAccountV2Command {
   string email = 1;
   string name = 2;

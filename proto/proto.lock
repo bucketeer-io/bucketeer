@@ -105,6 +105,12 @@
                 "name": "deleted",
                 "type": "bool"
               }
+            ],
+            "options": [
+              {
+                "name": "deprecated",
+                "value": "true"
+              }
             ]
           },
           {
@@ -175,31 +181,6 @@
                     "type": "Role.Environment"
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "name": "EnvironmentRoleV2",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment",
-                "type": "environment.EnvironmentV2"
-              },
-              {
-                "id": 2,
-                "name": "role",
-                "type": "Account.Role"
-              },
-              {
-                "id": 3,
-                "name": "trial_project",
-                "type": "bool"
-              },
-              {
-                "id": 4,
-                "name": "trial_started_at",
-                "type": "int64"
               }
             ]
           },
@@ -418,59 +399,6 @@
         ],
         "messages": [
           {
-            "name": "CreateAdminAccountCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "EnableAdminAccountCommand"
-          },
-          {
-            "name": "DisableAdminAccountCommand"
-          },
-          {
-            "name": "ConvertAccountCommand"
-          },
-          {
-            "name": "DeleteAccountCommand"
-          },
-          {
-            "name": "CreateAccountCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "role",
-                "type": "account.Account.Role"
-              }
-            ]
-          },
-          {
-            "name": "ChangeAccountRoleCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "role",
-                "type": "account.Account.Role"
-              }
-            ]
-          },
-          {
-            "name": "EnableAccountCommand"
-          },
-          {
-            "name": "DisableAccountCommand"
-          },
-          {
             "name": "CreateAccountV2Command",
             "fields": [
               {
@@ -612,70 +540,6 @@
       "def": {
         "enums": [
           {
-            "name": "ListAdminAccountsRequest.OrderBy",
-            "enum_fields": [
-              {
-                "name": "DEFAULT"
-              },
-              {
-                "name": "EMAIL",
-                "integer": 1
-              },
-              {
-                "name": "CREATED_AT",
-                "integer": 2
-              },
-              {
-                "name": "UPDATED_AT",
-                "integer": 3
-              }
-            ]
-          },
-          {
-            "name": "ListAdminAccountsRequest.OrderDirection",
-            "enum_fields": [
-              {
-                "name": "ASC"
-              },
-              {
-                "name": "DESC",
-                "integer": 1
-              }
-            ]
-          },
-          {
-            "name": "ListAccountsRequest.OrderBy",
-            "enum_fields": [
-              {
-                "name": "DEFAULT"
-              },
-              {
-                "name": "EMAIL",
-                "integer": 1
-              },
-              {
-                "name": "CREATED_AT",
-                "integer": 2
-              },
-              {
-                "name": "UPDATED_AT",
-                "integer": 3
-              }
-            ]
-          },
-          {
-            "name": "ListAccountsRequest.OrderDirection",
-            "enum_fields": [
-              {
-                "name": "ASC"
-              },
-              {
-                "name": "DESC",
-                "integer": 1
-              }
-            ]
-          },
-          {
             "name": "ListAccountsV2Request.OrderBy",
             "enum_fields": [
               {
@@ -782,361 +646,6 @@
                 "name": "organizations",
                 "type": "environment.Organization",
                 "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "GetMeV2Request"
-          },
-          {
-            "name": "GetMeByEmailV2Request",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetMeV2Response",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "is_admin",
-                "type": "bool"
-              },
-              {
-                "id": 3,
-                "name": "environment_roles",
-                "type": "EnvironmentRoleV2",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "CreateAdminAccountRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "command",
-                "type": "CreateAdminAccountCommand"
-              }
-            ]
-          },
-          {
-            "name": "CreateAdminAccountResponse"
-          },
-          {
-            "name": "EnableAdminAccountRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "EnableAdminAccountCommand"
-              }
-            ]
-          },
-          {
-            "name": "EnableAdminAccountResponse"
-          },
-          {
-            "name": "DisableAdminAccountRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "DisableAdminAccountCommand"
-              }
-            ]
-          },
-          {
-            "name": "DisableAdminAccountResponse"
-          },
-          {
-            "name": "GetAdminAccountRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetAdminAccountResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "account",
-                "type": "Account"
-              }
-            ]
-          },
-          {
-            "name": "ListAdminAccountsRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "order_by",
-                "type": "OrderBy"
-              },
-              {
-                "id": 4,
-                "name": "order_direction",
-                "type": "OrderDirection"
-              },
-              {
-                "id": 5,
-                "name": "search_keyword",
-                "type": "string"
-              },
-              {
-                "id": 6,
-                "name": "disabled",
-                "type": "google.protobuf.BoolValue"
-              }
-            ]
-          },
-          {
-            "name": "ListAdminAccountsResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "accounts",
-                "type": "Account",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "total_count",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "ConvertAccountRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "ConvertAccountCommand"
-              }
-            ]
-          },
-          {
-            "name": "ConvertAccountResponse"
-          },
-          {
-            "name": "CreateAccountRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "command",
-                "type": "CreateAccountCommand"
-              },
-              {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "CreateAccountResponse"
-          },
-          {
-            "name": "EnableAccountRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "EnableAccountCommand"
-              },
-              {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "EnableAccountResponse"
-          },
-          {
-            "name": "DisableAccountRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "DisableAccountCommand"
-              },
-              {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "DisableAccountResponse"
-          },
-          {
-            "name": "ChangeAccountRoleRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "command",
-                "type": "ChangeAccountRoleCommand"
-              },
-              {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ChangeAccountRoleResponse"
-          },
-          {
-            "name": "GetAccountRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetAccountResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "account",
-                "type": "Account"
-              }
-            ]
-          },
-          {
-            "name": "ListAccountsRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "order_by",
-                "type": "OrderBy"
-              },
-              {
-                "id": 5,
-                "name": "order_direction",
-                "type": "OrderDirection"
-              },
-              {
-                "id": 6,
-                "name": "search_keyword",
-                "type": "string"
-              },
-              {
-                "id": 7,
-                "name": "disabled",
-                "type": "google.protobuf.BoolValue"
-              },
-              {
-                "id": 8,
-                "name": "role",
-                "type": "google.protobuf.Int32Value"
-              }
-            ]
-          },
-          {
-            "name": "ListAccountsResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "accounts",
-                "type": "Account",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "total_count",
-                "type": "int64"
               }
             ]
           },
@@ -1617,76 +1126,6 @@
                 "name": "GetMyOrganizationsByEmail",
                 "in_type": "GetMyOrganizationsByEmailRequest",
                 "out_type": "GetMyOrganizationsResponse"
-              },
-              {
-                "name": "GetMeV2",
-                "in_type": "GetMeV2Request",
-                "out_type": "GetMeV2Response"
-              },
-              {
-                "name": "GetMeByEmailV2",
-                "in_type": "GetMeByEmailV2Request",
-                "out_type": "GetMeV2Response"
-              },
-              {
-                "name": "CreateAdminAccount",
-                "in_type": "CreateAdminAccountRequest",
-                "out_type": "CreateAdminAccountResponse"
-              },
-              {
-                "name": "EnableAdminAccount",
-                "in_type": "EnableAdminAccountRequest",
-                "out_type": "EnableAdminAccountResponse"
-              },
-              {
-                "name": "DisableAdminAccount",
-                "in_type": "DisableAdminAccountRequest",
-                "out_type": "DisableAdminAccountResponse"
-              },
-              {
-                "name": "GetAdminAccount",
-                "in_type": "GetAdminAccountRequest",
-                "out_type": "GetAdminAccountResponse"
-              },
-              {
-                "name": "ListAdminAccounts",
-                "in_type": "ListAdminAccountsRequest",
-                "out_type": "ListAdminAccountsResponse"
-              },
-              {
-                "name": "ConvertAccount",
-                "in_type": "ConvertAccountRequest",
-                "out_type": "ConvertAccountResponse"
-              },
-              {
-                "name": "CreateAccount",
-                "in_type": "CreateAccountRequest",
-                "out_type": "CreateAccountResponse"
-              },
-              {
-                "name": "EnableAccount",
-                "in_type": "EnableAccountRequest",
-                "out_type": "EnableAccountResponse"
-              },
-              {
-                "name": "DisableAccount",
-                "in_type": "DisableAccountRequest",
-                "out_type": "DisableAccountResponse"
-              },
-              {
-                "name": "ChangeAccountRole",
-                "in_type": "ChangeAccountRoleRequest",
-                "out_type": "ChangeAccountRoleResponse"
-              },
-              {
-                "name": "GetAccount",
-                "in_type": "GetAccountRequest",
-                "out_type": "GetAccountResponse"
-              },
-              {
-                "name": "ListAccounts",
-                "in_type": "ListAccountsRequest",
-                "out_type": "ListAccountsResponse"
               },
               {
                 "name": "CreateAccountV2",
@@ -5898,23 +5337,53 @@
               },
               {
                 "name": "ACCOUNT_CREATED",
-                "integer": 300
+                "integer": 300,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "ACCOUNT_ROLE_CHANGED",
-                "integer": 301
+                "integer": 301,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "ACCOUNT_ENABLED",
-                "integer": 302
+                "integer": 302,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "ACCOUNT_DISABLED",
-                "integer": 303
+                "integer": 303,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "ACCOUNT_DELETED",
-                "integer": 304
+                "integer": 304,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "ACCOUNT_V2_CREATED",
@@ -6066,15 +5535,33 @@
               },
               {
                 "name": "ADMIN_ACCOUNT_CREATED",
-                "integer": 700
+                "integer": 700,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "ADMIN_ACCOUNT_ENABLED",
-                "integer": 702
+                "integer": 702,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "ADMIN_ACCOUNT_DISABLED",
-                "integer": 703
+                "integer": 703,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "AUTOOPS_RULE_CREATED",
@@ -7392,91 +6879,6 @@
             "name": "ExperimentFinishedEvent"
           },
           {
-            "name": "AccountCreatedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "role",
-                "type": "bucketeer.account.Account.Role"
-              },
-              {
-                "id": 5,
-                "name": "disabled",
-                "type": "bool"
-              },
-              {
-                "id": 6,
-                "name": "created_at",
-                "type": "int64"
-              },
-              {
-                "id": 7,
-                "name": "updated_at",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "AccountRoleChangedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "role",
-                "type": "bucketeer.account.Account.Role"
-              }
-            ]
-          },
-          {
-            "name": "AccountEnabledEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AccountDisabledEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AccountDeletedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
             "name": "AccountV2CreatedEvent",
             "fields": [
               {
@@ -8231,76 +7633,6 @@
               {
                 "id": 3,
                 "name": "project_id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AdminAccountCreatedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "role",
-                "type": "bucketeer.account.Account.Role"
-              },
-              {
-                "id": 5,
-                "name": "disabled",
-                "type": "bool"
-              },
-              {
-                "id": 6,
-                "name": "created_at",
-                "type": "int64"
-              },
-              {
-                "id": 7,
-                "name": "updated_at",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "AdminAccountEnabledEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AdminAccountDisabledEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "AdminAccountDeletedEvent",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
                 "type": "string"
               }
             ]

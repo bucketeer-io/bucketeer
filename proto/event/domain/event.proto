@@ -112,11 +112,11 @@ message Event {
     EXPERIMENT_STARTED = 208;
     EXPERIMENT_FINISHED = 209;
     EXPERIMENT_ARCHIVED = 210;
-    ACCOUNT_CREATED = 300;
-    ACCOUNT_ROLE_CHANGED = 301;
-    ACCOUNT_ENABLED = 302;
-    ACCOUNT_DISABLED = 303;
-    ACCOUNT_DELETED = 304;
+    ACCOUNT_CREATED = 300 [deprecated = true];
+    ACCOUNT_ROLE_CHANGED = 301 [deprecated = true];
+    ACCOUNT_ENABLED = 302 [deprecated = true];
+    ACCOUNT_DISABLED = 303 [deprecated = true];
+    ACCOUNT_DELETED = 304 [deprecated = true];
     ACCOUNT_V2_CREATED = 305;
     ACCOUNT_V2_NAME_CHANGED = 306;
     ACCOUNT_V2_AVATAR_IMAGE_URL_CHANGED = 307;
@@ -154,9 +154,9 @@ message Event {
     ENVIRONMENT_V2_DESCRIPTION_CHANGED = 606;
     ENVIRONMENT_V2_ARCHIVED = 607;
     ENVIRONMENT_V2_UNARCHIVED = 608;
-    ADMIN_ACCOUNT_CREATED = 700;
-    ADMIN_ACCOUNT_ENABLED = 702;
-    ADMIN_ACCOUNT_DISABLED = 703;
+    ADMIN_ACCOUNT_CREATED = 700 [deprecated = true];
+    ADMIN_ACCOUNT_ENABLED = 702 [deprecated = true];
+    ADMIN_ACCOUNT_DISABLED = 703 [deprecated = true];
     AUTOOPS_RULE_CREATED = 800;
     AUTOOPS_RULE_DELETED = 801;
     AUTOOPS_RULE_OPS_TYPE_CHANGED = 802;
@@ -539,33 +539,6 @@ message ExperimentStartedEvent {}
 
 message ExperimentFinishedEvent {}
 
-message AccountCreatedEvent {
-  string id = 1;
-  string email = 2;
-  string name = 3;
-  bucketeer.account.Account.Role role = 4;
-  bool disabled = 5;
-  int64 created_at = 6;
-  int64 updated_at = 7;
-}
-
-message AccountRoleChangedEvent {
-  string id = 1;
-  bucketeer.account.Account.Role role = 2;
-}
-
-message AccountEnabledEvent {
-  string id = 1;
-}
-
-message AccountDisabledEvent {
-  string id = 1;
-}
-
-message AccountDeletedEvent {
-  string id = 1;
-}
-
 message AccountV2CreatedEvent {
   string email = 1;
   string name = 2;
@@ -789,28 +762,6 @@ message EnvironmentV2UnarchivedEvent {
   string id = 1;
   string name = 2;
   string project_id = 3;
-}
-
-message AdminAccountCreatedEvent {
-  string id = 1;
-  string email = 2;
-  string name = 3;
-  bucketeer.account.Account.Role role = 4;
-  bool disabled = 5;
-  int64 created_at = 6;
-  int64 updated_at = 7;
-}
-
-message AdminAccountEnabledEvent {
-  string id = 1;
-}
-
-message AdminAccountDisabledEvent {
-  string id = 1;
-}
-
-message AdminAccountDeletedEvent {
-  string id = 1;
 }
 
 message AutoOpsRuleCreatedEvent {
