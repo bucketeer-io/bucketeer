@@ -91,6 +91,15 @@ AutoOpsService.GetProgressiveRollout = {
   responseType: proto_autoops_service_pb.GetProgressiveRolloutResponse
 };
 
+AutoOpsService.StopProgressiveRollout = {
+  methodName: "StopProgressiveRollout",
+  service: AutoOpsService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_autoops_service_pb.StopProgressiveRolloutRequest,
+  responseType: proto_autoops_service_pb.StopProgressiveRolloutResponse
+};
+
 AutoOpsService.DeleteProgressiveRollout = {
   methodName: "DeleteProgressiveRollout",
   service: AutoOpsService,
@@ -378,6 +387,37 @@ AutoOpsServiceClient.prototype.getProgressiveRollout = function getProgressiveRo
     callback = arguments[1];
   }
   var client = grpc.unary(AutoOpsService.GetProgressiveRollout, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+AutoOpsServiceClient.prototype.stopProgressiveRollout = function stopProgressiveRollout(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AutoOpsService.StopProgressiveRollout, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

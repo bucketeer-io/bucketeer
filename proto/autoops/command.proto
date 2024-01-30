@@ -19,6 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
 
 import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/clause.proto";
+import "proto/autoops/progressive_rollout.proto";
 
 message CreateAutoOpsRuleCommand {
   string feature_id = 1;
@@ -63,6 +64,10 @@ message CreateProgressiveRolloutCommand {
       progressive_rollout_manual_schedule_clause = 2;
   optional ProgressiveRolloutTemplateScheduleClause
       progressive_rollout_template_schedule_clause = 3;
+}
+
+message StopProgressiveRolloutCommand {
+  ProgressiveRollout.StoppedBy stopped_by = 1;
 }
 
 message DeleteProgressiveRolloutCommand {}

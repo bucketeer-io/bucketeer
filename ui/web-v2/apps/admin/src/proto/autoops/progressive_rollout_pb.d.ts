@@ -28,6 +28,12 @@ export class ProgressiveRollout extends jspb.Message {
   getType(): ProgressiveRollout.TypeMap[keyof ProgressiveRollout.TypeMap];
   setType(value: ProgressiveRollout.TypeMap[keyof ProgressiveRollout.TypeMap]): void;
 
+  getStoppedBy(): ProgressiveRollout.StoppedByMap[keyof ProgressiveRollout.StoppedByMap];
+  setStoppedBy(value: ProgressiveRollout.StoppedByMap[keyof ProgressiveRollout.StoppedByMap]): void;
+
+  getStoppedAt(): number;
+  setStoppedAt(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ProgressiveRollout.AsObject;
   static toObject(includeInstance: boolean, msg: ProgressiveRollout): ProgressiveRollout.AsObject;
@@ -47,6 +53,8 @@ export namespace ProgressiveRollout {
     createdAt: number,
     updatedAt: number,
     type: ProgressiveRollout.TypeMap[keyof ProgressiveRollout.TypeMap],
+    stoppedBy: ProgressiveRollout.StoppedByMap[keyof ProgressiveRollout.StoppedByMap],
+    stoppedAt: number,
   }
 
   export interface TypeMap {
@@ -60,8 +68,18 @@ export namespace ProgressiveRollout {
     WAITING: 0;
     RUNNING: 1;
     FINISHED: 2;
+    STOPPED: 3;
   }
 
   export const Status: StatusMap;
+
+  export interface StoppedByMap {
+    UNKNOWN: 0;
+    USER: 1;
+    OPS_SCHEDULE: 2;
+    OPS_KILL_SWITCH: 3;
+  }
+
+  export const StoppedBy: StoppedByMap;
 }
 

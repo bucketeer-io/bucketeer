@@ -28,6 +28,13 @@ message ProgressiveRollout {
     WAITING = 0;
     RUNNING = 1;
     FINISHED = 2;
+    STOPPED = 3;
+  }
+  enum StoppedBy {
+    UNKNOWN = 0;
+    USER = 1;
+    OPS_SCHEDULE = 2;
+    OPS_KILL_SWITCH = 3;
   }
   string id = 1;
   string feature_id = 2;
@@ -36,4 +43,6 @@ message ProgressiveRollout {
   int64 created_at = 5;
   int64 updated_at = 6;
   Type type = 7;
+  StoppedBy stopped_by = 8;
+  int64 stopped_at = 9;
 }

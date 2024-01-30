@@ -201,6 +201,7 @@ message Event {
     PROGRESSIVE_ROLLOUT_CREATED = 1400;
     PROGRESSIVE_ROLLOUT_DELETED = 1401;
     PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED = 1402;
+    PROGRESSIVE_ROLLOUT_STOPPED = 1403;
     ORGANIZATION_CREATED = 1500;
     ORGANIZATION_NAME_CHANGED = 1501;
     ORGANIZATION_DESCRIPTION_CHANGED = 1502;
@@ -938,6 +939,13 @@ message ProgressiveRolloutCreatedEvent {
   int64 created_at = 4;
   int64 updated_at = 5;
   bucketeer.autoops.ProgressiveRollout.Type type = 6;
+}
+
+message ProgressiveRolloutStoppedEvent {
+  string id = 1;
+  bucketeer.autoops.ProgressiveRollout.Status status = 2;
+  bucketeer.autoops.ProgressiveRollout.StoppedBy stopped_by = 3;
+  int64 stopped_at = 4;
 }
 
 message ProgressiveRolloutDeletedEvent {
