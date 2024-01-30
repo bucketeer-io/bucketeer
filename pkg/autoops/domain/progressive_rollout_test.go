@@ -393,3 +393,51 @@ func TestExtractSchedules(t *testing.T) {
 	assert.Equal(t, actual[1].Weight, int32(20))
 	assert.Equal(t, actual[5].Weight, int32(100))
 }
+
+func TestStop(t *testing.T) {
+	patterns := []struct {
+		desc     string
+		input    autoopsproto.ProgressiveRollout_StoppedBy
+		expected error
+	}{
+		{
+			desc:     "err: stopped by is required",
+			input:    autoopsproto.ProgressiveRollout_UNKNOWN,
+			expected: ErrProgressiveRolloutStoopedByRequired,
+		},
+		{
+			desc:     "success: by user",
+			input:    autoopsproto.ProgressiveRollout_USER,
+			expected: nil,
+		},
+		{
+			desc:     "success: by schedule",
+			input:    autoopsproto.ProgressiveRollout_OPS_SCHEDULE,
+			expected: nil,
+		},
+		{
+			desc:     "success: by kill switch",
+			input:    autoopsproto.ProgressiveRollout_OPS_KILL_SWITCH,
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			pr := createProgressiveRollout(t)
+			err := pr.Stop(p.input)
+			if err != nil {
+				assert.Equal(t, p.expected, err, p.desc)
+				assert.Equal(t, autoopsproto.ProgressiveRollout_WAITING, pr.Status, p.desc)
+				assert.Equal(t, autoopsproto.ProgressiveRollout_UNKNOWN, pr.StoppedBy, p.desc)
+				assert.Zero(t, pr.StoppedAt, p.desc)
+				assert.True(t, pr.UpdatedAt >= time.Now().Unix(), p.desc)
+			} else {
+				assert.Equal(t, p.expected, err, p.desc)
+				assert.Equal(t, autoopsproto.ProgressiveRollout_STOPPED, pr.Status, p.desc)
+				assert.Equal(t, p.input, pr.StoppedBy, p.desc)
+				assert.NotZero(t, pr.StoppedAt, p.desc)
+				assert.True(t, pr.UpdatedAt >= time.Now().Unix(), p.desc)
+			}
+		})
+	}
+}

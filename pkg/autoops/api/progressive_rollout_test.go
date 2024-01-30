@@ -835,7 +835,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req:         &autoopsproto.GetProgressiveRolloutRequest{Id: "wrongid", EnvironmentNamespace: "ns0"},
-			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, "progressive_rollout")),
+			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
 		},
 		{
 			desc: "success",
@@ -857,6 +857,136 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			_, err := s.GetProgressiveRollout(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestStopProgressiveRolloutMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AutoOpsService)
+		req         *autoopsproto.StopProgressiveRolloutRequest
+		expectedErr error
+	}{
+		{
+			desc:        "err: id is required",
+			req:         &autoopsproto.StopProgressiveRolloutRequest{},
+			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc:        "err: command is reuired",
+			req:         &autoopsproto.StopProgressiveRolloutRequest{Id: "id", EnvironmentNamespace: "ns"},
+			expectedErr: createError(statusProgressiveRolloutNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		},
+		{
+			desc: "err: failed to begin transaction",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, errors.New("error"))
+			},
+			req: &autoopsproto.StopProgressiveRolloutRequest{
+				Id:                   "id",
+				EnvironmentNamespace: "ns",
+				Command: &autoopsproto.StopProgressiveRolloutCommand{
+					StoppedBy: autoopsproto.ProgressiveRollout_USER,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "err: internal error during transaction",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			req: &autoopsproto.StopProgressiveRolloutRequest{
+				Id:                   "id",
+				EnvironmentNamespace: "ns",
+				Command: &autoopsproto.StopProgressiveRolloutCommand{
+					StoppedBy: autoopsproto.ProgressiveRollout_USER,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "err: not found",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrProgressiveRolloutNotFound)
+			},
+			req: &autoopsproto.StopProgressiveRolloutRequest{
+				Id:                   "id",
+				EnvironmentNamespace: "ns",
+				Command: &autoopsproto.StopProgressiveRolloutCommand{
+					StoppedBy: autoopsproto.ProgressiveRollout_USER,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
+		},
+		{
+			desc: "err: unexpected affected rows",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrProgressiveRolloutUnexpectedAffectedRows)
+			},
+			req: &autoopsproto.StopProgressiveRolloutRequest{
+				Id:                   "id",
+				EnvironmentNamespace: "ns",
+				Command: &autoopsproto.StopProgressiveRolloutCommand{
+					StoppedBy: autoopsproto.ProgressiveRollout_USER,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.StopProgressiveRolloutRequest{
+				Id:                   "id",
+				EnvironmentNamespace: "ns",
+				Command: &autoopsproto.StopProgressiveRolloutCommand{
+					StoppedBy: autoopsproto.ProgressiveRollout_USER,
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createAutoOpsService(mockController, nil)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			_, err := s.StopProgressiveRollout(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -931,7 +1061,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 				).Return(v2as.ErrProgressiveRolloutNotFound)
 			},
 			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentNamespace: "ns0"},
-			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, "progressive_rollout")),
+			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
 		},
 		{
 			desc: "err: ErrProgressiveRolloutUnexpectedAffectedRows",
@@ -942,7 +1072,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 				).Return(v2as.ErrProgressiveRolloutUnexpectedAffectedRows)
 			},
 			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentNamespace: "ns0"},
-			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, "progressive_rollout")),
+			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
 		},
 		{
 			desc: "success",

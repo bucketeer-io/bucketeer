@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -40,8 +41,6 @@ func TestCreateAndListProgressiveRollout(t *testing.T) {
 	defer autoOpsClient.Close()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
 
 	featureID := createFeatureID(t)
 	createFeature(ctx, t, featureClient, featureID)
@@ -89,8 +88,6 @@ func TestGetProgressiveRollout(t *testing.T) {
 	defer autoOpsClient.Close()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
 
 	featureID := createFeatureID(t)
 	createFeature(ctx, t, featureClient, featureID)
@@ -130,6 +127,45 @@ func TestGetProgressiveRollout(t *testing.T) {
 	}
 }
 
+func TestStopProgressiveRollout(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+	feature := getFeature(t, featureClient, featureID)
+	schedules := createProgressiveRolloutSchedule()
+	createProgressiveRollout(
+		ctx,
+		t,
+		autoOpsClient,
+		featureID,
+		&autoopsproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: feature.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
+	if len(progressiveRollouts) != 1 {
+		t.Fatal("not enough rules")
+	}
+	stopProgressiveRollout(t, autoOpsClient, progressiveRollouts[0].Id)
+	resp, err := autoOpsClient.GetProgressiveRollout(ctx, &autoopsproto.GetProgressiveRolloutRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   progressiveRollouts[0].Id,
+	})
+	assert.NoError(t, err)
+	assert.True(t, time.Now().Unix() >= resp.ProgressiveRollout.StoppedAt)
+	assert.Equal(t, autoopsproto.ProgressiveRollout_STOPPED, resp.ProgressiveRollout.Status)
+	assert.Equal(t, autoopsproto.ProgressiveRollout_USER, resp.ProgressiveRollout.StoppedBy)
+}
+
 func TestDeleteProgressiveRollout(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -138,8 +174,6 @@ func TestDeleteProgressiveRollout(t *testing.T) {
 	defer autoOpsClient.Close()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
 
 	featureID := createFeatureID(t)
 	createFeature(ctx, t, featureClient, featureID)
@@ -184,8 +218,6 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	defer autoOpsClient.Close()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
-	experimentClient := newExperimentClient(t)
-	defer experimentClient.Close()
 
 	featureID := createFeatureID(t)
 	createFeature(ctx, t, featureClient, featureID)
@@ -354,7 +386,7 @@ func listProgressiveRollouts(t *testing.T, client autoopsclient.Client, featureI
 		FeatureIds:           []string{featureID},
 	})
 	if err != nil {
-		t.Fatal("failed to list auto ops rules", err)
+		t.Fatal("Failed to list progressive rollout", err)
 	}
 	return resp.ProgressiveRollouts
 }
@@ -396,9 +428,25 @@ func getProgressiveRollout(t *testing.T, id string) *autoopsproto.ProgressiveRol
 		Id:                   id,
 	})
 	if err != nil {
-		t.Fatal("failed to list auto ops rules", err)
+		t.Fatal("Failed to get progressive rollout", err)
 	}
 	return resp.ProgressiveRollout
+}
+
+func stopProgressiveRollout(t *testing.T, client autoopsclient.Client, id string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.StopProgressiveRollout(ctx, &autoopsproto.StopProgressiveRolloutRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   id,
+		Command: &autoopsproto.StopProgressiveRolloutCommand{
+			StoppedBy: autoopsproto.ProgressiveRollout_USER,
+		},
+	})
+	if err != nil {
+		t.Fatal("Failed to stop progressive rollout", err)
+	}
 }
 
 func deleteProgressiveRollout(t *testing.T, client autoopsclient.Client, id string) {
@@ -411,6 +459,6 @@ func deleteProgressiveRollout(t *testing.T, client autoopsclient.Client, id stri
 		Command:              &autoopsproto.DeleteProgressiveRolloutCommand{},
 	})
 	if err != nil {
-		t.Fatal("failed to list auto ops rules", err)
+		t.Fatal("Failed to delete progressive rollout", err)
 	}
 }
