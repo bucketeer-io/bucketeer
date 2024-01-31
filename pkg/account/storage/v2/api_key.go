@@ -44,7 +44,7 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 			?, ?, ?, ?, ?, ?, ?
 		)
 	`
-	_, err := s.qe().ExecContext(
+	_, err := s.qe(ctx).ExecContext(
 		ctx,
 		query,
 		k.Id,
@@ -78,7 +78,7 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 			id = ? AND
 			environment_namespace = ?
 	`
-	result, err := s.qe().ExecContext(
+	result, err := s.qe(ctx).ExecContext(
 		ctx,
 		query,
 		k.Name,
@@ -119,7 +119,7 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentNamespace
 			id = ? AND
 			environment_namespace = ?
 	`
-	err := s.qe().QueryRowContext(
+	err := s.qe(ctx).QueryRowContext(
 		ctx,
 		query,
 		id,
@@ -164,7 +164,7 @@ func (s *accountStorage) ListAPIKeys(
 		%s %s %s
 		`, whereSQL, orderBySQL, limitOffsetSQL,
 	)
-	rows, err := s.qe().QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -200,7 +200,7 @@ func (s *accountStorage) ListAPIKeys(
 		%s %s
 		`, whereSQL, orderBySQL,
 	)
-	err = s.qe().QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

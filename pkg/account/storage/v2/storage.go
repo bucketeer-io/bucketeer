@@ -50,6 +50,8 @@ type AccountStorage interface {
 	) ([]*proto.APIKey, int, int64, error)
 }
 
+const transactionKey = "transaction"
+
 type accountStorage struct {
 	client mysql.Client
 	tx     mysql.Transaction
@@ -64,16 +66,14 @@ func (s *accountStorage) RunInTransaction(ctx context.Context, f func() error) e
 	if err != nil {
 		return fmt.Errorf("account: begin tx: %w", err)
 	}
-	s.tx = tx
-	defer func() {
-		s.tx = nil
-	}()
+	ctx = context.WithValue(ctx, transactionKey, tx)
 	return s.client.RunInTransaction(ctx, tx, f)
 }
 
-func (s *accountStorage) qe() mysql.QueryExecer {
-	if s.tx != nil {
-		return s.tx
+func (s *accountStorage) qe(ctx context.Context) mysql.QueryExecer {
+	tx, ok := ctx.Value(transactionKey).(mysql.Transaction)
+	if ok {
+		return tx
 	}
 	return s.client
 }
