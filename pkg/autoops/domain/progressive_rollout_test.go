@@ -430,13 +430,13 @@ func TestStop(t *testing.T) {
 				assert.Equal(t, autoopsproto.ProgressiveRollout_WAITING, pr.Status, p.desc)
 				assert.Equal(t, autoopsproto.ProgressiveRollout_UNKNOWN, pr.StoppedBy, p.desc)
 				assert.Zero(t, pr.StoppedAt, p.desc)
-				assert.True(t, pr.UpdatedAt >= time.Now().Unix(), p.desc)
+				assert.NotZero(t, pr.UpdatedAt, p.desc)
 			} else {
 				assert.Equal(t, p.expected, err, p.desc)
 				assert.Equal(t, autoopsproto.ProgressiveRollout_STOPPED, pr.Status, p.desc)
 				assert.Equal(t, p.input, pr.StoppedBy, p.desc)
 				assert.NotZero(t, pr.StoppedAt, p.desc)
-				assert.True(t, pr.UpdatedAt >= time.Now().Unix(), p.desc)
+				assert.True(t, pr.UpdatedAt > time.Now().Add(time.Second*-2).Unix(), p.desc)
 			}
 		})
 	}

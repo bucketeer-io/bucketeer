@@ -161,7 +161,7 @@ func TestStopProgressiveRollout(t *testing.T) {
 		Id:                   progressiveRollouts[0].Id,
 	})
 	assert.NoError(t, err)
-	assert.True(t, time.Now().Unix() >= resp.ProgressiveRollout.StoppedAt)
+	assert.True(t, resp.ProgressiveRollout.StoppedAt > time.Now().Add(time.Second*-10).Unix())
 	assert.Equal(t, autoopsproto.ProgressiveRollout_STOPPED, resp.ProgressiveRollout.Status)
 	assert.Equal(t, autoopsproto.ProgressiveRollout_USER, resp.ProgressiveRollout.StoppedBy)
 }
