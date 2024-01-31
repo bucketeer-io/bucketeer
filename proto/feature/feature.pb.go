@@ -91,29 +91,29 @@ type Feature struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Enabled     bool   `protobuf:"varint,4,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	Deleted     bool   `protobuf:"varint,5,opt,name=deleted,proto3" json:"deleted,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description"`
+	Enabled     bool   `protobuf:"varint,4,opt,name=enabled,proto3" json:"enabled"`
+	Deleted     bool   `protobuf:"varint,5,opt,name=deleted,proto3" json:"deleted"`
 	// Deprecated: Do not use.
-	EvaluationUndelayable bool                  `protobuf:"varint,6,opt,name=evaluation_undelayable,json=evaluationUndelayable,proto3" json:"evaluation_undelayable,omitempty"`
-	Ttl                   int32                 `protobuf:"varint,7,opt,name=ttl,proto3" json:"ttl,omitempty"`
-	Version               int32                 `protobuf:"varint,8,opt,name=version,proto3" json:"version,omitempty"`
-	CreatedAt             int64                 `protobuf:"varint,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt             int64                 `protobuf:"varint,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Variations            []*Variation          `protobuf:"bytes,11,rep,name=variations,proto3" json:"variations,omitempty"`
-	Targets               []*Target             `protobuf:"bytes,12,rep,name=targets,proto3" json:"targets,omitempty"`
-	Rules                 []*Rule               `protobuf:"bytes,13,rep,name=rules,proto3" json:"rules,omitempty"`
-	DefaultStrategy       *Strategy             `protobuf:"bytes,14,opt,name=default_strategy,json=defaultStrategy,proto3" json:"default_strategy,omitempty"`
-	OffVariation          string                `protobuf:"bytes,15,opt,name=off_variation,json=offVariation,proto3" json:"off_variation,omitempty"`
-	Tags                  []string              `protobuf:"bytes,16,rep,name=tags,proto3" json:"tags,omitempty"`
-	LastUsedInfo          *FeatureLastUsedInfo  `protobuf:"bytes,17,opt,name=last_used_info,json=lastUsedInfo,proto3" json:"last_used_info,omitempty"`
-	Maintainer            string                `protobuf:"bytes,18,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
-	VariationType         Feature_VariationType `protobuf:"varint,19,opt,name=variation_type,json=variationType,proto3,enum=bucketeer.feature.Feature_VariationType" json:"variation_type,omitempty"`
-	Archived              bool                  `protobuf:"varint,20,opt,name=archived,proto3" json:"archived,omitempty"`
-	Prerequisites         []*Prerequisite       `protobuf:"bytes,21,rep,name=prerequisites,proto3" json:"prerequisites,omitempty"`
-	SamplingSeed          string                `protobuf:"bytes,22,opt,name=sampling_seed,json=samplingSeed,proto3" json:"sampling_seed,omitempty"`
+	EvaluationUndelayable bool                  `protobuf:"varint,6,opt,name=evaluation_undelayable,json=evaluationUndelayable,proto3" json:"evaluation_undelayable"`
+	Ttl                   int32                 `protobuf:"varint,7,opt,name=ttl,proto3" json:"ttl"`
+	Version               int32                 `protobuf:"varint,8,opt,name=version,proto3" json:"version"`
+	CreatedAt             int64                 `protobuf:"varint,9,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt             int64                 `protobuf:"varint,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Variations            []*Variation          `protobuf:"bytes,11,rep,name=variations,proto3" json:"variations"`
+	Targets               []*Target             `protobuf:"bytes,12,rep,name=targets,proto3" json:"targets"`
+	Rules                 []*Rule               `protobuf:"bytes,13,rep,name=rules,proto3" json:"rules"`
+	DefaultStrategy       *Strategy             `protobuf:"bytes,14,opt,name=default_strategy,json=defaultStrategy,proto3" json:"default_strategy"`
+	OffVariation          string                `protobuf:"bytes,15,opt,name=off_variation,json=offVariation,proto3" json:"off_variation"`
+	Tags                  []string              `protobuf:"bytes,16,rep,name=tags,proto3" json:"tags"`
+	LastUsedInfo          *FeatureLastUsedInfo  `protobuf:"bytes,17,opt,name=last_used_info,json=lastUsedInfo,proto3" json:"last_used_info"`
+	Maintainer            string                `protobuf:"bytes,18,opt,name=maintainer,proto3" json:"maintainer"`
+	VariationType         Feature_VariationType `protobuf:"varint,19,opt,name=variation_type,json=variationType,proto3,enum=bucketeer.feature.Feature_VariationType" json:"variation_type"`
+	Archived              bool                  `protobuf:"varint,20,opt,name=archived,proto3" json:"archived"`
+	Prerequisites         []*Prerequisite       `protobuf:"bytes,21,rep,name=prerequisites,proto3" json:"prerequisites"`
+	SamplingSeed          string                `protobuf:"bytes,22,opt,name=sampling_seed,json=samplingSeed,proto3" json:"sampling_seed"`
 }
 
 func (x *Feature) Reset() {
@@ -308,7 +308,7 @@ type Features struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Features []*Feature `protobuf:"bytes,1,rep,name=features,proto3" json:"features,omitempty"`
+	Features []*Feature `protobuf:"bytes,1,rep,name=features,proto3" json:"features"`
 }
 
 func (x *Features) Reset() {
@@ -355,9 +355,9 @@ type Tag struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	CreatedAt int64  `protobuf:"varint,2,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt int64  `protobuf:"varint,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	CreatedAt int64  `protobuf:"varint,2,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt int64  `protobuf:"varint,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *Tag) Reset() {

@@ -39,12 +39,12 @@ type EvaluationCount struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id             string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId      string            `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	FeatureVersion int32             `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version,omitempty"`
-	RealtimeCounts []*VariationCount `protobuf:"bytes,4,rep,name=realtime_counts,json=realtimeCounts,proto3" json:"realtime_counts,omitempty"`
-	BatchCounts    []*VariationCount `protobuf:"bytes,5,rep,name=batch_counts,json=batchCounts,proto3" json:"batch_counts,omitempty"`
-	UpdatedAt      int64             `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Id             string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId      string            `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	FeatureVersion int32             `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version"`
+	RealtimeCounts []*VariationCount `protobuf:"bytes,4,rep,name=realtime_counts,json=realtimeCounts,proto3" json:"realtime_counts"`
+	BatchCounts    []*VariationCount `protobuf:"bytes,5,rep,name=batch_counts,json=batchCounts,proto3" json:"batch_counts"`
+	UpdatedAt      int64             `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *EvaluationCount) Reset() {

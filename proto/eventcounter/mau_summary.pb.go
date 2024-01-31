@@ -40,17 +40,17 @@ type MAUSummary struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Yearmonth       string          `protobuf:"bytes,1,opt,name=yearmonth,proto3" json:"yearmonth,omitempty"`
-	EnvironmentId   string          `protobuf:"bytes,2,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
-	SourceId        client.SourceId `protobuf:"varint,3,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id,omitempty"`
-	UserCount       int64           `protobuf:"varint,4,opt,name=user_count,json=userCount,proto3" json:"user_count,omitempty"`
-	RequestCount    int64           `protobuf:"varint,5,opt,name=request_count,json=requestCount,proto3" json:"request_count,omitempty"`
-	EvaluationCount int64           `protobuf:"varint,6,opt,name=evaluation_count,json=evaluationCount,proto3" json:"evaluation_count,omitempty"`
-	GoalCount       int64           `protobuf:"varint,7,opt,name=goal_count,json=goalCount,proto3" json:"goal_count,omitempty"`
-	IsAll           bool            `protobuf:"varint,8,opt,name=is_all,json=isAll,proto3" json:"is_all,omitempty"`
-	IsFinished      bool            `protobuf:"varint,9,opt,name=is_finished,json=isFinished,proto3" json:"is_finished,omitempty"`
-	CreatedAt       int64           `protobuf:"varint,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt       int64           `protobuf:"varint,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Yearmonth       string          `protobuf:"bytes,1,opt,name=yearmonth,proto3" json:"yearmonth"`
+	EnvironmentId   string          `protobuf:"bytes,2,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	SourceId        client.SourceId `protobuf:"varint,3,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id"`
+	UserCount       int64           `protobuf:"varint,4,opt,name=user_count,json=userCount,proto3" json:"user_count"`
+	RequestCount    int64           `protobuf:"varint,5,opt,name=request_count,json=requestCount,proto3" json:"request_count"`
+	EvaluationCount int64           `protobuf:"varint,6,opt,name=evaluation_count,json=evaluationCount,proto3" json:"evaluation_count"`
+	GoalCount       int64           `protobuf:"varint,7,opt,name=goal_count,json=goalCount,proto3" json:"goal_count"`
+	IsAll           bool            `protobuf:"varint,8,opt,name=is_all,json=isAll,proto3" json:"is_all"`
+	IsFinished      bool            `protobuf:"varint,9,opt,name=is_finished,json=isFinished,proto3" json:"is_finished"`
+	CreatedAt       int64           `protobuf:"varint,10,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt       int64           `protobuf:"varint,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *MAUSummary) Reset() {

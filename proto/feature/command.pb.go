@@ -41,7 +41,7 @@ type Command struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Command *anypb.Any `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
+	Command *anypb.Any `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
 }
 
 func (x *Command) Reset() {
@@ -88,14 +88,14 @@ type CreateFeatureCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                     string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description              string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"` // This is an optional field
-	Variations               []*Variation           `protobuf:"bytes,4,rep,name=variations,proto3" json:"variations,omitempty"`
-	Tags                     []string               `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty"`
-	DefaultOnVariationIndex  *wrapperspb.Int32Value `protobuf:"bytes,6,opt,name=default_on_variation_index,json=defaultOnVariationIndex,proto3" json:"default_on_variation_index,omitempty"`
-	DefaultOffVariationIndex *wrapperspb.Int32Value `protobuf:"bytes,7,opt,name=default_off_variation_index,json=defaultOffVariationIndex,proto3" json:"default_off_variation_index,omitempty"`
-	VariationType            Feature_VariationType  `protobuf:"varint,8,opt,name=variation_type,json=variationType,proto3,enum=bucketeer.feature.Feature_VariationType" json:"variation_type,omitempty"`
+	Id                       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name                     string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Description              string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description"` // This is an optional field
+	Variations               []*Variation           `protobuf:"bytes,4,rep,name=variations,proto3" json:"variations"`
+	Tags                     []string               `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags"`
+	DefaultOnVariationIndex  *wrapperspb.Int32Value `protobuf:"bytes,6,opt,name=default_on_variation_index,json=defaultOnVariationIndex,proto3" json:"default_on_variation_index"`
+	DefaultOffVariationIndex *wrapperspb.Int32Value `protobuf:"bytes,7,opt,name=default_off_variation_index,json=defaultOffVariationIndex,proto3" json:"default_off_variation_index"`
+	VariationType            Feature_VariationType  `protobuf:"varint,8,opt,name=variation_type,json=variationType,proto3,enum=bucketeer.feature.Feature_VariationType" json:"variation_type"`
 }
 
 func (x *CreateFeatureCommand) Reset() {
@@ -305,7 +305,7 @@ type RenameFeatureCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *RenameFeatureCommand) Reset() {
@@ -352,7 +352,7 @@ type ChangeDescriptionCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ChangeDescriptionCommand) Reset() {
@@ -399,9 +399,9 @@ type ChangeBulkUploadSegmentUsersStatusCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Status Segment_Status    `protobuf:"varint,1,opt,name=status,proto3,enum=bucketeer.feature.Segment_Status" json:"status,omitempty"`
-	State  SegmentUser_State `protobuf:"varint,2,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
-	Count  int64             `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
+	Status Segment_Status    `protobuf:"varint,1,opt,name=status,proto3,enum=bucketeer.feature.Segment_Status" json:"status"`
+	State  SegmentUser_State `protobuf:"varint,2,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
+	Count  int64             `protobuf:"varint,3,opt,name=count,proto3" json:"count"`
 }
 
 func (x *ChangeBulkUploadSegmentUsersStatusCommand) Reset() {
@@ -462,7 +462,7 @@ type AddTagCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tag string `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag,omitempty"`
+	Tag string `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag"`
 }
 
 func (x *AddTagCommand) Reset() {
@@ -509,7 +509,7 @@ type RemoveTagCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tag string `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag,omitempty"`
+	Tag string `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag"`
 }
 
 func (x *RemoveTagCommand) Reset() {
@@ -632,9 +632,9 @@ type AddVariationCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Value       string `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"` // This is an optional field
+	Value       string `protobuf:"bytes,1,opt,name=value,proto3" json:"value"`
+	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description"` // This is an optional field
 }
 
 func (x *AddVariationCommand) Reset() {
@@ -695,7 +695,7 @@ type RemoveVariationCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *RemoveVariationCommand) Reset() {
@@ -742,8 +742,8 @@ type ChangeVariationValueCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id    string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Id    string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value"`
 }
 
 func (x *ChangeVariationValueCommand) Reset() {
@@ -797,8 +797,8 @@ type ChangeVariationNameCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *ChangeVariationNameCommand) Reset() {
@@ -852,8 +852,8 @@ type ChangeVariationDescriptionCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ChangeVariationDescriptionCommand) Reset() {
@@ -907,7 +907,7 @@ type ChangeOffVariationCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *ChangeOffVariationCommand) Reset() {
@@ -954,8 +954,8 @@ type AddUserToVariationCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user"`
 }
 
 func (x *AddUserToVariationCommand) Reset() {
@@ -1009,8 +1009,8 @@ type RemoveUserFromVariationCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user"`
 }
 
 func (x *RemoveUserFromVariationCommand) Reset() {
@@ -1064,7 +1064,7 @@ type ChangeDefaultStrategyCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Strategy *Strategy `protobuf:"bytes,1,opt,name=strategy,proto3" json:"strategy,omitempty"`
+	Strategy *Strategy `protobuf:"bytes,1,opt,name=strategy,proto3" json:"strategy"`
 }
 
 func (x *ChangeDefaultStrategyCommand) Reset() {
@@ -1111,7 +1111,7 @@ type AddRuleCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Rule *Rule `protobuf:"bytes,1,opt,name=rule,proto3" json:"rule,omitempty"`
+	Rule *Rule `protobuf:"bytes,1,opt,name=rule,proto3" json:"rule"`
 }
 
 func (x *AddRuleCommand) Reset() {
@@ -1158,9 +1158,9 @@ type ChangeRuleStrategyCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id       string    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RuleId   string    `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Strategy *Strategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy,omitempty"`
+	Id       string    `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RuleId   string    `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Strategy *Strategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy"`
 }
 
 func (x *ChangeRuleStrategyCommand) Reset() {
@@ -1221,7 +1221,7 @@ type ChangeRulesOrderCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	RuleIds []string `protobuf:"bytes,2,rep,name=rule_ids,json=ruleIds,proto3" json:"rule_ids,omitempty"`
+	RuleIds []string `protobuf:"bytes,2,rep,name=rule_ids,json=ruleIds,proto3" json:"rule_ids"`
 }
 
 func (x *ChangeRulesOrderCommand) Reset() {
@@ -1268,7 +1268,7 @@ type DeleteRuleCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *DeleteRuleCommand) Reset() {
@@ -1315,8 +1315,8 @@ type AddClauseCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	RuleId string  `protobuf:"bytes,1,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Clause *Clause `protobuf:"bytes,2,opt,name=clause,proto3" json:"clause,omitempty"`
+	RuleId string  `protobuf:"bytes,1,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Clause *Clause `protobuf:"bytes,2,opt,name=clause,proto3" json:"clause"`
 }
 
 func (x *AddClauseCommand) Reset() {
@@ -1370,8 +1370,8 @@ type DeleteClauseCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RuleId string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
+	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RuleId string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
 }
 
 func (x *DeleteClauseCommand) Reset() {
@@ -1425,9 +1425,9 @@ type ChangeClauseAttributeCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Attribute string `protobuf:"bytes,3,opt,name=attribute,proto3" json:"attribute,omitempty"`
+	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Attribute string `protobuf:"bytes,3,opt,name=attribute,proto3" json:"attribute"`
 }
 
 func (x *ChangeClauseAttributeCommand) Reset() {
@@ -1488,9 +1488,9 @@ type ChangeClauseOperatorCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id       string          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RuleId   string          `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Operator Clause_Operator `protobuf:"varint,3,opt,name=operator,proto3,enum=bucketeer.feature.Clause_Operator" json:"operator,omitempty"`
+	Id       string          `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RuleId   string          `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Operator Clause_Operator `protobuf:"varint,3,opt,name=operator,proto3,enum=bucketeer.feature.Clause_Operator" json:"operator"`
 }
 
 func (x *ChangeClauseOperatorCommand) Reset() {
@@ -1551,9 +1551,9 @@ type AddClauseValueCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RuleId string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Value  string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RuleId string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Value  string `protobuf:"bytes,3,opt,name=value,proto3" json:"value"`
 }
 
 func (x *AddClauseValueCommand) Reset() {
@@ -1614,9 +1614,9 @@ type RemoveClauseValueCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RuleId string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Value  string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RuleId string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Value  string `protobuf:"bytes,3,opt,name=value,proto3" json:"value"`
 }
 
 func (x *RemoveClauseValueCommand) Reset() {
@@ -1677,9 +1677,9 @@ type ChangeFixedStrategyCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id       string         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RuleId   string         `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Strategy *FixedStrategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy,omitempty"`
+	Id       string         `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RuleId   string         `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Strategy *FixedStrategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy"`
 }
 
 func (x *ChangeFixedStrategyCommand) Reset() {
@@ -1740,9 +1740,9 @@ type ChangeRolloutStrategyCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id       string           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RuleId   string           `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Strategy *RolloutStrategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy,omitempty"`
+	Id       string           `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RuleId   string           `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Strategy *RolloutStrategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy"`
 }
 
 func (x *ChangeRolloutStrategyCommand) Reset() {
@@ -1803,8 +1803,8 @@ type CreateSegmentCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name        string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Name        string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
 }
 
 func (x *CreateSegmentCommand) Reset() {
@@ -1896,7 +1896,7 @@ type ChangeSegmentNameCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *ChangeSegmentNameCommand) Reset() {
@@ -1943,7 +1943,7 @@ type ChangeSegmentDescriptionCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ChangeSegmentDescriptionCommand) Reset() {
@@ -1990,8 +1990,8 @@ type AddSegmentUserCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UserIds []string          `protobuf:"bytes,1,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
-	State   SegmentUser_State `protobuf:"varint,2,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
+	UserIds []string          `protobuf:"bytes,1,rep,name=user_ids,json=userIds,proto3" json:"user_ids"`
+	State   SegmentUser_State `protobuf:"varint,2,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
 }
 
 func (x *AddSegmentUserCommand) Reset() {
@@ -2045,8 +2045,8 @@ type DeleteSegmentUserCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UserIds []string          `protobuf:"bytes,1,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
-	State   SegmentUser_State `protobuf:"varint,2,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
+	UserIds []string          `protobuf:"bytes,1,rep,name=user_ids,json=userIds,proto3" json:"user_ids"`
+	State   SegmentUser_State `protobuf:"varint,2,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
 }
 
 func (x *DeleteSegmentUserCommand) Reset() {
@@ -2100,8 +2100,8 @@ type BulkUploadSegmentUsersCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Data  []byte            `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"` // segment user ids separated by comma or new line
-	State SegmentUser_State `protobuf:"varint,2,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
+	Data  []byte            `protobuf:"bytes,1,opt,name=data,proto3" json:"data"` // segment user ids separated by comma or new line
+	State SegmentUser_State `protobuf:"varint,2,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
 }
 
 func (x *BulkUploadSegmentUsersCommand) Reset() {
@@ -2193,7 +2193,7 @@ type CloneFeatureCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	EnvironmentNamespace string `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *CloneFeatureCommand) Reset() {
@@ -2278,7 +2278,7 @@ type AddPrerequisiteCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Prerequisite *Prerequisite `protobuf:"bytes,1,opt,name=prerequisite,proto3" json:"prerequisite,omitempty"`
+	Prerequisite *Prerequisite `protobuf:"bytes,1,opt,name=prerequisite,proto3" json:"prerequisite"`
 }
 
 func (x *AddPrerequisiteCommand) Reset() {
@@ -2325,7 +2325,7 @@ type RemovePrerequisiteCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
 }
 
 func (x *RemovePrerequisiteCommand) Reset() {
@@ -2372,7 +2372,7 @@ type ChangePrerequisiteVariationCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Prerequisite *Prerequisite `protobuf:"bytes,1,opt,name=prerequisite,proto3" json:"prerequisite,omitempty"`
+	Prerequisite *Prerequisite `protobuf:"bytes,1,opt,name=prerequisite,proto3" json:"prerequisite"`
 }
 
 func (x *ChangePrerequisiteVariationCommand) Reset() {
@@ -2419,10 +2419,10 @@ type CreateFlagTriggerCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId   string             `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	Type        FlagTrigger_Type   `protobuf:"varint,2,opt,name=type,proto3,enum=bucketeer.feature.FlagTrigger_Type" json:"type,omitempty"`
-	Action      FlagTrigger_Action `protobuf:"varint,3,opt,name=action,proto3,enum=bucketeer.feature.FlagTrigger_Action" json:"action,omitempty"`
-	Description string             `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	FeatureId   string             `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	Type        FlagTrigger_Type   `protobuf:"varint,2,opt,name=type,proto3,enum=bucketeer.feature.FlagTrigger_Type" json:"type"`
+	Action      FlagTrigger_Action `protobuf:"varint,3,opt,name=action,proto3,enum=bucketeer.feature.FlagTrigger_Action" json:"action"`
+	Description string             `protobuf:"bytes,4,opt,name=description,proto3" json:"description"`
 }
 
 func (x *CreateFlagTriggerCommand) Reset() {
@@ -2528,7 +2528,7 @@ type ChangeFlagTriggerDescriptionCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ChangeFlagTriggerDescriptionCommand) Reset() {

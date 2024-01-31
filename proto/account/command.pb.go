@@ -88,11 +88,11 @@ type CreateAccountV2Command struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email            string                       `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Name             string                       `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	AvatarImageUrl   string                       `protobuf:"bytes,3,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url,omitempty"`
-	OrganizationRole AccountV2_Role_Organization  `protobuf:"varint,4,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role,omitempty"`
-	EnvironmentRoles []*AccountV2_EnvironmentRole `protobuf:"bytes,5,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles,omitempty"`
+	Email            string                       `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	Name             string                       `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	AvatarImageUrl   string                       `protobuf:"bytes,3,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url"`
+	OrganizationRole AccountV2_Role_Organization  `protobuf:"varint,4,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role"`
+	EnvironmentRoles []*AccountV2_EnvironmentRole `protobuf:"bytes,5,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles"`
 }
 
 func (x *CreateAccountV2Command) Reset() {
@@ -167,7 +167,7 @@ type ChangeAccountV2NameCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *ChangeAccountV2NameCommand) Reset() {
@@ -214,7 +214,7 @@ type ChangeAccountV2AvatarImageUrlCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AvatarImageUrl string `protobuf:"bytes,1,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url,omitempty"`
+	AvatarImageUrl string `protobuf:"bytes,1,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url"`
 }
 
 func (x *ChangeAccountV2AvatarImageUrlCommand) Reset() {
@@ -261,7 +261,7 @@ type ChangeAccountV2OrganizationRoleCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Role AccountV2_Role_Organization `protobuf:"varint,1,opt,name=role,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"role,omitempty"`
+	Role AccountV2_Role_Organization `protobuf:"varint,1,opt,name=role,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"role"`
 }
 
 func (x *ChangeAccountV2OrganizationRoleCommand) Reset() {
@@ -308,8 +308,8 @@ type ChangeAccountV2EnvironmentRolesCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Roles     []*AccountV2_EnvironmentRole                     `protobuf:"bytes,1,rep,name=roles,proto3" json:"roles,omitempty"`
-	WriteType ChangeAccountV2EnvironmentRolesCommand_WriteType `protobuf:"varint,2,opt,name=write_type,json=writeType,proto3,enum=bucketeer.account.ChangeAccountV2EnvironmentRolesCommand_WriteType" json:"write_type,omitempty"`
+	Roles     []*AccountV2_EnvironmentRole                     `protobuf:"bytes,1,rep,name=roles,proto3" json:"roles"`
+	WriteType ChangeAccountV2EnvironmentRolesCommand_WriteType `protobuf:"varint,2,opt,name=write_type,json=writeType,proto3,enum=bucketeer.account.ChangeAccountV2EnvironmentRolesCommand_WriteType" json:"write_type"`
 }
 
 func (x *ChangeAccountV2EnvironmentRolesCommand) Reset() {
@@ -477,8 +477,8 @@ type CreateAPIKeyCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string      `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Role APIKey_Role `protobuf:"varint,2,opt,name=role,proto3,enum=bucketeer.account.APIKey_Role" json:"role,omitempty"`
+	Name string      `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
+	Role APIKey_Role `protobuf:"varint,2,opt,name=role,proto3,enum=bucketeer.account.APIKey_Role" json:"role"`
 }
 
 func (x *CreateAPIKeyCommand) Reset() {
@@ -532,7 +532,7 @@ type ChangeAPIKeyNameCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *ChangeAPIKeyNameCommand) Reset() {

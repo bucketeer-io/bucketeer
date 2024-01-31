@@ -39,11 +39,11 @@ type User struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id         string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Data       map[string]string     `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // used by the sdk client
-	TaggedData map[string]*User_Data `protobuf:"bytes,3,rep,name=tagged_data,json=taggedData,proto3" json:"tagged_data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	LastSeen   int64                 `protobuf:"varint,4,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
-	CreatedAt  int64                 `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	Id         string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Data       map[string]string     `protobuf:"bytes,2,rep,name=data,proto3" json:"data" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // used by the sdk client
+	TaggedData map[string]*User_Data `protobuf:"bytes,3,rep,name=tagged_data,json=taggedData,proto3" json:"tagged_data" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	LastSeen   int64                 `protobuf:"varint,4,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen"`
+	CreatedAt  int64                 `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
 }
 
 func (x *User) Reset() {
@@ -118,7 +118,7 @@ type User_Data struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Value map[string]string `protobuf:"bytes,1,rep,name=value,proto3" json:"value,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Value map[string]string `protobuf:"bytes,1,rep,name=value,proto3" json:"value" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *User_Data) Reset() {

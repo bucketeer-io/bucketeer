@@ -85,14 +85,14 @@ type AutoOpsRule struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId   string    `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	OpsType     OpsType   `protobuf:"varint,3,opt,name=ops_type,json=opsType,proto3,enum=bucketeer.autoops.OpsType" json:"ops_type,omitempty"`
-	Clauses     []*Clause `protobuf:"bytes,4,rep,name=clauses,proto3" json:"clauses,omitempty"`
-	TriggeredAt int64     `protobuf:"varint,6,opt,name=triggered_at,json=triggeredAt,proto3" json:"triggered_at,omitempty"`
-	CreatedAt   int64     `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt   int64     `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Deleted     bool      `protobuf:"varint,9,opt,name=deleted,proto3" json:"deleted,omitempty"`
+	Id          string    `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId   string    `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	OpsType     OpsType   `protobuf:"varint,3,opt,name=ops_type,json=opsType,proto3,enum=bucketeer.autoops.OpsType" json:"ops_type"`
+	Clauses     []*Clause `protobuf:"bytes,4,rep,name=clauses,proto3" json:"clauses"`
+	TriggeredAt int64     `protobuf:"varint,6,opt,name=triggered_at,json=triggeredAt,proto3" json:"triggered_at"`
+	CreatedAt   int64     `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt   int64     `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Deleted     bool      `protobuf:"varint,9,opt,name=deleted,proto3" json:"deleted"`
 }
 
 func (x *AutoOpsRule) Reset() {
@@ -188,7 +188,7 @@ type AutoOpsRules struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AutoOpsRules []*AutoOpsRule `protobuf:"bytes,1,rep,name=auto_ops_rules,json=autoOpsRules,proto3" json:"auto_ops_rules,omitempty"`
+	AutoOpsRules []*AutoOpsRule `protobuf:"bytes,1,rep,name=auto_ops_rules,json=autoOpsRules,proto3" json:"auto_ops_rules"`
 }
 
 func (x *AutoOpsRules) Reset() {

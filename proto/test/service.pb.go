@@ -43,7 +43,7 @@ type TestRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message"`
 }
 
 func (x *TestRequest) Reset() {
@@ -90,7 +90,7 @@ type TestResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message"`
 }
 
 func (x *TestResponse) Reset() {

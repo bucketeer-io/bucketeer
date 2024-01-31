@@ -138,21 +138,21 @@ type Segment struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string  `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string  `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string  `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Rules       []*Rule `protobuf:"bytes,4,rep,name=rules,proto3" json:"rules,omitempty"`
-	CreatedAt   int64   `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt   int64   `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Id          string  `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name        string  `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Description string  `protobuf:"bytes,3,opt,name=description,proto3" json:"description"`
+	Rules       []*Rule `protobuf:"bytes,4,rep,name=rules,proto3" json:"rules"`
+	CreatedAt   int64   `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt   int64   `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 	// Deprecated: Do not use.
-	Version           int64 `protobuf:"varint,7,opt,name=version,proto3" json:"version,omitempty"`
-	Deleted           bool  `protobuf:"varint,8,opt,name=deleted,proto3" json:"deleted,omitempty"`
-	IncludedUserCount int64 `protobuf:"varint,9,opt,name=included_user_count,json=includedUserCount,proto3" json:"included_user_count,omitempty"`
+	Version           int64 `protobuf:"varint,7,opt,name=version,proto3" json:"version"`
+	Deleted           bool  `protobuf:"varint,8,opt,name=deleted,proto3" json:"deleted"`
+	IncludedUserCount int64 `protobuf:"varint,9,opt,name=included_user_count,json=includedUserCount,proto3" json:"included_user_count"`
 	// Deprecated: Do not use.
-	ExcludedUserCount int64          `protobuf:"varint,10,opt,name=excluded_user_count,json=excludedUserCount,proto3" json:"excluded_user_count,omitempty"`
-	Status            Segment_Status `protobuf:"varint,11,opt,name=status,proto3,enum=bucketeer.feature.Segment_Status" json:"status,omitempty"`
-	IsInUseStatus     bool           `protobuf:"varint,12,opt,name=is_in_use_status,json=isInUseStatus,proto3" json:"is_in_use_status,omitempty"` // This field is set only when APIs return.
-	Features          []*Feature     `protobuf:"bytes,13,rep,name=features,proto3" json:"features,omitempty"`
+	ExcludedUserCount int64          `protobuf:"varint,10,opt,name=excluded_user_count,json=excludedUserCount,proto3" json:"excluded_user_count"`
+	Status            Segment_Status `protobuf:"varint,11,opt,name=status,proto3,enum=bucketeer.feature.Segment_Status" json:"status"`
+	IsInUseStatus     bool           `protobuf:"varint,12,opt,name=is_in_use_status,json=isInUseStatus,proto3" json:"is_in_use_status"` // This field is set only when APIs return.
+	Features          []*Feature     `protobuf:"bytes,13,rep,name=features,proto3" json:"features"`
 }
 
 func (x *Segment) Reset() {
@@ -285,11 +285,11 @@ type SegmentUser struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	SegmentId string            `protobuf:"bytes,2,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	UserId    string            `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	State     SegmentUser_State `protobuf:"varint,4,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
-	Deleted   bool              `protobuf:"varint,5,opt,name=deleted,proto3" json:"deleted,omitempty"`
+	Id        string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	SegmentId string            `protobuf:"bytes,2,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	UserId    string            `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id"`
+	State     SegmentUser_State `protobuf:"varint,4,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
+	Deleted   bool              `protobuf:"varint,5,opt,name=deleted,proto3" json:"deleted"`
 }
 
 func (x *SegmentUser) Reset() {
@@ -364,8 +364,8 @@ type SegmentUsers struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string         `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	Users     []*SegmentUser `protobuf:"bytes,2,rep,name=users,proto3" json:"users,omitempty"`
+	SegmentId string         `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	Users     []*SegmentUser `protobuf:"bytes,2,rep,name=users,proto3" json:"users"`
 }
 
 func (x *SegmentUsers) Reset() {

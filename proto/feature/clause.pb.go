@@ -112,10 +112,10 @@ type Clause struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Attribute string          `protobuf:"bytes,2,opt,name=attribute,proto3" json:"attribute,omitempty"`
-	Operator  Clause_Operator `protobuf:"varint,3,opt,name=operator,proto3,enum=bucketeer.feature.Clause_Operator" json:"operator,omitempty"`
-	Values    []string        `protobuf:"bytes,4,rep,name=values,proto3" json:"values,omitempty"`
+	Id        string          `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Attribute string          `protobuf:"bytes,2,opt,name=attribute,proto3" json:"attribute"`
+	Operator  Clause_Operator `protobuf:"varint,3,opt,name=operator,proto3,enum=bucketeer.feature.Clause_Operator" json:"operator"`
+	Values    []string        `protobuf:"bytes,4,rep,name=values,proto3" json:"values"`
 }
 
 func (x *Clause) Reset() {

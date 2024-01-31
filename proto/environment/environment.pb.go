@@ -39,15 +39,15 @@ type EnvironmentV2 struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name           string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode        string `protobuf:"bytes,3,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
-	Description    string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"` // optional
-	ProjectId      string `protobuf:"bytes,5,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Archived       bool   `protobuf:"varint,6,opt,name=archived,proto3" json:"archived,omitempty"`
-	CreatedAt      int64  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt      int64  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	OrganizationId string `protobuf:"bytes,9,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name           string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	UrlCode        string `protobuf:"bytes,3,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
+	Description    string `protobuf:"bytes,4,opt,name=description,proto3" json:"description"` // optional
+	ProjectId      string `protobuf:"bytes,5,opt,name=project_id,json=projectId,proto3" json:"project_id"`
+	Archived       bool   `protobuf:"varint,6,opt,name=archived,proto3" json:"archived"`
+	CreatedAt      int64  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt      int64  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	OrganizationId string `protobuf:"bytes,9,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
 }
 
 func (x *EnvironmentV2) Reset() {

@@ -39,16 +39,16 @@ type Project struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description    string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"` // optional
-	Disabled       bool   `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	Trial          bool   `protobuf:"varint,4,opt,name=trial,proto3" json:"trial,omitempty"`
-	CreatorEmail   string `protobuf:"bytes,5,opt,name=creator_email,json=creatorEmail,proto3" json:"creator_email,omitempty"`
-	CreatedAt      int64  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt      int64  `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Name           string `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode        string `protobuf:"bytes,9,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
-	OrganizationId string `protobuf:"bytes,10,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description    string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"` // optional
+	Disabled       bool   `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled"`
+	Trial          bool   `protobuf:"varint,4,opt,name=trial,proto3" json:"trial"`
+	CreatorEmail   string `protobuf:"bytes,5,opt,name=creator_email,json=creatorEmail,proto3" json:"creator_email"`
+	CreatedAt      int64  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt      int64  `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Name           string `protobuf:"bytes,8,opt,name=name,proto3" json:"name"`
+	UrlCode        string `protobuf:"bytes,9,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
+	OrganizationId string `protobuf:"bytes,10,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
 }
 
 func (x *Project) Reset() {

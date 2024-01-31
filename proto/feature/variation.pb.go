@@ -39,11 +39,11 @@ type Variation struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id    string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"` // this is called value because it could be a string,
+	Id    string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value"` // this is called value because it could be a string,
 	// number or even json object
-	Name        string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Name        string `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
+	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description"`
 }
 
 func (x *Variation) Reset() {

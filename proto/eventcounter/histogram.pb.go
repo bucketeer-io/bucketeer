@@ -39,8 +39,8 @@ type Histogram struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Hist []int64   `protobuf:"varint,1,rep,packed,name=hist,proto3" json:"hist,omitempty"`
-	Bins []float64 `protobuf:"fixed64,2,rep,packed,name=bins,proto3" json:"bins,omitempty"`
+	Hist []int64   `protobuf:"varint,1,rep,packed,name=hist,proto3" json:"hist"`
+	Bins []float64 `protobuf:"fixed64,2,rep,packed,name=bins,proto3" json:"bins"`
 }
 
 func (x *Histogram) Reset() {

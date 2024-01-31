@@ -39,9 +39,9 @@ type CreateGoalCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description"`
 }
 
 func (x *CreateGoalCommand) Reset() {
@@ -102,7 +102,7 @@ type RenameGoalCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *RenameGoalCommand) Reset() {
@@ -149,7 +149,7 @@ type ChangeDescriptionGoalCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ChangeDescriptionGoalCommand) Reset() {
@@ -272,13 +272,13 @@ type CreateExperimentCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId       string   `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	StartAt         int64    `protobuf:"varint,3,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
-	StopAt          int64    `protobuf:"varint,4,opt,name=stop_at,json=stopAt,proto3" json:"stop_at,omitempty"`
-	GoalIds         []string `protobuf:"bytes,5,rep,name=goal_ids,json=goalIds,proto3" json:"goal_ids,omitempty"`
-	Name            string   `protobuf:"bytes,6,opt,name=name,proto3" json:"name,omitempty"`
-	Description     string   `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
-	BaseVariationId string   `protobuf:"bytes,8,opt,name=base_variation_id,json=baseVariationId,proto3" json:"base_variation_id,omitempty"`
+	FeatureId       string   `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	StartAt         int64    `protobuf:"varint,3,opt,name=start_at,json=startAt,proto3" json:"start_at"`
+	StopAt          int64    `protobuf:"varint,4,opt,name=stop_at,json=stopAt,proto3" json:"stop_at"`
+	GoalIds         []string `protobuf:"bytes,5,rep,name=goal_ids,json=goalIds,proto3" json:"goal_ids"`
+	Name            string   `protobuf:"bytes,6,opt,name=name,proto3" json:"name"`
+	Description     string   `protobuf:"bytes,7,opt,name=description,proto3" json:"description"`
+	BaseVariationId string   `protobuf:"bytes,8,opt,name=base_variation_id,json=baseVariationId,proto3" json:"base_variation_id"`
 }
 
 func (x *CreateExperimentCommand) Reset() {
@@ -367,8 +367,8 @@ type ChangeExperimentPeriodCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	StartAt int64 `protobuf:"varint,1,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
-	StopAt  int64 `protobuf:"varint,2,opt,name=stop_at,json=stopAt,proto3" json:"stop_at,omitempty"`
+	StartAt int64 `protobuf:"varint,1,opt,name=start_at,json=startAt,proto3" json:"start_at"`
+	StopAt  int64 `protobuf:"varint,2,opt,name=stop_at,json=stopAt,proto3" json:"stop_at"`
 }
 
 func (x *ChangeExperimentPeriodCommand) Reset() {
@@ -422,7 +422,7 @@ type ChangeExperimentNameCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *ChangeExperimentNameCommand) Reset() {
@@ -469,7 +469,7 @@ type ChangeExperimentDescriptionCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ChangeExperimentDescriptionCommand) Reset() {

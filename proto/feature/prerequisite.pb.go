@@ -39,8 +39,8 @@ type Prerequisite struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId   string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	VariationId string `protobuf:"bytes,2,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
+	FeatureId   string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	VariationId string `protobuf:"bytes,2,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
 }
 
 func (x *Prerequisite) Reset() {

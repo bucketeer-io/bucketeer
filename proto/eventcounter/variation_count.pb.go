@@ -39,14 +39,14 @@ type VariationCount struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	VariationId             string  `protobuf:"bytes,1,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
-	UserCount               int64   `protobuf:"varint,2,opt,name=user_count,json=userCount,proto3" json:"user_count,omitempty"`
-	EventCount              int64   `protobuf:"varint,3,opt,name=event_count,json=eventCount,proto3" json:"event_count,omitempty"`
-	ValueSum                float64 `protobuf:"fixed64,4,opt,name=value_sum,json=valueSum,proto3" json:"value_sum,omitempty"`
-	CreatedAt               int64   `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	VariationValue          string  `protobuf:"bytes,6,opt,name=variation_value,json=variationValue,proto3" json:"variation_value,omitempty"`
-	ValueSumPerUserMean     float64 `protobuf:"fixed64,7,opt,name=value_sum_per_user_mean,json=valueSumPerUserMean,proto3" json:"value_sum_per_user_mean,omitempty"`
-	ValueSumPerUserVariance float64 `protobuf:"fixed64,8,opt,name=value_sum_per_user_variance,json=valueSumPerUserVariance,proto3" json:"value_sum_per_user_variance,omitempty"`
+	VariationId             string  `protobuf:"bytes,1,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
+	UserCount               int64   `protobuf:"varint,2,opt,name=user_count,json=userCount,proto3" json:"user_count"`
+	EventCount              int64   `protobuf:"varint,3,opt,name=event_count,json=eventCount,proto3" json:"event_count"`
+	ValueSum                float64 `protobuf:"fixed64,4,opt,name=value_sum,json=valueSum,proto3" json:"value_sum"`
+	CreatedAt               int64   `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	VariationValue          string  `protobuf:"bytes,6,opt,name=variation_value,json=variationValue,proto3" json:"variation_value"`
+	ValueSumPerUserMean     float64 `protobuf:"fixed64,7,opt,name=value_sum_per_user_mean,json=valueSumPerUserMean,proto3" json:"value_sum_per_user_mean"`
+	ValueSumPerUserVariance float64 `protobuf:"fixed64,8,opt,name=value_sum_per_user_variance,json=valueSumPerUserVariance,proto3" json:"value_sum_per_user_variance"`
 }
 
 func (x *VariationCount) Reset() {

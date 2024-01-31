@@ -243,7 +243,7 @@ type GetMeRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	OrganizationId string `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	OrganizationId string `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
 }
 
 func (x *GetMeRequest) Reset() {
@@ -290,7 +290,7 @@ type GetMeResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Account *ConsoleAccount `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	Account *ConsoleAccount `protobuf:"bytes,1,opt,name=account,proto3" json:"account"`
 }
 
 func (x *GetMeResponse) Reset() {
@@ -377,7 +377,7 @@ type GetMyOrganizationsByEmailRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
 }
 
 func (x *GetMyOrganizationsByEmailRequest) Reset() {
@@ -424,7 +424,7 @@ type GetMyOrganizationsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Organizations []*environment.Organization `protobuf:"bytes,1,rep,name=organizations,proto3" json:"organizations,omitempty"`
+	Organizations []*environment.Organization `protobuf:"bytes,1,rep,name=organizations,proto3" json:"organizations"`
 }
 
 func (x *GetMyOrganizationsResponse) Reset() {
@@ -471,8 +471,8 @@ type CreateAccountV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	OrganizationId string                  `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	Command        *CreateAccountV2Command `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	OrganizationId string                  `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
+	Command        *CreateAccountV2Command `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *CreateAccountV2Request) Reset() {
@@ -526,7 +526,7 @@ type CreateAccountV2Response struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Account *AccountV2 `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	Account *AccountV2 `protobuf:"bytes,1,opt,name=account,proto3" json:"account"`
 }
 
 func (x *CreateAccountV2Response) Reset() {
@@ -573,9 +573,9 @@ type EnableAccountV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email          string                  `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	OrganizationId string                  `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	Command        *EnableAccountV2Command `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	Email          string                  `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	OrganizationId string                  `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
+	Command        *EnableAccountV2Command `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
 }
 
 func (x *EnableAccountV2Request) Reset() {
@@ -674,9 +674,9 @@ type DisableAccountV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email          string                   `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	OrganizationId string                   `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	Command        *DisableAccountV2Command `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	Email          string                   `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	OrganizationId string                   `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
+	Command        *DisableAccountV2Command `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DisableAccountV2Request) Reset() {
@@ -775,9 +775,9 @@ type DeleteAccountV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email          string                  `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	OrganizationId string                  `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	Command        *DeleteAccountV2Command `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	Email          string                  `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	OrganizationId string                  `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
+	Command        *DeleteAccountV2Command `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DeleteAccountV2Request) Reset() {
@@ -876,12 +876,12 @@ type UpdateAccountV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email                         string                                  `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	OrganizationId                string                                  `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	ChangeNameCommand             *ChangeAccountV2NameCommand             `protobuf:"bytes,3,opt,name=change_name_command,json=changeNameCommand,proto3" json:"change_name_command,omitempty"`
-	ChangeAvatarUrlCommand        *ChangeAccountV2AvatarImageUrlCommand   `protobuf:"bytes,4,opt,name=change_avatar_url_command,json=changeAvatarUrlCommand,proto3" json:"change_avatar_url_command,omitempty"`
-	ChangeOrganizationRoleCommand *ChangeAccountV2OrganizationRoleCommand `protobuf:"bytes,5,opt,name=change_organization_role_command,json=changeOrganizationRoleCommand,proto3" json:"change_organization_role_command,omitempty"`
-	ChangeEnvironmentRolesCommand *ChangeAccountV2EnvironmentRolesCommand `protobuf:"bytes,6,opt,name=change_environment_roles_command,json=changeEnvironmentRolesCommand,proto3" json:"change_environment_roles_command,omitempty"`
+	Email                         string                                  `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	OrganizationId                string                                  `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
+	ChangeNameCommand             *ChangeAccountV2NameCommand             `protobuf:"bytes,3,opt,name=change_name_command,json=changeNameCommand,proto3" json:"change_name_command"`
+	ChangeAvatarUrlCommand        *ChangeAccountV2AvatarImageUrlCommand   `protobuf:"bytes,4,opt,name=change_avatar_url_command,json=changeAvatarUrlCommand,proto3" json:"change_avatar_url_command"`
+	ChangeOrganizationRoleCommand *ChangeAccountV2OrganizationRoleCommand `protobuf:"bytes,5,opt,name=change_organization_role_command,json=changeOrganizationRoleCommand,proto3" json:"change_organization_role_command"`
+	ChangeEnvironmentRolesCommand *ChangeAccountV2EnvironmentRolesCommand `protobuf:"bytes,6,opt,name=change_environment_roles_command,json=changeEnvironmentRolesCommand,proto3" json:"change_environment_roles_command"`
 }
 
 func (x *UpdateAccountV2Request) Reset() {
@@ -1001,8 +1001,8 @@ type GetAccountV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email          string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	OrganizationId string `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Email          string `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	OrganizationId string `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
 }
 
 func (x *GetAccountV2Request) Reset() {
@@ -1056,7 +1056,7 @@ type GetAccountV2Response struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Account *AccountV2 `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	Account *AccountV2 `protobuf:"bytes,1,opt,name=account,proto3" json:"account"`
 }
 
 func (x *GetAccountV2Response) Reset() {
@@ -1103,8 +1103,8 @@ type GetAccountV2ByEnvironmentIDRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email         string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	EnvironmentId string `protobuf:"bytes,2,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
+	Email         string `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	EnvironmentId string `protobuf:"bytes,2,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
 }
 
 func (x *GetAccountV2ByEnvironmentIDRequest) Reset() {
@@ -1158,7 +1158,7 @@ type GetAccountV2ByEnvironmentIDResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Account *AccountV2 `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	Account *AccountV2 `protobuf:"bytes,1,opt,name=account,proto3" json:"account"`
 }
 
 func (x *GetAccountV2ByEnvironmentIDResponse) Reset() {
@@ -1205,16 +1205,16 @@ type ListAccountsV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize         int64                                `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor           string                               `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	OrganizationId   string                               `protobuf:"bytes,3,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	OrderBy          ListAccountsV2Request_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.account.ListAccountsV2Request_OrderBy" json:"order_by,omitempty"`
-	OrderDirection   ListAccountsV2Request_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.account.ListAccountsV2Request_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword    string                               `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	Disabled         *wrapperspb.BoolValue                `protobuf:"bytes,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	OrganizationRole *wrapperspb.Int32Value               `protobuf:"bytes,8,opt,name=organization_role,json=organizationRole,proto3" json:"organization_role,omitempty"`
-	EnvironmentId    *wrapperspb.StringValue              `protobuf:"bytes,9,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
-	EnvironmentRole  *wrapperspb.Int32Value               `protobuf:"bytes,10,opt,name=environment_role,json=environmentRole,proto3" json:"environment_role,omitempty"`
+	PageSize         int64                                `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor           string                               `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	OrganizationId   string                               `protobuf:"bytes,3,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
+	OrderBy          ListAccountsV2Request_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.account.ListAccountsV2Request_OrderBy" json:"order_by"`
+	OrderDirection   ListAccountsV2Request_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.account.ListAccountsV2Request_OrderDirection" json:"order_direction"`
+	SearchKeyword    string                               `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	Disabled         *wrapperspb.BoolValue                `protobuf:"bytes,7,opt,name=disabled,proto3" json:"disabled"`
+	OrganizationRole *wrapperspb.Int32Value               `protobuf:"bytes,8,opt,name=organization_role,json=organizationRole,proto3" json:"organization_role"`
+	EnvironmentId    *wrapperspb.StringValue              `protobuf:"bytes,9,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	EnvironmentRole  *wrapperspb.Int32Value               `protobuf:"bytes,10,opt,name=environment_role,json=environmentRole,proto3" json:"environment_role"`
 }
 
 func (x *ListAccountsV2Request) Reset() {
@@ -1324,9 +1324,9 @@ type ListAccountsV2Response struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Accounts   []*AccountV2 `protobuf:"bytes,1,rep,name=accounts,proto3" json:"accounts,omitempty"`
-	Cursor     string       `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount int64        `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	Accounts   []*AccountV2 `protobuf:"bytes,1,rep,name=accounts,proto3" json:"accounts"`
+	Cursor     string       `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount int64        `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListAccountsV2Response) Reset() {
@@ -1387,8 +1387,8 @@ type CreateAPIKeyRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Command              *CreateAPIKeyCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string               `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Command              *CreateAPIKeyCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string               `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *CreateAPIKeyRequest) Reset() {
@@ -1442,7 +1442,7 @@ type CreateAPIKeyResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiKey *APIKey `protobuf:"bytes,1,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
+	ApiKey *APIKey `protobuf:"bytes,1,opt,name=api_key,json=apiKey,proto3" json:"api_key"`
 }
 
 func (x *CreateAPIKeyResponse) Reset() {
@@ -1489,9 +1489,9 @@ type ChangeAPIKeyNameRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *ChangeAPIKeyNameCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                   `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string                   `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *ChangeAPIKeyNameCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                   `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *ChangeAPIKeyNameRequest) Reset() {
@@ -1590,9 +1590,9 @@ type EnableAPIKeyRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *EnableAPIKeyCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string               `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *EnableAPIKeyCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string               `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *EnableAPIKeyRequest) Reset() {
@@ -1691,9 +1691,9 @@ type DisableAPIKeyRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *DisableAPIKeyCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *DisableAPIKeyCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *DisableAPIKeyRequest) Reset() {
@@ -1792,8 +1792,8 @@ type GetAPIKeyRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace string `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *GetAPIKeyRequest) Reset() {
@@ -1847,7 +1847,7 @@ type GetAPIKeyResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiKey *APIKey `protobuf:"bytes,1,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
+	ApiKey *APIKey `protobuf:"bytes,1,opt,name=api_key,json=apiKey,proto3" json:"api_key"`
 }
 
 func (x *GetAPIKeyResponse) Reset() {
@@ -1894,13 +1894,13 @@ type ListAPIKeysRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize             int64                             `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                            `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	EnvironmentNamespace string                            `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	OrderBy              ListAPIKeysRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.account.ListAPIKeysRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection       ListAPIKeysRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.account.ListAPIKeysRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword        string                            `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	Disabled             *wrapperspb.BoolValue             `protobuf:"bytes,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	PageSize             int64                             `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                            `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	EnvironmentNamespace string                            `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	OrderBy              ListAPIKeysRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.account.ListAPIKeysRequest_OrderBy" json:"order_by"`
+	OrderDirection       ListAPIKeysRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.account.ListAPIKeysRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword        string                            `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	Disabled             *wrapperspb.BoolValue             `protobuf:"bytes,7,opt,name=disabled,proto3" json:"disabled"`
 }
 
 func (x *ListAPIKeysRequest) Reset() {
@@ -1989,9 +1989,9 @@ type ListAPIKeysResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiKeys    []*APIKey `protobuf:"bytes,1,rep,name=api_keys,json=apiKeys,proto3" json:"api_keys,omitempty"`
-	Cursor     string    `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount int64     `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	ApiKeys    []*APIKey `protobuf:"bytes,1,rep,name=api_keys,json=apiKeys,proto3" json:"api_keys"`
+	Cursor     string    `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount int64     `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListAPIKeysResponse) Reset() {
@@ -2052,7 +2052,7 @@ type GetAPIKeyBySearchingAllEnvironmentsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *GetAPIKeyBySearchingAllEnvironmentsRequest) Reset() {
@@ -2099,7 +2099,7 @@ type GetAPIKeyBySearchingAllEnvironmentsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentApiKey *EnvironmentAPIKey `protobuf:"bytes,1,opt,name=environment_api_key,json=environmentApiKey,proto3" json:"environment_api_key,omitempty"`
+	EnvironmentApiKey *EnvironmentAPIKey `protobuf:"bytes,1,opt,name=environment_api_key,json=environmentApiKey,proto3" json:"environment_api_key"`
 }
 
 func (x *GetAPIKeyBySearchingAllEnvironmentsResponse) Reset() {

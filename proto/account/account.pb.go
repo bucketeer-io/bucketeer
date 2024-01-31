@@ -194,14 +194,14 @@ type Account struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string       `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email     string       `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	Name      string       `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Role      Account_Role `protobuf:"varint,4,opt,name=role,proto3,enum=bucketeer.account.Account_Role" json:"role,omitempty"`
-	Disabled  bool         `protobuf:"varint,5,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	CreatedAt int64        `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt int64        `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Deleted   bool         `protobuf:"varint,8,opt,name=deleted,proto3" json:"deleted,omitempty"`
+	Id        string       `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Email     string       `protobuf:"bytes,2,opt,name=email,proto3" json:"email"`
+	Name      string       `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
+	Role      Account_Role `protobuf:"varint,4,opt,name=role,proto3,enum=bucketeer.account.Account_Role" json:"role"`
+	Disabled  bool         `protobuf:"varint,5,opt,name=disabled,proto3" json:"disabled"`
+	CreatedAt int64        `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt int64        `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Deleted   bool         `protobuf:"varint,8,opt,name=deleted,proto3" json:"deleted"`
 }
 
 func (x *Account) Reset() {
@@ -297,15 +297,15 @@ type AccountV2 struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email            string                       `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Name             string                       `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	AvatarImageUrl   string                       `protobuf:"bytes,3,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url,omitempty"`
-	OrganizationId   string                       `protobuf:"bytes,4,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	OrganizationRole AccountV2_Role_Organization  `protobuf:"varint,5,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role,omitempty"`
-	EnvironmentRoles []*AccountV2_EnvironmentRole `protobuf:"bytes,6,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles,omitempty"`
-	Disabled         bool                         `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	CreatedAt        int64                        `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt        int64                        `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Email            string                       `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	Name             string                       `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	AvatarImageUrl   string                       `protobuf:"bytes,3,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url"`
+	OrganizationId   string                       `protobuf:"bytes,4,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
+	OrganizationRole AccountV2_Role_Organization  `protobuf:"varint,5,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role"`
+	EnvironmentRoles []*AccountV2_EnvironmentRole `protobuf:"bytes,6,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles"`
+	Disabled         bool                         `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled"`
+	CreatedAt        int64                        `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt        int64                        `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *AccountV2) Reset() {
@@ -408,13 +408,13 @@ type ConsoleAccount struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email            string                            `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Name             string                            `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	AvatarUrl        string                            `protobuf:"bytes,3,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
-	IsSystemAdmin    bool                              `protobuf:"varint,4,opt,name=is_system_admin,json=isSystemAdmin,proto3" json:"is_system_admin,omitempty"`
-	Organization     *environment.Organization         `protobuf:"bytes,5,opt,name=organization,proto3" json:"organization,omitempty"`
-	OrganizationRole AccountV2_Role_Organization       `protobuf:"varint,6,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role,omitempty"`
-	EnvironmentRoles []*ConsoleAccount_EnvironmentRole `protobuf:"bytes,7,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles,omitempty"`
+	Email            string                            `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	Name             string                            `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	AvatarUrl        string                            `protobuf:"bytes,3,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url"`
+	IsSystemAdmin    bool                              `protobuf:"varint,4,opt,name=is_system_admin,json=isSystemAdmin,proto3" json:"is_system_admin"`
+	Organization     *environment.Organization         `protobuf:"bytes,5,opt,name=organization,proto3" json:"organization"`
+	OrganizationRole AccountV2_Role_Organization       `protobuf:"varint,6,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role"`
+	EnvironmentRoles []*ConsoleAccount_EnvironmentRole `protobuf:"bytes,7,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles"`
 }
 
 func (x *ConsoleAccount) Reset() {
@@ -541,8 +541,8 @@ type AccountV2_EnvironmentRole struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentId string                     `protobuf:"bytes,1,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
-	Role          AccountV2_Role_Environment `protobuf:"varint,2,opt,name=role,proto3,enum=bucketeer.account.AccountV2_Role_Environment" json:"role,omitempty"`
+	EnvironmentId string                     `protobuf:"bytes,1,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	Role          AccountV2_Role_Environment `protobuf:"varint,2,opt,name=role,proto3,enum=bucketeer.account.AccountV2_Role_Environment" json:"role"`
 }
 
 func (x *AccountV2_EnvironmentRole) Reset() {
@@ -596,9 +596,9 @@ type ConsoleAccount_EnvironmentRole struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Environment *environment.EnvironmentV2 `protobuf:"bytes,1,opt,name=environment,proto3" json:"environment,omitempty"`
-	Project     *environment.Project       `protobuf:"bytes,2,opt,name=project,proto3" json:"project,omitempty"`
-	Role        AccountV2_Role_Environment `protobuf:"varint,3,opt,name=role,proto3,enum=bucketeer.account.AccountV2_Role_Environment" json:"role,omitempty"`
+	Environment *environment.EnvironmentV2 `protobuf:"bytes,1,opt,name=environment,proto3" json:"environment"`
+	Project     *environment.Project       `protobuf:"bytes,2,opt,name=project,proto3" json:"project"`
+	Role        AccountV2_Role_Environment `protobuf:"varint,3,opt,name=role,proto3,enum=bucketeer.account.AccountV2_Role_Environment" json:"role"`
 }
 
 func (x *ConsoleAccount_EnvironmentRole) Reset() {

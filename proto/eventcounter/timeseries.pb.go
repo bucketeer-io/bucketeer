@@ -85,8 +85,8 @@ type VariationTimeseries struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	VariationId string      `protobuf:"bytes,1,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
-	Timeseries  *Timeseries `protobuf:"bytes,2,opt,name=timeseries,proto3" json:"timeseries,omitempty"`
+	VariationId string      `protobuf:"bytes,1,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
+	Timeseries  *Timeseries `protobuf:"bytes,2,opt,name=timeseries,proto3" json:"timeseries"`
 }
 
 func (x *VariationTimeseries) Reset() {
@@ -140,10 +140,10 @@ type Timeseries struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Timestamps  []int64         `protobuf:"varint,1,rep,packed,name=timestamps,proto3" json:"timestamps,omitempty"`
-	Values      []float64       `protobuf:"fixed64,2,rep,packed,name=values,proto3" json:"values,omitempty"`
-	Unit        Timeseries_Unit `protobuf:"varint,3,opt,name=unit,proto3,enum=bucketeer.eventcounter.Timeseries_Unit" json:"unit,omitempty"`
-	TotalCounts int64           `protobuf:"varint,4,opt,name=total_counts,json=totalCounts,proto3" json:"total_counts,omitempty"`
+	Timestamps  []int64         `protobuf:"varint,1,rep,packed,name=timestamps,proto3" json:"timestamps"`
+	Values      []float64       `protobuf:"fixed64,2,rep,packed,name=values,proto3" json:"values"`
+	Unit        Timeseries_Unit `protobuf:"varint,3,opt,name=unit,proto3,enum=bucketeer.eventcounter.Timeseries_Unit" json:"unit"`
+	TotalCounts int64           `protobuf:"varint,4,opt,name=total_counts,json=totalCounts,proto3" json:"total_counts"`
 }
 
 func (x *Timeseries) Reset() {

@@ -490,8 +490,8 @@ type GetFeatureRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace string `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *GetFeatureRequest) Reset() {
@@ -545,7 +545,7 @@ type GetFeatureResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Feature *Feature `protobuf:"bytes,1,opt,name=feature,proto3" json:"feature,omitempty"`
+	Feature *Feature `protobuf:"bytes,1,opt,name=feature,proto3" json:"feature"`
 }
 
 func (x *GetFeatureResponse) Reset() {
@@ -592,8 +592,8 @@ type GetFeaturesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string   `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Ids                  []string `protobuf:"bytes,2,rep,name=ids,proto3" json:"ids,omitempty"`
+	EnvironmentNamespace string   `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Ids                  []string `protobuf:"bytes,2,rep,name=ids,proto3" json:"ids"`
 }
 
 func (x *GetFeaturesRequest) Reset() {
@@ -647,7 +647,7 @@ type GetFeaturesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Features []*Feature `protobuf:"bytes,1,rep,name=features,proto3" json:"features,omitempty"`
+	Features []*Feature `protobuf:"bytes,1,rep,name=features,proto3" json:"features"`
 }
 
 func (x *GetFeaturesResponse) Reset() {
@@ -694,18 +694,18 @@ type ListFeaturesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize             int64                              `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                             `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	Tags                 []string                           `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
-	OrderBy              ListFeaturesRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.feature.ListFeaturesRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection       ListFeaturesRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.feature.ListFeaturesRequest_OrderDirection" json:"order_direction,omitempty"`
-	EnvironmentNamespace string                             `protobuf:"bytes,6,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Maintainer           string                             `protobuf:"bytes,7,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
-	Enabled              *wrapperspb.BoolValue              `protobuf:"bytes,8,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	HasExperiment        *wrapperspb.BoolValue              `protobuf:"bytes,9,opt,name=has_experiment,json=hasExperiment,proto3" json:"has_experiment,omitempty"`
-	SearchKeyword        string                             `protobuf:"bytes,10,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	Archived             *wrapperspb.BoolValue              `protobuf:"bytes,11,opt,name=archived,proto3" json:"archived,omitempty"`
-	HasPrerequisites     *wrapperspb.BoolValue              `protobuf:"bytes,12,opt,name=has_prerequisites,json=hasPrerequisites,proto3" json:"has_prerequisites,omitempty"`
+	PageSize             int64                              `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                             `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	Tags                 []string                           `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags"`
+	OrderBy              ListFeaturesRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.feature.ListFeaturesRequest_OrderBy" json:"order_by"`
+	OrderDirection       ListFeaturesRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.feature.ListFeaturesRequest_OrderDirection" json:"order_direction"`
+	EnvironmentNamespace string                             `protobuf:"bytes,6,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Maintainer           string                             `protobuf:"bytes,7,opt,name=maintainer,proto3" json:"maintainer"`
+	Enabled              *wrapperspb.BoolValue              `protobuf:"bytes,8,opt,name=enabled,proto3" json:"enabled"`
+	HasExperiment        *wrapperspb.BoolValue              `protobuf:"bytes,9,opt,name=has_experiment,json=hasExperiment,proto3" json:"has_experiment"`
+	SearchKeyword        string                             `protobuf:"bytes,10,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	Archived             *wrapperspb.BoolValue              `protobuf:"bytes,11,opt,name=archived,proto3" json:"archived"`
+	HasPrerequisites     *wrapperspb.BoolValue              `protobuf:"bytes,12,opt,name=has_prerequisites,json=hasPrerequisites,proto3" json:"has_prerequisites"`
 }
 
 func (x *ListFeaturesRequest) Reset() {
@@ -829,9 +829,9 @@ type ListFeaturesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Features   []*Feature `protobuf:"bytes,1,rep,name=features,proto3" json:"features,omitempty"`
-	Cursor     string     `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount int64      `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	Features   []*Feature `protobuf:"bytes,1,rep,name=features,proto3" json:"features"`
+	Cursor     string     `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount int64      `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListFeaturesResponse) Reset() {
@@ -892,10 +892,10 @@ type ListEnabledFeaturesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize             int64    `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string   `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	Tags                 []string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
-	EnvironmentNamespace string   `protobuf:"bytes,4,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	PageSize             int64    `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string   `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	Tags                 []string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags"`
+	EnvironmentNamespace string   `protobuf:"bytes,4,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *ListEnabledFeaturesRequest) Reset() {
@@ -963,8 +963,8 @@ type ListEnabledFeaturesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Features []*Feature `protobuf:"bytes,1,rep,name=features,proto3" json:"features,omitempty"`
-	Cursor   string     `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Features []*Feature `protobuf:"bytes,1,rep,name=features,proto3" json:"features"`
+	Cursor   string     `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
 }
 
 func (x *ListEnabledFeaturesResponse) Reset() {
@@ -1018,8 +1018,8 @@ type CreateFeatureRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Command              *CreateFeatureCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Command              *CreateFeatureCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *CreateFeatureRequest) Reset() {
@@ -1111,10 +1111,10 @@ type EnableFeatureRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *EnableFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Comment              string                `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *EnableFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Comment              string                `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment"`
 }
 
 func (x *EnableFeatureRequest) Reset() {
@@ -1220,10 +1220,10 @@ type DisableFeatureRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *DisableFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                 `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Comment              string                 `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	Id                   string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *DisableFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                 `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Comment              string                 `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment"`
 }
 
 func (x *DisableFeatureRequest) Reset() {
@@ -1329,10 +1329,10 @@ type ArchiveFeatureRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *ArchiveFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                 `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Comment              string                 `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	Id                   string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *ArchiveFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                 `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Comment              string                 `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment"`
 }
 
 func (x *ArchiveFeatureRequest) Reset() {
@@ -1438,10 +1438,10 @@ type UnarchiveFeatureRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *UnarchiveFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                   `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Comment              string                   `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	Id                   string                   `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *UnarchiveFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                   `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Comment              string                   `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment"`
 }
 
 func (x *UnarchiveFeatureRequest) Reset() {
@@ -1547,10 +1547,10 @@ type DeleteFeatureRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *DeleteFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Comment              string                `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *DeleteFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Comment              string                `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment"`
 }
 
 func (x *DeleteFeatureRequest) Reset() {
@@ -1656,13 +1656,13 @@ type UpdateFeatureDetailsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                       string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RenameFeatureCommand     *RenameFeatureCommand     `protobuf:"bytes,2,opt,name=rename_feature_command,json=renameFeatureCommand,proto3" json:"rename_feature_command,omitempty"`
-	ChangeDescriptionCommand *ChangeDescriptionCommand `protobuf:"bytes,3,opt,name=change_description_command,json=changeDescriptionCommand,proto3" json:"change_description_command,omitempty"`
-	AddTagCommands           []*AddTagCommand          `protobuf:"bytes,4,rep,name=add_tag_commands,json=addTagCommands,proto3" json:"add_tag_commands,omitempty"`
-	RemoveTagCommands        []*RemoveTagCommand       `protobuf:"bytes,5,rep,name=remove_tag_commands,json=removeTagCommands,proto3" json:"remove_tag_commands,omitempty"`
-	EnvironmentNamespace     string                    `protobuf:"bytes,6,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Comment                  string                    `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty"`
+	Id                       string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RenameFeatureCommand     *RenameFeatureCommand     `protobuf:"bytes,2,opt,name=rename_feature_command,json=renameFeatureCommand,proto3" json:"rename_feature_command"`
+	ChangeDescriptionCommand *ChangeDescriptionCommand `protobuf:"bytes,3,opt,name=change_description_command,json=changeDescriptionCommand,proto3" json:"change_description_command"`
+	AddTagCommands           []*AddTagCommand          `protobuf:"bytes,4,rep,name=add_tag_commands,json=addTagCommands,proto3" json:"add_tag_commands"`
+	RemoveTagCommands        []*RemoveTagCommand       `protobuf:"bytes,5,rep,name=remove_tag_commands,json=removeTagCommands,proto3" json:"remove_tag_commands"`
+	EnvironmentNamespace     string                    `protobuf:"bytes,6,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Comment                  string                    `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment"`
 }
 
 func (x *UpdateFeatureDetailsRequest) Reset() {
@@ -1789,10 +1789,10 @@ type UpdateFeatureVariationsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Commands             []*Command `protobuf:"bytes,2,rep,name=commands,proto3" json:"commands,omitempty"`
-	EnvironmentNamespace string     `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Comment              string     `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	Id                   string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Commands             []*Command `protobuf:"bytes,2,rep,name=commands,proto3" json:"commands"`
+	EnvironmentNamespace string     `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Comment              string     `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment"`
 }
 
 func (x *UpdateFeatureVariationsRequest) Reset() {
@@ -1898,11 +1898,11 @@ type UpdateFeatureTargetingRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                             `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Commands             []*Command                         `protobuf:"bytes,2,rep,name=commands,proto3" json:"commands,omitempty"`
-	EnvironmentNamespace string                             `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Comment              string                             `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
-	From                 UpdateFeatureTargetingRequest_From `protobuf:"varint,5,opt,name=from,proto3,enum=bucketeer.feature.UpdateFeatureTargetingRequest_From" json:"from,omitempty"`
+	Id                   string                             `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Commands             []*Command                         `protobuf:"bytes,2,rep,name=commands,proto3" json:"commands"`
+	EnvironmentNamespace string                             `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Comment              string                             `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment"`
+	From                 UpdateFeatureTargetingRequest_From `protobuf:"varint,5,opt,name=from,proto3,enum=bucketeer.feature.UpdateFeatureTargetingRequest_From" json:"from"`
 }
 
 func (x *UpdateFeatureTargetingRequest) Reset() {
@@ -2015,9 +2015,9 @@ type CloneFeatureRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *CloneFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string               `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *CloneFeatureCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string               `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *CloneFeatureRequest) Reset() {
@@ -2116,8 +2116,8 @@ type CreateSegmentRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Command              *CreateSegmentCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Command              *CreateSegmentCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *CreateSegmentRequest) Reset() {
@@ -2171,7 +2171,7 @@ type CreateSegmentResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Segment *Segment `protobuf:"bytes,1,opt,name=segment,proto3" json:"segment,omitempty"`
+	Segment *Segment `protobuf:"bytes,1,opt,name=segment,proto3" json:"segment"`
 }
 
 func (x *CreateSegmentResponse) Reset() {
@@ -2218,8 +2218,8 @@ type GetSegmentRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace string `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *GetSegmentRequest) Reset() {
@@ -2273,7 +2273,7 @@ type GetSegmentResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Segment *Segment `protobuf:"bytes,1,opt,name=segment,proto3" json:"segment,omitempty"`
+	Segment *Segment `protobuf:"bytes,1,opt,name=segment,proto3" json:"segment"`
 }
 
 func (x *GetSegmentResponse) Reset() {
@@ -2320,14 +2320,14 @@ type ListSegmentsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize             int64                              `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                             `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	EnvironmentNamespace string                             `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	OrderBy              ListSegmentsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.feature.ListSegmentsRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection       ListSegmentsRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.feature.ListSegmentsRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword        string                             `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	Status               *wrapperspb.Int32Value             `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
-	IsInUseStatus        *wrapperspb.BoolValue              `protobuf:"bytes,8,opt,name=is_in_use_status,json=isInUseStatus,proto3" json:"is_in_use_status,omitempty"`
+	PageSize             int64                              `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                             `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	EnvironmentNamespace string                             `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	OrderBy              ListSegmentsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.feature.ListSegmentsRequest_OrderBy" json:"order_by"`
+	OrderDirection       ListSegmentsRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.feature.ListSegmentsRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword        string                             `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	Status               *wrapperspb.Int32Value             `protobuf:"bytes,7,opt,name=status,proto3" json:"status"`
+	IsInUseStatus        *wrapperspb.BoolValue              `protobuf:"bytes,8,opt,name=is_in_use_status,json=isInUseStatus,proto3" json:"is_in_use_status"`
 }
 
 func (x *ListSegmentsRequest) Reset() {
@@ -2423,9 +2423,9 @@ type ListSegmentsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Segments   []*Segment `protobuf:"bytes,1,rep,name=segments,proto3" json:"segments,omitempty"`
-	Cursor     string     `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount int64      `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	Segments   []*Segment `protobuf:"bytes,1,rep,name=segments,proto3" json:"segments"`
+	Cursor     string     `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount int64      `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListSegmentsResponse) Reset() {
@@ -2486,9 +2486,9 @@ type DeleteSegmentRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *DeleteSegmentCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *DeleteSegmentCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *DeleteSegmentRequest) Reset() {
@@ -2587,9 +2587,9 @@ type UpdateSegmentRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Commands             []*Command `protobuf:"bytes,2,rep,name=commands,proto3" json:"commands,omitempty"`
-	EnvironmentNamespace string     `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Commands             []*Command `protobuf:"bytes,2,rep,name=commands,proto3" json:"commands"`
+	EnvironmentNamespace string     `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *UpdateSegmentRequest) Reset() {
@@ -2688,9 +2688,9 @@ type AddSegmentUserRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *AddSegmentUserCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                 `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *AddSegmentUserCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                 `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *AddSegmentUserRequest) Reset() {
@@ -2789,9 +2789,9 @@ type DeleteSegmentUserRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *DeleteSegmentUserCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
-	EnvironmentNamespace string                    `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command              *DeleteSegmentUserCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
+	EnvironmentNamespace string                    `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *DeleteSegmentUserRequest) Reset() {
@@ -2890,10 +2890,10 @@ type GetSegmentUserRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId            string            `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	UserId               string            `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	State                SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
-	EnvironmentNamespace string            `protobuf:"bytes,4,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	SegmentId            string            `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	UserId               string            `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id"`
+	State                SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
+	EnvironmentNamespace string            `protobuf:"bytes,4,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *GetSegmentUserRequest) Reset() {
@@ -2961,7 +2961,7 @@ type GetSegmentUserResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	User *SegmentUser `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	User *SegmentUser `protobuf:"bytes,1,opt,name=user,proto3" json:"user"`
 }
 
 func (x *GetSegmentUserResponse) Reset() {
@@ -3008,12 +3008,12 @@ type ListSegmentUsersRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize             int64                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                 `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	SegmentId            string                 `protobuf:"bytes,3,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	State                *wrapperspb.Int32Value `protobuf:"bytes,4,opt,name=state,proto3" json:"state,omitempty"`
-	UserId               string                 `protobuf:"bytes,5,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	EnvironmentNamespace string                 `protobuf:"bytes,6,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	PageSize             int64                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                 `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	SegmentId            string                 `protobuf:"bytes,3,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	State                *wrapperspb.Int32Value `protobuf:"bytes,4,opt,name=state,proto3" json:"state"`
+	UserId               string                 `protobuf:"bytes,5,opt,name=user_id,json=userId,proto3" json:"user_id"`
+	EnvironmentNamespace string                 `protobuf:"bytes,6,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *ListSegmentUsersRequest) Reset() {
@@ -3095,8 +3095,8 @@ type ListSegmentUsersResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Users  []*SegmentUser `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
-	Cursor string         `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Users  []*SegmentUser `protobuf:"bytes,1,rep,name=users,proto3" json:"users"`
+	Cursor string         `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
 }
 
 func (x *ListSegmentUsersResponse) Reset() {
@@ -3150,9 +3150,9 @@ type BulkUploadSegmentUsersRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                         `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	SegmentId            string                         `protobuf:"bytes,2,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	Command              *BulkUploadSegmentUsersCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string                         `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	SegmentId            string                         `protobuf:"bytes,2,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	Command              *BulkUploadSegmentUsersCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
 }
 
 func (x *BulkUploadSegmentUsersRequest) Reset() {
@@ -3251,9 +3251,9 @@ type BulkDownloadSegmentUsersRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string            `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	SegmentId            string            `protobuf:"bytes,2,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	State                SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
+	EnvironmentNamespace string            `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	SegmentId            string            `protobuf:"bytes,2,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	State                SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
 }
 
 func (x *BulkDownloadSegmentUsersRequest) Reset() {
@@ -3314,7 +3314,7 @@ type BulkDownloadSegmentUsersResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Data []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"` // segment user ids separated by new line
+	Data []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data"` // segment user ids separated by new line
 }
 
 func (x *BulkDownloadSegmentUsersResponse) Reset() {
@@ -3361,10 +3361,10 @@ type EvaluateFeaturesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	User                 *user.User `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
-	EnvironmentNamespace string     `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Tag                  string     `protobuf:"bytes,3,opt,name=tag,proto3" json:"tag,omitempty"`
-	FeatureId            string     `protobuf:"bytes,4,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"` // it will evaluate a single feature if set
+	User                 *user.User `protobuf:"bytes,1,opt,name=user,proto3" json:"user"`
+	EnvironmentNamespace string     `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Tag                  string     `protobuf:"bytes,3,opt,name=tag,proto3" json:"tag"`
+	FeatureId            string     `protobuf:"bytes,4,opt,name=feature_id,json=featureId,proto3" json:"feature_id"` // it will evaluate a single feature if set
 }
 
 func (x *EvaluateFeaturesRequest) Reset() {
@@ -3432,7 +3432,7 @@ type EvaluateFeaturesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UserEvaluations *UserEvaluations `protobuf:"bytes,1,opt,name=user_evaluations,json=userEvaluations,proto3" json:"user_evaluations,omitempty"`
+	UserEvaluations *UserEvaluations `protobuf:"bytes,1,opt,name=user_evaluations,json=userEvaluations,proto3" json:"user_evaluations"`
 }
 
 func (x *EvaluateFeaturesResponse) Reset() {
@@ -3479,12 +3479,12 @@ type ListTagsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                         `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	PageSize             int64                          `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                         `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	OrderBy              ListTagsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.feature.ListTagsRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection       ListTagsRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.feature.ListTagsRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword        string                         `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
+	EnvironmentNamespace string                         `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	PageSize             int64                          `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                         `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor"`
+	OrderBy              ListTagsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.feature.ListTagsRequest_OrderBy" json:"order_by"`
+	OrderDirection       ListTagsRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.feature.ListTagsRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword        string                         `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
 }
 
 func (x *ListTagsRequest) Reset() {
@@ -3566,9 +3566,9 @@ type ListTagsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tags       []*Tag `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags,omitempty"`
-	Cursor     string `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount int64  `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	Tags       []*Tag `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags"`
+	Cursor     string `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount int64  `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListTagsResponse) Reset() {
@@ -3629,8 +3629,8 @@ type CreateFlagTriggerRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace     string                    `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	CreateFlagTriggerCommand *CreateFlagTriggerCommand `protobuf:"bytes,2,opt,name=create_flag_trigger_command,json=createFlagTriggerCommand,proto3" json:"create_flag_trigger_command,omitempty"`
+	EnvironmentNamespace     string                    `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	CreateFlagTriggerCommand *CreateFlagTriggerCommand `protobuf:"bytes,2,opt,name=create_flag_trigger_command,json=createFlagTriggerCommand,proto3" json:"create_flag_trigger_command"`
 }
 
 func (x *CreateFlagTriggerRequest) Reset() {
@@ -3684,8 +3684,8 @@ type CreateFlagTriggerResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FlagTrigger *FlagTrigger `protobuf:"bytes,1,opt,name=flag_trigger,json=flagTrigger,proto3" json:"flag_trigger,omitempty"`
-	Url         string       `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	FlagTrigger *FlagTrigger `protobuf:"bytes,1,opt,name=flag_trigger,json=flagTrigger,proto3" json:"flag_trigger"`
+	Url         string       `protobuf:"bytes,2,opt,name=url,proto3" json:"url"`
 }
 
 func (x *CreateFlagTriggerResponse) Reset() {
@@ -3739,9 +3739,9 @@ type DeleteFlagTriggerRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                       string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace     string                    `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	DeleteFlagTriggerCommand *DeleteFlagTriggerCommand `protobuf:"bytes,3,opt,name=delete_flag_trigger_command,json=deleteFlagTriggerCommand,proto3" json:"delete_flag_trigger_command,omitempty"`
+	Id                       string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace     string                    `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	DeleteFlagTriggerCommand *DeleteFlagTriggerCommand `protobuf:"bytes,3,opt,name=delete_flag_trigger_command,json=deleteFlagTriggerCommand,proto3" json:"delete_flag_trigger_command"`
 }
 
 func (x *DeleteFlagTriggerRequest) Reset() {
@@ -3840,9 +3840,9 @@ type UpdateFlagTriggerRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                                  string                               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace                string                               `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	ChangeFlagTriggerDescriptionCommand *ChangeFlagTriggerDescriptionCommand `protobuf:"bytes,3,opt,name=change_flag_trigger_description_command,json=changeFlagTriggerDescriptionCommand,proto3" json:"change_flag_trigger_description_command,omitempty"`
+	Id                                  string                               `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace                string                               `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	ChangeFlagTriggerDescriptionCommand *ChangeFlagTriggerDescriptionCommand `protobuf:"bytes,3,opt,name=change_flag_trigger_description_command,json=changeFlagTriggerDescriptionCommand,proto3" json:"change_flag_trigger_description_command"`
 }
 
 func (x *UpdateFlagTriggerRequest) Reset() {
@@ -3941,9 +3941,9 @@ type EnableFlagTriggerRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                       string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace     string                    `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	EnableFlagTriggerCommand *EnableFlagTriggerCommand `protobuf:"bytes,3,opt,name=enable_flag_trigger_command,json=enableFlagTriggerCommand,proto3" json:"enable_flag_trigger_command,omitempty"`
+	Id                       string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace     string                    `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	EnableFlagTriggerCommand *EnableFlagTriggerCommand `protobuf:"bytes,3,opt,name=enable_flag_trigger_command,json=enableFlagTriggerCommand,proto3" json:"enable_flag_trigger_command"`
 }
 
 func (x *EnableFlagTriggerRequest) Reset() {
@@ -4042,9 +4042,9 @@ type DisableFlagTriggerRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                        string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace      string                     `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	DisableFlagTriggerCommand *DisableFlagTriggerCommand `protobuf:"bytes,3,opt,name=disable_flag_trigger_command,json=disableFlagTriggerCommand,proto3" json:"disable_flag_trigger_command,omitempty"`
+	Id                        string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace      string                     `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	DisableFlagTriggerCommand *DisableFlagTriggerCommand `protobuf:"bytes,3,opt,name=disable_flag_trigger_command,json=disableFlagTriggerCommand,proto3" json:"disable_flag_trigger_command"`
 }
 
 func (x *DisableFlagTriggerRequest) Reset() {
@@ -4143,9 +4143,9 @@ type ResetFlagTriggerRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                      string                   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace    string                   `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	ResetFlagTriggerCommand *ResetFlagTriggerCommand `protobuf:"bytes,3,opt,name=reset_flag_trigger_command,json=resetFlagTriggerCommand,proto3" json:"reset_flag_trigger_command,omitempty"`
+	Id                      string                   `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace    string                   `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	ResetFlagTriggerCommand *ResetFlagTriggerCommand `protobuf:"bytes,3,opt,name=reset_flag_trigger_command,json=resetFlagTriggerCommand,proto3" json:"reset_flag_trigger_command"`
 }
 
 func (x *ResetFlagTriggerRequest) Reset() {
@@ -4206,8 +4206,8 @@ type ResetFlagTriggerResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FlagTrigger *FlagTrigger `protobuf:"bytes,1,opt,name=flag_trigger,json=flagTrigger,proto3" json:"flag_trigger,omitempty"`
-	Url         string       `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	FlagTrigger *FlagTrigger `protobuf:"bytes,1,opt,name=flag_trigger,json=flagTrigger,proto3" json:"flag_trigger"`
+	Url         string       `protobuf:"bytes,2,opt,name=url,proto3" json:"url"`
 }
 
 func (x *ResetFlagTriggerResponse) Reset() {
@@ -4261,8 +4261,8 @@ type GetFlagTriggerRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace string `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *GetFlagTriggerRequest) Reset() {
@@ -4316,8 +4316,8 @@ type GetFlagTriggerResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FlagTrigger *FlagTrigger `protobuf:"bytes,1,opt,name=flag_trigger,json=flagTrigger,proto3" json:"flag_trigger,omitempty"`
-	Url         string       `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	FlagTrigger *FlagTrigger `protobuf:"bytes,1,opt,name=flag_trigger,json=flagTrigger,proto3" json:"flag_trigger"`
+	Url         string       `protobuf:"bytes,2,opt,name=url,proto3" json:"url"`
 }
 
 func (x *GetFlagTriggerResponse) Reset() {
@@ -4371,12 +4371,12 @@ type ListFlagTriggersRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId            string                                 `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	EnvironmentNamespace string                                 `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Cursor               string                                 `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	PageSize             int32                                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	OrderBy              ListFlagTriggersRequest_OrderBy        `protobuf:"varint,5,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.feature.ListFlagTriggersRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection       ListFlagTriggersRequest_OrderDirection `protobuf:"varint,6,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.feature.ListFlagTriggersRequest_OrderDirection" json:"order_direction,omitempty"`
+	FeatureId            string                                 `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	EnvironmentNamespace string                                 `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Cursor               string                                 `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor"`
+	PageSize             int32                                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	OrderBy              ListFlagTriggersRequest_OrderBy        `protobuf:"varint,5,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.feature.ListFlagTriggersRequest_OrderBy" json:"order_by"`
+	OrderDirection       ListFlagTriggersRequest_OrderDirection `protobuf:"varint,6,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.feature.ListFlagTriggersRequest_OrderDirection" json:"order_direction"`
 }
 
 func (x *ListFlagTriggersRequest) Reset() {
@@ -4458,9 +4458,9 @@ type ListFlagTriggersResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FlagTriggers []*ListFlagTriggersResponse_FlagTriggerWithUrl `protobuf:"bytes,1,rep,name=flag_triggers,json=flagTriggers,proto3" json:"flag_triggers,omitempty"`
-	Cursor       string                                         `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount   int64                                          `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	FlagTriggers []*ListFlagTriggersResponse_FlagTriggerWithUrl `protobuf:"bytes,1,rep,name=flag_triggers,json=flagTriggers,proto3" json:"flag_triggers"`
+	Cursor       string                                         `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount   int64                                          `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListFlagTriggersResponse) Reset() {
@@ -4521,7 +4521,7 @@ type FlagTriggerWebhookRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token"`
 }
 
 func (x *FlagTriggerWebhookRequest) Reset() {
@@ -4606,8 +4606,8 @@ type ListFlagTriggersResponse_FlagTriggerWithUrl struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FlagTrigger *FlagTrigger `protobuf:"bytes,1,opt,name=flag_trigger,json=flagTrigger,proto3" json:"flag_trigger,omitempty"`
-	Url         string       `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	FlagTrigger *FlagTrigger `protobuf:"bytes,1,opt,name=flag_trigger,json=flagTrigger,proto3" json:"flag_trigger"`
+	Url         string       `protobuf:"bytes,2,opt,name=url,proto3" json:"url"`
 }
 
 func (x *ListFlagTriggersResponse_FlagTriggerWithUrl) Reset() {

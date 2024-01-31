@@ -240,7 +240,7 @@ type GetAdminSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *GetAdminSubscriptionRequest) Reset() {
@@ -287,7 +287,7 @@ type GetAdminSubscriptionResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Subscription *Subscription `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription,omitempty"`
+	Subscription *Subscription `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription"`
 }
 
 func (x *GetAdminSubscriptionResponse) Reset() {
@@ -334,13 +334,13 @@ type ListAdminSubscriptionsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize       int64                                        `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor         string                                       `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	SourceTypes    []Subscription_SourceType                    `protobuf:"varint,3,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
-	OrderBy        ListAdminSubscriptionsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.notification.ListAdminSubscriptionsRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection ListAdminSubscriptionsRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.notification.ListAdminSubscriptionsRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword  string                                       `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	Disabled       *wrapperspb.BoolValue                        `protobuf:"bytes,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	PageSize       int64                                        `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor         string                                       `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	SourceTypes    []Subscription_SourceType                    `protobuf:"varint,3,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	OrderBy        ListAdminSubscriptionsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.notification.ListAdminSubscriptionsRequest_OrderBy" json:"order_by"`
+	OrderDirection ListAdminSubscriptionsRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.notification.ListAdminSubscriptionsRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword  string                                       `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	Disabled       *wrapperspb.BoolValue                        `protobuf:"bytes,7,opt,name=disabled,proto3" json:"disabled"`
 }
 
 func (x *ListAdminSubscriptionsRequest) Reset() {
@@ -429,9 +429,9 @@ type ListAdminSubscriptionsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Subscriptions []*Subscription `protobuf:"bytes,1,rep,name=subscriptions,proto3" json:"subscriptions,omitempty"`
-	Cursor        string          `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount    int64           `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	Subscriptions []*Subscription `protobuf:"bytes,1,rep,name=subscriptions,proto3" json:"subscriptions"`
+	Cursor        string          `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount    int64           `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListAdminSubscriptionsResponse) Reset() {
@@ -492,9 +492,9 @@ type ListEnabledAdminSubscriptionsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize    int64                     `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor      string                    `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	SourceTypes []Subscription_SourceType `protobuf:"varint,3,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
+	PageSize    int64                     `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor      string                    `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	SourceTypes []Subscription_SourceType `protobuf:"varint,3,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *ListEnabledAdminSubscriptionsRequest) Reset() {
@@ -555,8 +555,8 @@ type ListEnabledAdminSubscriptionsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Subscriptions []*Subscription `protobuf:"bytes,1,rep,name=subscriptions,proto3" json:"subscriptions,omitempty"`
-	Cursor        string          `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Subscriptions []*Subscription `protobuf:"bytes,1,rep,name=subscriptions,proto3" json:"subscriptions"`
+	Cursor        string          `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
 }
 
 func (x *ListEnabledAdminSubscriptionsResponse) Reset() {
@@ -610,7 +610,7 @@ type CreateAdminSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Command *CreateAdminSubscriptionCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
+	Command *CreateAdminSubscriptionCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
 }
 
 func (x *CreateAdminSubscriptionRequest) Reset() {
@@ -695,8 +695,8 @@ type DeleteAdminSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *DeleteAdminSubscriptionCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                          `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *DeleteAdminSubscriptionCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DeleteAdminSubscriptionRequest) Reset() {
@@ -788,8 +788,8 @@ type EnableAdminSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *EnableAdminSubscriptionCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                          `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *EnableAdminSubscriptionCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *EnableAdminSubscriptionRequest) Reset() {
@@ -881,8 +881,8 @@ type DisableAdminSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *DisableAdminSubscriptionCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                           `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *DisableAdminSubscriptionCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DisableAdminSubscriptionRequest) Reset() {
@@ -974,10 +974,10 @@ type UpdateAdminSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                        string                                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	AddSourceTypesCommand     *AddAdminSubscriptionSourceTypesCommand    `protobuf:"bytes,2,opt,name=add_source_types_command,json=addSourceTypesCommand,proto3" json:"add_source_types_command,omitempty"`
-	DeleteSourceTypesCommand  *DeleteAdminSubscriptionSourceTypesCommand `protobuf:"bytes,3,opt,name=delete_source_types_command,json=deleteSourceTypesCommand,proto3" json:"delete_source_types_command,omitempty"`
-	RenameSubscriptionCommand *RenameAdminSubscriptionCommand            `protobuf:"bytes,4,opt,name=rename_subscription_command,json=renameSubscriptionCommand,proto3" json:"rename_subscription_command,omitempty"`
+	Id                        string                                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	AddSourceTypesCommand     *AddAdminSubscriptionSourceTypesCommand    `protobuf:"bytes,2,opt,name=add_source_types_command,json=addSourceTypesCommand,proto3" json:"add_source_types_command"`
+	DeleteSourceTypesCommand  *DeleteAdminSubscriptionSourceTypesCommand `protobuf:"bytes,3,opt,name=delete_source_types_command,json=deleteSourceTypesCommand,proto3" json:"delete_source_types_command"`
+	RenameSubscriptionCommand *RenameAdminSubscriptionCommand            `protobuf:"bytes,4,opt,name=rename_subscription_command,json=renameSubscriptionCommand,proto3" json:"rename_subscription_command"`
 }
 
 func (x *UpdateAdminSubscriptionRequest) Reset() {
@@ -1083,8 +1083,8 @@ type GetSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                   string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	EnvironmentNamespace string `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                   string `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
 }
 
 func (x *GetSubscriptionRequest) Reset() {
@@ -1138,7 +1138,7 @@ type GetSubscriptionResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Subscription *Subscription `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription,omitempty"`
+	Subscription *Subscription `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription"`
 }
 
 func (x *GetSubscriptionResponse) Reset() {
@@ -1185,14 +1185,14 @@ type ListSubscriptionsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                                  `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	PageSize             int64                                   `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                                  `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	SourceTypes          []Subscription_SourceType               `protobuf:"varint,4,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
-	OrderBy              ListSubscriptionsRequest_OrderBy        `protobuf:"varint,5,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.notification.ListSubscriptionsRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection       ListSubscriptionsRequest_OrderDirection `protobuf:"varint,6,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.notification.ListSubscriptionsRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword        string                                  `protobuf:"bytes,7,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	Disabled             *wrapperspb.BoolValue                   `protobuf:"bytes,8,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	EnvironmentNamespace string                                  `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	PageSize             int64                                   `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                                  `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor"`
+	SourceTypes          []Subscription_SourceType               `protobuf:"varint,4,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	OrderBy              ListSubscriptionsRequest_OrderBy        `protobuf:"varint,5,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.notification.ListSubscriptionsRequest_OrderBy" json:"order_by"`
+	OrderDirection       ListSubscriptionsRequest_OrderDirection `protobuf:"varint,6,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.notification.ListSubscriptionsRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword        string                                  `protobuf:"bytes,7,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	Disabled             *wrapperspb.BoolValue                   `protobuf:"bytes,8,opt,name=disabled,proto3" json:"disabled"`
 }
 
 func (x *ListSubscriptionsRequest) Reset() {
@@ -1288,9 +1288,9 @@ type ListSubscriptionsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Subscriptions []*Subscription `protobuf:"bytes,1,rep,name=subscriptions,proto3" json:"subscriptions,omitempty"`
-	Cursor        string          `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount    int64           `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	Subscriptions []*Subscription `protobuf:"bytes,1,rep,name=subscriptions,proto3" json:"subscriptions"`
+	Cursor        string          `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount    int64           `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListSubscriptionsResponse) Reset() {
@@ -1351,10 +1351,10 @@ type ListEnabledSubscriptionsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                    `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	PageSize             int64                     `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                    `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	SourceTypes          []Subscription_SourceType `protobuf:"varint,4,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
+	EnvironmentNamespace string                    `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	PageSize             int64                     `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                    `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor"`
+	SourceTypes          []Subscription_SourceType `protobuf:"varint,4,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *ListEnabledSubscriptionsRequest) Reset() {
@@ -1422,8 +1422,8 @@ type ListEnabledSubscriptionsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Subscriptions []*Subscription `protobuf:"bytes,1,rep,name=subscriptions,proto3" json:"subscriptions,omitempty"`
-	Cursor        string          `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Subscriptions []*Subscription `protobuf:"bytes,1,rep,name=subscriptions,proto3" json:"subscriptions"`
+	Cursor        string          `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
 }
 
 func (x *ListEnabledSubscriptionsResponse) Reset() {
@@ -1477,8 +1477,8 @@ type CreateSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                     `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Command              *CreateSubscriptionCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string                     `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Command              *CreateSubscriptionCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *CreateSubscriptionRequest) Reset() {
@@ -1570,9 +1570,9 @@ type DeleteSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                     `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                   string                     `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *DeleteSubscriptionCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string                     `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                   string                     `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	Command              *DeleteSubscriptionCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DeleteSubscriptionRequest) Reset() {
@@ -1671,9 +1671,9 @@ type EnableSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                     `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                   string                     `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *EnableSubscriptionCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string                     `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                   string                     `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	Command              *EnableSubscriptionCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
 }
 
 func (x *EnableSubscriptionRequest) Reset() {
@@ -1772,9 +1772,9 @@ type DisableSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                      `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                   string                      `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *DisableSubscriptionCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string                      `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                   string                      `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	Command              *DisableSubscriptionCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DisableSubscriptionRequest) Reset() {
@@ -1873,11 +1873,11 @@ type UpdateSubscriptionRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace      string                     `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                        string                     `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	AddSourceTypesCommand     *AddSourceTypesCommand     `protobuf:"bytes,3,opt,name=add_source_types_command,json=addSourceTypesCommand,proto3" json:"add_source_types_command,omitempty"`
-	DeleteSourceTypesCommand  *DeleteSourceTypesCommand  `protobuf:"bytes,4,opt,name=delete_source_types_command,json=deleteSourceTypesCommand,proto3" json:"delete_source_types_command,omitempty"`
-	RenameSubscriptionCommand *RenameSubscriptionCommand `protobuf:"bytes,5,opt,name=rename_subscription_command,json=renameSubscriptionCommand,proto3" json:"rename_subscription_command,omitempty"`
+	EnvironmentNamespace      string                     `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                        string                     `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	AddSourceTypesCommand     *AddSourceTypesCommand     `protobuf:"bytes,3,opt,name=add_source_types_command,json=addSourceTypesCommand,proto3" json:"add_source_types_command"`
+	DeleteSourceTypesCommand  *DeleteSourceTypesCommand  `protobuf:"bytes,4,opt,name=delete_source_types_command,json=deleteSourceTypesCommand,proto3" json:"delete_source_types_command"`
+	RenameSubscriptionCommand *RenameSubscriptionCommand `protobuf:"bytes,5,opt,name=rename_subscription_command,json=renameSubscriptionCommand,proto3" json:"rename_subscription_command"`
 }
 
 func (x *UpdateSubscriptionRequest) Reset() {

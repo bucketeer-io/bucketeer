@@ -39,17 +39,17 @@ type EvaluationEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	FeatureVersion       int32  `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version,omitempty"`
-	UserData             string `protobuf:"bytes,4,opt,name=user_data,json=userData,proto3" json:"user_data,omitempty"`
-	UserId               string `protobuf:"bytes,5,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	VariationId          string `protobuf:"bytes,6,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
-	Reason               string `protobuf:"bytes,7,opt,name=reason,proto3" json:"reason,omitempty"`
-	Tag                  string `protobuf:"bytes,8,opt,name=tag,proto3" json:"tag,omitempty"`
-	SourceId             string `protobuf:"bytes,9,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,10,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Timestamp            int64  `protobuf:"varint,11,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	FeatureVersion       int32  `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version"`
+	UserData             string `protobuf:"bytes,4,opt,name=user_data,json=userData,proto3" json:"user_data"`
+	UserId               string `protobuf:"bytes,5,opt,name=user_id,json=userId,proto3" json:"user_id"`
+	VariationId          string `protobuf:"bytes,6,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
+	Reason               string `protobuf:"bytes,7,opt,name=reason,proto3" json:"reason"`
+	Tag                  string `protobuf:"bytes,8,opt,name=tag,proto3" json:"tag"`
+	SourceId             string `protobuf:"bytes,9,opt,name=source_id,json=sourceId,proto3" json:"source_id"`
+	EnvironmentNamespace string `protobuf:"bytes,10,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Timestamp            int64  `protobuf:"varint,11,opt,name=timestamp,proto3" json:"timestamp"`
 }
 
 func (x *EvaluationEvent) Reset() {

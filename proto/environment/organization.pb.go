@@ -39,16 +39,16 @@ type Organization struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode     string `protobuf:"bytes,3,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"` // optional
-	Disabled    bool   `protobuf:"varint,5,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	Archived    bool   `protobuf:"varint,6,opt,name=archived,proto3" json:"archived,omitempty"`
-	Trial       bool   `protobuf:"varint,7,opt,name=trial,proto3" json:"trial,omitempty"`
-	CreatedAt   int64  `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt   int64  `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	SystemAdmin bool   `protobuf:"varint,10,opt,name=system_admin,json=systemAdmin,proto3" json:"system_admin,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	UrlCode     string `protobuf:"bytes,3,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
+	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description"` // optional
+	Disabled    bool   `protobuf:"varint,5,opt,name=disabled,proto3" json:"disabled"`
+	Archived    bool   `protobuf:"varint,6,opt,name=archived,proto3" json:"archived"`
+	Trial       bool   `protobuf:"varint,7,opt,name=trial,proto3" json:"trial"`
+	CreatedAt   int64  `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt   int64  `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	SystemAdmin bool   `protobuf:"varint,10,opt,name=system_admin,json=systemAdmin,proto3" json:"system_admin"`
 }
 
 func (x *Organization) Reset() {

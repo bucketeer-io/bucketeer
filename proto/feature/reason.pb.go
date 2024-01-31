@@ -97,8 +97,8 @@ type Reason struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Type   Reason_Type `protobuf:"varint,1,opt,name=type,proto3,enum=bucketeer.feature.Reason_Type" json:"type,omitempty"`
-	RuleId string      `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
+	Type   Reason_Type `protobuf:"varint,1,opt,name=type,proto3,enum=bucketeer.feature.Reason_Type" json:"type"`
+	RuleId string      `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
 }
 
 func (x *Reason) Reset() {

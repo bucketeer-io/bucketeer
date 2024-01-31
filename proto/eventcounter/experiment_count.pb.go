@@ -39,17 +39,17 @@ type ExperimentCount struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId      string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	FeatureVersion int32  `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version,omitempty"`
+	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId      string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	FeatureVersion int32  `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version"`
 	// Deprecated: Do not use.
-	GoalId string `protobuf:"bytes,4,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
+	GoalId string `protobuf:"bytes,4,opt,name=goal_id,json=goalId,proto3" json:"goal_id"`
 	// Deprecated: Do not use.
-	RealtimeCounts []*VariationCount `protobuf:"bytes,5,rep,name=realtime_counts,json=realtimeCounts,proto3" json:"realtime_counts,omitempty"`
+	RealtimeCounts []*VariationCount `protobuf:"bytes,5,rep,name=realtime_counts,json=realtimeCounts,proto3" json:"realtime_counts"`
 	// Deprecated: Do not use.
-	BatchCounts []*VariationCount `protobuf:"bytes,6,rep,name=batch_counts,json=batchCounts,proto3" json:"batch_counts,omitempty"`
-	UpdatedAt   int64             `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	GoalCounts  []*GoalCounts     `protobuf:"bytes,8,rep,name=goal_counts,json=goalCounts,proto3" json:"goal_counts,omitempty"`
+	BatchCounts []*VariationCount `protobuf:"bytes,6,rep,name=batch_counts,json=batchCounts,proto3" json:"batch_counts"`
+	UpdatedAt   int64             `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	GoalCounts  []*GoalCounts     `protobuf:"bytes,8,rep,name=goal_counts,json=goalCounts,proto3" json:"goal_counts"`
 }
 
 func (x *ExperimentCount) Reset() {
@@ -148,10 +148,10 @@ type GoalCounts struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	GoalId         string            `protobuf:"bytes,1,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
-	RealtimeCounts []*VariationCount `protobuf:"bytes,2,rep,name=realtime_counts,json=realtimeCounts,proto3" json:"realtime_counts,omitempty"`
+	GoalId         string            `protobuf:"bytes,1,opt,name=goal_id,json=goalId,proto3" json:"goal_id"`
+	RealtimeCounts []*VariationCount `protobuf:"bytes,2,rep,name=realtime_counts,json=realtimeCounts,proto3" json:"realtime_counts"`
 	// Deprecated: Do not use.
-	BatchCounts []*VariationCount `protobuf:"bytes,3,rep,name=batch_counts,json=batchCounts,proto3" json:"batch_counts,omitempty"`
+	BatchCounts []*VariationCount `protobuf:"bytes,3,rep,name=batch_counts,json=batchCounts,proto3" json:"batch_counts"`
 }
 
 func (x *GoalCounts) Reset() {

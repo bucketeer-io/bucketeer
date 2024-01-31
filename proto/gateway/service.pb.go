@@ -85,7 +85,7 @@ type PingResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Time int64 `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	Time int64 `protobuf:"varint,1,opt,name=time,proto3" json:"time"`
 }
 
 func (x *PingResponse) Reset() {
@@ -132,14 +132,14 @@ type GetEvaluationsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tag               string     `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag,omitempty"`
-	User              *user.User `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
-	UserEvaluationsId string     `protobuf:"bytes,3,opt,name=user_evaluations_id,json=userEvaluationsId,proto3" json:"user_evaluations_id,omitempty"`
+	Tag               string     `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag"`
+	User              *user.User `protobuf:"bytes,2,opt,name=user,proto3" json:"user"`
+	UserEvaluationsId string     `protobuf:"bytes,3,opt,name=user_evaluations_id,json=userEvaluationsId,proto3" json:"user_evaluations_id"`
 	// Deprecated: Do not use.
-	FeatureId               string                                         `protobuf:"bytes,4,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"` // instead, use GetEvaluation API
-	SourceId                client.SourceId                                `protobuf:"varint,5,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id,omitempty"`
-	UserEvaluationCondition *GetEvaluationsRequest_UserEvaluationCondition `protobuf:"bytes,6,opt,name=user_evaluation_condition,json=userEvaluationCondition,proto3" json:"user_evaluation_condition,omitempty"`
-	SdkVersion              string                                         `protobuf:"bytes,7,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version,omitempty"`
+	FeatureId               string                                         `protobuf:"bytes,4,opt,name=feature_id,json=featureId,proto3" json:"feature_id"` // instead, use GetEvaluation API
+	SourceId                client.SourceId                                `protobuf:"varint,5,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id"`
+	UserEvaluationCondition *GetEvaluationsRequest_UserEvaluationCondition `protobuf:"bytes,6,opt,name=user_evaluation_condition,json=userEvaluationCondition,proto3" json:"user_evaluation_condition"`
+	SdkVersion              string                                         `protobuf:"bytes,7,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version"`
 }
 
 func (x *GetEvaluationsRequest) Reset() {
@@ -229,9 +229,9 @@ type GetEvaluationsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	State             feature.UserEvaluations_State `protobuf:"varint,1,opt,name=state,proto3,enum=bucketeer.feature.UserEvaluations_State" json:"state,omitempty"`
-	Evaluations       *feature.UserEvaluations      `protobuf:"bytes,2,opt,name=evaluations,proto3" json:"evaluations,omitempty"`
-	UserEvaluationsId string                        `protobuf:"bytes,3,opt,name=user_evaluations_id,json=userEvaluationsId,proto3" json:"user_evaluations_id,omitempty"`
+	State             feature.UserEvaluations_State `protobuf:"varint,1,opt,name=state,proto3,enum=bucketeer.feature.UserEvaluations_State" json:"state"`
+	Evaluations       *feature.UserEvaluations      `protobuf:"bytes,2,opt,name=evaluations,proto3" json:"evaluations"`
+	UserEvaluationsId string                        `protobuf:"bytes,3,opt,name=user_evaluations_id,json=userEvaluationsId,proto3" json:"user_evaluations_id"`
 }
 
 func (x *GetEvaluationsResponse) Reset() {
@@ -292,11 +292,11 @@ type GetEvaluationRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tag        string          `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag,omitempty"`
-	User       *user.User      `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
-	FeatureId  string          `protobuf:"bytes,3,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	SourceId   client.SourceId `protobuf:"varint,4,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id,omitempty"`
-	SdkVersion string          `protobuf:"bytes,5,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version,omitempty"`
+	Tag        string          `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag"`
+	User       *user.User      `protobuf:"bytes,2,opt,name=user,proto3" json:"user"`
+	FeatureId  string          `protobuf:"bytes,3,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	SourceId   client.SourceId `protobuf:"varint,4,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id"`
+	SdkVersion string          `protobuf:"bytes,5,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version"`
 }
 
 func (x *GetEvaluationRequest) Reset() {
@@ -371,7 +371,7 @@ type GetEvaluationResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Evaluation *feature.Evaluation `protobuf:"bytes,1,opt,name=evaluation,proto3" json:"evaluation,omitempty"`
+	Evaluation *feature.Evaluation `protobuf:"bytes,1,opt,name=evaluation,proto3" json:"evaluation"`
 }
 
 func (x *GetEvaluationResponse) Reset() {
@@ -418,8 +418,8 @@ type RegisterEventsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Events     []*client.Event `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
-	SdkVersion string          `protobuf:"bytes,2,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version,omitempty"`
+	Events     []*client.Event `protobuf:"bytes,1,rep,name=events,proto3" json:"events"`
+	SdkVersion string          `protobuf:"bytes,2,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version"`
 }
 
 func (x *RegisterEventsRequest) Reset() {
@@ -473,7 +473,7 @@ type RegisterEventsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Errors map[string]*RegisterEventsResponse_Error `protobuf:"bytes,1,rep,name=errors,proto3" json:"errors,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Errors map[string]*RegisterEventsResponse_Error `protobuf:"bytes,1,rep,name=errors,proto3" json:"errors" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *RegisterEventsResponse) Reset() {
@@ -520,12 +520,12 @@ type TrackRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Apikey    string  `protobuf:"bytes,1,opt,name=apikey,proto3" json:"apikey,omitempty"`
-	Userid    string  `protobuf:"bytes,2,opt,name=userid,proto3" json:"userid,omitempty"`
-	Goalid    string  `protobuf:"bytes,3,opt,name=goalid,proto3" json:"goalid,omitempty"`
-	Tag       string  `protobuf:"bytes,4,opt,name=tag,proto3" json:"tag,omitempty"`
-	Timestamp int64   `protobuf:"varint,5,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Value     float64 `protobuf:"fixed64,6,opt,name=value,proto3" json:"value,omitempty"`
+	Apikey    string  `protobuf:"bytes,1,opt,name=apikey,proto3" json:"apikey"`
+	Userid    string  `protobuf:"bytes,2,opt,name=userid,proto3" json:"userid"`
+	Goalid    string  `protobuf:"bytes,3,opt,name=goalid,proto3" json:"goalid"`
+	Tag       string  `protobuf:"bytes,4,opt,name=tag,proto3" json:"tag"`
+	Timestamp int64   `protobuf:"varint,5,opt,name=timestamp,proto3" json:"timestamp"`
+	Value     float64 `protobuf:"fixed64,6,opt,name=value,proto3" json:"value"`
 }
 
 func (x *TrackRequest) Reset() {
@@ -645,8 +645,8 @@ type GetEvaluationsRequest_UserEvaluationCondition struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EvaluatedAt           int64 `protobuf:"varint,1,opt,name=evaluated_at,json=evaluatedAt,proto3" json:"evaluated_at,omitempty"`
-	UserAttributesUpdated bool  `protobuf:"varint,2,opt,name=user_attributes_updated,json=userAttributesUpdated,proto3" json:"user_attributes_updated,omitempty"`
+	EvaluatedAt           int64 `protobuf:"varint,1,opt,name=evaluated_at,json=evaluatedAt,proto3" json:"evaluated_at"`
+	UserAttributesUpdated bool  `protobuf:"varint,2,opt,name=user_attributes_updated,json=userAttributesUpdated,proto3" json:"user_attributes_updated"`
 }
 
 func (x *GetEvaluationsRequest_UserEvaluationCondition) Reset() {
@@ -700,8 +700,8 @@ type RegisterEventsResponse_Error struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Retriable bool   `protobuf:"varint,1,opt,name=retriable,proto3" json:"retriable,omitempty"`
-	Message   string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Retriable bool   `protobuf:"varint,1,opt,name=retriable,proto3" json:"retriable"`
+	Message   string `protobuf:"bytes,2,opt,name=message,proto3" json:"message"`
 }
 
 func (x *RegisterEventsResponse_Error) Reset() {

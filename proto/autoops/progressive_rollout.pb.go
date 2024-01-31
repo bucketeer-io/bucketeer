@@ -135,13 +135,13 @@ type ProgressiveRollout struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId string                    `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	Clause    *anypb.Any                `protobuf:"bytes,3,opt,name=clause,proto3" json:"clause,omitempty"`
-	Status    ProgressiveRollout_Status `protobuf:"varint,4,opt,name=status,proto3,enum=bucketeer.autoops.ProgressiveRollout_Status" json:"status,omitempty"`
-	CreatedAt int64                     `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt int64                     `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Type      ProgressiveRollout_Type   `protobuf:"varint,7,opt,name=type,proto3,enum=bucketeer.autoops.ProgressiveRollout_Type" json:"type,omitempty"`
+	Id        string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId string                    `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	Clause    *anypb.Any                `protobuf:"bytes,3,opt,name=clause,proto3" json:"clause"`
+	Status    ProgressiveRollout_Status `protobuf:"varint,4,opt,name=status,proto3,enum=bucketeer.autoops.ProgressiveRollout_Status" json:"status"`
+	CreatedAt int64                     `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt int64                     `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Type      ProgressiveRollout_Type   `protobuf:"varint,7,opt,name=type,proto3,enum=bucketeer.autoops.ProgressiveRollout_Type" json:"type"`
 }
 
 func (x *ProgressiveRollout) Reset() {

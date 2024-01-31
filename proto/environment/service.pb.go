@@ -356,7 +356,7 @@ type GetEnvironmentV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *GetEnvironmentV2Request) Reset() {
@@ -403,7 +403,7 @@ type GetEnvironmentV2Response struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Environment *EnvironmentV2 `protobuf:"bytes,1,opt,name=environment,proto3" json:"environment,omitempty"`
+	Environment *EnvironmentV2 `protobuf:"bytes,1,opt,name=environment,proto3" json:"environment"`
 }
 
 func (x *GetEnvironmentV2Response) Reset() {
@@ -450,14 +450,14 @@ type ListEnvironmentsV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize       int64                                    `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor         string                                   `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	OrderBy        ListEnvironmentsV2Request_OrderBy        `protobuf:"varint,3,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.environment.ListEnvironmentsV2Request_OrderBy" json:"order_by,omitempty"`
-	OrderDirection ListEnvironmentsV2Request_OrderDirection `protobuf:"varint,4,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.environment.ListEnvironmentsV2Request_OrderDirection" json:"order_direction,omitempty"`
-	ProjectId      string                                   `protobuf:"bytes,5,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Archived       *wrapperspb.BoolValue                    `protobuf:"bytes,6,opt,name=archived,proto3" json:"archived,omitempty"`
-	SearchKeyword  string                                   `protobuf:"bytes,7,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	OrganizationId string                                   `protobuf:"bytes,8,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	PageSize       int64                                    `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor         string                                   `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	OrderBy        ListEnvironmentsV2Request_OrderBy        `protobuf:"varint,3,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.environment.ListEnvironmentsV2Request_OrderBy" json:"order_by"`
+	OrderDirection ListEnvironmentsV2Request_OrderDirection `protobuf:"varint,4,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.environment.ListEnvironmentsV2Request_OrderDirection" json:"order_direction"`
+	ProjectId      string                                   `protobuf:"bytes,5,opt,name=project_id,json=projectId,proto3" json:"project_id"`
+	Archived       *wrapperspb.BoolValue                    `protobuf:"bytes,6,opt,name=archived,proto3" json:"archived"`
+	SearchKeyword  string                                   `protobuf:"bytes,7,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	OrganizationId string                                   `protobuf:"bytes,8,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
 }
 
 func (x *ListEnvironmentsV2Request) Reset() {
@@ -553,9 +553,9 @@ type ListEnvironmentsV2Response struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Environments []*EnvironmentV2 `protobuf:"bytes,1,rep,name=environments,proto3" json:"environments,omitempty"`
-	Cursor       string           `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount   int64            `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	Environments []*EnvironmentV2 `protobuf:"bytes,1,rep,name=environments,proto3" json:"environments"`
+	Cursor       string           `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount   int64            `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListEnvironmentsV2Response) Reset() {
@@ -616,7 +616,7 @@ type CreateEnvironmentV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Command *CreateEnvironmentV2Command `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
+	Command *CreateEnvironmentV2Command `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
 }
 
 func (x *CreateEnvironmentV2Request) Reset() {
@@ -663,7 +663,7 @@ type CreateEnvironmentV2Response struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Environment *EnvironmentV2 `protobuf:"bytes,1,opt,name=environment,proto3" json:"environment,omitempty"`
+	Environment *EnvironmentV2 `protobuf:"bytes,1,opt,name=environment,proto3" json:"environment"`
 }
 
 func (x *CreateEnvironmentV2Response) Reset() {
@@ -710,9 +710,9 @@ type UpdateEnvironmentV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                       string                                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RenameCommand            *RenameEnvironmentV2Command            `protobuf:"bytes,2,opt,name=rename_command,json=renameCommand,proto3" json:"rename_command,omitempty"`
-	ChangeDescriptionCommand *ChangeDescriptionEnvironmentV2Command `protobuf:"bytes,3,opt,name=change_description_command,json=changeDescriptionCommand,proto3" json:"change_description_command,omitempty"`
+	Id                       string                                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RenameCommand            *RenameEnvironmentV2Command            `protobuf:"bytes,2,opt,name=rename_command,json=renameCommand,proto3" json:"rename_command"`
+	ChangeDescriptionCommand *ChangeDescriptionEnvironmentV2Command `protobuf:"bytes,3,opt,name=change_description_command,json=changeDescriptionCommand,proto3" json:"change_description_command"`
 }
 
 func (x *UpdateEnvironmentV2Request) Reset() {
@@ -811,8 +811,8 @@ type ArchiveEnvironmentV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                       `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *ArchiveEnvironmentV2Command `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                       `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *ArchiveEnvironmentV2Command `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *ArchiveEnvironmentV2Request) Reset() {
@@ -904,8 +904,8 @@ type UnarchiveEnvironmentV2Request struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *UnarchiveEnvironmentV2Command `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                         `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *UnarchiveEnvironmentV2Command `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *UnarchiveEnvironmentV2Request) Reset() {
@@ -997,7 +997,7 @@ type GetProjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *GetProjectRequest) Reset() {
@@ -1044,7 +1044,7 @@ type GetProjectResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Project *Project `protobuf:"bytes,1,opt,name=project,proto3" json:"project,omitempty"`
+	Project *Project `protobuf:"bytes,1,opt,name=project,proto3" json:"project"`
 }
 
 func (x *GetProjectResponse) Reset() {
@@ -1091,13 +1091,13 @@ type ListProjectsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize       int64                              `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor         string                             `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	OrderBy        ListProjectsRequest_OrderBy        `protobuf:"varint,3,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.environment.ListProjectsRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection ListProjectsRequest_OrderDirection `protobuf:"varint,4,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.environment.ListProjectsRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword  string                             `protobuf:"bytes,5,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	Disabled       *wrapperspb.BoolValue              `protobuf:"bytes,6,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	OrganizationId string                             `protobuf:"bytes,7,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	PageSize       int64                              `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor         string                             `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	OrderBy        ListProjectsRequest_OrderBy        `protobuf:"varint,3,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.environment.ListProjectsRequest_OrderBy" json:"order_by"`
+	OrderDirection ListProjectsRequest_OrderDirection `protobuf:"varint,4,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.environment.ListProjectsRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword  string                             `protobuf:"bytes,5,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	Disabled       *wrapperspb.BoolValue              `protobuf:"bytes,6,opt,name=disabled,proto3" json:"disabled"`
+	OrganizationId string                             `protobuf:"bytes,7,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
 }
 
 func (x *ListProjectsRequest) Reset() {
@@ -1186,9 +1186,9 @@ type ListProjectsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Projects   []*Project `protobuf:"bytes,1,rep,name=projects,proto3" json:"projects,omitempty"`
-	Cursor     string     `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount int64      `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	Projects   []*Project `protobuf:"bytes,1,rep,name=projects,proto3" json:"projects"`
+	Cursor     string     `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount int64      `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListProjectsResponse) Reset() {
@@ -1249,7 +1249,7 @@ type CreateProjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Command *CreateProjectCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
+	Command *CreateProjectCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
 }
 
 func (x *CreateProjectRequest) Reset() {
@@ -1296,7 +1296,7 @@ type CreateProjectResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Project *Project `protobuf:"bytes,1,opt,name=project,proto3" json:"project,omitempty"`
+	Project *Project `protobuf:"bytes,1,opt,name=project,proto3" json:"project"`
 }
 
 func (x *CreateProjectResponse) Reset() {
@@ -1343,7 +1343,7 @@ type CreateTrialProjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Command *CreateTrialProjectCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
+	Command *CreateTrialProjectCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
 }
 
 func (x *CreateTrialProjectRequest) Reset() {
@@ -1428,9 +1428,9 @@ type UpdateProjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                       string                           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ChangeDescriptionCommand *ChangeDescriptionProjectCommand `protobuf:"bytes,2,opt,name=change_description_command,json=changeDescriptionCommand,proto3" json:"change_description_command,omitempty"`
-	RenameCommand            *RenameProjectCommand            `protobuf:"bytes,3,opt,name=rename_command,json=renameCommand,proto3" json:"rename_command,omitempty"`
+	Id                       string                           `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	ChangeDescriptionCommand *ChangeDescriptionProjectCommand `protobuf:"bytes,2,opt,name=change_description_command,json=changeDescriptionCommand,proto3" json:"change_description_command"`
+	RenameCommand            *RenameProjectCommand            `protobuf:"bytes,3,opt,name=rename_command,json=renameCommand,proto3" json:"rename_command"`
 }
 
 func (x *UpdateProjectRequest) Reset() {
@@ -1529,8 +1529,8 @@ type EnableProjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *EnableProjectCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *EnableProjectCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *EnableProjectRequest) Reset() {
@@ -1622,8 +1622,8 @@ type DisableProjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *DisableProjectCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *DisableProjectCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DisableProjectRequest) Reset() {
@@ -1715,8 +1715,8 @@ type ConvertTrialProjectRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                      `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *ConvertTrialProjectCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                      `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *ConvertTrialProjectCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *ConvertTrialProjectRequest) Reset() {
@@ -1808,7 +1808,7 @@ type GetOrganizationRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *GetOrganizationRequest) Reset() {
@@ -1855,7 +1855,7 @@ type GetOrganizationResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Organization *Organization `protobuf:"bytes,1,opt,name=organization,proto3" json:"organization,omitempty"`
+	Organization *Organization `protobuf:"bytes,1,opt,name=organization,proto3" json:"organization"`
 }
 
 func (x *GetOrganizationResponse) Reset() {
@@ -1902,13 +1902,13 @@ type ListOrganizationsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize       int64                                   `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor         string                                  `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	OrderBy        ListOrganizationsRequest_OrderBy        `protobuf:"varint,3,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.environment.ListOrganizationsRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection ListOrganizationsRequest_OrderDirection `protobuf:"varint,4,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.environment.ListOrganizationsRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword  string                                  `protobuf:"bytes,5,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	Disabled       *wrapperspb.BoolValue                   `protobuf:"bytes,6,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	Archived       *wrapperspb.BoolValue                   `protobuf:"bytes,7,opt,name=archived,proto3" json:"archived,omitempty"`
+	PageSize       int64                                   `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor         string                                  `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	OrderBy        ListOrganizationsRequest_OrderBy        `protobuf:"varint,3,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.environment.ListOrganizationsRequest_OrderBy" json:"order_by"`
+	OrderDirection ListOrganizationsRequest_OrderDirection `protobuf:"varint,4,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.environment.ListOrganizationsRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword  string                                  `protobuf:"bytes,5,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	Disabled       *wrapperspb.BoolValue                   `protobuf:"bytes,6,opt,name=disabled,proto3" json:"disabled"`
+	Archived       *wrapperspb.BoolValue                   `protobuf:"bytes,7,opt,name=archived,proto3" json:"archived"`
 }
 
 func (x *ListOrganizationsRequest) Reset() {
@@ -1997,9 +1997,9 @@ type ListOrganizationsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Organizations []*Organization `protobuf:"bytes,1,rep,name=Organizations,proto3" json:"Organizations,omitempty"`
-	Cursor        string          `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount    int64           `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	Organizations []*Organization `protobuf:"bytes,1,rep,name=Organizations,proto3" json:"Organizations"`
+	Cursor        string          `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount    int64           `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListOrganizationsResponse) Reset() {
@@ -2060,7 +2060,7 @@ type CreateOrganizationRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Command *CreateOrganizationCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
+	Command *CreateOrganizationCommand `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
 }
 
 func (x *CreateOrganizationRequest) Reset() {
@@ -2107,7 +2107,7 @@ type CreateOrganizationResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Organization *Organization `protobuf:"bytes,1,opt,name=Organization,proto3" json:"Organization,omitempty"`
+	Organization *Organization `protobuf:"bytes,1,opt,name=Organization,proto3" json:"Organization"`
 }
 
 func (x *CreateOrganizationResponse) Reset() {
@@ -2154,9 +2154,9 @@ type UpdateOrganizationRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                       string                                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RenameCommand            *ChangeNameOrganizationCommand        `protobuf:"bytes,2,opt,name=rename_command,json=renameCommand,proto3" json:"rename_command,omitempty"`
-	ChangeDescriptionCommand *ChangeDescriptionOrganizationCommand `protobuf:"bytes,3,opt,name=change_description_command,json=changeDescriptionCommand,proto3" json:"change_description_command,omitempty"`
+	Id                       string                                `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RenameCommand            *ChangeNameOrganizationCommand        `protobuf:"bytes,2,opt,name=rename_command,json=renameCommand,proto3" json:"rename_command"`
+	ChangeDescriptionCommand *ChangeDescriptionOrganizationCommand `protobuf:"bytes,3,opt,name=change_description_command,json=changeDescriptionCommand,proto3" json:"change_description_command"`
 }
 
 func (x *UpdateOrganizationRequest) Reset() {
@@ -2255,8 +2255,8 @@ type EnableOrganizationRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *EnableOrganizationCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *EnableOrganizationCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *EnableOrganizationRequest) Reset() {
@@ -2348,8 +2348,8 @@ type DisableOrganizationRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                      `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *DisableOrganizationCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                      `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *DisableOrganizationCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DisableOrganizationRequest) Reset() {
@@ -2441,8 +2441,8 @@ type ArchiveOrganizationRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                      `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *ArchiveOrganizationCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                      `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *ArchiveOrganizationCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *ArchiveOrganizationRequest) Reset() {
@@ -2534,8 +2534,8 @@ type UnarchiveOrganizationRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *UnarchiveOrganizationCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                        `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *UnarchiveOrganizationCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *UnarchiveOrganizationRequest) Reset() {
@@ -2627,8 +2627,8 @@ type ConvertTrialOrganizationRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string                           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Command *ConvertTrialOrganizationCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Id      string                           `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Command *ConvertTrialOrganizationCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *ConvertTrialOrganizationRequest) Reset() {

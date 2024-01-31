@@ -122,7 +122,7 @@ type BatchJobRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Job BatchJob `protobuf:"varint,1,opt,name=job,proto3,enum=bucketeer.batch.BatchJob" json:"job,omitempty"`
+	Job BatchJob `protobuf:"varint,1,opt,name=job,proto3,enum=bucketeer.batch.BatchJob" json:"job"`
 }
 
 func (x *BatchJobRequest) Reset() {

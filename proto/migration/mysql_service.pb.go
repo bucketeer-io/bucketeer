@@ -119,7 +119,7 @@ type RollbackMasterSchemaRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Step int64 `protobuf:"varint,1,opt,name=step,proto3" json:"step,omitempty"`
+	Step int64 `protobuf:"varint,1,opt,name=step,proto3" json:"step"`
 }
 
 func (x *RollbackMasterSchemaRequest) Reset() {
