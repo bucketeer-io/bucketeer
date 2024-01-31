@@ -17,6 +17,8 @@ package api
 import (
 	"context"
 
+	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
+	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -36,7 +38,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 type options struct {
@@ -52,6 +53,7 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type FeatureService struct {
+	flagTriggerStorage    v2fs.FlagTriggerStorage
 	mysqlClient           mysql.Client
 	accountClient         accountclient.Client
 	experimentClient      experimentclient.Client
@@ -84,6 +86,7 @@ func NewFeatureService(
 		opt(dopts)
 	}
 	return &FeatureService{
+		flagTriggerStorage:    v2fs.NewFlagTriggerStorage(mysqlClient),
 		mysqlClient:           mysqlClient,
 		accountClient:         accountClient,
 		experimentClient:      experimentClient,

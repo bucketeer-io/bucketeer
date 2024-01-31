@@ -666,7 +666,7 @@ func (s *FeatureService) GetFlagTrigger(
 		)
 		return nil, err
 	}
-	trigger, err := v2fs.NewFlagTriggerStorage(s.mysqlClient).GetFlagTrigger(
+	trigger, err := s.flagTriggerStorage.GetFlagTrigger(
 		ctx,
 		request.Id,
 		request.EnvironmentNamespace,

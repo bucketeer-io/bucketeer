@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
@@ -120,6 +121,7 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 	at := autoopsclientmock.NewMockClient(c)
 	at.EXPECT().ListProgressiveRollouts(gomock.Any(), gomock.Any()).Return(&autoopsproto.ListProgressiveRolloutsResponse{}, nil).AnyTimes()
 	return &FeatureService{
+		mock.NewMockFlagTriggerStorage(c),
 		mysqlmock.NewMockClient(c),
 		a,
 		e,
@@ -146,6 +148,7 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 	}
 	a.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &FeatureService{
+		flagTriggerStorage:    mock.NewMockFlagTriggerStorage(c),
 		mysqlClient:           mysqlmock.NewMockClient(c),
 		accountClient:         a,
 		autoOpsClient:         aoclientmock.NewMockClient(c),
