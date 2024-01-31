@@ -824,8 +824,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 		}
 		return nil, dt.Err()
 	}
-	storage := v2fs.NewFlagTriggerStorage(s.mysqlClient)
-	trigger, err := storage.GetFlagTriggerByToken(ctx, token)
+	trigger, err := s.flagTriggerStorage.GetFlagTriggerByToken(ctx, token)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get flag trigger",
@@ -857,8 +856,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	if err != nil {
 		return nil, err
 	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	feature, err := featureStorage.GetFeature(ctx, trigger.FeatureId, trigger.EnvironmentNamespace)
+	feature, err := s.featureStorage.GetFeature(ctx, trigger.FeatureId, trigger.EnvironmentNamespace)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{

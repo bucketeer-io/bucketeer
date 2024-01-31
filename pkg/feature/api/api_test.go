@@ -122,6 +122,7 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 	at.EXPECT().ListProgressiveRollouts(gomock.Any(), gomock.Any()).Return(&autoopsproto.ListProgressiveRolloutsResponse{}, nil).AnyTimes()
 	return &FeatureService{
 		mock.NewMockFlagTriggerStorage(c),
+		mock.NewMockFeatureStorage(c),
 		mysqlmock.NewMockClient(c),
 		a,
 		e,
@@ -149,6 +150,7 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 	a.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &FeatureService{
 		flagTriggerStorage:    mock.NewMockFlagTriggerStorage(c),
+		featureStorage:        mock.NewMockFeatureStorage(c),
 		mysqlClient:           mysqlmock.NewMockClient(c),
 		accountClient:         a,
 		autoOpsClient:         aoclientmock.NewMockClient(c),
