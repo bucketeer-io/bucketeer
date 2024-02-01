@@ -539,7 +539,14 @@ func (s *FeatureService) ResetFlagTrigger(
 			}
 			return nil, dt.Err()
 		}
-		return nil, err
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	triggerURL, err := s.generateTriggerURL(ctx, trigger.Token, false)
 	if err != nil {
@@ -642,7 +649,14 @@ func (s *FeatureService) DeleteFlagTrigger(
 			}
 			return nil, dt.Err()
 		}
-		return nil, err
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.DeleteFlagTriggerResponse{}, nil
 }
