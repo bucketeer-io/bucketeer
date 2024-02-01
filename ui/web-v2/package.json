@@ -60,7 +60,7 @@
     "formik": "2.2.9",
     "google-protobuf": "3.21.2",
     "history": "4.10.1",
-    "js-cookie": "2.2.1",
+    "js-cookie": "3.0.5",
     "jstat": "1.9.4",
     "option-t": "23.0.2",
     "query-string": "7.0.1",
