@@ -31,7 +31,7 @@ require (
 	github.com/tkuchiki/go-timezone v0.2.2
 	go.opencensus.io v0.24.0
 	go.uber.org/mock v0.4.0
-	go.uber.org/zap v1.24.0
+	go.uber.org/zap v1.26.0
 	golang.org/x/oauth2 v0.15.0
 	golang.org/x/sync v0.5.0
 	golang.org/x/text v0.14.0
@@ -105,7 +105,7 @@ require (
 	github.com/prometheus/prometheus v0.35.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.16.0 // indirect
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0 // indirect
 	golang.org/x/mod v0.11.0 // indirect
