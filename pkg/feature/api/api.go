@@ -17,14 +17,15 @@ package api
 import (
 	"context"
 
-	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
+	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"

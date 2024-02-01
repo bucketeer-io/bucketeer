@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
+
+	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	aoclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
