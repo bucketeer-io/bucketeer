@@ -39,12 +39,12 @@ type FeatureLastUsedInfo struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId           string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	Version             int32  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
-	LastUsedAt          int64  `protobuf:"varint,3,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
-	CreatedAt           int64  `protobuf:"varint,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	ClientOldestVersion string `protobuf:"bytes,5,opt,name=client_oldest_version,json=clientOldestVersion,proto3" json:"client_oldest_version,omitempty"`
-	ClientLatestVersion string `protobuf:"bytes,6,opt,name=client_latest_version,json=clientLatestVersion,proto3" json:"client_latest_version,omitempty"`
+	FeatureId           string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	Version             int32  `protobuf:"varint,2,opt,name=version,proto3" json:"version"`
+	LastUsedAt          int64  `protobuf:"varint,3,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at"`
+	CreatedAt           int64  `protobuf:"varint,4,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	ClientOldestVersion string `protobuf:"bytes,5,opt,name=client_oldest_version,json=clientOldestVersion,proto3" json:"client_oldest_version"`
+	ClientLatestVersion string `protobuf:"bytes,6,opt,name=client_latest_version,json=clientLatestVersion,proto3" json:"client_latest_version"`
 }
 
 func (x *FeatureLastUsedInfo) Reset() {

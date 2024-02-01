@@ -141,8 +141,8 @@ type CreatePushRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string             `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Command              *CreatePushCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string             `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Command              *CreatePushCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *CreatePushRequest) Reset() {
@@ -234,12 +234,12 @@ type ListPushesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                           `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	PageSize             int64                            `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                           `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	OrderBy              ListPushesRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.push.ListPushesRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection       ListPushesRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.push.ListPushesRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword        string                           `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
+	EnvironmentNamespace string                           `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	PageSize             int64                            `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                           `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor"`
+	OrderBy              ListPushesRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.push.ListPushesRequest_OrderBy" json:"order_by"`
+	OrderDirection       ListPushesRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.push.ListPushesRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword        string                           `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
 }
 
 func (x *ListPushesRequest) Reset() {
@@ -321,9 +321,9 @@ type ListPushesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Pushes     []*Push `protobuf:"bytes,1,rep,name=pushes,proto3" json:"pushes,omitempty"`
-	Cursor     string  `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount int64   `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	Pushes     []*Push `protobuf:"bytes,1,rep,name=pushes,proto3" json:"pushes"`
+	Cursor     string  `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount int64   `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListPushesResponse) Reset() {
@@ -384,9 +384,9 @@ type DeletePushRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string             `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                   string             `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *DeletePushCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string             `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                   string             `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	Command              *DeletePushCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DeletePushRequest) Reset() {
@@ -485,11 +485,11 @@ type UpdatePushRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace  string                 `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                    string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	AddPushTagsCommand    *AddPushTagsCommand    `protobuf:"bytes,3,opt,name=add_push_tags_command,json=addPushTagsCommand,proto3" json:"add_push_tags_command,omitempty"`
-	DeletePushTagsCommand *DeletePushTagsCommand `protobuf:"bytes,4,opt,name=delete_push_tags_command,json=deletePushTagsCommand,proto3" json:"delete_push_tags_command,omitempty"`
-	RenamePushCommand     *RenamePushCommand     `protobuf:"bytes,5,opt,name=rename_push_command,json=renamePushCommand,proto3" json:"rename_push_command,omitempty"`
+	EnvironmentNamespace  string                 `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                    string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	AddPushTagsCommand    *AddPushTagsCommand    `protobuf:"bytes,3,opt,name=add_push_tags_command,json=addPushTagsCommand,proto3" json:"add_push_tags_command"`
+	DeletePushTagsCommand *DeletePushTagsCommand `protobuf:"bytes,4,opt,name=delete_push_tags_command,json=deletePushTagsCommand,proto3" json:"delete_push_tags_command"`
+	RenamePushCommand     *RenamePushCommand     `protobuf:"bytes,5,opt,name=rename_push_command,json=renamePushCommand,proto3" json:"rename_push_command"`
 }
 
 func (x *UpdatePushRequest) Reset() {

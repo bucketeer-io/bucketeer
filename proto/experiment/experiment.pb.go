@@ -92,27 +92,27 @@ type Experiment struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 	// Deprecated: Do not use.
-	GoalId         string               `protobuf:"bytes,2,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
-	FeatureId      string               `protobuf:"bytes,3,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	FeatureVersion int32                `protobuf:"varint,4,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version,omitempty"`
-	Variations     []*feature.Variation `protobuf:"bytes,5,rep,name=variations,proto3" json:"variations,omitempty"`
-	StartAt        int64                `protobuf:"varint,6,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
-	StopAt         int64                `protobuf:"varint,7,opt,name=stop_at,json=stopAt,proto3" json:"stop_at,omitempty"`
+	GoalId         string               `protobuf:"bytes,2,opt,name=goal_id,json=goalId,proto3" json:"goal_id"`
+	FeatureId      string               `protobuf:"bytes,3,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	FeatureVersion int32                `protobuf:"varint,4,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version"`
+	Variations     []*feature.Variation `protobuf:"bytes,5,rep,name=variations,proto3" json:"variations"`
+	StartAt        int64                `protobuf:"varint,6,opt,name=start_at,json=startAt,proto3" json:"start_at"`
+	StopAt         int64                `protobuf:"varint,7,opt,name=stop_at,json=stopAt,proto3" json:"stop_at"`
 	// Deprecated: Do not use.
-	Stopped         bool              `protobuf:"varint,8,opt,name=stopped,proto3" json:"stopped,omitempty"`
-	StoppedAt       int64             `protobuf:"varint,9,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at,omitempty"`
-	CreatedAt       int64             `protobuf:"varint,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt       int64             `protobuf:"varint,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Deleted         bool              `protobuf:"varint,12,opt,name=deleted,proto3" json:"deleted,omitempty"`
-	GoalIds         []string          `protobuf:"bytes,13,rep,name=goal_ids,json=goalIds,proto3" json:"goal_ids,omitempty"`
-	Name            string            `protobuf:"bytes,14,opt,name=name,proto3" json:"name,omitempty"`
-	Description     string            `protobuf:"bytes,15,opt,name=description,proto3" json:"description,omitempty"`
-	BaseVariationId string            `protobuf:"bytes,16,opt,name=base_variation_id,json=baseVariationId,proto3" json:"base_variation_id,omitempty"`
-	Status          Experiment_Status `protobuf:"varint,18,opt,name=status,proto3,enum=bucketeer.experiment.Experiment_Status" json:"status,omitempty"`
-	Maintainer      string            `protobuf:"bytes,19,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
-	Archived        bool              `protobuf:"varint,20,opt,name=archived,proto3" json:"archived,omitempty"`
+	Stopped         bool              `protobuf:"varint,8,opt,name=stopped,proto3" json:"stopped"`
+	StoppedAt       int64             `protobuf:"varint,9,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at"`
+	CreatedAt       int64             `protobuf:"varint,10,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt       int64             `protobuf:"varint,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Deleted         bool              `protobuf:"varint,12,opt,name=deleted,proto3" json:"deleted"`
+	GoalIds         []string          `protobuf:"bytes,13,rep,name=goal_ids,json=goalIds,proto3" json:"goal_ids"`
+	Name            string            `protobuf:"bytes,14,opt,name=name,proto3" json:"name"`
+	Description     string            `protobuf:"bytes,15,opt,name=description,proto3" json:"description"`
+	BaseVariationId string            `protobuf:"bytes,16,opt,name=base_variation_id,json=baseVariationId,proto3" json:"base_variation_id"`
+	Status          Experiment_Status `protobuf:"varint,18,opt,name=status,proto3,enum=bucketeer.experiment.Experiment_Status" json:"status"`
+	Maintainer      string            `protobuf:"bytes,19,opt,name=maintainer,proto3" json:"maintainer"`
+	Archived        bool              `protobuf:"varint,20,opt,name=archived,proto3" json:"archived"`
 }
 
 func (x *Experiment) Reset() {
@@ -287,7 +287,7 @@ type Experiments struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Experiments []*Experiment `protobuf:"bytes,1,rep,name=experiments,proto3" json:"experiments,omitempty"`
+	Experiments []*Experiment `protobuf:"bytes,1,rep,name=experiments,proto3" json:"experiments"`
 }
 
 func (x *Experiments) Reset() {

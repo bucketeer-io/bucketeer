@@ -88,16 +88,16 @@ type Evaluation struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId      string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	FeatureVersion int32  `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version,omitempty"`
-	UserId         string `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	VariationId    string `protobuf:"bytes,5,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
+	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId      string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	FeatureVersion int32  `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version"`
+	UserId         string `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id"`
+	VariationId    string `protobuf:"bytes,5,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
 	// Deprecated: Do not use.
-	Variation      *Variation `protobuf:"bytes,6,opt,name=variation,proto3" json:"variation,omitempty"`
-	Reason         *Reason    `protobuf:"bytes,7,opt,name=reason,proto3" json:"reason,omitempty"`
-	VariationValue string     `protobuf:"bytes,8,opt,name=variation_value,json=variationValue,proto3" json:"variation_value,omitempty"`
-	VariationName  string     `protobuf:"bytes,9,opt,name=variation_name,json=variationName,proto3" json:"variation_name,omitempty"`
+	Variation      *Variation `protobuf:"bytes,6,opt,name=variation,proto3" json:"variation"`
+	Reason         *Reason    `protobuf:"bytes,7,opt,name=reason,proto3" json:"reason"`
+	VariationValue string     `protobuf:"bytes,8,opt,name=variation_value,json=variationValue,proto3" json:"variation_value"`
+	VariationName  string     `protobuf:"bytes,9,opt,name=variation_name,json=variationName,proto3" json:"variation_name"`
 }
 
 func (x *Evaluation) Reset() {
@@ -202,11 +202,11 @@ type UserEvaluations struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Deprecated: Do not use.
-	Id                 string        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Evaluations        []*Evaluation `protobuf:"bytes,2,rep,name=evaluations,proto3" json:"evaluations,omitempty"`
-	CreatedAt          int64         `protobuf:"varint,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	ArchivedFeatureIds []string      `protobuf:"bytes,4,rep,name=archived_feature_ids,json=archivedFeatureIds,proto3" json:"archived_feature_ids,omitempty"`
-	ForceUpdate        bool          `protobuf:"varint,5,opt,name=force_update,json=forceUpdate,proto3" json:"force_update,omitempty"`
+	Id                 string        `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Evaluations        []*Evaluation `protobuf:"bytes,2,rep,name=evaluations,proto3" json:"evaluations"`
+	CreatedAt          int64         `protobuf:"varint,3,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	ArchivedFeatureIds []string      `protobuf:"bytes,4,rep,name=archived_feature_ids,json=archivedFeatureIds,proto3" json:"archived_feature_ids"`
+	ForceUpdate        bool          `protobuf:"varint,5,opt,name=force_update,json=forceUpdate,proto3" json:"force_update"`
 }
 
 func (x *UserEvaluations) Reset() {

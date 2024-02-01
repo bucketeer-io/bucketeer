@@ -39,8 +39,8 @@ type Target struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Variation string   `protobuf:"bytes,1,opt,name=variation,proto3" json:"variation,omitempty"`
-	Users     []string `protobuf:"bytes,2,rep,name=users,proto3" json:"users,omitempty"`
+	Variation string   `protobuf:"bytes,1,opt,name=variation,proto3" json:"variation"`
+	Users     []string `protobuf:"bytes,2,rep,name=users,proto3" json:"users"`
 }
 
 func (x *Target) Reset() {

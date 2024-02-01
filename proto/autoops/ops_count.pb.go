@@ -39,13 +39,13 @@ type OpsCount struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id              string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	AutoOpsRuleId   string `protobuf:"bytes,2,opt,name=auto_ops_rule_id,json=autoOpsRuleId,proto3" json:"auto_ops_rule_id,omitempty"`
-	ClauseId        string `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
-	UpdatedAt       int64  `protobuf:"varint,4,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	OpsEventCount   int64  `protobuf:"varint,5,opt,name=ops_event_count,json=opsEventCount,proto3" json:"ops_event_count,omitempty"`
-	EvaluationCount int64  `protobuf:"varint,6,opt,name=evaluation_count,json=evaluationCount,proto3" json:"evaluation_count,omitempty"`
-	FeatureId       string `protobuf:"bytes,7,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
+	Id              string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	AutoOpsRuleId   string `protobuf:"bytes,2,opt,name=auto_ops_rule_id,json=autoOpsRuleId,proto3" json:"auto_ops_rule_id"`
+	ClauseId        string `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
+	UpdatedAt       int64  `protobuf:"varint,4,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	OpsEventCount   int64  `protobuf:"varint,5,opt,name=ops_event_count,json=opsEventCount,proto3" json:"ops_event_count"`
+	EvaluationCount int64  `protobuf:"varint,6,opt,name=evaluation_count,json=evaluationCount,proto3" json:"evaluation_count"`
+	FeatureId       string `protobuf:"bytes,7,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
 }
 
 func (x *OpsCount) Reset() {

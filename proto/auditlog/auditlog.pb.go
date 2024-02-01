@@ -41,15 +41,15 @@ type AuditLog struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id               string                   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Timestamp        int64                    `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	EntityType       domain.Event_EntityType  `protobuf:"varint,3,opt,name=entity_type,json=entityType,proto3,enum=bucketeer.event.domain.Event_EntityType" json:"entity_type,omitempty"`
-	EntityId         string                   `protobuf:"bytes,4,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
-	Type             domain.Event_Type        `protobuf:"varint,5,opt,name=type,proto3,enum=bucketeer.event.domain.Event_Type" json:"type,omitempty"`
-	Event            *anypb.Any               `protobuf:"bytes,6,opt,name=event,proto3" json:"event,omitempty"`
-	Editor           *domain.Editor           `protobuf:"bytes,7,opt,name=editor,proto3" json:"editor,omitempty"`
-	Options          *domain.Options          `protobuf:"bytes,8,opt,name=options,proto3" json:"options,omitempty"`
-	LocalizedMessage *domain.LocalizedMessage `protobuf:"bytes,9,opt,name=localized_message,json=localizedMessage,proto3" json:"localized_message,omitempty"`
+	Id               string                   `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Timestamp        int64                    `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp"`
+	EntityType       domain.Event_EntityType  `protobuf:"varint,3,opt,name=entity_type,json=entityType,proto3,enum=bucketeer.event.domain.Event_EntityType" json:"entity_type"`
+	EntityId         string                   `protobuf:"bytes,4,opt,name=entity_id,json=entityId,proto3" json:"entity_id"`
+	Type             domain.Event_Type        `protobuf:"varint,5,opt,name=type,proto3,enum=bucketeer.event.domain.Event_Type" json:"type"`
+	Event            *anypb.Any               `protobuf:"bytes,6,opt,name=event,proto3" json:"event"`
+	Editor           *domain.Editor           `protobuf:"bytes,7,opt,name=editor,proto3" json:"editor"`
+	Options          *domain.Options          `protobuf:"bytes,8,opt,name=options,proto3" json:"options"`
+	LocalizedMessage *domain.LocalizedMessage `protobuf:"bytes,9,opt,name=localized_message,json=localizedMessage,proto3" json:"localized_message"`
 }
 
 func (x *AuditLog) Reset() {

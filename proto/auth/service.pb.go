@@ -43,8 +43,8 @@ type GetAuthCodeURLRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	State       string `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	RedirectUrl string `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url,omitempty"`
+	State       string `protobuf:"bytes,1,opt,name=state,proto3" json:"state"`
+	RedirectUrl string `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url"`
 }
 
 func (x *GetAuthCodeURLRequest) Reset() {
@@ -98,7 +98,7 @@ type GetAuthCodeURLResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url"`
 }
 
 func (x *GetAuthCodeURLResponse) Reset() {
@@ -145,8 +145,8 @@ type ExchangeTokenRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Code        string `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
-	RedirectUrl string `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url,omitempty"`
+	Code        string `protobuf:"bytes,1,opt,name=code,proto3" json:"code"`
+	RedirectUrl string `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url"`
 }
 
 func (x *ExchangeTokenRequest) Reset() {
@@ -200,7 +200,7 @@ type ExchangeTokenResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Token *Token `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Token *Token `protobuf:"bytes,1,opt,name=token,proto3" json:"token"`
 }
 
 func (x *ExchangeTokenResponse) Reset() {
@@ -247,8 +247,8 @@ type RefreshTokenRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	RefreshToken string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	RedirectUrl  string `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url,omitempty"`
+	RefreshToken string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token"`
+	RedirectUrl  string `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url"`
 }
 
 func (x *RefreshTokenRequest) Reset() {
@@ -302,7 +302,7 @@ type RefreshTokenResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Token *Token `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Token *Token `protobuf:"bytes,1,opt,name=token,proto3" json:"token"`
 }
 
 func (x *RefreshTokenResponse) Reset() {

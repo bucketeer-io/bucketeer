@@ -44,8 +44,8 @@ type BatchCalcRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentId string                 `protobuf:"bytes,1,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
-	Experiment    *experiment.Experiment `protobuf:"bytes,2,opt,name=experiment,proto3" json:"experiment,omitempty"`
+	EnvironmentId string                 `protobuf:"bytes,1,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	Experiment    *experiment.Experiment `protobuf:"bytes,2,opt,name=experiment,proto3" json:"experiment"`
 }
 
 func (x *BatchCalcRequest) Reset() {

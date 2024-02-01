@@ -86,12 +86,12 @@ type APIKey struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string      `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name      string      `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Role      APIKey_Role `protobuf:"varint,3,opt,name=role,proto3,enum=bucketeer.account.APIKey_Role" json:"role,omitempty"`
-	Disabled  bool        `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	CreatedAt int64       `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt int64       `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Id        string      `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name      string      `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Role      APIKey_Role `protobuf:"varint,3,opt,name=role,proto3,enum=bucketeer.account.APIKey_Role" json:"role"`
+	Disabled  bool        `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled"`
+	CreatedAt int64       `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt int64       `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *APIKey) Reset() {
@@ -174,11 +174,11 @@ type EnvironmentAPIKey struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Deprecated: Do not use.
-	EnvironmentNamespace string                     `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	ApiKey               *APIKey                    `protobuf:"bytes,2,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
-	EnvironmentDisabled  bool                       `protobuf:"varint,3,opt,name=environment_disabled,json=environmentDisabled,proto3" json:"environment_disabled,omitempty"`
-	ProjectId            string                     `protobuf:"bytes,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Environment          *environment.EnvironmentV2 `protobuf:"bytes,5,opt,name=environment,proto3" json:"environment,omitempty"`
+	EnvironmentNamespace string                     `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	ApiKey               *APIKey                    `protobuf:"bytes,2,opt,name=api_key,json=apiKey,proto3" json:"api_key"`
+	EnvironmentDisabled  bool                       `protobuf:"varint,3,opt,name=environment_disabled,json=environmentDisabled,proto3" json:"environment_disabled"`
+	ProjectId            string                     `protobuf:"bytes,4,opt,name=project_id,json=projectId,proto3" json:"project_id"`
+	Environment          *environment.EnvironmentV2 `protobuf:"bytes,5,opt,name=environment,proto3" json:"environment"`
 }
 
 func (x *EnvironmentAPIKey) Reset() {

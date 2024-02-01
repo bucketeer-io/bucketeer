@@ -85,7 +85,7 @@ type FixedStrategy struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Variation string `protobuf:"bytes,1,opt,name=variation,proto3" json:"variation,omitempty"`
+	Variation string `protobuf:"bytes,1,opt,name=variation,proto3" json:"variation"`
 }
 
 func (x *FixedStrategy) Reset() {
@@ -132,7 +132,7 @@ type RolloutStrategy struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Variations []*RolloutStrategy_Variation `protobuf:"bytes,1,rep,name=variations,proto3" json:"variations,omitempty"`
+	Variations []*RolloutStrategy_Variation `protobuf:"bytes,1,rep,name=variations,proto3" json:"variations"`
 }
 
 func (x *RolloutStrategy) Reset() {
@@ -179,9 +179,9 @@ type Strategy struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Type            Strategy_Type    `protobuf:"varint,1,opt,name=type,proto3,enum=bucketeer.feature.Strategy_Type" json:"type,omitempty"`
-	FixedStrategy   *FixedStrategy   `protobuf:"bytes,2,opt,name=fixed_strategy,json=fixedStrategy,proto3" json:"fixed_strategy,omitempty"`
-	RolloutStrategy *RolloutStrategy `protobuf:"bytes,3,opt,name=rollout_strategy,json=rolloutStrategy,proto3" json:"rollout_strategy,omitempty"`
+	Type            Strategy_Type    `protobuf:"varint,1,opt,name=type,proto3,enum=bucketeer.feature.Strategy_Type" json:"type"`
+	FixedStrategy   *FixedStrategy   `protobuf:"bytes,2,opt,name=fixed_strategy,json=fixedStrategy,proto3" json:"fixed_strategy"`
+	RolloutStrategy *RolloutStrategy `protobuf:"bytes,3,opt,name=rollout_strategy,json=rolloutStrategy,proto3" json:"rollout_strategy"`
 }
 
 func (x *Strategy) Reset() {
@@ -242,8 +242,8 @@ type RolloutStrategy_Variation struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Variation string `protobuf:"bytes,1,opt,name=variation,proto3" json:"variation,omitempty"`
-	Weight    int32  `protobuf:"varint,2,opt,name=weight,proto3" json:"weight,omitempty"`
+	Variation string `protobuf:"bytes,1,opt,name=variation,proto3" json:"variation"`
+	Weight    int32  `protobuf:"varint,2,opt,name=weight,proto3" json:"weight"`
 }
 
 func (x *RolloutStrategy_Variation) Reset() {

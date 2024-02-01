@@ -128,9 +128,9 @@ type Recipient struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Type                  Recipient_Type         `protobuf:"varint,1,opt,name=type,proto3,enum=bucketeer.notification.Recipient_Type" json:"type,omitempty"`
-	SlackChannelRecipient *SlackChannelRecipient `protobuf:"bytes,2,opt,name=slack_channel_recipient,json=slackChannelRecipient,proto3" json:"slack_channel_recipient,omitempty"`
-	Language              Recipient_Language     `protobuf:"varint,3,opt,name=language,proto3,enum=bucketeer.notification.Recipient_Language" json:"language,omitempty"`
+	Type                  Recipient_Type         `protobuf:"varint,1,opt,name=type,proto3,enum=bucketeer.notification.Recipient_Type" json:"type"`
+	SlackChannelRecipient *SlackChannelRecipient `protobuf:"bytes,2,opt,name=slack_channel_recipient,json=slackChannelRecipient,proto3" json:"slack_channel_recipient"`
+	Language              Recipient_Language     `protobuf:"varint,3,opt,name=language,proto3,enum=bucketeer.notification.Recipient_Language" json:"language"`
 }
 
 func (x *Recipient) Reset() {
@@ -191,7 +191,7 @@ type SlackChannelRecipient struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	WebhookUrl string `protobuf:"bytes,1,opt,name=webhook_url,json=webhookUrl,proto3" json:"webhook_url,omitempty"`
+	WebhookUrl string `protobuf:"bytes,1,opt,name=webhook_url,json=webhookUrl,proto3" json:"webhook_url"`
 }
 
 func (x *SlackChannelRecipient) Reset() {

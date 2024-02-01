@@ -39,9 +39,9 @@ type CreatePushCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FcmApiKey string   `protobuf:"bytes,1,opt,name=fcm_api_key,json=fcmApiKey,proto3" json:"fcm_api_key,omitempty"`
-	Tags      []string `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
-	Name      string   `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	FcmApiKey string   `protobuf:"bytes,1,opt,name=fcm_api_key,json=fcmApiKey,proto3" json:"fcm_api_key"`
+	Tags      []string `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags"`
+	Name      string   `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 }
 
 func (x *CreatePushCommand) Reset() {
@@ -102,7 +102,7 @@ type AddPushTagsCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tags []string `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags,omitempty"`
+	Tags []string `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags"`
 }
 
 func (x *AddPushTagsCommand) Reset() {
@@ -149,7 +149,7 @@ type DeletePushTagsCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tags []string `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags,omitempty"`
+	Tags []string `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags"`
 }
 
 func (x *DeletePushTagsCommand) Reset() {
@@ -234,7 +234,7 @@ type RenamePushCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *RenamePushCommand) Reset() {

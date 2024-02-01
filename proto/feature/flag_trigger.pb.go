@@ -134,18 +134,18 @@ type FlagTrigger struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string             `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId            string             `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	EnvironmentNamespace string             `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Type                 FlagTrigger_Type   `protobuf:"varint,4,opt,name=type,proto3,enum=bucketeer.feature.FlagTrigger_Type" json:"type,omitempty"`
-	Action               FlagTrigger_Action `protobuf:"varint,5,opt,name=action,proto3,enum=bucketeer.feature.FlagTrigger_Action" json:"action,omitempty"`
-	Description          string             `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	TriggerCount         int32              `protobuf:"varint,7,opt,name=trigger_count,json=triggerCount,proto3" json:"trigger_count,omitempty"`
-	LastTriggeredAt      int64              `protobuf:"varint,8,opt,name=last_triggered_at,json=lastTriggeredAt,proto3" json:"last_triggered_at,omitempty"`
-	Token                string             `protobuf:"bytes,9,opt,name=token,proto3" json:"token,omitempty"`
-	Disabled             bool               `protobuf:"varint,10,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	CreatedAt            int64              `protobuf:"varint,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt            int64              `protobuf:"varint,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Id                   string             `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId            string             `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	EnvironmentNamespace string             `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Type                 FlagTrigger_Type   `protobuf:"varint,4,opt,name=type,proto3,enum=bucketeer.feature.FlagTrigger_Type" json:"type"`
+	Action               FlagTrigger_Action `protobuf:"varint,5,opt,name=action,proto3,enum=bucketeer.feature.FlagTrigger_Action" json:"action"`
+	Description          string             `protobuf:"bytes,6,opt,name=description,proto3" json:"description"`
+	TriggerCount         int32              `protobuf:"varint,7,opt,name=trigger_count,json=triggerCount,proto3" json:"trigger_count"`
+	LastTriggeredAt      int64              `protobuf:"varint,8,opt,name=last_triggered_at,json=lastTriggeredAt,proto3" json:"last_triggered_at"`
+	Token                string             `protobuf:"bytes,9,opt,name=token,proto3" json:"token"`
+	Disabled             bool               `protobuf:"varint,10,opt,name=disabled,proto3" json:"disabled"`
+	CreatedAt            int64              `protobuf:"varint,11,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt            int64              `protobuf:"varint,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *FlagTrigger) Reset() {

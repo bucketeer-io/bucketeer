@@ -320,15 +320,15 @@ type ListAuditLogsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize             int64                               `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                              `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	EnvironmentNamespace string                              `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	OrderBy              ListAuditLogsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.auditlog.ListAuditLogsRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection       ListAuditLogsRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.auditlog.ListAuditLogsRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword        string                              `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	From                 int64                               `protobuf:"varint,7,opt,name=from,proto3" json:"from,omitempty"`
-	To                   int64                               `protobuf:"varint,8,opt,name=to,proto3" json:"to,omitempty"`
-	EntityType           *wrapperspb.Int32Value              `protobuf:"bytes,9,opt,name=entity_type,json=entityType,proto3" json:"entity_type,omitempty"`
+	PageSize             int64                               `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                              `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	EnvironmentNamespace string                              `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	OrderBy              ListAuditLogsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.auditlog.ListAuditLogsRequest_OrderBy" json:"order_by"`
+	OrderDirection       ListAuditLogsRequest_OrderDirection `protobuf:"varint,5,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.auditlog.ListAuditLogsRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword        string                              `protobuf:"bytes,6,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	From                 int64                               `protobuf:"varint,7,opt,name=from,proto3" json:"from"`
+	To                   int64                               `protobuf:"varint,8,opt,name=to,proto3" json:"to"`
+	EntityType           *wrapperspb.Int32Value              `protobuf:"bytes,9,opt,name=entity_type,json=entityType,proto3" json:"entity_type"`
 }
 
 func (x *ListAuditLogsRequest) Reset() {
@@ -431,9 +431,9 @@ type ListAuditLogsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AuditLogs  []*AuditLog `protobuf:"bytes,1,rep,name=audit_logs,json=auditLogs,proto3" json:"audit_logs,omitempty"`
-	Cursor     string      `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount int64       `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	AuditLogs  []*AuditLog `protobuf:"bytes,1,rep,name=audit_logs,json=auditLogs,proto3" json:"audit_logs"`
+	Cursor     string      `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount int64       `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListAuditLogsResponse) Reset() {
@@ -494,14 +494,14 @@ type ListAdminAuditLogsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	PageSize       int64                                    `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor         string                                   `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	OrderBy        ListAdminAuditLogsRequest_OrderBy        `protobuf:"varint,3,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.auditlog.ListAdminAuditLogsRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection ListAdminAuditLogsRequest_OrderDirection `protobuf:"varint,4,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.auditlog.ListAdminAuditLogsRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword  string                                   `protobuf:"bytes,5,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	From           int64                                    `protobuf:"varint,6,opt,name=from,proto3" json:"from,omitempty"`
-	To             int64                                    `protobuf:"varint,7,opt,name=to,proto3" json:"to,omitempty"`
-	EntityType     *wrapperspb.Int32Value                   `protobuf:"bytes,8,opt,name=entity_type,json=entityType,proto3" json:"entity_type,omitempty"`
+	PageSize       int64                                    `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor         string                                   `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	OrderBy        ListAdminAuditLogsRequest_OrderBy        `protobuf:"varint,3,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.auditlog.ListAdminAuditLogsRequest_OrderBy" json:"order_by"`
+	OrderDirection ListAdminAuditLogsRequest_OrderDirection `protobuf:"varint,4,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.auditlog.ListAdminAuditLogsRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword  string                                   `protobuf:"bytes,5,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	From           int64                                    `protobuf:"varint,6,opt,name=from,proto3" json:"from"`
+	To             int64                                    `protobuf:"varint,7,opt,name=to,proto3" json:"to"`
+	EntityType     *wrapperspb.Int32Value                   `protobuf:"bytes,8,opt,name=entity_type,json=entityType,proto3" json:"entity_type"`
 }
 
 func (x *ListAdminAuditLogsRequest) Reset() {
@@ -597,9 +597,9 @@ type ListAdminAuditLogsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AuditLogs  []*AuditLog `protobuf:"bytes,1,rep,name=audit_logs,json=auditLogs,proto3" json:"audit_logs,omitempty"`
-	Cursor     string      `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount int64       `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	AuditLogs  []*AuditLog `protobuf:"bytes,1,rep,name=audit_logs,json=auditLogs,proto3" json:"audit_logs"`
+	Cursor     string      `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount int64       `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListAdminAuditLogsResponse) Reset() {
@@ -660,15 +660,15 @@ type ListFeatureHistoryRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId            string                                   `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	PageSize             int64                                    `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                                   `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	EnvironmentNamespace string                                   `protobuf:"bytes,4,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	OrderBy              ListFeatureHistoryRequest_OrderBy        `protobuf:"varint,5,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.auditlog.ListFeatureHistoryRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection       ListFeatureHistoryRequest_OrderDirection `protobuf:"varint,6,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.auditlog.ListFeatureHistoryRequest_OrderDirection" json:"order_direction,omitempty"`
-	SearchKeyword        string                                   `protobuf:"bytes,7,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword,omitempty"`
-	From                 int64                                    `protobuf:"varint,8,opt,name=from,proto3" json:"from,omitempty"`
-	To                   int64                                    `protobuf:"varint,9,opt,name=to,proto3" json:"to,omitempty"`
+	FeatureId            string                                   `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	PageSize             int64                                    `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                                   `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor"`
+	EnvironmentNamespace string                                   `protobuf:"bytes,4,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	OrderBy              ListFeatureHistoryRequest_OrderBy        `protobuf:"varint,5,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.auditlog.ListFeatureHistoryRequest_OrderBy" json:"order_by"`
+	OrderDirection       ListFeatureHistoryRequest_OrderDirection `protobuf:"varint,6,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.auditlog.ListFeatureHistoryRequest_OrderDirection" json:"order_direction"`
+	SearchKeyword        string                                   `protobuf:"bytes,7,opt,name=search_keyword,json=searchKeyword,proto3" json:"search_keyword"`
+	From                 int64                                    `protobuf:"varint,8,opt,name=from,proto3" json:"from"`
+	To                   int64                                    `protobuf:"varint,9,opt,name=to,proto3" json:"to"`
 }
 
 func (x *ListFeatureHistoryRequest) Reset() {
@@ -771,9 +771,9 @@ type ListFeatureHistoryResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AuditLogs  []*AuditLog `protobuf:"bytes,1,rep,name=audit_logs,json=auditLogs,proto3" json:"audit_logs,omitempty"`
-	Cursor     string      `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount int64       `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	AuditLogs  []*AuditLog `protobuf:"bytes,1,rep,name=audit_logs,json=auditLogs,proto3" json:"audit_logs"`
+	Cursor     string      `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount int64       `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListFeatureHistoryResponse) Reset() {

@@ -2502,8 +2502,10 @@ func newGatewayServiceWithMock(t *testing.T, mockController *gomock.Controller) 
 func emptyUserEvaluationsForREST(t *testing.T) *featureproto.UserEvaluations {
 	t.Helper()
 	return &featureproto.UserEvaluations{
-		Id:          "no_evaluations",
-		CreatedAt:   time.Now().Unix(),
-		ForceUpdate: false,
+		Id:                 "no_evaluations",
+		Evaluations:        []*featureproto.Evaluation{},
+		CreatedAt:          time.Now().Unix(),
+		ForceUpdate:        false,
+		ArchivedFeatureIds: []string{},
 	}
 }

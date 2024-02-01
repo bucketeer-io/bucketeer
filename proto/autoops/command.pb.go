@@ -39,10 +39,10 @@ type CreateAutoOpsRuleCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId           string                `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	OpsType             OpsType               `protobuf:"varint,2,opt,name=ops_type,json=opsType,proto3,enum=bucketeer.autoops.OpsType" json:"ops_type,omitempty"`
-	OpsEventRateClauses []*OpsEventRateClause `protobuf:"bytes,3,rep,name=ops_event_rate_clauses,json=opsEventRateClauses,proto3" json:"ops_event_rate_clauses,omitempty"`
-	DatetimeClauses     []*DatetimeClause     `protobuf:"bytes,4,rep,name=datetime_clauses,json=datetimeClauses,proto3" json:"datetime_clauses,omitempty"`
+	FeatureId           string                `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	OpsType             OpsType               `protobuf:"varint,2,opt,name=ops_type,json=opsType,proto3,enum=bucketeer.autoops.OpsType" json:"ops_type"`
+	OpsEventRateClauses []*OpsEventRateClause `protobuf:"bytes,3,rep,name=ops_event_rate_clauses,json=opsEventRateClauses,proto3" json:"ops_event_rate_clauses"`
+	DatetimeClauses     []*DatetimeClause     `protobuf:"bytes,4,rep,name=datetime_clauses,json=datetimeClauses,proto3" json:"datetime_clauses"`
 }
 
 func (x *CreateAutoOpsRuleCommand) Reset() {
@@ -110,7 +110,7 @@ type ChangeAutoOpsRuleOpsTypeCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	OpsType OpsType `protobuf:"varint,1,opt,name=ops_type,json=opsType,proto3,enum=bucketeer.autoops.OpsType" json:"ops_type,omitempty"`
+	OpsType OpsType `protobuf:"varint,1,opt,name=ops_type,json=opsType,proto3,enum=bucketeer.autoops.OpsType" json:"ops_type"`
 }
 
 func (x *ChangeAutoOpsRuleOpsTypeCommand) Reset() {
@@ -233,7 +233,7 @@ type AddOpsEventRateClauseCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	OpsEventRateClause *OpsEventRateClause `protobuf:"bytes,1,opt,name=ops_event_rate_clause,json=opsEventRateClause,proto3" json:"ops_event_rate_clause,omitempty"`
+	OpsEventRateClause *OpsEventRateClause `protobuf:"bytes,1,opt,name=ops_event_rate_clause,json=opsEventRateClause,proto3" json:"ops_event_rate_clause"`
 }
 
 func (x *AddOpsEventRateClauseCommand) Reset() {
@@ -280,8 +280,8 @@ type ChangeOpsEventRateClauseCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                 string              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	OpsEventRateClause *OpsEventRateClause `protobuf:"bytes,2,opt,name=ops_event_rate_clause,json=opsEventRateClause,proto3" json:"ops_event_rate_clause,omitempty"`
+	Id                 string              `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	OpsEventRateClause *OpsEventRateClause `protobuf:"bytes,2,opt,name=ops_event_rate_clause,json=opsEventRateClause,proto3" json:"ops_event_rate_clause"`
 }
 
 func (x *ChangeOpsEventRateClauseCommand) Reset() {
@@ -335,7 +335,7 @@ type DeleteClauseCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *DeleteClauseCommand) Reset() {
@@ -382,7 +382,7 @@ type AddDatetimeClauseCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	DatetimeClause *DatetimeClause `protobuf:"bytes,1,opt,name=datetime_clause,json=datetimeClause,proto3" json:"datetime_clause,omitempty"`
+	DatetimeClause *DatetimeClause `protobuf:"bytes,1,opt,name=datetime_clause,json=datetimeClause,proto3" json:"datetime_clause"`
 }
 
 func (x *AddDatetimeClauseCommand) Reset() {
@@ -429,8 +429,8 @@ type ChangeDatetimeClauseCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id             string          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	DatetimeClause *DatetimeClause `protobuf:"bytes,2,opt,name=datetime_clause,json=datetimeClause,proto3" json:"datetime_clause,omitempty"`
+	Id             string          `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	DatetimeClause *DatetimeClause `protobuf:"bytes,2,opt,name=datetime_clause,json=datetimeClause,proto3" json:"datetime_clause"`
 }
 
 func (x *ChangeDatetimeClauseCommand) Reset() {
@@ -484,9 +484,9 @@ type CreateProgressiveRolloutCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId                                string                                    `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	ProgressiveRolloutManualScheduleClause   *ProgressiveRolloutManualScheduleClause   `protobuf:"bytes,2,opt,name=progressive_rollout_manual_schedule_clause,json=progressiveRolloutManualScheduleClause,proto3,oneof" json:"progressive_rollout_manual_schedule_clause,omitempty"`
-	ProgressiveRolloutTemplateScheduleClause *ProgressiveRolloutTemplateScheduleClause `protobuf:"bytes,3,opt,name=progressive_rollout_template_schedule_clause,json=progressiveRolloutTemplateScheduleClause,proto3,oneof" json:"progressive_rollout_template_schedule_clause,omitempty"`
+	FeatureId                                string                                    `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	ProgressiveRolloutManualScheduleClause   *ProgressiveRolloutManualScheduleClause   `protobuf:"bytes,2,opt,name=progressive_rollout_manual_schedule_clause,json=progressiveRolloutManualScheduleClause,proto3,oneof" json:"progressive_rollout_manual_schedule_clause"`
+	ProgressiveRolloutTemplateScheduleClause *ProgressiveRolloutTemplateScheduleClause `protobuf:"bytes,3,opt,name=progressive_rollout_template_schedule_clause,json=progressiveRolloutTemplateScheduleClause,proto3,oneof" json:"progressive_rollout_template_schedule_clause"`
 }
 
 func (x *CreateProgressiveRolloutCommand) Reset() {
@@ -585,7 +585,7 @@ type AddProgressiveRolloutManualScheduleClauseCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Clause *ProgressiveRolloutManualScheduleClause `protobuf:"bytes,1,opt,name=clause,proto3" json:"clause,omitempty"`
+	Clause *ProgressiveRolloutManualScheduleClause `protobuf:"bytes,1,opt,name=clause,proto3" json:"clause"`
 }
 
 func (x *AddProgressiveRolloutManualScheduleClauseCommand) Reset() {
@@ -632,7 +632,7 @@ type AddProgressiveRolloutTemplateScheduleClauseCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Clause *ProgressiveRolloutTemplateScheduleClause `protobuf:"bytes,1,opt,name=clause,proto3" json:"clause,omitempty"`
+	Clause *ProgressiveRolloutTemplateScheduleClause `protobuf:"bytes,1,opt,name=clause,proto3" json:"clause"`
 }
 
 func (x *AddProgressiveRolloutTemplateScheduleClauseCommand) Reset() {
@@ -679,7 +679,7 @@ type ChangeProgressiveRolloutScheduleTriggeredAtCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ScheduleId string `protobuf:"bytes,1,opt,name=schedule_id,json=scheduleId,proto3" json:"schedule_id,omitempty"`
+	ScheduleId string `protobuf:"bytes,1,opt,name=schedule_id,json=scheduleId,proto3" json:"schedule_id"`
 }
 
 func (x *ChangeProgressiveRolloutScheduleTriggeredAtCommand) Reset() {

@@ -39,9 +39,9 @@ type Rule struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id       string    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Strategy *Strategy `protobuf:"bytes,2,opt,name=strategy,proto3" json:"strategy,omitempty"`
-	Clauses  []*Clause `protobuf:"bytes,3,rep,name=clauses,proto3" json:"clauses,omitempty"`
+	Id       string    `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Strategy *Strategy `protobuf:"bytes,2,opt,name=strategy,proto3" json:"strategy"`
+	Clauses  []*Clause `protobuf:"bytes,3,rep,name=clauses,proto3" json:"clauses"`
 }
 
 func (x *Rule) Reset() {

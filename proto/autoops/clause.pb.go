@@ -138,8 +138,8 @@ type Clause struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id     string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Clause *anypb.Any `protobuf:"bytes,2,opt,name=clause,proto3" json:"clause,omitempty"`
+	Id     string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Clause *anypb.Any `protobuf:"bytes,2,opt,name=clause,proto3" json:"clause"`
 }
 
 func (x *Clause) Reset() {
@@ -193,11 +193,11 @@ type OpsEventRateClause struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	VariationId     string                      `protobuf:"bytes,2,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
-	GoalId          string                      `protobuf:"bytes,3,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
-	MinCount        int64                       `protobuf:"varint,4,opt,name=min_count,json=minCount,proto3" json:"min_count,omitempty"`
-	ThreadsholdRate float64                     `protobuf:"fixed64,5,opt,name=threadshold_rate,json=threadsholdRate,proto3" json:"threadshold_rate,omitempty"`
-	Operator        OpsEventRateClause_Operator `protobuf:"varint,6,opt,name=operator,proto3,enum=bucketeer.autoops.OpsEventRateClause_Operator" json:"operator,omitempty"`
+	VariationId     string                      `protobuf:"bytes,2,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
+	GoalId          string                      `protobuf:"bytes,3,opt,name=goal_id,json=goalId,proto3" json:"goal_id"`
+	MinCount        int64                       `protobuf:"varint,4,opt,name=min_count,json=minCount,proto3" json:"min_count"`
+	ThreadsholdRate float64                     `protobuf:"fixed64,5,opt,name=threadshold_rate,json=threadsholdRate,proto3" json:"threadshold_rate"`
+	Operator        OpsEventRateClause_Operator `protobuf:"varint,6,opt,name=operator,proto3,enum=bucketeer.autoops.OpsEventRateClause_Operator" json:"operator"`
 }
 
 func (x *OpsEventRateClause) Reset() {
@@ -272,7 +272,7 @@ type DatetimeClause struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Time int64 `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	Time int64 `protobuf:"varint,1,opt,name=time,proto3" json:"time"`
 }
 
 func (x *DatetimeClause) Reset() {
@@ -319,10 +319,10 @@ type ProgressiveRolloutSchedule struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ScheduleId  string `protobuf:"bytes,1,opt,name=schedule_id,json=scheduleId,proto3" json:"schedule_id,omitempty"`
-	ExecuteAt   int64  `protobuf:"varint,2,opt,name=execute_at,json=executeAt,proto3" json:"execute_at,omitempty"`
-	Weight      int32  `protobuf:"varint,3,opt,name=weight,proto3" json:"weight,omitempty"`
-	TriggeredAt int64  `protobuf:"varint,4,opt,name=triggered_at,json=triggeredAt,proto3" json:"triggered_at,omitempty"`
+	ScheduleId  string `protobuf:"bytes,1,opt,name=schedule_id,json=scheduleId,proto3" json:"schedule_id"`
+	ExecuteAt   int64  `protobuf:"varint,2,opt,name=execute_at,json=executeAt,proto3" json:"execute_at"`
+	Weight      int32  `protobuf:"varint,3,opt,name=weight,proto3" json:"weight"`
+	TriggeredAt int64  `protobuf:"varint,4,opt,name=triggered_at,json=triggeredAt,proto3" json:"triggered_at"`
 }
 
 func (x *ProgressiveRolloutSchedule) Reset() {
@@ -390,8 +390,8 @@ type ProgressiveRolloutManualScheduleClause struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Schedules   []*ProgressiveRolloutSchedule `protobuf:"bytes,1,rep,name=schedules,proto3" json:"schedules,omitempty"`
-	VariationId string                        `protobuf:"bytes,2,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
+	Schedules   []*ProgressiveRolloutSchedule `protobuf:"bytes,1,rep,name=schedules,proto3" json:"schedules"`
+	VariationId string                        `protobuf:"bytes,2,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
 }
 
 func (x *ProgressiveRolloutManualScheduleClause) Reset() {
@@ -447,10 +447,10 @@ type ProgressiveRolloutTemplateScheduleClause struct {
 
 	// The reason of setting `schedules` is to save `triggered_at` in each
 	// schedule.
-	Schedules   []*ProgressiveRolloutSchedule                     `protobuf:"bytes,1,rep,name=schedules,proto3" json:"schedules,omitempty"`
-	Interval    ProgressiveRolloutTemplateScheduleClause_Interval `protobuf:"varint,2,opt,name=interval,proto3,enum=bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause_Interval" json:"interval,omitempty"`
-	Increments  int64                                             `protobuf:"varint,3,opt,name=increments,proto3" json:"increments,omitempty"`
-	VariationId string                                            `protobuf:"bytes,4,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
+	Schedules   []*ProgressiveRolloutSchedule                     `protobuf:"bytes,1,rep,name=schedules,proto3" json:"schedules"`
+	Interval    ProgressiveRolloutTemplateScheduleClause_Interval `protobuf:"varint,2,opt,name=interval,proto3,enum=bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause_Interval" json:"interval"`
+	Increments  int64                                             `protobuf:"varint,3,opt,name=increments,proto3" json:"increments"`
+	VariationId string                                            `protobuf:"bytes,4,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
 }
 
 func (x *ProgressiveRolloutTemplateScheduleClause) Reset() {

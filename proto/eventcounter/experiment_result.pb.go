@@ -39,10 +39,10 @@ type ExperimentResult struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id           string        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ExperimentId string        `protobuf:"bytes,2,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
-	UpdatedAt    int64         `protobuf:"varint,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	GoalResults  []*GoalResult `protobuf:"bytes,4,rep,name=goal_results,json=goalResults,proto3" json:"goal_results,omitempty"`
+	Id           string        `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	ExperimentId string        `protobuf:"bytes,2,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id"`
+	UpdatedAt    int64         `protobuf:"varint,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	GoalResults  []*GoalResult `protobuf:"bytes,4,rep,name=goal_results,json=goalResults,proto3" json:"goal_results"`
 }
 
 func (x *ExperimentResult) Reset() {

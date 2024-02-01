@@ -39,14 +39,14 @@ type Goal struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description   string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Deleted       bool   `protobuf:"varint,4,opt,name=deleted,proto3" json:"deleted,omitempty"`
-	CreatedAt     int64  `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     int64  `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	IsInUseStatus bool   `protobuf:"varint,7,opt,name=is_in_use_status,json=isInUseStatus,proto3" json:"is_in_use_status,omitempty"` // This field is set only when APIs return.
-	Archived      bool   `protobuf:"varint,8,opt,name=archived,proto3" json:"archived,omitempty"`
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Description   string `protobuf:"bytes,3,opt,name=description,proto3" json:"description"`
+	Deleted       bool   `protobuf:"varint,4,opt,name=deleted,proto3" json:"deleted"`
+	CreatedAt     int64  `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt     int64  `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	IsInUseStatus bool   `protobuf:"varint,7,opt,name=is_in_use_status,json=isInUseStatus,proto3" json:"is_in_use_status"` // This field is set only when APIs return.
+	Archived      bool   `protobuf:"varint,8,opt,name=archived,proto3" json:"archived"`
 }
 
 func (x *Goal) Reset() {

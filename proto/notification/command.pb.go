@@ -39,9 +39,9 @@ type CreateAdminSubscriptionCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
-	Recipient   *Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient,omitempty"`
-	Name        string                    `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	Recipient   *Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient"`
+	Name        string                    `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 }
 
 func (x *CreateAdminSubscriptionCommand) Reset() {
@@ -102,7 +102,7 @@ type AddAdminSubscriptionSourceTypesCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
+	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *AddAdminSubscriptionSourceTypesCommand) Reset() {
@@ -149,7 +149,7 @@ type DeleteAdminSubscriptionSourceTypesCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
+	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *DeleteAdminSubscriptionSourceTypesCommand) Reset() {
@@ -310,7 +310,7 @@ type RenameAdminSubscriptionCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *RenameAdminSubscriptionCommand) Reset() {
@@ -357,9 +357,9 @@ type CreateSubscriptionCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
-	Recipient   *Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient,omitempty"`
-	Name        string                    `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	Recipient   *Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient"`
+	Name        string                    `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 }
 
 func (x *CreateSubscriptionCommand) Reset() {
@@ -420,7 +420,7 @@ type AddSourceTypesCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
+	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *AddSourceTypesCommand) Reset() {
@@ -467,7 +467,7 @@ type DeleteSourceTypesCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
+	SourceTypes []Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *DeleteSourceTypesCommand) Reset() {
@@ -628,7 +628,7 @@ type RenameSubscriptionCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *RenameSubscriptionCommand) Reset() {

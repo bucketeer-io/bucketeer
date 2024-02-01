@@ -138,8 +138,8 @@ type GetAutoOpsRuleRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                   string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	EnvironmentNamespace string `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                   string `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
 }
 
 func (x *GetAutoOpsRuleRequest) Reset() {
@@ -193,7 +193,7 @@ type GetAutoOpsRuleResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AutoOpsRule *AutoOpsRule `protobuf:"bytes,1,opt,name=auto_ops_rule,json=autoOpsRule,proto3" json:"auto_ops_rule,omitempty"`
+	AutoOpsRule *AutoOpsRule `protobuf:"bytes,1,opt,name=auto_ops_rule,json=autoOpsRule,proto3" json:"auto_ops_rule"`
 }
 
 func (x *GetAutoOpsRuleResponse) Reset() {
@@ -240,8 +240,8 @@ type CreateAutoOpsRuleRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                    `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Command              *CreateAutoOpsRuleCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string                    `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Command              *CreateAutoOpsRuleCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *CreateAutoOpsRuleRequest) Reset() {
@@ -333,10 +333,10 @@ type ListAutoOpsRulesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string   `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	PageSize             int64    `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string   `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	FeatureIds           []string `protobuf:"bytes,4,rep,name=feature_ids,json=featureIds,proto3" json:"feature_ids,omitempty"`
+	EnvironmentNamespace string   `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	PageSize             int64    `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string   `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor"`
+	FeatureIds           []string `protobuf:"bytes,4,rep,name=feature_ids,json=featureIds,proto3" json:"feature_ids"`
 }
 
 func (x *ListAutoOpsRulesRequest) Reset() {
@@ -404,8 +404,8 @@ type ListAutoOpsRulesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AutoOpsRules []*AutoOpsRule `protobuf:"bytes,1,rep,name=auto_ops_rules,json=autoOpsRules,proto3" json:"auto_ops_rules,omitempty"`
-	Cursor       string         `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	AutoOpsRules []*AutoOpsRule `protobuf:"bytes,1,rep,name=auto_ops_rules,json=autoOpsRules,proto3" json:"auto_ops_rules"`
+	Cursor       string         `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
 }
 
 func (x *ListAutoOpsRulesResponse) Reset() {
@@ -459,9 +459,9 @@ type DeleteAutoOpsRuleRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                    `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                   string                    `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *DeleteAutoOpsRuleCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string                    `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                   string                    `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	Command              *DeleteAutoOpsRuleCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DeleteAutoOpsRuleRequest) Reset() {
@@ -560,14 +560,14 @@ type UpdateAutoOpsRuleRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace             string                             `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                               string                             `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	ChangeAutoOpsRuleOpsTypeCommand  *ChangeAutoOpsRuleOpsTypeCommand   `protobuf:"bytes,3,opt,name=change_auto_ops_rule_ops_type_command,json=changeAutoOpsRuleOpsTypeCommand,proto3" json:"change_auto_ops_rule_ops_type_command,omitempty"`
-	AddOpsEventRateClauseCommands    []*AddOpsEventRateClauseCommand    `protobuf:"bytes,4,rep,name=add_ops_event_rate_clause_commands,json=addOpsEventRateClauseCommands,proto3" json:"add_ops_event_rate_clause_commands,omitempty"`
-	ChangeOpsEventRateClauseCommands []*ChangeOpsEventRateClauseCommand `protobuf:"bytes,5,rep,name=change_ops_event_rate_clause_commands,json=changeOpsEventRateClauseCommands,proto3" json:"change_ops_event_rate_clause_commands,omitempty"`
-	DeleteClauseCommands             []*DeleteClauseCommand             `protobuf:"bytes,6,rep,name=delete_clause_commands,json=deleteClauseCommands,proto3" json:"delete_clause_commands,omitempty"`
-	AddDatetimeClauseCommands        []*AddDatetimeClauseCommand        `protobuf:"bytes,7,rep,name=add_datetime_clause_commands,json=addDatetimeClauseCommands,proto3" json:"add_datetime_clause_commands,omitempty"`
-	ChangeDatetimeClauseCommands     []*ChangeDatetimeClauseCommand     `protobuf:"bytes,8,rep,name=change_datetime_clause_commands,json=changeDatetimeClauseCommands,proto3" json:"change_datetime_clause_commands,omitempty"`
+	EnvironmentNamespace             string                             `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                               string                             `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	ChangeAutoOpsRuleOpsTypeCommand  *ChangeAutoOpsRuleOpsTypeCommand   `protobuf:"bytes,3,opt,name=change_auto_ops_rule_ops_type_command,json=changeAutoOpsRuleOpsTypeCommand,proto3" json:"change_auto_ops_rule_ops_type_command"`
+	AddOpsEventRateClauseCommands    []*AddOpsEventRateClauseCommand    `protobuf:"bytes,4,rep,name=add_ops_event_rate_clause_commands,json=addOpsEventRateClauseCommands,proto3" json:"add_ops_event_rate_clause_commands"`
+	ChangeOpsEventRateClauseCommands []*ChangeOpsEventRateClauseCommand `protobuf:"bytes,5,rep,name=change_ops_event_rate_clause_commands,json=changeOpsEventRateClauseCommands,proto3" json:"change_ops_event_rate_clause_commands"`
+	DeleteClauseCommands             []*DeleteClauseCommand             `protobuf:"bytes,6,rep,name=delete_clause_commands,json=deleteClauseCommands,proto3" json:"delete_clause_commands"`
+	AddDatetimeClauseCommands        []*AddDatetimeClauseCommand        `protobuf:"bytes,7,rep,name=add_datetime_clause_commands,json=addDatetimeClauseCommands,proto3" json:"add_datetime_clause_commands"`
+	ChangeDatetimeClauseCommands     []*ChangeDatetimeClauseCommand     `protobuf:"bytes,8,rep,name=change_datetime_clause_commands,json=changeDatetimeClauseCommands,proto3" json:"change_datetime_clause_commands"`
 }
 
 func (x *UpdateAutoOpsRuleRequest) Reset() {
@@ -701,9 +701,9 @@ type ExecuteAutoOpsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace                string                               `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                                  string                               `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	ChangeAutoOpsRuleTriggeredAtCommand *ChangeAutoOpsRuleTriggeredAtCommand `protobuf:"bytes,3,opt,name=change_auto_ops_rule_triggered_at_command,json=changeAutoOpsRuleTriggeredAtCommand,proto3" json:"change_auto_ops_rule_triggered_at_command,omitempty"`
+	EnvironmentNamespace                string                               `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                                  string                               `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	ChangeAutoOpsRuleTriggeredAtCommand *ChangeAutoOpsRuleTriggeredAtCommand `protobuf:"bytes,3,opt,name=change_auto_ops_rule_triggered_at_command,json=changeAutoOpsRuleTriggeredAtCommand,proto3" json:"change_auto_ops_rule_triggered_at_command"`
 }
 
 func (x *ExecuteAutoOpsRequest) Reset() {
@@ -764,7 +764,7 @@ type ExecuteAutoOpsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AlreadyTriggered bool `protobuf:"varint,1,opt,name=already_triggered,json=alreadyTriggered,proto3" json:"already_triggered,omitempty"`
+	AlreadyTriggered bool `protobuf:"varint,1,opt,name=already_triggered,json=alreadyTriggered,proto3" json:"already_triggered"`
 }
 
 func (x *ExecuteAutoOpsResponse) Reset() {
@@ -811,11 +811,11 @@ type ListOpsCountsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string   `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	PageSize             int64    `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string   `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	AutoOpsRuleIds       []string `protobuf:"bytes,4,rep,name=auto_ops_rule_ids,json=autoOpsRuleIds,proto3" json:"auto_ops_rule_ids,omitempty"`
-	FeatureIds           []string `protobuf:"bytes,5,rep,name=feature_ids,json=featureIds,proto3" json:"feature_ids,omitempty"`
+	EnvironmentNamespace string   `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	PageSize             int64    `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string   `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor"`
+	AutoOpsRuleIds       []string `protobuf:"bytes,4,rep,name=auto_ops_rule_ids,json=autoOpsRuleIds,proto3" json:"auto_ops_rule_ids"`
+	FeatureIds           []string `protobuf:"bytes,5,rep,name=feature_ids,json=featureIds,proto3" json:"feature_ids"`
 }
 
 func (x *ListOpsCountsRequest) Reset() {
@@ -890,8 +890,8 @@ type ListOpsCountsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Cursor    string      `protobuf:"bytes,1,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	OpsCounts []*OpsCount `protobuf:"bytes,2,rep,name=ops_counts,json=opsCounts,proto3" json:"ops_counts,omitempty"`
+	Cursor    string      `protobuf:"bytes,1,opt,name=cursor,proto3" json:"cursor"`
+	OpsCounts []*OpsCount `protobuf:"bytes,2,rep,name=ops_counts,json=opsCounts,proto3" json:"ops_counts"`
 }
 
 func (x *ListOpsCountsResponse) Reset() {
@@ -945,8 +945,8 @@ type CreateProgressiveRolloutRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                           `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Command              *CreateProgressiveRolloutCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string                           `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Command              *CreateProgressiveRolloutCommand `protobuf:"bytes,2,opt,name=command,proto3" json:"command"`
 }
 
 func (x *CreateProgressiveRolloutRequest) Reset() {
@@ -1038,8 +1038,8 @@ type GetProgressiveRolloutRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                   string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	EnvironmentNamespace string `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                   string `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
 }
 
 func (x *GetProgressiveRolloutRequest) Reset() {
@@ -1093,7 +1093,7 @@ type GetProgressiveRolloutResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ProgressiveRollout *ProgressiveRollout `protobuf:"bytes,1,opt,name=progressive_rollout,json=progressiveRollout,proto3" json:"progressive_rollout,omitempty"`
+	ProgressiveRollout *ProgressiveRollout `protobuf:"bytes,1,opt,name=progressive_rollout,json=progressiveRollout,proto3" json:"progressive_rollout"`
 }
 
 func (x *GetProgressiveRolloutResponse) Reset() {
@@ -1140,9 +1140,9 @@ type DeleteProgressiveRolloutRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                           `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                   string                           `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Command              *DeleteProgressiveRolloutCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	EnvironmentNamespace string                           `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                   string                           `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	Command              *DeleteProgressiveRolloutCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
 }
 
 func (x *DeleteProgressiveRolloutRequest) Reset() {
@@ -1241,14 +1241,14 @@ type ListProgressiveRolloutsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace string                                        `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	PageSize             int64                                         `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                                        `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	FeatureIds           []string                                      `protobuf:"bytes,4,rep,name=feature_ids,json=featureIds,proto3" json:"feature_ids,omitempty"`
-	OrderBy              ListProgressiveRolloutsRequest_OrderBy        `protobuf:"varint,5,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.autoops.ListProgressiveRolloutsRequest_OrderBy" json:"order_by,omitempty"`
-	OrderDirection       ListProgressiveRolloutsRequest_OrderDirection `protobuf:"varint,6,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.autoops.ListProgressiveRolloutsRequest_OrderDirection" json:"order_direction,omitempty"`
-	Status               *ProgressiveRollout_Status                    `protobuf:"varint,7,opt,name=status,proto3,enum=bucketeer.autoops.ProgressiveRollout_Status,oneof" json:"status,omitempty"`
-	Type                 *ProgressiveRollout_Type                      `protobuf:"varint,8,opt,name=type,proto3,enum=bucketeer.autoops.ProgressiveRollout_Type,oneof" json:"type,omitempty"`
+	EnvironmentNamespace string                                        `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	PageSize             int64                                         `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
+	Cursor               string                                        `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor"`
+	FeatureIds           []string                                      `protobuf:"bytes,4,rep,name=feature_ids,json=featureIds,proto3" json:"feature_ids"`
+	OrderBy              ListProgressiveRolloutsRequest_OrderBy        `protobuf:"varint,5,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.autoops.ListProgressiveRolloutsRequest_OrderBy" json:"order_by"`
+	OrderDirection       ListProgressiveRolloutsRequest_OrderDirection `protobuf:"varint,6,opt,name=order_direction,json=orderDirection,proto3,enum=bucketeer.autoops.ListProgressiveRolloutsRequest_OrderDirection" json:"order_direction"`
+	Status               *ProgressiveRollout_Status                    `protobuf:"varint,7,opt,name=status,proto3,enum=bucketeer.autoops.ProgressiveRollout_Status,oneof" json:"status"`
+	Type                 *ProgressiveRollout_Type                      `protobuf:"varint,8,opt,name=type,proto3,enum=bucketeer.autoops.ProgressiveRollout_Type,oneof" json:"type"`
 }
 
 func (x *ListProgressiveRolloutsRequest) Reset() {
@@ -1344,9 +1344,9 @@ type ListProgressiveRolloutsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ProgressiveRollouts []*ProgressiveRollout `protobuf:"bytes,1,rep,name=progressive_rollouts,json=progressiveRollouts,proto3" json:"progressive_rollouts,omitempty"`
-	Cursor              string                `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	TotalCount          int64                 `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	ProgressiveRollouts []*ProgressiveRollout `protobuf:"bytes,1,rep,name=progressive_rollouts,json=progressiveRollouts,proto3" json:"progressive_rollouts"`
+	Cursor              string                `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
+	TotalCount          int64                 `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count"`
 }
 
 func (x *ListProgressiveRolloutsResponse) Reset() {
@@ -1407,9 +1407,9 @@ type ExecuteProgressiveRolloutRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentNamespace                       string                                              `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Id                                         string                                              `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	ChangeProgressiveRolloutTriggeredAtCommand *ChangeProgressiveRolloutScheduleTriggeredAtCommand `protobuf:"bytes,3,opt,name=change_progressive_rollout_triggered_at_command,json=changeProgressiveRolloutTriggeredAtCommand,proto3" json:"change_progressive_rollout_triggered_at_command,omitempty"`
+	EnvironmentNamespace                       string                                              `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                                         string                                              `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	ChangeProgressiveRolloutTriggeredAtCommand *ChangeProgressiveRolloutScheduleTriggeredAtCommand `protobuf:"bytes,3,opt,name=change_progressive_rollout_triggered_at_command,json=changeProgressiveRolloutTriggeredAtCommand,proto3" json:"change_progressive_rollout_triggered_at_command"`
 }
 
 func (x *ExecuteProgressiveRolloutRequest) Reset() {

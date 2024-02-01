@@ -39,10 +39,10 @@ type CreateEnvironmentV2Command struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name        string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode     string `protobuf:"bytes,2,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"` // optional
-	ProjectId   string `protobuf:"bytes,4,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Name        string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
+	UrlCode     string `protobuf:"bytes,2,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description"` // optional
+	ProjectId   string `protobuf:"bytes,4,opt,name=project_id,json=projectId,proto3" json:"project_id"`
 }
 
 func (x *CreateEnvironmentV2Command) Reset() {
@@ -110,7 +110,7 @@ type RenameEnvironmentV2Command struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *RenameEnvironmentV2Command) Reset() {
@@ -157,7 +157,7 @@ type ChangeDescriptionEnvironmentV2Command struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ChangeDescriptionEnvironmentV2Command) Reset() {
@@ -282,10 +282,10 @@ type CreateProjectCommand struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Deprecated: Do not use.
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"` // optional
-	Name        string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode     string `protobuf:"bytes,4,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"` // optional
+	Name        string `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
+	UrlCode     string `protobuf:"bytes,4,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
 }
 
 func (x *CreateProjectCommand) Reset() {
@@ -355,10 +355,10 @@ type CreateTrialProjectCommand struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Deprecated: Do not use.
-	Id      string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email   string `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	Name    string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode string `protobuf:"bytes,4,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
+	Id      string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Email   string `protobuf:"bytes,2,opt,name=email,proto3" json:"email"`
+	Name    string `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
+	UrlCode string `protobuf:"bytes,4,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
 }
 
 func (x *CreateTrialProjectCommand) Reset() {
@@ -427,7 +427,7 @@ type RenameProjectCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *RenameProjectCommand) Reset() {
@@ -474,7 +474,7 @@ type ChangeDescriptionProjectCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ChangeDescriptionProjectCommand) Reset() {
@@ -635,11 +635,11 @@ type CreateOrganizationCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode       string `protobuf:"bytes,2,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
-	Description   string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"` // optional
-	IsTrial       bool   `protobuf:"varint,4,opt,name=is_trial,json=isTrial,proto3" json:"is_trial,omitempty"`
-	IsSystemAdmin bool   `protobuf:"varint,5,opt,name=is_system_admin,json=isSystemAdmin,proto3" json:"is_system_admin,omitempty"`
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
+	UrlCode       string `protobuf:"bytes,2,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
+	Description   string `protobuf:"bytes,3,opt,name=description,proto3" json:"description"` // optional
+	IsTrial       bool   `protobuf:"varint,4,opt,name=is_trial,json=isTrial,proto3" json:"is_trial"`
+	IsSystemAdmin bool   `protobuf:"varint,5,opt,name=is_system_admin,json=isSystemAdmin,proto3" json:"is_system_admin"`
 }
 
 func (x *CreateOrganizationCommand) Reset() {
@@ -714,7 +714,7 @@ type ChangeNameOrganizationCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *ChangeNameOrganizationCommand) Reset() {
@@ -761,7 +761,7 @@ type ChangeDescriptionOrganizationCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ChangeDescriptionOrganizationCommand) Reset() {

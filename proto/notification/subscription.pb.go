@@ -139,13 +139,13 @@ type Subscription struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	CreatedAt   int64                     `protobuf:"varint,2,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt   int64                     `protobuf:"varint,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Disabled    bool                      `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	SourceTypes []Subscription_SourceType `protobuf:"varint,5,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
-	Recipient   *Recipient                `protobuf:"bytes,6,opt,name=recipient,proto3" json:"recipient,omitempty"`
-	Name        string                    `protobuf:"bytes,7,opt,name=name,proto3" json:"name,omitempty"`
+	Id          string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	CreatedAt   int64                     `protobuf:"varint,2,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt   int64                     `protobuf:"varint,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Disabled    bool                      `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled"`
+	SourceTypes []Subscription_SourceType `protobuf:"varint,5,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	Recipient   *Recipient                `protobuf:"bytes,6,opt,name=recipient,proto3" json:"recipient"`
+	Name        string                    `protobuf:"bytes,7,opt,name=name,proto3" json:"name"`
 }
 
 func (x *Subscription) Reset() {

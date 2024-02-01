@@ -39,28 +39,28 @@ type VariationResult struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	VariationId                                string               `protobuf:"bytes,1,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
-	ExperimentCount                            *VariationCount      `protobuf:"bytes,2,opt,name=experiment_count,json=experimentCount,proto3" json:"experiment_count,omitempty"`
-	EvaluationCount                            *VariationCount      `protobuf:"bytes,3,opt,name=evaluation_count,json=evaluationCount,proto3" json:"evaluation_count,omitempty"`
-	CvrProbBest                                *DistributionSummary `protobuf:"bytes,4,opt,name=cvr_prob_best,json=cvrProbBest,proto3" json:"cvr_prob_best,omitempty"`
-	CvrProbBeatBaseline                        *DistributionSummary `protobuf:"bytes,5,opt,name=cvr_prob_beat_baseline,json=cvrProbBeatBaseline,proto3" json:"cvr_prob_beat_baseline,omitempty"`
-	CvrProb                                    *DistributionSummary `protobuf:"bytes,6,opt,name=cvr_prob,json=cvrProb,proto3" json:"cvr_prob,omitempty"`
-	EvaluationUserCountTimeseries              *Timeseries          `protobuf:"bytes,7,opt,name=evaluation_user_count_timeseries,json=evaluationUserCountTimeseries,proto3" json:"evaluation_user_count_timeseries,omitempty"`
-	EvaluationEventCountTimeseries             *Timeseries          `protobuf:"bytes,8,opt,name=evaluation_event_count_timeseries,json=evaluationEventCountTimeseries,proto3" json:"evaluation_event_count_timeseries,omitempty"`
-	GoalUserCountTimeseries                    *Timeseries          `protobuf:"bytes,9,opt,name=goal_user_count_timeseries,json=goalUserCountTimeseries,proto3" json:"goal_user_count_timeseries,omitempty"`
-	GoalEventCountTimeseries                   *Timeseries          `protobuf:"bytes,10,opt,name=goal_event_count_timeseries,json=goalEventCountTimeseries,proto3" json:"goal_event_count_timeseries,omitempty"`
-	GoalValueSumTimeseries                     *Timeseries          `protobuf:"bytes,11,opt,name=goal_value_sum_timeseries,json=goalValueSumTimeseries,proto3" json:"goal_value_sum_timeseries,omitempty"`
-	CvrMedianTimeseries                        *Timeseries          `protobuf:"bytes,12,opt,name=cvr_median_timeseries,json=cvrMedianTimeseries,proto3" json:"cvr_median_timeseries,omitempty"`
-	CvrPercentile025Timeseries                 *Timeseries          `protobuf:"bytes,13,opt,name=cvr_percentile025_timeseries,json=cvrPercentile025Timeseries,proto3" json:"cvr_percentile025_timeseries,omitempty"`
-	CvrPercentile975Timeseries                 *Timeseries          `protobuf:"bytes,14,opt,name=cvr_percentile975_timeseries,json=cvrPercentile975Timeseries,proto3" json:"cvr_percentile975_timeseries,omitempty"`
-	CvrTimeseries                              *Timeseries          `protobuf:"bytes,15,opt,name=cvr_timeseries,json=cvrTimeseries,proto3" json:"cvr_timeseries,omitempty"`
-	GoalValueSumPerUserTimeseries              *Timeseries          `protobuf:"bytes,16,opt,name=goal_value_sum_per_user_timeseries,json=goalValueSumPerUserTimeseries,proto3" json:"goal_value_sum_per_user_timeseries,omitempty"`
-	GoalValueSumPerUserProb                    *DistributionSummary `protobuf:"bytes,17,opt,name=goal_value_sum_per_user_prob,json=goalValueSumPerUserProb,proto3" json:"goal_value_sum_per_user_prob,omitempty"`
-	GoalValueSumPerUserProbBest                *DistributionSummary `protobuf:"bytes,18,opt,name=goal_value_sum_per_user_prob_best,json=goalValueSumPerUserProbBest,proto3" json:"goal_value_sum_per_user_prob_best,omitempty"`
-	GoalValueSumPerUserProbBeatBaseline        *DistributionSummary `protobuf:"bytes,19,opt,name=goal_value_sum_per_user_prob_beat_baseline,json=goalValueSumPerUserProbBeatBaseline,proto3" json:"goal_value_sum_per_user_prob_beat_baseline,omitempty"`
-	GoalValueSumPerUserMedianTimeseries        *Timeseries          `protobuf:"bytes,20,opt,name=goal_value_sum_per_user_median_timeseries,json=goalValueSumPerUserMedianTimeseries,proto3" json:"goal_value_sum_per_user_median_timeseries,omitempty"`
-	GoalValueSumPerUserPercentile025Timeseries *Timeseries          `protobuf:"bytes,21,opt,name=goal_value_sum_per_user_percentile025_timeseries,json=goalValueSumPerUserPercentile025Timeseries,proto3" json:"goal_value_sum_per_user_percentile025_timeseries,omitempty"`
-	GoalValueSumPerUserPercentile975Timeseries *Timeseries          `protobuf:"bytes,22,opt,name=goal_value_sum_per_user_percentile975_timeseries,json=goalValueSumPerUserPercentile975Timeseries,proto3" json:"goal_value_sum_per_user_percentile975_timeseries,omitempty"`
+	VariationId                                string               `protobuf:"bytes,1,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
+	ExperimentCount                            *VariationCount      `protobuf:"bytes,2,opt,name=experiment_count,json=experimentCount,proto3" json:"experiment_count"`
+	EvaluationCount                            *VariationCount      `protobuf:"bytes,3,opt,name=evaluation_count,json=evaluationCount,proto3" json:"evaluation_count"`
+	CvrProbBest                                *DistributionSummary `protobuf:"bytes,4,opt,name=cvr_prob_best,json=cvrProbBest,proto3" json:"cvr_prob_best"`
+	CvrProbBeatBaseline                        *DistributionSummary `protobuf:"bytes,5,opt,name=cvr_prob_beat_baseline,json=cvrProbBeatBaseline,proto3" json:"cvr_prob_beat_baseline"`
+	CvrProb                                    *DistributionSummary `protobuf:"bytes,6,opt,name=cvr_prob,json=cvrProb,proto3" json:"cvr_prob"`
+	EvaluationUserCountTimeseries              *Timeseries          `protobuf:"bytes,7,opt,name=evaluation_user_count_timeseries,json=evaluationUserCountTimeseries,proto3" json:"evaluation_user_count_timeseries"`
+	EvaluationEventCountTimeseries             *Timeseries          `protobuf:"bytes,8,opt,name=evaluation_event_count_timeseries,json=evaluationEventCountTimeseries,proto3" json:"evaluation_event_count_timeseries"`
+	GoalUserCountTimeseries                    *Timeseries          `protobuf:"bytes,9,opt,name=goal_user_count_timeseries,json=goalUserCountTimeseries,proto3" json:"goal_user_count_timeseries"`
+	GoalEventCountTimeseries                   *Timeseries          `protobuf:"bytes,10,opt,name=goal_event_count_timeseries,json=goalEventCountTimeseries,proto3" json:"goal_event_count_timeseries"`
+	GoalValueSumTimeseries                     *Timeseries          `protobuf:"bytes,11,opt,name=goal_value_sum_timeseries,json=goalValueSumTimeseries,proto3" json:"goal_value_sum_timeseries"`
+	CvrMedianTimeseries                        *Timeseries          `protobuf:"bytes,12,opt,name=cvr_median_timeseries,json=cvrMedianTimeseries,proto3" json:"cvr_median_timeseries"`
+	CvrPercentile025Timeseries                 *Timeseries          `protobuf:"bytes,13,opt,name=cvr_percentile025_timeseries,json=cvrPercentile025Timeseries,proto3" json:"cvr_percentile025_timeseries"`
+	CvrPercentile975Timeseries                 *Timeseries          `protobuf:"bytes,14,opt,name=cvr_percentile975_timeseries,json=cvrPercentile975Timeseries,proto3" json:"cvr_percentile975_timeseries"`
+	CvrTimeseries                              *Timeseries          `protobuf:"bytes,15,opt,name=cvr_timeseries,json=cvrTimeseries,proto3" json:"cvr_timeseries"`
+	GoalValueSumPerUserTimeseries              *Timeseries          `protobuf:"bytes,16,opt,name=goal_value_sum_per_user_timeseries,json=goalValueSumPerUserTimeseries,proto3" json:"goal_value_sum_per_user_timeseries"`
+	GoalValueSumPerUserProb                    *DistributionSummary `protobuf:"bytes,17,opt,name=goal_value_sum_per_user_prob,json=goalValueSumPerUserProb,proto3" json:"goal_value_sum_per_user_prob"`
+	GoalValueSumPerUserProbBest                *DistributionSummary `protobuf:"bytes,18,opt,name=goal_value_sum_per_user_prob_best,json=goalValueSumPerUserProbBest,proto3" json:"goal_value_sum_per_user_prob_best"`
+	GoalValueSumPerUserProbBeatBaseline        *DistributionSummary `protobuf:"bytes,19,opt,name=goal_value_sum_per_user_prob_beat_baseline,json=goalValueSumPerUserProbBeatBaseline,proto3" json:"goal_value_sum_per_user_prob_beat_baseline"`
+	GoalValueSumPerUserMedianTimeseries        *Timeseries          `protobuf:"bytes,20,opt,name=goal_value_sum_per_user_median_timeseries,json=goalValueSumPerUserMedianTimeseries,proto3" json:"goal_value_sum_per_user_median_timeseries"`
+	GoalValueSumPerUserPercentile025Timeseries *Timeseries          `protobuf:"bytes,21,opt,name=goal_value_sum_per_user_percentile025_timeseries,json=goalValueSumPerUserPercentile025Timeseries,proto3" json:"goal_value_sum_per_user_percentile025_timeseries"`
+	GoalValueSumPerUserPercentile975Timeseries *Timeseries          `protobuf:"bytes,22,opt,name=goal_value_sum_per_user_percentile975_timeseries,json=goalValueSumPerUserPercentile975Timeseries,proto3" json:"goal_value_sum_per_user_percentile975_timeseries"`
 }
 
 func (x *VariationResult) Reset() {

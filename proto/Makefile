@@ -28,6 +28,14 @@ go: remove-go
 			--descriptor_set_out=${GIT_TOP_DIR}/proto/$$f/proto_descriptor.pb \
 			${GIT_TOP_DIR}/proto/$$f/*.proto; \
 	done
+	# Because there are old projects using empty in the `environment_id`
+	# we must remove the `omitempty` option from the generated files.
+	# Otherwise, it will omit the field when converting it to json when saving the data in MySQL.
+ifeq ($(findstring Darwin, $(shell uname)),Darwin)
+	sed -i '' -e 's/,omitempty//g' ${GIT_TOP_DIR}/proto/**/*pb.go
+else
+	sed -i -e 's/,omitempty//g' ${GIT_TOP_DIR}/proto/**/*pb.go
+endif
 
 .PHONY: go-check
 go-check: go

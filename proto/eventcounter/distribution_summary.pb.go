@@ -39,14 +39,14 @@ type DistributionSummary struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Mean          float64    `protobuf:"fixed64,1,opt,name=mean,proto3" json:"mean,omitempty"`
-	Sd            float64    `protobuf:"fixed64,2,opt,name=sd,proto3" json:"sd,omitempty"`
-	Rhat          float64    `protobuf:"fixed64,3,opt,name=rhat,proto3" json:"rhat,omitempty"`
-	Histogram     *Histogram `protobuf:"bytes,4,opt,name=histogram,proto3" json:"histogram,omitempty"`
-	Median        float64    `protobuf:"fixed64,5,opt,name=median,proto3" json:"median,omitempty"`
-	Percentile025 float64    `protobuf:"fixed64,6,opt,name=percentile025,proto3" json:"percentile025,omitempty"` // Remove "_" because python should generate same
+	Mean          float64    `protobuf:"fixed64,1,opt,name=mean,proto3" json:"mean"`
+	Sd            float64    `protobuf:"fixed64,2,opt,name=sd,proto3" json:"sd"`
+	Rhat          float64    `protobuf:"fixed64,3,opt,name=rhat,proto3" json:"rhat"`
+	Histogram     *Histogram `protobuf:"bytes,4,opt,name=histogram,proto3" json:"histogram"`
+	Median        float64    `protobuf:"fixed64,5,opt,name=median,proto3" json:"median"`
+	Percentile025 float64    `protobuf:"fixed64,6,opt,name=percentile025,proto3" json:"percentile025"` // Remove "_" because python should generate same
 	// field name for Datasource.
-	Percentile975 float64 `protobuf:"fixed64,7,opt,name=percentile975,proto3" json:"percentile975,omitempty"` // Remove "_" because python should generate same
+	Percentile975 float64 `protobuf:"fixed64,7,opt,name=percentile975,proto3" json:"percentile975"` // Remove "_" because python should generate same
 }
 
 func (x *DistributionSummary) Reset() {
