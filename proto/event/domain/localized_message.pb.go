@@ -42,8 +42,8 @@ type LocalizedMessage struct {
 	// The locale used following the specification defined at
 	// http://www.rfc-editor.org/rfc/bcp/bcp47.txt.
 	// Examples are: "en-US", "fr-CH", "es-MX"
-	Locale  string `protobuf:"bytes,1,opt,name=locale,proto3" json:"locale,omitempty"`
-	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Locale  string `protobuf:"bytes,1,opt,name=locale,proto3" json:"locale"`
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message"`
 }
 
 func (x *LocalizedMessage) Reset() {

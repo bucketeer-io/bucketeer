@@ -40,12 +40,12 @@ type EvaluationRequestEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Timestamp int64      `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	User      *user.User `protobuf:"bytes,3,opt,name=user,proto3" json:"user,omitempty"`
+	Id        string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Timestamp int64      `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp"`
+	User      *user.User `protobuf:"bytes,3,opt,name=user,proto3" json:"user"`
 	// true];
-	EnvironmentNamespace string `protobuf:"bytes,5,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Tag                  string `protobuf:"bytes,6,opt,name=tag,proto3" json:"tag,omitempty"`
+	EnvironmentNamespace string `protobuf:"bytes,5,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Tag                  string `protobuf:"bytes,6,opt,name=tag,proto3" json:"tag"`
 }
 
 func (x *EvaluationRequestEvent) Reset() {

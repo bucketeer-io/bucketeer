@@ -31,11 +31,13 @@ go: remove-go
 	# Because there are old projects using empty in the `environment_id`
 	# we must remove the `omitempty` option from the generated files.
 	# Otherwise, it will omit the field when converting it to json when saving the data in MySQL.
-ifeq ($(findstring Darwin, $(shell uname)),Darwin)
-	sed -i '' -e 's/,omitempty//g' ${GIT_TOP_DIR}/proto/**/*pb.go
-else
-	sed -i -e 's/,omitempty//g' ${GIT_TOP_DIR}/proto/**/*pb.go
-endif
+	@for f in ${PROTO_FOLDERS}; do \
+		if [ ${shell uname} = "Darwin" ]; then \
+			sed -i '' 's/,omitempty//g' ${GIT_TOP_DIR}/proto/$$f/*.pb.go; \
+		else \
+			sed -i 's/,omitempty//g' ${GIT_TOP_DIR}/proto/$$f/*.pb.go; \
+		fi \
+	done
 
 .PHONY: go-check
 go-check: go

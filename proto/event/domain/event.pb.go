@@ -637,17 +637,17 @@ type Event struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Timestamp            int64            `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	EntityType           Event_EntityType `protobuf:"varint,3,opt,name=entity_type,json=entityType,proto3,enum=bucketeer.event.domain.Event_EntityType" json:"entity_type,omitempty"`
-	EntityId             string           `protobuf:"bytes,4,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
-	Type                 Event_Type       `protobuf:"varint,5,opt,name=type,proto3,enum=bucketeer.event.domain.Event_Type" json:"type,omitempty"`
-	Editor               *Editor          `protobuf:"bytes,6,opt,name=editor,proto3" json:"editor,omitempty"`
-	Data                 *anypb.Any       `protobuf:"bytes,7,opt,name=data,proto3" json:"data,omitempty"`
-	EnvironmentNamespace string           `protobuf:"bytes,8,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	IsAdminEvent         bool             `protobuf:"varint,9,opt,name=is_admin_event,json=isAdminEvent,proto3" json:"is_admin_event,omitempty"` // if true, it's stored in AdminDomainEvent table
+	Id                   string           `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Timestamp            int64            `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp"`
+	EntityType           Event_EntityType `protobuf:"varint,3,opt,name=entity_type,json=entityType,proto3,enum=bucketeer.event.domain.Event_EntityType" json:"entity_type"`
+	EntityId             string           `protobuf:"bytes,4,opt,name=entity_id,json=entityId,proto3" json:"entity_id"`
+	Type                 Event_Type       `protobuf:"varint,5,opt,name=type,proto3,enum=bucketeer.event.domain.Event_Type" json:"type"`
+	Editor               *Editor          `protobuf:"bytes,6,opt,name=editor,proto3" json:"editor"`
+	Data                 *anypb.Any       `protobuf:"bytes,7,opt,name=data,proto3" json:"data"`
+	EnvironmentNamespace string           `protobuf:"bytes,8,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	IsAdminEvent         bool             `protobuf:"varint,9,opt,name=is_admin_event,json=isAdminEvent,proto3" json:"is_admin_event"` // if true, it's stored in AdminDomainEvent table
 	// and AdminAuditLog table.
-	Options *Options `protobuf:"bytes,10,opt,name=options,proto3" json:"options,omitempty"` // optional
+	Options *Options `protobuf:"bytes,10,opt,name=options,proto3" json:"options"` // optional
 }
 
 func (x *Event) Reset() {
@@ -757,10 +757,10 @@ type Editor struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
 	// Deprecated: Do not use.
-	Role    account.Account_Role `protobuf:"varint,2,opt,name=role,proto3,enum=bucketeer.account.Account_Role" json:"role,omitempty"`
-	IsAdmin bool                 `protobuf:"varint,3,opt,name=is_admin,json=isAdmin,proto3" json:"is_admin,omitempty"`
+	Role    account.Account_Role `protobuf:"varint,2,opt,name=role,proto3,enum=bucketeer.account.Account_Role" json:"role"`
+	IsAdmin bool                 `protobuf:"varint,3,opt,name=is_admin,json=isAdmin,proto3" json:"is_admin"`
 }
 
 func (x *Editor) Reset() {
@@ -822,8 +822,8 @@ type Options struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Comment    string `protobuf:"bytes,1,opt,name=comment,proto3" json:"comment,omitempty"`
-	NewVersion int32  `protobuf:"varint,2,opt,name=new_version,json=newVersion,proto3" json:"new_version,omitempty"`
+	Comment    string `protobuf:"bytes,1,opt,name=comment,proto3" json:"comment"`
+	NewVersion int32  `protobuf:"varint,2,opt,name=new_version,json=newVersion,proto3" json:"new_version"`
 }
 
 func (x *Options) Reset() {
@@ -877,18 +877,18 @@ type FeatureCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                       string                        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                     string                        `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description              string                        `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	User                     string                        `protobuf:"bytes,4,opt,name=user,proto3" json:"user,omitempty"`
-	Variations               []*feature.Variation          `protobuf:"bytes,5,rep,name=variations,proto3" json:"variations,omitempty"`
-	DefaultOnVariationIndex  *wrapperspb.Int32Value        `protobuf:"bytes,6,opt,name=default_on_variation_index,json=defaultOnVariationIndex,proto3" json:"default_on_variation_index,omitempty"`
-	DefaultOffVariationIndex *wrapperspb.Int32Value        `protobuf:"bytes,7,opt,name=default_off_variation_index,json=defaultOffVariationIndex,proto3" json:"default_off_variation_index,omitempty"`
-	VariationType            feature.Feature_VariationType `protobuf:"varint,8,opt,name=variation_type,json=variationType,proto3,enum=bucketeer.feature.Feature_VariationType" json:"variation_type,omitempty"`
-	Tags                     []string                      `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty"`
-	Prerequisites            []*feature.Prerequisite       `protobuf:"bytes,10,rep,name=prerequisites,proto3" json:"prerequisites,omitempty"`
-	Rules                    []*feature.Rule               `protobuf:"bytes,11,rep,name=rules,proto3" json:"rules,omitempty"`
-	Targets                  []*feature.Target             `protobuf:"bytes,12,rep,name=targets,proto3" json:"targets,omitempty"`
+	Id                       string                        `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name                     string                        `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Description              string                        `protobuf:"bytes,3,opt,name=description,proto3" json:"description"`
+	User                     string                        `protobuf:"bytes,4,opt,name=user,proto3" json:"user"`
+	Variations               []*feature.Variation          `protobuf:"bytes,5,rep,name=variations,proto3" json:"variations"`
+	DefaultOnVariationIndex  *wrapperspb.Int32Value        `protobuf:"bytes,6,opt,name=default_on_variation_index,json=defaultOnVariationIndex,proto3" json:"default_on_variation_index"`
+	DefaultOffVariationIndex *wrapperspb.Int32Value        `protobuf:"bytes,7,opt,name=default_off_variation_index,json=defaultOffVariationIndex,proto3" json:"default_off_variation_index"`
+	VariationType            feature.Feature_VariationType `protobuf:"varint,8,opt,name=variation_type,json=variationType,proto3,enum=bucketeer.feature.Feature_VariationType" json:"variation_type"`
+	Tags                     []string                      `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags"`
+	Prerequisites            []*feature.Prerequisite       `protobuf:"bytes,10,rep,name=prerequisites,proto3" json:"prerequisites"`
+	Rules                    []*feature.Rule               `protobuf:"bytes,11,rep,name=rules,proto3" json:"rules"`
+	Targets                  []*feature.Target             `protobuf:"bytes,12,rep,name=targets,proto3" json:"targets"`
 }
 
 func (x *FeatureCreatedEvent) Reset() {
@@ -1012,7 +1012,7 @@ type FeatureEnabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *FeatureEnabledEvent) Reset() {
@@ -1059,7 +1059,7 @@ type FeatureDisabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *FeatureDisabledEvent) Reset() {
@@ -1106,7 +1106,7 @@ type FeatureArchivedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *FeatureArchivedEvent) Reset() {
@@ -1153,7 +1153,7 @@ type FeatureUnarchivedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *FeatureUnarchivedEvent) Reset() {
@@ -1200,7 +1200,7 @@ type FeatureDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *FeatureDeletedEvent) Reset() {
@@ -1247,7 +1247,7 @@ type EvaluationDelayableSetEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *EvaluationDelayableSetEvent) Reset() {
@@ -1294,7 +1294,7 @@ type EvaluationUndelayableSetEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *EvaluationUndelayableSetEvent) Reset() {
@@ -1341,8 +1341,8 @@ type FeatureRenamedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *FeatureRenamedEvent) Reset() {
@@ -1396,8 +1396,8 @@ type FeatureDescriptionChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
 }
 
 func (x *FeatureDescriptionChangedEvent) Reset() {
@@ -1451,8 +1451,8 @@ type FeatureOffVariationChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id           string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	OffVariation string `protobuf:"bytes,2,opt,name=off_variation,json=offVariation,proto3" json:"off_variation,omitempty"`
+	Id           string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	OffVariation string `protobuf:"bytes,2,opt,name=off_variation,json=offVariation,proto3" json:"off_variation"`
 }
 
 func (x *FeatureOffVariationChangedEvent) Reset() {
@@ -1506,8 +1506,8 @@ type FeatureVariationAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string             `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Variation *feature.Variation `protobuf:"bytes,2,opt,name=variation,proto3" json:"variation,omitempty"`
+	Id        string             `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Variation *feature.Variation `protobuf:"bytes,2,opt,name=variation,proto3" json:"variation"`
 }
 
 func (x *FeatureVariationAddedEvent) Reset() {
@@ -1561,8 +1561,8 @@ type FeatureVariationRemovedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	VariationId string `protobuf:"bytes,2,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	VariationId string `protobuf:"bytes,2,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
 }
 
 func (x *FeatureVariationRemovedEvent) Reset() {
@@ -1616,9 +1616,9 @@ type VariationValueChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Value     string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	Value     string `protobuf:"bytes,3,opt,name=value,proto3" json:"value"`
 }
 
 func (x *VariationValueChangedEvent) Reset() {
@@ -1679,9 +1679,9 @@ type VariationNameChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Name      string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	Name      string `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 }
 
 func (x *VariationNameChangedEvent) Reset() {
@@ -1742,9 +1742,9 @@ type VariationDescriptionChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId   string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	Id          string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	FeatureId   string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	Id          string `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description"`
 }
 
 func (x *VariationDescriptionChangedEvent) Reset() {
@@ -1805,9 +1805,9 @@ type VariationUserAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	User      string `protobuf:"bytes,3,opt,name=user,proto3" json:"user,omitempty"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	User      string `protobuf:"bytes,3,opt,name=user,proto3" json:"user"`
 }
 
 func (x *VariationUserAddedEvent) Reset() {
@@ -1868,9 +1868,9 @@ type VariationUserRemovedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	User      string `protobuf:"bytes,3,opt,name=user,proto3" json:"user,omitempty"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	Id        string `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	User      string `protobuf:"bytes,3,opt,name=user,proto3" json:"user"`
 }
 
 func (x *VariationUserRemovedEvent) Reset() {
@@ -1931,8 +1931,8 @@ type FeatureRuleAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Rule *feature.Rule `protobuf:"bytes,2,opt,name=rule,proto3" json:"rule,omitempty"`
+	Id   string        `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Rule *feature.Rule `protobuf:"bytes,2,opt,name=rule,proto3" json:"rule"`
 }
 
 func (x *FeatureRuleAddedEvent) Reset() {
@@ -1986,9 +1986,9 @@ type FeatureChangeRuleStrategyEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string            `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	RuleId    string            `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Strategy  *feature.Strategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy,omitempty"`
+	FeatureId string            `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	RuleId    string            `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Strategy  *feature.Strategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy"`
 }
 
 func (x *FeatureChangeRuleStrategyEvent) Reset() {
@@ -2049,8 +2049,8 @@ type FeatureRulesOrderChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string   `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	RuleIds   []string `protobuf:"bytes,2,rep,name=rule_ids,json=ruleIds,proto3" json:"rule_ids,omitempty"`
+	FeatureId string   `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	RuleIds   []string `protobuf:"bytes,2,rep,name=rule_ids,json=ruleIds,proto3" json:"rule_ids"`
 }
 
 func (x *FeatureRulesOrderChangedEvent) Reset() {
@@ -2104,8 +2104,8 @@ type FeatureRuleDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RuleId string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
+	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RuleId string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
 }
 
 func (x *FeatureRuleDeletedEvent) Reset() {
@@ -2159,9 +2159,9 @@ type FeatureFixedStrategyChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string                 `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	RuleId    string                 `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Strategy  *feature.FixedStrategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy,omitempty"`
+	FeatureId string                 `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	RuleId    string                 `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Strategy  *feature.FixedStrategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy"`
 }
 
 func (x *FeatureFixedStrategyChangedEvent) Reset() {
@@ -2222,9 +2222,9 @@ type FeatureRolloutStrategyChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string                   `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	RuleId    string                   `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Strategy  *feature.RolloutStrategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy,omitempty"`
+	FeatureId string                   `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	RuleId    string                   `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Strategy  *feature.RolloutStrategy `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy"`
 }
 
 func (x *FeatureRolloutStrategyChangedEvent) Reset() {
@@ -2285,9 +2285,9 @@ type RuleClauseAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string          `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	RuleId    string          `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Clause    *feature.Clause `protobuf:"bytes,3,opt,name=clause,proto3" json:"clause,omitempty"`
+	FeatureId string          `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	RuleId    string          `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Clause    *feature.Clause `protobuf:"bytes,3,opt,name=clause,proto3" json:"clause"`
 }
 
 func (x *RuleClauseAddedEvent) Reset() {
@@ -2348,9 +2348,9 @@ type RuleClauseDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Id        string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Id        string `protobuf:"bytes,3,opt,name=id,proto3" json:"id"`
 }
 
 func (x *RuleClauseDeletedEvent) Reset() {
@@ -2411,10 +2411,10 @@ type ClauseAttributeChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Id        string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
-	Attribute string `protobuf:"bytes,4,opt,name=attribute,proto3" json:"attribute,omitempty"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Id        string `protobuf:"bytes,3,opt,name=id,proto3" json:"id"`
+	Attribute string `protobuf:"bytes,4,opt,name=attribute,proto3" json:"attribute"`
 }
 
 func (x *ClauseAttributeChangedEvent) Reset() {
@@ -2482,10 +2482,10 @@ type ClauseOperatorChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string                  `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	RuleId    string                  `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Id        string                  `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
-	Operator  feature.Clause_Operator `protobuf:"varint,4,opt,name=operator,proto3,enum=bucketeer.feature.Clause_Operator" json:"operator,omitempty"`
+	FeatureId string                  `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	RuleId    string                  `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Id        string                  `protobuf:"bytes,3,opt,name=id,proto3" json:"id"`
+	Operator  feature.Clause_Operator `protobuf:"varint,4,opt,name=operator,proto3,enum=bucketeer.feature.Clause_Operator" json:"operator"`
 }
 
 func (x *ClauseOperatorChangedEvent) Reset() {
@@ -2553,10 +2553,10 @@ type ClauseValueAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Id        string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
-	Value     string `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Id        string `protobuf:"bytes,3,opt,name=id,proto3" json:"id"`
+	Value     string `protobuf:"bytes,4,opt,name=value,proto3" json:"value"`
 }
 
 func (x *ClauseValueAddedEvent) Reset() {
@@ -2624,10 +2624,10 @@ type ClauseValueRemovedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Id        string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
-	Value     string `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Id        string `protobuf:"bytes,3,opt,name=id,proto3" json:"id"`
+	Value     string `protobuf:"bytes,4,opt,name=value,proto3" json:"value"`
 }
 
 func (x *ClauseValueRemovedEvent) Reset() {
@@ -2695,8 +2695,8 @@ type FeatureDefaultStrategyChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id       string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Strategy *feature.Strategy `protobuf:"bytes,2,opt,name=strategy,proto3" json:"strategy,omitempty"`
+	Id       string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Strategy *feature.Strategy `protobuf:"bytes,2,opt,name=strategy,proto3" json:"strategy"`
 }
 
 func (x *FeatureDefaultStrategyChangedEvent) Reset() {
@@ -2750,8 +2750,8 @@ type FeatureTagAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id  string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Tag string `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
+	Id  string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Tag string `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag"`
 }
 
 func (x *FeatureTagAddedEvent) Reset() {
@@ -2805,8 +2805,8 @@ type FeatureTagRemovedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id  string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Tag string `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
+	Id  string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Tag string `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag"`
 }
 
 func (x *FeatureTagRemovedEvent) Reset() {
@@ -2860,8 +2860,8 @@ type FeatureVersionIncrementedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Version int32  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
+	Id      string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Version int32  `protobuf:"varint,2,opt,name=version,proto3" json:"version"`
 }
 
 func (x *FeatureVersionIncrementedEvent) Reset() {
@@ -2915,18 +2915,18 @@ type FeatureClonedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id              string                        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name            string                        `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description     string                        `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Variations      []*feature.Variation          `protobuf:"bytes,4,rep,name=variations,proto3" json:"variations,omitempty"`
-	Targets         []*feature.Target             `protobuf:"bytes,5,rep,name=targets,proto3" json:"targets,omitempty"`
-	Rules           []*feature.Rule               `protobuf:"bytes,6,rep,name=rules,proto3" json:"rules,omitempty"`
-	DefaultStrategy *feature.Strategy             `protobuf:"bytes,7,opt,name=default_strategy,json=defaultStrategy,proto3" json:"default_strategy,omitempty"`
-	OffVariation    string                        `protobuf:"bytes,8,opt,name=off_variation,json=offVariation,proto3" json:"off_variation,omitempty"`
-	Tags            []string                      `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty"`
-	Maintainer      string                        `protobuf:"bytes,10,opt,name=maintainer,proto3" json:"maintainer,omitempty"`
-	VariationType   feature.Feature_VariationType `protobuf:"varint,11,opt,name=variation_type,json=variationType,proto3,enum=bucketeer.feature.Feature_VariationType" json:"variation_type,omitempty"`
-	Prerequisites   []*feature.Prerequisite       `protobuf:"bytes,12,rep,name=prerequisites,proto3" json:"prerequisites,omitempty"`
+	Id              string                        `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name            string                        `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Description     string                        `protobuf:"bytes,3,opt,name=description,proto3" json:"description"`
+	Variations      []*feature.Variation          `protobuf:"bytes,4,rep,name=variations,proto3" json:"variations"`
+	Targets         []*feature.Target             `protobuf:"bytes,5,rep,name=targets,proto3" json:"targets"`
+	Rules           []*feature.Rule               `protobuf:"bytes,6,rep,name=rules,proto3" json:"rules"`
+	DefaultStrategy *feature.Strategy             `protobuf:"bytes,7,opt,name=default_strategy,json=defaultStrategy,proto3" json:"default_strategy"`
+	OffVariation    string                        `protobuf:"bytes,8,opt,name=off_variation,json=offVariation,proto3" json:"off_variation"`
+	Tags            []string                      `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags"`
+	Maintainer      string                        `protobuf:"bytes,10,opt,name=maintainer,proto3" json:"maintainer"`
+	VariationType   feature.Feature_VariationType `protobuf:"varint,11,opt,name=variation_type,json=variationType,proto3,enum=bucketeer.feature.Feature_VariationType" json:"variation_type"`
+	Prerequisites   []*feature.Prerequisite       `protobuf:"bytes,12,rep,name=prerequisites,proto3" json:"prerequisites"`
 }
 
 func (x *FeatureClonedEvent) Reset() {
@@ -3050,7 +3050,7 @@ type FeatureSamplingSeedResetEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SamplingSeed string `protobuf:"bytes,1,opt,name=sampling_seed,json=samplingSeed,proto3" json:"sampling_seed,omitempty"`
+	SamplingSeed string `protobuf:"bytes,1,opt,name=sampling_seed,json=samplingSeed,proto3" json:"sampling_seed"`
 }
 
 func (x *FeatureSamplingSeedResetEvent) Reset() {
@@ -3097,12 +3097,12 @@ type GoalCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Deleted     bool   `protobuf:"varint,4,opt,name=deleted,proto3" json:"deleted,omitempty"`
-	CreatedAt   int64  `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt   int64  `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description"`
+	Deleted     bool   `protobuf:"varint,4,opt,name=deleted,proto3" json:"deleted"`
+	CreatedAt   int64  `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt   int64  `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *GoalCreatedEvent) Reset() {
@@ -3184,8 +3184,8 @@ type GoalRenamedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *GoalRenamedEvent) Reset() {
@@ -3239,8 +3239,8 @@ type GoalDescriptionChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
 }
 
 func (x *GoalDescriptionChangedEvent) Reset() {
@@ -3294,7 +3294,7 @@ type GoalArchivedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *GoalArchivedEvent) Reset() {
@@ -3341,7 +3341,7 @@ type GoalDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *GoalDeletedEvent) Reset() {
@@ -3388,22 +3388,22 @@ type ExperimentCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id             string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId      string               `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	FeatureVersion int32                `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version,omitempty"`
-	Variations     []*feature.Variation `protobuf:"bytes,4,rep,name=variations,proto3" json:"variations,omitempty"`
+	Id             string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId      string               `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	FeatureVersion int32                `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version"`
+	Variations     []*feature.Variation `protobuf:"bytes,4,rep,name=variations,proto3" json:"variations"`
 	// Deprecated: Do not use.
-	GoalId          string   `protobuf:"bytes,5,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
-	StartAt         int64    `protobuf:"varint,6,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
-	StopAt          int64    `protobuf:"varint,7,opt,name=stop_at,json=stopAt,proto3" json:"stop_at,omitempty"`
-	Stopped         bool     `protobuf:"varint,8,opt,name=stopped,proto3" json:"stopped,omitempty"`
-	StoppedAt       int64    `protobuf:"varint,9,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at,omitempty"`
-	CreatedAt       int64    `protobuf:"varint,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt       int64    `protobuf:"varint,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	GoalIds         []string `protobuf:"bytes,12,rep,name=goal_ids,json=goalIds,proto3" json:"goal_ids,omitempty"`
-	Name            string   `protobuf:"bytes,13,opt,name=name,proto3" json:"name,omitempty"`
-	Description     string   `protobuf:"bytes,14,opt,name=description,proto3" json:"description,omitempty"`
-	BaseVariationId string   `protobuf:"bytes,15,opt,name=base_variation_id,json=baseVariationId,proto3" json:"base_variation_id,omitempty"`
+	GoalId          string   `protobuf:"bytes,5,opt,name=goal_id,json=goalId,proto3" json:"goal_id"`
+	StartAt         int64    `protobuf:"varint,6,opt,name=start_at,json=startAt,proto3" json:"start_at"`
+	StopAt          int64    `protobuf:"varint,7,opt,name=stop_at,json=stopAt,proto3" json:"stop_at"`
+	Stopped         bool     `protobuf:"varint,8,opt,name=stopped,proto3" json:"stopped"`
+	StoppedAt       int64    `protobuf:"varint,9,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at"`
+	CreatedAt       int64    `protobuf:"varint,10,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt       int64    `protobuf:"varint,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	GoalIds         []string `protobuf:"bytes,12,rep,name=goal_ids,json=goalIds,proto3" json:"goal_ids"`
+	Name            string   `protobuf:"bytes,13,opt,name=name,proto3" json:"name"`
+	Description     string   `protobuf:"bytes,14,opt,name=description,proto3" json:"description"`
+	BaseVariationId string   `protobuf:"bytes,15,opt,name=base_variation_id,json=baseVariationId,proto3" json:"base_variation_id"`
 }
 
 func (x *ExperimentCreatedEvent) Reset() {
@@ -3549,8 +3549,8 @@ type ExperimentStoppedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	StoppedAt int64  `protobuf:"varint,2,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at,omitempty"`
+	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	StoppedAt int64  `protobuf:"varint,2,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at"`
 }
 
 func (x *ExperimentStoppedEvent) Reset() {
@@ -3604,7 +3604,7 @@ type ExperimentArchivedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *ExperimentArchivedEvent) Reset() {
@@ -3651,7 +3651,7 @@ type ExperimentDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *ExperimentDeletedEvent) Reset() {
@@ -3698,8 +3698,8 @@ type ExperimentStartAtChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	StartAt int64  `protobuf:"varint,2,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
+	Id      string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	StartAt int64  `protobuf:"varint,2,opt,name=start_at,json=startAt,proto3" json:"start_at"`
 }
 
 func (x *ExperimentStartAtChangedEvent) Reset() {
@@ -3753,8 +3753,8 @@ type ExperimentStopAtChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	StopAt int64  `protobuf:"varint,2,opt,name=stop_at,json=stopAt,proto3" json:"stop_at,omitempty"`
+	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	StopAt int64  `protobuf:"varint,2,opt,name=stop_at,json=stopAt,proto3" json:"stop_at"`
 }
 
 func (x *ExperimentStopAtChangedEvent) Reset() {
@@ -3808,9 +3808,9 @@ type ExperimentPeriodChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	StartAt int64  `protobuf:"varint,2,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
-	StopAt  int64  `protobuf:"varint,3,opt,name=stop_at,json=stopAt,proto3" json:"stop_at,omitempty"`
+	Id      string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	StartAt int64  `protobuf:"varint,2,opt,name=start_at,json=startAt,proto3" json:"start_at"`
+	StopAt  int64  `protobuf:"varint,3,opt,name=stop_at,json=stopAt,proto3" json:"stop_at"`
 }
 
 func (x *ExperimentPeriodChangedEvent) Reset() {
@@ -3871,8 +3871,8 @@ type ExperimentNameChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *ExperimentNameChangedEvent) Reset() {
@@ -3926,8 +3926,8 @@ type ExperimentDescriptionChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ExperimentDescriptionChangedEvent) Reset() {
@@ -4057,15 +4057,15 @@ type AccountV2CreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email            string                               `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Name             string                               `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	AvatarImageUrl   string                               `protobuf:"bytes,3,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url,omitempty"`
-	OrganizationId   string                               `protobuf:"bytes,4,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	OrganizationRole account.AccountV2_Role_Organization  `protobuf:"varint,5,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role,omitempty"`
-	EnvironmentRoles []*account.AccountV2_EnvironmentRole `protobuf:"bytes,6,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles,omitempty"`
-	Disabled         bool                                 `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	CreatedAt        int64                                `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt        int64                                `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Email            string                               `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	Name             string                               `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	AvatarImageUrl   string                               `protobuf:"bytes,3,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url"`
+	OrganizationId   string                               `protobuf:"bytes,4,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
+	OrganizationRole account.AccountV2_Role_Organization  `protobuf:"varint,5,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role"`
+	EnvironmentRoles []*account.AccountV2_EnvironmentRole `protobuf:"bytes,6,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles"`
+	Disabled         bool                                 `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled"`
+	CreatedAt        int64                                `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt        int64                                `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *AccountV2CreatedEvent) Reset() {
@@ -4168,8 +4168,8 @@ type AccountV2NameChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Name  string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	Name  string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *AccountV2NameChangedEvent) Reset() {
@@ -4223,8 +4223,8 @@ type AccountV2AvatarImageURLChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email          string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	AvatarImageUrl string `protobuf:"bytes,2,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url,omitempty"`
+	Email          string `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	AvatarImageUrl string `protobuf:"bytes,2,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url"`
 }
 
 func (x *AccountV2AvatarImageURLChangedEvent) Reset() {
@@ -4278,8 +4278,8 @@ type AccountV2OrganizationRoleChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email            string                              `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	OrganizationRole account.AccountV2_Role_Organization `protobuf:"varint,2,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role,omitempty"`
+	Email            string                              `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	OrganizationRole account.AccountV2_Role_Organization `protobuf:"varint,2,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role"`
 }
 
 func (x *AccountV2OrganizationRoleChangedEvent) Reset() {
@@ -4333,8 +4333,8 @@ type AccountV2EnvironmentRolesChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email            string                               `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	EnvironmentRoles []*account.AccountV2_EnvironmentRole `protobuf:"bytes,2,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles,omitempty"`
+	Email            string                               `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	EnvironmentRoles []*account.AccountV2_EnvironmentRole `protobuf:"bytes,2,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles"`
 }
 
 func (x *AccountV2EnvironmentRolesChangedEvent) Reset() {
@@ -4388,7 +4388,7 @@ type AccountV2EnabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
 }
 
 func (x *AccountV2EnabledEvent) Reset() {
@@ -4435,7 +4435,7 @@ type AccountV2DisabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
 }
 
 func (x *AccountV2DisabledEvent) Reset() {
@@ -4482,7 +4482,7 @@ type AccountV2DeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
 }
 
 func (x *AccountV2DeletedEvent) Reset() {
@@ -4529,12 +4529,12 @@ type APIKeyCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name      string              `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Role      account.APIKey_Role `protobuf:"varint,3,opt,name=role,proto3,enum=bucketeer.account.APIKey_Role" json:"role,omitempty"`
-	Disabled  bool                `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	CreatedAt int64               `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt int64               `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Id        string              `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name      string              `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Role      account.APIKey_Role `protobuf:"varint,3,opt,name=role,proto3,enum=bucketeer.account.APIKey_Role" json:"role"`
+	Disabled  bool                `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled"`
+	CreatedAt int64               `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt int64               `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *APIKeyCreatedEvent) Reset() {
@@ -4616,8 +4616,8 @@ type APIKeyNameChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *APIKeyNameChangedEvent) Reset() {
@@ -4671,7 +4671,7 @@ type APIKeyEnabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *APIKeyEnabledEvent) Reset() {
@@ -4718,7 +4718,7 @@ type APIKeyDisabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *APIKeyDisabledEvent) Reset() {
@@ -4765,9 +4765,9 @@ type SegmentCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description"`
 }
 
 func (x *SegmentCreatedEvent) Reset() {
@@ -4828,7 +4828,7 @@ type SegmentDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *SegmentDeletedEvent) Reset() {
@@ -4875,8 +4875,8 @@ type SegmentNameChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *SegmentNameChangedEvent) Reset() {
@@ -4930,8 +4930,8 @@ type SegmentDescriptionChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
 }
 
 func (x *SegmentDescriptionChangedEvent) Reset() {
@@ -4985,8 +4985,8 @@ type SegmentRuleAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Rule *feature.Rule `protobuf:"bytes,2,opt,name=rule,proto3" json:"rule,omitempty"`
+	Id   string        `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Rule *feature.Rule `protobuf:"bytes,2,opt,name=rule,proto3" json:"rule"`
 }
 
 func (x *SegmentRuleAddedEvent) Reset() {
@@ -5040,8 +5040,8 @@ type SegmentRuleDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RuleId string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
+	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	RuleId string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
 }
 
 func (x *SegmentRuleDeletedEvent) Reset() {
@@ -5095,9 +5095,9 @@ type SegmentRuleClauseAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string          `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	RuleId    string          `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	Clause    *feature.Clause `protobuf:"bytes,3,opt,name=clause,proto3" json:"clause,omitempty"`
+	SegmentId string          `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	RuleId    string          `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	Clause    *feature.Clause `protobuf:"bytes,3,opt,name=clause,proto3" json:"clause"`
 }
 
 func (x *SegmentRuleClauseAddedEvent) Reset() {
@@ -5158,9 +5158,9 @@ type SegmentRuleClauseDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	ClauseId  string `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
+	SegmentId string `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	ClauseId  string `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
 }
 
 func (x *SegmentRuleClauseDeletedEvent) Reset() {
@@ -5221,10 +5221,10 @@ type SegmentClauseAttributeChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	ClauseId  string `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
-	Attribute string `protobuf:"bytes,4,opt,name=attribute,proto3" json:"attribute,omitempty"`
+	SegmentId string `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	ClauseId  string `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
+	Attribute string `protobuf:"bytes,4,opt,name=attribute,proto3" json:"attribute"`
 }
 
 func (x *SegmentClauseAttributeChangedEvent) Reset() {
@@ -5292,10 +5292,10 @@ type SegmentClauseOperatorChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string                  `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	RuleId    string                  `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	ClauseId  string                  `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
-	Operator  feature.Clause_Operator `protobuf:"varint,4,opt,name=operator,proto3,enum=bucketeer.feature.Clause_Operator" json:"operator,omitempty"`
+	SegmentId string                  `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	RuleId    string                  `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	ClauseId  string                  `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
+	Operator  feature.Clause_Operator `protobuf:"varint,4,opt,name=operator,proto3,enum=bucketeer.feature.Clause_Operator" json:"operator"`
 }
 
 func (x *SegmentClauseOperatorChangedEvent) Reset() {
@@ -5363,10 +5363,10 @@ type SegmentClauseValueAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	ClauseId  string `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
-	Value     string `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
+	SegmentId string `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	ClauseId  string `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
+	Value     string `protobuf:"bytes,4,opt,name=value,proto3" json:"value"`
 }
 
 func (x *SegmentClauseValueAddedEvent) Reset() {
@@ -5434,10 +5434,10 @@ type SegmentClauseValueRemovedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
-	ClauseId  string `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
-	Value     string `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
+	SegmentId string `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	RuleId    string `protobuf:"bytes,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id"`
+	ClauseId  string `protobuf:"bytes,3,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
+	Value     string `protobuf:"bytes,4,opt,name=value,proto3" json:"value"`
 }
 
 func (x *SegmentClauseValueRemovedEvent) Reset() {
@@ -5505,9 +5505,9 @@ type SegmentUserAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string                    `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	UserIds   []string                  `protobuf:"bytes,2,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
-	State     feature.SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
+	SegmentId string                    `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	UserIds   []string                  `protobuf:"bytes,2,rep,name=user_ids,json=userIds,proto3" json:"user_ids"`
+	State     feature.SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
 }
 
 func (x *SegmentUserAddedEvent) Reset() {
@@ -5568,9 +5568,9 @@ type SegmentUserDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string                    `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	UserIds   []string                  `protobuf:"bytes,2,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
-	State     feature.SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
+	SegmentId string                    `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	UserIds   []string                  `protobuf:"bytes,2,rep,name=user_ids,json=userIds,proto3" json:"user_ids"`
+	State     feature.SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
 }
 
 func (x *SegmentUserDeletedEvent) Reset() {
@@ -5631,9 +5631,9 @@ type SegmentBulkUploadUsersEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string                    `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	Status    feature.Segment_Status    `protobuf:"varint,2,opt,name=status,proto3,enum=bucketeer.feature.Segment_Status" json:"status,omitempty"`
-	State     feature.SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
+	SegmentId string                    `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	Status    feature.Segment_Status    `protobuf:"varint,2,opt,name=status,proto3,enum=bucketeer.feature.Segment_Status" json:"status"`
+	State     feature.SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
 }
 
 func (x *SegmentBulkUploadUsersEvent) Reset() {
@@ -5694,10 +5694,10 @@ type SegmentBulkUploadUsersStatusChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SegmentId string                    `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	Status    feature.Segment_Status    `protobuf:"varint,2,opt,name=status,proto3,enum=bucketeer.feature.Segment_Status" json:"status,omitempty"`
-	State     feature.SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
-	Count     int64                     `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
+	SegmentId string                    `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	Status    feature.Segment_Status    `protobuf:"varint,2,opt,name=status,proto3,enum=bucketeer.feature.Segment_Status" json:"status"`
+	State     feature.SegmentUser_State `protobuf:"varint,3,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
+	Count     int64                     `protobuf:"varint,4,opt,name=count,proto3" json:"count"`
 }
 
 func (x *SegmentBulkUploadUsersStatusChangedEvent) Reset() {
@@ -5765,14 +5765,14 @@ type EnvironmentCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Namespace   string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Name        string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	Deleted     bool   `protobuf:"varint,5,opt,name=deleted,proto3" json:"deleted,omitempty"`
-	CreatedAt   int64  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt   int64  `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	ProjectId   string `protobuf:"bytes,8,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Namespace   string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace"`
+	Name        string `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
+	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description"`
+	Deleted     bool   `protobuf:"varint,5,opt,name=deleted,proto3" json:"deleted"`
+	CreatedAt   int64  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt   int64  `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	ProjectId   string `protobuf:"bytes,8,opt,name=project_id,json=projectId,proto3" json:"project_id"`
 }
 
 func (x *EnvironmentCreatedEvent) Reset() {
@@ -5868,8 +5868,8 @@ type EnvironmentRenamedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *EnvironmentRenamedEvent) Reset() {
@@ -5923,8 +5923,8 @@ type EnvironmentDescriptionChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
 }
 
 func (x *EnvironmentDescriptionChangedEvent) Reset() {
@@ -5978,8 +5978,8 @@ type EnvironmentDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace"`
 }
 
 func (x *EnvironmentDeletedEvent) Reset() {
@@ -6033,14 +6033,14 @@ type EnvironmentV2CreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode     string `protobuf:"bytes,3,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	ProjectId   string `protobuf:"bytes,5,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Archived    bool   `protobuf:"varint,6,opt,name=archived,proto3" json:"archived,omitempty"`
-	CreatedAt   int64  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt   int64  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	UrlCode     string `protobuf:"bytes,3,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
+	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description"`
+	ProjectId   string `protobuf:"bytes,5,opt,name=project_id,json=projectId,proto3" json:"project_id"`
+	Archived    bool   `protobuf:"varint,6,opt,name=archived,proto3" json:"archived"`
+	CreatedAt   int64  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt   int64  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *EnvironmentV2CreatedEvent) Reset() {
@@ -6136,10 +6136,10 @@ type EnvironmentV2RenamedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProjectId string `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	OldName   string `protobuf:"bytes,3,opt,name=old_name,json=oldName,proto3" json:"old_name,omitempty"`
-	NewName   string `protobuf:"bytes,4,opt,name=new_name,json=newName,proto3" json:"new_name,omitempty"`
+	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	ProjectId string `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id"`
+	OldName   string `protobuf:"bytes,3,opt,name=old_name,json=oldName,proto3" json:"old_name"`
+	NewName   string `protobuf:"bytes,4,opt,name=new_name,json=newName,proto3" json:"new_name"`
 }
 
 func (x *EnvironmentV2RenamedEvent) Reset() {
@@ -6207,11 +6207,11 @@ type EnvironmentV2DescriptionChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name           string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ProjectId      string `protobuf:"bytes,3,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	OldDescription string `protobuf:"bytes,4,opt,name=old_description,json=oldDescription,proto3" json:"old_description,omitempty"`
-	NewDescription string `protobuf:"bytes,5,opt,name=new_description,json=newDescription,proto3" json:"new_description,omitempty"`
+	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name           string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	ProjectId      string `protobuf:"bytes,3,opt,name=project_id,json=projectId,proto3" json:"project_id"`
+	OldDescription string `protobuf:"bytes,4,opt,name=old_description,json=oldDescription,proto3" json:"old_description"`
+	NewDescription string `protobuf:"bytes,5,opt,name=new_description,json=newDescription,proto3" json:"new_description"`
 }
 
 func (x *EnvironmentV2DescriptionChangedEvent) Reset() {
@@ -6286,9 +6286,9 @@ type EnvironmentV2ArchivedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ProjectId string `protobuf:"bytes,3,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	ProjectId string `protobuf:"bytes,3,opt,name=project_id,json=projectId,proto3" json:"project_id"`
 }
 
 func (x *EnvironmentV2ArchivedEvent) Reset() {
@@ -6349,9 +6349,9 @@ type EnvironmentV2UnarchivedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ProjectId string `protobuf:"bytes,3,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name      string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	ProjectId string `protobuf:"bytes,3,opt,name=project_id,json=projectId,proto3" json:"project_id"`
 }
 
 func (x *EnvironmentV2UnarchivedEvent) Reset() {
@@ -6412,12 +6412,12 @@ type AutoOpsRuleCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId   string            `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	OpsType     autoops.OpsType   `protobuf:"varint,2,opt,name=ops_type,json=opsType,proto3,enum=bucketeer.autoops.OpsType" json:"ops_type,omitempty"`
-	Clauses     []*autoops.Clause `protobuf:"bytes,3,rep,name=clauses,proto3" json:"clauses,omitempty"`
-	TriggeredAt int64             `protobuf:"varint,4,opt,name=triggered_at,json=triggeredAt,proto3" json:"triggered_at,omitempty"`
-	CreatedAt   int64             `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt   int64             `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	FeatureId   string            `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	OpsType     autoops.OpsType   `protobuf:"varint,2,opt,name=ops_type,json=opsType,proto3,enum=bucketeer.autoops.OpsType" json:"ops_type"`
+	Clauses     []*autoops.Clause `protobuf:"bytes,3,rep,name=clauses,proto3" json:"clauses"`
+	TriggeredAt int64             `protobuf:"varint,4,opt,name=triggered_at,json=triggeredAt,proto3" json:"triggered_at"`
+	CreatedAt   int64             `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt   int64             `protobuf:"varint,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *AutoOpsRuleCreatedEvent) Reset() {
@@ -6537,7 +6537,7 @@ type AutoOpsRuleOpsTypeChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	OpsType autoops.OpsType `protobuf:"varint,1,opt,name=ops_type,json=opsType,proto3,enum=bucketeer.autoops.OpsType" json:"ops_type,omitempty"`
+	OpsType autoops.OpsType `protobuf:"varint,1,opt,name=ops_type,json=opsType,proto3,enum=bucketeer.autoops.OpsType" json:"ops_type"`
 }
 
 func (x *AutoOpsRuleOpsTypeChangedEvent) Reset() {
@@ -6622,8 +6622,8 @@ type OpsEventRateClauseAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ClauseId           string                      `protobuf:"bytes,1,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
-	OpsEventRateClause *autoops.OpsEventRateClause `protobuf:"bytes,2,opt,name=ops_event_rate_clause,json=opsEventRateClause,proto3" json:"ops_event_rate_clause,omitempty"`
+	ClauseId           string                      `protobuf:"bytes,1,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
+	OpsEventRateClause *autoops.OpsEventRateClause `protobuf:"bytes,2,opt,name=ops_event_rate_clause,json=opsEventRateClause,proto3" json:"ops_event_rate_clause"`
 }
 
 func (x *OpsEventRateClauseAddedEvent) Reset() {
@@ -6677,8 +6677,8 @@ type OpsEventRateClauseChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ClauseId           string                      `protobuf:"bytes,1,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
-	OpsEventRateClause *autoops.OpsEventRateClause `protobuf:"bytes,2,opt,name=ops_event_rate_clause,json=opsEventRateClause,proto3" json:"ops_event_rate_clause,omitempty"`
+	ClauseId           string                      `protobuf:"bytes,1,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
+	OpsEventRateClause *autoops.OpsEventRateClause `protobuf:"bytes,2,opt,name=ops_event_rate_clause,json=opsEventRateClause,proto3" json:"ops_event_rate_clause"`
 }
 
 func (x *OpsEventRateClauseChangedEvent) Reset() {
@@ -6732,7 +6732,7 @@ type AutoOpsRuleClauseDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ClauseId string `protobuf:"bytes,1,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
+	ClauseId string `protobuf:"bytes,1,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
 }
 
 func (x *AutoOpsRuleClauseDeletedEvent) Reset() {
@@ -6779,8 +6779,8 @@ type DatetimeClauseAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ClauseId       string                  `protobuf:"bytes,1,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
-	DatetimeClause *autoops.DatetimeClause `protobuf:"bytes,2,opt,name=datetime_clause,json=datetimeClause,proto3" json:"datetime_clause,omitempty"`
+	ClauseId       string                  `protobuf:"bytes,1,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
+	DatetimeClause *autoops.DatetimeClause `protobuf:"bytes,2,opt,name=datetime_clause,json=datetimeClause,proto3" json:"datetime_clause"`
 }
 
 func (x *DatetimeClauseAddedEvent) Reset() {
@@ -6834,8 +6834,8 @@ type DatetimeClauseChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ClauseId       string                  `protobuf:"bytes,1,opt,name=clause_id,json=clauseId,proto3" json:"clause_id,omitempty"`
-	DatetimeClause *autoops.DatetimeClause `protobuf:"bytes,2,opt,name=datetime_clause,json=datetimeClause,proto3" json:"datetime_clause,omitempty"`
+	ClauseId       string                  `protobuf:"bytes,1,opt,name=clause_id,json=clauseId,proto3" json:"clause_id"`
+	DatetimeClause *autoops.DatetimeClause `protobuf:"bytes,2,opt,name=datetime_clause,json=datetimeClause,proto3" json:"datetime_clause"`
 }
 
 func (x *DatetimeClauseChangedEvent) Reset() {
@@ -6889,9 +6889,9 @@ type PushCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FcmApiKey string   `protobuf:"bytes,2,opt,name=fcm_api_key,json=fcmApiKey,proto3" json:"fcm_api_key,omitempty"`
-	Tags      []string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
-	Name      string   `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	FcmApiKey string   `protobuf:"bytes,2,opt,name=fcm_api_key,json=fcmApiKey,proto3" json:"fcm_api_key"`
+	Tags      []string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags"`
+	Name      string   `protobuf:"bytes,4,opt,name=name,proto3" json:"name"`
 }
 
 func (x *PushCreatedEvent) Reset() {
@@ -6990,7 +6990,7 @@ type PushTagsAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tags []string `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
+	Tags []string `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags"`
 }
 
 func (x *PushTagsAddedEvent) Reset() {
@@ -7037,7 +7037,7 @@ type PushTagsDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tags []string `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
+	Tags []string `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags"`
 }
 
 func (x *PushTagsDeletedEvent) Reset() {
@@ -7084,7 +7084,7 @@ type PushRenamedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *PushRenamedEvent) Reset() {
@@ -7131,9 +7131,9 @@ type SubscriptionCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
-	Recipient   *notification.Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient,omitempty"`
-	Name        string                                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	Recipient   *notification.Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient"`
+	Name        string                                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 }
 
 func (x *SubscriptionCreatedEvent) Reset() {
@@ -7308,7 +7308,7 @@ type SubscriptionSourceTypesAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
+	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *SubscriptionSourceTypesAddedEvent) Reset() {
@@ -7355,7 +7355,7 @@ type SubscriptionSourceTypesDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
+	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *SubscriptionSourceTypesDeletedEvent) Reset() {
@@ -7402,7 +7402,7 @@ type SubscriptionRenamedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *SubscriptionRenamedEvent) Reset() {
@@ -7449,9 +7449,9 @@ type AdminSubscriptionCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
-	Recipient   *notification.Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient,omitempty"`
-	Name        string                                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
+	Recipient   *notification.Recipient                `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient"`
+	Name        string                                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 }
 
 func (x *AdminSubscriptionCreatedEvent) Reset() {
@@ -7626,7 +7626,7 @@ type AdminSubscriptionSourceTypesAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
+	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *AdminSubscriptionSourceTypesAddedEvent) Reset() {
@@ -7673,7 +7673,7 @@ type AdminSubscriptionSourceTypesDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types,omitempty"`
+	SourceTypes []notification.Subscription_SourceType `protobuf:"varint,1,rep,packed,name=source_types,json=sourceTypes,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_types"`
 }
 
 func (x *AdminSubscriptionSourceTypesDeletedEvent) Reset() {
@@ -7720,7 +7720,7 @@ type AdminSubscriptionRenamedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
 }
 
 func (x *AdminSubscriptionRenamedEvent) Reset() {
@@ -7767,15 +7767,15 @@ type ProjectCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id           string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description  string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Disabled     bool   `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	Trial        bool   `protobuf:"varint,4,opt,name=trial,proto3" json:"trial,omitempty"`
-	CreatorEmail string `protobuf:"bytes,5,opt,name=creator_email,json=creatorEmail,proto3" json:"creator_email,omitempty"`
-	CreatedAt    int64  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt    int64  `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Name         string `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode      string `protobuf:"bytes,9,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
+	Id           string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description  string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
+	Disabled     bool   `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled"`
+	Trial        bool   `protobuf:"varint,4,opt,name=trial,proto3" json:"trial"`
+	CreatorEmail string `protobuf:"bytes,5,opt,name=creator_email,json=creatorEmail,proto3" json:"creator_email"`
+	CreatedAt    int64  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt    int64  `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Name         string `protobuf:"bytes,8,opt,name=name,proto3" json:"name"`
+	UrlCode      string `protobuf:"bytes,9,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
 }
 
 func (x *ProjectCreatedEvent) Reset() {
@@ -7878,8 +7878,8 @@ type ProjectDescriptionChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
 }
 
 func (x *ProjectDescriptionChangedEvent) Reset() {
@@ -7933,8 +7933,8 @@ type ProjectRenamedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *ProjectRenamedEvent) Reset() {
@@ -7988,7 +7988,7 @@ type ProjectEnabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *ProjectEnabledEvent) Reset() {
@@ -8035,7 +8035,7 @@ type ProjectDisabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *ProjectDisabledEvent) Reset() {
@@ -8082,15 +8082,15 @@ type ProjectTrialCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id           string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description  string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Disabled     bool   `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	Trial        bool   `protobuf:"varint,4,opt,name=trial,proto3" json:"trial,omitempty"`
-	CreatorEmail string `protobuf:"bytes,5,opt,name=creator_email,json=creatorEmail,proto3" json:"creator_email,omitempty"`
-	CreatedAt    int64  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt    int64  `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Name         string `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode      string `protobuf:"bytes,9,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
+	Id           string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description  string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
+	Disabled     bool   `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled"`
+	Trial        bool   `protobuf:"varint,4,opt,name=trial,proto3" json:"trial"`
+	CreatorEmail string `protobuf:"bytes,5,opt,name=creator_email,json=creatorEmail,proto3" json:"creator_email"`
+	CreatedAt    int64  `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt    int64  `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Name         string `protobuf:"bytes,8,opt,name=name,proto3" json:"name"`
+	UrlCode      string `protobuf:"bytes,9,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
 }
 
 func (x *ProjectTrialCreatedEvent) Reset() {
@@ -8193,7 +8193,7 @@ type ProjectTrialConvertedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *ProjectTrialConvertedEvent) Reset() {
@@ -8240,7 +8240,7 @@ type PrerequisiteAddedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Prerequisite *feature.Prerequisite `protobuf:"bytes,1,opt,name=prerequisite,proto3" json:"prerequisite,omitempty"`
+	Prerequisite *feature.Prerequisite `protobuf:"bytes,1,opt,name=prerequisite,proto3" json:"prerequisite"`
 }
 
 func (x *PrerequisiteAddedEvent) Reset() {
@@ -8287,7 +8287,7 @@ type PrerequisiteVariationChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Prerequisite *feature.Prerequisite `protobuf:"bytes,1,opt,name=prerequisite,proto3" json:"prerequisite,omitempty"`
+	Prerequisite *feature.Prerequisite `protobuf:"bytes,1,opt,name=prerequisite,proto3" json:"prerequisite"`
 }
 
 func (x *PrerequisiteVariationChangedEvent) Reset() {
@@ -8334,7 +8334,7 @@ type PrerequisiteRemovedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
 }
 
 func (x *PrerequisiteRemovedEvent) Reset() {
@@ -8381,12 +8381,12 @@ type ProgressiveRolloutCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string                          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId string                          `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	Clause    *anypb.Any                      `protobuf:"bytes,3,opt,name=clause,proto3" json:"clause,omitempty"`
-	CreatedAt int64                           `protobuf:"varint,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt int64                           `protobuf:"varint,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Type      autoops.ProgressiveRollout_Type `protobuf:"varint,6,opt,name=type,proto3,enum=bucketeer.autoops.ProgressiveRollout_Type" json:"type,omitempty"`
+	Id        string                          `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId string                          `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	Clause    *anypb.Any                      `protobuf:"bytes,3,opt,name=clause,proto3" json:"clause"`
+	CreatedAt int64                           `protobuf:"varint,4,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt int64                           `protobuf:"varint,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Type      autoops.ProgressiveRollout_Type `protobuf:"varint,6,opt,name=type,proto3,enum=bucketeer.autoops.ProgressiveRollout_Type" json:"type"`
 }
 
 func (x *ProgressiveRolloutCreatedEvent) Reset() {
@@ -8468,7 +8468,7 @@ type ProgressiveRolloutDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *ProgressiveRolloutDeletedEvent) Reset() {
@@ -8515,7 +8515,7 @@ type ProgressiveRolloutScheduleTriggeredAtChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ScheduleId string `protobuf:"bytes,1,opt,name=schedule_id,json=scheduleId,proto3" json:"schedule_id,omitempty"`
+	ScheduleId string `protobuf:"bytes,1,opt,name=schedule_id,json=scheduleId,proto3" json:"schedule_id"`
 }
 
 func (x *ProgressiveRolloutScheduleTriggeredAtChangedEvent) Reset() {
@@ -8562,15 +8562,15 @@ type OrganizationCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	UrlCode     string `protobuf:"bytes,3,opt,name=url_code,json=urlCode,proto3" json:"url_code,omitempty"`
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	Disabled    bool   `protobuf:"varint,5,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	Archived    bool   `protobuf:"varint,6,opt,name=archived,proto3" json:"archived,omitempty"`
-	Trial       bool   `protobuf:"varint,7,opt,name=trial,proto3" json:"trial,omitempty"`
-	CreatedAt   int64  `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt   int64  `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
+	UrlCode     string `protobuf:"bytes,3,opt,name=url_code,json=urlCode,proto3" json:"url_code"`
+	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description"`
+	Disabled    bool   `protobuf:"varint,5,opt,name=disabled,proto3" json:"disabled"`
+	Archived    bool   `protobuf:"varint,6,opt,name=archived,proto3" json:"archived"`
+	Trial       bool   `protobuf:"varint,7,opt,name=trial,proto3" json:"trial"`
+	CreatedAt   int64  `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt   int64  `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *OrganizationCreatedEvent) Reset() {
@@ -8673,8 +8673,8 @@ type OrganizationDescriptionChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Id          string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`
 }
 
 func (x *OrganizationDescriptionChangedEvent) Reset() {
@@ -8728,8 +8728,8 @@ type OrganizationNameChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
 func (x *OrganizationNameChangedEvent) Reset() {
@@ -8783,7 +8783,7 @@ type OrganizationEnabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *OrganizationEnabledEvent) Reset() {
@@ -8830,7 +8830,7 @@ type OrganizationDisabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *OrganizationDisabledEvent) Reset() {
@@ -8877,7 +8877,7 @@ type OrganizationArchivedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *OrganizationArchivedEvent) Reset() {
@@ -8924,7 +8924,7 @@ type OrganizationUnarchivedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *OrganizationUnarchivedEvent) Reset() {
@@ -8971,7 +8971,7 @@ type OrganizationTrialConvertedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 }
 
 func (x *OrganizationTrialConvertedEvent) Reset() {
@@ -9018,15 +9018,15 @@ type FlagTriggerCreatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId            string                     `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	EnvironmentNamespace string                     `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Type                 feature.FlagTrigger_Type   `protobuf:"varint,4,opt,name=type,proto3,enum=bucketeer.feature.FlagTrigger_Type" json:"type,omitempty"`
-	Action               feature.FlagTrigger_Action `protobuf:"varint,5,opt,name=action,proto3,enum=bucketeer.feature.FlagTrigger_Action" json:"action,omitempty"`
-	Description          string                     `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	Token                string                     `protobuf:"bytes,7,opt,name=token,proto3" json:"token,omitempty"`
-	CreatedAt            int64                      `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt            int64                      `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Id                   string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId            string                     `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	EnvironmentNamespace string                     `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Type                 feature.FlagTrigger_Type   `protobuf:"varint,4,opt,name=type,proto3,enum=bucketeer.feature.FlagTrigger_Type" json:"type"`
+	Action               feature.FlagTrigger_Action `protobuf:"varint,5,opt,name=action,proto3,enum=bucketeer.feature.FlagTrigger_Action" json:"action"`
+	Description          string                     `protobuf:"bytes,6,opt,name=description,proto3" json:"description"`
+	Token                string                     `protobuf:"bytes,7,opt,name=token,proto3" json:"token"`
+	CreatedAt            int64                      `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt            int64                      `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
 }
 
 func (x *FlagTriggerCreatedEvent) Reset() {
@@ -9129,10 +9129,10 @@ type FlagTriggerResetEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Token                string `protobuf:"bytes,4,opt,name=token,proto3" json:"token,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Token                string `protobuf:"bytes,4,opt,name=token,proto3" json:"token"`
 }
 
 func (x *FlagTriggerResetEvent) Reset() {
@@ -9200,10 +9200,10 @@ type FlagTriggerDescriptionChangedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Description          string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Description          string `protobuf:"bytes,4,opt,name=description,proto3" json:"description"`
 }
 
 func (x *FlagTriggerDescriptionChangedEvent) Reset() {
@@ -9271,9 +9271,9 @@ type FlagTriggerDisabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *FlagTriggerDisabledEvent) Reset() {
@@ -9334,9 +9334,9 @@ type FlagTriggerEnabledEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *FlagTriggerEnabledEvent) Reset() {
@@ -9397,9 +9397,9 @@ type FlagTriggerDeletedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
 }
 
 func (x *FlagTriggerDeletedEvent) Reset() {
@@ -9460,11 +9460,11 @@ type FlagTriggerUsageUpdatedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	LastTriggeredAt      int64  `protobuf:"varint,4,opt,name=last_triggered_at,json=lastTriggeredAt,proto3" json:"last_triggered_at,omitempty"`
-	TriggerTimes         int32  `protobuf:"varint,5,opt,name=trigger_times,json=triggerTimes,proto3" json:"trigger_times,omitempty"`
+	Id                   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	FeatureId            string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	EnvironmentNamespace string `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	LastTriggeredAt      int64  `protobuf:"varint,4,opt,name=last_triggered_at,json=lastTriggeredAt,proto3" json:"last_triggered_at"`
+	TriggerTimes         int32  `protobuf:"varint,5,opt,name=trigger_times,json=triggerTimes,proto3" json:"trigger_times"`
 }
 
 func (x *FlagTriggerUsageUpdatedEvent) Reset() {
