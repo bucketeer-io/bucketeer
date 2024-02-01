@@ -139,14 +139,7 @@ func (s *FeatureService) CreateFlagTrigger(
 		}
 		return nil, dt.Err()
 	}
-	triggerURL, err := s.generateTriggerURL(ctx, flagTrigger.Token, false)
-	if err != nil {
-		s.logger.Error(
-			"Failed to generate trigger url",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
+	triggerURL := s.generateTriggerURL(ctx, flagTrigger.Token, false)
 	flagTrigger.FlagTrigger.Token = ""
 	return &featureproto.CreateFlagTriggerResponse{
 		FlagTrigger: flagTrigger.FlagTrigger,
@@ -548,14 +541,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		}
 		return nil, dt.Err()
 	}
-	triggerURL, err := s.generateTriggerURL(ctx, trigger.Token, false)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
+	triggerURL := s.generateTriggerURL(ctx, trigger.Token, false)
 	trigger.FlagTrigger.Token = ""
 	return &featureproto.ResetFlagTriggerResponse{
 		FlagTrigger: trigger.FlagTrigger,
@@ -698,14 +684,7 @@ func (s *FeatureService) GetFlagTrigger(
 		}
 		return nil, err
 	}
-	triggerURL, err := s.generateTriggerURL(ctx, trigger.Token, true)
-	if err != nil {
-		s.logger.Error(
-			"Failed to generate trigger url",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
+	triggerURL := s.generateTriggerURL(ctx, trigger.Token, true)
 	trigger.FlagTrigger.Token = ""
 	return &featureproto.GetFlagTriggerResponse{
 		FlagTrigger: trigger.FlagTrigger,
@@ -766,14 +745,7 @@ func (s *FeatureService) ListFlagTriggers(
 	)
 	triggerWithUrls := make([]*featureproto.ListFlagTriggersResponse_FlagTriggerWithUrl, 0, len(flagTriggers))
 	for _, trigger := range flagTriggers {
-		triggerURL, err := s.generateTriggerURL(ctx, trigger.Token, true)
-		if err != nil {
-			s.logger.Error(
-				"Failed to generate trigger url",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, err
-		}
+		triggerURL := s.generateTriggerURL(ctx, trigger.Token, true)
 		trigger.Token = ""
 		triggerWithUrls = append(triggerWithUrls, &featureproto.ListFlagTriggersResponse_FlagTriggerWithUrl{
 			FlagTrigger: trigger,
@@ -1070,10 +1042,10 @@ func (s *FeatureService) generateTriggerURL(
 	ctx context.Context,
 	token string,
 	masked bool,
-) (string, error) {
+) string {
 	if masked {
-		return fmt.Sprintf("%s/%s", s.triggerURL, token[:numOfSecretCharsToShow]+maskURI), nil
+		return fmt.Sprintf("%s/%s", s.triggerURL, token[:numOfSecretCharsToShow]+maskURI)
 	} else {
-		return fmt.Sprintf("%s/%s", s.triggerURL, token), nil
+		return fmt.Sprintf("%s/%s", s.triggerURL, token)
 	}
 }
