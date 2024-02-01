@@ -179,7 +179,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Load cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: yarn-cache
         with:
           path: |
