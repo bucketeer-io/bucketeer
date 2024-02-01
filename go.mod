@@ -36,7 +36,7 @@ require (
 	golang.org/x/sync v0.5.0
 	golang.org/x/text v0.14.0
 	golang.org/x/time v0.5.0
-	gonum.org/v1/gonum v0.11.0
+	gonum.org/v1/gonum v0.14.0
 	google.golang.org/api v0.152.0
 	google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17
 	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17
@@ -107,7 +107,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.16.0 // indirect
-	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0 // indirect
+	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/mod v0.11.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
