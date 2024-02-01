@@ -94,11 +94,11 @@ type Notification struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Type                          Notification_Type              `protobuf:"varint,1,opt,name=type,proto3,enum=bucketeer.notification.sender.Notification_Type" json:"type,omitempty"`
-	DomainEventNotification       *DomainEventNotification       `protobuf:"bytes,2,opt,name=domain_event_notification,json=domainEventNotification,proto3" json:"domain_event_notification,omitempty"`
-	FeatureStaleNotification      *FeatureStaleNotification      `protobuf:"bytes,3,opt,name=feature_stale_notification,json=featureStaleNotification,proto3" json:"feature_stale_notification,omitempty"`
-	ExperimentRunningNotification *ExperimentRunningNotification `protobuf:"bytes,4,opt,name=experiment_running_notification,json=experimentRunningNotification,proto3" json:"experiment_running_notification,omitempty"`
-	MauCountNotification          *MauCountNotification          `protobuf:"bytes,5,opt,name=mau_count_notification,json=mauCountNotification,proto3" json:"mau_count_notification,omitempty"`
+	Type                          Notification_Type              `protobuf:"varint,1,opt,name=type,proto3,enum=bucketeer.notification.sender.Notification_Type" json:"type"`
+	DomainEventNotification       *DomainEventNotification       `protobuf:"bytes,2,opt,name=domain_event_notification,json=domainEventNotification,proto3" json:"domain_event_notification"`
+	FeatureStaleNotification      *FeatureStaleNotification      `protobuf:"bytes,3,opt,name=feature_stale_notification,json=featureStaleNotification,proto3" json:"feature_stale_notification"`
+	ExperimentRunningNotification *ExperimentRunningNotification `protobuf:"bytes,4,opt,name=experiment_running_notification,json=experimentRunningNotification,proto3" json:"experiment_running_notification"`
+	MauCountNotification          *MauCountNotification          `protobuf:"bytes,5,opt,name=mau_count_notification,json=mauCountNotification,proto3" json:"mau_count_notification"`
 }
 
 func (x *Notification) Reset() {
@@ -173,11 +173,11 @@ type DomainEventNotification struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Editor        *domain.Editor          `protobuf:"bytes,2,opt,name=editor,proto3" json:"editor,omitempty"`
-	EntityType    domain.Event_EntityType `protobuf:"varint,3,opt,name=entity_type,json=entityType,proto3,enum=bucketeer.event.domain.Event_EntityType" json:"entity_type,omitempty"`
-	EntityId      string                  `protobuf:"bytes,4,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
-	Type          domain.Event_Type       `protobuf:"varint,5,opt,name=type,proto3,enum=bucketeer.event.domain.Event_Type" json:"type,omitempty"`
-	EnvironmentId string                  `protobuf:"bytes,6,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
+	Editor        *domain.Editor          `protobuf:"bytes,2,opt,name=editor,proto3" json:"editor"`
+	EntityType    domain.Event_EntityType `protobuf:"varint,3,opt,name=entity_type,json=entityType,proto3,enum=bucketeer.event.domain.Event_EntityType" json:"entity_type"`
+	EntityId      string                  `protobuf:"bytes,4,opt,name=entity_id,json=entityId,proto3" json:"entity_id"`
+	Type          domain.Event_Type       `protobuf:"varint,5,opt,name=type,proto3,enum=bucketeer.event.domain.Event_Type" json:"type"`
+	EnvironmentId string                  `protobuf:"bytes,6,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
 }
 
 func (x *DomainEventNotification) Reset() {
@@ -252,8 +252,8 @@ type FeatureStaleNotification struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Features      []*feature.Feature `protobuf:"bytes,2,rep,name=features,proto3" json:"features,omitempty"`
-	EnvironmentId string             `protobuf:"bytes,3,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
+	Features      []*feature.Feature `protobuf:"bytes,2,rep,name=features,proto3" json:"features"`
+	EnvironmentId string             `protobuf:"bytes,3,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
 }
 
 func (x *FeatureStaleNotification) Reset() {
@@ -307,8 +307,8 @@ type ExperimentRunningNotification struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentId string                   `protobuf:"bytes,2,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
-	Experiments   []*experiment.Experiment `protobuf:"bytes,3,rep,name=experiments,proto3" json:"experiments,omitempty"`
+	EnvironmentId string                   `protobuf:"bytes,2,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	Experiments   []*experiment.Experiment `protobuf:"bytes,3,rep,name=experiments,proto3" json:"experiments"`
 }
 
 func (x *ExperimentRunningNotification) Reset() {
@@ -362,10 +362,10 @@ type MauCountNotification struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EnvironmentId string `protobuf:"bytes,1,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
-	EventCount    int64  `protobuf:"varint,2,opt,name=event_count,json=eventCount,proto3" json:"event_count,omitempty"`
-	UserCount     int64  `protobuf:"varint,3,opt,name=user_count,json=userCount,proto3" json:"user_count,omitempty"`
-	Month         int32  `protobuf:"varint,4,opt,name=month,proto3" json:"month,omitempty"`
+	EnvironmentId string `protobuf:"bytes,1,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	EventCount    int64  `protobuf:"varint,2,opt,name=event_count,json=eventCount,proto3" json:"event_count"`
+	UserCount     int64  `protobuf:"varint,3,opt,name=user_count,json=userCount,proto3" json:"user_count"`
+	Month         int32  `protobuf:"varint,4,opt,name=month,proto3" json:"month"`
 }
 
 func (x *MauCountNotification) Reset() {

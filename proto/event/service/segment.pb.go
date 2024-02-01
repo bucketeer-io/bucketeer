@@ -41,12 +41,12 @@ type BulkSegmentUsersReceivedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace string                    `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	SegmentId            string                    `protobuf:"bytes,3,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	Data                 []byte                    `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"`
-	State                feature.SegmentUser_State `protobuf:"varint,5,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state,omitempty"`
-	Editor               *domain.Editor            `protobuf:"bytes,6,opt,name=editor,proto3" json:"editor,omitempty"`
+	Id                   string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace string                    `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	SegmentId            string                    `protobuf:"bytes,3,opt,name=segment_id,json=segmentId,proto3" json:"segment_id"`
+	Data                 []byte                    `protobuf:"bytes,4,opt,name=data,proto3" json:"data"`
+	State                feature.SegmentUser_State `protobuf:"varint,5,opt,name=state,proto3,enum=bucketeer.feature.SegmentUser_State" json:"state"`
+	Editor               *domain.Editor            `protobuf:"bytes,6,opt,name=editor,proto3" json:"editor"`
 }
 
 func (x *BulkSegmentUsersReceivedEvent) Reset() {

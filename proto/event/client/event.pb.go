@@ -157,9 +157,9 @@ type Event struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Event                *anypb.Any `protobuf:"bytes,2,opt,name=event,proto3" json:"event,omitempty"`
-	EnvironmentNamespace string     `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"` // SDK doens't need to set this field. It's set by gateway service.
+	Id                   string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Event                *anypb.Any `protobuf:"bytes,2,opt,name=event,proto3" json:"event"`
+	EnvironmentNamespace string     `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"` // SDK doens't need to set this field. It's set by gateway service.
 }
 
 func (x *Event) Reset() {
@@ -220,17 +220,17 @@ type EvaluationEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Timestamp      int64             `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	FeatureId      string            `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	FeatureVersion int32             `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version,omitempty"`
-	UserId         string            `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	VariationId    string            `protobuf:"bytes,5,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
-	User           *user.User        `protobuf:"bytes,6,opt,name=user,proto3" json:"user,omitempty"`
-	Reason         *feature.Reason   `protobuf:"bytes,7,opt,name=reason,proto3" json:"reason,omitempty"`
-	Tag            string            `protobuf:"bytes,8,opt,name=tag,proto3" json:"tag,omitempty"`
-	SourceId       SourceId          `protobuf:"varint,9,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id,omitempty"`
-	SdkVersion     string            `protobuf:"bytes,10,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version,omitempty"`
-	Metadata       map[string]string `protobuf:"bytes,11,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Timestamp      int64             `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp"`
+	FeatureId      string            `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	FeatureVersion int32             `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version"`
+	UserId         string            `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id"`
+	VariationId    string            `protobuf:"bytes,5,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
+	User           *user.User        `protobuf:"bytes,6,opt,name=user,proto3" json:"user"`
+	Reason         *feature.Reason   `protobuf:"bytes,7,opt,name=reason,proto3" json:"reason"`
+	Tag            string            `protobuf:"bytes,8,opt,name=tag,proto3" json:"tag"`
+	SourceId       SourceId          `protobuf:"varint,9,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id"`
+	SdkVersion     string            `protobuf:"bytes,10,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version"`
+	Metadata       map[string]string `protobuf:"bytes,11,rep,name=metadata,proto3" json:"metadata" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *EvaluationEvent) Reset() {
@@ -347,17 +347,17 @@ type GoalEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Timestamp int64      `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	GoalId    string     `protobuf:"bytes,2,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
-	UserId    string     `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Value     float64    `protobuf:"fixed64,4,opt,name=value,proto3" json:"value,omitempty"`
-	User      *user.User `protobuf:"bytes,5,opt,name=user,proto3" json:"user,omitempty"`
+	Timestamp int64      `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp"`
+	GoalId    string     `protobuf:"bytes,2,opt,name=goal_id,json=goalId,proto3" json:"goal_id"`
+	UserId    string     `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id"`
+	Value     float64    `protobuf:"fixed64,4,opt,name=value,proto3" json:"value"`
+	User      *user.User `protobuf:"bytes,5,opt,name=user,proto3" json:"user"`
 	// Deprecated: Do not use.
-	Evaluations []*feature.Evaluation `protobuf:"bytes,6,rep,name=evaluations,proto3" json:"evaluations,omitempty"`
-	Tag         string                `protobuf:"bytes,7,opt,name=tag,proto3" json:"tag,omitempty"`
-	SourceId    SourceId              `protobuf:"varint,8,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id,omitempty"`
-	SdkVersion  string                `protobuf:"bytes,9,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version,omitempty"`
-	Metadata    map[string]string     `protobuf:"bytes,10,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Evaluations []*feature.Evaluation `protobuf:"bytes,6,rep,name=evaluations,proto3" json:"evaluations"`
+	Tag         string                `protobuf:"bytes,7,opt,name=tag,proto3" json:"tag"`
+	SourceId    SourceId              `protobuf:"varint,8,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id"`
+	SdkVersion  string                `protobuf:"bytes,9,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version"`
+	Metadata    map[string]string     `protobuf:"bytes,10,rep,name=metadata,proto3" json:"metadata" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *GoalEvent) Reset() {
@@ -468,11 +468,11 @@ type MetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Timestamp  int64             `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Event      *anypb.Any        `protobuf:"bytes,2,opt,name=event,proto3" json:"event,omitempty"`
-	SourceId   SourceId          `protobuf:"varint,3,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id,omitempty"`
-	SdkVersion string            `protobuf:"bytes,4,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version,omitempty"`
-	Metadata   map[string]string `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Timestamp  int64             `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp"`
+	Event      *anypb.Any        `protobuf:"bytes,2,opt,name=event,proto3" json:"event"`
+	SourceId   SourceId          `protobuf:"varint,3,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id"`
+	SdkVersion string            `protobuf:"bytes,4,opt,name=sdk_version,json=sdkVersion,proto3" json:"sdk_version"`
+	Metadata   map[string]string `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *MetricsEvent) Reset() {
@@ -548,8 +548,8 @@ type GetEvaluationLatencyMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Labels   map[string]string    `protobuf:"bytes,1,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Duration *durationpb.Duration `protobuf:"bytes,2,opt,name=duration,proto3" json:"duration,omitempty"`
+	Labels   map[string]string    `protobuf:"bytes,1,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Duration *durationpb.Duration `protobuf:"bytes,2,opt,name=duration,proto3" json:"duration"`
 }
 
 func (x *GetEvaluationLatencyMetricsEvent) Reset() {
@@ -604,8 +604,8 @@ type GetEvaluationSizeMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Labels   map[string]string `protobuf:"bytes,1,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	SizeByte int32             `protobuf:"varint,2,opt,name=size_byte,json=sizeByte,proto3" json:"size_byte,omitempty"`
+	Labels   map[string]string `protobuf:"bytes,1,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	SizeByte int32             `protobuf:"varint,2,opt,name=size_byte,json=sizeByte,proto3" json:"size_byte"`
 }
 
 func (x *GetEvaluationSizeMetricsEvent) Reset() {
@@ -659,11 +659,11 @@ type LatencyMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// Deprecated: Do not use.
-	Duration      *durationpb.Duration `protobuf:"bytes,3,opt,name=duration,proto3" json:"duration,omitempty"`
-	LatencySecond float64              `protobuf:"fixed64,4,opt,name=latency_second,json=latencySecond,proto3" json:"latency_second,omitempty"`
+	Duration      *durationpb.Duration `protobuf:"bytes,3,opt,name=duration,proto3" json:"duration"`
+	LatencySecond float64              `protobuf:"fixed64,4,opt,name=latency_second,json=latencySecond,proto3" json:"latency_second"`
 }
 
 func (x *LatencyMetricsEvent) Reset() {
@@ -732,9 +732,9 @@ type SizeMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId    ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels   map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	SizeByte int32             `protobuf:"varint,3,opt,name=size_byte,json=sizeByte,proto3" json:"size_byte,omitempty"`
+	ApiId    ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels   map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	SizeByte int32             `protobuf:"varint,3,opt,name=size_byte,json=sizeByte,proto3" json:"size_byte"`
 }
 
 func (x *SizeMetricsEvent) Reset() {
@@ -796,7 +796,7 @@ type TimeoutErrorCountMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tag string `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag,omitempty"`
+	Tag string `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag"`
 }
 
 func (x *TimeoutErrorCountMetricsEvent) Reset() {
@@ -844,7 +844,7 @@ type InternalErrorCountMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tag string `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag,omitempty"`
+	Tag string `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag"`
 }
 
 func (x *InternalErrorCountMetricsEvent) Reset() {
@@ -892,8 +892,8 @@ type BadRequestErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *BadRequestErrorMetricsEvent) Reset() {
@@ -948,8 +948,8 @@ type UnauthorizedErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *UnauthorizedErrorMetricsEvent) Reset() {
@@ -1004,8 +1004,8 @@ type ForbiddenErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *ForbiddenErrorMetricsEvent) Reset() {
@@ -1060,8 +1060,8 @@ type NotFoundErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *NotFoundErrorMetricsEvent) Reset() {
@@ -1116,8 +1116,8 @@ type ClientClosedRequestErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *ClientClosedRequestErrorMetricsEvent) Reset() {
@@ -1172,8 +1172,8 @@ type InternalServerErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *InternalServerErrorMetricsEvent) Reset() {
@@ -1228,8 +1228,8 @@ type ServiceUnavailableErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *ServiceUnavailableErrorMetricsEvent) Reset() {
@@ -1283,8 +1283,8 @@ type TimeoutErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *TimeoutErrorMetricsEvent) Reset() {
@@ -1338,8 +1338,8 @@ type InternalErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *InternalErrorMetricsEvent) Reset() {
@@ -1393,8 +1393,8 @@ type NetworkErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *NetworkErrorMetricsEvent) Reset() {
@@ -1448,8 +1448,8 @@ type InternalSdkErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *InternalSdkErrorMetricsEvent) Reset() {
@@ -1503,8 +1503,8 @@ type UnknownErrorMetricsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id,omitempty"`
-	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ApiId  ApiId             `protobuf:"varint,1,opt,name=api_id,json=apiId,proto3,enum=bucketeer.event.client.ApiId" json:"api_id"`
+	Labels map[string]string `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *UnknownErrorMetricsEvent) Reset() {
@@ -1558,12 +1558,12 @@ type OpsEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Timestamp      int64  `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	FeatureId      string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id,omitempty"`
-	FeatureVersion int32  `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version,omitempty"`
-	VariationId    string `protobuf:"bytes,4,opt,name=variation_id,json=variationId,proto3" json:"variation_id,omitempty"`
-	GoalId         string `protobuf:"bytes,5,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
-	UserId         string `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Timestamp      int64  `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp"`
+	FeatureId      string `protobuf:"bytes,2,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	FeatureVersion int32  `protobuf:"varint,3,opt,name=feature_version,json=featureVersion,proto3" json:"feature_version"`
+	VariationId    string `protobuf:"bytes,4,opt,name=variation_id,json=variationId,proto3" json:"variation_id"`
+	GoalId         string `protobuf:"bytes,5,opt,name=goal_id,json=goalId,proto3" json:"goal_id"`
+	UserId         string `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3" json:"user_id"`
 }
 
 func (x *OpsEvent) Reset() {
@@ -1645,9 +1645,9 @@ type UserGoalEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Timestamp int64   `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	GoalId    string  `protobuf:"bytes,2,opt,name=goal_id,json=goalId,proto3" json:"goal_id,omitempty"`
-	Value     float64 `protobuf:"fixed64,3,opt,name=value,proto3" json:"value,omitempty"`
+	Timestamp int64   `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp"`
+	GoalId    string  `protobuf:"bytes,2,opt,name=goal_id,json=goalId,proto3" json:"goal_id"`
+	Value     float64 `protobuf:"fixed64,3,opt,name=value,proto3" json:"value"`
 }
 
 func (x *UserGoalEvent) Reset() {

@@ -40,14 +40,14 @@ type UserEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
 	// true];
-	EnvironmentNamespace string            `protobuf:"bytes,4,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	Tag                  string            `protobuf:"bytes,5,opt,name=tag,proto3" json:"tag,omitempty"`
-	UserId               string            `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	LastSeen             int64             `protobuf:"varint,7,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
-	Data                 map[string]string `protobuf:"bytes,8,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	SourceId             client.SourceId   `protobuf:"varint,9,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id,omitempty"`
+	EnvironmentNamespace string            `protobuf:"bytes,4,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Tag                  string            `protobuf:"bytes,5,opt,name=tag,proto3" json:"tag"`
+	UserId               string            `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3" json:"user_id"`
+	LastSeen             int64             `protobuf:"varint,7,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen"`
+	Data                 map[string]string `protobuf:"bytes,8,rep,name=data,proto3" json:"data" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	SourceId             client.SourceId   `protobuf:"varint,9,opt,name=source_id,json=sourceId,proto3,enum=bucketeer.event.client.SourceId" json:"source_id"`
 }
 
 func (x *UserEvent) Reset() {

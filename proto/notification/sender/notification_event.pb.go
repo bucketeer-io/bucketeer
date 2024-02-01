@@ -40,11 +40,11 @@ type NotificationEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                   string                               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	EnvironmentNamespace string                               `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	SourceType           notification.Subscription_SourceType `protobuf:"varint,3,opt,name=source_type,json=sourceType,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_type,omitempty"`
-	Notification         *Notification                        `protobuf:"bytes,4,opt,name=notification,proto3" json:"notification,omitempty"`
-	IsAdminEvent         bool                                 `protobuf:"varint,5,opt,name=is_admin_event,json=isAdminEvent,proto3" json:"is_admin_event,omitempty"`
+	Id                   string                               `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	EnvironmentNamespace string                               `protobuf:"bytes,2,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	SourceType           notification.Subscription_SourceType `protobuf:"varint,3,opt,name=source_type,json=sourceType,proto3,enum=bucketeer.notification.Subscription_SourceType" json:"source_type"`
+	Notification         *Notification                        `protobuf:"bytes,4,opt,name=notification,proto3" json:"notification"`
+	IsAdminEvent         bool                                 `protobuf:"varint,5,opt,name=is_admin_event,json=isAdminEvent,proto3" json:"is_admin_event"`
 }
 
 func (x *NotificationEvent) Reset() {
