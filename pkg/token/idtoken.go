@@ -31,10 +31,12 @@ type IDToken struct {
 	Expiry   time.Time `json:"exp"`
 	IssuedAt time.Time `json:"iat"`
 	Email    string    `json:"email"`
+	// Deprecated. Use IsSystemAdmin instead. It will be removed in the future.
 	// Use "role" as json tag to keep compatibility.
 	// AdminRole is accountproto.Account_OWNER in the case of AdminAccount.
 	// AdminRole is accountproto.Account_UNASSIGNED in the case of Account.
-	AdminRole accountproto.Account_Role `json:"role"`
+	AdminRole     accountproto.Account_Role `json:"role"`
+	IsSystemAdmin bool                      `json:"is_system_admin"`
 }
 
 func (t *IDToken) IsAdmin() bool {
