@@ -17,7 +17,7 @@ package main
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -68,20 +68,21 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		return errors.New("wrong role parameter")
 	}
 	idToken := &token.IDToken{
-		Issuer:    *c.issuer,
-		Subject:   *c.sub,
-		Audience:  *c.audience,
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     *c.email,
-		AdminRole: accountproto.Account_Role(role),
+		Issuer:        *c.issuer,
+		Subject:       *c.sub,
+		Audience:      *c.audience,
+		Expiry:        time.Now().AddDate(100, 0, 0),
+		IssuedAt:      time.Now(),
+		Email:         *c.email,
+		AdminRole:     accountproto.Account_Role(role),
+		IsSystemAdmin: true,
 	}
 	signedIDToken, err := signer.Sign(idToken)
 	if err != nil {
 		logger.Error("Failed to sign token", zap.Error(err))
 		return err
 	}
-	if err := ioutil.WriteFile(*c.output, []byte(signedIDToken), 0644); err != nil {
+	if err := os.WriteFile(*c.output, []byte(signedIDToken), 0644); err != nil {
 		logger.Error("Failed to write token to file", zap.Error(err), zap.String("output", *c.output))
 		return err
 	}
