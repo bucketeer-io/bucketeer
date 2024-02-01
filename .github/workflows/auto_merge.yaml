@@ -11,7 +11,7 @@ jobs:
     if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
       - name: Wait for other checks to succeed
-        uses: lewagon/wait-on-check-action@595dabb3acf442d47e29c9ec9ba44db0c6bdd18f # v1.3.3
+        uses: lewagon/wait-on-check-action@v1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           running-workflow-name: 'dependabot'
@@ -20,7 +20,7 @@ jobs:
           allowed-conclusions: success
       - name: Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@c9c4182bf1b97f5224aee3906fd373f6b61b4526 # v1.6.0
+        uses: dependabot/fetch-metadata@v1
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: Enable auto-merge for Dependabot PRs
