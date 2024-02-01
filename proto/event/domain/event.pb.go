@@ -8471,10 +8471,10 @@ type ProgressiveRolloutStoppedEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string                               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Status    autoops.ProgressiveRollout_Status    `protobuf:"varint,2,opt,name=status,proto3,enum=bucketeer.autoops.ProgressiveRollout_Status" json:"status,omitempty"`
-	StoppedBy autoops.ProgressiveRollout_StoppedBy `protobuf:"varint,3,opt,name=stopped_by,json=stoppedBy,proto3,enum=bucketeer.autoops.ProgressiveRollout_StoppedBy" json:"stopped_by,omitempty"`
-	StoppedAt int64                                `protobuf:"varint,4,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at,omitempty"`
+	Id        string                               `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Status    autoops.ProgressiveRollout_Status    `protobuf:"varint,2,opt,name=status,proto3,enum=bucketeer.autoops.ProgressiveRollout_Status" json:"status"`
+	StoppedBy autoops.ProgressiveRollout_StoppedBy `protobuf:"varint,3,opt,name=stopped_by,json=stoppedBy,proto3,enum=bucketeer.autoops.ProgressiveRollout_StoppedBy" json:"stopped_by"`
+	StoppedAt int64                                `protobuf:"varint,4,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at"`
 }
 
 func (x *ProgressiveRolloutStoppedEvent) Reset() {
