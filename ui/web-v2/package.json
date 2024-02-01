@@ -99,7 +99,7 @@
     "@nrwl/eslint-plugin-nx": "12.5.2",
     "@nrwl/jest": "11.4.0",
     "@nrwl/linter": "12.5.2",
-    "@nrwl/react": "12.5.2",
+    "@nrwl/react": "17.3.1",
     "@nrwl/tao": "12.5.2",
     "@nrwl/web": "12.5.2",
     "@nrwl/workspace": "12.5.2",
