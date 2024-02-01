@@ -9,6 +9,10 @@ updates:
     commit-message:
       prefix: "build"
       include: "scope"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
@@ -18,6 +22,10 @@ updates:
     commit-message:
       prefix: "build"
       include: "scope"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
   - package-ecosystem: "npm"
     directory: "/ui/web-v2"
     schedule:
@@ -27,3 +35,7 @@ updates:
     commit-message:
       prefix: "build"
       include: "scope"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
