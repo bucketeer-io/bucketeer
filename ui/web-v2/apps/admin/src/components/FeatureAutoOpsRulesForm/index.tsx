@@ -16,6 +16,7 @@ import {
 import {
   selectAll as selectAllProgressiveRollouts,
   deleteProgressiveRollout,
+  stopProgressiveRollout,
 } from '@/modules/porgressiveRollout';
 import { OpsCount } from '@/proto/autoops/ops_count_pb';
 import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
@@ -30,6 +31,7 @@ import {
   ArrowNarrowLeftIcon,
   ArrowNarrowRightIcon,
   BanIcon,
+  ClockIcon,
 } from '@heroicons/react/outline';
 import { SerializedError } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
@@ -76,6 +78,7 @@ import { HoverPopover } from '../HoverPopover';
 import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
 import { Overlay } from '../Overlay';
 import { ProgressiveRolloutStopDialog } from '../ProgressiveRolloutStopDialog';
+import { RelativeDateText } from '../RelativeDateText';
 import { Option } from '../Select';
 
 enum SORT_TYPE {
@@ -263,8 +266,6 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const { handleSubmit } = methods;
 
     const [tabs, setTabs] = useState<Tab[]>([]);
-    const [selectedClauseType, setSelectedClauseType] =
-      useState<keyof ClauseTypeMap>(null);
 
     useEffect(() => {
       const rules = autoOpsRules.map((r) => ({
@@ -395,14 +396,14 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const handleStopConfirm = () => {
       setIsStopConfirmDialogOpen(false);
 
-      // dispatch(
-      //   deleteAutoOpsRule({
-      //     environmentNamespace: currentEnvironment.id,
-      //     id: selectedOperation.id,
-      //   })
-      // ).then(() => {
-      //   refetchAutoOpsRules();
-      // });
+      dispatch(
+        stopProgressiveRollout({
+          environmentNamespace: currentEnvironment.id,
+          id: selectedOperation.id,
+        })
+      ).then(() => {
+        refetchProgressiveRollouts();
+      });
     };
 
     const isActiveTabSelected =
@@ -692,7 +693,6 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
       ).toObject();
 
       const { schedulesList, increments, interval, variationId } = data;
-
       return (
         <ProgressiveRolloutComponent
           key={progressiveRollout.id}
@@ -1065,8 +1065,8 @@ const EventRateOperation = memo(
 interface ProgressiveRolloutTemplateScheduleProps {
   variationOptions: Option[];
   rule: ProgressiveRollout.AsObject;
-  deleteRule: (ruleId) => void;
-  stopRule: (ruleId) => void;
+  deleteRule: () => void;
+  stopRule: () => void;
   schedulesList: ProgressiveRolloutSchedule.AsObject[];
   increments?: number;
   interval?: ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap];
@@ -1159,7 +1159,7 @@ const ProgressiveRolloutComponent = memo(
                       {f(messages.autoOps.deleteProgressiveRollout)}
                     </span>
                   </button>
-                  {/* <button
+                  <button
                     onClick={stopRule}
                     className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
                   >
@@ -1167,7 +1167,7 @@ const ProgressiveRolloutComponent = memo(
                     <span className="text-sm">
                       {f(messages.autoOps.stopProgressiveRollout)}
                     </span>
-                  </button> */}
+                  </button>
                 </Popover.Panel>
               </Popover>
             )}
@@ -1177,49 +1177,73 @@ const ProgressiveRolloutComponent = memo(
           <p className="font-bold text-lg">
             {f(messages.autoOps.progressInformation)}
           </p>
-          <div className="flex items-center py-3 space-x-2">
-            {increments && (
-              <>
-                <div className="space-x-1 items-center flex">
-                  <span className="text-gray-400">
-                    {f(messages.autoOps.increment)}:
-                  </span>
-                  <span className="text-gray-500">{increments}%</span>
-                  <InformationCircleIcon width={18} className="text-gray-400" />
-                </div>
-                <span className="text-gray-200">/</span>
-              </>
-            )}
-            <div className="flex space-x-1">
-              <span className="text-gray-400">
-                {f(messages.autoOps.startDate)}:
-              </span>
-              <span className="text-gray-500">
-                {dayjs(schedulesList[0].executeAt * 1000).format('YYYY/MM/DD')}
-              </span>
+          <div className="flex py-3 items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {increments && (
+                <>
+                  <div className="space-x-1 items-center flex">
+                    <span className="text-gray-400">
+                      {f(messages.autoOps.increment)}:
+                    </span>
+                    <span className="text-gray-500">{increments}%</span>
+                    <InformationCircleIcon
+                      width={18}
+                      className="text-gray-400"
+                    />
+                  </div>
+                  <span className="text-gray-200">/</span>
+                </>
+              )}
+              <div className="flex space-x-1">
+                <span className="text-gray-400">
+                  {f(messages.autoOps.startDate)}:
+                </span>
+                <span className="text-gray-500">
+                  {dayjs(schedulesList[0].executeAt * 1000).format(
+                    'YYYY/MM/DD'
+                  )}
+                </span>
+              </div>
+              <span className="text-gray-200">/</span>
+              {interval && (
+                <>
+                  <div className="flex space-x-1">
+                    <span className="text-gray-400">
+                      {f(messages.autoOps.frequency)}:
+                    </span>
+                    <span className="text-gray-500">
+                      {getFrequency(interval)}
+                    </span>
+                  </div>
+                  <span className="text-gray-200">/</span>
+                </>
+              )}
+              <div className="flex space-x-1">
+                <span className="text-gray-400">
+                  {f(messages.feature.variation)}:
+                </span>
+                <span className="text-gray-500">
+                  {variationOptions.find((v) => v.value === variationId)?.label}
+                </span>
+              </div>
             </div>
-            <span className="text-gray-200">/</span>
-            {interval && (
-              <>
-                <div className="flex space-x-1">
-                  <span className="text-gray-400">
-                    {f(messages.autoOps.frequency)}:
-                  </span>
-                  <span className="text-gray-500">
-                    {getFrequency(interval)}
-                  </span>
+            {rule.status === ProgressiveRollout.Status.STOPPED && (
+              <div className="flex space-x-2 text-gray-500 items-center">
+                <ClockIcon width={18} />
+                <span>Stopped</span>
+                {<RelativeDateText date={new Date(rule.stoppedAt * 1000)} />}
+                <span>by</span>
+                <div className="relative">
+                  <RefreshSvg width={22} />
+                  <CrossSvg
+                    width={12}
+                    className="absolute right-[1px] bottom-[3px]"
+                  />
                 </div>
-                <span className="text-gray-200">/</span>
-              </>
+                {/* {ProgressiveRollout.StoppedBy.OPS_KILL_SWITCH} */}
+                <span>Kill Switch</span>
+              </div>
             )}
-            <div className="flex space-x-1">
-              <span className="text-gray-400">
-                {f(messages.feature.variation)}:
-              </span>
-              <span className="text-gray-500">
-                {variationOptions.find((v) => v.value === variationId)?.label}
-              </span>
-            </div>
           </div>
           <div className="bg-gray-50 pt-14 pb-16 px-12 rounded mt-2">
             <div className="flex h-[4px] bg-gray-200 relative">

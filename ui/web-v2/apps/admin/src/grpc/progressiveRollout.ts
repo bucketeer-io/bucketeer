@@ -8,6 +8,8 @@ import {
   DeleteProgressiveRolloutResponse,
   ListProgressiveRolloutsRequest,
   ListProgressiveRolloutsResponse,
+  StopProgressiveRolloutRequest,
+  StopProgressiveRolloutResponse,
 } from '../proto/autoops/service_pb';
 import {
   AutoOpsServiceClient,
@@ -121,6 +123,37 @@ export function deleteProgressiveRollout(
       reject
     ): void => {
       client.deleteProgressiveRollout(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new ProgressiveRolloutServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
+    }
+  );
+}
+
+export interface StopProgressiveRolloutResult {
+  request: StopProgressiveRolloutRequest;
+  response: StopProgressiveRolloutResponse;
+}
+
+export function stopProgressiveRollout(
+  request: StopProgressiveRolloutRequest
+): Promise<StopProgressiveRolloutResult> {
+  return new Promise(
+    (resolve: (result: StopProgressiveRolloutResult) => void, reject): void => {
+      client.stopProgressiveRollout(
         request,
         getMetaData(),
         (error, response): void => {

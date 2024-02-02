@@ -8,6 +8,7 @@ import * as progressiveRolloutGrpc from '../grpc/progressiveRollout';
 import {
   CreateProgressiveRolloutCommand,
   DeleteProgressiveRolloutCommand,
+  StopProgressiveRolloutCommand,
 } from '../proto/autoops/command_pb';
 import { ProgressiveRollout } from '../proto/autoops/progressive_rollout_pb';
 import {
@@ -15,6 +16,7 @@ import {
   ListProgressiveRolloutsRequest,
   ListProgressiveRolloutsResponse,
   DeleteProgressiveRolloutRequest,
+  StopProgressiveRolloutRequest,
 } from '../proto/autoops/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -84,6 +86,26 @@ export const deleteProgressiveRollout = createAsyncThunk<
   request.setCommand(command);
   await setupAuthToken();
   await progressiveRolloutGrpc.deleteProgressiveRollout(request);
+});
+
+export interface StopProgressiveRolloutParams {
+  environmentNamespace: string;
+  id: string;
+}
+
+export const stopProgressiveRollout = createAsyncThunk<
+  void,
+  StopProgressiveRolloutParams | undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/stop`, async (params) => {
+  const request = new StopProgressiveRolloutRequest();
+  request.setId(params.id);
+  request.setEnvironmentNamespace(params.environmentNamespace);
+  const command = new StopProgressiveRolloutCommand();
+  command.setStoppedBy(ProgressiveRollout.StoppedBy.OPS_KILL_SWITCH);
+  request.setCommand(command);
+  await setupAuthToken();
+  await progressiveRolloutGrpc.stopProgressiveRollout(request);
 });
 
 const initialState = progressiveRolloutAdapter.getInitialState<{
