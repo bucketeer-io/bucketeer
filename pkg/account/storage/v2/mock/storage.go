@@ -140,19 +140,19 @@ func (mr *MockAccountStorageMockRecorder) GetAccountsWithOrganization(ctx, email
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountsWithOrganization", reflect.TypeOf((*MockAccountStorage)(nil).GetAccountsWithOrganization), ctx, email)
 }
 
-// GetAdminAccountV2 mocks base method.
-func (m *MockAccountStorage) GetAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error) {
+// GetSystemAdminAccountV2 mocks base method.
+func (m *MockAccountStorage) GetSystemAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAdminAccountV2", ctx, email)
+	ret := m.ctrl.Call(m, "GetSystemAdminAccountV2", ctx, email)
 	ret0, _ := ret[0].(*domain.AccountV2)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetAdminAccountV2 indicates an expected call of GetAdminAccountV2.
-func (mr *MockAccountStorageMockRecorder) GetAdminAccountV2(ctx, email interface{}) *gomock.Call {
+// GetSystemAdminAccountV2 indicates an expected call of GetSystemAdminAccountV2.
+func (mr *MockAccountStorageMockRecorder) GetSystemAdminAccountV2(ctx, email interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdminAccountV2", reflect.TypeOf((*MockAccountStorage)(nil).GetAdminAccountV2), ctx, email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSystemAdminAccountV2", reflect.TypeOf((*MockAccountStorage)(nil).GetSystemAdminAccountV2), ctx, email)
 }
 
 // ListAPIKeys mocks base method.
