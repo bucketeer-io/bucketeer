@@ -57,33 +57,37 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		role        accountproto.Account_Role
-		input       *proto.CreateAdminSubscriptionRequest
-		expectedErr error
+		desc          string
+		setup         func(*NotificationService)
+		role          accountproto.Account_Role
+		isSystemAdmin bool
+		input         *proto.CreateAdminSubscriptionRequest
+		expectedErr   error
 	}{
 		{
-			desc:  "err: ErrPermissionDenied",
-			setup: nil,
-			role:  accountproto.Account_UNASSIGNED,
+			desc:          "err: ErrPermissionDenied",
+			setup:         nil,
+			role:          accountproto.Account_UNASSIGNED,
+			isSystemAdmin: false,
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: nil,
 			},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			role:  accountproto.Account_OWNER,
+			desc:          "err: ErrNoCommand",
+			setup:         nil,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: nil,
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc: "err: ErrSourceTypesRequired",
-			role: accountproto.Account_OWNER,
+			desc:          "err: ErrSourceTypesRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -96,8 +100,9 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: createError(statusSourceTypesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes")),
 		},
 		{
-			desc: "err: ErrRecipientRequired",
-			role: accountproto.Account_OWNER,
+			desc:          "err: ErrRecipientRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -110,8 +115,9 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: createError(statusRecipientRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "recipant")),
 		},
 		{
-			desc: "err: ErrSlackRecipientRequired",
-			role: accountproto.Account_OWNER,
+			desc:          "err: ErrSlackRecipientRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -127,8 +133,9 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: createError(statusSlackRecipientRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "slack_recipant")),
 		},
 		{
-			desc: "err: ErrSlackRecipientWebhookURLRequired",
-			role: accountproto.Account_OWNER,
+			desc:          "err: ErrSlackRecipientWebhookURLRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -145,8 +152,9 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: createError(statusSlackRecipientWebhookURLRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_url")),
 		},
 		{
-			desc: "err: ErrNameRequired",
-			role: accountproto.Account_OWNER,
+			desc:          "err: ErrNameRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					SourceTypes: []proto.Subscription_SourceType{
@@ -172,7 +180,8 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			role: accountproto.Account_OWNER,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -191,7 +200,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, p.role)
+			ctx = setToken(t, ctx, p.role, p.isSystemAdmin)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -226,35 +235,40 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		role        accountproto.Account_Role
-		input       *proto.UpdateAdminSubscriptionRequest
-		expectedErr error
+		desc          string
+		setup         func(*NotificationService)
+		role          accountproto.Account_Role
+		isSystemAdmin bool
+		input         *proto.UpdateAdminSubscriptionRequest
+		expectedErr   error
 	}{
 		{
-			desc:        "err: ErrPermissionDenied",
-			role:        accountproto.Account_UNASSIGNED,
-			input:       &proto.UpdateAdminSubscriptionRequest{},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			desc:          "err: ErrPermissionDenied",
+			role:          accountproto.Account_UNASSIGNED,
+			isSystemAdmin: false,
+			input:         &proto.UpdateAdminSubscriptionRequest{},
+			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
-			desc:        "err: ErrIDRequired",
-			role:        accountproto.Account_OWNER,
-			input:       &proto.UpdateAdminSubscriptionRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			desc:          "err: ErrIDRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
+			input:         &proto.UpdateAdminSubscriptionRequest{},
+			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			role: accountproto.Account_OWNER,
+			desc:          "err: ErrNoCommand",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-0",
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc: "err: add notification types: ErrSourceTypesRequired",
-			role: accountproto.Account_OWNER,
+			desc:          "err: add notification types: ErrSourceTypesRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id:                    "key-0",
 				AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{},
@@ -262,8 +276,9 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: createError(statusSourceTypesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes")),
 		},
 		{
-			desc: "err: delete notification types: ErrSourceTypesRequired",
-			role: accountproto.Account_OWNER,
+			desc:          "err: delete notification types: ErrSourceTypesRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id:                       "key-0",
 				DeleteSourceTypesCommand: &proto.DeleteAdminSubscriptionSourceTypesCommand{},
@@ -278,7 +293,8 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2ss.ErrAdminSubscriptionNotFound)
 			},
-			role: accountproto.Account_OWNER,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-1",
 				AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{
@@ -301,7 +317,8 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			role: accountproto.Account_OWNER,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-0",
 				AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{
@@ -323,7 +340,8 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			role: accountproto.Account_OWNER,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-0",
 				DeleteSourceTypesCommand: &proto.DeleteAdminSubscriptionSourceTypesCommand{
@@ -345,7 +363,8 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			role: accountproto.Account_OWNER,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-0",
 				AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{
@@ -367,7 +386,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, p.role)
+			ctx = setToken(t, ctx, p.role, p.isSystemAdmin)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -398,27 +417,31 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		role        accountproto.Account_Role
-		input       *proto.EnableAdminSubscriptionRequest
-		expectedErr error
+		desc          string
+		setup         func(*NotificationService)
+		role          accountproto.Account_Role
+		isSystemAdmin bool
+		input         *proto.EnableAdminSubscriptionRequest
+		expectedErr   error
 	}{
 		{
-			desc:        "err: ErrPermissionDenied",
-			role:        accountproto.Account_UNASSIGNED,
-			input:       &proto.EnableAdminSubscriptionRequest{},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			desc:          "err: ErrPermissionDenied",
+			role:          accountproto.Account_UNASSIGNED,
+			isSystemAdmin: false,
+			input:         &proto.EnableAdminSubscriptionRequest{},
+			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
-			desc:        "err: ErrIDRequired",
-			role:        accountproto.Account_OWNER,
-			input:       &proto.EnableAdminSubscriptionRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			desc:          "err: ErrIDRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
+			input:         &proto.EnableAdminSubscriptionRequest{},
+			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			role: accountproto.Account_OWNER,
+			desc:          "err: ErrNoCommand",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.EnableAdminSubscriptionRequest{
 				Id: "key-0",
 			},
@@ -435,7 +458,8 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			role: accountproto.Account_OWNER,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.EnableAdminSubscriptionRequest{
 				Id:      "key-0",
 				Command: &proto.EnableAdminSubscriptionCommand{},
@@ -445,7 +469,7 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, p.role)
+			ctx = setToken(t, ctx, p.role, p.isSystemAdmin)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -477,21 +501,24 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		role        accountproto.Account_Role
-		input       *proto.DisableAdminSubscriptionRequest
-		expectedErr error
+		desc          string
+		setup         func(*NotificationService)
+		role          accountproto.Account_Role
+		isSystemAdmin bool
+		input         *proto.DisableAdminSubscriptionRequest
+		expectedErr   error
 	}{
 		{
-			desc:        "err: ErrIDRequired",
-			role:        accountproto.Account_OWNER,
-			input:       &proto.DisableAdminSubscriptionRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			desc:          "err: ErrIDRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
+			input:         &proto.DisableAdminSubscriptionRequest{},
+			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			role: accountproto.Account_OWNER,
+			desc:          "err: ErrNoCommand",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.DisableAdminSubscriptionRequest{
 				Id: "key-0",
 			},
@@ -508,7 +535,8 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			role: accountproto.Account_OWNER,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.DisableAdminSubscriptionRequest{
 				Id:      "key-0",
 				Command: &proto.DisableAdminSubscriptionCommand{},
@@ -518,7 +546,7 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, p.role)
+			ctx = setToken(t, ctx, p.role, p.isSystemAdmin)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -549,21 +577,24 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		role        accountproto.Account_Role
-		input       *proto.DeleteAdminSubscriptionRequest
-		expectedErr error
+		desc          string
+		setup         func(*NotificationService)
+		role          accountproto.Account_Role
+		isSystemAdmin bool
+		input         *proto.DeleteAdminSubscriptionRequest
+		expectedErr   error
 	}{
 		{
-			desc:        "err: ErrIDRequired",
-			role:        accountproto.Account_OWNER,
-			input:       &proto.DeleteAdminSubscriptionRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			desc:          "err: ErrIDRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
+			input:         &proto.DeleteAdminSubscriptionRequest{},
+			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			role: accountproto.Account_OWNER,
+			desc:          "err: ErrNoCommand",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.DeleteAdminSubscriptionRequest{
 				Id: "key-0",
 			},
@@ -580,7 +611,8 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			role: accountproto.Account_OWNER,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.DeleteAdminSubscriptionRequest{
 				Id:      "key-0",
 				Command: &proto.DeleteAdminSubscriptionCommand{},
@@ -590,7 +622,7 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, p.role)
+			ctx = setToken(t, ctx, p.role, p.isSystemAdmin)
 			service := newNotificationServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -621,23 +653,26 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		role        accountproto.Account_Role
-		input       *proto.GetAdminSubscriptionRequest
-		expectedErr error
+		desc          string
+		setup         func(*NotificationService)
+		role          accountproto.Account_Role
+		isSystemAdmin bool
+		input         *proto.GetAdminSubscriptionRequest
+		expectedErr   error
 	}{
 		{
-			desc:        "err: ErrPermissionDenied",
-			role:        accountproto.Account_UNASSIGNED,
-			input:       &proto.GetAdminSubscriptionRequest{},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			desc:          "err: ErrPermissionDenied",
+			role:          accountproto.Account_UNASSIGNED,
+			isSystemAdmin: false,
+			input:         &proto.GetAdminSubscriptionRequest{},
+			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
-			desc:        "err: ErrIDRequired",
-			role:        accountproto.Account_OWNER,
-			input:       &proto.GetAdminSubscriptionRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			desc:          "err: ErrIDRequired",
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
+			input:         &proto.GetAdminSubscriptionRequest{},
+			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc: "success",
@@ -648,9 +683,10 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			role:        accountproto.Account_OWNER,
-			input:       &proto.GetAdminSubscriptionRequest{Id: "key-0"},
-			expectedErr: nil,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
+			input:         &proto.GetAdminSubscriptionRequest{Id: "key-0"},
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -659,7 +695,7 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			ctx = setToken(t, ctx, p.role)
+			ctx = setToken(t, ctx, p.role, p.isSystemAdmin)
 			actual, err := service.GetAdminSubscription(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
@@ -689,20 +725,22 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		role        accountproto.Account_Role
-		input       *proto.ListAdminSubscriptionsRequest
-		expected    *proto.ListAdminSubscriptionsResponse
-		expectedErr error
+		desc          string
+		setup         func(*NotificationService)
+		role          accountproto.Account_Role
+		isSystemAdmin bool
+		input         *proto.ListAdminSubscriptionsRequest
+		expected      *proto.ListAdminSubscriptionsResponse
+		expectedErr   error
 	}{
 		{
-			desc:        "err: ErrPermissionDenied",
-			setup:       nil,
-			role:        accountproto.Account_UNASSIGNED,
-			input:       &proto.ListAdminSubscriptionsRequest{PageSize: 2, Cursor: ""},
-			expected:    nil,
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			desc:          "err: ErrPermissionDenied",
+			setup:         nil,
+			role:          accountproto.Account_UNASSIGNED,
+			isSystemAdmin: false,
+			input:         &proto.ListAdminSubscriptionsRequest{PageSize: 2, Cursor: ""},
+			expected:      nil,
+			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "success",
@@ -720,7 +758,8 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			role: accountproto.Account_OWNER,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.ListAdminSubscriptionsRequest{
 				PageSize: 2,
 				Cursor:   "",
@@ -739,7 +778,7 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			ctx = setToken(t, ctx, p.role)
+			ctx = setToken(t, ctx, p.role, p.isSystemAdmin)
 			actual, err := s.ListAdminSubscriptions(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
@@ -767,20 +806,22 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		role        accountproto.Account_Role
-		input       *proto.ListEnabledAdminSubscriptionsRequest
-		expected    *proto.ListEnabledAdminSubscriptionsResponse
-		expectedErr error
+		desc          string
+		setup         func(*NotificationService)
+		role          accountproto.Account_Role
+		isSystemAdmin bool
+		input         *proto.ListEnabledAdminSubscriptionsRequest
+		expected      *proto.ListEnabledAdminSubscriptionsResponse
+		expectedErr   error
 	}{
 		{
-			desc:        "err: ErrPermissionDenied",
-			setup:       nil,
-			role:        accountproto.Account_UNASSIGNED,
-			input:       &proto.ListEnabledAdminSubscriptionsRequest{PageSize: 2, Cursor: ""},
-			expected:    nil,
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			desc:          "err: ErrPermissionDenied",
+			setup:         nil,
+			role:          accountproto.Account_UNASSIGNED,
+			isSystemAdmin: false,
+			input:         &proto.ListEnabledAdminSubscriptionsRequest{PageSize: 2, Cursor: ""},
+			expected:      nil,
+			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc: "success",
@@ -798,7 +839,8 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			role: accountproto.Account_OWNER,
+			role:          accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			input: &proto.ListEnabledAdminSubscriptionsRequest{
 				PageSize: 2,
 				Cursor:   "1",
@@ -817,7 +859,7 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			ctx = setToken(t, ctx, p.role)
+			ctx = setToken(t, ctx, p.role, p.isSystemAdmin)
 			actual, err := s.ListEnabledAdminSubscriptions(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
@@ -825,16 +867,17 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 	}
 }
 
-func setToken(t *testing.T, ctx context.Context, role accountproto.Account_Role) context.Context {
+func setToken(t *testing.T, ctx context.Context, role accountproto.Account_Role, isSystemAdmin bool) context.Context {
 	t.Helper()
 	tokenID := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   "sub",
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "email",
-		AdminRole: role,
+		Issuer:        "issuer",
+		Subject:       "sub",
+		Audience:      "audience",
+		Expiry:        time.Now().AddDate(100, 0, 0),
+		IssuedAt:      time.Now(),
+		Email:         "email",
+		AdminRole:     role,
+		IsSystemAdmin: isSystemAdmin,
 	}
 	return context.WithValue(ctx, rpc.Key, tokenID)
 }

@@ -72,7 +72,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	now := time.Now()
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED, false)
 	correctStartAtUnix := now.Add(-30 * 24 * time.Hour).Unix()
 	correctStartAt := time.Unix(correctStartAtUnix, 0)
 	correctEndAtUnix := now.Unix()
@@ -296,7 +296,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED, false)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -366,7 +366,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED, false)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -517,7 +517,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	now := time.Now()
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED, false)
 	correctStartAtUnix := now.Add(-30 * 24 * time.Hour).Unix()
 	correctStartAt := time.Unix(correctStartAtUnix, 0)
 	correctEndAtUnix := now.Unix()
@@ -714,7 +714,7 @@ func TestGetMAUCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED, false)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -790,7 +790,7 @@ func TestSummarizeMAUCounts(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken(t, accountproto.Account_VIEWER)
+	ctx := createContextWithToken(t, accountproto.Account_VIEWER, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1125,7 +1125,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED, false)
 	environmentNamespace := "ns0"
 	fID := "fid"
 	vID0 := "vid0"
@@ -1390,7 +1390,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED, false)
 	environmentNamespace := "ns0"
 	opsRuleID := "rule0"
 	clauseID := "clause0"
@@ -1532,7 +1532,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED, false)
 	environmentNamespace := "ns0"
 	opsRuleID := "rule0"
 	clauseID := "clause0"
@@ -1776,11 +1776,12 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller) *ev
 	}
 }
 
-func createContextWithToken(t *testing.T, role accountproto.Account_Role) context.Context {
+func createContextWithToken(t *testing.T, role accountproto.Account_Role, isSystemAdmin bool) context.Context {
 	t.Helper()
 	token := &token.IDToken{
-		Email:     "test@example.com",
-		AdminRole: role,
+		Email:         "test@example.com",
+		AdminRole:     role,
+		IsSystemAdmin: isSystemAdmin,
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
@@ -1923,12 +1924,12 @@ func TestCheckAdminRole(t *testing.T) {
 		},
 		{
 			desc:        "error: PermissionDenied",
-			inputCtx:    createContextWithToken(t, accountproto.Account_UNASSIGNED),
+			inputCtx:    createContextWithToken(t, accountproto.Account_UNASSIGNED, false),
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.PermissionDenied)),
 		},
 		{
 			desc:        "success",
-			inputCtx:    createContextWithToken(t, accountproto.Account_EDITOR),
+			inputCtx:    createContextWithToken(t, accountproto.Account_EDITOR, true),
 			expectedErr: nil,
 		},
 	}

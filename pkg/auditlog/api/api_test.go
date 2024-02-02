@@ -303,8 +303,9 @@ func createAuditLogs(t *testing.T) []*proto.AuditLog {
 func createContextWithToken(t *testing.T, role accountproto.Account_Role) context.Context {
 	t.Helper()
 	token := &token.IDToken{
-		Email:     "test@example.com",
-		AdminRole: role,
+		Email:         "test@example.com",
+		AdminRole:     role,
+		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)

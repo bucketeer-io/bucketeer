@@ -42,12 +42,12 @@ func TestCheckAdminRole(t *testing.T) {
 			expectedErr: ErrUnauthenticated,
 		},
 		{
-			inputCtx:    getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_UNASSIGNED}),
+			inputCtx:    getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_UNASSIGNED, IsSystemAdmin: false}),
 			expected:    nil,
 			expectedErr: ErrPermissionDenied,
 		},
 		{
-			inputCtx:    getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_OWNER}),
+			inputCtx:    getContextWithToken(t, &token.IDToken{Email: "test@example.com", AdminRole: accountproto.Account_OWNER, IsSystemAdmin: true}),
 			expected:    &eventproto.Editor{Email: "test@example.com", IsAdmin: true},
 			expectedErr: nil,
 		},
