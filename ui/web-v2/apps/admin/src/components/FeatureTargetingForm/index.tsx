@@ -1337,7 +1337,7 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
     return (
       <div>
         {isProgressiveRolloutsRunning && (
-          <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-4">
+          <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-4 inline-block">
             <div className="flex">
               <div className="flex-shrink-0">
                 <InformationCircleIcon

@@ -97,7 +97,7 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
     return (
       <div className="p-10 bg-gray-100">
         {isProgressiveRolloutsRunning && (
-          <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-7">
+          <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-7 inline-block">
             <div className="flex">
               <div className="flex-shrink-0">
                 <InformationCircleIcon
