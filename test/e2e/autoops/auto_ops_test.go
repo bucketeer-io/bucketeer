@@ -526,6 +526,18 @@ func createFeature(ctx context.Context, t *testing.T, client featureclient.Clien
 	enableFeature(t, featureID, client)
 }
 
+func createDisabledFeature(ctx context.Context, t *testing.T, client featureclient.Client, featureID string) {
+	t.Helper()
+	cmd := newCreateFeatureCommand(featureID)
+	createReq := &featureproto.CreateFeatureRequest{
+		Command:              cmd,
+		EnvironmentNamespace: *environmentNamespace,
+	}
+	if _, err := client.CreateFeature(ctx, createReq); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func getFeature(t *testing.T, client featureclient.Client, featureID string) *featureproto.Feature {
 	t.Helper()
 	getReq := &featureproto.GetFeatureRequest{

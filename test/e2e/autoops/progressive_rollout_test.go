@@ -43,7 +43,7 @@ func TestCreateAndListProgressiveRollout(t *testing.T) {
 	defer featureClient.Close()
 
 	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
+	createDisabledFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
 	schedules := createProgressiveRolloutSchedule()
 	createProgressiveRollout(
@@ -90,7 +90,7 @@ func TestGetProgressiveRollout(t *testing.T) {
 	defer featureClient.Close()
 
 	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
+	createDisabledFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
 	schedules := createProgressiveRolloutSchedule()
 	createProgressiveRollout(
@@ -137,7 +137,7 @@ func TestStopProgressiveRollout(t *testing.T) {
 	defer featureClient.Close()
 
 	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
+	createDisabledFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
 	schedules := createProgressiveRolloutSchedule()
 	createProgressiveRollout(
@@ -176,7 +176,7 @@ func TestDeleteProgressiveRollout(t *testing.T) {
 	defer featureClient.Close()
 
 	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
+	createDisabledFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
 	schedules := createProgressiveRolloutSchedule()
 	createProgressiveRollout(
@@ -220,7 +220,7 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	defer featureClient.Close()
 
 	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
+	createDisabledFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
 	schedules := createProgressiveRolloutSchedule()
 	createProgressiveRollout(
@@ -262,6 +262,9 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 			},
 		},
 	}
+	if !feature.Enabled {
+		t.Fatalf("Flag shouldn't be disabled at this point")
+	}
 	if !proto.Equal(feature.DefaultStrategy.RolloutStrategy, expectedStrategy) {
 		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.Rules[0].Strategy.RolloutStrategy)
 	}
@@ -291,7 +294,7 @@ func TestProgressiveRolloutBatch(t *testing.T) {
 	defer featureClient.Close()
 
 	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
+	createDisabledFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
 	now := time.Now()
 	schedules := []*autoopsproto.ProgressiveRolloutSchedule{
@@ -337,6 +340,9 @@ func TestProgressiveRolloutBatch(t *testing.T) {
 		}
 		if !proto.Equal(feature.DefaultStrategy.RolloutStrategy, expectedStrategy) {
 			continue
+		}
+		if !feature.Enabled {
+			t.Fatalf("Flag shouldn't be disabled at this point")
 		}
 		actual := listProgressiveRollouts(t, autoOpsClient, featureID)
 		if actual[0].Status != autoopsproto.ProgressiveRollout_FINISHED {
