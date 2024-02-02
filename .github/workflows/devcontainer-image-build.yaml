@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (GitHub)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up QEMU for multi-architecture builds
         uses: docker/setup-qemu-action@v3.0.0
         with:
