@@ -166,7 +166,7 @@ const sortOperations = (
 
 const TabLabel = {
   ACTIVE: intl.formatMessage(messages.autoOps.active),
-  COMPLETED: intl.formatMessage(messages.autoOps.completed),
+  FINISHED: intl.formatMessage(messages.autoOps.finished),
 };
 
 export interface ClauseTypeMap {
@@ -290,7 +290,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           selected: true,
         },
         {
-          label: TabLabel.COMPLETED,
+          label: TabLabel.FINISHED,
           value: sortOperations(
             rules.filter((rule) => rule.triggeredAt),
             rollouts.filter(

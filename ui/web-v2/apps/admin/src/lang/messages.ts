@@ -425,9 +425,9 @@ export const messages = {
       id: 'autoOps.active',
       defaultMessage: 'Active',
     }),
-    completed: defineMessage({
-      id: 'autoOps.completed',
-      defaultMessage: 'Completed',
+    finished: defineMessage({
+      id: 'autoOps.finished',
+      defaultMessage: 'Finished',
     }),
     goalCount: defineMessage({
       id: 'autoOps.goalCount',

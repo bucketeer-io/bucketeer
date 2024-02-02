@@ -113,6 +113,7 @@
   "autoOps.evaluationCount": "エバリュエーションカウント",
   "autoOps.eventRate": "イベントレート",
   "autoOps.eventRateClauseType": "イベントレート",
+  "autoOps.finished": "終了",
   "autoOps.executeAt": "実行日時",
   "autoOps.frequency": "頻度",
   "autoOps.goalCount": "コールカウント",
