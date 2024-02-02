@@ -25,8 +25,8 @@ jobs:
         working-directory: ${{ env.WEB_DIRECTORY }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Set yarn cache directory path
@@ -52,8 +52,8 @@ jobs:
         working-directory: ${{ env.WEB_DIRECTORY }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Set yarn cache directory path
@@ -79,8 +79,8 @@ jobs:
         working-directory: ${{ env.WEB_DIRECTORY }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Set yarn cache directory path
@@ -106,8 +106,8 @@ jobs:
         working-directory: ${{ env.WEB_DIRECTORY }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Set yarn cache directory path
