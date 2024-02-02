@@ -333,7 +333,7 @@ func (s *AccountService) getSystemAdminAccountV2(
 ) (*domain.AccountV2, error) {
 	account, err := s.accountStorage.GetSystemAdminAccountV2(ctx, email)
 	if err != nil {
-		if errors.Is(err, v2as.ErrAdminAccountNotFound) {
+		if errors.Is(err, v2as.ErrSystemAdminAccountNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),

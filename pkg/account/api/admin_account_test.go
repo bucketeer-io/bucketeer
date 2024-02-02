@@ -132,7 +132,7 @@ func TestGetMeMySQL(t *testing.T) {
 				)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
 					gomock.Any(), gomock.Any(),
-				).Return(nil, v2as.ErrAdminAccountNotFound)
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
