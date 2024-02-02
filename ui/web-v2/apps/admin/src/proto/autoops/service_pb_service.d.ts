@@ -85,6 +85,15 @@ type AutoOpsServiceGetProgressiveRollout = {
   readonly responseType: typeof proto_autoops_service_pb.GetProgressiveRolloutResponse;
 };
 
+type AutoOpsServiceStopProgressiveRollout = {
+  readonly methodName: string;
+  readonly service: typeof AutoOpsService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_autoops_service_pb.StopProgressiveRolloutRequest;
+  readonly responseType: typeof proto_autoops_service_pb.StopProgressiveRolloutResponse;
+};
+
 type AutoOpsServiceDeleteProgressiveRollout = {
   readonly methodName: string;
   readonly service: typeof AutoOpsService;
@@ -123,6 +132,7 @@ export class AutoOpsService {
   static readonly ListOpsCounts: AutoOpsServiceListOpsCounts;
   static readonly CreateProgressiveRollout: AutoOpsServiceCreateProgressiveRollout;
   static readonly GetProgressiveRollout: AutoOpsServiceGetProgressiveRollout;
+  static readonly StopProgressiveRollout: AutoOpsServiceStopProgressiveRollout;
   static readonly DeleteProgressiveRollout: AutoOpsServiceDeleteProgressiveRollout;
   static readonly ListProgressiveRollouts: AutoOpsServiceListProgressiveRollouts;
   static readonly ExecuteProgressiveRollout: AutoOpsServiceExecuteProgressiveRollout;
@@ -240,6 +250,15 @@ export class AutoOpsServiceClient {
   getProgressiveRollout(
     requestMessage: proto_autoops_service_pb.GetProgressiveRolloutRequest,
     callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.GetProgressiveRolloutResponse|null) => void
+  ): UnaryResponse;
+  stopProgressiveRollout(
+    requestMessage: proto_autoops_service_pb.StopProgressiveRolloutRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.StopProgressiveRolloutResponse|null) => void
+  ): UnaryResponse;
+  stopProgressiveRollout(
+    requestMessage: proto_autoops_service_pb.StopProgressiveRolloutRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.StopProgressiveRolloutResponse|null) => void
   ): UnaryResponse;
   deleteProgressiveRollout(
     requestMessage: proto_autoops_service_pb.DeleteProgressiveRolloutRequest,

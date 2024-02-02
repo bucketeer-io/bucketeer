@@ -112,6 +112,14 @@ message GetProgressiveRolloutResponse {
   ProgressiveRollout progressive_rollout = 1;
 }
 
+message StopProgressiveRolloutRequest {
+  string environment_namespace = 1;
+  string id = 2;
+  StopProgressiveRolloutCommand command = 3;
+}
+
+message StopProgressiveRolloutResponse {}
+
 message DeleteProgressiveRolloutRequest {
   string environment_namespace = 1;
   string id = 2;
@@ -171,6 +179,8 @@ service AutoOpsService {
       returns (CreateProgressiveRolloutResponse) {}
   rpc GetProgressiveRollout(GetProgressiveRolloutRequest)
       returns (GetProgressiveRolloutResponse) {}
+  rpc StopProgressiveRollout(StopProgressiveRolloutRequest)
+      returns (StopProgressiveRolloutResponse) {}
   rpc DeleteProgressiveRollout(DeleteProgressiveRolloutRequest)
       returns (DeleteProgressiveRolloutResponse) {}
   rpc ListProgressiveRollouts(ListProgressiveRolloutsRequest)

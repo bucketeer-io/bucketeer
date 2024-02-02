@@ -241,6 +241,7 @@ export namespace Event {
     PROGRESSIVE_ROLLOUT_CREATED: 1400;
     PROGRESSIVE_ROLLOUT_DELETED: 1401;
     PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED: 1402;
+    PROGRESSIVE_ROLLOUT_STOPPED: 1403;
     ORGANIZATION_CREATED: 1500;
     ORGANIZATION_NAME_CHANGED: 1501;
     ORGANIZATION_DESCRIPTION_CHANGED: 1502;
@@ -3758,6 +3759,38 @@ export namespace ProgressiveRolloutCreatedEvent {
     createdAt: number,
     updatedAt: number,
     type: proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap],
+  }
+}
+
+export class ProgressiveRolloutStoppedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getStatus(): proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap];
+  setStatus(value: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap]): void;
+
+  getStoppedBy(): proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap];
+  setStoppedBy(value: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap]): void;
+
+  getStoppedAt(): number;
+  setStoppedAt(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ProgressiveRolloutStoppedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: ProgressiveRolloutStoppedEvent): ProgressiveRolloutStoppedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ProgressiveRolloutStoppedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ProgressiveRolloutStoppedEvent;
+  static deserializeBinaryFromReader(message: ProgressiveRolloutStoppedEvent, reader: jspb.BinaryReader): ProgressiveRolloutStoppedEvent;
+}
+
+export namespace ProgressiveRolloutStoppedEvent {
+  export type AsObject = {
+    id: string,
+    status: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap],
+    stoppedBy: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap],
+    stoppedAt: number,
   }
 }
 

@@ -269,6 +269,26 @@ func (mr *MockClientMockRecorder) ListProgressiveRollouts(ctx, in interface{}, o
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProgressiveRollouts", reflect.TypeOf((*MockClient)(nil).ListProgressiveRollouts), varargs...)
 }
 
+// StopProgressiveRollout mocks base method.
+func (m *MockClient) StopProgressiveRollout(ctx context.Context, in *autoops.StopProgressiveRolloutRequest, opts ...grpc.CallOption) (*autoops.StopProgressiveRolloutResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "StopProgressiveRollout", varargs...)
+	ret0, _ := ret[0].(*autoops.StopProgressiveRolloutResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StopProgressiveRollout indicates an expected call of StopProgressiveRollout.
+func (mr *MockClientMockRecorder) StopProgressiveRollout(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopProgressiveRollout", reflect.TypeOf((*MockClient)(nil).StopProgressiveRollout), varargs...)
+}
+
 // UpdateAutoOpsRule mocks base method.
 func (m *MockClient) UpdateAutoOpsRule(ctx context.Context, in *autoops.UpdateAutoOpsRuleRequest, opts ...grpc.CallOption) (*autoops.UpdateAutoOpsRuleResponse, error) {
 	m.ctrl.T.Helper()

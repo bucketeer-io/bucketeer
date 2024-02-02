@@ -2217,6 +2217,16 @@
             ]
           },
           {
+            "name": "StopProgressiveRolloutCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "stopped_by",
+                "type": "ProgressiveRollout.StoppedBy"
+              }
+            ]
+          },
+          {
             "name": "DeleteProgressiveRolloutCommand"
           },
           {
@@ -2256,6 +2266,9 @@
           },
           {
             "path": "proto/autoops/clause.proto"
+          },
+          {
+            "path": "proto/autoops/progressive_rollout.proto"
           }
         ],
         "package": {
@@ -2354,6 +2367,30 @@
               {
                 "name": "FINISHED",
                 "integer": 2
+              },
+              {
+                "name": "STOPPED",
+                "integer": 3
+              }
+            ]
+          },
+          {
+            "name": "ProgressiveRollout.StoppedBy",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "USER",
+                "integer": 1
+              },
+              {
+                "name": "OPS_SCHEDULE",
+                "integer": 2
+              },
+              {
+                "name": "OPS_KILL_SWITCH",
+                "integer": 3
               }
             ]
           }
@@ -2396,6 +2433,16 @@
                 "id": 7,
                 "name": "type",
                 "type": "Type"
+              },
+              {
+                "id": 8,
+                "name": "stopped_by",
+                "type": "StoppedBy"
+              },
+              {
+                "id": 9,
+                "name": "stopped_at",
+                "type": "int64"
               }
             ]
           }
@@ -2733,6 +2780,29 @@
             ]
           },
           {
+            "name": "StopProgressiveRolloutRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "command",
+                "type": "StopProgressiveRolloutCommand"
+              }
+            ]
+          },
+          {
+            "name": "StopProgressiveRolloutResponse"
+          },
+          {
             "name": "DeleteProgressiveRolloutRequest",
             "fields": [
               {
@@ -2894,6 +2964,11 @@
                 "name": "GetProgressiveRollout",
                 "in_type": "GetProgressiveRolloutRequest",
                 "out_type": "GetProgressiveRolloutResponse"
+              },
+              {
+                "name": "StopProgressiveRollout",
+                "in_type": "StopProgressiveRolloutRequest",
+                "out_type": "StopProgressiveRolloutResponse"
               },
               {
                 "name": "DeleteProgressiveRollout",
@@ -5712,6 +5787,10 @@
                 "integer": 1402
               },
               {
+                "name": "PROGRESSIVE_ROLLOUT_STOPPED",
+                "integer": 1403
+              },
+              {
                 "name": "ORGANIZATION_CREATED",
                 "integer": 1500
               },
@@ -8157,6 +8236,31 @@
                 "id": 6,
                 "name": "type",
                 "type": "bucketeer.autoops.ProgressiveRollout.Type"
+              }
+            ]
+          },
+          {
+            "name": "ProgressiveRolloutStoppedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "status",
+                "type": "bucketeer.autoops.ProgressiveRollout.Status"
+              },
+              {
+                "id": 3,
+                "name": "stopped_by",
+                "type": "bucketeer.autoops.ProgressiveRollout.StoppedBy"
+              },
+              {
+                "id": 4,
+                "name": "stopped_at",
+                "type": "int64"
               }
             ]
           },

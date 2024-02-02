@@ -4,6 +4,7 @@
 import * as jspb from "google-protobuf";
 import * as proto_autoops_auto_ops_rule_pb from "../../proto/autoops/auto_ops_rule_pb";
 import * as proto_autoops_clause_pb from "../../proto/autoops/clause_pb";
+import * as proto_autoops_progressive_rollout_pb from "../../proto/autoops/progressive_rollout_pb";
 
 export class CreateAutoOpsRuleCommand extends jspb.Message {
   getFeatureId(): string;
@@ -238,6 +239,26 @@ export namespace CreateProgressiveRolloutCommand {
     featureId: string,
     progressiveRolloutManualScheduleClause?: proto_autoops_clause_pb.ProgressiveRolloutManualScheduleClause.AsObject,
     progressiveRolloutTemplateScheduleClause?: proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause.AsObject,
+  }
+}
+
+export class StopProgressiveRolloutCommand extends jspb.Message {
+  getStoppedBy(): proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap];
+  setStoppedBy(value: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap]): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): StopProgressiveRolloutCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: StopProgressiveRolloutCommand): StopProgressiveRolloutCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: StopProgressiveRolloutCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): StopProgressiveRolloutCommand;
+  static deserializeBinaryFromReader(message: StopProgressiveRolloutCommand, reader: jspb.BinaryReader): StopProgressiveRolloutCommand;
+}
+
+export namespace StopProgressiveRolloutCommand {
+  export type AsObject = {
+    stoppedBy: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap],
   }
 }
 

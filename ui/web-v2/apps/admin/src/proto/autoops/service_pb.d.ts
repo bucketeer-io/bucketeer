@@ -481,6 +481,52 @@ export namespace GetProgressiveRolloutResponse {
   }
 }
 
+export class StopProgressiveRolloutRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  getId(): string;
+  setId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_autoops_command_pb.StopProgressiveRolloutCommand | undefined;
+  setCommand(value?: proto_autoops_command_pb.StopProgressiveRolloutCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): StopProgressiveRolloutRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: StopProgressiveRolloutRequest): StopProgressiveRolloutRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: StopProgressiveRolloutRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): StopProgressiveRolloutRequest;
+  static deserializeBinaryFromReader(message: StopProgressiveRolloutRequest, reader: jspb.BinaryReader): StopProgressiveRolloutRequest;
+}
+
+export namespace StopProgressiveRolloutRequest {
+  export type AsObject = {
+    environmentNamespace: string,
+    id: string,
+    command?: proto_autoops_command_pb.StopProgressiveRolloutCommand.AsObject,
+  }
+}
+
+export class StopProgressiveRolloutResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): StopProgressiveRolloutResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: StopProgressiveRolloutResponse): StopProgressiveRolloutResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: StopProgressiveRolloutResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): StopProgressiveRolloutResponse;
+  static deserializeBinaryFromReader(message: StopProgressiveRolloutResponse, reader: jspb.BinaryReader): StopProgressiveRolloutResponse;
+}
+
+export namespace StopProgressiveRolloutResponse {
+  export type AsObject = {
+  }
+}
+
 export class DeleteProgressiveRolloutRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;

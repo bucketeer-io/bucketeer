@@ -33,6 +33,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -180,7 +181,7 @@ func (s *AutoOpsService) GetProgressiveRollout(
 		if err == v2as.ErrProgressiveRolloutNotFound {
 			dt, err := statusProgressiveRolloutNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, "progressive_rollout"),
+				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout),
 			})
 			if err != nil {
 				return nil, statusProgressiveRolloutInternal.Err()
@@ -199,6 +200,104 @@ func (s *AutoOpsService) GetProgressiveRollout(
 	return &autoopsproto.GetProgressiveRolloutResponse{
 		ProgressiveRollout: progressiveRollout.ProgressiveRollout,
 	}, nil
+}
+
+func (s *AutoOpsService) StopProgressiveRollout(
+	ctx context.Context,
+	req *autoopsproto.StopProgressiveRolloutRequest,
+) (*autoopsproto.StopProgressiveRolloutResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.validateStopProgressiveRolloutRequest(req, localizer); err != nil {
+		return nil, err
+	}
+	err = s.updateProgressiveRollout(
+		ctx,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.Command,
+		editor,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &autoopsproto.StopProgressiveRolloutResponse{}, nil
+}
+
+func (s *AutoOpsService) updateProgressiveRollout(
+	ctx context.Context,
+	progressiveRolloutID, environmentNamespace string,
+	cmd command.Command,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) error {
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		storage := v2as.NewProgressiveRolloutStorage(tx)
+		progressiveRollout, err := storage.GetProgressiveRollout(ctx, progressiveRolloutID, environmentNamespace)
+		if err != nil {
+			return err
+		}
+		handler := command.NewProgressiveRolloutCommandHandler(
+			editor,
+			progressiveRollout,
+			s.publisher,
+			environmentNamespace,
+		)
+		if err := handler.Handle(ctx, cmd); err != nil {
+			return err
+		}
+		return storage.UpdateProgressiveRollout(ctx, progressiveRollout, environmentNamespace)
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to stop the progressive rollout",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", progressiveRolloutID),
+				zap.String("environmentNamespace", environmentNamespace),
+			)...,
+		)
+		if err == v2as.ErrProgressiveRolloutNotFound || err == v2as.ErrProgressiveRolloutUnexpectedAffectedRows {
+			dt, err := statusProgressiveRolloutNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout),
+			})
+			if err != nil {
+				return statusProgressiveRolloutInternal.Err()
+			}
+			return dt.Err()
+		}
+		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }
 
 func (s *AutoOpsService) DeleteProgressiveRollout(
@@ -258,7 +357,7 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 		if err == v2as.ErrProgressiveRolloutNotFound || err == v2as.ErrProgressiveRolloutUnexpectedAffectedRows {
 			dt, err := statusProgressiveRolloutNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, "progressive_rollout"),
+				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout),
 			})
 			if err != nil {
 				return nil, statusProgressiveRolloutInternal.Err()
@@ -385,7 +484,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err == v2as.ErrProgressiveRolloutNotFound || err == v2as.ErrProgressiveRolloutUnexpectedAffectedRows {
 			dt, err := statusProgressiveRolloutNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, "progressive_rollout"),
+				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout),
 			})
 			if err != nil {
 				return nil, statusProgressiveRolloutInternal.Err()
@@ -625,6 +724,19 @@ func (s *AutoOpsService) validateGetProgressiveRolloutRequest(
 	return nil
 }
 
+func (s *AutoOpsService) validateStopProgressiveRolloutRequest(
+	req *autoopsproto.StopProgressiveRolloutRequest,
+	localizer locale.Localizer,
+) error {
+	if err := s.validateID(req.Id, localizer); err != nil {
+		return err
+	}
+	if err := s.validateCommand(req.Command, localizer); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *AutoOpsService) validateDeleteProgressiveRolloutRequest(
 	req *autoopsproto.DeleteProgressiveRolloutRequest,
 	localizer locale.Localizer,
@@ -678,6 +790,28 @@ func (s *AutoOpsService) validateID(
 			return statusProgressiveRolloutInternal.Err()
 		}
 		return dt.Err()
+	}
+	return nil
+}
+
+func (s *AutoOpsService) validateCommand(
+	command interface{},
+	localizer locale.Localizer,
+) error {
+	switch command := command.(type) {
+	case *autoopsproto.StopProgressiveRolloutCommand:
+		if command == nil {
+			dt, err := statusProgressiveRolloutNoCommand.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+			})
+			if err != nil {
+				return statusProgressiveRolloutInternal.Err()
+			}
+			return dt.Err()
+		}
+	default:
+		return nil
 	}
 	return nil
 }

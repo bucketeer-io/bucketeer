@@ -27,8 +27,9 @@ import (
 )
 
 var (
-	ErrProgressiveRolloutScheduleNotFound = errors.New("progressiveRollout: schedule not found")
-	ErrProgressiveRolloutInvalidType      = errors.New("progressiveRollout: invalid type")
+	ErrProgressiveRolloutScheduleNotFound  = errors.New("progressiveRollout: schedule not found")
+	ErrProgressiveRolloutInvalidType       = errors.New("progressiveRollout: invalid type")
+	ErrProgressiveRolloutStoopedByRequired = errors.New("progressiveRollout: stopped by is required")
 )
 
 type ProgressiveRollout struct {
@@ -49,6 +50,7 @@ func NewProgressiveRollout(
 		Id:        id.String(),
 		FeatureId: featureID,
 		Status:    autoopsproto.ProgressiveRollout_WAITING,
+		StoppedBy: autoopsproto.ProgressiveRollout_UNKNOWN,
 		Clause:    nil,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -226,4 +228,16 @@ func findTargetSchedule(
 		}
 	}
 	return nil, ErrProgressiveRolloutScheduleNotFound
+}
+
+func (p *ProgressiveRollout) Stop(stoppedBy autoopsproto.ProgressiveRollout_StoppedBy) error {
+	if stoppedBy == autoopsproto.ProgressiveRollout_UNKNOWN {
+		return ErrProgressiveRolloutStoopedByRequired
+	}
+	now := time.Now().Unix()
+	p.StoppedBy = stoppedBy
+	p.Status = autoopsproto.ProgressiveRollout_STOPPED
+	p.StoppedAt = now
+	p.UpdatedAt = now
+	return nil
 }

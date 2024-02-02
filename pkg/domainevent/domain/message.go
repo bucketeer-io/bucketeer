@@ -1080,18 +1080,35 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 		}
 	case proto.Event_PROGRESSIVE_ROLLOUT_CREATED:
 		return &proto.LocalizedMessage{
-			Locale:  locale.Ja,
-			Message: "Progressive Rolloutを作成しました",
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.CreatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ProgressiveRollout),
+			),
+		}
+	case proto.Event_PROGRESSIVE_ROLLOUT_STOPPED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.StoppedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ProgressiveRollout),
+			),
 		}
 	case proto.Event_PROGRESSIVE_ROLLOUT_DELETED:
 		return &proto.LocalizedMessage{
-			Locale:  locale.Ja,
-			Message: "Progressive Rolloutを削除しました",
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DeletedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ProgressiveRollout),
+			),
 		}
 	case proto.Event_PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED:
 		return &proto.LocalizedMessage{
-			Locale:  locale.Ja,
-			Message: "Progressive Rolloutの実行時間が変更されました",
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ExecutedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.ProgressiveRollout),
+			),
 		}
 	case proto.Event_ORGANIZATION_CREATED:
 		return &proto.LocalizedMessage{
