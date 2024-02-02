@@ -234,9 +234,10 @@ func (p *ProgressiveRollout) Stop(stoppedBy autoopsproto.ProgressiveRollout_Stop
 	if stoppedBy == autoopsproto.ProgressiveRollout_UNKNOWN {
 		return ErrProgressiveRolloutStoopedByRequired
 	}
+	now := time.Now().Unix()
 	p.StoppedBy = stoppedBy
 	p.Status = autoopsproto.ProgressiveRollout_STOPPED
-	p.StoppedAt = time.Now().Unix()
-	p.UpdatedAt = time.Now().Unix()
+	p.StoppedAt = now
+	p.UpdatedAt = now
 	return nil
 }
