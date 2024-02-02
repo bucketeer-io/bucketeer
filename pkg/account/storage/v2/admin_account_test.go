@@ -46,7 +46,7 @@ func TestGetAdminAccountV2(t *testing.T) {
 				).Return(row)
 			},
 			email:       "bucketeer@example.com",
-			expectedErr: ErrAdminAccountNotFound,
+			expectedErr: ErrSystemAdminAccountNotFound,
 		},
 		{
 			desc: "Error",

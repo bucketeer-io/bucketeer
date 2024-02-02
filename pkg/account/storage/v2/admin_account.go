@@ -25,13 +25,12 @@ import (
 )
 
 var (
-	ErrAdminAccountAlreadyExists = errors.New("account: admin account already exists")
-	ErrAdminAccountNotFound      = errors.New("account: admin account not found")
+	ErrSystemAdminAccountNotFound = errors.New("account: admin account not found")
 )
 
 var (
-	//go:embed sql/account_v2/select_admin_account_v2.sql
-	selectAdminAccountV2SQL string
+	//go:embed sql/account_v2/select_system_admin_account_v2.sql
+	selectSystemAdminAccountV2SQL string
 )
 
 func (s *accountStorage) GetSystemAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error) {
@@ -39,7 +38,7 @@ func (s *accountStorage) GetSystemAdminAccountV2(ctx context.Context, email stri
 	var organizationRole int32
 	err := s.qe(ctx).QueryRowContext(
 		ctx,
-		selectAdminAccountV2SQL,
+		selectSystemAdminAccountV2SQL,
 		email,
 	).Scan(
 		&account.Email,
@@ -54,7 +53,7 @@ func (s *accountStorage) GetSystemAdminAccountV2(ctx context.Context, email stri
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
-			return nil, ErrAdminAccountNotFound
+			return nil, ErrSystemAdminAccountNotFound
 		}
 		return nil, err
 	}
