@@ -92,6 +92,10 @@ var (
 		codes.Internal,
 		"autoops: internal error occurs for a progressive rollout",
 	)
+	statusProgressiveRolloutAlreadyStopped = gstatus.New(
+		codes.Internal,
+		"autoops: progressive rollout is already stopped",
+	)
 	statusProgressiveRolloutClauseVariationIDRequired = gstatus.New(
 		codes.InvalidArgument,
 		"autoops: clause variation id must be specified for a progressive rollout",

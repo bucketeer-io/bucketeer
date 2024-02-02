@@ -106,6 +106,14 @@ func (p *ProgressiveRollout) setClause(c protoiface.MessageV1) error {
 	return nil
 }
 
+func (p *ProgressiveRollout) IsWaiting() bool {
+	return p.Status == autoopsproto.ProgressiveRollout_WAITING
+}
+
+func (p *ProgressiveRollout) IsStopped() bool {
+	return p.Status == autoopsproto.ProgressiveRollout_STOPPED
+}
+
 func (p *ProgressiveRollout) IsFinished() bool {
 	return p.Status == autoopsproto.ProgressiveRollout_FINISHED
 }

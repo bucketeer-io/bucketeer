@@ -15,14 +15,11 @@
 package api
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 
-	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
-	"github.com/bucketeer-io/bucketeer/proto/autoops"
+	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -89,66 +86,13 @@ func TestGetRolloutStrategyVariations(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual, err := getRolloutStrategyVariations(p.feature, &autoops.ProgressiveRolloutSchedule{
-				Weight: p.targetWeight,
-			}, p.targetVariationID)
-			assert.Equal(t, p.expectedErr, err)
-			assert.Equal(t, p.expected, actual)
-		})
-	}
-}
-
-func TestUpdateFeatureTargeting(t *testing.T) {
-	t.Parallel()
-	ctx := context.TODO()
-	mockController := gomock.NewController(t)
-	environmentNamespace := "en"
-	fID := "fid-1"
-	patterns := []struct {
-		desc              string
-		setup             func(*featureclientmock.MockClient)
-		feature           *featureproto.Feature
-		targetVariationID string
-		targetWeight      int32
-		expectedErr       error
-	}{
-		{
-			desc: "success: weight is max",
-			setup: func(mock *featureclientmock.MockClient) {
-				mock.EXPECT().UpdateFeatureTargeting(gomock.Any(), gomock.Any()).Return(nil, nil)
-			},
-			feature: &featureproto.Feature{
-				Id: fID,
-				Variations: []*featureproto.Variation{
-					{
-						Id: "vid-1",
-					},
-					{
-						Id: "vid-2",
-					},
-				},
-			},
-			targetVariationID: "vid-1",
-			targetWeight:      totalVariationWeight,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			featureClientMock := featureclientmock.NewMockClient(mockController)
-			if p.setup != nil {
-				p.setup(featureClientMock)
-			}
-			err := updateFeatureTargeting(
-				ctx,
-				&autoops.ProgressiveRolloutSchedule{
-					Weight: p.targetWeight,
-				},
-				featureClientMock,
-				p.feature,
+			actual, err := getRolloutStrategyVariations(
+				&ftdomain.Feature{Feature: p.feature},
+				p.targetWeight,
 				p.targetVariationID,
-				environmentNamespace,
 			)
 			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, actual)
 		})
 	}
 }

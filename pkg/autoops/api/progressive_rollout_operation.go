@@ -21,7 +21,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -33,27 +33,21 @@ const totalVariationWeight = int32(100000)
 func ExecuteProgressiveRolloutOperation(
 	ctx context.Context,
 	progressiveRollout *domain.ProgressiveRollout,
-	featureClient featureclient.Client,
+	feature *ftdomain.Feature,
 	scheduleID, environmentNamespace string,
 ) error {
+	var variationID string
+	var weight int32
 	switch progressiveRollout.Type {
 	case autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE:
 		c := &autoopsproto.ProgressiveRolloutManualScheduleClause{}
 		if err := ptypes.UnmarshalAny(progressiveRollout.Clause, c); err != nil {
 			return err
 		}
-		s, err := getTargetSchedule(c.Schedules, scheduleID)
+		variationID = c.VariationId
+		var err error
+		weight, err = getTargetWeight(c.Schedules, scheduleID)
 		if err != nil {
-			return err
-		}
-		if err := updateRolloutStrategy(
-			ctx,
-			s,
-			featureClient,
-			c.VariationId,
-			progressiveRollout.FeatureId,
-			environmentNamespace,
-		); err != nil {
 			return err
 		}
 	case autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE:
@@ -61,54 +55,21 @@ func ExecuteProgressiveRolloutOperation(
 		if err := ptypes.UnmarshalAny(progressiveRollout.Clause, c); err != nil {
 			return err
 		}
-		s, err := getTargetSchedule(c.Schedules, scheduleID)
+		variationID = c.VariationId
+		var err error
+		weight, err = getTargetWeight(c.Schedules, scheduleID)
 		if err != nil {
-			return err
-		}
-		if err := updateRolloutStrategy(
-			ctx,
-			s,
-			featureClient,
-			c.VariationId,
-			progressiveRollout.FeatureId,
-			environmentNamespace,
-		); err != nil {
 			return err
 		}
 	default:
 		return domain.ErrProgressiveRolloutInvalidType
 	}
-	return nil
-}
-
-func getTargetSchedule(
-	schedules []*autoopsproto.ProgressiveRolloutSchedule,
-	scheduleID string,
-) (*autoopsproto.ProgressiveRolloutSchedule, error) {
-	for _, s := range schedules {
-		if s.ScheduleId == scheduleID {
-			return s, nil
-		}
-	}
-	return nil, domain.ErrProgressiveRolloutScheduleNotFound
-}
-
-func updateRolloutStrategy(
-	ctx context.Context,
-	schedule *autoopsproto.ProgressiveRolloutSchedule,
-	featureClient featureclient.Client,
-	targetVariationID, featureID, environmentNamespace string,
-) error {
-	f, err := fetchFeature(ctx, featureClient, featureID, environmentNamespace)
-	if err != nil {
-		return err
-	}
-	if err := updateFeatureTargeting(
+	if err := updateRolloutStrategy(
 		ctx,
-		schedule,
-		featureClient,
-		f,
-		targetVariationID,
+		weight,
+		feature,
+		variationID,
+		progressiveRollout.FeatureId,
 		environmentNamespace,
 	); err != nil {
 		return err
@@ -116,76 +77,43 @@ func updateRolloutStrategy(
 	return nil
 }
 
-func fetchFeature(
-	ctx context.Context,
-	featureClient featureclient.Client,
-	featureID, environmentNamespace string,
-) (*featureproto.Feature, error) {
-	resp, err := featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		EnvironmentNamespace: environmentNamespace,
-		Id:                   featureID,
-	})
-	if err != nil {
-		return nil, err
+func getTargetWeight(
+	schedules []*autoopsproto.ProgressiveRolloutSchedule,
+	scheduleID string,
+) (int32, error) {
+	for _, s := range schedules {
+		if s.ScheduleId == scheduleID {
+			return s.Weight, nil
+		}
 	}
-	return resp.Feature, nil
+	return 0, domain.ErrProgressiveRolloutScheduleNotFound
 }
 
-func updateFeatureTargeting(
+func updateRolloutStrategy(
 	ctx context.Context,
-	schedule *autoopsproto.ProgressiveRolloutSchedule,
-	featureClient featureclient.Client,
-	feature *featureproto.Feature,
-	targetVariationID, environmentNamespace string,
+	weight int32,
+	feature *ftdomain.Feature,
+	targetVariationID, featureID, environmentNamespace string,
 ) error {
-	c, err := getChangeDefaultStrategyCmd(feature, schedule, targetVariationID)
+	variations, err := getRolloutStrategyVariations(feature, weight, targetVariationID)
 	if err != nil {
 		return err
 	}
-	_, err = featureClient.UpdateFeatureTargeting(
-		ctx,
-		&featureproto.UpdateFeatureTargetingRequest{
-			EnvironmentNamespace: environmentNamespace,
-			Id:                   feature.Id,
-			Commands:             []*featureproto.Command{c},
-			From:                 featureproto.UpdateFeatureTargetingRequest_OPS,
+	strategy := &featureproto.Strategy{
+		Type: featureproto.Strategy_ROLLOUT,
+		RolloutStrategy: &featureproto.RolloutStrategy{
+			Variations: variations,
 		},
-	)
-	if err != nil {
+	}
+	if err := feature.ChangeDefaultStrategy(strategy); err != nil {
 		return err
 	}
 	return nil
 }
 
-func getChangeDefaultStrategyCmd(
-	feature *featureproto.Feature,
-	schedule *autoopsproto.ProgressiveRolloutSchedule,
-	targetVariationID string,
-) (*featureproto.Command, error) {
-	variations, err := getRolloutStrategyVariations(feature, schedule, targetVariationID)
-	if err != nil {
-		return nil, err
-	}
-	c := &featureproto.ChangeDefaultStrategyCommand{
-		Strategy: &featureproto.Strategy{
-			Type: featureproto.Strategy_ROLLOUT,
-			RolloutStrategy: &featureproto.RolloutStrategy{
-				Variations: variations,
-			},
-		},
-	}
-	ac, err := ptypes.MarshalAny(c)
-	if err != nil {
-		return nil, err
-	}
-	return &featureproto.Command{
-		Command: ac,
-	}, nil
-}
-
 func getRolloutStrategyVariations(
-	feature *featureproto.Feature,
-	schedule *autoopsproto.ProgressiveRolloutSchedule,
+	feature *ftdomain.Feature,
+	weight int32,
 	targetVariationID string,
 ) ([]*featureproto.RolloutStrategy_Variation, error) {
 	nonTargetVariationID, err := findNonTargetVariationID(feature, targetVariationID)
@@ -195,17 +123,17 @@ func getRolloutStrategyVariations(
 	return []*featureproto.RolloutStrategy_Variation{
 		{
 			Variation: targetVariationID,
-			Weight:    schedule.Weight,
+			Weight:    weight,
 		},
 		{
 			Variation: nonTargetVariationID,
-			Weight:    totalVariationWeight - schedule.Weight,
+			Weight:    totalVariationWeight - weight,
 		},
 	}, nil
 }
 
 func findNonTargetVariationID(
-	feature *featureproto.Feature,
+	feature *ftdomain.Feature,
 	variationID string,
 ) (string, error) {
 	for _, v := range feature.Variations {

@@ -28,6 +28,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
+	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -435,6 +436,23 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err != nil {
 			return err
 		}
+		ftStorage := ftstorage.NewFeatureStorage(tx)
+		feature, err := ftStorage.GetFeature(ctx, progressiveRollout.FeatureId, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
+		if err := s.checkStopStatus(progressiveRollout, localizer); err != nil {
+			s.logger.Error(
+				"Failed to execute progressive rollout",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("id", progressiveRollout.Id),
+					zap.String("featureId", progressiveRollout.FeatureId),
+				)...,
+			)
+			return err
+		}
 		triggered, err := s.checkAlreadyTriggered(
 			req.ChangeProgressiveRolloutTriggeredAtCommand,
 			progressiveRollout,
@@ -453,6 +471,12 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			)
 			return nil
 		}
+		// Enable the flag if it is disabled and it is the first rollout execution
+		if !feature.Enabled && progressiveRollout.IsWaiting() {
+			if err := feature.Enable(); err != nil {
+				return err
+			}
+		}
 		handler := command.NewProgressiveRolloutCommandHandler(
 			editor,
 			progressiveRollout,
@@ -465,13 +489,28 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err := storage.UpdateProgressiveRollout(ctx, progressiveRollout, req.EnvironmentNamespace); err != nil {
 			return err
 		}
-		return ExecuteProgressiveRolloutOperation(
+		if err := ExecuteProgressiveRolloutOperation(
 			ctx,
 			progressiveRollout,
-			s.featureClient,
+			feature,
 			req.ChangeProgressiveRolloutTriggeredAtCommand.ScheduleId,
 			req.EnvironmentNamespace,
-		)
+		); err != nil {
+			return err
+		}
+		if err := ftStorage.UpdateFeature(ctx, feature, req.EnvironmentNamespace); err != nil {
+			s.logger.Error(
+				"Failed to update feature flag",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("id", progressiveRollout.Id),
+					zap.String("featureId", progressiveRollout.FeatureId),
+				)...,
+			)
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		s.logger.Error(
@@ -501,6 +540,20 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		return nil, dt.Err()
 	}
 	return &autoopsproto.ExecuteProgressiveRolloutResponse{}, nil
+}
+
+func (s *AutoOpsService) checkStopStatus(p *domain.ProgressiveRollout, localizer locale.Localizer) error {
+	if p.IsStopped() {
+		dt, err := statusProgressiveRolloutAlreadyStopped.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }
 
 func (s *AutoOpsService) checkAlreadyTriggered(
