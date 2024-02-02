@@ -472,7 +472,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			return nil
 		}
 		// Enable the flag if it is disabled and it is the first rollout execution
-		if !feature.Enabled && progressiveRollout.Status == autoopsproto.ProgressiveRollout_WAITING {
+		if !feature.Enabled && progressiveRollout.IsWaiting() {
 			if err := feature.Enable(); err != nil {
 				return err
 			}
