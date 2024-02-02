@@ -125,17 +125,17 @@ func (s *AccountService) GetMe(
 		}
 		return nil, dt.Err()
 	}
-	// admin account response
-	adminAccount, err := s.getAdminAccountV2(ctx, t.Email, localizer)
+	// system admin account response
+	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, t.Email, localizer)
 	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
-	if adminAccount != nil && !adminAccount.Disabled {
+	if sysAdminAccount != nil && !sysAdminAccount.Disabled {
 		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
-			Email:            adminAccount.Email,
-			Name:             adminAccount.Name,
-			AvatarUrl:        adminAccount.AvatarImageUrl,
+			Email:            sysAdminAccount.Email,
+			Name:             sysAdminAccount.Name,
+			AvatarUrl:        sysAdminAccount.AvatarImageUrl,
 			IsSystemAdmin:    true,
 			Organization:     organization,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
@@ -326,12 +326,12 @@ func (s *AccountService) containsSystemAdminOrganization(
 	return false
 }
 
-func (s *AccountService) getAdminAccountV2(
+func (s *AccountService) getSystemAdminAccountV2(
 	ctx context.Context,
 	email string,
 	localizer locale.Localizer,
 ) (*domain.AccountV2, error) {
-	account, err := s.accountStorage.GetAdminAccountV2(ctx, email)
+	account, err := s.accountStorage.GetSystemAdminAccountV2(ctx, email)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAdminAccountNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -344,7 +344,7 @@ func (s *AccountService) getAdminAccountV2(
 			return nil, dt.Err()
 		}
 		s.logger.Error(
-			"Failed to get admin account",
+			"Failed to get system admin account",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("email", email),
