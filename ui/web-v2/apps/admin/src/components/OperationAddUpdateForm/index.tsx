@@ -552,7 +552,6 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                   isProgressiveRolloutsWarningsExists({
                     progressiveRolloutList,
                     feature,
-                    autoOpsRules,
                     experiments,
                   }))
               }

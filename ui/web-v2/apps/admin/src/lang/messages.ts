@@ -496,10 +496,6 @@ export const messages = {
         id: 'progressiveRolloutWarningMessages.variations',
         defaultMessage: 'The flag must have only 2 variations',
       }),
-      scheduledOperations: defineMessage({
-        id: 'progressiveRolloutWarningMessages.scheduledOperations',
-        defaultMessage: 'The flag must not have scheduled operations',
-      }),
       alreadyProgressiveRollout: defineMessage({
         id: 'progressiveRolloutWarningMessages.alreadyProgressiveRollout',
         defaultMessage:

@@ -1228,20 +1228,31 @@ const ProgressiveRolloutComponent = memo(
               </div>
             </div>
             {rule.status === ProgressiveRollout.Status.STOPPED && (
-              <div className="flex space-x-2 text-gray-500 items-center">
+              <div className="flex space-x-[6px] text-gray-500 items-center">
                 <ClockIcon width={18} />
                 <span>Stopped</span>
                 {<RelativeDateText date={new Date(rule.stoppedAt * 1000)} />}
                 <span>by</span>
-                <div className="relative">
-                  <RefreshSvg width={22} />
-                  <CrossSvg
-                    width={12}
-                    className="absolute right-[1px] bottom-[3px]"
-                  />
-                </div>
-                {/* {ProgressiveRollout.StoppedBy.OPS_KILL_SWITCH} */}
-                <span>Kill Switch</span>
+                {rule.stoppedBy ===
+                  ProgressiveRollout.StoppedBy.OPS_KILL_SWITCH && (
+                  <>
+                    <div className="relative">
+                      <RefreshSvg width={22} />
+                      <CrossSvg
+                        width={12}
+                        className="absolute right-[1px] bottom-[3px]"
+                      />
+                    </div>
+                    <span>Kill Switch</span>
+                  </>
+                )}
+                {rule.stoppedBy === ProgressiveRollout.StoppedBy.USER && (
+                  <span>User</span>
+                )}
+                {rule.stoppedBy ===
+                  ProgressiveRollout.StoppedBy.OPS_SCHEDULE && (
+                  <span>Schedule</span>
+                )}
               </div>
             )}
           </div>

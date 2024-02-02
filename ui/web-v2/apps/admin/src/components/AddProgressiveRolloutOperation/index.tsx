@@ -44,14 +44,6 @@ interface FindScheduleOperation {
   autoOpsRules: AutoOpsRule.AsObject[];
 }
 
-const findScheduleOperation = ({ autoOpsRules }: FindScheduleOperation) => {
-  return autoOpsRules.find((rule) => {
-    const { typeUrl } = rule.clausesList[0].clause;
-    const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
-    return !rule.triggeredAt && type === ClauseType.DATETIME;
-  });
-};
-
 export const isProgressiveRolloutsRunningWaiting = (
   status: ProgressiveRollout.StatusMap[keyof ProgressiveRollout.StatusMap]
 ) =>
@@ -61,14 +53,12 @@ export const isProgressiveRolloutsRunningWaiting = (
 interface isProgressiveRolloutsWarningsExists {
   feature: Feature.AsObject;
   progressiveRolloutList: ProgressiveRollout.AsObject[];
-  autoOpsRules: AutoOpsRule.AsObject[];
   experiments: Experiment.AsObject[];
 }
 
 export const isProgressiveRolloutsWarningsExists = ({
   feature,
   progressiveRolloutList,
-  autoOpsRules,
   experiments,
 }: isProgressiveRolloutsWarningsExists): boolean => {
   const check =
@@ -78,8 +68,7 @@ export const isProgressiveRolloutsWarningsExists = ({
     (progressiveRolloutList.length > 0 &&
       progressiveRolloutList.find((p) =>
         isProgressiveRolloutsRunningWaiting(p.status)
-      )) ||
-    findScheduleOperation({ autoOpsRules });
+      ));
   return !!check;
 };
 
@@ -167,7 +156,6 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
         isProgressiveRolloutsWarningsExists({
           feature,
           progressiveRolloutList,
-          autoOpsRules,
           experiments,
         })
       ) {
@@ -212,16 +200,6 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                           {f(
                             messages.autoOps.progressiveRolloutWarningMessages
                               .alreadyProgressiveRollout
-                          )}
-                        </p>
-                      </li>
-                    ) : null}
-                    {findScheduleOperation({ autoOpsRules }) ? (
-                      <li>
-                        <p>
-                          {f(
-                            messages.autoOps.progressiveRolloutWarningMessages
-                              .scheduledOperations
                           )}
                         </p>
                       </li>

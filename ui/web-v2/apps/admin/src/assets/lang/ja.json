@@ -410,7 +410,6 @@
   "notification.update.header.title": "通知の更新",
   "progressiveRolloutWarningMessages.alreadyProgressiveRollout": "同時に複数のプログレッシブロールアウトを実行することはできません",
   "progressiveRolloutWarningMessages.moreInformation": "詳細については、{link}を参照してください。",
-  "progressiveRolloutWarningMessages.scheduledOperations": "スケジュールされたオペレーションを持つフラグでは利用できません",
   "progressiveRolloutWarningMessages.title": "プログレッシブロールアウトを作成できません。以下の条件を確認してください。",
   "progressiveRolloutWarningMessages.variations": "3つ以上のバリエーションを持つフラグでは利用できません",
   "push.add.header.description": "プッシュ機能を使用することによって、リアルタイムでSDKを更新することができます。フィーチャーフラグが更新されるたびに、プッシュ通知がクライアントに送信されます。",

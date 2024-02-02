@@ -102,7 +102,7 @@ export const stopProgressiveRollout = createAsyncThunk<
   request.setId(params.id);
   request.setEnvironmentNamespace(params.environmentNamespace);
   const command = new StopProgressiveRolloutCommand();
-  command.setStoppedBy(ProgressiveRollout.StoppedBy.OPS_KILL_SWITCH);
+  command.setStoppedBy(ProgressiveRollout.StoppedBy.USER);
   request.setCommand(command);
   await setupAuthToken();
   await progressiveRolloutGrpc.stopProgressiveRollout(request);
