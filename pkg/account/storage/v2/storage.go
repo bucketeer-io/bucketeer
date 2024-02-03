@@ -54,11 +54,10 @@ const transactionKey = "transaction"
 
 type accountStorage struct {
 	client mysql.Client
-	tx     mysql.Transaction
 }
 
 func NewAccountStorage(client mysql.Client) AccountStorage {
-	return &accountStorage{client, nil}
+	return &accountStorage{client}
 }
 
 func (s *accountStorage) RunInTransaction(ctx context.Context, f func() error) error {
