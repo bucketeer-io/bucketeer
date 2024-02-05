@@ -487,7 +487,10 @@ func (s *auditlogService) checkRole(
 	return editor, nil
 }
 
-func (s *auditlogService) checkSystemAdminRole(ctx context.Context, localizer locale.Localizer) (*eventproto.Editor, error) {
+func (s *auditlogService) checkSystemAdminRole(
+	ctx context.Context,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
 	editor, err := role.CheckSystemAdminRole(ctx)
 	if err != nil {
 		switch status.Code(err) {
