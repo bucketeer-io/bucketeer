@@ -340,7 +340,10 @@ func (s *NotificationService) DisableSubscription(
 	req *notificationproto.DisableSubscriptionRequest,
 ) (*notificationproto.DisableSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace,
+		localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -554,7 +557,10 @@ func (s *NotificationService) DeleteSubscription(
 	req *notificationproto.DeleteSubscriptionRequest,
 ) (*notificationproto.DeleteSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace,
+		localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -751,7 +757,10 @@ func (s *NotificationService) ListSubscriptions(
 	req *notificationproto.ListSubscriptionsRequest,
 ) (*notificationproto.ListSubscriptionsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentNamespace,
+		localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -835,7 +844,10 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	req *notificationproto.ListEnabledSubscriptionsRequest,
 ) (*notificationproto.ListEnabledSubscriptionsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentNamespace,
+		localizer)
 	if err != nil {
 		return nil, err
 	}
