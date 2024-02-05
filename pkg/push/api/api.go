@@ -101,7 +101,9 @@ func (s *PushService) CreatePush(
 	req *pushproto.CreatePushRequest,
 ) (*pushproto.CreatePushResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +289,9 @@ func (s *PushService) UpdatePush(
 	req *pushproto.UpdatePushRequest,
 ) (*pushproto.UpdatePushResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -481,7 +485,9 @@ func (s *PushService) DeletePush(
 	req *pushproto.DeletePushRequest,
 ) (*pushproto.DeletePushResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -671,7 +677,9 @@ func (s *PushService) ListPushes(
 	req *pushproto.ListPushesRequest,
 ) (*pushproto.ListPushesResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}

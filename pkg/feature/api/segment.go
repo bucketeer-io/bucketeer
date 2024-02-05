@@ -43,7 +43,9 @@ func (s *FeatureService) CreateSegment(
 	req *featureproto.CreateSegmentRequest,
 ) (*featureproto.CreateSegmentResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +161,9 @@ func (s *FeatureService) DeleteSegment(
 	req *featureproto.DeleteSegmentRequest,
 ) (*featureproto.DeleteSegmentResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +269,9 @@ func (s *FeatureService) UpdateSegment(
 	req *featureproto.UpdateSegmentRequest,
 ) (*featureproto.UpdateSegmentResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		s.logger.Info(
 			"Permission denied",
@@ -406,7 +412,9 @@ func (s *FeatureService) GetSegment(
 	req *featureproto.GetSegmentRequest,
 ) (*featureproto.GetSegmentResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -484,7 +492,9 @@ func (s *FeatureService) ListSegments(
 	req *featureproto.ListSegmentsRequest,
 ) (*featureproto.ListSegmentsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
