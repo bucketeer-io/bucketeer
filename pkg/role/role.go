@@ -55,42 +55,25 @@ func CheckEnvironmentRole(
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
-	// TODO remove this condition after migration to AccountV2
-	if !token.IsSystemAdmin {
-		// get account for the environment namespace
-		account, err := getAccountFunc(token.Email)
-		if err != nil {
-			if code := status.Code(err); code == codes.NotFound {
-				return nil, ErrUnauthenticated
-			}
-			return nil, ErrInternal
+	account, err := getAccountFunc(token.Email)
+	if err != nil {
+		if code := status.Code(err); code == codes.NotFound {
+			return nil, ErrUnauthenticated
 		}
-		accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
-		return checkRole(account.Email, accountEnvRole, requiredRole, false)
+		return nil, ErrInternal
 	}
-	return checkRole(token.Email, accountproto.AccountV2_Role_Environment_EDITOR, requiredRole, true)
-}
-
-func getRole(roles []*accountproto.AccountV2_EnvironmentRole, envID string) accountproto.AccountV2_Role_Environment {
-	for _, role := range roles {
-		if role.EnvironmentId == envID {
-			return role.Role
+	accountEnvRole := accountproto.AccountV2_Role_Environment_UNASSIGNED
+	for _, role := range account.EnvironmentRoles {
+		if role.EnvironmentId == environmentID {
+			accountEnvRole = role.Role
 		}
 	}
-	return accountproto.AccountV2_Role_Environment_UNASSIGNED
-}
-
-func checkRole(
-	email string,
-	role, requiredRole accountproto.AccountV2_Role_Environment,
-	isAdmin bool,
-) (*eventproto.Editor, error) {
-	if role < requiredRole {
+	if accountEnvRole < requiredRole {
 		return nil, ErrPermissionDenied
 	}
 	return &eventproto.Editor{
-		Email:   email,
-		IsAdmin: isAdmin,
+		Email:   account.Email,
+		IsAdmin: token.IsSystemAdmin,
 	}, nil
 }
 
@@ -102,13 +85,6 @@ func CheckOrganizationRole(
 	token, ok := rpc.GetIDToken(ctx)
 	if !ok {
 		return nil, ErrUnauthenticated
-	}
-	// TODO remove this condition after migration to AccountV2
-	if token.IsSystemAdmin {
-		return &eventproto.Editor{
-			Email:   token.Email,
-			IsAdmin: true,
-		}, nil
 	}
 	resp, err := getAccountFunc(token.Email)
 	if err != nil {
