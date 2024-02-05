@@ -652,7 +652,10 @@ func (s *FeatureService) GetFlagTrigger(
 	request *featureproto.GetFlagTriggerRequest,
 ) (*featureproto.GetFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, request.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		request.EnvironmentNamespace,
+		localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -704,7 +707,10 @@ func (s *FeatureService) ListFlagTriggers(
 	request *featureproto.ListFlagTriggersRequest,
 ) (*featureproto.ListFlagTriggersResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, request.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		request.EnvironmentNamespace,
+		localizer)
 	if err != nil {
 		return nil, err
 	}

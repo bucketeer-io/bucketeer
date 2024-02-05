@@ -39,7 +39,10 @@ func (s *NotificationService) CreateSubscription(
 	req *notificationproto.CreateSubscriptionRequest,
 ) (*notificationproto.CreateSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace,
+		localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +244,10 @@ func (s *NotificationService) UpdateSubscription(
 	req *notificationproto.UpdateSubscriptionRequest,
 ) (*notificationproto.UpdateSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace,
+		localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +276,10 @@ func (s *NotificationService) EnableSubscription(
 	req *notificationproto.EnableSubscriptionRequest,
 ) (*notificationproto.EnableSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace,
+		localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -681,7 +690,10 @@ func (s *NotificationService) GetSubscription(
 	req *notificationproto.GetSubscriptionRequest,
 ) (*notificationproto.GetSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentNamespace,
+		localizer)
 	if err != nil {
 		return nil, err
 	}
