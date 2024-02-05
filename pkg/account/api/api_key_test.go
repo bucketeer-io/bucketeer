@@ -55,23 +55,26 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*AccountService)
-		ctxRole     accountproto.Account_Role
-		req         *accountproto.CreateAPIKeyRequest
-		expectedErr error
+		desc          string
+		setup         func(*AccountService)
+		ctxRole       accountproto.Account_Role
+		isSystemAdmin bool
+		req           *accountproto.CreateAPIKeyRequest
+		expectedErr   error
 	}{
 		{
-			desc:    "errNoCommand",
-			ctxRole: accountproto.Account_OWNER,
+			desc:          "errNoCommand",
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.CreateAPIKeyRequest{
 				Command: nil,
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc:    "errMissingAPIKeyName",
-			ctxRole: accountproto.Account_OWNER,
+			desc:          "errMissingAPIKeyName",
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.CreateAPIKeyRequest{
 				Command: &accountproto.CreateAPIKeyCommand{Name: ""},
 			},
@@ -84,7 +87,8 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.CreateAPIKeyRequest{
 				Command: &accountproto.CreateAPIKeyCommand{
 					Name: "name",
@@ -100,7 +104,8 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.CreateAPIKeyRequest{
 				Command: &accountproto.CreateAPIKeyCommand{
 					Name: "name",
@@ -112,7 +117,7 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, p.ctxRole)
+			ctx = setToken(ctx, p.ctxRole, p.isSystemAdmin)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -144,23 +149,26 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*AccountService)
-		ctxRole     accountproto.Account_Role
-		req         *accountproto.ChangeAPIKeyNameRequest
-		expectedErr error
+		desc          string
+		setup         func(*AccountService)
+		ctxRole       accountproto.Account_Role
+		isSystemAdmin bool
+		req           *accountproto.ChangeAPIKeyNameRequest
+		expectedErr   error
 	}{
 		{
-			desc:    "errMissingAPIKeyID",
-			ctxRole: accountproto.Account_OWNER,
+			desc:          "errMissingAPIKeyID",
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.ChangeAPIKeyNameRequest{
 				Id: "",
 			},
 			expectedErr: createError(statusMissingAPIKeyID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id")),
 		},
 		{
-			desc:    "errNoCommand",
-			ctxRole: accountproto.Account_OWNER,
+			desc:          "errNoCommand",
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.ChangeAPIKeyNameRequest{
 				Id:      "id",
 				Command: nil,
@@ -174,7 +182,8 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAPIKeyNotFound)
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.ChangeAPIKeyNameRequest{
 				Id: "id",
 				Command: &accountproto.ChangeAPIKeyNameCommand{
@@ -190,7 +199,8 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.ChangeAPIKeyNameRequest{
 				Id: "id",
 				Command: &accountproto.ChangeAPIKeyNameCommand{
@@ -206,7 +216,8 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.ChangeAPIKeyNameRequest{
 				Id: "id",
 				Command: &accountproto.ChangeAPIKeyNameCommand{
@@ -218,7 +229,7 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, p.ctxRole)
+			ctx = setToken(ctx, p.ctxRole, p.isSystemAdmin)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -250,23 +261,26 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*AccountService)
-		ctxRole     accountproto.Account_Role
-		req         *accountproto.EnableAPIKeyRequest
-		expectedErr error
+		desc          string
+		setup         func(*AccountService)
+		ctxRole       accountproto.Account_Role
+		isSystemAdmin bool
+		req           *accountproto.EnableAPIKeyRequest
+		expectedErr   error
 	}{
 		{
-			desc:    "errMissingAPIKeyID",
-			ctxRole: accountproto.Account_OWNER,
+			desc:          "errMissingAPIKeyID",
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.EnableAPIKeyRequest{
 				Id: "",
 			},
 			expectedErr: createError(statusMissingAPIKeyID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id")),
 		},
 		{
-			desc:    "errNoCommand",
-			ctxRole: accountproto.Account_OWNER,
+			desc:          "errNoCommand",
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.EnableAPIKeyRequest{
 				Id:      "id",
 				Command: nil,
@@ -280,7 +294,8 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAPIKeyNotFound)
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.EnableAPIKeyRequest{
 				Id:      "id",
 				Command: &accountproto.EnableAPIKeyCommand{},
@@ -294,7 +309,8 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.EnableAPIKeyRequest{
 				Id:      "id",
 				Command: &accountproto.EnableAPIKeyCommand{},
@@ -308,7 +324,8 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.EnableAPIKeyRequest{
 				Id:      "id",
 				Command: &accountproto.EnableAPIKeyCommand{},
@@ -318,7 +335,7 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := setToken(ctx, p.ctxRole)
+			ctx := setToken(ctx, p.ctxRole, p.isSystemAdmin)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -350,23 +367,26 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*AccountService)
-		ctxRole     accountproto.Account_Role
-		req         *accountproto.DisableAPIKeyRequest
-		expectedErr error
+		desc          string
+		setup         func(*AccountService)
+		ctxRole       accountproto.Account_Role
+		isSystemAdmin bool
+		req           *accountproto.DisableAPIKeyRequest
+		expectedErr   error
 	}{
 		{
-			desc:    "errMissingAPIKeyID",
-			ctxRole: accountproto.Account_OWNER,
+			desc:          "errMissingAPIKeyID",
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.DisableAPIKeyRequest{
 				Id: "",
 			},
 			expectedErr: createError(statusMissingAPIKeyID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id")),
 		},
 		{
-			desc:    "errNoCommand",
-			ctxRole: accountproto.Account_OWNER,
+			desc:          "errNoCommand",
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.DisableAPIKeyRequest{
 				Id:      "id",
 				Command: nil,
@@ -380,7 +400,8 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAPIKeyNotFound)
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.DisableAPIKeyRequest{
 				Id:      "id",
 				Command: &accountproto.DisableAPIKeyCommand{},
@@ -394,7 +415,8 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.DisableAPIKeyRequest{
 				Id:      "id",
 				Command: &accountproto.DisableAPIKeyCommand{},
@@ -408,7 +430,8 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			ctxRole: accountproto.Account_OWNER,
+			ctxRole:       accountproto.Account_OWNER,
+			isSystemAdmin: true,
 			req: &accountproto.DisableAPIKeyRequest{
 				Id:      "id",
 				Command: &accountproto.DisableAPIKeyCommand{},
@@ -418,7 +441,7 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, p.ctxRole)
+			ctx = setToken(ctx, p.ctxRole, p.isSystemAdmin)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -487,7 +510,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, accountproto.Account_OWNER)
+			ctx = setToken(ctx, accountproto.Account_OWNER, true)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -559,7 +582,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, accountproto.Account_OWNER)
+			ctx = setToken(ctx, accountproto.Account_OWNER, true)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)

@@ -64,12 +64,12 @@ func createAccountService(t *testing.T, mockController *gomock.Controller, db st
 	}
 }
 
-func createContextWithDefaultToken(t *testing.T, role accountproto.Account_Role) context.Context {
+func createContextWithDefaultToken(t *testing.T, role accountproto.Account_Role, isSystemAdmin bool) context.Context {
 	t.Helper()
-	return createContextWithEmailToken(t, "bucketeer@example.com", role)
+	return createContextWithEmailToken(t, "bucketeer@example.com", role, isSystemAdmin)
 }
 
-func createContextWithEmailToken(t *testing.T, email string, role accountproto.Account_Role) context.Context {
+func createContextWithEmailToken(t *testing.T, email string, role accountproto.Account_Role, isSystemAdmin bool) context.Context {
 	t.Helper()
 	sub := &authproto.IDTokenSubject{
 		UserId: email,
@@ -78,13 +78,14 @@ func createContextWithEmailToken(t *testing.T, email string, role accountproto.A
 	data, err := proto.Marshal(sub)
 	require.NoError(t, err)
 	token := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   base64.RawURLEncoding.EncodeToString([]byte(data)),
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     email,
-		AdminRole: role,
+		Issuer:        "issuer",
+		Subject:       base64.RawURLEncoding.EncodeToString([]byte(data)),
+		Audience:      "audience",
+		Expiry:        time.Now().AddDate(100, 0, 0),
+		IssuedAt:      time.Now(),
+		Email:         email,
+		AdminRole:     role,
+		IsSystemAdmin: isSystemAdmin,
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)

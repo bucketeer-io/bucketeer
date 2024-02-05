@@ -36,7 +36,7 @@ func CheckAdminRole(ctx context.Context) (*eventproto.Editor, error) {
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
-	if !token.IsAdmin() {
+	if !token.IsSystemAdmin {
 		return nil, ErrPermissionDenied
 	}
 	return &eventproto.Editor{
@@ -104,7 +104,7 @@ func CheckOrganizationRole(
 		return nil, ErrUnauthenticated
 	}
 	// TODO remove this condition after migration to AccountV2
-	if token.IsAdmin() {
+	if token.IsSystemAdmin {
 		return &eventproto.Editor{
 			Email:   token.Email,
 			IsAdmin: true,
@@ -122,6 +122,6 @@ func CheckOrganizationRole(
 	}
 	return &eventproto.Editor{
 		Email:   token.Email,
-		IsAdmin: token.IsAdmin(),
+		IsAdmin: token.IsSystemAdmin,
 	}, nil
 }

@@ -204,7 +204,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED, false)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -446,7 +446,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED, false)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -632,7 +632,7 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED, false)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -818,7 +818,7 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED, false)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -1004,7 +1004,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED, false)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -1138,7 +1138,7 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
+			ctx = setToken(ctx, accountproto.Account_UNASSIGNED, false)
 			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
@@ -1154,7 +1154,7 @@ func TestListAccountsV2MySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithDefaultToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithDefaultToken(t, accountproto.Account_UNASSIGNED, false)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1248,15 +1248,16 @@ func TestListAccountsV2MySQL(t *testing.T) {
 	}
 }
 
-func setToken(ctx context.Context, role accountproto.Account_Role) context.Context {
+func setToken(ctx context.Context, role accountproto.Account_Role, isSystemAdmin bool) context.Context {
 	t := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   "sub",
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "email",
-		AdminRole: role,
+		Issuer:        "issuer",
+		Subject:       "sub",
+		Audience:      "audience",
+		Expiry:        time.Now().AddDate(100, 0, 0),
+		IssuedAt:      time.Now(),
+		Email:         "email",
+		AdminRole:     role,
+		IsSystemAdmin: isSystemAdmin,
 	}
 	return context.WithValue(ctx, rpc.Key, t)
 }
