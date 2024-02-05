@@ -170,7 +170,7 @@ func (a *AutoOpsRule) DeleteClause(id string) error {
 	return errClauseNotFound
 }
 
-func (a *AutoOpsRule) IsEventRateOps() (bool, error) {
+func (a *AutoOpsRule) HasEventRateOps() (bool, error) {
 	clauses, err := a.ExtractOpsEventRateClauses()
 	if err != nil {
 		return false, err
@@ -204,7 +204,7 @@ func (a *AutoOpsRule) unmarshalOpsEventRateClause(clause *proto.Clause) (*proto.
 	return nil, nil
 }
 
-func (a *AutoOpsRule) IsScheduleOps() (bool, error) {
+func (a *AutoOpsRule) HasScheduleOps() (bool, error) {
 	clauses, err := a.ExtractDatetimeClauses()
 	if err != nil {
 		return false, err

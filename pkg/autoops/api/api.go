@@ -978,14 +978,16 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			return err
 		}
 		// Stop the running progressive rollout if the operation type is disable
-		if err := s.stopProgressiveRolloutIfneeded(
-			ctx,
-			req.EnvironmentNamespace,
-			autoOpsRule,
-			prStorage,
-			localizer,
-		); err != nil {
-			return err
+		if autoOpsRule.OpsType == autoopsproto.OpsType_DISABLE_FEATURE {
+			if err := s.stopProgressiveRollout(
+				ctx,
+				req.EnvironmentNamespace,
+				autoOpsRule,
+				prStorage,
+				localizer,
+			); err != nil {
+				return err
+			}
 		}
 		if err := executeAutoOpsRuleOperation(
 			ctx,
@@ -1049,68 +1051,65 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: false}, nil
 }
 
-func (s *AutoOpsService) stopProgressiveRolloutIfneeded(
+func (s *AutoOpsService) stopProgressiveRollout(
 	ctx context.Context,
 	environmentNamespace string,
 	autoOpsRule *domain.AutoOpsRule,
 	storage v2as.ProgressiveRolloutStorage,
 	localizer locale.Localizer,
 ) error {
-	// Stop the running progressive rollout if the operation type is disable
-	if autoOpsRule.OpsType == autoopsproto.OpsType_DISABLE_FEATURE {
-		// Check what operation is being executed
-		// and the set progressive rollout `stoppedBy`
-		var stoppedBy autoopsproto.ProgressiveRollout_StoppedBy
-		isScheduleOps, err := autoOpsRule.IsScheduleOps()
+	// Check what operation is being executed
+	// and the set progressive rollout `stoppedBy`
+	var stoppedBy autoopsproto.ProgressiveRollout_StoppedBy
+	hasScheduleOps, err := autoOpsRule.HasScheduleOps()
+	if err != nil {
+		s.logger.Error(
+			"Failed to check operation type",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("autoOpsRuleId", autoOpsRule.Id),
+				zap.String("featureId", autoOpsRule.FeatureId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
 		if err != nil {
-			s.logger.Error(
-				"Failed to check operation type",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
-					zap.String("autoOpsRuleId", autoOpsRule.Id),
-					zap.String("featureId", autoOpsRule.FeatureId),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
+			return statusInternal.Err()
 		}
-		if isScheduleOps {
-			stoppedBy = autoopsproto.ProgressiveRollout_OPS_KILL_SWITCH
-		} else {
-			stoppedBy = autoopsproto.ProgressiveRollout_OPS_SCHEDULE
+		return dt.Err()
+	}
+	if hasScheduleOps {
+		stoppedBy = autoopsproto.ProgressiveRollout_OPS_KILL_SWITCH
+	} else {
+		stoppedBy = autoopsproto.ProgressiveRollout_OPS_SCHEDULE
+	}
+	if err := executeStopProgressiveRolloutOperation(
+		ctx,
+		storage,
+		s.convToInterfaceSlice([]string{autoOpsRule.FeatureId}),
+		environmentNamespace,
+		stoppedBy,
+	); err != nil {
+		s.logger.Error(
+			"Failed to stop progressive rollout",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("autoOpsRuleId", autoOpsRule.Id),
+				zap.String("featureId", autoOpsRule.FeatureId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
 		}
-		if err := executeStopProgressiveRolloutOperation(
-			ctx,
-			storage,
-			s.convToInterfaceSlice([]string{autoOpsRule.FeatureId}),
-			environmentNamespace,
-			stoppedBy,
-		); err != nil {
-			s.logger.Error(
-				"Failed to stop progressive rollout",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
-					zap.String("autoOpsRuleId", autoOpsRule.Id),
-					zap.String("featureId", autoOpsRule.FeatureId),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
+		return dt.Err()
 	}
 	return nil
 }
