@@ -104,7 +104,9 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	req *autoopsproto.CreateAutoOpsRuleRequest,
 ) (*autoopsproto.CreateAutoOpsRuleResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -379,7 +381,9 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	req *autoopsproto.DeleteAutoOpsRuleRequest,
 ) (*autoopsproto.DeleteAutoOpsRuleResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -474,7 +478,9 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	req *autoopsproto.UpdateAutoOpsRuleRequest,
 ) (*autoopsproto.UpdateAutoOpsRuleResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -758,7 +764,9 @@ func (s *AutoOpsService) GetAutoOpsRule(
 	req *autoopsproto.GetAutoOpsRuleRequest,
 ) (*autoopsproto.GetAutoOpsRuleResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -824,7 +832,9 @@ func (s *AutoOpsService) ListAutoOpsRules(
 	req *autoopsproto.ListAutoOpsRulesRequest,
 ) (*autoopsproto.ListAutoOpsRulesResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -915,7 +925,9 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	req *autoopsproto.ExecuteAutoOpsRequest,
 ) (*autoopsproto.ExecuteAutoOpsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1099,7 +1111,9 @@ func (s *AutoOpsService) ListOpsCounts(
 	req *autoopsproto.ListOpsCountsRequest,
 ) (*autoopsproto.ListOpsCountsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1224,13 +1238,13 @@ func (s *AutoOpsService) getGoal(
 	return resp.Goal, nil
 }
 
-func (s *AutoOpsService) checkRole(
+func (s *AutoOpsService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(
+	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
 		environmentNamespace,

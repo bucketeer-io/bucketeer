@@ -57,7 +57,9 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 	req *autoopsproto.CreateProgressiveRolloutRequest,
 ) (*autoopsproto.CreateProgressiveRolloutResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +163,9 @@ func (s *AutoOpsService) GetProgressiveRollout(
 	req *autoopsproto.GetProgressiveRolloutRequest,
 ) (*autoopsproto.GetProgressiveRolloutResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +212,9 @@ func (s *AutoOpsService) StopProgressiveRollout(
 	req *autoopsproto.StopProgressiveRolloutRequest,
 ) (*autoopsproto.StopProgressiveRolloutResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +312,9 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 	req *autoopsproto.DeleteProgressiveRolloutRequest,
 ) (*autoopsproto.DeleteProgressiveRolloutResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +390,9 @@ func (s *AutoOpsService) ListProgressiveRollouts(
 	req *autoopsproto.ListProgressiveRolloutsRequest,
 ) (*autoopsproto.ListProgressiveRolloutsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -406,7 +416,9 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 	req *autoopsproto.ExecuteProgressiveRolloutRequest,
 ) (*autoopsproto.ExecuteProgressiveRolloutResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}

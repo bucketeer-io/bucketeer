@@ -260,13 +260,13 @@ func (s *AccountService) checkSystemAdminRole(
 	return editor, nil
 }
 
-func (s *AccountService) checkRole(
+func (s *AccountService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole proto.AccountV2_Role_Environment,
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(
+	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
 		environmentNamespace,
