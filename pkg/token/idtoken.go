@@ -39,10 +39,6 @@ type IDToken struct {
 	IsSystemAdmin bool                      `json:"is_system_admin"`
 }
 
-func (t *IDToken) IsAdmin() bool {
-	return t.AdminRole != accountproto.Account_UNASSIGNED
-}
-
 func ExtractUserID(subject string) (string, error) {
 	tokenSubject := &authproto.IDTokenSubject{}
 	// Q: Why do we need to decode the sub string
