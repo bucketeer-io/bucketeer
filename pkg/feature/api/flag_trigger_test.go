@@ -828,17 +828,11 @@ func TestFeatureServiceGenerateTriggerURL(t *testing.T) {
 	}
 	t.Logf("GenerateToken() token = %v", trigger.Token)
 	triggerURL := featureService.generateTriggerURL(context.Background(), trigger.Token, false)
-	if err != nil {
-		t.Errorf("generateTriggerURL() [full] error = %v", err)
-	}
 	if triggerURL == "" {
 		t.Errorf("generateTriggerURL() [full] triggerURL is empty")
 	}
 	t.Logf("generateTriggerURL() [full] triggerURL = %v", triggerURL)
 	triggerURL = featureService.generateTriggerURL(context.Background(), trigger.Token, true)
-	if err != nil {
-		t.Errorf("generateTriggerURL() [masked] error = %v", err)
-	}
 	if triggerURL == "" {
 		t.Errorf("generateTriggerURL() [masked] triggerURL is empty")
 	}
