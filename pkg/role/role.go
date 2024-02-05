@@ -31,7 +31,7 @@ var (
 	ErrInternal         = status.Error(codes.Internal, "Internal")
 )
 
-func CheckAdminRole(ctx context.Context) (*eventproto.Editor, error) {
+func CheckSystemAdminRole(ctx context.Context) (*eventproto.Editor, error) {
 	token, ok := rpc.GetIDToken(ctx)
 	if !ok {
 		return nil, ErrUnauthenticated

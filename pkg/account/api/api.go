@@ -209,8 +209,11 @@ func (s *AccountService) getOrganization(
 	return resp.Organization, nil
 }
 
-func (s *AccountService) checkAdminRole(ctx context.Context, localizer locale.Localizer) (*eventproto.Editor, error) {
-	editor, err := role.CheckAdminRole(ctx)
+func (s *AccountService) checkSystemAdminRole(
+	ctx context.Context,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
+	editor, err := role.CheckSystemAdminRole(ctx)
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:

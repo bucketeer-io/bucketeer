@@ -1936,7 +1936,7 @@ func TestCheckAdminRole(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			gs := newEventCounterService(t, mockController)
-			_, actualErr := gs.checkAdminRole(p.inputCtx, localizer)
+			_, actualErr := gs.checkSystemAdminRole(p.inputCtx, localizer)
 			assert.Equal(t, actualErr, p.expectedErr)
 		})
 	}

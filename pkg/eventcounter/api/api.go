@@ -1058,7 +1058,7 @@ func (s *eventCounterService) SummarizeMAUCounts(
 	req *ecproto.SummarizeMAUCountsRequest,
 ) (*ecproto.SummarizeMAUCountsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1469,11 +1469,11 @@ func (s *eventCounterService) checkRole(
 	return editor, nil
 }
 
-func (s *eventCounterService) checkAdminRole(
+func (s *eventCounterService) checkSystemAdminRole(
 	ctx context.Context,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckAdminRole(ctx)
+	editor, err := role.CheckSystemAdminRole(ctx)
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:

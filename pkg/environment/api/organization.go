@@ -44,7 +44,7 @@ func (s *EnvironmentService) GetOrganization(
 	req *environmentproto.GetOrganizationRequest,
 ) (*environmentproto.GetOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (s *EnvironmentService) ListOrganizations(
 	req *environmentproto.ListOrganizationsRequest,
 ) (*environmentproto.ListOrganizationsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func (s *EnvironmentService) CreateOrganization(
 	req *environmentproto.CreateOrganizationRequest,
 ) (*environmentproto.CreateOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +380,7 @@ func (s *EnvironmentService) UpdateOrganization(
 	req *environmentproto.UpdateOrganizationRequest,
 ) (*environmentproto.UpdateOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -542,7 +542,7 @@ func (s *EnvironmentService) EnableOrganization(
 	req *environmentproto.EnableOrganizationRequest,
 ) (*environmentproto.EnableOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -587,7 +587,7 @@ func (s *EnvironmentService) DisableOrganization(
 	req *environmentproto.DisableOrganizationRequest,
 ) (*environmentproto.DisableOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -632,7 +632,7 @@ func (s *EnvironmentService) ArchiveOrganization(
 	req *environmentproto.ArchiveOrganizationRequest,
 ) (*environmentproto.ArchiveOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -677,7 +677,7 @@ func (s *EnvironmentService) UnarchiveOrganization(
 	req *environmentproto.UnarchiveOrganizationRequest,
 ) (*environmentproto.UnarchiveOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -722,7 +722,7 @@ func (s *EnvironmentService) ConvertTrialOrganization(
 	req *environmentproto.ConvertTrialOrganizationRequest,
 ) (*environmentproto.ConvertTrialOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
