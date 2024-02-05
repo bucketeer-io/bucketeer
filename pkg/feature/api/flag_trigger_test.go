@@ -41,10 +41,10 @@ func TestCreateFlagTrigger(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -130,11 +130,10 @@ func TestGetFlagTrigger(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -216,10 +215,10 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -300,11 +299,10 @@ func TestEnableFlagTrigger(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -381,11 +379,10 @@ func TestDisableFlagTrigger(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -462,11 +459,10 @@ func TestResetFlagTrigger(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -562,11 +558,10 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -636,11 +631,10 @@ func TestFlagTriggerWebhook(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
@@ -737,10 +731,10 @@ func TestListFlagTriggers(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
