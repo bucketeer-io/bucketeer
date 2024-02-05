@@ -52,7 +52,7 @@ func (s *FeatureService) CreateFlagTrigger(
 	request *featureproto.CreateFlagTriggerRequest,
 ) (*featureproto.CreateFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(
+	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentNamespace,
@@ -159,7 +159,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 	request *featureproto.UpdateFlagTriggerRequest,
 ) (*featureproto.UpdateFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(
+	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentNamespace,
@@ -261,7 +261,7 @@ func (s *FeatureService) EnableFlagTrigger(
 	request *featureproto.EnableFlagTriggerRequest,
 ) (*featureproto.EnableFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(
+	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentNamespace,
@@ -363,7 +363,7 @@ func (s *FeatureService) DisableFlagTrigger(
 	request *featureproto.DisableFlagTriggerRequest,
 ) (*featureproto.DisableFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(
+	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentNamespace,
@@ -462,7 +462,7 @@ func (s *FeatureService) ResetFlagTrigger(
 	request *featureproto.ResetFlagTriggerRequest,
 ) (*featureproto.ResetFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(
+	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentNamespace,
@@ -561,7 +561,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 	request *featureproto.DeleteFlagTriggerRequest,
 ) (*featureproto.DeleteFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkRole(
+	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
 		request.EnvironmentNamespace,
@@ -652,7 +652,7 @@ func (s *FeatureService) GetFlagTrigger(
 	request *featureproto.GetFlagTriggerRequest,
 ) (*featureproto.GetFlagTriggerResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, request.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, request.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -704,7 +704,7 @@ func (s *FeatureService) ListFlagTriggers(
 	request *featureproto.ListFlagTriggersRequest,
 ) (*featureproto.ListFlagTriggersResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, request.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, request.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}

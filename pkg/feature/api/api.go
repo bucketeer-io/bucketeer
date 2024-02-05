@@ -102,13 +102,13 @@ func (s *FeatureService) Register(server *grpc.Server) {
 	featureproto.RegisterFeatureServiceServer(server, s)
 }
 
-func (s *FeatureService) checkRole(
+func (s *FeatureService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(
+	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
 		environmentNamespace,

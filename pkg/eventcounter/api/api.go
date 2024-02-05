@@ -117,7 +117,7 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	req *ecproto.GetExperimentEvaluationCountRequest,
 ) (*ecproto.GetExperimentEvaluationCountResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +241,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	req *ecproto.GetEvaluationTimeseriesCountRequest,
 ) (*ecproto.GetEvaluationTimeseriesCountResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -719,7 +719,7 @@ func (s *eventCounterService) GetExperimentResult(
 	req *ecproto.GetExperimentResultRequest,
 ) (*ecproto.GetExperimentResultResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -772,7 +772,7 @@ func (s *eventCounterService) ListExperimentResults(
 	req *ecproto.ListExperimentResultsRequest,
 ) (*ecproto.ListExperimentResultsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -877,7 +877,7 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	req *ecproto.GetExperimentGoalCountRequest,
 ) (*ecproto.GetExperimentGoalCountResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1014,7 +1014,7 @@ func (s *eventCounterService) GetMAUCount(
 	req *ecproto.GetMAUCountRequest,
 ) (*ecproto.GetMAUCountResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1159,7 +1159,7 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 	req *ecproto.GetOpsEvaluationUserCountRequest,
 ) (*ecproto.GetOpsEvaluationUserCountResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1279,7 +1279,7 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 	req *ecproto.GetOpsGoalUserCountRequest,
 ) (*ecproto.GetOpsGoalUserCountResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1394,13 +1394,13 @@ func newOpsGoalUserCountKey(
 	)
 }
 
-func (s *eventCounterService) checkRole(
+func (s *eventCounterService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(
+	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
 		environmentNamespace,

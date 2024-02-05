@@ -84,13 +84,13 @@ func (s *experimentService) Register(server *grpc.Server) {
 	proto.RegisterExperimentServiceServer(server, s)
 }
 
-func (s *experimentService) checkRole(
+func (s *experimentService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(
+	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
 		environmentNamespace,

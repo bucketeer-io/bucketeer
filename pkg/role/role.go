@@ -45,7 +45,7 @@ func CheckAdminRole(ctx context.Context) (*eventproto.Editor, error) {
 	}, nil
 }
 
-func CheckRole(
+func CheckEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentID string,

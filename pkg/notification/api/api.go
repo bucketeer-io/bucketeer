@@ -130,13 +130,13 @@ func (s *NotificationService) checkAdminRole(
 	return editor, nil
 }
 
-func (s *NotificationService) checkRole(
+func (s *NotificationService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckRole(
+	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
 		environmentNamespace,
