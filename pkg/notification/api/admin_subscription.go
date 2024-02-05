@@ -38,7 +38,7 @@ func (s *NotificationService) CreateAdminSubscription(
 	req *notificationproto.CreateAdminSubscriptionRequest,
 ) (*notificationproto.CreateAdminSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (s *NotificationService) UpdateAdminSubscription(
 	req *notificationproto.UpdateAdminSubscriptionRequest,
 ) (*notificationproto.UpdateAdminSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (s *NotificationService) EnableAdminSubscription(
 	req *notificationproto.EnableAdminSubscriptionRequest,
 ) (*notificationproto.EnableAdminSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func (s *NotificationService) DisableAdminSubscription(
 	req *notificationproto.DisableAdminSubscriptionRequest,
 ) (*notificationproto.DisableAdminSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -471,7 +471,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 	req *notificationproto.DeleteAdminSubscriptionRequest,
 ) (*notificationproto.DeleteAdminSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -606,7 +606,7 @@ func (s *NotificationService) GetAdminSubscription(
 	req *notificationproto.GetAdminSubscriptionRequest,
 ) (*notificationproto.GetAdminSubscriptionResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -667,7 +667,7 @@ func (s *NotificationService) ListAdminSubscriptions(
 	req *notificationproto.ListAdminSubscriptionsRequest,
 ) (*notificationproto.ListAdminSubscriptionsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -750,7 +750,7 @@ func (s *NotificationService) ListEnabledAdminSubscriptions(
 	req *notificationproto.ListEnabledAdminSubscriptionsRequest,
 ) (*notificationproto.ListEnabledAdminSubscriptionsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}

@@ -50,7 +50,7 @@ func (s *EnvironmentService) GetProject(
 	req *environmentproto.GetProjectRequest,
 ) (*environmentproto.GetProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (s *EnvironmentService) ListProjects(
 	req *environmentproto.ListProjectsRequest,
 ) (*environmentproto.ListProjectsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +230,7 @@ func (s *EnvironmentService) CreateProject(
 	req *environmentproto.CreateProjectRequest,
 ) (*environmentproto.CreateProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -400,7 +400,7 @@ func (s *EnvironmentService) CreateTrialProject(
 	req *environmentproto.CreateTrialProjectRequest,
 ) (*environmentproto.CreateTrialProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -637,7 +637,7 @@ func (s *EnvironmentService) UpdateProject(
 	req *environmentproto.UpdateProjectRequest,
 ) (*environmentproto.UpdateProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -781,7 +781,7 @@ func (s *EnvironmentService) EnableProject(
 	req *environmentproto.EnableProjectRequest,
 ) (*environmentproto.EnableProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -823,7 +823,7 @@ func (s *EnvironmentService) DisableProject(
 	req *environmentproto.DisableProjectRequest,
 ) (*environmentproto.DisableProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -865,7 +865,7 @@ func (s *EnvironmentService) ConvertTrialProject(
 	req *environmentproto.ConvertTrialProjectRequest,
 ) (*environmentproto.ConvertTrialProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}

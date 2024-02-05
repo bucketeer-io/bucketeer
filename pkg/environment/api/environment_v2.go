@@ -43,7 +43,7 @@ func (s *EnvironmentService) GetEnvironmentV2(
 	req *environmentproto.GetEnvironmentV2Request,
 ) (*environmentproto.GetEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 	req *environmentproto.ListEnvironmentsV2Request,
 ) (*environmentproto.ListEnvironmentsV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +207,7 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 	req *environmentproto.CreateEnvironmentV2Request,
 ) (*environmentproto.CreateEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +383,7 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 	req *environmentproto.UpdateEnvironmentV2Request,
 ) (*environmentproto.UpdateEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -518,7 +518,7 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 	req *environmentproto.ArchiveEnvironmentV2Request,
 ) (*environmentproto.ArchiveEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -604,7 +604,7 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 	req *environmentproto.UnarchiveEnvironmentV2Request,
 ) (*environmentproto.UnarchiveEnvironmentV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkAdminRole(ctx, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}

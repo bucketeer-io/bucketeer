@@ -447,7 +447,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 	req *proto.GetAPIKeyBySearchingAllEnvironmentsRequest,
 ) (*proto.GetAPIKeyBySearchingAllEnvironmentsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}

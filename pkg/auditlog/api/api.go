@@ -204,7 +204,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 	req *proto.ListAdminAuditLogsRequest,
 ) (*proto.ListAdminAuditLogsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkAdminRole(ctx, localizer)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -487,8 +487,8 @@ func (s *auditlogService) checkRole(
 	return editor, nil
 }
 
-func (s *auditlogService) checkAdminRole(ctx context.Context, localizer locale.Localizer) (*eventproto.Editor, error) {
-	editor, err := role.CheckAdminRole(ctx)
+func (s *auditlogService) checkSystemAdminRole(ctx context.Context, localizer locale.Localizer) (*eventproto.Editor, error) {
+	editor, err := role.CheckSystemAdminRole(ctx)
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:

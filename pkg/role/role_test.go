@@ -29,7 +29,7 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
-func TestCheckAdminRole(t *testing.T) {
+func TestCheckSystemAdminRole(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		inputCtx    context.Context
@@ -53,7 +53,7 @@ func TestCheckAdminRole(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		editor, err := CheckAdminRole(p.inputCtx)
+		editor, err := CheckSystemAdminRole(p.inputCtx)
 		assert.Equal(t, p.expectedErr, err)
 		assert.Equal(t, p.expected, editor)
 	}

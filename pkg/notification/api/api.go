@@ -79,11 +79,11 @@ func (s *NotificationService) Register(server *grpc.Server) {
 	notificationproto.RegisterNotificationServiceServer(server, s)
 }
 
-func (s *NotificationService) checkAdminRole(
+func (s *NotificationService) checkSystemAdminRole(
 	ctx context.Context,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
-	editor, err := role.CheckAdminRole(ctx)
+	editor, err := role.CheckSystemAdminRole(ctx)
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:
