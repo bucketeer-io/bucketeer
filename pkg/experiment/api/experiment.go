@@ -100,7 +100,9 @@ func (s *experimentService) ListExperiments(
 	req *proto.ListExperimentsRequest,
 ) (*proto.ListExperimentsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentNamespace, localizer)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -454,7 +456,9 @@ func (s *experimentService) UpdateExperiment(
 	req *proto.UpdateExperimentRequest,
 ) (*proto.UpdateExperimentResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -587,7 +591,9 @@ func (s *experimentService) StartExperiment(
 	req *proto.StartExperimentRequest,
 ) (*proto.StartExperimentResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -629,7 +635,9 @@ func (s *experimentService) FinishExperiment(
 	req *proto.FinishExperimentRequest,
 ) (*proto.FinishExperimentResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -671,7 +679,9 @@ func (s *experimentService) StopExperiment(
 	req *proto.StopExperimentRequest,
 ) (*proto.StopExperimentResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -713,7 +723,9 @@ func (s *experimentService) ArchiveExperiment(
 	req *proto.ArchiveExperimentRequest,
 ) (*proto.ArchiveExperimentResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -763,7 +775,9 @@ func (s *experimentService) DeleteExperiment(
 	req *proto.DeleteExperimentRequest,
 ) (*proto.DeleteExperimentResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(ctx, accountproto.AccountV2_Role_Environment_EDITOR, req.EnvironmentNamespace, localizer)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
 	}
