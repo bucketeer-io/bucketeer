@@ -70,13 +70,14 @@ func (u *dummyWebhookCryptoUtil) Decrypt(ctx context.Context, data []byte) ([]by
 
 func createContextWithToken() context.Context {
 	token := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   "sub",
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "email",
-		AdminRole: accountproto.Account_OWNER,
+		Issuer:        "issuer",
+		Subject:       "sub",
+		Audience:      "audience",
+		Expiry:        time.Now().AddDate(100, 0, 0),
+		IssuedAt:      time.Now(),
+		Email:         "email",
+		AdminRole:     accountproto.Account_OWNER,
+		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
