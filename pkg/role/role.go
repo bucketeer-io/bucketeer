@@ -56,7 +56,7 @@ func CheckRole(
 		return nil, ErrUnauthenticated
 	}
 	// TODO remove this condition after migration to AccountV2
-	if !token.IsAdmin() {
+	if !token.IsSystemAdmin {
 		// get account for the environment namespace
 		account, err := getAccountFunc(token.Email)
 		if err != nil {
