@@ -12,6 +12,8 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   PlusCircleIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
 } from '@heroicons/react/solid';
 import { FileCopyOutlined } from '@material-ui/icons';
 import { SerializedError } from '@reduxjs/toolkit';
@@ -718,6 +720,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
     fields: rules,
     append: appendRule,
     remove,
+    swap,
   } = useFieldArray({
     control,
     name: 'rules',
@@ -770,19 +773,41 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
               className={classNames('bg-white p-3 rounded-md border')}
             >
               <div key={ruleIdx}>
+                <div className="flex justify-end space-x-2"></div>
                 <div className="flex mb-2">
                   <label className={classNames()}>{`${f(
                     messages.feature.rule
                   )} ${ruleIdx + 1}`}</label>
                   <div className="flex-grow" />
                   {editable && (
-                    <div className="flex items-center">
+                    <div className="flex py-1 space-x-4">
                       <button
                         type="button"
                         onClick={() => handleRemoveRule(ruleIdx)}
+                        className="text-gray-500 hover:text-gray-800"
                       >
                         <XIcon className="w-5 h-5" aria-hidden="true" />
                       </button>
+                      {ruleIdx !== 0 && (
+                        <button
+                          type="button"
+                          onClick={() => swap(ruleIdx, ruleIdx - 1)}
+                          className="text-gray-500 hover:text-gray-800"
+                          disabled={ruleIdx === 0}
+                        >
+                          <ArrowUpIcon width={18} />
+                        </button>
+                      )}
+                      {ruleIdx !== rules.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => swap(ruleIdx, ruleIdx + 1)}
+                          className="text-gray-500 hover:text-gray-800"
+                          disabled={ruleIdx === rules.length - 1}
+                        >
+                          <ArrowDownIcon width={18} />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
