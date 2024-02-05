@@ -146,7 +146,9 @@ func TestCheckRole(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		editor, err := CheckEnvironmentRole(p.inputCtx, p.inputRequiredRole, env, p.inputGetAccountFunc)
+		editor, err := CheckEnvironmentRole(
+			p.inputCtx, p.inputRequiredRole,
+			env, p.inputGetAccountFunc)
 		assert.Equal(t, p.expectedErr, err)
 		assert.Equal(t, p.expected, editor)
 	}
