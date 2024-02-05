@@ -84,7 +84,6 @@ func createContextWithEmailToken(t *testing.T, email string, role accountproto.A
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),
 		Email:         email,
-		AdminRole:     role,
 		IsSystemAdmin: isSystemAdmin,
 	}
 	ctx := context.TODO()
@@ -94,13 +93,12 @@ func createContextWithEmailToken(t *testing.T, email string, role accountproto.A
 func createContextWithInvalidSubjectToken(t *testing.T, role accountproto.Account_Role) context.Context {
 	t.Helper()
 	token := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   base64.RawURLEncoding.EncodeToString([]byte("bucketeer@example.com")),
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "bucketeer@example.com",
-		AdminRole: role,
+		Issuer:   "issuer",
+		Subject:  base64.RawURLEncoding.EncodeToString([]byte("bucketeer@example.com")),
+		Audience: "audience",
+		Expiry:   time.Now().AddDate(100, 0, 0),
+		IssuedAt: time.Now(),
+		Email:    "bucketeer@example.com",
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
@@ -115,13 +113,12 @@ func createContextWithInvalidEmailToken(t *testing.T, role accountproto.Account_
 	data, err := proto.Marshal(sub)
 	require.NoError(t, err)
 	token := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   base64.RawURLEncoding.EncodeToString([]byte(data)),
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "bucketeer@",
-		AdminRole: role,
+		Issuer:   "issuer",
+		Subject:  base64.RawURLEncoding.EncodeToString([]byte(data)),
+		Audience: "audience",
+		Expiry:   time.Now().AddDate(100, 0, 0),
+		IssuedAt: time.Now(),
+		Email:    "bucketeer@",
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)

@@ -33,7 +33,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
 
@@ -76,26 +75,24 @@ func createContextWithToken(t *testing.T, token *token.IDToken) context.Context 
 func createAdminToken(t *testing.T) *token.IDToken {
 	t.Helper()
 	return &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   "sub",
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "email",
-		AdminRole: accountproto.Account_OWNER,
+		Issuer:   "issuer",
+		Subject:  "sub",
+		Audience: "audience",
+		Expiry:   time.Now().AddDate(100, 0, 0),
+		IssuedAt: time.Now(),
+		Email:    "email",
 	}
 }
 
 func createOwnerToken(t *testing.T) *token.IDToken {
 	t.Helper()
 	return &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   "sub",
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "email",
-		AdminRole: accountproto.Account_UNASSIGNED,
+		Issuer:   "issuer",
+		Subject:  "sub",
+		Audience: "audience",
+		Expiry:   time.Now().AddDate(100, 0, 0),
+		IssuedAt: time.Now(),
+		Email:    "email",
 	}
 }
 

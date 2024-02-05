@@ -39,7 +39,6 @@ import (
 	storagetesting "github.com/bucketeer-io/bucketeer/pkg/storage/testing"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
 )
 
@@ -565,7 +564,6 @@ func createContextWithToken(t *testing.T) context.Context {
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),
 		Email:         "email",
-		AdminRole:     accountproto.Account_OWNER,
 		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()

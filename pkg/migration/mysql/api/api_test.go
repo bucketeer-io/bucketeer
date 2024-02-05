@@ -30,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/migration/mysql/migrate/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/migration"
 )
 
@@ -223,7 +222,6 @@ func createContextWithToken(t *testing.T) context.Context {
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),
 		Email:         "email",
-		AdminRole:     accountproto.Account_OWNER,
 		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()
@@ -239,7 +237,6 @@ func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),
 		Email:         "email",
-		AdminRole:     accountproto.Account_UNASSIGNED,
 		IsSystemAdmin: false,
 	}
 	ctx := context.TODO()

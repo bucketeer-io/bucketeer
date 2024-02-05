@@ -440,13 +440,12 @@ func TestListSegmentsMySQL(t *testing.T) {
 
 func setToken(ctx context.Context, role accountproto.Account_Role) context.Context {
 	t := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   "sub",
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "email",
-		AdminRole: role,
+		Issuer:   "issuer",
+		Subject:  "sub",
+		Audience: "audience",
+		Expiry:   time.Now().AddDate(100, 0, 0),
+		IssuedAt: time.Now(),
+		Email:    "email",
 	}
 	return context.WithValue(ctx, rpc.Key, t)
 }

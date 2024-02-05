@@ -384,17 +384,15 @@ func (s *authService) generateToken(
 		return nil, dt.Err()
 	}
 	idToken := &token.IDToken{
-		Issuer:    claims.Iss,
-		Subject:   claims.Sub,
-		Audience:  claims.Aud,
-		Expiry:    time.Unix(claims.Exp, 0),
-		IssuedAt:  time.Unix(claims.Iat, 0),
-		Email:     claims.Email,
-		AdminRole: accountproto.Account_UNASSIGNED,
+		Issuer:   claims.Iss,
+		Subject:  claims.Sub,
+		Audience: claims.Aud,
+		Expiry:   time.Unix(claims.Exp, 0),
+		IssuedAt: time.Unix(claims.Iat, 0),
+		Email:    claims.Email,
 	}
 	if hasSystemAdminOrganization(resp.Organizations) {
 		idToken.IsSystemAdmin = true
-		idToken.AdminRole = accountproto.Account_OWNER
 	}
 	signedIDToken, err := s.signer.Sign(idToken)
 	if err != nil {

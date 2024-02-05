@@ -99,13 +99,12 @@ func createContextWithToken() context.Context {
 
 func createContextWithTokenAndMetadata(metadata map[string][]string) context.Context {
 	token := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   "sub",
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "email",
-		AdminRole: accountproto.Account_OWNER,
+		Issuer:   "issuer",
+		Subject:  "sub",
+		Audience: "audience",
+		Expiry:   time.Now().AddDate(100, 0, 0),
+		IssuedAt: time.Now(),
+		Email:    "email",
 	}
 	ctx := context.TODO()
 	if metadata != nil {
@@ -116,13 +115,12 @@ func createContextWithTokenAndMetadata(metadata map[string][]string) context.Con
 
 func createContextWithTokenRoleUnassigned() context.Context {
 	token := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   "sub",
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "email",
-		AdminRole: accountproto.Account_UNASSIGNED,
+		Issuer:   "issuer",
+		Subject:  "sub",
+		Audience: "audience",
+		Expiry:   time.Now().AddDate(100, 0, 0),
+		IssuedAt: time.Now(),
+		Email:    "email",
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)

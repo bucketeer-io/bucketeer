@@ -78,7 +78,6 @@ func createContextWithToken() context.Context {
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),
 		Email:         "email",
-		AdminRole:     accountproto.Account_OWNER,
 		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()
@@ -87,13 +86,12 @@ func createContextWithToken() context.Context {
 
 func createContextWithTokenRoleUnassigned() context.Context {
 	token := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   "sub",
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "email",
-		AdminRole: accountproto.Account_UNASSIGNED,
+		Issuer:   "issuer",
+		Subject:  "sub",
+		Audience: "audience",
+		Expiry:   time.Now().AddDate(100, 0, 0),
+		IssuedAt: time.Now(),
+		Email:    "email",
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)

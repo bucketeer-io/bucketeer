@@ -20,23 +20,17 @@ import (
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 )
 
 type IDToken struct {
-	Issuer   string    `json:"iss"`
-	Subject  string    `json:"sub"`
-	Audience string    `json:"aud"`
-	Expiry   time.Time `json:"exp"`
-	IssuedAt time.Time `json:"iat"`
-	Email    string    `json:"email"`
-	// Deprecated. Use IsSystemAdmin instead. It will be removed in the future.
-	// Use "role" as json tag to keep compatibility.
-	// AdminRole is accountproto.Account_OWNER in the case of AdminAccount.
-	// AdminRole is accountproto.Account_UNASSIGNED in the case of Account.
-	AdminRole     accountproto.Account_Role `json:"role"`
-	IsSystemAdmin bool                      `json:"is_system_admin"`
+	Issuer        string    `json:"iss"`
+	Subject       string    `json:"sub"`
+	Audience      string    `json:"aud"`
+	Expiry        time.Time `json:"exp"`
+	IssuedAt      time.Time `json:"iat"`
+	Email         string    `json:"email"`
+	IsSystemAdmin bool      `json:"is_system_admin"`
 }
 
 func ExtractUserID(subject string) (string, error) {
