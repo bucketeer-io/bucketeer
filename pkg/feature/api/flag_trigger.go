@@ -139,14 +139,7 @@ func (s *FeatureService) CreateFlagTrigger(
 		}
 		return nil, dt.Err()
 	}
-	triggerURL, err := s.generateTriggerURL(ctx, flagTrigger.Token, false)
-	if err != nil {
-		s.logger.Error(
-			"Failed to generate trigger url",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
+	triggerURL := s.generateTriggerURL(ctx, flagTrigger.Token, false)
 	flagTrigger.FlagTrigger.Token = ""
 	return &featureproto.CreateFlagTriggerResponse{
 		FlagTrigger: flagTrigger.FlagTrigger,
@@ -539,16 +532,16 @@ func (s *FeatureService) ResetFlagTrigger(
 			}
 			return nil, dt.Err()
 		}
-		return nil, err
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
-	triggerURL, err := s.generateTriggerURL(ctx, trigger.Token, false)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
+	triggerURL := s.generateTriggerURL(ctx, trigger.Token, false)
 	trigger.FlagTrigger.Token = ""
 	return &featureproto.ResetFlagTriggerResponse{
 		FlagTrigger: trigger.FlagTrigger,
@@ -642,7 +635,14 @@ func (s *FeatureService) DeleteFlagTrigger(
 			}
 			return nil, dt.Err()
 		}
-		return nil, err
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.DeleteFlagTriggerResponse{}, nil
 }
@@ -666,7 +666,7 @@ func (s *FeatureService) GetFlagTrigger(
 		)
 		return nil, err
 	}
-	trigger, err := v2fs.NewFlagTriggerStorage(s.mysqlClient).GetFlagTrigger(
+	trigger, err := s.flagTriggerStorage.GetFlagTrigger(
 		ctx,
 		request.Id,
 		request.EnvironmentNamespace,
@@ -684,14 +684,7 @@ func (s *FeatureService) GetFlagTrigger(
 		}
 		return nil, err
 	}
-	triggerURL, err := s.generateTriggerURL(ctx, trigger.Token, true)
-	if err != nil {
-		s.logger.Error(
-			"Failed to generate trigger url",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
+	triggerURL := s.generateTriggerURL(ctx, trigger.Token, true)
 	trigger.FlagTrigger.Token = ""
 	return &featureproto.GetFlagTriggerResponse{
 		FlagTrigger: trigger.FlagTrigger,
@@ -752,14 +745,7 @@ func (s *FeatureService) ListFlagTriggers(
 	)
 	triggerWithUrls := make([]*featureproto.ListFlagTriggersResponse_FlagTriggerWithUrl, 0, len(flagTriggers))
 	for _, trigger := range flagTriggers {
-		triggerURL, err := s.generateTriggerURL(ctx, trigger.Token, true)
-		if err != nil {
-			s.logger.Error(
-				"Failed to generate trigger url",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, err
-		}
+		triggerURL := s.generateTriggerURL(ctx, trigger.Token, true)
 		trigger.Token = ""
 		triggerWithUrls = append(triggerWithUrls, &featureproto.ListFlagTriggersResponse_FlagTriggerWithUrl{
 			FlagTrigger: trigger,
@@ -824,8 +810,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 		}
 		return nil, dt.Err()
 	}
-	storage := v2fs.NewFlagTriggerStorage(s.mysqlClient)
-	trigger, err := storage.GetFlagTriggerByToken(ctx, token)
+	trigger, err := s.flagTriggerStorage.GetFlagTriggerByToken(ctx, token)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get flag trigger",
@@ -857,8 +842,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	if err != nil {
 		return nil, err
 	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	feature, err := featureStorage.GetFeature(ctx, trigger.FeatureId, trigger.EnvironmentNamespace)
+	feature, err := s.featureStorage.GetFeature(ctx, trigger.FeatureId, trigger.EnvironmentNamespace)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -1058,10 +1042,10 @@ func (s *FeatureService) generateTriggerURL(
 	ctx context.Context,
 	token string,
 	masked bool,
-) (string, error) {
+) string {
 	if masked {
-		return fmt.Sprintf("%s/%s", s.triggerURL, token[:numOfSecretCharsToShow]+maskURI), nil
+		return fmt.Sprintf("%s/%s", s.triggerURL, token[:numOfSecretCharsToShow]+maskURI)
 	} else {
-		return fmt.Sprintf("%s/%s", s.triggerURL, token), nil
+		return fmt.Sprintf("%s/%s", s.triggerURL, token)
 	}
 }
