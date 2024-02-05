@@ -110,6 +110,10 @@ func (p *ProgressiveRollout) IsWaiting() bool {
 	return p.Status == autoopsproto.ProgressiveRollout_WAITING
 }
 
+func (p *ProgressiveRollout) IsRunning() bool {
+	return p.Status == autoopsproto.ProgressiveRollout_RUNNING
+}
+
 func (p *ProgressiveRollout) IsStopped() bool {
 	return p.Status == autoopsproto.ProgressiveRollout_STOPPED
 }
