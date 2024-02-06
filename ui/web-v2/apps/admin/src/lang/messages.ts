@@ -1065,6 +1065,10 @@ export const messages = {
         id: 'experiment.action.archive',
         defaultMessage: 'Archive',
       }),
+      archiveTooltip: defineMessage({
+        id: 'experiment.action.archiveTooltip',
+        defaultMessage: 'Please stop the experiment before archiving.',
+      }),
     },
     confirm: {
       archiveTitle: defineMessage({

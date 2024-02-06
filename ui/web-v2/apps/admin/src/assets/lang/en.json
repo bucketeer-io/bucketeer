@@ -152,6 +152,7 @@
   "environment.select.label": "(Project) Environment",
   "error": "Error",
   "experiment.action.archive": "Archive",
+  "experiment.action.archiveTooltip": "Please stop the experiment before archiving.",
   "experiment.add.header.description": "Get started by filling in the information below to create your new experiment.",
   "experiment.add.header.title": "Create a experiment",
   "experiment.baselineVariation": "Baseline variation",

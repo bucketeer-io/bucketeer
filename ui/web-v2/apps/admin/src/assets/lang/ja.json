@@ -152,6 +152,7 @@
   "environment.select.label": "(プロジェクト) 環境",
   "error": "エラー",
   "experiment.action.archive": "アーカイブ",
+  "experiment.action.archiveTooltip": "アーカイブする前にエクスペリメントを停止してください。",
   "experiment.add.header.description": "以下の情報を入力して、新しいエクスペリメントを始めましょう。",
   "experiment.add.header.title": "エクスペリメントの作成",
   "experiment.baselineVariation": "ベースラインバリエーション",

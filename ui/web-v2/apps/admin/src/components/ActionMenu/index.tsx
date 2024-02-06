@@ -2,6 +2,7 @@ import { Menu, Transition } from '@headlessui/react';
 import React, { FC, Fragment, memo } from 'react';
 
 import { classNames } from '../../utils/css';
+import { HoverPopover } from '../HoverPopover';
 
 export enum MenuActions {
   NONE,
@@ -18,6 +19,8 @@ export interface MenuItem {
   readonly name: string;
   readonly iconElement: JSX.Element;
   readonly disabled?: boolean;
+  tooltipMessage?: string;
+  alignRight?: boolean;
 }
 
 export interface ActionMenuProps {
@@ -61,39 +64,51 @@ export const ActionMenu: FC<ActionMenuProps> = memo(
           >
             <div className="px-2 py-2">
               {menuItems.map((item) => (
-                <Menu.Item key={item.name}>
-                  {({ active }) =>
-                    item.disabled ? (
-                      <button
-                        disabled
-                        className={classNames(
-                          'bg-white text-gray-400 group flex',
-                          'rounded-md items-center w-full px-3',
-                          'py-2 text-sm disabled:cursor-auto disabled:pointer-events-none'
-                        )}
-                      >
-                        <div className="w-6 h-6 mr-2 text-gray-300">
-                          {item.iconElement}
-                        </div>
-                        <div>{item.name}</div>
-                      </button>
-                    ) : (
-                      <button
-                        className={`${
-                          active
-                            ? 'bg-gray-100 text-gray-700 '
-                            : 'bg-white text-gray-700'
-                        } group flex rounded-md items-center w-full px-3 py-2 text-sm`}
-                        onClick={() => onClickAction(item.action)}
-                      >
-                        <div className="w-6 h-6 mr-2 text-gray-500">
-                          {item.iconElement}
-                        </div>
-                        <div>{item.name}</div>
-                      </button>
-                    )
-                  }
-                </Menu.Item>
+                <HoverPopover
+                  key={item.name}
+                  alignRight={item.alignRight}
+                  render={() => {
+                    return item.tooltipMessage ? (
+                      <div className="bg-gray-900 text-white p-2 text-xs rounded whitespace-pre">
+                        {item.tooltipMessage}
+                      </div>
+                    ) : null;
+                  }}
+                >
+                  <Menu.Item>
+                    {({ active }) => {
+                      return item.disabled ? (
+                        <button
+                          disabled
+                          className={classNames(
+                            'bg-white text-gray-400 group flex',
+                            'rounded-md items-center w-full px-3',
+                            'py-2 text-sm disabled:cursor-auto disabled:pointer-events-none'
+                          )}
+                        >
+                          <div className="w-6 h-6 mr-2 text-gray-300">
+                            {item.iconElement}
+                          </div>
+                          <div>{item.name}</div>
+                        </button>
+                      ) : (
+                        <button
+                          className={`${
+                            active
+                              ? 'bg-gray-100 text-gray-700 '
+                              : 'bg-white text-gray-700'
+                          } group flex rounded-md items-center w-full px-3 py-2 text-sm`}
+                          onClick={() => onClickAction(item.action)}
+                        >
+                          <div className="w-6 h-6 mr-2 text-gray-500">
+                            {item.iconElement}
+                          </div>
+                          <div>{item.name}</div>
+                        </button>
+                      );
+                    }}
+                  </Menu.Item>
+                </HoverPopover>
               ))}
             </div>
           </Menu.Items>
