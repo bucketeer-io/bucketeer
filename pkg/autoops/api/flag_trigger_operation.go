@@ -19,11 +19,9 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
-	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
@@ -32,19 +30,19 @@ import (
 
 type Command interface{}
 
-func ExecuteAutoOpsRuleOperation(
+func executeAutoOpsRuleOperation(
 	ctx context.Context,
 	environmentNamespace string,
 	autoOpsRule *domain.AutoOpsRule,
-	featureClient featureclient.Client,
+	feature *ftdomain.Feature,
 	logger *zap.Logger,
 	localizer locale.Localizer,
 ) error {
 	switch autoOpsRule.OpsType {
 	case autoopsproto.OpsType_ENABLE_FEATURE:
-		return enableFeature(ctx, environmentNamespace, autoOpsRule, featureClient, logger)
+		return enableFeature(ctx, environmentNamespace, autoOpsRule, feature, logger)
 	case autoopsproto.OpsType_DISABLE_FEATURE:
-		return disableFeature(ctx, environmentNamespace, autoOpsRule, featureClient, logger)
+		return disableFeature(ctx, environmentNamespace, autoOpsRule, feature, logger)
 	}
 	dt, err := statusUnknownOpsType.WithDetails(&errdetails.LocalizedMessage{
 		Locale:  localizer.GetLocale(),
@@ -60,7 +58,7 @@ func enableFeature(
 	ctx context.Context,
 	environmentNamespace string,
 	autoOpsRule *domain.AutoOpsRule,
-	featureClient featureclient.Client,
+	feature *ftdomain.Feature,
 	logger *zap.Logger,
 ) error {
 	req := &featureproto.EnableFeatureRequest{
@@ -68,19 +66,7 @@ func enableFeature(
 		Command:              &featureproto.EnableFeatureCommand{},
 		EnvironmentNamespace: environmentNamespace,
 	}
-	_, err := featureClient.EnableFeature(ctx, req)
-	if err != nil {
-		if code := status.Code(err); code == codes.FailedPrecondition {
-			logger.Warn(
-				"Feature flag is already enabled",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("featureId", req.Id),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
-				)...,
-			)
-			return nil
-		}
+	if err := feature.Enable(); err != nil {
 		logger.Error(
 			"Failed to enable feature flag",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -98,33 +84,16 @@ func disableFeature(
 	ctx context.Context,
 	environmentNamespace string,
 	autoOpsRule *domain.AutoOpsRule,
-	featureClient featureclient.Client,
+	feature *ftdomain.Feature,
 	logger *zap.Logger,
 ) error {
-	req := &featureproto.DisableFeatureRequest{
-		Id:                   autoOpsRule.FeatureId,
-		Command:              &featureproto.DisableFeatureCommand{},
-		EnvironmentNamespace: environmentNamespace,
-	}
-	_, err := featureClient.DisableFeature(ctx, req)
-	if err != nil {
-		if code := status.Code(err); code == codes.FailedPrecondition {
-			logger.Warn(
-				"Feature flag is already disabled",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("featureId", req.Id),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
-				)...,
-			)
-			return nil
-		}
+	if err := feature.Disable(); err != nil {
 		logger.Error(
 			"Failed to disable feature flag",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("featureId", req.Id),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("featureId", feature.Id),
+				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
 		return err

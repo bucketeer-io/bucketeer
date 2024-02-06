@@ -356,6 +356,29 @@ func TestOpsEventRateBatch(t *testing.T) {
 	featureID := createFeatureID(t)
 	createFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
+	now := time.Now()
+	schedules := []*autoopsproto.ProgressiveRolloutSchedule{
+		{
+			Weight:    20000,
+			ExecuteAt: now.Add(10 * time.Minute).Unix(),
+		},
+	}
+	createProgressiveRollout(
+		ctx,
+		t,
+		autoOpsClient,
+		featureID,
+		&autoopsproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: feature.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
+	if len(progressiveRollouts) != 1 {
+		t.Fatal("Progressive rollout list shouldn't be empty")
+	}
+
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
 	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
@@ -376,6 +399,13 @@ func TestOpsEventRateBatch(t *testing.T) {
 	}
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
+
+	// As a requirement, when disabling a flag using an auto operation,
+	// It must stop the progressive rollout if it is running
+	pr := getProgressiveRollout(t, progressiveRollouts[0].Id)
+	if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
+		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
+	}
 }
 
 func TestDatetimeBatch(t *testing.T) {
@@ -389,6 +419,30 @@ func TestDatetimeBatch(t *testing.T) {
 
 	featureID := createFeatureID(t)
 	createFeature(ctx, t, featureClient, featureID)
+	feature := getFeature(t, featureClient, featureID)
+	now := time.Now()
+	schedules := []*autoopsproto.ProgressiveRolloutSchedule{
+		{
+			Weight:    20000,
+			ExecuteAt: now.Add(10 * time.Minute).Unix(),
+		},
+	}
+	createProgressiveRollout(
+		ctx,
+		t,
+		autoOpsClient,
+		featureID,
+		&autoopsproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: feature.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
+	if len(progressiveRollouts) != 1 {
+		t.Fatal("Progressive rollout list shouldn't be empty")
+	}
+
 	clause := createDatetimeClause(t)
 	createAutoOpsRule(ctx, t, autoOpsClient, featureID, nil, []*autoopsproto.DatetimeClause{clause})
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
@@ -397,6 +451,13 @@ func TestDatetimeBatch(t *testing.T) {
 	}
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
+
+	// As a requirement, when disabling a flag using an auto operation,
+	// It must stop the progressive rollout if it is running
+	pr := getProgressiveRollout(t, progressiveRollouts[0].Id)
+	if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
+		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
+	}
 }
 
 func sendHttpWebhook(t *testing.T, url, payload string) {
