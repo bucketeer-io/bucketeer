@@ -252,23 +252,7 @@ func (s *grpcGatewayService) saveBadRequestError(event *eventproto.MetricsEvent,
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveUnauthorizedError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -277,23 +261,7 @@ func (s *grpcGatewayService) saveUnauthorizedError(event *eventproto.MetricsEven
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveForbiddenError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -302,23 +270,7 @@ func (s *grpcGatewayService) saveForbiddenError(event *eventproto.MetricsEvent, 
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveNotFoundError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -327,23 +279,7 @@ func (s *grpcGatewayService) saveNotFoundError(event *eventproto.MetricsEvent, p
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveClientClosedRequestError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -352,23 +288,7 @@ func (s *grpcGatewayService) saveClientClosedRequestError(event *eventproto.Metr
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveInternalServerError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -377,23 +297,7 @@ func (s *grpcGatewayService) saveInternalServerError(event *eventproto.MetricsEv
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveServiceUnavailableError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -402,23 +306,7 @@ func (s *grpcGatewayService) saveServiceUnavailableError(event *eventproto.Metri
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveTimeoutError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -427,23 +315,7 @@ func (s *grpcGatewayService) saveTimeoutError(event *eventproto.MetricsEvent, pr
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveInternalError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -452,23 +324,7 @@ func (s *grpcGatewayService) saveInternalError(event *eventproto.MetricsEvent, p
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveNetworkError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -477,23 +333,7 @@ func (s *grpcGatewayService) saveNetworkError(event *eventproto.MetricsEvent, pr
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveInternalSdkError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -502,23 +342,7 @@ func (s *grpcGatewayService) saveInternalSdkError(event *eventproto.MetricsEvent
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
-		return MetricsSaveErrUnknownApiId
-	}
-	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
-	}
-	sdkErrorCounter.WithLabelValues(
-		projectID,
-		env,
-		tag,
-		errorType,
-		ev.ApiId.String(),
-		event.SdkVersion,
-		event.SourceId.String(),
-	).Inc()
-	return nil
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
 func (s *grpcGatewayService) saveUnknownError(event *eventproto.MetricsEvent, projectID, env string) error {
@@ -527,19 +351,28 @@ func (s *grpcGatewayService) saveUnknownError(event *eventproto.MetricsEvent, pr
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
-	if ev.ApiId == eventproto.ApiId_UNKNOWN_API {
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
+}
+
+func (s *grpcGatewayService) saveErrorCount(
+	event *eventproto.MetricsEvent,
+	projectID, env, errorType string,
+	apiID eventproto.ApiId,
+	labels map[string]string,
+) error {
+	if apiID == eventproto.ApiId_UNKNOWN_API {
 		return MetricsSaveErrUnknownApiId
 	}
 	var tag string
-	if ev.Labels != nil {
-		tag = ev.Labels["tag"]
+	if labels != nil {
+		tag = labels["tag"]
 	}
 	sdkErrorCounter.WithLabelValues(
 		projectID,
 		env,
 		tag,
 		errorType,
-		ev.ApiId.String(),
+		apiID.String(),
 		event.SdkVersion,
 		event.SourceId.String(),
 	).Inc()
