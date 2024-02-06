@@ -10,10 +10,12 @@ import (
 )
 
 const (
+	ErrRedirectionRequest        = "ErrRedirection"
 	ErrorTypeBadRequest          = "BadRequest"
 	ErrorTypeUnauthenticated     = "Unauthenticated"
 	ErrorTypeForbidden           = "Forbidden"
 	ErrorTypeNotFound            = "NotFound"
+	ErrPayloadTooLargeRequest    = "ErrPayloadTooLarge"
 	ErrorTypeClientClosedRequest = "ClientClosedRequest"
 	ErrorTypeInternalServerError = "InternalServerError"
 	ErrorTypeServiceUnavailable  = "ServiceUnavailable"
@@ -35,10 +37,12 @@ var (
 	internalErrorCountMetricsEventP       = &eventproto.InternalErrorCountMetricsEvent{}
 	latencyMetricsEventP                  = &eventproto.LatencyMetricsEvent{}
 	sizeMetricsEventP                     = &eventproto.SizeMetricsEvent{}
+	redirectionRequestExceptionEventP     = &eventproto.RedirectionRequestExceptionEvent{}
 	badRequestErrorMetricsEventP          = &eventproto.BadRequestErrorMetricsEvent{}
 	unauthorizedErrorMetricsEventP        = &eventproto.UnauthorizedErrorMetricsEvent{}
 	forbiddenErrorMetricsEventP           = &eventproto.ForbiddenErrorMetricsEvent{}
 	notFoundErrorMetricsEventP            = &eventproto.NotFoundErrorMetricsEvent{}
+	payloadTooLargeExceptionEventP        = &eventproto.PayloadTooLargeExceptionEvent{}
 	clientClosedRequestErrorMetricsEventP = &eventproto.ClientClosedRequestErrorMetricsEvent{}
 	internalServerErrorMetricsEventP      = &eventproto.InternalServerErrorMetricsEvent{}
 	serviceUnavailableErrorMetricsEventP  = &eventproto.ServiceUnavailableErrorMetricsEvent{}
@@ -91,6 +95,9 @@ func (s *grpcGatewayService) saveMetrics(event *eventproto.MetricsEvent, project
 	if ptypes.Is(event.Event, badRequestErrorMetricsEventP) {
 		return s.saveBadRequestError(event, projectID, environmentUrlCode)
 	}
+	if ptypes.Is(event.Event, redirectionRequestExceptionEventP) {
+		return s.saveRedirectionRequestError(event, projectID, environmentUrlCode)
+	}
 	if ptypes.Is(event.Event, unauthorizedErrorMetricsEventP) {
 		return s.saveUnauthorizedError(event, projectID, environmentUrlCode)
 	}
@@ -99,6 +106,9 @@ func (s *grpcGatewayService) saveMetrics(event *eventproto.MetricsEvent, project
 	}
 	if ptypes.Is(event.Event, notFoundErrorMetricsEventP) {
 		return s.saveNotFoundError(event, projectID, environmentUrlCode)
+	}
+	if ptypes.Is(event.Event, payloadTooLargeExceptionEventP) {
+		return s.payloadTooLargeRequestError(event, projectID, environmentUrlCode)
 	}
 	if ptypes.Is(event.Event, clientClosedRequestErrorMetricsEventP) {
 		return s.saveClientClosedRequestError(event, projectID, environmentUrlCode)
@@ -255,6 +265,15 @@ func (s *grpcGatewayService) saveBadRequestError(event *eventproto.MetricsEvent,
 	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
 }
 
+func (s *grpcGatewayService) saveRedirectionRequestError(event *eventproto.MetricsEvent, projectID, env string) error {
+	errorType := ErrRedirectionRequest
+	ev := &eventproto.RedirectionRequestExceptionEvent{}
+	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+		return err
+	}
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
+}
+
 func (s *grpcGatewayService) saveUnauthorizedError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeUnauthenticated
 	ev := &eventproto.UnauthorizedErrorMetricsEvent{}
@@ -276,6 +295,15 @@ func (s *grpcGatewayService) saveForbiddenError(event *eventproto.MetricsEvent, 
 func (s *grpcGatewayService) saveNotFoundError(event *eventproto.MetricsEvent, projectID, env string) error {
 	errorType := ErrorTypeNotFound
 	ev := &eventproto.NotFoundErrorMetricsEvent{}
+	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
+		return err
+	}
+	return s.saveErrorCount(event, projectID, env, errorType, ev.ApiId, ev.Labels)
+}
+
+func (s *grpcGatewayService) payloadTooLargeRequestError(event *eventproto.MetricsEvent, projectID, env string) error {
+	errorType := ErrPayloadTooLargeRequest
+	ev := &eventproto.PayloadTooLargeExceptionEvent{}
 	if err := ptypes.UnmarshalAny(event.Event, ev); err != nil {
 		return err
 	}
