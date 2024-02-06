@@ -29,9 +29,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 	"github.com/bucketeer-io/bucketeer/test/util"
@@ -179,41 +182,196 @@ func TestDeleteFeature(t *testing.T) {
 
 func TestEnableFeature(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
+	cmd := newCreateFeatureWithTwoVariationsCommand(newFeatureID(t))
 	createFeature(t, client, cmd)
-	enableFeature(t, cmd.Id, client)
 	f := getFeature(t, cmd.Id, client)
+	aoCLient := newAutoOpsClient(t)
+	schedules := []*aoproto.ProgressiveRolloutSchedule{
+		{
+			Weight:    20000,
+			ExecuteAt: time.Now().Add(10 * time.Minute).Unix(),
+		},
+	}
+	createProgressiveRollout(
+		ctx,
+		t,
+		aoCLient,
+		cmd.Id,
+		&aoproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: f.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollouts := listProgressiveRollouts(t, aoCLient, cmd.Id)
+	if len(progressiveRollouts) != 1 {
+		t.Fatal("Progressive rollout list shouldn't be empty")
+	}
+	enableFeature(t, cmd.Id, client)
+	f = getFeature(t, cmd.Id, client)
 	if cmd.Id != f.Id {
 		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
 	}
 	if !f.Enabled {
 		t.Fatal("Enabled flag is false")
 	}
+	// As a requirement, when disabling a flag,
+	// It must stop the progressive rollout if it is running.
+	// In this case, we ensure that the status didn't change after enabling the flag.
+	pr := getProgressiveRollout(t, aoCLient, progressiveRollouts[0].Id)
+	if pr.Status != aoproto.ProgressiveRollout_WAITING {
+		t.Fatalf("Progressive rollout must be in waiting status. Current status: %v", pr.Status)
+	}
+}
+
+func TestUpdateTargetingEnableFeature(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	client := newFeatureClient(t)
+	featureID := newFeatureID(t)
+	cmd := newCreateFeatureWithTwoVariationsCommand(featureID)
+	createFeature(t, client, cmd)
+	f := getFeature(t, cmd.Id, client)
+	aoCLient := newAutoOpsClient(t)
+	schedules := []*aoproto.ProgressiveRolloutSchedule{
+		{
+			Weight:    20000,
+			ExecuteAt: time.Now().Add(10 * time.Minute).Unix(),
+		},
+	}
+	createProgressiveRollout(
+		ctx,
+		t,
+		aoCLient,
+		cmd.Id,
+		&aoproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: f.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollouts := listProgressiveRollouts(t, aoCLient, cmd.Id)
+	if len(progressiveRollouts) != 1 {
+		t.Fatal("Progressive rollout list shouldn't be empty")
+	}
+	f = getFeature(t, featureID, client)
+	disableCmd, _ := util.MarshalCommand(&feature.EnableFeatureCommand{})
+	updateFeatureTargeting(t, client, disableCmd, featureID)
+	f = getFeature(t, cmd.Id, client)
+	if !f.Enabled {
+		t.Fatal("Flag must be enabled")
+	}
+	// As a requirement, when disabling a flag,
+	// It must stop the progressive rollout if it is running.
+	// In this case, we ensure that the status didn't change after enabling the flag.
+	pr := getProgressiveRollout(t, aoCLient, progressiveRollouts[0].Id)
+	if pr.Status != aoproto.ProgressiveRollout_WAITING {
+		t.Fatalf("Progressive rollout must be in waiting status. Current status: %v", pr.Status)
+	}
 }
 
 func TestDisableFeature(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 	client := newFeatureClient(t)
-	cmd := newCreateFeatureCommand(newFeatureID(t))
+	cmd := newCreateFeatureWithTwoVariationsCommand(newFeatureID(t))
 	createFeature(t, client, cmd)
 	enableFeature(t, cmd.Id, client)
+	f := getFeature(t, cmd.Id, client)
+	aoCLient := newAutoOpsClient(t)
+	schedules := []*aoproto.ProgressiveRolloutSchedule{
+		{
+			Weight:    20000,
+			ExecuteAt: time.Now().Add(10 * time.Minute).Unix(),
+		},
+	}
+	createProgressiveRollout(
+		ctx,
+		t,
+		aoCLient,
+		cmd.Id,
+		&aoproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: f.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollouts := listProgressiveRollouts(t, aoCLient, cmd.Id)
+	if len(progressiveRollouts) != 1 {
+		t.Fatal("Progressive rollout list shouldn't be empty")
+	}
 	disableReq := &feature.DisableFeatureRequest{
 		Id:                   cmd.Id,
 		Command:              &feature.DisableFeatureCommand{},
 		EnvironmentNamespace: *environmentNamespace,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 	if _, err := client.DisableFeature(ctx, disableReq); err != nil {
 		t.Fatal(err)
 	}
-	f := getFeature(t, cmd.Id, client)
+	f = getFeature(t, cmd.Id, client)
 	if cmd.Id != f.Id {
 		t.Fatalf("Different ids. Expected: %s actual: %s", cmd.Id, f.Id)
 	}
 	if f.Enabled {
 		t.Fatal("Enabled flag is true")
+	}
+	// As a requirement, when disabling a flag using an auto operation,
+	// It must stop the progressive rollout if it is running
+	pr := getProgressiveRollout(t, aoCLient, progressiveRollouts[0].Id)
+	if pr.Status != aoproto.ProgressiveRollout_STOPPED {
+		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
+	}
+}
+
+func TestUpdateTargetingDisableFeature(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	client := newFeatureClient(t)
+	featureID := newFeatureID(t)
+	cmd := newCreateFeatureWithTwoVariationsCommand(featureID)
+	createFeature(t, client, cmd)
+	enableFeature(t, cmd.Id, client)
+	f := getFeature(t, cmd.Id, client)
+	aoCLient := newAutoOpsClient(t)
+	schedules := []*aoproto.ProgressiveRolloutSchedule{
+		{
+			Weight:    20000,
+			ExecuteAt: time.Now().Add(10 * time.Minute).Unix(),
+		},
+	}
+	createProgressiveRollout(
+		ctx,
+		t,
+		aoCLient,
+		cmd.Id,
+		&aoproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: f.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollouts := listProgressiveRollouts(t, aoCLient, cmd.Id)
+	if len(progressiveRollouts) != 1 {
+		t.Fatal("Progressive rollout list shouldn't be empty")
+	}
+	f = getFeature(t, featureID, client)
+	disableCmd, _ := util.MarshalCommand(&feature.DisableFeatureCommand{})
+	updateFeatureTargeting(t, client, disableCmd, featureID)
+	f = getFeature(t, cmd.Id, client)
+	if f.Enabled {
+		t.Fatal("Flag must be disabled")
+	}
+	// As a requirement, when disabling a flag using an auto operation,
+	// It must stop the progressive rollout if it is running
+	pr := getProgressiveRollout(t, aoCLient, progressiveRollouts[0].Id)
+	if pr.Status != aoproto.ProgressiveRollout_STOPPED {
+		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
 	}
 }
 
@@ -1487,6 +1645,33 @@ func newCreateFeatureCommand(featureID string) *feature.CreateFeatureCommand {
 	}
 }
 
+func newCreateFeatureWithTwoVariationsCommand(featureID string) *feature.CreateFeatureCommand {
+	return &feature.CreateFeatureCommand{
+		Id:          featureID,
+		Name:        "e2e-test-feature-name",
+		Description: "e2e-test-feature-description",
+		Variations: []*feature.Variation{
+			{
+				Value:       "A",
+				Name:        "Variation A",
+				Description: "Thing does A",
+			},
+			{
+				Value:       "B",
+				Name:        "Variation B",
+				Description: "Thing does B",
+			},
+		},
+		Tags: []string{
+			"e2e-test-tag-1",
+			"e2e-test-tag-2",
+			"e2e-test-tag-3",
+		},
+		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+	}
+}
+
 func newAddVariationsCommand(t *testing.T, vs []*feature.Variation) []*feature.Command {
 	var cmds []*feature.Command
 	for _, v := range vs {
@@ -1814,6 +1999,77 @@ func evaluateFeatures(t *testing.T, client featureclient.Client, userID, tag str
 		return nil
 	}
 	return res
+}
+
+func createProgressiveRollout(
+	ctx context.Context,
+	t *testing.T,
+	client aoclient.Client,
+	featureID string,
+	manual *aoproto.ProgressiveRolloutManualScheduleClause,
+	template *aoproto.ProgressiveRolloutTemplateScheduleClause,
+) {
+	t.Helper()
+	cmd := &aoproto.CreateProgressiveRolloutCommand{
+		FeatureId:                                featureID,
+		ProgressiveRolloutManualScheduleClause:   manual,
+		ProgressiveRolloutTemplateScheduleClause: template,
+	}
+	_, err := client.CreateProgressiveRollout(ctx, &aoproto.CreateProgressiveRolloutRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Command:              cmd,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func listProgressiveRollouts(t *testing.T, client aoclient.Client, featureID string) []*aoproto.ProgressiveRollout {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	resp, err := client.ListProgressiveRollouts(ctx, &aoproto.ListProgressiveRolloutsRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		PageSize:             0,
+		FeatureIds:           []string{featureID},
+	})
+	if err != nil {
+		t.Fatal("Failed to list progressive rollout", err)
+	}
+	return resp.ProgressiveRollouts
+}
+
+func getProgressiveRollout(t *testing.T, client aoclient.Client, id string) *aoproto.ProgressiveRollout {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	resp, err := client.GetProgressiveRollout(ctx, &aoproto.GetProgressiveRolloutRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   id,
+	})
+	if err != nil {
+		t.Fatal("Failed to get progressive rollout", err)
+	}
+	return resp.ProgressiveRollout
+}
+
+func newAutoOpsClient(t *testing.T) aoclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := aoclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create auto ops client:", err)
+	}
+	return client
 }
 
 /*
