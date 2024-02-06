@@ -1,5 +1,111 @@
 # Changelog
 
+## [1.0.0](https://github.com/bucketeer-io/bucketeer/compare/v0.3.0...v1.0.0) (2024-02-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* use range for templating cronjobs ([#689](https://github.com/bucketeer-io/bucketeer/issues/689))
+
+### Features
+
+* add accountV2 api ([#617](https://github.com/bucketeer-io/bucketeer/issues/617)) ([0a4193e](https://github.com/bucketeer-io/bucketeer/commit/0a4193ef4f5e181290b3dbf72bdad15a79ea44cc))
+* add accountV2 proto ([#611](https://github.com/bucketeer-io/bucketeer/issues/611)) ([4dbc44c](https://github.com/bucketeer-io/bucketeer/commit/4dbc44cb256668f30bd5d576da62eac7b0a20016))
+* add api to get mau summaries ([#554](https://github.com/bucketeer-io/bucketeer/issues/554)) ([cf09fe2](https://github.com/bucketeer-io/bucketeer/commit/cf09fe2d9d2918ce90228fe174dea987b3f0f1f1))
+* add auto ops rules cache to event persister ops ([#595](https://github.com/bucketeer-io/bucketeer/issues/595)) ([c3ed7b2](https://github.com/bucketeer-io/bucketeer/commit/c3ed7b24541c82aada4e4a84b40b0056e9cc61cc))
+* add cronjob to delete old keys from redis ([#476](https://github.com/bucketeer-io/bucketeer/issues/476)) ([c3e5b7e](https://github.com/bucketeer-io/bucketeer/commit/c3e5b7e910763ebcd997a5b1db06ace302be4c1e))
+* add environment id to list accounts filter options ([#709](https://github.com/bucketeer-io/bucketeer/issues/709)) ([333d522](https://github.com/bucketeer-io/bucketeer/commit/333d5220978e76cfbad4cfac946f4af87e2b16d8))
+* add environment v2 api ([#482](https://github.com/bucketeer-io/bucketeer/issues/482)) ([203e9f0](https://github.com/bucketeer-io/bucketeer/commit/203e9f029a59e92481e04090e121de2d946b18c9))
+* add environment v2 domain and storage ([#480](https://github.com/bucketeer-io/bucketeer/issues/480)) ([1615f84](https://github.com/bucketeer-io/bucketeer/commit/1615f8462c001a4810f9299c1919f05a3b00e6d5))
+* add experiments cache to event persister dwh ([#593](https://github.com/bucketeer-io/bucketeer/issues/593)) ([6049adf](https://github.com/bucketeer-io/bucketeer/commit/6049adfdf0f8eab4dc24d4f4ae64ae7ff8328e78))
+* add feature switch schedule modal ([#548](https://github.com/bucketeer-io/bucketeer/issues/548)) ([fcacff8](https://github.com/bucketeer-io/bucketeer/commit/fcacff8f1a28cca27f810ec16a3e670700d15c55))
+* add GetAccount by environmentID API ([#628](https://github.com/bucketeer-io/bucketeer/issues/628)) ([6bce5f6](https://github.com/bucketeer-io/bucketeer/commit/6bce5f668622a86c3dfce943548fcf12916920f7))
+* add GetMyOrganizationsByEmail API ([#725](https://github.com/bucketeer-io/bucketeer/issues/725)) ([239b323](https://github.com/bucketeer-io/bucketeer/commit/239b323307c090bbb4848db651c7b99de247eaa6))
+* add name and url_code to project ([#475](https://github.com/bucketeer-io/bucketeer/issues/475)) ([8ba8c42](https://github.com/bucketeer-io/bucketeer/commit/8ba8c4289add17dcfc44ebc7abdabc0da22b6cba))
+* add new GetMe API and GetMyOrganizations API ([#663](https://github.com/bucketeer-io/bucketeer/issues/663)) ([12cdb8b](https://github.com/bucketeer-io/bucketeer/commit/12cdb8b2bde0f2143219b24aa5ae5f6f2349f3bb))
+* add organization api ([#592](https://github.com/bucketeer-io/bucketeer/issues/592)) ([54f6e40](https://github.com/bucketeer-io/bucketeer/commit/54f6e408e3fed06698777a18ab8565bbc64d27c7))
+* add organization proto ([#589](https://github.com/bucketeer-io/bucketeer/issues/589)) ([112f975](https://github.com/bucketeer-io/bucketeer/commit/112f9754dea94c46d93aad99937105bc08e04f83))
+* add organization select page and console account object ([#667](https://github.com/bucketeer-io/bucketeer/issues/667)) ([0184fae](https://github.com/bucketeer-io/bucketeer/commit/0184fae855c1bbecf967044cd550c8b2c38c7660))
+* batch service ([#450](https://github.com/bucketeer-io/bucketeer/issues/450)) ([163e6a4](https://github.com/bucketeer-io/bucketeer/commit/163e6a46cf552614dea0c8cefda5540209f91b86))
+* **batch:** add create partition job ([#672](https://github.com/bucketeer-io/bucketeer/issues/672)) ([fd02799](https://github.com/bucketeer-io/bucketeer/commit/fd0279922b8f61d6a8a4e487f059c8d04cc6115d))
+* change rule order ([#745](https://github.com/bucketeer-io/bucketeer/issues/745)) ([f9aa8e5](https://github.com/bucketeer-io/bucketeer/commit/f9aa8e5adea1a3d3b2525e05206af2871f976ced))
+* change rules order ([#710](https://github.com/bucketeer-io/bucketeer/issues/710)) ([972a937](https://github.com/bucketeer-io/bucketeer/commit/972a937a1e25d21878409e1c248f8501d15993fe))
+* enable Google Analytics4 ([#501](https://github.com/bucketeer-io/bucketeer/issues/501)) ([82c5fe4](https://github.com/bucketeer-io/bucketeer/commit/82c5fe44a4f92b3d3b8211efb9fab6b480d62eb7))
+* enable to list environments and projects by organization id ([#661](https://github.com/bucketeer-io/bucketeer/issues/661)) ([a85a04f](https://github.com/bucketeer-io/bucketeer/commit/a85a04f2fd3a68fba3df9260b88d4ba34bf8c646))
+* experiment calculator improvement ([#553](https://github.com/bucketeer-io/bucketeer/issues/553)) ([d39bc2b](https://github.com/bucketeer-io/bucketeer/commit/d39bc2b47e36d68a3ef98845b17b72a602c1edb9))
+* flag trigger implementation ([#596](https://github.com/bucketeer-io/bucketeer/issues/596)) ([721cec2](https://github.com/bucketeer-io/bucketeer/commit/721cec2e6a8b76e27eb4a01f2aa8d7cd5c266fa6))
+* modify api-gateway service to use in-memory cache when getting apikey ([#506](https://github.com/bucketeer-io/bucketeer/issues/506)) ([57b9490](https://github.com/bucketeer-io/bucketeer/commit/57b94904537643fc1f3015155c9ce26a050c6886))
+* progressive rollout ([#550](https://github.com/bucketeer-io/bucketeer/issues/550)) ([400cb7e](https://github.com/bucketeer-io/bucketeer/commit/400cb7ed62155078d18d5df8eba7eb00674dcc2b))
+* remove role field from editor object ([#614](https://github.com/bucketeer-io/bucketeer/issues/614)) ([299f2d7](https://github.com/bucketeer-io/bucketeer/commit/299f2d7212bba1affd179a9eb6460336c4e8addb))
+* renewal auto operations tab ([#499](https://github.com/bucketeer-io/bucketeer/issues/499)) ([59760ae](https://github.com/bucketeer-io/bucketeer/commit/59760ae63ad57745e888ad564b292837e97e95da))
+* separete the mysql config for DDL and DML ([#498](https://github.com/bucketeer-io/bucketeer/issues/498)) ([c71617d](https://github.com/bucketeer-io/bucketeer/commit/c71617de374a5bd7578926f261366e6c37b37f58))
+* support rename function for environment ([#546](https://github.com/bucketeer-io/bucketeer/issues/546)) ([920bb8b](https://github.com/bucketeer-io/bucketeer/commit/920bb8ba2758cf20296f0470b83547d00012e86a))
+* support rename function for project ([#479](https://github.com/bucketeer-io/bucketeer/issues/479)) ([65f50fd](https://github.com/bucketeer-io/bucketeer/commit/65f50fd12de6376e052adb19c32a9a52a786b78c))
+* support rename function for project ([#552](https://github.com/bucketeer-io/bucketeer/issues/552)) ([e315105](https://github.com/bucketeer-io/bucketeer/commit/e3151050fcbf6a69e69ae233a89a0ed5a4284add))
+* **ui:** add google analytics ([#334](https://github.com/bucketeer-io/bucketeer/issues/334)) ([d9e5c0e](https://github.com/bucketeer-io/bucketeer/commit/d9e5c0ed8299cf0090381e7a35ca249fd7a18e1c))
+* **ui:** audit log entity filter ([#680](https://github.com/bucketeer-io/bucketeer/issues/680)) ([b92cbcf](https://github.com/bucketeer-io/bucketeer/commit/b92cbcfa1514dca0ec7072e8886f63f11d6c7264))
+* **ui:** flag triggers ([#631](https://github.com/bucketeer-io/bucketeer/issues/631)) ([cd134b7](https://github.com/bucketeer-io/bucketeer/commit/cd134b726671c94dfba76e05618264a0f9435f07))
+
+
+### Bug Fixes
+
+* account e2e test fails ([#623](https://github.com/bucketeer-io/bucketeer/issues/623)) ([79191b9](https://github.com/bucketeer-io/bucketeer/commit/79191b98d8bd3bd2079a6d00f96d1c50ee69b5d9))
+* account not being display on the accounts page ([#753](https://github.com/bucketeer-io/bucketeer/issues/753)) ([1b0721f](https://github.com/bucketeer-io/bucketeer/commit/1b0721fbdd32a8e280e4bdfb11cc5b63ff7f6cbb))
+* auto operation already triggered error ([#509](https://github.com/bucketeer-io/bucketeer/issues/509)) ([96101bc](https://github.com/bucketeer-io/bucketeer/commit/96101bcc37e9ca14ddfeabc94a6ce206de3f1442))
+* batch domain-event-informer ([#613](https://github.com/bucketeer-io/bucketeer/issues/613)) ([b9bf3d1](https://github.com/bucketeer-io/bucketeer/commit/b9bf3d1407dea5179cbd35b67259e1a57dffee16))
+* batch server cannot execute ddl to mysql ([#632](https://github.com/bucketeer-io/bucketeer/issues/632)) ([a1d77f6](https://github.com/bucketeer-io/bucketeer/commit/a1d77f6bcc600ae168500ec4e910ac5f20111dab))
+* batch service process timeout ([#634](https://github.com/bucketeer-io/bucketeer/issues/634)) ([9839fff](https://github.com/bucketeer-io/bucketeer/commit/9839fff71a7eccb527f4b0ffe8086a9383ed28d0))
+* bigquery fails when the value is null ([#557](https://github.com/bucketeer-io/bucketeer/issues/557)) ([bc918b7](https://github.com/bucketeer-io/bucketeer/commit/bc918b70ad50f9510a2fc5227e988df3dc8ab802))
+* calculator envoy health check ([#474](https://github.com/bucketeer-io/bucketeer/issues/474)) ([aa6bc44](https://github.com/bucketeer-io/bucketeer/commit/aa6bc441e6a8fc45e30c52475a9370c470196a64))
+* cannot delete or update a parent row when deleting e2e data ([#627](https://github.com/bucketeer-io/bucketeer/issues/627)) ([c6b72b8](https://github.com/bucketeer-io/bucketeer/commit/c6b72b8b9d092f7bc03bd0db5649b44f7376102d))
+* change the api-gateway metrics label ([#662](https://github.com/bucketeer-io/bucketeer/issues/662)) ([574b2c7](https://github.com/bucketeer-io/bucketeer/commit/574b2c76e0d809833cfd7dd24e7655bbff8d7f6e))
+* crashing in the localizer ([#619](https://github.com/bucketeer-io/bucketeer/issues/619)) ([25176b1](https://github.com/bucketeer-io/bucketeer/commit/25176b17f837fbeb8a3ecdc04e843cfd572a205c))
+* dispatch workflow fails if commit message contains multi-lines ([#693](https://github.com/bucketeer-io/bucketeer/issues/693)) ([eb5d45a](https://github.com/bucketeer-io/bucketeer/commit/eb5d45a25b26f72a4392a599f0709e01b6c0e00d))
+* failed to GetAccountV2ByEnvironmentID with empty ID ([#658](https://github.com/bucketeer-io/bucketeer/issues/658)) ([1c9babb](https://github.com/bucketeer-io/bucketeer/commit/1c9babbf1e5d8e5a8623b5b6315f5148b67c7344))
+* getEnvironmentV2 fails to get env with empty ID ([#518](https://github.com/bucketeer-io/bucketeer/issues/518)) ([05338a8](https://github.com/bucketeer-io/bucketeer/commit/05338a87509da75cbd39e9aba5dd0905da77f2b8))
+* incorrect experiment result when running multiple goals ([#558](https://github.com/bucketeer-io/bucketeer/issues/558)) ([df11351](https://github.com/bucketeer-io/bucketeer/commit/df113516609457e3024153140dbf68d9ac4651aa))
+* invalid environment url code in trial project ([#655](https://github.com/bucketeer-io/bucketeer/issues/655)) ([8ced92e](https://github.com/bucketeer-io/bucketeer/commit/8ced92e0e31394912aa29b11903a7a3564bca493))
+* invalid mysql connection when using transaction ([#755](https://github.com/bucketeer-io/bucketeer/issues/755)) ([cb75f9d](https://github.com/bucketeer-io/bucketeer/commit/cb75f9dc0dd4a5ddfc0478ed1902bd259a41695b))
+* omitempty not being removed in the proto subdirectories ([#775](https://github.com/bucketeer-io/bucketeer/issues/775)) ([0108e72](https://github.com/bucketeer-io/bucketeer/commit/0108e725988254017b4ecc9772ab5ee40d7bcc14))
+* preStop hook in the api and web gateway ([#471](https://github.com/bucketeer-io/bucketeer/issues/471)) ([d101811](https://github.com/bucketeer-io/bucketeer/commit/d101811e84713aa68fb0391e782fb49a0985eb5c))
+* progress rollout fails due to wrong conditions ([#718](https://github.com/bucketeer-io/bucketeer/issues/718)) ([e352412](https://github.com/bucketeer-io/bucketeer/commit/e3524124f0df530e5215541b5e5881b2a49fce44))
+* project hack script not creating environment correctly ([#568](https://github.com/bucketeer-io/bucketeer/issues/568)) ([a57505f](https://github.com/bucketeer-io/bucketeer/commit/a57505f9f58ef26a8c212da419f761ac0cf11bd6))
+* rename sql file ([#630](https://github.com/bucketeer-io/bucketeer/issues/630)) ([b075f72](https://github.com/bucketeer-io/bucketeer/commit/b075f72480b70ec22de79eb9c68ce9c0c0c83d75))
+* show stop experiment in experiment list action ([#690](https://github.com/bucketeer-io/bucketeer/issues/690)) ([3c60dc9](https://github.com/bucketeer-io/bucketeer/commit/3c60dc90663d4241d7be40a48afc6d43c365895b))
+* system admin does not have access to resources ([#796](https://github.com/bucketeer-io/bucketeer/issues/796)) ([57dc14a](https://github.com/bucketeer-io/bucketeer/commit/57dc14a6b1dbfc0922c3f7f4c4d325863f2ea132))
+* the component will not refresh when incorrect envID is in localstorage ([#529](https://github.com/bucketeer-io/bucketeer/issues/529)) ([36b5c5f](https://github.com/bucketeer-io/bucketeer/commit/36b5c5fc397ea42b5cf81df6dcb7d76f82520f56))
+* **ui:** audit log date range position ([#697](https://github.com/bucketeer-io/bucketeer/issues/697)) ([2e8c285](https://github.com/bucketeer-io/bucketeer/commit/2e8c2855b4992dfa18b1ed861237febfb1c7904a))
+* **ui:** auditlog action filter not working on admin page ([#731](https://github.com/bucketeer-io/bucketeer/issues/731)) ([1cc2f04](https://github.com/bucketeer-io/bucketeer/commit/1cc2f04e71f01c12f53162ac4e5dd1145c00271e))
+* **ui:** column alignment on the experiment results tab ([#569](https://github.com/bucketeer-io/bucketeer/issues/569)) ([d17ba76](https://github.com/bucketeer-io/bucketeer/commit/d17ba768b4d8955bf216f1590f5d2da2d9919483))
+* **ui:** documentation link ([#621](https://github.com/bucketeer-io/bucketeer/issues/621)) ([e970111](https://github.com/bucketeer-io/bucketeer/commit/e970111154784f8d23f25cde2a1d84a87d8f280b))
+* **ui:** search filter options break when the same filter is selected ([#734](https://github.com/bucketeer-io/bucketeer/issues/734)) ([84b7719](https://github.com/bucketeer-io/bucketeer/commit/84b7719cdc06e17117e2d94d063560611ec90df5))
+* **ui:** sort auto operations list by scheduled date. ([#615](https://github.com/bucketeer-io/bucketeer/issues/615)) ([54386a1](https://github.com/bucketeer-io/bucketeer/commit/54386a1b365cdb8d7fe17aea586e3b127c334235))
+* **ui:** update targeting rule with multiple clause ([#591](https://github.com/bucketeer-io/bucketeer/issues/591)) ([ab0939c](https://github.com/bucketeer-io/bucketeer/commit/ab0939c6adf4d4a07ef59ced6c134fb03377ffae))
+* unable create trial project ([#743](https://github.com/bucketeer-io/bucketeer/issues/743)) ([8a20e17](https://github.com/bucketeer-io/bucketeer/commit/8a20e17a663d712175743d5ea9a8327f4dc7d20d))
+* unable to fetch all orgs when user is system admin ([#674](https://github.com/bucketeer-io/bucketeer/issues/674)) ([e93eeeb](https://github.com/bucketeer-io/bucketeer/commit/e93eeebffe3d6d0d12efddcf3d149ecb8b665396))
+* unable to filter account list by roles ([#733](https://github.com/bucketeer-io/bucketeer/issues/733)) ([e5f1284](https://github.com/bucketeer-io/bucketeer/commit/e5f1284433289c9cfc006271fbaba5f1759ca169))
+* unable to get GA ID from envvar ([#500](https://github.com/bucketeer-io/bucketeer/issues/500)) ([6bf7f57](https://github.com/bucketeer-io/bucketeer/commit/6bf7f57f75c5c8f2f8cfd1eca6a836b39755aaae))
+* unknown column 'is_in_use_status' in 'having clause' ([#739](https://github.com/bucketeer-io/bucketeer/issues/739)) ([fc81930](https://github.com/bucketeer-io/bucketeer/commit/fc8193048caa26e883269e43c485ea13bc6826a3))
+* validation while creating a progressive rollout ([#629](https://github.com/bucketeer-io/bucketeer/issues/629)) ([6f9313b](https://github.com/bucketeer-io/bucketeer/commit/6f9313b38011ce307c2a2d97134095158e4c489e))
+* variation name is empty ([#502](https://github.com/bucketeer-io/bucketeer/issues/502)) ([e8c8a42](https://github.com/bucketeer-io/bucketeer/commit/e8c8a42b1019e812539147f1ddde0102877e0f1b))
+* web-gateway values file ([#786](https://github.com/bucketeer-io/bucketeer/issues/786)) ([7dd66b4](https://github.com/bucketeer-io/bucketeer/commit/7dd66b4b92899ad47e656c321c2aed1fe1f07394))
+
+
+### Performance Improvements
+
+* improve redis load in the event persisters ([#597](https://github.com/bucketeer-io/bucketeer/issues/597)) ([cb8324d](https://github.com/bucketeer-io/bucketeer/commit/cb8324dc7ca851dd050bdad5b1ca69f4069966d8))
+* modify api-gateway to fetch feature flags cache from redis without single flight ([#508](https://github.com/bucketeer-io/bucketeer/issues/508)) ([bb38e09](https://github.com/bucketeer-io/bucketeer/commit/bb38e09d0a0f5258a32954bd383deb5a2d868ed1))
+
+
+### Reverts
+
+* chore replace account v1 to v2 when checking the role ([#656](https://github.com/bucketeer-io/bucketeer/issues/656)) ([d586b71](https://github.com/bucketeer-io/bucketeer/commit/d586b71429130f748a6bb0ec9d3922a87310c5a8))
+
+
+### Miscellaneous Chores
+
+* use range for templating cronjobs ([#689](https://github.com/bucketeer-io/bucketeer/issues/689)) ([ae03f1e](https://github.com/bucketeer-io/bucketeer/commit/ae03f1e355832c030f2bb02b745369157a3da0f0))
+
 ## [0.3.0](https://github.com/bucketeer-io/bucketeer/compare/v0.2.0...v0.3.0) (2023-07-13)
 
 
