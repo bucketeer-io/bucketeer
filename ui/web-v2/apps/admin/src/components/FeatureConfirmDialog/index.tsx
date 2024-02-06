@@ -1,4 +1,8 @@
-import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
+import {
+  PAGE_PATH_FEATURES,
+  PAGE_PATH_FEATURE_AUTOOPS,
+  PAGE_PATH_ROOT,
+} from '@/constants/routing';
 import { AppState } from '@/modules';
 import { createAutoOpsRule } from '@/modules/autoOpsRules';
 import {
@@ -29,7 +33,7 @@ import ReactDatePicker from 'react-datepicker';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 import { FEATURE_UPDATE_COMMENT_MAX_LENGTH } from '../../constants/feature';
 import { intl } from '../../lang';
@@ -77,6 +81,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   const { formatMessage: f } = useIntl();
   const methods = useFormContext();
   const currentEnvironment = useCurrentEnvironment();
+  const history = useHistory();
   const [flagList, setFlagList] = useState([]);
   const [isFlagActive, setIsFlagActive] = useState(false);
   const [selectedSwitchEnabledType, setSelectedSwitchEnabledType] = useState(
@@ -113,7 +118,6 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
 
   useEffect(() => {
     if (isSwitchEnabledConfirm && isEnabled) {
-      console.log('inside');
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
@@ -444,7 +448,26 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
               </div>
               <div className="ml-3">
                 <p className="text-sm text-yellow-700">
-                  It will stop the progressive rollout in progress.
+                  {f(
+                    messages.autoOps.progressiveRolloutWarningMessages
+                      .progressiveRolloutInProgress,
+                    {
+                      link: (
+                        <span
+                          onClick={() => {
+                            history.push(
+                              `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}`
+                            );
+                          }}
+                          className="underline text-primary cursor-pointer ml-1"
+                        >
+                          <span>
+                            {f(messages.sourceType.progressiveRollout)}
+                          </span>
+                        </span>
+                      ),
+                    }
+                  )}
                 </p>
               </div>
             </div>

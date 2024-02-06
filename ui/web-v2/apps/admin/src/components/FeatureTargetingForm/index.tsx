@@ -1,4 +1,8 @@
-import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
+import {
+  PAGE_PATH_FEATURES,
+  PAGE_PATH_FEATURE_AUTOOPS,
+  PAGE_PATH_ROOT,
+} from '@/constants/routing';
 import { isLanguageJapanese } from '@/lang/getSelectedLanguage';
 import { selectAll as selectAllProgressiveRollouts } from '@/modules/porgressiveRollout';
 import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
@@ -30,7 +34,7 @@ import {
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { components } from 'react-select';
 import ReactCreatableSelect from 'react-select/creatable';
 import { v4 as uuid } from 'uuid';
@@ -72,7 +76,8 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       formState: { errors, isDirty },
       watch,
     } = methods;
-
+    const history = useHistory();
+    const currentEnvironment = useCurrentEnvironment();
     const prerequisites = watch('prerequisites');
 
     const rules = watch('rules');
@@ -85,6 +90,20 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       selectFeatureById(state.features, featureId),
       state.features.getFeatureError,
     ]);
+    const progressiveRolloutList = useSelector<
+      AppState,
+      ProgressiveRollout.AsObject[]
+    >(
+      (state) =>
+        selectAllProgressiveRollouts(state.progressiveRollout).filter(
+          (rule) => rule.featureId === featureId
+        ),
+      shallowEqual
+    );
+    const isProgressiveRolloutsRunning = !!progressiveRolloutList.find((p) =>
+      isProgressiveRolloutsRunningWaiting(p.status)
+    );
+
     const strategyOptions = feature.variationsList.map((v) => {
       return {
         value: v.id,
@@ -332,10 +351,45 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 {f(messages.feature.defaultStrategy)}
               </label>
               <div className="bg-white p-3 rounded-md border">
+                {isProgressiveRolloutsRunning && (
+                  <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-4 inline-block">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <InformationCircleIcon
+                          className="h-5 w-5 text-blue-400"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <div className="ml-3 flex-1">
+                        <p className="flex text-sm text-blue-700">
+                          {f(
+                            messages.feature.runningProgressiveRolloutMessage,
+                            {
+                              link: (
+                                <span
+                                  onClick={() => {
+                                    history.push(
+                                      `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}`
+                                    );
+                                  }}
+                                  className="underline text-primary cursor-pointer ml-1"
+                                >
+                                  <span>
+                                    {f(messages.sourceType.progressiveRollout)}
+                                  </span>
+                                </span>
+                              ),
+                            }
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <StrategyInput
                   feature={feature}
                   strategyName={'defaultStrategy'}
-                  featureId={featureId}
+                  disabled={!!isProgressiveRolloutsRunning}
                 />
                 <p className="input-error">
                   {errors.defaultStrategy?.rolloutStrategy?.message && (
@@ -820,7 +874,6 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
               <StrategyInput
                 feature={feature}
                 strategyName={`rules.${ruleIdx}.strategy`}
-                featureId={feature.id}
               />
               <p className="input-error">
                 {errors.rules?.[ruleIdx]?.strategy?.rolloutStrategy
@@ -1273,11 +1326,11 @@ export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
 export interface StrategyInputProps {
   feature: Feature.AsObject;
   strategyName: string;
-  featureId: string;
+  disabled?: boolean;
 }
 
 export const StrategyInput: FC<StrategyInputProps> = memo(
-  ({ feature, strategyName, featureId }) => {
+  ({ feature, strategyName, disabled }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
     const methods = useFormContext();
@@ -1298,16 +1351,6 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
       name: rolloutStrategyName,
       keyName: 'key', // the default keyName is "id" and it conflicts with the variation id field
     });
-    const progressiveRolloutList = useSelector<
-      AppState,
-      ProgressiveRollout.AsObject[]
-    >(
-      (state) =>
-        selectAllProgressiveRollouts(state.progressiveRollout).filter(
-          (rule) => rule.featureId === featureId
-        ),
-      shallowEqual
-    );
 
     const strategyOptions = feature.variationsList.map((v) => {
       return {
@@ -1330,36 +1373,15 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
       [update, trigger]
     );
 
-    const isProgressiveRolloutsRunning = !!progressiveRolloutList.find((p) =>
-      isProgressiveRolloutsRunningWaiting(p.status)
-    );
-
     return (
       <div>
-        {isProgressiveRolloutsRunning && (
-          <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-4 inline-block">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <InformationCircleIcon
-                  className="h-5 w-5 text-blue-400"
-                  aria-hidden="true"
-                />
-              </div>
-              <div className="ml-3 flex-1">
-                <p className="text-sm text-blue-700">
-                  can't change when a progressive is in progress
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
         <Controller
           name={optionName}
           control={control}
           render={({ field }) => (
             <Select
               options={strategyOptions}
-              disabled={!editable || isProgressiveRolloutsRunning}
+              disabled={!editable || disabled}
               value={selectedOption}
               onChange={field.onChange}
               isSearchable={false}
@@ -1384,7 +1406,7 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
                       )}
                       placeholder={''}
                       onChange={(e) => handleOnChange(idx, s.id, e)}
-                      disabled={!editable || isProgressiveRolloutsRunning}
+                      disabled={!editable || disabled}
                     />
                     <span
                       className={classNames(

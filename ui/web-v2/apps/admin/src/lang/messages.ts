@@ -501,6 +501,15 @@ export const messages = {
         defaultMessage:
           'Cannot execute more than one progressive rollout at the same time',
       }),
+      experimentOnProgress: defineMessage({
+        id: 'progressiveRolloutWarningMessages.experimentOnProgress',
+        defaultMessage:
+          'To create a Progressive Rollout, you must stop the current {link}',
+      }),
+      progressiveRolloutInProgress: defineMessage({
+        id: 'progressiveRolloutWarningMessages.progressiveRolloutInProgress',
+        defaultMessage: 'There is a {link} in progress. It will stop it.',
+      }),
       moreInformation: defineMessage({
         id: 'progressiveRolloutWarningMessages.moreInformation',
         defaultMessage: 'For more information, please see the {link}.',
@@ -1652,6 +1661,11 @@ export const messages = {
     defaultStrategy: defineMessage({
       id: 'feature.defaultStrategy',
       defaultMessage: 'Default strategy',
+    }),
+    runningProgressiveRolloutMessage: defineMessage({
+      id: 'feature.runningProgressiveRolloutMessage',
+      defaultMessage:
+        'To update the Default Strategy, you must stop or delete the current {link}',
     }),
     onVariation: defineMessage({
       id: 'feature.onVariation',

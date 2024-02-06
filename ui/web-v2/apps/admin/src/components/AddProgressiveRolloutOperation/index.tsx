@@ -1,3 +1,8 @@
+import {
+  PAGE_PATH_FEATURES,
+  PAGE_PATH_ROOT,
+  PAGE_PATH_FEATURE_EXPERIMENTS,
+} from '@/constants/routing';
 import { messages } from '@/lang/messages';
 import { AppState } from '@/modules';
 import { selectAll as selectAllAutoOpsRules } from '@/modules/autoOpsRules';
@@ -32,6 +37,7 @@ import {
 } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 
 import { selectById as selectFeatureById } from '../../modules/features';
 import { DatetimePicker } from '../DatetimePicker';
@@ -91,6 +97,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
     }) => {
       const { formatMessage: f } = useIntl();
       const editable = useIsEditable();
+      const history = useHistory();
       const dispatch = useDispatch<AppDispatch>();
       const currentEnvironment = useCurrentEnvironment();
       const [isLoading, setIsLoading] = useState(true);
@@ -188,7 +195,28 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                       isExperimentStatusWaitingRunnning(e.status)
                     ) ? (
                       <li>
-                        <p>Experiment warnings</p>
+                        <p>
+                          {f(
+                            messages.autoOps.progressiveRolloutWarningMessages
+                              .experimentOnProgress,
+                            {
+                              link: (
+                                <span
+                                  onClick={() => {
+                                    history.push(
+                                      `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_EXPERIMENTS}`
+                                    );
+                                  }}
+                                  className="underline text-primary cursor-pointer ml-1"
+                                >
+                                  <span>
+                                    {f(messages.sourceType.experiment)}
+                                  </span>
+                                </span>
+                              ),
+                            }
+                          )}
+                        </p>
                       </li>
                     ) : null}
                     {progressiveRolloutList.length > 0 &&

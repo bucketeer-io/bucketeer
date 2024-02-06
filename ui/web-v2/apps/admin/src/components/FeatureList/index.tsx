@@ -254,6 +254,7 @@ export const FeatureList: FC<FeatureListProps> = memo(
       (state) => state.features.totalCount,
       shallowEqual
     );
+
     const relativeDate = new Date();
     const createMenuItems = (archived: boolean): Array<MenuItem> => {
       const items: Array<MenuItem> = [];
