@@ -23,12 +23,15 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/migration"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/proto/batch"
 )
 
 var (
-	errUnknownJob = status.Error(codes.InvalidArgument, "batch: unknown job")
+	errUnknownJob            = status.Error(codes.InvalidArgument, "batch: unknown job")
+	migrationPermissionDined = status.Error(codes.PermissionDenied, "batch: database migration require system admin role")
 )
 
 type batchService struct {
@@ -50,6 +53,7 @@ type batchService struct {
 	apiKeyCacher              jobs.Job
 	experimentCacher          jobs.Job
 	autoOpsRulesCacher        jobs.Job
+	mysqlSchemaMigration      *migration.MysqlSchemaMigration
 	logger                    *zap.Logger
 }
 
@@ -62,6 +66,7 @@ func NewBatchService(
 	domainEventInformer, featureFlagCacher,
 	segmentUserCacher, apiKeyCacher,
 	experimentCacher, autoOpsRulesCacher jobs.Job,
+	mysqlSchemaMigration *migration.MysqlSchemaMigration,
 	logger *zap.Logger,
 ) *batchService {
 	return &batchService{
@@ -83,6 +88,7 @@ func NewBatchService(
 		apiKeyCacher:              apiKeyCacher,
 		experimentCacher:          experimentCacher,
 		autoOpsRulesCacher:        autoOpsRulesCacher,
+		mysqlSchemaMigration:      mysqlSchemaMigration,
 		logger:                    logger.Named("batch-service"),
 	}
 }
@@ -145,6 +151,39 @@ func (s *batchService) ExecuteBatchJob(
 		return nil, err
 	}
 	return &batch.BatchJobResponse{}, nil
+}
+
+func (s *batchService) CurrentMigrationVersion(
+	ctx context.Context,
+	request *batch.MigrationVersionRequest,
+) (*batch.MigrationVersionResponse, error) {
+	_, err := role.CheckSystemAdminRole(ctx)
+	if err != nil {
+		return nil, migrationPermissionDined
+	}
+	currentVersion, dirty, err := s.mysqlSchemaMigration.CurrentVersion(ctx, request)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &batch.MigrationVersionResponse{
+		Version: int32(currentVersion),
+		Dirty:   dirty,
+	}, nil
+}
+
+func (s *batchService) Migrate(
+	ctx context.Context,
+	request *batch.MigrationRequest,
+) (*batch.MigrationResponse, error) {
+	_, err := role.CheckSystemAdminRole(ctx)
+	if err != nil {
+		return nil, migrationPermissionDined
+	}
+	err = s.mysqlSchemaMigration.Migrate(ctx, request)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &batch.MigrationResponse{}, nil
 }
 
 func (s *batchService) Register(server *grpc.Server) {

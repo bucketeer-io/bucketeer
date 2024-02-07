@@ -13,9 +13,29 @@ type BatchServiceExecuteBatchJob = {
   readonly responseType: typeof proto_batch_service_pb.BatchJobResponse;
 };
 
+type BatchServiceCurrentMigrationVersion = {
+  readonly methodName: string;
+  readonly service: typeof BatchService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_batch_service_pb.MigrationVersionRequest;
+  readonly responseType: typeof proto_batch_service_pb.MigrationVersionResponse;
+};
+
+type BatchServiceMigrate = {
+  readonly methodName: string;
+  readonly service: typeof BatchService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_batch_service_pb.MigrationRequest;
+  readonly responseType: typeof proto_batch_service_pb.MigrationResponse;
+};
+
 export class BatchService {
   static readonly serviceName: string;
   static readonly ExecuteBatchJob: BatchServiceExecuteBatchJob;
+  static readonly CurrentMigrationVersion: BatchServiceCurrentMigrationVersion;
+  static readonly Migrate: BatchServiceMigrate;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -58,6 +78,24 @@ export class BatchServiceClient {
   executeBatchJob(
     requestMessage: proto_batch_service_pb.BatchJobRequest,
     callback: (error: ServiceError|null, responseMessage: proto_batch_service_pb.BatchJobResponse|null) => void
+  ): UnaryResponse;
+  currentMigrationVersion(
+    requestMessage: proto_batch_service_pb.MigrationVersionRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_batch_service_pb.MigrationVersionResponse|null) => void
+  ): UnaryResponse;
+  currentMigrationVersion(
+    requestMessage: proto_batch_service_pb.MigrationVersionRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_batch_service_pb.MigrationVersionResponse|null) => void
+  ): UnaryResponse;
+  migrate(
+    requestMessage: proto_batch_service_pb.MigrationRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_batch_service_pb.MigrationResponse|null) => void
+  ): UnaryResponse;
+  migrate(
+    requestMessage: proto_batch_service_pb.MigrationRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_batch_service_pb.MigrationResponse|null) => void
   ): UnaryResponse;
 }
 

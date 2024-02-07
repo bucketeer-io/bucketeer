@@ -19,6 +19,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/batch/migration"
+
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
@@ -504,6 +506,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			// We must use the same instance for caching.
 			cachev3.NewRedisCache(persistentRedisClient),
 			jobs.WithLogger(logger),
+		),
+		migration.NewMySQLSchemaMigration(
+			*s.mysqlUser, *s.mysqlPass, *s.mysqlHost, *s.mysqlDBName, *s.mysqlPort,
+			logger,
 		),
 		logger,
 	)

@@ -50,7 +50,8 @@ local-deps:
 	go install go.uber.org/mock/mockgen@v0.1.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/nilslice/protolock/...@v0.15.0;
-	go install github.com/mikefarah/yq/v4@v4.28.2
+	go install github.com/mikefarah/yq/v4@v4.28.2;
+	go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 .PHONY: lint
 lint:
@@ -255,3 +256,9 @@ e2e:
 .PHONY: update-copyright
 update-copyright:
 	./hack/update-copyright/update-copyright.sh
+
+###################
+# Database Migration
+###################
+create-mysql-migration:
+	migrate create -dir pkg/batch/migration/mysql -digits 8 -seq -ext sql $(NAME)
