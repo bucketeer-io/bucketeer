@@ -94,7 +94,7 @@ func TestSign(t *testing.T) {
 			require.True(t, tc.token.Expiry.Equal(parsedToken.Expiry), des)
 			require.True(t, tc.token.IssuedAt.Equal(parsedToken.IssuedAt), des)
 			require.Equal(t, tc.token.Email, parsedToken.Email, des)
-			require.Equal(t, tc.token.AdminRole, parsedToken.AdminRole, des)
+			require.Equal(t, tc.token.IsSystemAdmin, parsedToken.IsSystemAdmin, des)
 		} else {
 			require.Error(t, err, des)
 		}

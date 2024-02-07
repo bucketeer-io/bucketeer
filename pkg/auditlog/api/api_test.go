@@ -304,7 +304,6 @@ func createContextWithToken(t *testing.T, role accountproto.Account_Role) contex
 	t.Helper()
 	token := &token.IDToken{
 		Email:         "test@example.com",
-		AdminRole:     role,
 		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()

@@ -31,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
 func TestNewEnvironmentService(t *testing.T) {
@@ -56,7 +55,6 @@ func createContextWithToken(t *testing.T) context.Context {
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),
 		Email:         "email",
-		AdminRole:     accountproto.Account_EDITOR,
 		IsSystemAdmin: true,
 	}
 	ctx := context.TODO()
@@ -66,13 +64,12 @@ func createContextWithToken(t *testing.T) context.Context {
 func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 	t.Helper()
 	token := &token.IDToken{
-		Issuer:    "issuer",
-		Subject:   "sub",
-		Audience:  "audience",
-		Expiry:    time.Now().AddDate(100, 0, 0),
-		IssuedAt:  time.Now(),
-		Email:     "email",
-		AdminRole: accountproto.Account_UNASSIGNED,
+		Issuer:   "issuer",
+		Subject:  "sub",
+		Audience: "audience",
+		Expiry:   time.Now().AddDate(100, 0, 0),
+		IssuedAt: time.Now(),
+		Email:    "email",
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
