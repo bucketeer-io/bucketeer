@@ -7,10 +7,11 @@ export interface HoverPopoverProps {
   onMouseLeave?: () => void;
   render: () => JSX.Element;
   disabled?: boolean;
+  alignRight?: boolean;
 }
 
 export const HoverPopover: FC<HoverPopoverProps> = memo(
-  ({ disabled, onClick, onMouseLeave, render, children }) => {
+  ({ disabled, onClick, onMouseLeave, render, children, alignRight }) => {
     let timeout;
     const timeoutDuration = 400;
     const [open, setOpen] = useState<boolean>(false);
@@ -56,7 +57,10 @@ export const HoverPopover: FC<HoverPopoverProps> = memo(
       >
         {children}
         {open ? (
-          <div ref={popoverRef} className={classNames('absolute z-10')}>
+          <div
+            ref={popoverRef}
+            className={classNames('absolute z-10', alignRight && 'right-0')}
+          >
             {render()}
           </div>
         ) : null}

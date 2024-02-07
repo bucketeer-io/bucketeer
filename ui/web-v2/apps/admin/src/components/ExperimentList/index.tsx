@@ -66,10 +66,11 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
       experimentSatus: Experiment.StatusMap[keyof Experiment.StatusMap]
     ): Array<MenuItem> => {
       const items: Array<MenuItem> = [];
-      if (
+      const isExperimentWaitingRunnning =
         experimentSatus === Experiment.Status.WAITING ||
-        experimentSatus === Experiment.Status.RUNNING
-      ) {
+        experimentSatus === Experiment.Status.RUNNING;
+
+      if (isExperimentWaitingRunnning) {
         items.push({
           action: MenuActions.STOP,
           name: intl.formatMessage(messages.experiment.stop.button),
@@ -80,6 +81,11 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
         action: MenuActions.ARCHIVE,
         name: intl.formatMessage(messages.experiment.action.archive),
         iconElement: <MUArchiveIcon />,
+        disabled: isExperimentWaitingRunnning,
+        tooltipMessage: isExperimentWaitingRunnning
+          ? intl.formatMessage(messages.experiment.action.archiveTooltip)
+          : null,
+        alignRight: true,
       });
       return items;
     };
