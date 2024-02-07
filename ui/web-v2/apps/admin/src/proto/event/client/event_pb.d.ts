@@ -345,6 +345,29 @@ export namespace InternalErrorCountMetricsEvent {
   }
 }
 
+export class RedirectionRequestExceptionEvent extends jspb.Message {
+  getApiId(): ApiIdMap[keyof ApiIdMap];
+  setApiId(value: ApiIdMap[keyof ApiIdMap]): void;
+
+  getLabelsMap(): jspb.Map<string, string>;
+  clearLabelsMap(): void;
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RedirectionRequestExceptionEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: RedirectionRequestExceptionEvent): RedirectionRequestExceptionEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: RedirectionRequestExceptionEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): RedirectionRequestExceptionEvent;
+  static deserializeBinaryFromReader(message: RedirectionRequestExceptionEvent, reader: jspb.BinaryReader): RedirectionRequestExceptionEvent;
+}
+
+export namespace RedirectionRequestExceptionEvent {
+  export type AsObject = {
+    apiId: ApiIdMap[keyof ApiIdMap],
+    labelsMap: Array<[string, string]>,
+  }
+}
+
 export class BadRequestErrorMetricsEvent extends jspb.Message {
   getApiId(): ApiIdMap[keyof ApiIdMap];
   setApiId(value: ApiIdMap[keyof ApiIdMap]): void;
@@ -431,6 +454,29 @@ export class NotFoundErrorMetricsEvent extends jspb.Message {
 }
 
 export namespace NotFoundErrorMetricsEvent {
+  export type AsObject = {
+    apiId: ApiIdMap[keyof ApiIdMap],
+    labelsMap: Array<[string, string]>,
+  }
+}
+
+export class PayloadTooLargeExceptionEvent extends jspb.Message {
+  getApiId(): ApiIdMap[keyof ApiIdMap];
+  setApiId(value: ApiIdMap[keyof ApiIdMap]): void;
+
+  getLabelsMap(): jspb.Map<string, string>;
+  clearLabelsMap(): void;
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PayloadTooLargeExceptionEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: PayloadTooLargeExceptionEvent): PayloadTooLargeExceptionEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: PayloadTooLargeExceptionEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PayloadTooLargeExceptionEvent;
+  static deserializeBinaryFromReader(message: PayloadTooLargeExceptionEvent, reader: jspb.BinaryReader): PayloadTooLargeExceptionEvent;
+}
+
+export namespace PayloadTooLargeExceptionEvent {
   export type AsObject = {
     apiId: ApiIdMap[keyof ApiIdMap],
     labelsMap: Array<[string, string]>,

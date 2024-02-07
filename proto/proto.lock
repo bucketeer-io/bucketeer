@@ -4790,6 +4790,26 @@
             ]
           },
           {
+            "name": "RedirectionRequestExceptionEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "ApiId"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
             "name": "BadRequestErrorMetricsEvent",
             "fields": [
               {
@@ -4851,6 +4871,26 @@
           },
           {
             "name": "NotFoundErrorMetricsEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "api_id",
+                "type": "ApiId"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "PayloadTooLargeExceptionEvent",
             "fields": [
               {
                 "id": 1,
