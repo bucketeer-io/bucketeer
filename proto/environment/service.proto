@@ -118,7 +118,7 @@ message ListProjectsRequest {
   OrderDirection order_direction = 4;
   string search_keyword = 5;
   google.protobuf.BoolValue disabled = 6;
-  string organization_id = 7;
+  repeated string organization_ids = 7;
 }
 
 message ListProjectsResponse {

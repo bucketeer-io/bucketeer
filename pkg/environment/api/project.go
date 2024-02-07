@@ -120,8 +120,12 @@ func (s *EnvironmentService) ListProjects(
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{}
-	if req.OrganizationId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("organization_id", "=", req.OrganizationId))
+	if req.OrganizationIds != nil && len(req.OrganizationIds) > 0 {
+		oIDs := make([]interface{}, 0, len(req.OrganizationIds))
+		for _, oID := range req.OrganizationIds {
+			oIDs = append(oIDs, oID)
+		}
+		whereParts = append(whereParts, mysql.NewInFilter("organization_id", oIDs))
 	}
 	if req.Disabled != nil {
 		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))

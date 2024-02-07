@@ -155,9 +155,9 @@ func (s *AccountService) listProjectsByOrganizationID(
 	cursor := ""
 	for {
 		resp, err := s.environmentClient.ListProjects(ctx, &environmentproto.ListProjectsRequest{
-			PageSize:       listRequestPageSize,
-			Cursor:         cursor,
-			OrganizationId: organizationID,
+			PageSize:        listRequestPageSize,
+			Cursor:          cursor,
+			OrganizationIds: []string{organizationID},
 		})
 		if err != nil {
 			return nil, err
