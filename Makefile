@@ -251,3 +251,7 @@ e2e:
 		-service-token=${SERVICE_TOKEN_PATH} \
 		-environment-namespace=${ENVIRONMENT_NAMESPACE} \
 		-test-id=${TEST_ID}
+
+.PHONY: update-copyright
+update-copyright:
+	./hack/update-copyright/update-copyright.sh
