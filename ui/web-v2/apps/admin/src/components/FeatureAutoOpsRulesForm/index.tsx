@@ -32,6 +32,7 @@ import {
   ArrowNarrowRightIcon,
   BanIcon,
   ClockIcon,
+  CalendarIcon,
 } from '@heroicons/react/outline';
 import { SerializedError } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
@@ -56,6 +57,7 @@ import { ReactComponent as CrossSvg } from '../../assets/svg/cross.svg';
 import { ReactComponent as OpenInNewSvg } from '../../assets/svg/open-new-tab.svg';
 import { ReactComponent as RefreshSvg } from '../../assets/svg/refresh.svg';
 import { ReactComponent as SeeDetailsSvg } from '../../assets/svg/see-details.svg';
+import { ReactComponent as UserSvg } from '../../assets/svg/user.svg';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -1132,6 +1134,8 @@ const ProgressiveRolloutComponent = memo(
           : schedulesList[selectedPagination * 10 - 1].executeAt,
     };
 
+    console.log({ rule });
+
     return (
       <div className="rounded-xl shadow px-6 py-4 bg-white">
         <div className="flex justify-between py-4 border-b">
@@ -1247,11 +1251,17 @@ const ProgressiveRolloutComponent = memo(
                   </>
                 )}
                 {rule.stoppedBy === ProgressiveRollout.StoppedBy.USER && (
-                  <span>User</span>
+                  <>
+                    <UserSvg />
+                    <span>User</span>
+                  </>
                 )}
                 {rule.stoppedBy ===
                   ProgressiveRollout.StoppedBy.OPS_SCHEDULE && (
-                  <span>Schedule</span>
+                  <>
+                    <CalendarIcon width={18} className="text-primary" />
+                    <span>Schedule</span>
+                  </>
                 )}
               </div>
             )}
