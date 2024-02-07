@@ -44,6 +44,27 @@ message BatchJobRequest {
 
 message BatchJobResponse {}
 
+message MigrationVersionRequest {}
+
+message MigrationVersionResponse {
+  int32 version = 1;
+  bool dirty = 2;
+}
+
+message MigrationRequest {
+  enum Direction {
+    UP = 0;
+    DOWN = 1;
+  }
+  Direction direction = 1;
+  int32 steps = 2;
+}
+
+message MigrationResponse {}
+
 service BatchService {
   rpc ExecuteBatchJob(BatchJobRequest) returns (BatchJobResponse) {}
+  rpc CurrentMigrationVersion(MigrationVersionRequest)
+      returns (MigrationVersionResponse) {}
+  rpc Migrate(MigrationRequest) returns (MigrationResponse) {}
 }
