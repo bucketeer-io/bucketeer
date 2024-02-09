@@ -42,13 +42,9 @@ import { useHistory } from 'react-router-dom';
 import { selectById as selectFeatureById } from '../../modules/features';
 import { DatetimePicker } from '../DatetimePicker';
 import { isExperimentStatusWaitingRunnning } from '../ExperimentList';
-import { ClauseType, getIntervalForDayjs } from '../FeatureAutoOpsRulesForm';
+import { getIntervalForDayjs } from '../FeatureAutoOpsRulesForm';
 import { ProgressiveRolloutTypeTab } from '../OperationAddUpdateForm';
 import { Option, Select } from '../Select';
-
-interface FindScheduleOperation {
-  autoOpsRules: AutoOpsRule.AsObject[];
-}
 
 export const isProgressiveRolloutsRunningWaiting = (
   status: ProgressiveRollout.StatusMap[keyof ProgressiveRollout.StatusMap]
@@ -68,7 +64,7 @@ export const isProgressiveRolloutsWarningsExists = ({
   experiments,
 }: isProgressiveRolloutsWarningsExists): boolean => {
   const check =
-    feature.variationsList.length > 2 ||
+    feature.variationsList.length !== 2 ||
     (experiments.length > 0 &&
       experiments.find((e) => isExperimentStatusWaitingRunnning(e.status))) ||
     (progressiveRolloutList.length > 0 &&
@@ -181,7 +177,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                 </p>
                 <div className="mt-2 text-sm text-yellow-700">
                   <ul className="list-disc space-y-1 pl-5">
-                    {feature.variationsList.length > 2 ? (
+                    {feature.variationsList.length !== 2 ? (
                       <li>
                         <p>
                           {f(

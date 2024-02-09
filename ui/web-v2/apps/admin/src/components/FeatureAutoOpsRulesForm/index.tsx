@@ -1134,8 +1134,6 @@ const ProgressiveRolloutComponent = memo(
           : schedulesList[selectedPagination * 10 - 1].executeAt,
     };
 
-    console.log({ rule });
-
     return (
       <div className="rounded-xl shadow px-6 py-4 bg-white">
         <div className="flex justify-between py-4 border-b">

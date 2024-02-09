@@ -2,7 +2,7 @@ import { listProgressiveRollout } from '@/modules/porgressiveRollout';
 import { Feature } from '@/proto/feature/feature_pb';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
-import React, { FC, memo, useCallback } from 'react';
+import React, { FC, memo, useCallback, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 
@@ -75,7 +75,12 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
 
     const { reset, setValue } = methods;
 
-    const handleRefetchAutoOpsRules = useCallback(() => {
+    useEffect(() => {
+      fetchProgressiveRollouts();
+      fetchAutoOpsRules();
+    }, []);
+
+    const fetchAutoOpsRules = useCallback(() => {
       dispatch(
         listAutoOpsRules({
           featureId: featureId,
@@ -84,7 +89,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       );
     }, [dispatch]);
 
-    const handleRefetchProgressiveRollouts = useCallback(() => {
+    const fetchProgressiveRollouts = useCallback(() => {
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
@@ -113,8 +118,8 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       <FormProvider {...methods}>
         <FeatureAutoOpsRulesForm
           featureId={featureId}
-          refetchAutoOpsRules={handleRefetchAutoOpsRules}
-          refetchProgressiveRollouts={handleRefetchProgressiveRollouts}
+          refetchAutoOpsRules={fetchAutoOpsRules}
+          refetchProgressiveRollouts={fetchProgressiveRollouts}
           reset={handleReset}
         />
       </FormProvider>
