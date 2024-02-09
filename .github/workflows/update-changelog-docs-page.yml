@@ -1,0 +1,48 @@
+# This workflow will update the CHANGELOG page in the `bucketeer-io/bucketeer-docs` repository when a tag is created
+name: update-changelog-docs-page
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - v*
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      RELEASE_TAG: ${{ steps.release_tag.outputs.value }}
+      COMMIT_URL: ${{ steps.commit_url.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Store the tag value
+        id: release_tag
+        run: echo "value=$(git describe --tags --always --abbrev=7)" >> $GITHUB_OUTPUT
+      - name: Store the first line of commit message
+        id: commit_url
+        run: echo "value=$(echo '${{ github.event.head_commit.url }}' | head -n 1)" >> $GITHUB_OUTPUT
+
+  update_changelog_doc_page:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Workflow Dispatch
+        uses: benc-uk/workflow-dispatch@798e70c97009500150087d30d9f11c5444830385 # v1.2.2
+        env:
+          DOC_REPO: bucketeer-io/bucketeer-docs
+          DOC_FILENAME: core.mdx
+          DOC_FILEPATH: docs/changelog
+          DOC_TITLE: Core
+          DOC_SLUG: /changelog/core
+          CHANGELOG_URL: https://raw.githubusercontent.com/bucketeer-io/bucketeer/main/CHANGELOG.md
+          FROM_REPOSITORY_NAME: bucketeer-io/bucketeer
+          FROM_REPOSITORY_URL: https://github.com/bucketeer-io/bucketeer
+        with:
+          repo: ${{ env.DOC_REPO }}
+          token: ${{ secrets.REPO_ACCESS_PAT }}
+          workflow: create-changelog.yaml
+          ref: main
+          inputs: '{"doc_filename": "${{ env.DOC_FILENAME }}", "doc_filepath": "${{ env.DOC_FILEPATH }}", "doc_title": "${{ env.DOC_TITLE }}", "doc_slug": "${{ env.DOC_SLUG }}", "changelog_url": "${{ env.CHANGELOG_URL }}", "from_repository_name": "${{ env.FROM_REPOSITORY_NAME }}", "from_repository_url": "${{ env.FROM_REPOSITORY_URL }}", "commit_url": "${{ needs.setup.outputs.COMMIT_URL }}", "release_tag": "${{ needs.setup.outputs.RELEASE_TAG }}"}'
