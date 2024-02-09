@@ -20,8 +20,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/migration"
-
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 

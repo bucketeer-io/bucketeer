@@ -76,6 +76,9 @@ tls:
     secret:
     cert:
     key:
+  issuer:
+    secret:
+    cert:
 
 serviceToken:
   secret:
@@ -85,8 +88,10 @@ oauth:
   key:
     secret:
     public:
-  issuer:
   clientId:
+  clientSecret:
+  redirectUrls:
+  issuer:
 
 service:
   type: ClusterIP

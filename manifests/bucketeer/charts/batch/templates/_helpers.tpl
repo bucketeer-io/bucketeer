@@ -54,3 +54,19 @@ Create chart name and version as used by the chart label.
 {{ template "batch-server.fullname" . }}-service-token
 {{- end -}}
 {{- end -}}
+
+{{- define "issuer-cert-secret" -}}
+{{- if .Values.tls.issuer.secret }}
+{{- printf "%s" .Values.tls.issuer.secret -}}
+{{- else -}}
+{{ template "batch-server.fullname" . }}-issuer-cert
+{{- end -}}
+{{- end -}}
+
+{{- define "oauth-key-secret" -}}
+{{- if .Values.oauth.key.secret }}
+{{- printf "%s" .Values.oauth.key.secret -}}
+{{- else -}}
+{{ template "batch-server.fullname" . }}-oauth-key
+{{- end -}}
+{{- end -}}
