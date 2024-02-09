@@ -22,6 +22,7 @@ import (
 
 	libmigrate "github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
+	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"go.uber.org/zap"
 
@@ -46,7 +47,7 @@ func NewMySQLSchemaMigration(
 ) *MysqlSchemaMigration {
 	d, err := iofs.New(migrationSchemaFS, "mysql")
 	if err != nil {
-		logger.Error("failed to create a new source instance", zap.Error(err))
+		logger.Fatal("failed to create a new source instance", zap.Error(err))
 	}
 	databaseURL := fmt.Sprintf(
 		"mysql://%s:%s@tcp(%s:%d)/%s?%s",
@@ -54,7 +55,7 @@ func NewMySQLSchemaMigration(
 	)
 	m, err := libmigrate.NewWithSourceInstance("iofs", d, databaseURL)
 	if err != nil {
-		logger.Error("failed to create a new migrate instance", zap.Error(err))
+		logger.Fatal("failed to create a new migrate instance", zap.Error(err))
 	}
 	return &MysqlSchemaMigration{
 		mysqlMigrate: m,

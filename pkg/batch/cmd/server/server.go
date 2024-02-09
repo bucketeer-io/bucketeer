@@ -19,8 +19,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/migration"
-
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
@@ -35,6 +33,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/rediscounter"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/migration"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -54,6 +53,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
 
 const command = "server"
@@ -63,14 +63,17 @@ var serverShutDownTimeout = 10 * time.Second
 type server struct {
 	*kingpin.CmdClause
 	// Common
-	port             *int
-	project          *string
-	certPath         *string
-	keyPath          *string
-	serviceTokenPath *string
-	timezone         *string
-	refreshInterval  *time.Duration
-	webURL           *string
+	port               *int
+	project            *string
+	certPath           *string
+	keyPath            *string
+	serviceTokenPath   *string
+	oauthPublicKeyPath *string
+	oauthClientID      *string
+	oauthIssuer        *string
+	timezone           *string
+	refreshInterval    *time.Duration
+	webURL             *string
 	// MySQL
 	mysqlUser   *string
 	mysqlPass   *string
@@ -115,7 +118,16 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
-		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
+		oauthPublicKeyPath: cmd.Flag(
+			"oauth-public-key",
+			"Path to public key used to verify oauth token.",
+		).Required().String(),
+		oauthClientID: cmd.Flag(
+			"oauth-client-id",
+			"The oauth clientID registered at dex.",
+		).Required().String(),
+		oauthIssuer: cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
+		timezone:    cmd.Flag("timezone", "Time zone").Required().String(),
 		refreshInterval: cmd.Flag(
 			"refresh-interval",
 			"Interval between refreshing target objects.",
@@ -225,6 +237,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	*s.serviceTokenPath = s.insertTelepresenceMountRoot(*s.serviceTokenPath)
 	*s.keyPath = s.insertTelepresenceMountRoot(*s.keyPath)
 	*s.certPath = s.insertTelepresenceMountRoot(*s.certPath)
+
+	// verifier
+	verifier, err := token.NewVerifier(*s.oauthPublicKeyPath, *s.oauthIssuer, *s.oauthClientID)
+	if err != nil {
+		return err
+	}
 
 	registerer := metrics.DefaultRegisterer()
 
@@ -529,6 +547,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 		rpc.WithService(healthChecker),
 		rpc.WithHandler("/health", healthChecker),
+		rpc.WithVerifier(verifier),
 	)
 	go server.Run()
 
