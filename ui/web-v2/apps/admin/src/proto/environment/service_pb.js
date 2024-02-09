@@ -388,7 +388,7 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.environment.ListProjectsRequest = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.bucketeer.environment.ListProjectsRequest.repeatedFields_, null);
 };
 goog.inherits(proto.bucketeer.environment.ListProjectsRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -3412,6 +3412,13 @@ proto.bucketeer.environment.GetProjectResponse.prototype.hasProject = function()
 
 
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.environment.ListProjectsRequest.repeatedFields_ = [7];
+
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -3449,7 +3456,7 @@ proto.bucketeer.environment.ListProjectsRequest.toObject = function(includeInsta
     orderDirection: jspb.Message.getFieldWithDefault(msg, 4, 0),
     searchKeyword: jspb.Message.getFieldWithDefault(msg, 5, ""),
     disabled: (f = msg.getDisabled()) && google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-    organizationId: jspb.Message.getFieldWithDefault(msg, 7, "")
+    organizationIdsList: (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -3513,7 +3520,7 @@ proto.bucketeer.environment.ListProjectsRequest.deserializeBinaryFromReader = fu
       break;
     case 7:
       var value = /** @type {string} */ (reader.readString());
-      msg.setOrganizationId(value);
+      msg.addOrganizationIds(value);
       break;
     default:
       reader.skipField();
@@ -3587,9 +3594,9 @@ proto.bucketeer.environment.ListProjectsRequest.serializeBinaryToWriter = functi
       google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
     );
   }
-  f = message.getOrganizationId();
+  f = message.getOrganizationIdsList();
   if (f.length > 0) {
-    writer.writeString(
+    writer.writeRepeatedString(
       7,
       f
     );
@@ -3745,20 +3752,39 @@ proto.bucketeer.environment.ListProjectsRequest.prototype.hasDisabled = function
 
 
 /**
- * optional string organization_id = 7;
- * @return {string}
+ * repeated string organization_ids = 7;
+ * @return {!Array<string>}
  */
-proto.bucketeer.environment.ListProjectsRequest.prototype.getOrganizationId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
+proto.bucketeer.environment.ListProjectsRequest.prototype.getOrganizationIdsList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 7));
+};
+
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.environment.ListProjectsRequest} returns this
+ */
+proto.bucketeer.environment.ListProjectsRequest.prototype.setOrganizationIdsList = function(value) {
+  return jspb.Message.setField(this, 7, value || []);
 };
 
 
 /**
  * @param {string} value
+ * @param {number=} opt_index
  * @return {!proto.bucketeer.environment.ListProjectsRequest} returns this
  */
-proto.bucketeer.environment.ListProjectsRequest.prototype.setOrganizationId = function(value) {
-  return jspb.Message.setProto3StringField(this, 7, value);
+proto.bucketeer.environment.ListProjectsRequest.prototype.addOrganizationIds = function(value, opt_index) {
+  return jspb.Message.addToRepeatedField(this, 7, value, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.environment.ListProjectsRequest} returns this
+ */
+proto.bucketeer.environment.ListProjectsRequest.prototype.clearOrganizationIdsList = function() {
+  return this.setOrganizationIdsList([]);
 };
 
 

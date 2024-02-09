@@ -3889,8 +3889,9 @@
               },
               {
                 "id": 7,
-                "name": "organization_id",
-                "type": "string"
+                "name": "organization_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },

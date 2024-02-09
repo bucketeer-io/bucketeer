@@ -387,8 +387,10 @@ export class ListProjectsRequest extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
-  getOrganizationId(): string;
-  setOrganizationId(value: string): void;
+  clearOrganizationIdsList(): void;
+  getOrganizationIdsList(): Array<string>;
+  setOrganizationIdsList(value: Array<string>): void;
+  addOrganizationIds(value: string, index?: number): string;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListProjectsRequest.AsObject;
@@ -408,7 +410,7 @@ export namespace ListProjectsRequest {
     orderDirection: ListProjectsRequest.OrderDirectionMap[keyof ListProjectsRequest.OrderDirectionMap],
     searchKeyword: string,
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject,
-    organizationId: string,
+    organizationIdsList: Array<string>,
   }
 
   export interface OrderByMap {

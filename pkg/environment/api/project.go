@@ -120,8 +120,9 @@ func (s *EnvironmentService) ListProjects(
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{}
-	if req.OrganizationId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("organization_id", "=", req.OrganizationId))
+	if len(req.OrganizationIds) > 0 {
+		oIDs := convToInterfaceSlice(req.OrganizationIds)
+		whereParts = append(whereParts, mysql.NewInFilter("organization_id", oIDs))
 	}
 	if req.Disabled != nil {
 		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
@@ -188,6 +189,16 @@ func (s *EnvironmentService) ListProjects(
 		Cursor:     strconv.Itoa(nextCursor),
 		TotalCount: totalCount,
 	}, nil
+}
+
+func convToInterfaceSlice(
+	slice []string,
+) []interface{} {
+	result := make([]interface{}, 0, len(slice))
+	for _, element := range slice {
+		result = append(result, element)
+	}
+	return result
 }
 
 func (s *EnvironmentService) newProjectListOrders(

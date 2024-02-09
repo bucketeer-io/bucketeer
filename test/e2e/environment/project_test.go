@@ -17,6 +17,8 @@ package environment
 import (
 	"context"
 	"fmt"
+	"math"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -55,6 +57,41 @@ func TestListProjects(t *testing.T) {
 	responseSize := int64(len(resp.Projects))
 	if responseSize != pageSize {
 		t.Fatalf("different sizes, expected: %d actual: %d", pageSize, responseSize)
+	}
+}
+
+func TestListProjectsRequestOrganizations(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newEnvironmentClient(t)
+	defer c.Close()
+	pageSize := int64(2)
+
+	orgResp, err := c.ListOrganizations(ctx, &environmentproto.ListOrganizationsRequest{PageSize: pageSize})
+	if err != nil {
+		t.Fatal(err)
+	}
+	length := int(math.Min(float64(len(orgResp.Organizations)), float64(pageSize)))
+	orgIds := make([]string, length)
+	for i := 0; i < length; i++ {
+		orgIds[i] = orgResp.Organizations[rand.Intn(len(orgResp.Organizations))].Id
+	}
+
+	resp, err := c.ListProjects(ctx, &environmentproto.ListProjectsRequest{PageSize: pageSize, OrganizationIds: orgIds})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, project := range resp.Projects {
+		found := false
+		for _, orgId := range orgIds {
+			if orgId == project.OrganizationId {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("received a project of a not request organization expected: %v, actual: %s", orgIds, project.OrganizationId)
+		}
 	}
 }
 

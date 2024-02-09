@@ -180,7 +180,7 @@ func TestListProjectsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:       &proto.ListProjectsRequest{PageSize: 2, Cursor: ""},
+			input:       &proto.ListProjectsRequest{PageSize: 2, Cursor: "", OrganizationIds: []string{"org-1", "org-2"}},
 			expected:    &proto.ListProjectsResponse{Projects: []*proto.Project{}, Cursor: "0", TotalCount: 0},
 			expectedErr: nil,
 		},
