@@ -39,6 +39,14 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 {{- end -}}
 
+{{- define "service-token-secret" -}}
+{{- if .Values.serviceToken.secret }}
+{{- printf "%s" .Values.serviceToken.secret -}}
+{{- else -}}
+{{ template "batch-server.fullname" . }}-service-token
+{{- end -}}
+{{- end -}}
+
 {{- define "oauth-key-secret" -}}
 {{- if .Values.oauth.key.secret }}
 {{- printf "%s" .Values.oauth.key.secret -}}
@@ -47,10 +55,10 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 {{- end -}}
 
-{{- define "service-token-secret" -}}
-{{- if .Values.serviceToken.secret }}
-{{- printf "%s" .Values.serviceToken.secret -}}
+{{- define "issuer-cert-secret" -}}
+{{- if .Values.tls.issuer.secret }}
+{{- printf "%s" .Values.tls.issuer.secret -}}
 {{- else -}}
-{{ template "batch-server.fullname" . }}-service-token
+{{ template "batch-server.fullname" . }}-issuer-cert
 {{- end -}}
 {{- end -}}
