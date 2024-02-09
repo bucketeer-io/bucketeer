@@ -262,3 +262,21 @@ update-copyright:
 ###################
 create-mysql-migration:
 	migrate create -dir pkg/batch/migration/mysql -digits 8 -seq -ext sql $(NAME)
+
+migrate-up:
+	ENDPOINT="$(WEB_GATEWAY_HOST)/bucketeer.batch.BatchService/Migrate" \
+	TOKEN=`cat $(SERVICE_TOKEN_PATH)` \
+	RES=`curl -X POST -m 3600 --cacert tools/dev/cert/tls.crt -d '{"direction":"UP", "steps": 1}' -H "authorization: bearer $$TOKEN" -H "Content-Type: application/json" -s -i $$ENDPOINT` \
+	; echo "result:\n$$RES"
+
+migrate-down:
+	ENDPOINT="$(WEB_GATEWAY_HOST)/bucketeer.batch.BatchService/Migrate" \
+	TOKEN=`cat $(SERVICE_TOKEN_PATH)` \
+	RES=`curl -X POST -m 3600 --cacert tools/dev/cert/tls.crt -d '{"direction":"DOWN", "steps": 1}' -H "authorization: bearer $$TOKEN" -H "Content-Type: application/json" -s -i $$ENDPOINT` \
+	; echo "result:\n$$RES"
+
+migrate-version:
+	ENDPOINT="$(WEB_GATEWAY_HOST)/bucketeer.batch.BatchService/CurrentMigrationVersion" \
+	TOKEN=`cat $(SERVICE_TOKEN_PATH)` \
+	RES=`curl -X POST -m 3600 --cacert tools/dev/cert/tls.crt -d '{}' -H "authorization: bearer $$TOKEN" -H "Content-Type: application/json" -s -i $$ENDPOINT` \
+	; echo "result:\n$$RES"
