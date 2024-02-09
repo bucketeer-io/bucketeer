@@ -90,7 +90,7 @@ func TestListProjectsRequestOrganizations(t *testing.T) {
 			}
 		}
 		if !found {
-			t.Fatalf("received a project of a not request organization expected: %v, actual: %v", orgIds, project.OrganizationId)
+			t.Fatalf("received a project of a not request organization expected: %v, actual: %s", orgIds, project.OrganizationId)
 		}
 	}
 }
