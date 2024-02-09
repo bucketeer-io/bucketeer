@@ -65,13 +65,13 @@ func TestListProjectsRequestOrganizations(t *testing.T) {
 	defer cancel()
 	c := newEnvironmentClient(t)
 	defer c.Close()
-	pageSize := int64(1)
+	pageSize := int64(2)
 
 	orgResp, err := c.ListOrganizations(ctx, &environmentproto.ListOrganizationsRequest{PageSize: pageSize})
 	if err != nil {
 		t.Fatal(err)
 	}
-	length := int(math.Min(float64(len(orgResp.Organizations)), 2))
+	length := int(math.Min(float64(len(orgResp.Organizations)), float64(pageSize)))
 	orgIds := make([]string, length)
 	for i := 0; i < length; i++ {
 		orgIds[i] = orgResp.Organizations[rand.Intn(len(orgResp.Organizations))].Id
