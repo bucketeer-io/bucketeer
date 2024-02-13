@@ -93,6 +93,16 @@ spec:
               value: "{{ .Values.env.redis.poolMaxIdle }}"
             - name: BUCKETEER_EVENT_PERSISTER_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.redis.poolMaxActive }}"
+            - name: BUCKETEER_EVENT_PERSISTER_MYSQL_USER
+              value: "{{ .Values.env.mysqlUser }}"
+            - name: BUCKETEER_EVENT_PERSISTER_MYSQL_PASS
+              value: "{{ .Values.env.mysqlPass }}"
+            - name: BUCKETEER_EVENT_PERSISTER_MYSQL_HOST
+              value: "{{ .Values.env.mysqlHost }}"
+            - name: BUCKETEER_EVENT_PERSISTER_MYSQL_PORT
+              value: "{{ .Values.env.mysqlPort }}"
+            - name: BUCKETEER_EVENT_PERSISTER_MYSQL_DB_NAME
+              value: "{{ .Values.env.mysqlDBName }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
