@@ -13,6 +13,11 @@ env:
   port: 9090
   metricsPort: 9002
   timezone: UTC
+  mysqlUser:
+  mysqlPass:
+  mysqlHost:
+  mysqlPort: 3306
+  mysqlDbName:
   # egress services
   experimentService: localhost:9001
   featureService: localhost:9001
@@ -20,6 +25,7 @@ env:
   maxMps: "1000"
   numWorkers: 5
   flushSize: 100
+  checkInterval: 60s
   flushInterval: 2s
   flushTimeout: 30s
   # pubsub

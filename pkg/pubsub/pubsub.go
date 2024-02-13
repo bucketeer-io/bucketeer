@@ -17,6 +17,7 @@ package pubsub
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/pubsub"
@@ -30,6 +31,10 @@ import (
 
 var (
 	ErrInvalidTopic = errors.New("pubsub: invalid topic")
+)
+
+const (
+	rpcErrAlreadyExists = "AlreadyExists"
 )
 
 type Client struct {
@@ -235,6 +240,7 @@ func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) 
 	for retry.WaitNext() {
 		ok, err := sub.Exists(ctx)
 		if err != nil {
+			lastErr = err
 			continue
 		}
 		if ok {
@@ -246,7 +252,44 @@ func (c *Client) subscription(id, topicID string) (*pubsub.Subscription, error) 
 		if err == nil {
 			return sub, nil
 		}
+		if strings.Contains(err.Error(), rpcErrAlreadyExists) {
+			c.logger.Debug("Subscription already exists, use it directly",
+				zap.String("subscription", id),
+				zap.String("topic", topicID),
+			)
+			return sub, nil
+		}
 		lastErr = err
 	}
 	return nil, lastErr
+}
+
+func (c *Client) SubscriptionExists(id string) (bool, error) {
+	sub := c.Client.Subscription(id)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	exists, err := sub.Exists(ctx)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func (c *Client) DeleteSubscription(id string) error {
+	sub := c.Client.Subscription(id)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return sub.Delete(ctx)
+}
+
+func (c *Client) DeleteSubscriptionIfExist(id string) error {
+	exists, err := c.SubscriptionExists(id)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		c.logger.Debug("Subscription does not exist", zap.String("subscription", id))
+		return nil
+	}
+	return c.DeleteSubscription(id)
 }

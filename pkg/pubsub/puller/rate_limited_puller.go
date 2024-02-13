@@ -25,6 +25,7 @@ import (
 type RateLimitedPuller interface {
 	Run(context.Context) error
 	MessageCh() <-chan *Message
+	SubscriptionName() string
 }
 
 type rateLimitedPuller struct {
@@ -56,4 +57,8 @@ func (p *rateLimitedPuller) Run(ctx context.Context) error {
 
 func (p *rateLimitedPuller) MessageCh() <-chan *Message {
 	return p.msgCh
+}
+
+func (p *rateLimitedPuller) SubscriptionName() string {
+	return p.puller.SubscriptionName()
 }

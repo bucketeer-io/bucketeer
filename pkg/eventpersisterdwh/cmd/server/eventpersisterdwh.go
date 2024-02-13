@@ -31,10 +31,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
 const (
@@ -52,6 +52,7 @@ type server struct {
 	maxMPS        *int
 	numWorkers    *int
 	flushSize     *int
+	checkInterval *time.Duration
 	flushInterval *time.Duration
 	flushTimeout  *time.Duration
 	timezone      *string
@@ -77,6 +78,12 @@ type server struct {
 	redisAddr          *string
 	redisPoolMaxIdle   *int
 	redisPoolMaxActive *int
+	// mysql
+	mysqlUser   *string
+	mysqlPass   *string
+	mysqlHost   *string
+	mysqlPort   *int
+	mysqlDbName *string
 }
 
 func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -92,6 +99,10 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"flush-size",
 			"Maximum number of messages to batch before writing to datastore.",
 		).Default("50").Int(),
+		checkInterval: cmd.Flag(
+			"check-interval",
+			"Interval to check if there are experiments to be handled.",
+		).Required().Duration(),
 		flushInterval: cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
 		flushTimeout:  cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
 		timezone:      cmd.Flag("timezone", "Time zone").Required().String(),
@@ -132,6 +143,11 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"redis-pool-max-active",
 			"Maximum number of connections allocated by the pool at a given time.",
 		).Required().Int(),
+		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDbName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -139,7 +155,12 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 
 func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	registerer := metrics.DefaultRegisterer()
-	puller, err := s.createPuller(ctx, logger)
+	// mysqlClient
+	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
+	if err != nil {
+		return err
+	}
+	pubsubClient, err := s.createPubsubClient(ctx, logger)
 	if err != nil {
 		return err
 	}
@@ -202,12 +223,19 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	p := persister.NewPersisterDWH(
-		puller,
+		pubsubClient,
 		registerer,
 		writer,
+		mysqlClient,
+		*s.subscription,
+		*s.topic,
+		*s.pullerNumGoroutines,
+		*s.pullerMaxOutstandingMessages,
+		*s.pullerMaxOutstandingBytes,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
+		persister.WithCheckInterval(*s.checkInterval),
 		persister.WithFlushInterval(*s.flushInterval),
 		persister.WithFlushTimeout(*s.flushTimeout),
 		persister.WithMetrics(registerer),
@@ -247,19 +275,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	return nil
 }
 
-func (s *server) createPuller(ctx context.Context, logger *zap.Logger) (puller.Puller, error) {
+func (s *server) createPubsubClient(
+	ctx context.Context,
+	logger *zap.Logger,
+) (*pubsub.Client, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	client, err := pubsub.NewClient(ctx, *s.project, pubsub.WithLogger(logger))
+	pubsubClient, err := pubsub.NewClient(ctx, *s.project, pubsub.WithLogger(logger))
 	if err != nil {
 		logger.Error("Failed to create PubSub client", zap.Error(err))
 		return nil, err
 	}
-	return client.CreatePuller(*s.subscription, *s.topic,
-		pubsub.WithNumGoroutines(*s.pullerNumGoroutines),
-		pubsub.WithMaxOutstandingMessages(*s.pullerMaxOutstandingMessages),
-		pubsub.WithMaxOutstandingBytes(*s.pullerMaxOutstandingBytes),
-	)
+	return pubsubClient, nil
 }
 
 func (s *server) newBigQueryWriter(
@@ -303,4 +330,21 @@ func (s *server) newBigQueryWriter(
 		return nil, errUnknownSvcName
 	}
 	return writer, err
+}
+
+func (s *server) createMySQLClient(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (mysql.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return mysql.NewClient(
+		ctx,
+		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost,
+		*s.mysqlPort,
+		*s.mysqlDbName,
+		mysql.WithLogger(logger),
+		mysql.WithMetrics(registerer),
+	)
 }
