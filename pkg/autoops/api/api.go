@@ -1094,9 +1094,9 @@ func (s *AutoOpsService) stopProgressiveRollout(
 		return dt.Err()
 	}
 	if hasScheduleOps {
-		stoppedBy = autoopsproto.ProgressiveRollout_OPS_KILL_SWITCH
-	} else {
 		stoppedBy = autoopsproto.ProgressiveRollout_OPS_SCHEDULE
+	} else {
+		stoppedBy = autoopsproto.ProgressiveRollout_OPS_KILL_SWITCH
 	}
 	if err := executeStopProgressiveRolloutOperation(
 		ctx,
