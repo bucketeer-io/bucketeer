@@ -45,6 +45,11 @@ type batchService struct {
 	mauPartitionDeleter       jobs.Job
 	mauPartitionCreator       jobs.Job
 	domainEventInformer       jobs.Job
+	featureFlagCacher         jobs.Job
+	segmentUserCacher         jobs.Job
+	apiKeyCacher              jobs.Job
+	experimentCacher          jobs.Job
+	autoOpsRulesCacher        jobs.Job
 	logger                    *zap.Logger
 }
 
@@ -54,7 +59,9 @@ func NewBatchService(
 	eventCountWatcher, progressiveRolloutWatcher,
 	redisCounterDeleter, experimentCalculator,
 	mauSummarizer, mauPartitionDeleter, mauPartitionCreator,
-	domainEventInformer jobs.Job,
+	domainEventInformer, featureFlagCacher,
+	segmentUserCacher, apiKeyCacher,
+	experimentCacher, autoOpsRulesCacher jobs.Job,
 	logger *zap.Logger,
 ) *batchService {
 	return &batchService{
@@ -71,6 +78,11 @@ func NewBatchService(
 		mauPartitionDeleter:       mauPartitionDeleter,
 		mauPartitionCreator:       mauPartitionCreator,
 		domainEventInformer:       domainEventInformer,
+		featureFlagCacher:         featureFlagCacher,
+		segmentUserCacher:         segmentUserCacher,
+		apiKeyCacher:              apiKeyCacher,
+		experimentCacher:          experimentCacher,
+		autoOpsRulesCacher:        autoOpsRulesCacher,
 		logger:                    logger.Named("batch-service"),
 	}
 }
@@ -105,6 +117,16 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.mauPartitionDeleter.Run(ctx)
 	case batch.BatchJob_MauPartitionCreator:
 		err = s.mauPartitionCreator.Run(ctx)
+	case batch.BatchJob_FeatureFlagCacher:
+		err = s.featureFlagCacher.Run(ctx)
+	case batch.BatchJob_SegmentUserCacher:
+		err = s.segmentUserCacher.Run(ctx)
+	case batch.BatchJob_ApiKeyCacher:
+		err = s.apiKeyCacher.Run(ctx)
+	case batch.BatchJob_ExperimentCacher:
+		err = s.experimentCacher.Run(ctx)
+	case batch.BatchJob_AutoOpsRulesCacher:
+		err = s.autoOpsRulesCacher.Run(ctx)
 	default:
 		s.logger.Error("Unknown job",
 			log.FieldsFromImcomingContext(ctx).AddFields(
