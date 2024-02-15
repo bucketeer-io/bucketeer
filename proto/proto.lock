@@ -3070,6 +3070,26 @@
               {
                 "name": "MauPartitionCreator",
                 "integer": 12
+              },
+              {
+                "name": "FeatureFlagCacher",
+                "integer": 13
+              },
+              {
+                "name": "SegmentUserCacher",
+                "integer": 14
+              },
+              {
+                "name": "ApiKeyCacher",
+                "integer": 15
+              },
+              {
+                "name": "AutoOpsRulesCacher",
+                "integer": 16
+              },
+              {
+                "name": "ExperimentCacher",
+                "integer": 17
               }
             ]
           }
