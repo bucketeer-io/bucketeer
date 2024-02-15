@@ -50,6 +50,8 @@ spec:
           env:
             - name: BUCKETEER_BATCH_PROJECT
               value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_BATCH_ACCOUNT_SERVICE
+              value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BATCH_NOTIFICATION_SERVICE
               value: "{{ .Values.env.notificationService }}"
             - name: BUCKETEER_BATCH_ENVIRONMENT_SERVICE
