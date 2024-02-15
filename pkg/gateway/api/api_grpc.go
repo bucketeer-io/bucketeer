@@ -1017,32 +1017,45 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 	ctx context.Context,
 	apiKey string,
 ) (*accountproto.EnvironmentAPIKey, error) {
-	envAPIKey, err := getEnvironmentAPIKeyFromCache(
-		ctx,
-		apiKey,
-		s.environmentAPIKeyCache,
-		callerGatewayService,
-		cacheLayerInMemory,
-	)
-	if err == nil {
-		return envAPIKey, nil
-	}
 	k, err, _ := s.flightgroup.Do(
 		environmentAPIKeyFlightID(apiKey),
 		func() (interface{}, error) {
-			return getEnvironmentAPIKey(
+			envAPIKey, err := getEnvironmentAPIKeyFromCache(
+				ctx,
+				apiKey,
+				s.environmentAPIKeyCache,
+				callerGatewayService,
+				cacheLayerInMemory,
+			)
+			// Cache found
+			if err == nil {
+				return envAPIKey, nil
+			}
+			// No cache
+			envAPIKey, err = getEnvironmentAPIKey(
 				ctx,
 				apiKey,
 				s.accountClient,
 				s.environmentAPIKeyCache,
 				s.logger,
 			)
+			if err != nil {
+				return nil, err
+			}
+			// Put cache
+			putEnvironmentAPIKeyCache(
+				ctx,
+				envAPIKey,
+				s.environmentAPIKeyCache,
+				s.logger,
+			)
+			return envAPIKey, nil
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
-	envAPIKey = k.(*accountproto.EnvironmentAPIKey)
+	envAPIKey := k.(*accountproto.EnvironmentAPIKey)
 	return envAPIKey, nil
 }
 
@@ -1083,7 +1096,15 @@ func getEnvironmentAPIKey(
 		)
 		return nil, ErrInternal
 	}
-	envAPIKey := resp.EnvironmentApiKey
+	return resp.EnvironmentApiKey, nil
+}
+
+func putEnvironmentAPIKeyCache(
+	ctx context.Context,
+	envAPIKey *accountproto.EnvironmentAPIKey,
+	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
+	logger *zap.Logger,
+) {
 	if err := environmentAPIKeyCache.Put(envAPIKey); err != nil {
 		logger.Error(
 			"Failed to cache environment APIKey",
@@ -1093,7 +1114,6 @@ func getEnvironmentAPIKey(
 			)...,
 		)
 	}
-	return envAPIKey, nil
 }
 
 func getEnvironmentAPIKeyFromCache(
