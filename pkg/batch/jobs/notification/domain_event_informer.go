@@ -70,7 +70,6 @@ func WithLogger(logger *zap.Logger) Option {
 type domainEventInformer struct {
 	environmentClient            environmentclient.Client
 	sender                       sender.Sender
-	group                        errgroup.Group
 	maxMPS                       int
 	runningDurationPerBatch      time.Duration
 	project                      string
@@ -132,10 +131,11 @@ func (i *domainEventInformer) Run(ctx context.Context) error {
 		)
 		cancel()
 	})
-	i.group.Go(func() error {
+	group := errgroup.Group{}
+	group.Go(func() error {
 		return rateLimitedPuller.Run(cctx)
 	})
-	i.group.Go(func() error {
+	group.Go(func() error {
 		for {
 			select {
 			case msg, ok := <-rateLimitedPuller.MessageCh():
@@ -149,7 +149,10 @@ func (i *domainEventInformer) Run(ctx context.Context) error {
 			}
 		}
 	})
-	err = i.group.Wait()
+	err = group.Wait()
+	if err != nil {
+		i.logger.Error("DomainEventInformer stopped with error", zap.Error(err))
+	}
 	closeClient()
 	i.logger.Info("DomainEventInformer stopped")
 	return err
