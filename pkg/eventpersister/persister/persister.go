@@ -193,8 +193,9 @@ func (p *Persister) batch() error {
 	batch := make(map[string]*puller.Message)
 	envCache := environmentLastUsedInfoCache{}
 	timer := time.NewTimer(p.opts.flushInterval)
-	timerWriteCache := time.NewTimer(p.opts.writeCacheInterval)
 	defer timer.Stop()
+	timerWriteCache := time.NewTimer(p.opts.writeCacheInterval)
+	defer timerWriteCache.Stop()
 	updateEvaluationCounter := func(envEvents environmentEventMap) {
 		// Increment the evaluation event count in the Redis
 		fails := p.incrementEnvEvents(envEvents)
@@ -203,6 +204,12 @@ func (p *Persister) batch() error {
 		// Reset the maps and the timer
 		batch = make(map[string]*puller.Message)
 		timer.Reset(p.opts.flushInterval)
+	}
+	writeLastUsedInfoCache := func(cache environmentLastUsedInfoCache) {
+		p.writeEnvLastUsedInfo(cache)
+		// Reset the cache and the timer
+		envCache = make(environmentLastUsedInfoCache)
+		timerWriteCache.Reset(p.opts.writeCacheInterval)
 	}
 	for {
 		select {
@@ -239,19 +246,16 @@ func (p *Persister) batch() error {
 		case <-timerWriteCache.C:
 			p.logger.Debug("Write cache timer triggered")
 			// Write the feature flag last-used cache in the MySQL
-			p.writeEnvLastUsedInfo(envCache)
-			// Reset the cache and the timer
-			envCache = make(environmentLastUsedInfoCache)
-			timerWriteCache.Reset(p.opts.writeCacheInterval)
+			writeLastUsedInfoCache(envCache)
 		case <-p.ctx.Done():
-			// Because the feature flag last-used cache is not mandatory
-			// when the context is done, we don't try to write the cache
-			// to speed up the shutdown process
 			batchSize := len(batch)
 			p.logger.Info("Context is done", zap.Int("batchSize", batchSize))
 			if len(batch) > 0 {
 				envEvents := p.extractEvents(batch)
-				p.incrementEnvEvents(envEvents)
+				updateEvaluationCounter(envEvents)
+				// Update and write the last-used info cache
+				p.cacheLastUsedInfoPerEnv(envEvents, envCache)
+				writeLastUsedInfoCache(envCache)
 				p.logger.Info("All the left messages are processed successfully", zap.Int("batchSize", batchSize))
 			}
 			return nil
