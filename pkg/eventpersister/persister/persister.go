@@ -205,8 +205,8 @@ func (p *Persister) batch() error {
 		batch = make(map[string]*puller.Message)
 		timer.Reset(p.opts.flushInterval)
 	}
-	writeLastUsedInfoCache := func(cache environmentLastUsedInfoCache) {
-		p.writeEnvLastUsedInfo(cache)
+	writeLastUsedInfoCache := func() {
+		p.writeEnvLastUsedInfo(envCache)
 		// Reset the cache and the timer
 		envCache = make(environmentLastUsedInfoCache)
 		timerWriteCache.Reset(p.opts.writeCacheInterval)
@@ -215,6 +215,7 @@ func (p *Persister) batch() error {
 		select {
 		case msg, ok := <-p.puller.MessageCh():
 			if !ok {
+				p.logger.Error("Failed to pull message")
 				return nil
 			}
 			receivedCounter.Inc()
@@ -246,18 +247,14 @@ func (p *Persister) batch() error {
 		case <-timerWriteCache.C:
 			p.logger.Debug("Write cache timer triggered")
 			// Write the feature flag last-used cache in the MySQL
-			writeLastUsedInfoCache(envCache)
+			writeLastUsedInfoCache()
 		case <-p.ctx.Done():
-			batchSize := len(batch)
-			p.logger.Info("Context is done", zap.Int("batchSize", batchSize))
-			if len(batch) > 0 {
-				envEvents := p.extractEvents(batch)
-				updateEvaluationCounter(envEvents)
-				// Update and write the last-used info cache
-				p.cacheLastUsedInfoPerEnv(envEvents, envCache)
-				writeLastUsedInfoCache(envCache)
-				p.logger.Info("All the left messages are processed successfully", zap.Int("batchSize", batchSize))
+			// Nack the messages to be redelivered
+			for _, msg := range batch {
+				msg.Nack()
 			}
+			p.logger.Info("All the left messages were Nack successfully before shutting down",
+				zap.Int("batchSize", len(batch)))
 			return nil
 		}
 	}
@@ -466,53 +463,58 @@ func (p *Persister) upsertMultiFeatureLastUsedInfo(
 	for _, f := range featureLastUsedInfos {
 		ids = append(ids, f.ID())
 	}
-	tx, err := p.mysqlClient.BeginTx(ctx)
+	storage := ftstorage.NewFeatureLastUsedInfoStorage(p.mysqlClient)
+	updatedInfo := make([]*ftdomain.FeatureLastUsedInfo, 0, len(ids))
+	currentInfo, err := storage.GetFeatureLastUsedInfos(ctx, ids, environmentNamespace)
 	if err != nil {
-		p.logger.Error("Failed to begin transaction", zap.Error(err))
 		return err
 	}
-	err = p.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		storage := ftstorage.NewFeatureLastUsedInfoStorage(p.mysqlClient)
-		updatedInfo := make([]*ftdomain.FeatureLastUsedInfo, 0, len(ids))
-		currentInfo, err := storage.GetFeatureLastUsedInfos(ctx, ids, environmentNamespace)
-		if err != nil {
+	currentInfoMap := make(map[string]*ftdomain.FeatureLastUsedInfo, len(currentInfo))
+	for _, c := range currentInfo {
+		currentInfoMap[c.ID()] = c
+	}
+	for _, f := range featureLastUsedInfos {
+		v, ok := currentInfoMap[f.ID()]
+		if !ok {
+			updatedInfo = append(updatedInfo, f)
+			continue
+		}
+		var update bool
+		if v.LastUsedAt < f.LastUsedAt {
+			update = true
+			v.LastUsedAt = f.LastUsedAt
+		}
+		if v.ClientOldestVersion != f.ClientOldestVersion {
+			update = true
+			v.ClientOldestVersion = f.ClientOldestVersion
+		}
+		if v.ClientLatestVersion != f.ClientLatestVersion {
+			update = true
+			v.ClientLatestVersion = f.ClientLatestVersion
+		}
+		if update {
+			updatedInfo = append(updatedInfo, v)
+		}
+	}
+	for _, info := range updatedInfo {
+		if err := p.upsertFeatureLastUsedInfo(ctx, info, environmentNamespace); err != nil {
 			return err
 		}
-		currentInfoMap := make(map[string]*ftdomain.FeatureLastUsedInfo, len(currentInfo))
-		for _, c := range currentInfo {
-			currentInfoMap[c.ID()] = c
-		}
-		for _, f := range featureLastUsedInfos {
-			v, ok := currentInfoMap[f.ID()]
-			if !ok {
-				updatedInfo = append(updatedInfo, f)
-				continue
-			}
-			var update bool
-			if v.LastUsedAt < f.LastUsedAt {
-				update = true
-				v.LastUsedAt = f.LastUsedAt
-			}
-			if v.ClientOldestVersion != f.ClientOldestVersion {
-				update = true
-				v.ClientOldestVersion = f.ClientOldestVersion
-			}
-			if v.ClientLatestVersion != f.ClientLatestVersion {
-				update = true
-				v.ClientLatestVersion = f.ClientLatestVersion
-			}
-			if update {
-				updatedInfo = append(updatedInfo, v)
-			}
-		}
-		for _, info := range updatedInfo {
-			if err := storage.UpsertFeatureLastUsedInfo(ctx, info, environmentNamespace); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
+	}
+	return nil
+}
+
+func (p *Persister) upsertFeatureLastUsedInfo(
+	ctx context.Context,
+	featureLastUsedInfo *ftdomain.FeatureLastUsedInfo,
+	environmentNamespace string,
+) error {
+	storage := ftstorage.NewFeatureLastUsedInfoStorage(p.mysqlClient)
+	if err := storage.UpsertFeatureLastUsedInfo(
+		ctx,
+		featureLastUsedInfo,
+		environmentNamespace,
+	); err != nil {
 		return err
 	}
 	return nil
