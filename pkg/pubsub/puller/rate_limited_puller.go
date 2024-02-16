@@ -49,6 +49,9 @@ func (p *rateLimitedPuller) Run(ctx context.Context) error {
 		select {
 		case p.msgCh <- msg:
 		case <-ctx.Done():
+			// we should Nack the message if the context is done, check
+			// this issue: https://github.com/googleapis/google-cloud-go/issues/848#issuecomment-355116917
+			msg.Nack()
 		}
 	})
 	close(p.msgCh)
