@@ -17,8 +17,8 @@ package pubsub
 import (
 	"context"
 	"errors"
-	"strings"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/pubsub"
