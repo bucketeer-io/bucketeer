@@ -240,6 +240,7 @@ func (p *Persister) batch() error {
 			p.cacheLastUsedInfoPerEnv(envEvents, envCache)
 			updateEvaluationCounter(envEvents)
 		case <-timer.C:
+			p.logger.Debug("Update evaluation count timer triggered")
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
 			p.cacheLastUsedInfoPerEnv(envEvents, envCache)

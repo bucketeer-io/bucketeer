@@ -15463,13 +15463,19 @@
                 "type": "bucketeer.event.domain.Event.Type"
               },
               {
-                "id": 6,
-                "name": "environment_id",
+                "id": 7,
+                "name": "environment_name",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "environment_url_code",
                 "type": "string"
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              6
             ]
           },
           {
@@ -15482,42 +15488,49 @@
                 "is_repeated": true
               },
               {
-                "id": 3,
-                "name": "environment_id",
+                "id": 4,
+                "name": "environment_name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "environment_url_code",
                 "type": "string"
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              3
             ]
           },
           {
             "name": "ExperimentRunningNotification",
             "fields": [
               {
-                "id": 2,
-                "name": "environment_id",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "experiments",
                 "type": "bucketeer.experiment.Experiment",
                 "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "environment_name",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "environment_url_code",
+                "type": "string"
               }
             ],
             "reserved_ids": [
-              1
+              1,
+              2
             ]
           },
           {
             "name": "MauCountNotification",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_id",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "event_count",
@@ -15532,7 +15545,20 @@
                 "id": 4,
                 "name": "month",
                 "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "environment_name",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "environment_url_code",
+                "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           }
         ],

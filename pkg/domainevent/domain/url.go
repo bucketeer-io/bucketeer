@@ -45,26 +45,26 @@ var (
 	ErrUnknownEntityType = errors.New("domain: unknown entity type")
 )
 
-func URL(entityType proto.Event_EntityType, url, environmentID, id string) (string, error) {
+func URL(entityType proto.Event_EntityType, url, envURLCode, id string) (string, error) {
 	switch entityType {
 	case proto.Event_FEATURE:
-		return fmt.Sprintf(urlTemplateFeature, url, environmentID, id), nil
+		return fmt.Sprintf(urlTemplateFeature, url, envURLCode, id), nil
 	case proto.Event_GOAL:
-		return fmt.Sprintf(urlTemplateGoal, url, environmentID, id), nil
+		return fmt.Sprintf(urlTemplateGoal, url, envURLCode, id), nil
 	case proto.Event_EXPERIMENT:
-		return fmt.Sprintf(urlTemplateExperiment, url, environmentID, id), nil
+		return fmt.Sprintf(urlTemplateExperiment, url, envURLCode, id), nil
 	case proto.Event_ACCOUNT:
-		return fmt.Sprintf(urlTemplateAccount, url, environmentID, id), nil
+		return fmt.Sprintf(urlTemplateAccount, url, envURLCode, id), nil
 	case proto.Event_APIKEY:
-		return fmt.Sprintf(urlTemplateAPIKey, url, environmentID, id), nil
+		return fmt.Sprintf(urlTemplateAPIKey, url, envURLCode, id), nil
 	case proto.Event_SEGMENT:
-		return fmt.Sprintf(urlTemplateSegment, url, environmentID, id), nil
+		return fmt.Sprintf(urlTemplateSegment, url, envURLCode, id), nil
 	case proto.Event_AUTOOPS_RULE, proto.Event_PROGRESSIVE_ROLLOUT:
-		return fmt.Sprintf(urlTemplateAutoOpsRule, url, environmentID, id), nil
+		return fmt.Sprintf(urlTemplateAutoOpsRule, url, envURLCode, id), nil
 	case proto.Event_PUSH:
-		return fmt.Sprintf(urlTemplatePush, url, environmentID, id), nil
+		return fmt.Sprintf(urlTemplatePush, url, envURLCode, id), nil
 	case proto.Event_SUBSCRIPTION:
-		return fmt.Sprintf(urlTemplateSubscription, url, environmentID, id), nil
+		return fmt.Sprintf(urlTemplateSubscription, url, envURLCode, id), nil
 	case proto.Event_ADMIN_SUBSCRIPTION:
 		return fmt.Sprintf(urlTemplateAdminSubscription, url, defaultEnvironmentID, id), nil
 	case proto.Event_ENVIRONMENT:
@@ -76,7 +76,7 @@ func URL(entityType proto.Event_EntityType, url, environmentID, id string) (stri
 	case proto.Event_ORGANIZATION:
 		return fmt.Sprintf(urlTemplateOrganization, url, defaultEnvironmentID, id), nil
 	case proto.Event_FLAG_TRIGGER:
-		return fmt.Sprintf(urlTemplateFeature, url, environmentID, id), nil
+		return fmt.Sprintf(urlTemplateFeature, url, envURLCode, id), nil
 	}
 	return "", ErrUnknownEntityType
 }

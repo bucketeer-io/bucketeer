@@ -31,12 +31,15 @@ func TestCreateNotificationEvent(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	envName := "env-name"
+	envURLCode := "env-url-code"
 	patterns := []struct {
-		desc          string
-		input         *domaineventproto.Event
-		environmentID string
-		expected      *senderproto.NotificationEvent
-		expectedErr   error
+		desc               string
+		input              *domaineventproto.Event
+		environmentName    string
+		environmentURLCode string
+		expected           *senderproto.NotificationEvent
+		expectedErr        error
 	}{
 		{
 			desc: "success: DomainEvent",
@@ -49,7 +52,8 @@ func TestCreateNotificationEvent(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 				IsAdminEvent:         false,
 			},
-			environmentID: "nsid",
+			environmentName:    envName,
+			environmentURLCode: envURLCode,
 			expected: &senderproto.NotificationEvent{
 				Id:                   "id",
 				EnvironmentNamespace: "ns0",
@@ -57,11 +61,12 @@ func TestCreateNotificationEvent(t *testing.T) {
 				Notification: &senderproto.Notification{
 					Type: senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{
-						EnvironmentId: "nsid",
-						Editor:        &domaineventproto.Editor{Email: "test@test.com"},
-						EntityType:    domaineventproto.Event_FEATURE,
-						EntityId:      "fid",
-						Type:          domaineventproto.Event_FEATURE_CREATED,
+						EnvironmentName:    envName,
+						EnvironmentUrlCode: envURLCode,
+						Editor:             &domaineventproto.Editor{Email: "test@test.com"},
+						EntityType:         domaineventproto.Event_FEATURE,
+						EntityId:           "fid",
+						Type:               domaineventproto.Event_FEATURE_CREATED,
 					},
 				},
 				IsAdminEvent: false,
@@ -79,7 +84,8 @@ func TestCreateNotificationEvent(t *testing.T) {
 				EnvironmentNamespace: "",
 				IsAdminEvent:         true,
 			},
-			environmentID: "nsid",
+			environmentName:    envName,
+			environmentURLCode: envURLCode,
 			expected: &senderproto.NotificationEvent{
 				Id:                   "id",
 				EnvironmentNamespace: "",
@@ -87,11 +93,12 @@ func TestCreateNotificationEvent(t *testing.T) {
 				Notification: &senderproto.Notification{
 					Type: senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{
-						EnvironmentId: "nsid",
-						Editor:        &domaineventproto.Editor{Email: "test@test.com"},
-						EntityType:    domaineventproto.Event_PROJECT,
-						EntityId:      "pid",
-						Type:          domaineventproto.Event_PROJECT_CREATED,
+						EnvironmentName:    envName,
+						EnvironmentUrlCode: envURLCode,
+						Editor:             &domaineventproto.Editor{Email: "test@test.com"},
+						EntityType:         domaineventproto.Event_PROJECT,
+						EntityId:           "pid",
+						Type:               domaineventproto.Event_PROJECT_CREATED,
 					},
 				},
 				IsAdminEvent: true,
@@ -102,14 +109,15 @@ func TestCreateNotificationEvent(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			i := newDomainEventInformer(t, mockController)
-			actual, err := i.createNotificationEvent(p.input, p.environmentID, p.input.IsAdminEvent)
+			actual, err := i.createNotificationEvent(p.input, p.environmentName, p.environmentURLCode, p.input.IsAdminEvent)
 			assert.Equal(t, p.expectedErr, err)
 			if p.expected != nil {
 				assert.Equal(t, p.expected.EnvironmentNamespace, actual.EnvironmentNamespace)
 				assert.Equal(t, p.expected.SourceType, actual.SourceType)
 				assert.Equal(t, p.expected.IsAdminEvent, actual.IsAdminEvent)
 				assert.Equal(t, p.expected.Notification.Type, actual.Notification.Type)
-				assert.Equal(t, p.expected.Notification.DomainEventNotification.EnvironmentId, actual.Notification.DomainEventNotification.EnvironmentId)
+				assert.Equal(t, p.expected.Notification.DomainEventNotification.EnvironmentName, actual.Notification.DomainEventNotification.EnvironmentName)
+				assert.Equal(t, p.expected.Notification.DomainEventNotification.EnvironmentUrlCode, actual.Notification.DomainEventNotification.EnvironmentUrlCode)
 				assert.Equal(t, p.expected.Notification.DomainEventNotification.Editor, actual.Notification.DomainEventNotification.Editor)
 				assert.Equal(t, p.expected.Notification.DomainEventNotification.EntityType, actual.Notification.DomainEventNotification.EntityType)
 				assert.Equal(t, p.expected.Notification.DomainEventNotification.EntityId, actual.Notification.DomainEventNotification.EntityId)

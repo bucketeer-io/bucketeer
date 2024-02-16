@@ -74,8 +74,11 @@ export class DomainEventNotification extends jspb.Message {
   getType(): proto_event_domain_event_pb.Event.TypeMap[keyof proto_event_domain_event_pb.Event.TypeMap];
   setType(value: proto_event_domain_event_pb.Event.TypeMap[keyof proto_event_domain_event_pb.Event.TypeMap]): void;
 
-  getEnvironmentId(): string;
-  setEnvironmentId(value: string): void;
+  getEnvironmentName(): string;
+  setEnvironmentName(value: string): void;
+
+  getEnvironmentUrlCode(): string;
+  setEnvironmentUrlCode(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DomainEventNotification.AsObject;
@@ -93,7 +96,8 @@ export namespace DomainEventNotification {
     entityType: proto_event_domain_event_pb.Event.EntityTypeMap[keyof proto_event_domain_event_pb.Event.EntityTypeMap],
     entityId: string,
     type: proto_event_domain_event_pb.Event.TypeMap[keyof proto_event_domain_event_pb.Event.TypeMap],
-    environmentId: string,
+    environmentName: string,
+    environmentUrlCode: string,
   }
 }
 
@@ -103,8 +107,11 @@ export class FeatureStaleNotification extends jspb.Message {
   setFeaturesList(value: Array<proto_feature_feature_pb.Feature>): void;
   addFeatures(value?: proto_feature_feature_pb.Feature, index?: number): proto_feature_feature_pb.Feature;
 
-  getEnvironmentId(): string;
-  setEnvironmentId(value: string): void;
+  getEnvironmentName(): string;
+  setEnvironmentName(value: string): void;
+
+  getEnvironmentUrlCode(): string;
+  setEnvironmentUrlCode(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FeatureStaleNotification.AsObject;
@@ -119,18 +126,22 @@ export class FeatureStaleNotification extends jspb.Message {
 export namespace FeatureStaleNotification {
   export type AsObject = {
     featuresList: Array<proto_feature_feature_pb.Feature.AsObject>,
-    environmentId: string,
+    environmentName: string,
+    environmentUrlCode: string,
   }
 }
 
 export class ExperimentRunningNotification extends jspb.Message {
-  getEnvironmentId(): string;
-  setEnvironmentId(value: string): void;
-
   clearExperimentsList(): void;
   getExperimentsList(): Array<proto_experiment_experiment_pb.Experiment>;
   setExperimentsList(value: Array<proto_experiment_experiment_pb.Experiment>): void;
   addExperiments(value?: proto_experiment_experiment_pb.Experiment, index?: number): proto_experiment_experiment_pb.Experiment;
+
+  getEnvironmentName(): string;
+  setEnvironmentName(value: string): void;
+
+  getEnvironmentUrlCode(): string;
+  setEnvironmentUrlCode(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ExperimentRunningNotification.AsObject;
@@ -144,15 +155,13 @@ export class ExperimentRunningNotification extends jspb.Message {
 
 export namespace ExperimentRunningNotification {
   export type AsObject = {
-    environmentId: string,
     experimentsList: Array<proto_experiment_experiment_pb.Experiment.AsObject>,
+    environmentName: string,
+    environmentUrlCode: string,
   }
 }
 
 export class MauCountNotification extends jspb.Message {
-  getEnvironmentId(): string;
-  setEnvironmentId(value: string): void;
-
   getEventCount(): number;
   setEventCount(value: number): void;
 
@@ -161,6 +170,12 @@ export class MauCountNotification extends jspb.Message {
 
   getMonth(): number;
   setMonth(value: number): void;
+
+  getEnvironmentName(): string;
+  setEnvironmentName(value: string): void;
+
+  getEnvironmentUrlCode(): string;
+  setEnvironmentUrlCode(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MauCountNotification.AsObject;
@@ -174,10 +189,11 @@ export class MauCountNotification extends jspb.Message {
 
 export namespace MauCountNotification {
   export type AsObject = {
-    environmentId: string,
     eventCount: number,
     userCount: number,
     month: number,
+    environmentName: string,
+    environmentUrlCode: string,
   }
 }
 
