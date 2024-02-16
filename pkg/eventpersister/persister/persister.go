@@ -26,13 +26,19 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
+	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
+	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
+
+type lastUsedInfoCache map[string]*ftdomain.FeatureLastUsedInfo
+type environmentLastUsedInfoCache map[string]lastUsedInfoCache
 
 var (
 	ErrUnexpectedMessageType = errors.New("eventpersister: unexpected message type")
@@ -48,18 +54,20 @@ const (
 	eventCountKey      = "ec"
 	userCountKey       = "uc"
 	defaultVariationID = "default"
+	userDataAppVersion = "app_version"
 )
 
-type eventMap map[string]proto.Message
+type eventMap map[string]*eventproto.EvaluationEvent
 type environmentEventMap map[string]eventMap
 
 type options struct {
-	maxMPS        int
-	numWorkers    int
-	flushSize     int
-	flushInterval time.Duration
-	metrics       metrics.Registerer
-	logger        *zap.Logger
+	maxMPS             int
+	numWorkers         int
+	flushSize          int
+	flushInterval      time.Duration
+	writeCacheInterval time.Duration
+	metrics            metrics.Registerer
+	logger             *zap.Logger
 }
 
 type Option func(*options)
@@ -88,6 +96,12 @@ func WithFlushInterval(i time.Duration) Option {
 	}
 }
 
+func WithWriteCacheInterval(i time.Duration) Option {
+	return func(opts *options) {
+		opts.writeCacheInterval = i
+	}
+}
+
 func WithMetrics(r metrics.Registerer) Option {
 	return func(opts *options) {
 		opts.metrics = r
@@ -102,6 +116,7 @@ func WithLogger(l *zap.Logger) Option {
 
 type Persister struct {
 	puller                puller.RateLimitedPuller
+	mysqlClient           mysql.Client
 	group                 errgroup.Group
 	opts                  *options
 	logger                *zap.Logger
@@ -113,15 +128,17 @@ type Persister struct {
 
 func NewPersister(
 	p puller.Puller,
+	mysqlClient mysql.Client,
 	v3Cache cache.MultiGetDeleteCountCache,
 	opts ...Option,
 ) *Persister {
 	dopts := &options{
-		maxMPS:        1000,
-		numWorkers:    1,
-		flushSize:     50,
-		flushInterval: 5 * time.Second,
-		logger:        zap.NewNop(),
+		maxMPS:             1000,
+		numWorkers:         1,
+		flushSize:          50,
+		flushInterval:      5 * time.Second,
+		writeCacheInterval: 1 * time.Minute,
+		logger:             zap.NewNop(),
 	}
 	for _, opt := range opts {
 		opt(dopts)
@@ -138,6 +155,7 @@ func NewPersister(
 		cancel:                cancel,
 		doneCh:                make(chan struct{}),
 		evaluationCountCacher: v3Cache,
+		mysqlClient:           mysqlClient,
 	}
 }
 
@@ -173,8 +191,26 @@ func (p *Persister) Check(ctx context.Context) health.Status {
 
 func (p *Persister) batch() error {
 	batch := make(map[string]*puller.Message)
+	envCache := environmentLastUsedInfoCache{}
 	timer := time.NewTimer(p.opts.flushInterval)
 	defer timer.Stop()
+	timerWriteCache := time.NewTimer(p.opts.writeCacheInterval)
+	defer timerWriteCache.Stop()
+	updateEvaluationCounter := func(envEvents environmentEventMap) {
+		// Increment the evaluation event count in the Redis
+		fails := p.incrementEnvEvents(envEvents)
+		// Check to Ack or Nack the messages
+		p.checkMessages(batch, fails)
+		// Reset the maps and the timer
+		batch = make(map[string]*puller.Message)
+		timer.Reset(p.opts.flushInterval)
+	}
+	writeLastUsedInfoCache := func(cache environmentLastUsedInfoCache) {
+		p.writeEnvLastUsedInfo(cache)
+		// Reset the cache and the timer
+		envCache = make(environmentLastUsedInfoCache)
+		timerWriteCache.Reset(p.opts.writeCacheInterval)
+	}
 	for {
 		select {
 		case msg, ok := <-p.puller.MessageCh():
@@ -198,20 +234,28 @@ func (p *Persister) batch() error {
 			if len(batch) < p.opts.flushSize {
 				continue
 			}
-			p.send(batch)
-			batch = make(map[string]*puller.Message)
-			timer.Reset(p.opts.flushInterval)
+			envEvents := p.extractEvents(batch)
+			// Update the feature flag last-used cache
+			p.cacheLastUsedInfoPerEnv(envEvents, envCache)
+			updateEvaluationCounter(envEvents)
 		case <-timer.C:
-			if len(batch) > 0 {
-				p.send(batch)
-				batch = make(map[string]*puller.Message)
-			}
-			timer.Reset(p.opts.flushInterval)
+			envEvents := p.extractEvents(batch)
+			// Update the feature flag last-used cache
+			p.cacheLastUsedInfoPerEnv(envEvents, envCache)
+			updateEvaluationCounter(envEvents)
+		case <-timerWriteCache.C:
+			p.logger.Debug("Write cache timer triggered")
+			// Write the feature flag last-used cache in the MySQL
+			writeLastUsedInfoCache(envCache)
 		case <-p.ctx.Done():
 			batchSize := len(batch)
 			p.logger.Info("Context is done", zap.Int("batchSize", batchSize))
 			if len(batch) > 0 {
-				p.send(batch)
+				envEvents := p.extractEvents(batch)
+				updateEvaluationCounter(envEvents)
+				// Update and write the last-used info cache
+				p.cacheLastUsedInfoPerEnv(envEvents, envCache)
+				writeLastUsedInfoCache(envCache)
 				p.logger.Info("All the left messages are processed successfully", zap.Int("batchSize", batchSize))
 			}
 			return nil
@@ -219,18 +263,14 @@ func (p *Persister) batch() error {
 	}
 }
 
-func (p *Persister) send(messages map[string]*puller.Message) {
-	envEvents := p.extractEvents(messages)
-	if len(envEvents) == 0 {
-		p.logger.Error("all messages were bad")
-		return
-	}
-	fails := make(map[string]bool, len(messages))
+func (p *Persister) incrementEnvEvents(envEvents environmentEventMap) map[string]bool {
+	fails := make(map[string]bool, len(envEvents))
 	for environmentNamespace, events := range envEvents {
 		for id, event := range events {
-			if err := p.upsertEvaluationCount(event, environmentNamespace); err != nil {
+			// Increment the evaluation event count in the Redis
+			if err := p.incrementEvaluationCount(event, environmentNamespace); err != nil {
 				p.logger.Error(
-					"Failed to upsert an evaluation event in redis",
+					"Failed to increment the evaluation event in the Redis",
 					zap.Error(err),
 					zap.String("id", id),
 					zap.String("environmentNamespace", environmentNamespace),
@@ -239,6 +279,10 @@ func (p *Persister) send(messages map[string]*puller.Message) {
 			}
 		}
 	}
+	return fails
+}
+
+func (p *Persister) checkMessages(messages map[string]*puller.Message, fails map[string]bool) {
 	for id, m := range messages {
 		if repeatable, ok := fails[id]; ok {
 			if repeatable {
@@ -259,7 +303,7 @@ func (p *Persister) extractEvents(messages map[string]*puller.Message) environme
 	envEvents := environmentEventMap{}
 	handleBadMessage := func(m *puller.Message, err error) {
 		m.Ack()
-		p.logger.Error("bad message", zap.Error(err), zap.Any("msg", m))
+		p.logger.Error("Bad proto message", zap.Error(err), zap.Any("msg", m))
 		handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
 	}
 	for _, m := range messages {
@@ -268,16 +312,16 @@ func (p *Persister) extractEvents(messages map[string]*puller.Message) environme
 			handleBadMessage(m, err)
 			continue
 		}
-		var innerEvent ptypes.DynamicAny
-		if err := ptypes.UnmarshalAny(event.Event, &innerEvent); err != nil {
+		innerEvent := &eventproto.EvaluationEvent{}
+		if err := ptypes.UnmarshalAny(event.Event, innerEvent); err != nil {
 			handleBadMessage(m, err)
 			continue
 		}
 		if innerEvents, ok := envEvents[event.EnvironmentNamespace]; ok {
-			innerEvents[event.Id] = innerEvent.Message
+			innerEvents[event.Id] = innerEvent
 			continue
 		}
-		envEvents[event.EnvironmentNamespace] = eventMap{event.Id: innerEvent.Message}
+		envEvents[event.EnvironmentNamespace] = eventMap{event.Id: innerEvent}
 	}
 	return envEvents
 }
@@ -292,7 +336,7 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
-func (p *Persister) upsertEvaluationCount(event proto.Message, environmentNamespace string) error {
+func (p *Persister) incrementEvaluationCount(event proto.Message, environmentNamespace string) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
 		vID, err := getVariationID(e.Reason, e.VariationId)
 		if err != nil {
@@ -335,6 +379,139 @@ func (p *Persister) countEvent(key string) error {
 
 func (p *Persister) countUser(key, userID string) error {
 	_, err := p.evaluationCountCacher.PFAdd(key, userID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *Persister) cacheLastUsedInfoPerEnv(
+	envEvents environmentEventMap,
+	envCache environmentLastUsedInfoCache,
+) {
+	for environmentNamespace, events := range envEvents {
+		for _, event := range events {
+			p.cacheEnvLastUsedInfo(event, envCache, environmentNamespace)
+		}
+		p.logger.Debug("Cache has been updated",
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.Int("cacheSize", len(envCache[environmentNamespace])),
+			zap.Int("eventSize", len(events)),
+		)
+	}
+}
+
+func (p *Persister) cacheEnvLastUsedInfo(
+	event *eventproto.EvaluationEvent,
+	envCache environmentLastUsedInfoCache,
+	environmentNamespace string,
+) {
+	clientVersion := event.User.Data[userDataAppVersion]
+	id := ftdomain.FeatureLastUsedInfoID(event.FeatureId, event.FeatureVersion)
+	if cache, ok := envCache[environmentNamespace]; ok {
+		if info, ok := cache[id]; ok {
+			info.UsedAt(event.Timestamp)
+			if err := info.SetClientVersion(clientVersion); err != nil {
+				p.logger.Error("Failed to set client version",
+					zap.Error(err),
+					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("featureId", info.FeatureId),
+					zap.Int32("featureVersion", info.Version),
+					zap.String("clientVersion", clientVersion))
+			}
+			return
+		}
+		cache[id] = ftdomain.NewFeatureLastUsedInfo(
+			event.FeatureId,
+			event.FeatureVersion,
+			event.Timestamp,
+			clientVersion,
+		)
+		return
+	}
+	cache := lastUsedInfoCache{}
+	cache[id] = ftdomain.NewFeatureLastUsedInfo(
+		event.FeatureId,
+		event.FeatureVersion,
+		event.Timestamp,
+		clientVersion,
+	)
+	envCache[environmentNamespace] = cache
+}
+
+func (p *Persister) writeEnvLastUsedInfo(envCache environmentLastUsedInfoCache) {
+	for environmentNamespace, cache := range envCache {
+		info := make([]*ftdomain.FeatureLastUsedInfo, 0, len(cache))
+		for _, v := range cache {
+			info = append(info, v)
+		}
+		if err := p.upsertMultiFeatureLastUsedInfo(context.Background(), info, environmentNamespace); err != nil {
+			p.logger.Error("Failed to write featureLastUsedInfo", zap.Error(err),
+				zap.String("environmentNamespace", environmentNamespace))
+			continue
+		}
+		p.logger.Debug("Cache has been written",
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.Int("cacheSize", len(info)),
+		)
+	}
+}
+
+func (p *Persister) upsertMultiFeatureLastUsedInfo(
+	ctx context.Context,
+	featureLastUsedInfos []*ftdomain.FeatureLastUsedInfo,
+	environmentNamespace string,
+) error {
+	ids := make([]string, 0, len(featureLastUsedInfos))
+	for _, f := range featureLastUsedInfos {
+		ids = append(ids, f.ID())
+	}
+	tx, err := p.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		p.logger.Error("Failed to begin transaction", zap.Error(err))
+		return err
+	}
+	err = p.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		storage := ftstorage.NewFeatureLastUsedInfoStorage(p.mysqlClient)
+		updatedInfo := make([]*ftdomain.FeatureLastUsedInfo, 0, len(ids))
+		currentInfo, err := storage.GetFeatureLastUsedInfos(ctx, ids, environmentNamespace)
+		if err != nil {
+			return err
+		}
+		currentInfoMap := make(map[string]*ftdomain.FeatureLastUsedInfo, len(currentInfo))
+		for _, c := range currentInfo {
+			currentInfoMap[c.ID()] = c
+		}
+		for _, f := range featureLastUsedInfos {
+			v, ok := currentInfoMap[f.ID()]
+			if !ok {
+				updatedInfo = append(updatedInfo, f)
+				continue
+			}
+			var update bool
+			if v.LastUsedAt < f.LastUsedAt {
+				update = true
+				v.LastUsedAt = f.LastUsedAt
+			}
+			if v.ClientOldestVersion != f.ClientOldestVersion {
+				update = true
+				v.ClientOldestVersion = f.ClientOldestVersion
+			}
+			if v.ClientLatestVersion != f.ClientLatestVersion {
+				update = true
+				v.ClientLatestVersion = f.ClientLatestVersion
+			}
+			if update {
+				updatedInfo = append(updatedInfo, v)
+			}
+		}
+		for _, info := range updatedInfo {
+			if err := storage.UpsertFeatureLastUsedInfo(ctx, info, environmentNamespace); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		return err
 	}

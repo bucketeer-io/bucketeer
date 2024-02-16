@@ -30,6 +30,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
 const (
@@ -47,6 +48,7 @@ type server struct {
 	flushSize                    *int
 	flushInterval                *time.Duration
 	flushTimeout                 *time.Duration
+	writeCacheInterval           *time.Duration
 	certPath                     *string
 	keyPath                      *string
 	serviceTokenPath             *string
@@ -57,7 +59,7 @@ type server struct {
 	mysqlPass                    *string
 	mysqlHost                    *string
 	mysqlPort                    *int
-	mysqlDbName                  *string
+	mysqlDBName                  *string
 	redisServerName              *string
 	redisAddr                    *string
 	redisPoolMaxIdle             *int
@@ -78,8 +80,10 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"flush-size",
 			"Maximum number of messages to batch before writing to datastore.",
 		).Default("50").Int(),
-		flushInterval:    cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
-		flushTimeout:     cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
+		flushInterval: cmd.Flag("flush-interval", "Maximum interval between two flushes.").Default("5s").Duration(),
+		flushTimeout:  cmd.Flag("flush-timeout", "Maximum time for a flush to finish.").Default("20s").Duration(),
+		writeCacheInterval: cmd.Flag(
+			"write-cache-interval", "Maximum interval before writing the cache in the DB.").Default("60s").Duration(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -95,11 +99,11 @@ func RegisterServerCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Comma
 			"puller-max-outstanding-bytes",
 			"Maximum size of unprocessed messages.",
 		).Int(),
-		mysqlUser:       cmd.Flag("mysql-user", "").String(),
-		mysqlPass:       cmd.Flag("mysql-pass", "").String(),
-		mysqlHost:       cmd.Flag("mysql-host", "").String(),
-		mysqlPort:       cmd.Flag("mysql-port", "").Int(),
-		mysqlDbName:     cmd.Flag("mysql-dbname", "").String(),
+		mysqlUser:       cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:       cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:       cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:       cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:     cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
 		redisServerName: cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
 		redisAddr:       cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		redisPoolMaxIdle: cmd.Flag(
@@ -142,13 +146,30 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer redisV3Client.Close()
 	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
 
+	mysqlClient, err := mysql.NewClient(
+		ctx,
+		*s.mysqlUser,
+		*s.mysqlPass,
+		*s.mysqlHost,
+		*s.mysqlPort,
+		*s.mysqlDBName,
+		mysql.WithLogger(logger),
+	)
+	if err != nil {
+		logger.Error("Failed to create mysql client", zap.Error(err))
+		return err
+	}
+	defer mysqlClient.Close()
+
 	p := persister.NewPersister(
 		puller,
+		mysqlClient,
 		redisV3Cache,
 		persister.WithMaxMPS(*s.maxMPS),
 		persister.WithNumWorkers(*s.numWorkers),
 		persister.WithFlushSize(*s.flushSize),
 		persister.WithFlushInterval(*s.flushInterval),
+		persister.WithWriteCacheInterval(*s.writeCacheInterval),
 		persister.WithMetrics(registerer),
 		persister.WithLogger(logger),
 	)
