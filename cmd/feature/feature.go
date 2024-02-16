@@ -18,7 +18,6 @@ import (
 	"log"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/cmd/recorder"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/cmd/segmentpersister"
 )
 
@@ -38,6 +37,5 @@ func main() {
 }
 
 func registerCommands(app *cli.App) {
-	recorder.RegisterCommand(app, app)
 	segmentpersister.RegisterCommand(app, app)
 }
