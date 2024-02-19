@@ -403,7 +403,13 @@ func (p *Persister) cacheEnvLastUsedInfo(
 	envCache environmentLastUsedInfoCache,
 	environmentNamespace string,
 ) {
-	clientVersion := event.User.Data[userDataAppVersion]
+	var clientVersion string
+	if event.User == nil {
+		p.logger.Warn("Failed to cache last used info. User is nil.",
+			zap.String("environmentNamespace", environmentNamespace))
+	} else {
+		clientVersion = event.User.Data[userDataAppVersion]
+	}
 	id := ftdomain.FeatureLastUsedInfoID(event.FeatureId, event.FeatureVersion)
 	if cache, ok := envCache[environmentNamespace]; ok {
 		if info, ok := cache[id]; ok {
