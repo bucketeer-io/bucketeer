@@ -154,6 +154,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		*s.mysqlPort,
 		*s.mysqlDBName,
 		mysql.WithLogger(logger),
+		mysql.WithMetrics(registerer),
 	)
 	if err != nil {
 		logger.Error("Failed to create mysql client", zap.Error(err))
