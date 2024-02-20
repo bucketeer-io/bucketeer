@@ -384,6 +384,10 @@ func (s *sender) updateFeatures(ctx context.Context, environmentNamespace, tag s
 	features := &featureproto.Features{
 		Features: fs,
 	}
+	// We manage all the caching via batch, but this case is an exception
+	// because we must update the cache before sending the push notification.
+	// Otherwise, when the api-gateway gets the request from the client, the cache might still be old
+	// because there is an interval of one minute between the cache update job.
 	if err := s.featuresCache.Put(features, environmentNamespace); err != nil {
 		s.logger.Error(
 			"Failed to cache features",
