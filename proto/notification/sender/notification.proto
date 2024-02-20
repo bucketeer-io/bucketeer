@@ -41,24 +41,32 @@ message DomainEventNotification {
   bucketeer.event.domain.Event.EntityType entity_type = 3;
   string entity_id = 4;
   bucketeer.event.domain.Event.Type type = 5;
-  string environment_id = 6;
+  reserved 6;  // string environment_id = 6
+  string environment_name = 7;
+  string environment_url_code = 8;
 }
 
 message FeatureStaleNotification {
   reserved 1;  // string environment_namespace = 1
   repeated bucketeer.feature.Feature features = 2;
-  string environment_id = 3;
+  reserved 3;  // string environment_id = 3
+  string environment_name = 4;
+  string environment_url_code = 5;
 }
 
 message ExperimentRunningNotification {
   reserved 1;  // string environment_namespace = 1
-  string environment_id = 2;
+  reserved 2;  // string environment_id = 2
   repeated bucketeer.experiment.Experiment experiments = 3;
+  string environment_name = 4;
+  string environment_url_code = 5;
 }
 
 message MauCountNotification {
-  string environment_id = 1;
+  reserved 1;  // string environment_id = 1
   int64 event_count = 2;
   int64 user_count = 3;
   int32 month = 4;
+  string environment_name = 5;
+  string environment_url_code = 6;
 }

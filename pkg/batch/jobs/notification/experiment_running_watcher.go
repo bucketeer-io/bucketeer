@@ -108,8 +108,9 @@ func (w *experimentRunningWatcher) createNotificationEvent(
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_ExperimentRunning,
 			ExperimentRunningNotification: &senderproto.ExperimentRunningNotification{
-				EnvironmentId: environment.Id,
-				Experiments:   experiments,
+				EnvironmentName:    environment.Name,
+				EnvironmentUrlCode: environment.UrlCode,
+				Experiments:        experiments,
 			},
 		},
 		IsAdminEvent: false,

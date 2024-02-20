@@ -202,10 +202,11 @@ func (w *mauCountWatcher) createNotificationEvent(
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_MauCount,
 			MauCountNotification: &senderproto.MauCountNotification{
-				EnvironmentId: environment.Id,
-				EventCount:    eventCount,
-				UserCount:     userCount,
-				Month:         month,
+				EnvironmentName:    environment.Name,
+				EnvironmentUrlCode: environment.UrlCode,
+				EventCount:         eventCount,
+				UserCount:          userCount,
+				Month:              month,
 			},
 		},
 		IsAdminEvent: false,

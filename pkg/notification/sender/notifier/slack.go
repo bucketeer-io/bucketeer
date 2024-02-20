@@ -192,7 +192,7 @@ func (n *slackNotifier) createDomainEventAttachment(
 	url, err := domainevent.URL(
 		notification.EntityType,
 		n.webURL,
-		notification.EnvironmentId,
+		notification.EnvironmentUrlCode,
 		notification.EntityId,
 	)
 	if err != nil {
@@ -202,7 +202,7 @@ func (n *slackNotifier) createDomainEventAttachment(
 		Color:      "#36a64f",
 		AuthorName: notification.Editor.Email,
 		Text: localizedMessage.Message + "\n\n" +
-			"Environment: " + notification.EnvironmentId + "\n" +
+			"Environment: " + notification.EnvironmentName + "\n" +
 			"Entity ID: " + notification.EntityId + "\n" +
 			"URL: " + url,
 	}
@@ -217,7 +217,7 @@ func (n *slackNotifier) createFeatureStaleAttachment(
 		url, err := domainevent.URL(
 			domainproto.Event_FEATURE,
 			n.webURL,
-			notification.EnvironmentId,
+			notification.EnvironmentUrlCode,
 			feature.Id,
 		)
 		if err != nil {
@@ -236,7 +236,7 @@ func (n *slackNotifier) createFeatureStaleAttachment(
 		Color:      "#F4D03F",
 		MarkdownIn: []string{"text"},
 		Text: replacedMsg + "\n\n" +
-			"Environment: " + notification.EnvironmentId + "\n\n" +
+			"Environment: " + notification.EnvironmentName + "\n\n" +
 			"Feature flags: \n\n" +
 			featureListMsg,
 	}
@@ -252,7 +252,7 @@ func (n *slackNotifier) createExperimentRunningAttachment(
 		url, err := domainevent.URL(
 			domainproto.Event_EXPERIMENT,
 			n.webURL,
-			notification.EnvironmentId,
+			notification.EnvironmentUrlCode,
 			e.Id,
 		)
 		if err != nil {
@@ -271,7 +271,7 @@ func (n *slackNotifier) createExperimentRunningAttachment(
 		Color:      "#3498DB",
 		MarkdownIn: []string{"text"},
 		Text: msg.Message + "\n\n" +
-			"Environment: " + notification.EnvironmentId + "\n\n" +
+			"Environment: " + notification.EnvironmentName + "\n\n" +
 			"Experiments: \n\n" +
 			listMsg,
 	}
@@ -291,7 +291,7 @@ func (n *slackNotifier) createMAUCountAttachment(
 		Color:      "#3498DB",
 		MarkdownIn: []string{"text"},
 		Text: replacedMsg + "\n\n" +
-			"Environment: " + notification.EnvironmentId + "\n" +
+			"Environment: " + notification.EnvironmentName + "\n" +
 			p.Sprintf("Event count: %d", notification.EventCount) + "\n" +
 			p.Sprintf("User count: %d", notification.UserCount),
 	}

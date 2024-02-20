@@ -115,8 +115,9 @@ func (w *featureStaleWatcher) createNotificationEvent(
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_FeatureStale,
 			FeatureStaleNotification: &senderproto.FeatureStaleNotification{
-				EnvironmentId: environment.Id,
-				Features:      features,
+				EnvironmentName:    environment.Name,
+				EnvironmentUrlCode: environment.UrlCode,
+				Features:           features,
 			},
 		},
 		IsAdminEvent: false,
