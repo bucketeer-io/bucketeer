@@ -101,7 +101,7 @@ export const APIKeyIndexPage: FC = memo(() => {
   const { apiKeyId } = useParams<{ apiKeyId: string }>();
   const isNew = apiKeyId == ID_NEW;
   const isUpdate = apiKeyId ? apiKeyId != ID_NEW : false;
-  const [open, setOpen] = useState(isNew);
+  const [open, setOpen] = useState(isNew || isUpdate);
   const [apiKey, getAPIKeyError] = useSelector<
     AppState,
     [APIKey.AsObject | undefined, SerializedError | null]
@@ -315,6 +315,22 @@ export const APIKeyIndexPage: FC = memo(() => {
       }
     });
   });
+
+  useEffect(() => {
+    if (isUpdate) {
+      dispatch(
+        getAPIKey({
+          environmentNamespace: currentEnvironment.id,
+          id: apiKeyId,
+        })
+      ).then((e) => {
+        const payload = e.payload as APIKey.AsObject;
+        resetUpdate({
+          name: payload.name,
+        });
+      });
+    }
+  }, []);
 
   useEffect(() => {
     updateAPIKeyList(

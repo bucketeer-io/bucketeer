@@ -18,7 +18,7 @@ export const GoalUpdateForm: FC<GoalUpdateFormProps> = memo(
     const methods = useFormContext();
     const {
       register,
-      formState: { errors, isSubmitting, isDirty, dirtyFields, isValid },
+      formState: { errors, isSubmitting, isDirty, isValid },
     } = methods;
 
     return (
@@ -61,7 +61,7 @@ export const GoalUpdateForm: FC<GoalUpdateFormProps> = memo(
                       name="id"
                       id="id"
                       className="input-text w-full"
-                      disabled={!editable}
+                      disabled
                     />
                     <p className="input-error">
                       {errors.id && (

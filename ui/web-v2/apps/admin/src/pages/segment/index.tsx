@@ -98,7 +98,7 @@ export const SegmentIndexPage: FC = memo(() => {
   const { segmentId } = useParams<{ segmentId: string }>();
   const isNew = segmentId == ID_NEW;
   const isUpdate = segmentId ? segmentId != ID_NEW : false;
-  const [open, setOpen] = useState(isNew);
+  const [open, setOpen] = useState(isNew || isUpdate);
   const [isUploadingDialogOpen, setIsUploadingDialogOpen] = useState(false);
   const [segment, getSegmentError] = useSelector<
     AppState,
@@ -422,7 +422,7 @@ export const SegmentIndexPage: FC = memo(() => {
         });
       });
     },
-    [dispatch, segmentId]
+    [dispatch, segmentId, dirtyFields]
   );
 
   const handleUploadingClose = () => {
@@ -434,6 +434,20 @@ export const SegmentIndexPage: FC = memo(() => {
   };
 
   useEffect(() => {
+    if (isUpdate) {
+      dispatch(
+        getSegment({
+          environmentNamespace: currentEnvironment.id,
+          id: segmentId,
+        })
+      ).then((response) => {
+        const payload = response.payload as Segment.AsObject;
+        resetUpdate({
+          name: payload.name,
+          description: payload.description,
+        });
+      });
+    }
     history.listen(() => {
       // Handle browser's back button
       if (history.action === 'POP') {
@@ -442,7 +456,7 @@ export const SegmentIndexPage: FC = memo(() => {
         }
       }
     });
-  });
+  }, []);
 
   useEffect(() => {
     updateSegmentList(
