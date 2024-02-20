@@ -765,6 +765,82 @@ func TestExistGoal(t *testing.T) {
 	}
 }
 
+// Test that the APIs are successful with a Viewer account that is not SystemAdmin.
+func TestViewerEnvironmentRole(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	service := createFeatureServiceForViewer(mockController)
+	patterns := []struct {
+		desc   string
+		setup  func(opsService *AutoOpsService)
+		action func(context.Context, *AutoOpsService) error
+	}{
+		{
+			desc: "ListAutoOpsRules",
+			setup: func(s *AutoOpsService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			action: func(ctx context.Context, fs *AutoOpsService) error {
+				_, err := fs.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{EnvironmentNamespace: "ns0"})
+				return err
+			},
+		},
+		{
+			desc: "GetAutoOpsRule",
+			setup: func(s *AutoOpsService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			action: func(ctx context.Context, fs *AutoOpsService) error {
+				_, err := fs.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
+					Id:                   "aid1",
+					EnvironmentNamespace: "ns0"})
+				return err
+			},
+		},
+		{
+			desc: "ListOpsCounts",
+			setup: func(s *AutoOpsService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			action: func(ctx context.Context, fs *AutoOpsService) error {
+				_, err := fs.ListOpsCounts(ctx, &autoopsproto.ListOpsCountsRequest{EnvironmentNamespace: "ns0"})
+				return err
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			if p.setup != nil {
+				p.setup(service)
+			}
+			err := p.action(ctx, service)
+			assert.Nil(t, err, "%s", p.desc)
+		})
+	}
+}
+
 func createAutoOpsService(c *gomock.Controller, db storage.Client) *AutoOpsService {
 	mysqlClientMock := mysqlmock.NewMockClient(c)
 	featureClientMock := featureclientmock.NewMockClient(c)
@@ -828,4 +904,28 @@ func createContextWithTokenRoleOwner(t *testing.T) context.Context {
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
+}
+
+func createFeatureServiceForViewer(c *gomock.Controller) *AutoOpsService {
+	a := accountclientmock.NewMockClient(c)
+	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "ns0",
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				},
+			},
+		},
+	}
+	a.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	return &AutoOpsService{
+		mysqlClient:      mysqlmock.NewMockClient(c),
+		featureClient:    featureclientmock.NewMockClient(c),
+		experimentClient: experimentclientmock.NewMockClient(c),
+		accountClient:    a,
+		authClient:       authclientmock.NewMockClient(c),
+	}
 }
