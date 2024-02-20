@@ -1044,8 +1044,8 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.toObject = fun
   var f, obj = {
     experimentsList: jspb.Message.toObjectList(msg.getExperimentsList(),
     proto_experiment_experiment_pb.Experiment.toObject, includeInstance),
-    environmentName: jspb.Message.getFieldWithDefault(msg, 5, ""),
-    environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 6, "")
+    environmentName: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 5, "")
   };
 
   if (includeInstance) {
@@ -1087,11 +1087,11 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.deserializeBin
       reader.readMessage(value,proto_experiment_experiment_pb.Experiment.deserializeBinaryFromReader);
       msg.addExperiments(value);
       break;
-    case 5:
+    case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setEnvironmentName(value);
       break;
-    case 6:
+    case 5:
       var value = /** @type {string} */ (reader.readString());
       msg.setEnvironmentUrlCode(value);
       break;
@@ -1135,14 +1135,14 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.serializeBinar
   f = message.getEnvironmentName();
   if (f.length > 0) {
     writer.writeString(
-      5,
+      4,
       f
     );
   }
   f = message.getEnvironmentUrlCode();
   if (f.length > 0) {
     writer.writeString(
-      6,
+      5,
       f
     );
   }
@@ -1188,11 +1188,11 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.clea
 
 
 /**
- * optional string environment_name = 5;
+ * optional string environment_name = 4;
  * @return {string}
  */
 proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.getEnvironmentName = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
 };
 
 
@@ -1201,16 +1201,16 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.getE
  * @return {!proto.bucketeer.notification.sender.ExperimentRunningNotification} returns this
  */
 proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.setEnvironmentName = function(value) {
-  return jspb.Message.setProto3StringField(this, 5, value);
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 
 /**
- * optional string environment_url_code = 6;
+ * optional string environment_url_code = 5;
  * @return {string}
  */
 proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.getEnvironmentUrlCode = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
 };
 
 
@@ -1219,7 +1219,7 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.getE
  * @return {!proto.bucketeer.notification.sender.ExperimentRunningNotification} returns this
  */
 proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.setEnvironmentUrlCode = function(value) {
-  return jspb.Message.setProto3StringField(this, 6, value);
+  return jspb.Message.setProto3StringField(this, 5, value);
 };
 
 

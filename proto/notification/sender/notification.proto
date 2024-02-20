@@ -58,8 +58,8 @@ message ExperimentRunningNotification {
   reserved 1;  // string environment_namespace = 1
   reserved 2;  // string environment_id = 2
   repeated bucketeer.experiment.Experiment experiments = 3;
-  string environment_name = 5;
-  string environment_url_code = 6;
+  string environment_name = 4;
+  string environment_url_code = 5;
 }
 
 message MauCountNotification {
