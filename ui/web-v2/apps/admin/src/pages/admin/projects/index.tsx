@@ -44,10 +44,7 @@ import {
   stringifySearchParams,
 } from '../../../utils/search-params';
 
-import {
-  addFormSchema,
-  updateFormSchema,
-} from './formSchema';
+import { addFormSchema, updateFormSchema } from './formSchema';
 
 interface Sort {
   orderBy: OrderBy;
@@ -179,7 +176,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
         creatorEmail: p.creatorEmail,
       });
       history.push({
-        pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_PROJECTS}/${p.urlCode}`,
+        pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_PROJECTS}/${p.id}`,
         search: location.search,
       });
     },
