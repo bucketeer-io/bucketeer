@@ -32,13 +32,11 @@ const (
 	urlTemplatePush         = "%s/%s/settings/pushes/%s"
 	urlTemplateSubscription = "%s/%s/settings/notifications/%s"
 
-	// FIXME: url templates for admin will not require defaultEnvironmentID after environmentID is removed from admin page.
-	urlTemplateAdminSubscription = "%s/%s/admin/notifications/%s"
-	urlTemplateEnvironment       = "%s/%s/admin/environments/%s"
-	urlTemplateAdminAccount      = "%s/%s/admin/accounts/%s"
-	urlTemplateProject           = "%s/%s/admin/projects/%s"
-	urlTemplateOrganization      = "%s/%s/admin/organizations/%s"
-	defaultEnvironmentID         = "bucketeer"
+	urlTemplateAdminSubscription = "%s/admin/notifications/%s"
+	urlTemplateEnvironment       = "%s/admin/environments/%s"
+	urlTemplateAdminAccount      = "%s/admin/accounts/%s"
+	urlTemplateProject           = "%s/admin/projects/%s"
+	urlTemplateOrganization      = "%s/admin/organizations/%s"
 )
 
 var (
@@ -66,15 +64,15 @@ func URL(entityType proto.Event_EntityType, url, envURLCode, id string) (string,
 	case proto.Event_SUBSCRIPTION:
 		return fmt.Sprintf(urlTemplateSubscription, url, envURLCode, id), nil
 	case proto.Event_ADMIN_SUBSCRIPTION:
-		return fmt.Sprintf(urlTemplateAdminSubscription, url, defaultEnvironmentID, id), nil
+		return fmt.Sprintf(urlTemplateAdminSubscription, url, id), nil
 	case proto.Event_ENVIRONMENT:
-		return fmt.Sprintf(urlTemplateEnvironment, url, defaultEnvironmentID, id), nil
+		return fmt.Sprintf(urlTemplateEnvironment, url, id), nil
 	case proto.Event_ADMIN_ACCOUNT:
-		return fmt.Sprintf(urlTemplateAdminAccount, url, defaultEnvironmentID, id), nil
+		return fmt.Sprintf(urlTemplateAdminAccount, url, id), nil
 	case proto.Event_PROJECT:
-		return fmt.Sprintf(urlTemplateProject, url, defaultEnvironmentID, id), nil
+		return fmt.Sprintf(urlTemplateProject, url, id), nil
 	case proto.Event_ORGANIZATION:
-		return fmt.Sprintf(urlTemplateOrganization, url, defaultEnvironmentID, id), nil
+		return fmt.Sprintf(urlTemplateOrganization, url, id), nil
 	case proto.Event_FLAG_TRIGGER:
 		return fmt.Sprintf(urlTemplateFeature, url, envURLCode, id), nil
 	}

@@ -207,6 +207,9 @@ func (i *domainEventInformer) handleMessage(msg *puller.Message) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	environmentName := ""
+	// TODO: The environmentURLCode will be dynamic when the console v3 is ready.
+	// Currently, it inserts the url code `admin` in the domain event URL util
+	// https://github.com/bucketeer-io/bucketeer/blob/main/pkg/domainevent/domain/url.go#L36-L40
 	environmentURLCode := ""
 	if !domainEvent.IsAdminEvent {
 		environment, err := i.getEnvironment(ctx, domainEvent.EnvironmentNamespace)
