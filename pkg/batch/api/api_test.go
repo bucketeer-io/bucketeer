@@ -552,6 +552,19 @@ func TestSegmentUserCacher(t *testing.T) {
 				nil,
 			)
 		featureMockClient.EXPECT().
+			ListSegments(gomock.Any(), gomock.Any()).
+			Times(2).
+			Return(
+				&featureproto.ListSegmentsResponse{
+					Segments: []*featureproto.Segment{
+						{
+							Id: "segment-id",
+						},
+					},
+				},
+				nil,
+			)
+		featureMockClient.EXPECT().
 			ListSegmentUsers(gomock.Any(), gomock.Any()).
 			Times(2).
 			Return(

@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -67,14 +68,34 @@ func (c *segmentUserCacher) Run(ctx context.Context) error {
 		return err
 	}
 	for _, env := range envs {
-		users, err := c.listSegmentUsers(ctx, env.Id)
+		// List segments by environment ID
+		segments, err := c.listSegments(ctx, env.Id)
 		if err != nil {
-			c.logger.Error("Failed to list segment users", zap.String("environmentId", env.Id))
+			c.logger.Error("Failed to list segments", zap.String("environmentId", env.Id))
 			return err
 		}
-		if err := c.cache.Put(&ftproto.SegmentUsers{Users: users}, env.Id); err != nil {
-			c.logger.Error("Failed to cache segment users", zap.String("environmentId", env.Id))
-			continue
+		for _, seg := range segments {
+			// List segment users by segment ID
+			users, err := c.listSegmentUsers(ctx, env.Id, seg.Id)
+			if err != nil {
+				c.logger.Error("Failed to list segment users",
+					zap.String("environmentId", env.Id),
+					zap.String("segmentId", seg.Id),
+				)
+				return err
+			}
+			su := &ftproto.SegmentUsers{
+				SegmentId: seg.Id,
+				Users:     users,
+			}
+			// Update the cache by segment ID
+			if err := c.cache.Put(su, env.Id); err != nil {
+				c.logger.Error("Failed to cache segment users",
+					zap.String("environmentId", env.Id),
+					zap.String("segmentId", seg.Id),
+				)
+				continue
+			}
 		}
 	}
 	return nil
@@ -93,13 +114,31 @@ func (c *segmentUserCacher) listAllEnvironments(
 	return resp.Environments, nil
 }
 
-func (c *segmentUserCacher) listSegmentUsers(
+// List only segments in use
+func (c *segmentUserCacher) listSegments(
 	ctx context.Context,
 	environmentID string,
+) ([]*ftproto.Segment, error) {
+	req := &ftproto.ListSegmentsRequest{
+		PageSize:             0,
+		EnvironmentNamespace: environmentID,
+		IsInUseStatus:        &wrapperspb.BoolValue{Value: true},
+	}
+	resp, err := c.featureClient.ListSegments(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Segments, nil
+}
+
+func (c *segmentUserCacher) listSegmentUsers(
+	ctx context.Context,
+	environmentID, segmentID string,
 ) ([]*ftproto.SegmentUser, error) {
 	req := &ftproto.ListSegmentUsersRequest{
 		PageSize:             0,
 		EnvironmentNamespace: environmentID,
+		SegmentId:            segmentID,
 	}
 	resp, err := c.featureClient.ListSegmentUsers(ctx, req)
 	if err != nil {

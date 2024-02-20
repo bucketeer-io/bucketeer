@@ -26,6 +26,7 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ftclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -105,5 +106,17 @@ func (c *featureFlagCacher) listFeatures(
 	if err != nil {
 		return nil, err
 	}
-	return resp.Features, nil
+	filtered := make([]*ftproto.Feature, 0, len(resp.Features))
+	for _, f := range resp.Features {
+		ff := domain.Feature{Feature: f}
+		if ff.IsDisabledAndOffVariationEmpty() {
+			continue
+		}
+		// We exclude archived feature flags over thirty days ago to keep the cache size small.
+		if ff.IsArchivedBeforeLastThirtyDays() {
+			continue
+		}
+		filtered = append(filtered, f)
+	}
+	return filtered, nil
 }

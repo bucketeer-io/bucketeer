@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
@@ -93,7 +94,7 @@ func (c *experimentCacher) listAllEnvironments(
 	return resp.Environments, nil
 }
 
-// List only running and stopped experiments
+// List only running, stopped, and not archived experiments
 func (c *experimentCacher) listExperiments(
 	ctx context.Context,
 	environmentID string,
@@ -105,6 +106,7 @@ func (c *experimentCacher) listExperiments(
 			expproto.Experiment_RUNNING,
 			expproto.Experiment_STOPPED,
 		},
+		Archived: &wrapperspb.BoolValue{Value: false},
 	}
 	resp, err := c.experimentClient.ListExperiments(ctx, req)
 	if err != nil {
