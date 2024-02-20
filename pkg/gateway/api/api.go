@@ -768,15 +768,6 @@ func (s *gatewayService) getFeatures(
 		)
 		return nil, errInternal
 	}
-	if err := s.featuresCache.Put(&featureproto.Features{Features: features}, environmentId); err != nil {
-		s.logger.Error(
-			"Failed to cache features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentID", environmentId),
-			)...,
-		)
-	}
 	return features, nil
 }
 
