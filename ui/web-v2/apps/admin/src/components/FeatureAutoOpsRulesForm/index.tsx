@@ -82,6 +82,7 @@ import { Overlay } from '../Overlay';
 import { ProgressiveRolloutStopDialog } from '../ProgressiveRolloutStopDialog';
 import { RelativeDateText } from '../RelativeDateText';
 import { Option } from '../Select';
+import { isLanguageJapanese } from '@/lang/getSelectedLanguage';
 
 enum SORT_TYPE {
   ASC = 'ASC',
@@ -1230,36 +1231,78 @@ const ProgressiveRolloutComponent = memo(
               </div>
             </div>
             {rule.status === ProgressiveRollout.Status.STOPPED && (
-              <div className="flex space-x-[6px] text-gray-500 items-center">
-                <ClockIcon width={18} />
-                <span>Stopped</span>
-                {<RelativeDateText date={new Date(rule.stoppedAt * 1000)} />}
-                <span>by</span>
+              <div className="text-gray-500">
+                {rule.stoppedBy === ProgressiveRollout.StoppedBy.USER && (
+                  <div className="flex items-center">
+                    {f(messages.autoOps.stoppedByUser, {
+                      relativeDate: (
+                        <div
+                          className={classNames(
+                            !isLanguageJapanese && 'mx-[6px]'
+                          )}
+                        >
+                          <RelativeDateText
+                            date={new Date(rule.stoppedAt * 1000)}
+                          />
+                        </div>
+                      ),
+                      stoppedByIcon: <UserSvg className="mx-[6px]" />,
+                      clockIcon: <ClockIcon width={18} className="mx-[6px]" />,
+                    })}
+                  </div>
+                )}
                 {rule.stoppedBy ===
                   ProgressiveRollout.StoppedBy.OPS_KILL_SWITCH && (
-                  <>
-                    <div className="relative">
-                      <RefreshSvg width={22} />
-                      <CrossSvg
-                        width={12}
-                        className="absolute right-[1px] bottom-[3px]"
-                      />
-                    </div>
-                    <span>Kill Switch</span>
-                  </>
-                )}
-                {rule.stoppedBy === ProgressiveRollout.StoppedBy.USER && (
-                  <>
-                    <UserSvg />
-                    <span>User</span>
-                  </>
+                  <div className="flex items-center">
+                    {f(messages.autoOps.stoppedByKillSwitch, {
+                      relativeDate: (
+                        <div
+                          className={classNames(
+                            !isLanguageJapanese && 'mx-[6px]'
+                          )}
+                        >
+                          <RelativeDateText
+                            date={new Date(rule.stoppedAt * 1000)}
+                          />
+                        </div>
+                      ),
+                      stoppedByIcon: (
+                        <div className="relative px-[6px]">
+                          <RefreshSvg width={22} />
+                          <CrossSvg
+                            width={12}
+                            className="absolute right-[6px] bottom-[3px]"
+                          />
+                        </div>
+                      ),
+                      clockIcon: <ClockIcon width={18} className="mx-[6px]" />,
+                    })}
+                  </div>
                 )}
                 {rule.stoppedBy ===
                   ProgressiveRollout.StoppedBy.OPS_SCHEDULE && (
-                  <>
-                    <CalendarIcon width={18} className="text-primary" />
-                    <span>Schedule</span>
-                  </>
+                  <div className="flex items-center">
+                    {f(messages.autoOps.stoppedBySchedule, {
+                      relativeDate: (
+                        <div
+                          className={classNames(
+                            !isLanguageJapanese && 'mx-[6px]'
+                          )}
+                        >
+                          <RelativeDateText
+                            date={new Date(rule.stoppedAt * 1000)}
+                          />
+                        </div>
+                      ),
+                      stoppedByIcon: (
+                        <CalendarIcon
+                          width={18}
+                          className="text-primary mx-[6px]"
+                        />
+                      ),
+                      clockIcon: <ClockIcon width={18} className="mx-[6px]" />,
+                    })}
+                  </div>
                 )}
               </div>
             )}

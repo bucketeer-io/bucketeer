@@ -494,17 +494,17 @@ export const messages = {
       }),
       variations: defineMessage({
         id: 'progressiveRolloutWarningMessages.variations',
-        defaultMessage: 'The flag must have only 2 variations',
+        defaultMessage: 'The flag must have only 2 variations.',
       }),
       alreadyProgressiveRollout: defineMessage({
         id: 'progressiveRolloutWarningMessages.alreadyProgressiveRollout',
         defaultMessage:
-          'Cannot execute more than one progressive rollout at the same time',
+          'Cannot execute more than one progressive rollout at the same time.',
       }),
       experimentOnProgress: defineMessage({
         id: 'progressiveRolloutWarningMessages.experimentOnProgress',
         defaultMessage:
-          'To create a Progressive Rollout, you must stop the current {link}',
+          'To create a Progressive Rollout, you must stop the current {link}.',
       }),
       progressiveRolloutInProgress: defineMessage({
         id: 'progressiveRolloutWarningMessages.progressiveRolloutInProgress',
@@ -515,6 +515,21 @@ export const messages = {
         defaultMessage: 'For more information, please see the {link}.',
       }),
     },
+    stoppedByUser: defineMessage({
+      id: 'autoOps.stoppedByUser',
+      defaultMessage:
+        '{clockIcon} Stopped {relativeDate} by {stoppedByIcon} User',
+    }),
+    stoppedByKillSwitch: defineMessage({
+      id: 'autoOps.stoppedByKillSwitch',
+      defaultMessage:
+        '{clockIcon} Stopped {relativeDate} by {stoppedByIcon} Kill Switch',
+    }),
+    stoppedBySchedule: defineMessage({
+      id: 'autoOps.stoppedBySchedule',
+      defaultMessage:
+        '{clockIcon} Stopped {relativeDate} by {stoppedByIcon} Schedule',
+    }),
   },
   trigger: {
     documentation: defineMessage({
