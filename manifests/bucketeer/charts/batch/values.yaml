@@ -167,3 +167,7 @@ cronjob:
     - name: auto-ops-rules-cacher
       jobId: AutoOpsRulesCacher
       schedule: "* * * * *"
+
+
+migration:
+  webGatewayAddress: https://web-gateway.default.svc.cluster.local:9000
