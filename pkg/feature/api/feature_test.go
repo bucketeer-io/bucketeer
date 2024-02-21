@@ -1474,6 +1474,154 @@ func TestPermissionDenied(t *testing.T) {
 	}
 }
 
+// Test that the APIs are successful with a Viewer account that is not SystemAdmin.
+func TestViewerEnvironmentRoleForFeatureAPIs(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithTokenRoleUnassigned()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	service := createFeatureServiceForViewer(mockController)
+	patterns := []struct {
+		desc   string
+		setup  func(*FeatureService)
+		action func(context.Context, *FeatureService) error
+	}{
+		{
+			desc: "GetFeatures",
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			action: func(ctx context.Context, fs *FeatureService) error {
+				_, err := fs.GetFeatures(ctx, &featureproto.GetFeaturesRequest{
+					EnvironmentNamespace: "ns0",
+					Ids:                  []string{"id"},
+				})
+				return err
+			},
+		},
+		{
+			desc: "GetFeature",
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			action: func(ctx context.Context, fs *FeatureService) error {
+				_, err := fs.GetFeature(ctx, &featureproto.GetFeatureRequest{
+					EnvironmentNamespace: "ns0",
+					Id:                   "id",
+				})
+				return err
+			},
+		},
+		{
+			desc: "ListFeatures",
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			action: func(ctx context.Context, fs *FeatureService) error {
+				_, err := fs.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
+					EnvironmentNamespace: "ns0",
+				})
+				return err
+			},
+		},
+		{
+			desc: "ListEnabledFeatures",
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			action: func(ctx context.Context, fs *FeatureService) error {
+				_, err := fs.ListEnabledFeatures(ctx, &featureproto.ListEnabledFeaturesRequest{
+					EnvironmentNamespace: "ns0",
+				})
+				return err
+			},
+		},
+		{
+			desc: "EvaluateFeatures",
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, errors.New("error"))
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			action: func(ctx context.Context, fs *FeatureService) error {
+				_, err := fs.EvaluateFeatures(ctx, &featureproto.EvaluateFeaturesRequest{
+					User:                 &userproto.User{Id: "test-id"},
+					EnvironmentNamespace: "ns0",
+				})
+				return err
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			if p.setup != nil {
+				p.setup(service)
+			}
+			err := p.action(ctx, service)
+			assert.Nil(t, err, "%s", p.desc)
+		})
+	}
+}
+
 func TestEnableFeatureMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
