@@ -375,11 +375,9 @@ func (p *Persister) countUser(key, userID string) error {
 }
 
 func (p *Persister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
 	for environmentNamespace, events := range envEvents {
 		for _, event := range events {
-			p.cacheEnvLastUsedInfo(event, p.envLastUsedCache, environmentNamespace)
+			p.cacheEnvLastUsedInfo(event, environmentNamespace)
 		}
 		p.logger.Debug("Cache has been updated",
 			zap.String("environmentNamespace", environmentNamespace),
@@ -391,9 +389,10 @@ func (p *Persister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {
 
 func (p *Persister) cacheEnvLastUsedInfo(
 	event *eventproto.EvaluationEvent,
-	envLastUsedCache environmentLastUsedInfoCache,
 	environmentNamespace string,
 ) {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 	var clientVersion string
 	if event.User == nil {
 		p.logger.Warn("Failed to cache last used info. User is nil.",
@@ -402,7 +401,7 @@ func (p *Persister) cacheEnvLastUsedInfo(
 		clientVersion = event.User.Data[userDataAppVersion]
 	}
 	id := ftdomain.FeatureLastUsedInfoID(event.FeatureId, event.FeatureVersion)
-	if cache, ok := envLastUsedCache[environmentNamespace]; ok {
+	if cache, ok := p.envLastUsedCache[environmentNamespace]; ok {
 		if info, ok := cache[id]; ok {
 			info.UsedAt(event.Timestamp)
 			if err := info.SetClientVersion(clientVersion); err != nil {
@@ -430,7 +429,7 @@ func (p *Persister) cacheEnvLastUsedInfo(
 		event.Timestamp,
 		clientVersion,
 	)
-	envLastUsedCache[environmentNamespace] = cache
+	p.envLastUsedCache[environmentNamespace] = cache
 }
 
 // Write the feature flag last-used cache in the MySQL and reset the cache
@@ -442,23 +441,23 @@ func (p *Persister) writeFlagLastUsedInfoCache() error {
 			return nil
 		case <-timer.C:
 			p.logger.Debug("Write cache timer triggered")
-			p.writeEnvLastUsedInfo(p.envLastUsedCache)
+			p.writeEnvLastUsedInfo()
 			timer.Reset(p.opts.writeCacheInterval)
 		}
 	}
 }
 
-func (p *Persister) writeEnvLastUsedInfo(envCache environmentLastUsedInfoCache) {
+func (p *Persister) writeEnvLastUsedInfo() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	for environmentNamespace, cache := range envCache {
+	for environmentNamespace, cache := range p.envLastUsedCache {
 		info := make([]*ftdomain.FeatureLastUsedInfo, 0, len(cache))
 		for _, v := range cache {
 			info = append(info, v)
 		}
 		if err := p.upsertMultiFeatureLastUsedInfo(context.Background(), info, environmentNamespace); err != nil {
-			p.logger.Error("Failed to write featureLastUsedInfo", zap.Error(err),
+			p.logger.Error("Failed to write feature last-used info", zap.Error(err),
 				zap.String("environmentNamespace", environmentNamespace))
 			continue
 		}
