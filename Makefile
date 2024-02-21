@@ -341,7 +341,7 @@ minikube-load-images:
 		minikube ssh "rm /home/docker/$$IMAGE.tar"; \
 	done
 
-SERVICES := account-apikey-cacher api-gateway auditlog-persister backend batch event-persister-evaluation-events-dwh event-persister-evaluation-events-evaluation-count event-persister-evaluation-events-ops event-persister-goal-events-dwh event-persister-goal-events-ops experiment-calculator feature-recorder feature-segment-persister metrics-event-persister push-sender user-persister web-gateway web dex
+SERVICES := account-apikey-cacher api-gateway auditlog-persister backend batch event-persister-evaluation-events-dwh event-persister-evaluation-events-evaluation-count event-persister-evaluation-events-ops event-persister-goal-events-dwh event-persister-goal-events-ops experiment-calculator feature-segment-persister metrics-event-persister push-sender user-persister web-gateway web dex
 
 # Deploy Bucketeer to minikube
 deploy-service-to-minikube:
