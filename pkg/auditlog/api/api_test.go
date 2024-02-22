@@ -260,6 +260,58 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	}
 }
 
+// Test that the APIs are successful with a Viewer account that is not SystemAdmin.
+func TestViewerEnvironmentRole(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	service := newAuditLogServiceForViewer(t, mockController)
+	patterns := []struct {
+		desc   string
+		setup  func(*auditlogService)
+		action func(context.Context, *auditlogService) error
+	}{
+		{
+			desc: "ListAuditLogs",
+			setup: func(s *auditlogService) {
+				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(createAuditLogs(t), 2, int64(10), nil)
+			},
+			action: func(ctx context.Context, fs *auditlogService) error {
+				_, err := fs.ListAuditLogs(ctx, &proto.ListAuditLogsRequest{EnvironmentNamespace: "ns0"})
+				return err
+			},
+		},
+		{
+			desc: "ListFeatureHistory",
+			setup: func(s *auditlogService) {
+				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(createAuditLogs(t), 2, int64(10), nil)
+			},
+			action: func(ctx context.Context, fs *auditlogService) error {
+				_, err := fs.ListFeatureHistory(ctx, &proto.ListFeatureHistoryRequest{EnvironmentNamespace: "ns0"})
+				return err
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			if p.setup != nil {
+				p.setup(service)
+			}
+			err := p.action(ctx, service)
+			assert.Nil(t, err, "%s", p.desc)
+		})
+	}
+}
+
 func newAuditLogService(t *testing.T, mockController *gomock.Controller) *auditlogService {
 	t.Helper()
 	logger, err := log.NewLogger()
@@ -273,6 +325,32 @@ func newAuditLogService(t *testing.T, mockController *gomock.Controller) *auditl
 				{
 					EnvironmentId: "ns0",
 					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+				},
+			},
+		},
+	}
+	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	return &auditlogService{
+		accountClient:     accountClientMock,
+		mysqlStorage:      v2alsmock.NewMockAuditLogStorage(mockController),
+		mysqlAdminStorage: v2alsmock.NewMockAdminAuditLogStorage(mockController),
+		logger:            logger.Named("api"),
+	}
+}
+
+func newAuditLogServiceForViewer(t *testing.T, mockController *gomock.Controller) *auditlogService {
+	t.Helper()
+	logger, err := log.NewLogger()
+	require.NoError(t, err)
+	accountClientMock := accountclientmock.NewMockClient(mockController)
+	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "ns0",
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 				},
 			},
 		},
@@ -305,6 +383,15 @@ func createContextWithToken(t *testing.T, role accountproto.Account_Role) contex
 	token := &token.IDToken{
 		Email:         "test@example.com",
 		IsSystemAdmin: true,
+	}
+	ctx := context.TODO()
+	return context.WithValue(ctx, rpc.Key, token)
+}
+
+func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
+	t.Helper()
+	token := &token.IDToken{
+		Email: "test@example.com",
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
