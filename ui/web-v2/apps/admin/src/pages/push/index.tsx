@@ -95,8 +95,9 @@ export const PushIndexPage: FC = memo(() => {
   const { pushId } = useParams<{ pushId: string }>();
   const isNew = pushId == ID_NEW;
   const isUpdate = pushId ? pushId != ID_NEW : false;
-  const [open, setOpen] = useState(isNew);
+  const [open, setOpen] = useState(isNew || isUpdate);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+
   const push = useSelector<AppState, Push.AsObject | undefined>(
     (state) => selectPushById(state.push, pushId),
     shallowEqual
@@ -241,7 +242,7 @@ export const PushIndexPage: FC = memo(() => {
         handleOnClose();
       });
     },
-    [dispatch, push, pushId, updatePushList]
+    [dispatch, push, pushId, updatePushList, dirtyFields]
   );
 
   const handleOnClose = useCallback(() => {
@@ -297,6 +298,16 @@ export const PushIndexPage: FC = memo(() => {
       }
     });
   });
+
+  useEffect(() => {
+    if (isUpdate && push) {
+      resetUpdate({
+        name: push.name,
+        fcmApiKey: push.fcmApiKey,
+        tags: push.tagsList,
+      });
+    }
+  }, [push]);
 
   useEffect(() => {
     updatePushList(

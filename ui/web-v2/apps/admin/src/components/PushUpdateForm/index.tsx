@@ -106,7 +106,7 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                             field.onChange(options.map((o) => o.value));
                           }}
                           disabled={!editable || isSubmitted}
-                          defaultValues={field.value.map((tag: string) => {
+                          value={field.value?.map((tag: string) => {
                             return {
                               value: tag,
                               label: tag,

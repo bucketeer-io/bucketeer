@@ -102,7 +102,7 @@ export const NotificationIndexPage: FC = memo(() => {
   );
   const isNew = notificationId == ID_NEW;
   const isUpdate = notificationId ? notificationId != ID_NEW : false;
-  const [open, setOpen] = useState(isNew);
+  const [open, setOpen] = useState(isNew || isUpdate);
   const [isDeleteConfirmDialogOpen, setIsDeleteConfirmDialogOpen] =
     useState(false);
   const [isEnableConfirmDialogOpen, setIsEnableConfirmDialogOpen] =
@@ -254,7 +254,13 @@ export const NotificationIndexPage: FC = memo(() => {
         handleOnClose();
       });
     },
-    [dispatch, notification, notificationId, updateNotificationList]
+    [
+      dispatch,
+      notification,
+      notificationId,
+      updateNotificationList,
+      dirtyFields,
+    ]
   );
 
   const handleOnClose = useCallback(() => {
@@ -342,6 +348,16 @@ export const NotificationIndexPage: FC = memo(() => {
     },
     [dispatch, setIsDeleteConfirmDialogOpen]
   );
+
+  useEffect(() => {
+    if (isUpdate && notification) {
+      resetUpdate({
+        name: notification.name,
+        webhookUrl: notification.recipient.slackChannelRecipient.webhookUrl,
+        sourceTypes: [...notification.sourceTypesList].sort(),
+      });
+    }
+  }, [notification]);
 
   useEffect(() => {
     history.listen(() => {

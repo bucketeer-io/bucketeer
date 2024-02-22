@@ -48,6 +48,9 @@ import {
 
 import { addFormSchema, updateFormSchema } from './formSchema';
 
+interface GoalPayload {
+  goal: Goal.AsObject; // Assuming Goal is a specific type
+}
 interface Sort {
   orderBy: OrderBy;
   orderDirection: OrderDirection;
@@ -89,7 +92,7 @@ export const GoalIndexPage: FC = memo(() => {
   const { goalId } = useParams<{ goalId: string }>();
   const isNew = goalId == ID_NEW;
   const isUpdate = goalId ? goalId != ID_NEW : false;
-  const [open, setOpen] = useState(isNew);
+  const [open, setOpen] = useState(isNew || isUpdate);
   const [isArchiveConfirmDialogOpen, setIsArchiveConfirmDialogOpen] =
     useState(false);
   const [goal] = useSelector<
@@ -298,6 +301,29 @@ export const GoalIndexPage: FC = memo(() => {
   }, [setOpen, history, location, resetAdd, resetUpdate]);
 
   useEffect(() => {
+    if (isUpdate) {
+      dispatch(
+        getGoal({
+          environmentNamespace: currentEnvironment.id,
+          id: goalId,
+        })
+      ).then((e) => {
+        const { goal } = e.payload as GoalPayload;
+
+        resetUpdate({
+          id: goal.id,
+          name: goal.name,
+          description: goal.description,
+        });
+      });
+    }
+    updateGoalList(
+      searchOptions,
+      searchOptions.page ? Number(searchOptions.page) : 1
+    );
+  }, [updateGoalList, dispatch]);
+
+  useEffect(() => {
     history.listen(() => {
       // Handle browser's back button
       if (history.action === 'POP') {
@@ -307,13 +333,6 @@ export const GoalIndexPage: FC = memo(() => {
       }
     });
   });
-
-  useEffect(() => {
-    updateGoalList(
-      searchOptions,
-      searchOptions.page ? Number(searchOptions.page) : 1
-    );
-  }, [updateGoalList]);
 
   return (
     <>

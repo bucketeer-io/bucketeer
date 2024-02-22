@@ -90,7 +90,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
   const { environmentId } = useParams<{ environmentId: string }>();
   const isNew = environmentId == ID_NEW;
   const isUpdate = environmentId ? environmentId != ID_NEW : false;
-  const [open, setOpen] = useState(isNew);
+  const [open, setOpen] = useState(isNew || isUpdate);
   const updateProjectList = useCallback(
     (options, page: number) => {
       const sort = createSort(
@@ -244,6 +244,25 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
     },
     [dispatch, dirtyFields]
   );
+
+  useEffect(() => {
+    if (isUpdate) {
+      dispatch(
+        getEnvironment({
+          id: environmentId,
+        })
+      ).then((res) => {
+        const payload = res.payload as EnvironmentV2.AsObject;
+        resetUpdate({
+          id: payload.id,
+          name: payload.name,
+          urlCode: payload.urlCode,
+          projectId: payload.projectId,
+          description: payload.description,
+        });
+      });
+    }
+  }, [isUpdate, environmentId]);
 
   useEffect(() => {
     history.listen(() => {
