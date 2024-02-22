@@ -283,8 +283,8 @@ func TestViewerEnvironmentRole(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
-			action: func(ctx context.Context, fs *auditlogService) error {
-				_, err := fs.ListAuditLogs(ctx, &proto.ListAuditLogsRequest{EnvironmentNamespace: "ns0"})
+			action: func(ctx context.Context, s *auditlogService) error {
+				_, err := s.ListAuditLogs(ctx, &proto.ListAuditLogsRequest{EnvironmentNamespace: "ns0"})
 				return err
 			},
 		},
@@ -295,8 +295,8 @@ func TestViewerEnvironmentRole(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
-			action: func(ctx context.Context, fs *auditlogService) error {
-				_, err := fs.ListFeatureHistory(ctx, &proto.ListFeatureHistoryRequest{EnvironmentNamespace: "ns0"})
+			action: func(ctx context.Context, s *auditlogService) error {
+				_, err := s.ListFeatureHistory(ctx, &proto.ListFeatureHistoryRequest{EnvironmentNamespace: "ns0"})
 				return err
 			},
 		},

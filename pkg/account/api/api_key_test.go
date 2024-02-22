@@ -593,3 +593,87 @@ func TestListAPIKeysMySQL(t *testing.T) {
 		})
 	}
 }
+
+// Test that the APIs are successful with a Viewer account that is not SystemAdmin.
+func TestViewerEnvironmentRole(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithDefaultToken(t, accountproto.Account_VIEWER, false)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	service := createAccountService(t, mockController, nil)
+	patterns := []struct {
+		desc   string
+		setup  func(*AccountService)
+		action func(context.Context, *AccountService) error
+	}{
+		{
+			desc: "ListAPIKeys",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
+					},
+				}, nil).AnyTimes()
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.APIKey{}, 0, int64(0), nil)
+			},
+			action: func(ctx context.Context, s *AccountService) error {
+				_, err := s.ListAPIKeys(ctx, &accountproto.ListAPIKeysRequest{EnvironmentNamespace: "ns0"})
+				return err
+			},
+		},
+		{
+			desc: "GetAPIKey",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
+					},
+				}, nil).AnyTimes()
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAPIKey(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.APIKey{
+					APIKey: &accountproto.APIKey{
+						Id: "id",
+					},
+				}, nil)
+			},
+			action: func(ctx context.Context, s *AccountService) error {
+				_, err := s.GetAPIKey(ctx, &accountproto.GetAPIKeyRequest{Id: "id", EnvironmentNamespace: "ns0"})
+				return err
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			if p.setup != nil {
+				p.setup(service)
+			}
+			err := p.action(ctx, service)
+			assert.Nil(t, err, "%s", p.desc)
+		})
+	}
+}

@@ -792,8 +792,8 @@ func TestViewerEnvironmentRole(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			action: func(ctx context.Context, fs *AutoOpsService) error {
-				_, err := fs.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{EnvironmentNamespace: "ns0"})
+			action: func(ctx context.Context, s *AutoOpsService) error {
+				_, err := s.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{EnvironmentNamespace: "ns0"})
 				return err
 			},
 		},
@@ -806,8 +806,8 @@ func TestViewerEnvironmentRole(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			action: func(ctx context.Context, fs *AutoOpsService) error {
-				_, err := fs.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
+			action: func(ctx context.Context, s *AutoOpsService) error {
+				_, err := s.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
 					Id:                   "aid1",
 					EnvironmentNamespace: "ns0"})
 				return err
@@ -824,8 +824,8 @@ func TestViewerEnvironmentRole(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			action: func(ctx context.Context, fs *AutoOpsService) error {
-				_, err := fs.ListOpsCounts(ctx, &autoopsproto.ListOpsCountsRequest{EnvironmentNamespace: "ns0"})
+			action: func(ctx context.Context, s *AutoOpsService) error {
+				_, err := s.ListOpsCounts(ctx, &autoopsproto.ListOpsCountsRequest{EnvironmentNamespace: "ns0"})
 				return err
 			},
 		},
