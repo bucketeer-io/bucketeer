@@ -28,6 +28,7 @@ import {
   ExclamationIcon,
   InformationCircleIcon,
 } from '@heroicons/react/solid';
+import dayjs from 'dayjs';
 import { FC, useEffect, useState } from 'react';
 import ReactDatePicker from 'react-datepicker';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -89,10 +90,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   );
   const [scheduleErrorMessage, setScheduleErrorMessage] = useState('');
 
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
-
-  const [datetime, setDatetime] = useState(date);
+  const [datetime, setDatetime] = useState(dayjs().add(1, 'hour').toDate());
 
   const {
     register,

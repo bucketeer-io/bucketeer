@@ -1446,10 +1446,8 @@ export const createInitialOpsEventRateClause = (feature: Feature.AsObject) => {
 };
 
 export const createInitialDatetimeClause = () => {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
   return {
-    time: date,
+    time: dayjs().add(1, 'hour').toDate(),
   };
 };
 
