@@ -487,6 +487,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	defer func() {
 		server.Stop(serverShutDownTimeout)
+		accountClient.Close()
 		notificationClient.Close()
 		experimentClient.Close()
 		environmentClient.Close()
