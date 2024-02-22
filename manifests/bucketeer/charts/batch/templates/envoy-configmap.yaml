@@ -226,6 +226,18 @@ data:
                                   - name: content-type
                                     string_match:
                                       exact: application/grpc
+                                prefix: /bucketeer.account.AccountService
+                              route:
+                                cluster: backend
+                                retry_policy:
+                                  num_retries: 3
+                                  retry_on: 5xx
+                                timeout: 15s
+                            - match:
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
                                 prefix: /bucketeer.autoops.AutoOpsService
                               route:
                                 cluster: backend
