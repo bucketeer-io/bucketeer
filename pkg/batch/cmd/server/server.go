@@ -22,9 +22,11 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	acclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/api"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
+	cacher "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/cacher"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/calculator"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/mau"
@@ -74,6 +76,7 @@ type server struct {
 	mysqlPort   *int
 	mysqlDBName *string
 	// gRPC service
+	accountService              *string
 	environmentService          *string
 	experimentService           *string
 	autoOpsService              *string
@@ -116,6 +119,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
 		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
 		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		accountService: cmd.Flag(
+			"account-service",
+			"bucketeer-account-service address.",
+		).Default("account:9090").String(),
 		environmentService: cmd.Flag(
 			"environment-service",
 			"bucketeer-environment-service address.",
@@ -198,6 +205,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
+	if err != nil {
+		return err
+	}
+
+	accountClient, err := acclient.NewClient(*s.accountService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
 	if err != nil {
 		return err
 	}
@@ -416,6 +434,31 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			*s.pullerMaxOutstandingBytes,
 			notification.WithLogger(logger),
 			notification.WithMetrics(registerer),
+		),
+		cacher.NewFeatureFlagCacher(
+			environmentClient,
+			featureClient,
+			cachev3.NewRedisCache(redisV3Client),
+		),
+		cacher.NewSegmentUserCacher(
+			environmentClient,
+			featureClient,
+			cachev3.NewRedisCache(redisV3Client),
+		),
+		cacher.NewAPIKeyCacher(
+			environmentClient,
+			accountClient,
+			cachev3.NewRedisCache(redisV3Client),
+		),
+		cacher.NewExperimentCacher(
+			environmentClient,
+			experimentClient,
+			cachev3.NewRedisCache(redisV3Client),
+		),
+		cacher.NewAutoOpsRulesCacher(
+			environmentClient,
+			autoOpsClient,
+			cachev3.NewRedisCache(redisV3Client),
 		),
 		logger,
 	)

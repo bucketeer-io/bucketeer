@@ -27,7 +27,7 @@ import (
 
 const (
 	experimentsKind    = "experiment"
-	experimentCacheTTL = time.Minute
+	experimentCacheTTL = time.Duration(0)
 )
 
 type ExperimentsCache interface {

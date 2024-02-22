@@ -27,7 +27,7 @@ import (
 
 const (
 	autoOpsRuleKind     = "autoOpsRule"
-	autoOpsRuleCacheTTL = time.Minute
+	autoOpsRuleCacheTTL = time.Duration(0)
 )
 
 type AutoOpsRulesCache interface {
