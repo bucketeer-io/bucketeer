@@ -43,10 +43,7 @@ import {
   stringifySearchParams,
 } from '../../../utils/search-params';
 
-import {
-  addFormSchema,
-  updateFormSchema,
-} from './formSchema';
+import { addFormSchema, updateFormSchema } from './formSchema';
 
 interface Sort {
   orderBy: OrderBy;
@@ -174,7 +171,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
         description: e.description,
       });
       history.push({
-        pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_ENVIRONMENTS}/${e.urlCode}`,
+        pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_ENVIRONMENTS}/${e.id}`,
         search: location.search,
       });
     },
