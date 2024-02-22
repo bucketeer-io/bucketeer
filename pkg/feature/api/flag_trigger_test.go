@@ -901,10 +901,12 @@ func TestPermissionForAcquisitionAPIForFlagTrigger(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		if p.setup != nil {
-			p.setup(service)
-		}
-		err := p.action(ctx, service)
-		assert.Nil(t, err, "%s", p.desc)
+		t.Run(p.desc, func(t *testing.T) {
+			if p.setup != nil {
+				p.setup(service)
+			}
+			err := p.action(ctx, service)
+			assert.Nil(t, err, "%s", p.desc)
+		})
 	}
 }

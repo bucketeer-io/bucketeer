@@ -438,6 +438,77 @@ func TestListSegmentsMySQL(t *testing.T) {
 	}
 }
 
+// Test that the APIs are successful with a Viewer account that is not SystemAdmin.
+func TestViewerEnvironmentRoleForSegmentAPIs(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithTokenRoleUnassigned()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	service := createFeatureServiceForViewer(mockController)
+	patterns := []struct {
+		desc   string
+		setup  func(*FeatureService)
+		action func(context.Context, *FeatureService) error
+	}{
+		{
+			desc: "GetSegment",
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row).Times(2)
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			action: func(ctx context.Context, fs *FeatureService) error {
+				_, err := fs.GetSegment(ctx, &featureproto.GetSegmentRequest{Id: "1", EnvironmentNamespace: "ns0"})
+				return err
+			},
+		},
+		{
+			desc: "ListSegments",
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil).Times(2)
+				rows.EXPECT().Next().Return(false).Times(2)
+				rows.EXPECT().Err().Return(nil).Times(2)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil).Times(2)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row).Times(2)
+			},
+			action: func(ctx context.Context, fs *FeatureService) error {
+				_, err := fs.ListSegments(ctx, &featureproto.ListSegmentsRequest{EnvironmentNamespace: "ns0"})
+				return err
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+
+			if p.setup != nil {
+				p.setup(service)
+			}
+			err := p.action(ctx, service)
+			assert.Nil(t, err, "%s", p.desc)
+		})
+	}
+}
+
 func setToken(ctx context.Context, role accountproto.Account_Role) context.Context {
 	t := &token.IDToken{
 		Issuer:   "issuer",
