@@ -832,3 +832,79 @@ func TestFeatureServiceGenerateTriggerURL(t *testing.T) {
 	}
 	t.Logf("generateTriggerURL() [masked] triggerURL = %v", triggerURL)
 }
+
+// Test that the APIs are successful with a Viewer account that is not SystemAdmin.
+func TestPermissionForAcquisitionAPIForFlagTrigger(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	ctx := createContextWithTokenRoleUnassigned()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	baseFlagTrigger := &proto.FlagTrigger{
+		Id:                   "1",
+		FeatureId:            "featureId",
+		EnvironmentNamespace: "ns0",
+		Type:                 proto.FlagTrigger_Type_WEBHOOK,
+		Action:               proto.FlagTrigger_Action_ON,
+		Description:          "base",
+		TriggerCount:         100,
+		LastTriggeredAt:      500,
+		Token:                "test-token",
+		Disabled:             false,
+		CreatedAt:            200,
+		UpdatedAt:            300,
+	}
+
+	service := createFeatureServiceForViewer(mockController)
+	patterns := []struct {
+		desc   string
+		setup  func(*FeatureService)
+		action func(context.Context, *FeatureService) error
+	}{
+		{
+			desc: "GetFlagTrigger",
+			setup: func(s *FeatureService) {
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.FlagTrigger{
+					FlagTrigger: baseFlagTrigger,
+				}, nil)
+			},
+			action: func(ctx context.Context, fs *FeatureService) error {
+				_, err := fs.GetFlagTrigger(ctx, &proto.GetFlagTriggerRequest{Id: baseFlagTrigger.Id, EnvironmentNamespace: baseFlagTrigger.EnvironmentNamespace})
+				return err
+			},
+		},
+		{
+			desc: "ListFlagTriggers",
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Close().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			action: func(ctx context.Context, fs *FeatureService) error {
+				_, err := fs.ListFlagTriggers(ctx, &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"})
+				return err
+			},
+		},
+	}
+	for _, p := range patterns {
+		if p.setup != nil {
+			p.setup(service)
+		}
+		err := p.action(ctx, service)
+		assert.Nil(t, err, "%s", p.desc)
+	}
+}
