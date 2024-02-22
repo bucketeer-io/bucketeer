@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	acclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
@@ -87,6 +88,7 @@ func (c *apiKeyCacher) listAllEnvironments(
 ) ([]*envproto.EnvironmentV2, error) {
 	req := &envproto.ListEnvironmentsV2Request{
 		PageSize: 0,
+		Archived: wrapperspb.Bool(false),
 	}
 	resp, err := c.environmentClient.ListEnvironmentsV2(ctx, req)
 	if err != nil {
