@@ -294,6 +294,11 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
+	// Wait for the event-persister-ops subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
+
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
 		registerGoalEventWithEvaluations(t, featureID, feature.Version, goalID, uid, feature.Variations[0].Id)
@@ -326,6 +331,11 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
+
+	// Wait for the event-persister-ops subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -382,6 +392,11 @@ func TestOpsEventRateBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
+
+	// Wait for the event-persister-ops subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -442,6 +457,11 @@ func TestDatetimeBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
+
+	// Wait for the event-persister-ops subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
 
