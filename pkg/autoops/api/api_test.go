@@ -775,7 +775,7 @@ func TestViewerEnvironmentRole(t *testing.T) {
 		"accept-language": []string{"ja"},
 	})
 
-	service := createFeatureServiceForViewer(mockController)
+	service := createServiceForViewer(mockController)
 	patterns := []struct {
 		desc   string
 		setup  func(opsService *AutoOpsService)
@@ -906,7 +906,7 @@ func createContextWithTokenRoleOwner(t *testing.T) context.Context {
 	return context.WithValue(ctx, rpc.Key, token)
 }
 
-func createFeatureServiceForViewer(c *gomock.Controller) *AutoOpsService {
+func createServiceForViewer(c *gomock.Controller) *AutoOpsService {
 	a := accountclientmock.NewMockClient(c)
 	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
 		Account: &accountproto.AccountV2{
