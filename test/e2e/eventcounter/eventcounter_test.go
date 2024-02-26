@@ -29,8 +29,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -38,6 +41,7 @@ import (
 	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/gateway/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -116,9 +120,6 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		variationIDs = append(variationIDs, v.Id)
 		variations[v.Value] = v
 	}
-
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
 
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
@@ -232,9 +233,6 @@ func TestExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
-
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
@@ -345,9 +343,6 @@ func TestGrpcExperimentResult(t *testing.T) {
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
 
 	// CVRs is 3/4
 	// Register goal variation
@@ -577,9 +572,6 @@ func TestExperimentResult(t *testing.T) {
 	stopAt := startAt.Local().Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
-
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
 
 	// CVRs is 3/4
 	// Register goal variation
@@ -816,9 +808,6 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
-
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
@@ -1002,9 +991,6 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
-
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
@@ -1185,9 +1171,6 @@ func TestHTTPTrack(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
-
 	// Send track events.
 	sendHTTPTrack(t, userID, goalIDs[0], tag, value)
 	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
@@ -1295,9 +1278,6 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		startAt, stopAt,
 	)
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
-
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
@@ -1403,9 +1383,6 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		f.Variations[0].Id,
 		startAt, stopAt,
 	)
-
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
 
 	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 	for i := 0; i < retryTimes; i++ {
@@ -1614,6 +1591,27 @@ func createExperimentWithMultiGoals(
 		Id:                   resp.Experiment.Id,
 		Command:              &experimentproto.StartExperimentCommand{},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Update experiment cache
+	batchClient := newBatchClient(t)
+	defer batchClient.Close()
+	numRetries := 5
+	for i := 0; i < numRetries; i++ {
+		_, err = batchClient.ExecuteBatchJob(
+			ctx,
+			&btproto.BatchJobRequest{Job: btproto.BatchJob_ExperimentCacher})
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to execute experiment cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		time.Sleep(5 * time.Second)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1923,6 +1921,25 @@ func newEventCounterClient(t *testing.T) ecclient.Client {
 	return client
 }
 
+func newBatchClient(t *testing.T) btclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := btclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create batch client:", err)
+	}
+	return client
+}
+
 func newCreateFeatureCommand(featureID string, variations []string) *featureproto.CreateFeatureCommand {
 	cmd := &featureproto.CreateFeatureCommand{
 		Id:          featureID,
@@ -2102,7 +2119,21 @@ func getExperimentGoalCount(t *testing.T, c ecclient.Client, goalID, featureID s
 		FeatureVersion:       featureVersion,
 		VariationIds:         variationIDs,
 	}
-	response, err := c.GetExperimentGoalCount(ctx, req)
+	var response *ecproto.GetExperimentGoalCountResponse
+	var err error
+	numRetries := 5
+	for i := 0; i < numRetries; i++ {
+		response, err = c.GetExperimentGoalCount(ctx, req)
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to get experiment goal count. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		time.Sleep(5 * time.Second)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}

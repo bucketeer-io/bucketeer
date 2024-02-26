@@ -35,7 +35,12 @@ env:
   runningDurationPerBatch: 15s
   maxMps: 50
   # redis settings
-  redis:
+  persistentRedis:
+    serverName:
+    addr:
+    poolMaxIdle: 25
+    poolMaxActive: 25
+  nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
