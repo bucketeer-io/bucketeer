@@ -17,9 +17,9 @@ package cacher
 
 import (
 	"context"
-	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	acclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
@@ -45,8 +45,7 @@ func NewAPIKeyCacher(
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
-		Timeout: 1 * time.Minute,
-		Logger:  zap.NewNop(),
+		Logger: zap.NewNop(),
 	}
 	for _, opt := range opts {
 		opt(dopts)
@@ -63,18 +62,24 @@ func NewAPIKeyCacher(
 func (c *apiKeyCacher) Run(ctx context.Context) error {
 	envs, err := c.listAllEnvironments(ctx)
 	if err != nil {
-		c.logger.Error("Failed to list all environments")
+		c.logger.Error("Failed to list all environments", zap.Error(err))
 		return err
 	}
 	for _, env := range envs {
 		envAPIKeys, err := c.listEnvAPIKeys(ctx, env)
 		if err != nil {
-			c.logger.Error("Failed to list environment api keys", zap.String("environmentId", env.Id))
+			c.logger.Error("Failed to list environment api keys",
+				zap.Error(err),
+				zap.String("environmentId", env.Id),
+			)
 			return err
 		}
 		for _, envAPIKey := range envAPIKeys {
 			if err := c.cache.Put(envAPIKey); err != nil {
-				c.logger.Error("Failed to cache environment api key", zap.Any("envAPIKey", envAPIKey))
+				c.logger.Error("Failed to cache environment api key",
+					zap.Error(err),
+					zap.Any("envAPIKey", envAPIKey),
+				)
 				continue
 			}
 		}
@@ -87,6 +92,7 @@ func (c *apiKeyCacher) listAllEnvironments(
 ) ([]*envproto.EnvironmentV2, error) {
 	req := &envproto.ListEnvironmentsV2Request{
 		PageSize: 0,
+		Archived: wrapperspb.Bool(false),
 	}
 	resp, err := c.environmentClient.ListEnvironmentsV2(ctx, req)
 	if err != nil {
@@ -110,6 +116,7 @@ func (c *apiKeyCacher) listEnvAPIKeys(
 	proj, err := c.getProject(ctx, environment.ProjectId)
 	if err != nil {
 		c.logger.Error("Failed to get project",
+			zap.Error(err),
 			zap.String("organizationId", environment.OrganizationId),
 			zap.String("projectId", environment.ProjectId),
 		)

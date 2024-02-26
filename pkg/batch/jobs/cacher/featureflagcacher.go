@@ -17,7 +17,6 @@ package cacher
 
 import (
 	"context"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -46,8 +45,7 @@ func NewFeatureFlagCacher(
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
-		Timeout: 1 * time.Minute,
-		Logger:  zap.NewNop(),
+		Logger: zap.NewNop(),
 	}
 	for _, opt := range opts {
 		opt(dopts)

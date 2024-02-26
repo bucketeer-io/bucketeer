@@ -439,26 +439,31 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			environmentClient,
 			featureClient,
 			cachev3.NewRedisCache(redisV3Client),
+			jobs.WithLogger(logger),
 		),
 		cacher.NewSegmentUserCacher(
 			environmentClient,
 			featureClient,
 			cachev3.NewRedisCache(redisV3Client),
+			jobs.WithLogger(logger),
 		),
 		cacher.NewAPIKeyCacher(
 			environmentClient,
 			accountClient,
 			cachev3.NewRedisCache(redisV3Client),
+			jobs.WithLogger(logger),
 		),
 		cacher.NewExperimentCacher(
 			environmentClient,
 			experimentClient,
 			cachev3.NewRedisCache(redisV3Client),
+			jobs.WithLogger(logger),
 		),
 		cacher.NewAutoOpsRulesCacher(
 			environmentClient,
 			autoOpsClient,
 			cachev3.NewRedisCache(redisV3Client),
+			jobs.WithLogger(logger),
 		),
 		logger,
 	)
@@ -482,6 +487,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	defer func() {
 		server.Stop(serverShutDownTimeout)
+		accountClient.Close()
 		notificationClient.Close()
 		experimentClient.Close()
 		environmentClient.Close()
