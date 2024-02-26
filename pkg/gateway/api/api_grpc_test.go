@@ -570,7 +570,6 @@ func TestGrpcGetFeatures(t *testing.T) {
 							Enabled: true,
 						},
 					}}, nil)
-				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			environmentId: "ns0",
 			expected: []*featureproto.Feature{
@@ -608,7 +607,6 @@ func TestGrpcGetFeatures(t *testing.T) {
 							OffVariation: "",
 						},
 					}}, nil)
-				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			environmentId: "ns0",
 			expected: []*featureproto.Feature{
@@ -654,7 +652,6 @@ func TestGrpcGetFeatures(t *testing.T) {
 							UpdatedAt: thirtyOneDaysAgo.Unix(),
 						},
 					}}, nil)
-				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			environmentId: "ns0",
 			expected: []*featureproto.Feature{
@@ -1697,7 +1694,6 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(

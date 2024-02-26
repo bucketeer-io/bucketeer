@@ -31,6 +31,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	gwapi "github.com/bucketeer-io/bucketeer/pkg/gateway/api"
@@ -38,6 +39,7 @@ import (
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -292,8 +294,10 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the auto ops rules cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-ops subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -328,8 +332,10 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the auto ops rules cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-ops subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -387,8 +393,10 @@ func TestOpsEventRateBatch(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 
-	// Wait for the auto ops rules cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-ops subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	userIDs := createUserIDs(t, 10)
 	for _, uid := range userIDs[:6] {
@@ -449,6 +457,11 @@ func TestDatetimeBatch(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
+
+	// Wait for the event-persister-ops subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
 
@@ -533,6 +546,27 @@ func createAutoOpsRule(
 		EnvironmentNamespace: *environmentNamespace,
 		Command:              cmd,
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Update auto ops rules cache
+	batchClient := newBatchClient(t)
+	defer batchClient.Close()
+	numRetries := 5
+	for i := 0; i < numRetries; i++ {
+		_, err = batchClient.ExecuteBatchJob(
+			ctx,
+			&btproto.BatchJobRequest{Job: btproto.BatchJob_AutoOpsRulesCacher})
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to execute auto ops rules cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		time.Sleep(5 * time.Second)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -870,6 +904,25 @@ func newExperimentClient(t *testing.T) experimentclient.Client {
 	)
 	if err != nil {
 		t.Fatal("Failed to create experiment client:", err)
+	}
+	return client
+}
+
+func newBatchClient(t *testing.T) btclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := btclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create batch client:", err)
 	}
 	return client
 }

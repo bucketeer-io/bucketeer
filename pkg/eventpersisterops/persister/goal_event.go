@@ -203,16 +203,6 @@ func (u *evalGoalUpdater) listAutoOpsRules(
 			if err != nil {
 				return nil, err
 			}
-			// Cache the auto ops rules for the next request
-			autoOpsRules := &aoproto.AutoOpsRules{
-				AutoOpsRules: resp.AutoOpsRules,
-			}
-			if err := u.autoOpsRulesCache.Put(autoOpsRules, environmentNamespace); err != nil {
-				u.logger.Error("Failed to cache auto ops rules",
-					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
-				)
-			}
 			return resp.AutoOpsRules, nil
 		},
 	)

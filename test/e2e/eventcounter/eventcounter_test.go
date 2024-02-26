@@ -29,8 +29,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -38,6 +41,7 @@ import (
 	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/gateway/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -88,19 +92,20 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 
 	variationVarA := "a"
 	variationVarB := "b"
-	cmd := newCreateFeatureCommand(featureID, []string{variationVarA, variationVarB})
-	createFeature(t, featureClient, cmd)
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
+	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
 	f := getFeature(t, featureClient, featureID)
 
-	// Because we set the user to the individual targeting,
+	// Because we set the user to the individual targeting when creating the flag,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
 	// evaluates the user
 	reason := &featureproto.Reason{
 		Type: featureproto.Reason_TARGET,
 	}
 	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+	// Because the event-persister-dwh calls the EvaluateFeatures API
+	// and it uses the feature flag cache, we must update it before sending events.
+	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
 	f = getFeature(t, featureClient, featureID)
@@ -117,8 +122,10 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-dwh subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
@@ -203,19 +210,20 @@ func TestExperimentGoalCount(t *testing.T) {
 
 	variationVarA := "a"
 	variationVarB := "b"
-	cmd := newCreateFeatureCommand(featureID, []string{variationVarA, variationVarB})
-	createFeature(t, featureClient, cmd)
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
+	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
 	f := getFeature(t, featureClient, featureID)
 
-	// Because we set the user to the individual targeting,
+	// Because we set the user to the individual targeting when creating the flag,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
 	// evaluates the user
 	reason := &featureproto.Reason{
 		Type: featureproto.Reason_TARGET,
 	}
 	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+	// Because the event-persister-dwh calls the EvaluateFeatures API
+	// and it uses the feature flag cache, we must update it before sending events.
+	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
 	f = getFeature(t, featureClient, featureID)
@@ -232,8 +240,10 @@ func TestExperimentGoalCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-dwh subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
@@ -319,13 +329,10 @@ func TestGrpcExperimentResult(t *testing.T) {
 	}
 	featureID := createFeatureID(t, uuid)
 
-	cmd := newCreateFeatureCommand(featureID, []string{"a", "b"})
-	createFeature(t, featureClient, cmd)
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
+	createFeature(t, featureClient, featureID, tag, "a", "b")
 	f := getFeature(t, featureClient, featureID)
 
-	// Because we set the user to the individual targeting,
+	// Because we set the user to the individual targeting when creating the flag,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
 	// evaluates the user
 	reason := &featureproto.Reason{
@@ -337,6 +344,10 @@ func TestGrpcExperimentResult(t *testing.T) {
 	addFeatureIndividualTargeting(t, featureID, userIDs[3], f.Variations[1].Id, featureClient)
 	addFeatureIndividualTargeting(t, featureID, userIDs[4], f.Variations[1].Id, featureClient)
 
+	// Because the event-persister-dwh calls the EvaluateFeatures API
+	// and it uses the feature flag cache, we must update it before sending events.
+	updateFeatueFlagCache(t)
+
 	// Get the latest version after all changes in the feature flag
 	f = getFeature(t, featureClient, featureID)
 
@@ -346,8 +357,10 @@ func TestGrpcExperimentResult(t *testing.T) {
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-dwh subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	// CVRs is 3/4
 	// Register goal variation
@@ -358,7 +371,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-time.Hour).Unix())
 	// Increment experiment event count
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	// Register 3 events and 2 user counts for user 1, 2 and 3
+	// Register 3 events and 2 user counts for the user index 1, 2 and 3
 	// Register variation a
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], experiment.Variations[0].Id, tag, reason)
@@ -374,7 +387,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-time.Hour).Unix())
 	// Increment experiment event count
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	// Register 3 events and 2 user counts for user 4 and 5
+	// Register 3 events and 2 user counts for the user index 4 and 5
 	// Register variation
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag, reason)
@@ -405,16 +418,20 @@ func TestGrpcExperimentResult(t *testing.T) {
 			if len(gr.VariationResults) != 2 {
 				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
 			}
-			if gr.VariationResults[0].EvaluationCount.EventCount == 0 || // variation A
-				gr.VariationResults[0].EvaluationCount.UserCount == 0 ||
-				gr.VariationResults[1].EvaluationCount.EventCount == 0 || // variation B
-				gr.VariationResults[1].EvaluationCount.UserCount == 0 {
+			vsA := getVariationResult(gr.VariationResults, experiment.Variations[0].Id)
+			vsB := getVariationResult(gr.VariationResults, experiment.Variations[1].Id)
+			// These counts are based on the number of events sent earlier
+			if vsA.EvaluationCount.EventCount != 4 || // variation A
+				vsA.EvaluationCount.UserCount != 3 ||
+				vsB.EvaluationCount.EventCount != 3 || // variation B
+				vsB.EvaluationCount.UserCount != 2 {
 				continue
 			}
-			if gr.VariationResults[0].ExperimentCount.EventCount == 0 || // variation A
-				gr.VariationResults[0].ExperimentCount.UserCount == 0 ||
-				gr.VariationResults[1].ExperimentCount.EventCount == 0 || // variation B
-				gr.VariationResults[1].ExperimentCount.UserCount == 0 {
+			// These counts are based on the number of events sent earlier
+			if vsA.ExperimentCount.EventCount != 4 || // variation A
+				vsA.ExperimentCount.UserCount != 3 ||
+				vsB.ExperimentCount.EventCount != 3 || // variation B
+				vsB.ExperimentCount.UserCount != 2 {
 				continue
 			}
 			for _, vr := range gr.VariationResults {
@@ -551,10 +568,7 @@ func TestExperimentResult(t *testing.T) {
 	}
 	featureID := createFeatureID(t, uuid)
 
-	cmd := newCreateFeatureCommand(featureID, []string{"a", "b"})
-	createFeature(t, featureClient, cmd)
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
+	createFeature(t, featureClient, featureID, tag, "a", "b")
 	f := getFeature(t, featureClient, featureID)
 
 	// Because we set the user to the individual targeting,
@@ -569,6 +583,10 @@ func TestExperimentResult(t *testing.T) {
 	addFeatureIndividualTargeting(t, featureID, userIDs[3], f.Variations[1].Id, featureClient)
 	addFeatureIndividualTargeting(t, featureID, userIDs[4], f.Variations[1].Id, featureClient)
 
+	// Because the event-persister-dwh calls the EvaluateFeatures API
+	// and it uses the feature flag cache, we must update it before sending events.
+	updateFeatueFlagCache(t)
+
 	// Get the latest version after all changes in the feature flag
 	f = getFeature(t, featureClient, featureID)
 
@@ -578,8 +596,10 @@ func TestExperimentResult(t *testing.T) {
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-dwh subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	// CVRs is 3/4
 	// Register goal variation
@@ -637,16 +657,20 @@ func TestExperimentResult(t *testing.T) {
 			if len(gr.VariationResults) != 2 {
 				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
 			}
-			if gr.VariationResults[0].EvaluationCount.EventCount == 0 || // variation A
-				gr.VariationResults[0].EvaluationCount.UserCount == 0 ||
-				gr.VariationResults[1].EvaluationCount.EventCount == 0 || // variation B
-				gr.VariationResults[1].EvaluationCount.UserCount == 0 {
+			vsA := getVariationResult(gr.VariationResults, experiment.Variations[0].Id)
+			vsB := getVariationResult(gr.VariationResults, experiment.Variations[1].Id)
+			// These counts are based on the number of events sent earlier
+			if vsA.EvaluationCount.EventCount != 4 || // variation A
+				vsA.EvaluationCount.UserCount != 3 ||
+				vsB.EvaluationCount.EventCount != 3 || // variation B
+				vsB.EvaluationCount.UserCount != 2 {
 				continue
 			}
-			if gr.VariationResults[0].ExperimentCount.EventCount == 0 || // variation A
-				gr.VariationResults[0].ExperimentCount.UserCount == 0 ||
-				gr.VariationResults[1].ExperimentCount.EventCount == 0 || // variation B
-				gr.VariationResults[1].ExperimentCount.UserCount == 0 {
+			// These counts are based on the number of events sent earlier
+			if vsA.ExperimentCount.EventCount != 4 || // variation A
+				vsA.ExperimentCount.UserCount != 3 ||
+				vsB.ExperimentCount.EventCount != 3 || // variation B
+				vsB.ExperimentCount.UserCount != 2 {
 				continue
 			}
 			for _, vr := range gr.VariationResults {
@@ -785,10 +809,7 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 
 	variationVarA := "a"
 	variationVarB := "b"
-	cmd := newCreateFeatureCommand(featureID, []string{variationVarA, variationVarB})
-	createFeature(t, featureClient, cmd)
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
+	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
 	f := getFeature(t, featureClient, featureID)
 
 	// Because we set the user to the individual targeting,
@@ -799,6 +820,10 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	}
 	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
 	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[1].Id, featureClient)
+
+	// Because the event-persister-dwh calls the EvaluateFeatures API
+	// and it uses the feature flag cache, we must update it before sending events.
+	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
 	f = getFeature(t, featureClient, featureID)
@@ -816,8 +841,10 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-dwh subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
@@ -971,10 +998,7 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 
 	variationVarA := "a"
 	variationVarB := "b"
-	cmd := newCreateFeatureCommand(featureID, []string{variationVarA, variationVarB})
-	createFeature(t, featureClient, cmd)
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
+	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
 	f := getFeature(t, featureClient, featureID)
 
 	// Because we set the user to the individual targeting,
@@ -985,6 +1009,10 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	}
 	addFeatureIndividualTargeting(t, featureID, userIDs[0], f.Variations[0].Id, featureClient)
 	addFeatureIndividualTargeting(t, featureID, userIDs[1], f.Variations[1].Id, featureClient)
+
+	// Because the event-persister-dwh calls the EvaluateFeatures API
+	// and it uses the feature flag cache, we must update it before sending events.
+	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
 	f = getFeature(t, featureClient, featureID)
@@ -1002,8 +1030,10 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-dwh subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
@@ -1155,10 +1185,7 @@ func TestHTTPTrack(t *testing.T) {
 
 	variationVarA := "a"
 	variationVarB := "b"
-	cmd := newCreateFeatureCommand(featureID, []string{variationVarA, variationVarB})
-	createFeature(t, featureClient, cmd)
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
+	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
 	f := getFeature(t, featureClient, featureID)
 
 	// Because we set the user to the individual targeting,
@@ -1168,6 +1195,10 @@ func TestHTTPTrack(t *testing.T) {
 		Type: featureproto.Reason_TARGET,
 	}
 	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+	// Because the event-persister-dwh calls the EvaluateFeatures API
+	// and it uses the feature flag cache, we must update it before sending events.
+	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
 	f = getFeature(t, featureClient, featureID)
@@ -1185,8 +1216,10 @@ func TestHTTPTrack(t *testing.T) {
 		variations[v.Value] = v
 	}
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-dwh subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	// Send track events.
 	sendHTTPTrack(t, userID, goalIDs[0], tag, value)
@@ -1257,10 +1290,7 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	variationVarA := "a"
 	variationVarB := "b"
 
-	cmd := newCreateFeatureCommand(featureID, []string{variationVarA, variationVarB})
-	createFeature(t, featureClient, cmd)
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
+	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
 	f := getFeature(t, featureClient, featureID)
 
 	// Because we set the user to the individual targeting,
@@ -1270,6 +1300,10 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		Type: featureproto.Reason_TARGET,
 	}
 	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+	// Because the event-persister-dwh calls the EvaluateFeatures API
+	// and it uses the feature flag cache, we must update it before sending events.
+	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
 	f = getFeature(t, featureClient, featureID)
@@ -1295,8 +1329,10 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		startAt, stopAt,
 	)
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-dwh subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 
@@ -1367,10 +1403,7 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 	variationVarA := "a"
 	variationVarB := "b"
 
-	cmd := newCreateFeatureCommand(featureID, []string{variationVarA, variationVarB})
-	createFeature(t, featureClient, cmd)
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
+	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
 	f := getFeature(t, featureClient, featureID)
 
 	// Because we set the user to the individual targeting,
@@ -1380,6 +1413,10 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		Type: featureproto.Reason_TARGET,
 	}
 	addFeatureIndividualTargeting(t, featureID, userID, f.Variations[0].Id, featureClient)
+
+	// Because the event-persister-dwh calls the EvaluateFeatures API
+	// and it uses the feature flag cache, we must update it before sending events.
+	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
 	f = getFeature(t, featureClient, featureID)
@@ -1404,8 +1441,10 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		startAt, stopAt,
 	)
 
-	// Wait for the experiment cache to expire
-	time.Sleep(time.Minute)
+	// Wait for the event-persister-dwh subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
 
 	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 	for i := 0; i < retryTimes; i++ {
@@ -1465,16 +1504,22 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	defer ecClient.Close()
 	uuid := newUUID(t)
 	featureID := createFeatureID(t, uuid)
-	cmd := newCreateFeatureCommand(featureID, []string{"a", "b"})
-	createFeature(t, featureClient, cmd)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	createFeature(t, featureClient, featureID, tag, "a", "b")
 	userIDs := []string{}
 	for i := 0; i < 8; i++ {
 		userIDs = append(userIDs, fmt.Sprintf("%s-%d", createUserID(t, uuid), i))
 	}
-	addTag(t, tag, featureID, featureClient)
-	enableFeature(t, featureID, featureClient)
+	// Because the event-persister-dwh calls the EvaluateFeatures API
+	// and it uses the feature flag cache, we must update it before sending events.
+	updateFeatueFlagCache(t)
 	f := getFeature(t, featureClient, featureID)
+
+	// Wait for the event-persister-dwh subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
+
 	// Register variation
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, nil)
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag, nil)
@@ -1535,6 +1580,15 @@ LOOP:
 }
 
 func getVariationCount(vcs []*ecproto.VariationCount, id string) *ecproto.VariationCount {
+	for _, vc := range vcs {
+		if vc.VariationId == id {
+			return vc
+		}
+	}
+	return nil
+}
+
+func getVariationResult(vcs []*ecproto.VariationResult, id string) *ecproto.VariationResult {
 	for _, vc := range vcs {
 		if vc.VariationId == id {
 			return vc
@@ -1617,7 +1671,54 @@ func createExperimentWithMultiGoals(
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Update experiment cache
+	batchClient := newBatchClient(t)
+	defer batchClient.Close()
+	numRetries := 5
+	for i := 0; i < numRetries; i++ {
+		_, err = batchClient.ExecuteBatchJob(
+			ctx,
+			&btproto.BatchJobRequest{Job: btproto.BatchJob_ExperimentCacher})
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to execute experiment cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		time.Sleep(5 * time.Second)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
 	return resp.Experiment
+}
+
+func updateFeatueFlagCache(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	batchClient := newBatchClient(t)
+	defer batchClient.Close()
+	numRetries := 5
+	var err error
+	for i := 0; i < numRetries; i++ {
+		_, err = batchClient.ExecuteBatchJob(
+			ctx,
+			&btproto.BatchJobRequest{Job: btproto.BatchJob_FeatureFlagCacher})
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to execute feature flag cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		time.Sleep(5 * time.Second)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func grpcRegisterGoalEvent(
@@ -1923,6 +2024,25 @@ func newEventCounterClient(t *testing.T) ecclient.Client {
 	return client
 }
 
+func newBatchClient(t *testing.T) btclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := btclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create batch client:", err)
+	}
+	return client
+}
+
 func newCreateFeatureCommand(featureID string, variations []string) *featureproto.CreateFeatureCommand {
 	cmd := &featureproto.CreateFeatureCommand{
 		Id:          featureID,
@@ -1947,8 +2067,13 @@ func newCreateFeatureCommand(featureID string, variations []string) *featureprot
 	return cmd
 }
 
-func createFeature(t *testing.T, client featureclient.Client, cmd *featureproto.CreateFeatureCommand) {
+func createFeature(
+	t *testing.T,
+	client featureclient.Client,
+	featureID, tag, variationA, variationB string,
+) {
 	t.Helper()
+	cmd := newCreateFeatureCommand(featureID, []string{variationA, variationB})
 	createReq := &featureproto.CreateFeatureRequest{
 		Command:              cmd,
 		EnvironmentNamespace: *environmentNamespace,
@@ -1958,6 +2083,8 @@ func createFeature(t *testing.T, client featureclient.Client, cmd *featureproto.
 	if _, err := client.CreateFeature(ctx, createReq); err != nil {
 		t.Fatal(err)
 	}
+	addTag(t, tag, featureID, client)
+	enableFeature(t, featureID, client)
 }
 
 func addTag(t *testing.T, tag string, featureID string, client featureclient.Client) {
@@ -2102,7 +2229,21 @@ func getExperimentGoalCount(t *testing.T, c ecclient.Client, goalID, featureID s
 		FeatureVersion:       featureVersion,
 		VariationIds:         variationIDs,
 	}
-	response, err := c.GetExperimentGoalCount(ctx, req)
+	var response *ecproto.GetExperimentGoalCountResponse
+	var err error
+	numRetries := 5
+	for i := 0; i < numRetries; i++ {
+		response, err = c.GetExperimentGoalCount(ctx, req)
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to get experiment goal count. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		time.Sleep(5 * time.Second)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}

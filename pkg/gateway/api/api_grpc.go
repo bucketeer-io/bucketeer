@@ -640,15 +640,6 @@ func (s *grpcGatewayService) getFeatures(
 		)
 		return nil, ErrInternal
 	}
-	if err := s.featuresCache.Put(&featureproto.Features{Features: features}, environmentId); err != nil {
-		s.logger.Error(
-			"Failed to cache features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentID", environmentId),
-			)...,
-		)
-	}
 	return features, nil
 }
 
@@ -784,20 +775,6 @@ func (s *grpcGatewayService) getSegmentUsers(
 			)...,
 		)
 		return nil, ErrInternal
-	}
-	su := &featureproto.SegmentUsers{
-		SegmentId: segmentID,
-		Users:     res.Users,
-	}
-	if err := s.segmentUsersCache.Put(su, environmentId); err != nil {
-		s.logger.Error(
-			"Failed to cache segment users",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentID", environmentId),
-				zap.String("segmentId", segmentID),
-			)...,
-		)
 	}
 	return res.Users, nil
 }

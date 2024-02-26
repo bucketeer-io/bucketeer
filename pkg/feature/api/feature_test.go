@@ -400,21 +400,6 @@ func TestCreateFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(nil)
 			},
 			id:                       "Bucketeer-id-2019",
 			name:                     "name",
@@ -425,38 +410,6 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
 			environmentNamespace:     "ns0",
 			expected:                 nil,
-		},
-		{
-			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(errors.New("error"))
-			},
-			id:                       "Bucketeer-id-2019",
-			name:                     "name",
-			description:              "success to create, but fail to refresh cache",
-			variations:               variations,
-			tags:                     tags,
-			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
-			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
-			environmentNamespace:     "ns0",
-			expected:                 createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 	}
 	for _, p := range patterns {
@@ -1014,7 +967,6 @@ func TestEvaluateFeatures(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
-				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
 			expected: &featureproto.EvaluateFeaturesResponse{
@@ -1169,7 +1121,6 @@ func TestEvaluateSingleFeature(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
-				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{
 				User:                 &userproto.User{Id: "user-id"},
@@ -1538,21 +1489,6 @@ func TestEnableFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(nil)
 			},
 			req: &featureproto.EnableFeatureRequest{
 				Id:                   "id-1",
@@ -1560,36 +1496,6 @@ func TestEnableFeatureMySQL(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: nil,
-		},
-		{
-			desc: "success to enable, but fail to refresh cache",
-			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(errors.New("error"))
-			},
-			req: &featureproto.EnableFeatureRequest{
-				Id:                   "id-1",
-				Command:              &featureproto.EnableFeatureCommand{},
-				EnvironmentNamespace: "ns0",
-			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 	}
 	for _, p := range patterns {
@@ -1668,21 +1574,6 @@ func TestDisableFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(nil)
 			},
 			req: &featureproto.DisableFeatureRequest{
 				Id:                   "id-1",
@@ -1690,36 +1581,6 @@ func TestDisableFeatureMySQL(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: nil,
-		},
-		{
-			desc: "success to disable, but fail to refresh cache",
-			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(errors.New("error"))
-			},
-			req: &featureproto.DisableFeatureRequest{
-				Id:                   "id-1",
-				Command:              &featureproto.DisableFeatureCommand{},
-				EnvironmentNamespace: "ns0",
-			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 	}
 	for _, p := range patterns {
@@ -1933,21 +1794,6 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(nil)
 			},
 			req: &featureproto.UnarchiveFeatureRequest{
 				Id:                   "id-1",
@@ -1955,36 +1801,6 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: nil,
-		},
-		{
-			desc: "success to unarchive, but fail to refresh cache",
-			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(errors.New("error"))
-			},
-			req: &featureproto.UnarchiveFeatureRequest{
-				Id:                   "id-1",
-				Command:              &featureproto.UnarchiveFeatureCommand{},
-				EnvironmentNamespace: "ns0",
-			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 	}
 	for _, p := range patterns {
@@ -2063,21 +1879,6 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(nil)
 			},
 			req: &featureproto.DeleteFeatureRequest{
 				Id:                   "id-1",
@@ -2085,36 +1886,6 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: nil,
-		},
-		{
-			desc: "success to delete, but fail to refresh cache",
-			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(errors.New("error"))
-			},
-			req: &featureproto.DeleteFeatureRequest{
-				Id:                   "id-1",
-				Command:              &featureproto.DeleteFeatureCommand{},
-				EnvironmentNamespace: "ns0",
-			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 	}
 	for _, p := range patterns {
@@ -2217,21 +1988,6 @@ func TestCloneFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				r := mysqlmock.NewMockRow(mockController)
-				r.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(r)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(nil)
 			},
 			req: &featureproto.CloneFeatureRequest{
 				Id: "id-0",
@@ -2241,43 +1997,6 @@ func TestCloneFeatureMySQL(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: nil,
-		},
-		{
-			desc: "success to clone, but fail to refresh cache",
-			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				r := mysqlmock.NewMockRow(mockController)
-				r.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					ctx, gomock.Any(), gomock.Any(),
-				).Return(r)
-				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Put(
-					gomock.Any(), "ns0",
-				).Return(errors.New("error"))
-			},
-			req: &featureproto.CloneFeatureRequest{
-				Id: "id-0",
-				Command: &featureproto.CloneFeatureCommand{
-					EnvironmentNamespace: "ns1",
-				},
-				EnvironmentNamespace: "ns0",
-			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 	}
 

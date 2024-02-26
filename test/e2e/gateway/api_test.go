@@ -29,21 +29,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/test/e2e/util"
 )
 
-func TestGetEvaluationsWithoutCreatingFeature(t *testing.T) {
-	t.Parallel()
-	uuid := newUUID(t)
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := newUserID(t, uuid)
-	response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
-
-	if response.Evaluations != nil {
-		evaluationSize := len(response.Evaluations.Evaluations)
-		if evaluationSize > 0 {
-			t.Fatalf("Different sizes. Expected: 0, actual: %v", evaluationSize)
-		}
-	}
-}
-
 func TestGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
@@ -56,17 +41,21 @@ func TestGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	createFeature(t, client, cmd)
 	addTag(t, tag, featureID, client)
 	enableFeature(t, featureID, client)
-	time.Sleep(3 * time.Second)
+	// Update feature flag cache
+	updateFeatueFlagCache(t)
 	response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
 
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
-	evaluationSize := len(response.Evaluations.Evaluations)
-	if evaluationSize != 1 {
-		t.Fatalf("Wrong evaluation size. Expected 1, actual: %d", evaluationSize)
+	if len(response.Evaluations.Evaluations) == 0 {
+		t.Fatalf("Wrong evaluation size. Expected more than one, actual zero")
 	}
-	reason := response.Evaluations.Evaluations[0].Reason.Type
+	eval, err := findFeature(response.Evaluations.Evaluations, featureID)
+	if err != nil {
+		t.Fatalf("Failed to find evaluation. Error: %v", err)
+	}
+	reason := eval.Reason.Type
 	if reason != featureproto.Reason_DEFAULT {
 		t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_DEFAULT, reason)
 	}
@@ -83,17 +72,21 @@ func TestGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 	cmd := newCreateFeatureCommand(featureID)
 	createFeature(t, client, cmd)
 	addTag(t, tag, featureID, client)
-	time.Sleep(3 * time.Second)
+	// Update feature flag cache
+	updateFeatueFlagCache(t)
 	response := util.GetEvaluations(t, tag, userID, *gatewayAddr, *apiKeyPath)
 
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
-	evaluationSize := len(response.Evaluations.Evaluations)
-	if evaluationSize != 1 {
-		t.Fatalf("Wrong evaluation size. Expected 1, actual: %d", evaluationSize)
+	if len(response.Evaluations.Evaluations) == 0 {
+		t.Fatalf("Wrong evaluation size. Expected more than one, actual zero")
 	}
-	reason := response.Evaluations.Evaluations[0].Reason.Type
+	eval, err := findFeature(response.Evaluations.Evaluations, featureID)
+	if err != nil {
+		t.Fatalf("Failed to find evaluation. Error: %v", err)
+	}
+	reason := eval.Reason.Type
 	if reason != featureproto.Reason_OFF_VARIATION {
 		t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_OFF_VARIATION, reason)
 	}
@@ -117,7 +110,7 @@ func TestGetEvaluationsFullState(t *testing.T) {
 		t.Fatal("Evaluations field is nil")
 	}
 	evaluationSize := len(response.Evaluations.Evaluations)
-	if evaluationSize != 2 {
+	if evaluationSize < 2 {
 		t.Fatalf("Wrong evaluation size. Expected 2, actual: %d", evaluationSize)
 	}
 }

@@ -248,16 +248,6 @@ func (w *evalEvtWriter) listExperiments(
 			if err != nil {
 				return nil, err
 			}
-			// Cache the experiment for the next request
-			experiments := &exproto.Experiments{
-				Experiments: resp.Experiments,
-			}
-			if err := w.cache.Put(experiments, environmentNamespace); err != nil {
-				w.logger.Error("Failed to cache experiments",
-					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
-				)
-			}
 			return resp.Experiments, nil
 		},
 	)
