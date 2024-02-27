@@ -1361,6 +1361,11 @@ export const messages = {
             'Get started by filling in the information below to create your new experiment.',
         }),
       },
+      hasProgressiveRollout: defineMessage({
+        id: 'experiment.add.hasProgressiveRollout',
+        defaultMessage:
+          'The selected feature flag has a {link}. Please stop or delete it before creating the experiment.',
+      }),
     },
     update: {
       header: {
