@@ -33,7 +33,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 )
 
@@ -64,12 +63,12 @@ func createAccountService(t *testing.T, mockController *gomock.Controller, db st
 	}
 }
 
-func createContextWithDefaultToken(t *testing.T, role accountproto.Account_Role, isSystemAdmin bool) context.Context {
+func createContextWithDefaultToken(t *testing.T, isSystemAdmin bool) context.Context {
 	t.Helper()
-	return createContextWithEmailToken(t, "bucketeer@example.com", role, isSystemAdmin)
+	return createContextWithEmailToken(t, "bucketeer@example.com", isSystemAdmin)
 }
 
-func createContextWithEmailToken(t *testing.T, email string, role accountproto.Account_Role, isSystemAdmin bool) context.Context {
+func createContextWithEmailToken(t *testing.T, email string, isSystemAdmin bool) context.Context {
 	t.Helper()
 	sub := &authproto.IDTokenSubject{
 		UserId: email,
@@ -90,21 +89,7 @@ func createContextWithEmailToken(t *testing.T, email string, role accountproto.A
 	return context.WithValue(ctx, rpc.Key, token)
 }
 
-func createContextWithInvalidSubjectToken(t *testing.T, role accountproto.Account_Role) context.Context {
-	t.Helper()
-	token := &token.IDToken{
-		Issuer:   "issuer",
-		Subject:  base64.RawURLEncoding.EncodeToString([]byte("bucketeer@example.com")),
-		Audience: "audience",
-		Expiry:   time.Now().AddDate(100, 0, 0),
-		IssuedAt: time.Now(),
-		Email:    "bucketeer@example.com",
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.Key, token)
-}
-
-func createContextWithInvalidEmailToken(t *testing.T, role accountproto.Account_Role) context.Context {
+func createContextWithInvalidEmailToken(t *testing.T) context.Context {
 	t.Helper()
 	sub := &authproto.IDTokenSubject{
 		UserId: "bucketeer@example.com",

@@ -75,7 +75,7 @@ func TestGetMeMySQL(t *testing.T) {
 		},
 		{
 			desc:        "errInvalidEmail",
-			ctx:         createContextWithInvalidEmailToken(t, accountproto.Account_OWNER),
+			ctx:         createContextWithInvalidEmailToken(t),
 			setup:       nil,
 			input:       &accountproto.GetMeRequest{},
 			expected:    nil,
@@ -83,7 +83,7 @@ func TestGetMeMySQL(t *testing.T) {
 		},
 		{
 			desc: "errInternal",
-			ctx:  createContextWithDefaultToken(t, accountproto.Account_OWNER, true),
+			ctx:  createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(),
@@ -99,7 +99,7 @@ func TestGetMeMySQL(t *testing.T) {
 		},
 		{
 			desc: "success",
-			ctx:  createContextWithDefaultToken(t, accountproto.Account_EDITOR, true),
+			ctx:  createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
 
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
@@ -204,7 +204,7 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithDefaultToken(t, accountproto.Account_OWNER, true)
+	ctx := createContextWithDefaultToken(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -326,7 +326,7 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithDefaultToken(t, accountproto.Account_OWNER, true)
+	ctx := createContextWithDefaultToken(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
