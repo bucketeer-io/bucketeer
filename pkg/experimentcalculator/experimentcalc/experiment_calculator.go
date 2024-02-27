@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"sort"
 	"sync"
 	"time"
 
@@ -347,26 +346,29 @@ func (e ExperimentCalculator) appendVariationResult(
 	goalResult *eventcounter.GoalResult,
 	srcVrs []*eventcounter.VariationResult,
 ) {
-	sort.SliceStable(goalResult.VariationResults, func(i, j int) bool {
-		return goalResult.VariationResults[i].VariationId < goalResult.VariationResults[j].VariationId
-	})
-	sort.SliceStable(srcVrs, func(i, j int) bool {
-		return srcVrs[i].VariationId < srcVrs[j].VariationId
-	})
 	for i := 0; i < len(goalResult.VariationResults); i++ {
-		goalResult.VariationResults[i].ExperimentCount = copyVariationCount(srcVrs[i].ExperimentCount)
-		goalResult.VariationResults[i].EvaluationCount = copyVariationCount(srcVrs[i].EvaluationCount)
+		variationResult := getVariationResult(srcVrs, goalResult.VariationResults[i].VariationId)
+		if variationResult == nil {
+			e.logger.Error("Variation result not found",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("variation_id", goalResult.VariationResults[i].VariationId),
+				)...,
+			)
+			continue
+		}
+		goalResult.VariationResults[i].ExperimentCount = copyVariationCount(variationResult.ExperimentCount)
+		goalResult.VariationResults[i].EvaluationCount = copyVariationCount(variationResult.EvaluationCount)
 
-		goalResult.VariationResults[i].CvrProb = copyDistributionSummary(srcVrs[i].CvrProb)
-		goalResult.VariationResults[i].CvrProbBest = copyDistributionSummary(srcVrs[i].CvrProbBest)
-		goalResult.VariationResults[i].CvrProbBeatBaseline = copyDistributionSummary(srcVrs[i].CvrProbBeatBaseline)
+		goalResult.VariationResults[i].CvrProb = copyDistributionSummary(variationResult.CvrProb)
+		goalResult.VariationResults[i].CvrProbBest = copyDistributionSummary(variationResult.CvrProbBest)
+		goalResult.VariationResults[i].CvrProbBeatBaseline = copyDistributionSummary(variationResult.CvrProbBeatBaseline)
 
 		goalResult.VariationResults[i].GoalValueSumPerUserProb =
-			copyDistributionSummary(srcVrs[i].GoalValueSumPerUserProb)
+			copyDistributionSummary(variationResult.GoalValueSumPerUserProb)
 		goalResult.VariationResults[i].GoalValueSumPerUserProbBest =
-			copyDistributionSummary(srcVrs[i].GoalValueSumPerUserProbBest)
+			copyDistributionSummary(variationResult.GoalValueSumPerUserProbBest)
 		goalResult.VariationResults[i].GoalValueSumPerUserProbBeatBaseline =
-			copyDistributionSummary(srcVrs[i].GoalValueSumPerUserProbBeatBaseline)
+			copyDistributionSummary(variationResult.GoalValueSumPerUserProbBeatBaseline)
 
 		goalResult.VariationResults[i].EvaluationUserCountTimeseries = &eventcounter.Timeseries{
 			Timestamps: []int64{timestamp},
@@ -540,6 +542,15 @@ func listEndAt(startAt, endAt, now int64) []int64 {
 	}
 	timestamps = append(timestamps, endAt)
 	return timestamps
+}
+
+func getVariationResult(vcs []*eventcounter.VariationResult, id string) *eventcounter.VariationResult {
+	for _, vc := range vcs {
+		if vc.VariationId == id {
+			return vc
+		}
+	}
+	return nil
 }
 
 func copyVariationCount(from *eventcounter.VariationCount) *eventcounter.VariationCount {
