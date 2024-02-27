@@ -33,7 +33,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -59,21 +58,18 @@ func TestCreateSegmentMySQL(t *testing.T) {
 
 	testcases := []struct {
 		setup                func(*FeatureService)
-		role                 accountproto.Account_Role
 		cmd                  *featureproto.CreateSegmentCommand
 		environmentNamespace string
 		expected             error
 	}{
 		{
 			setup:                nil,
-			role:                 accountproto.Account_OWNER,
 			cmd:                  nil,
 			environmentNamespace: "ns0",
 			expected:             createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: nil,
-			role:  accountproto.Account_OWNER,
 			cmd: &featureproto.CreateSegmentCommand{
 				Name:        "",
 				Description: "description",
@@ -88,7 +84,6 @@ func TestCreateSegmentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			role: accountproto.Account_OWNER,
 			cmd: &featureproto.CreateSegmentCommand{
 				Name:        "name",
 				Description: "description",
@@ -102,7 +97,7 @@ func TestCreateSegmentMySQL(t *testing.T) {
 		if tc.setup != nil {
 			tc.setup(service)
 		}
-		ctx = setToken(ctx, tc.role)
+		ctx = setToken(ctx)
 		req := &featureproto.CreateSegmentRequest{Command: tc.cmd, EnvironmentNamespace: tc.environmentNamespace}
 		_, err := service.CreateSegment(ctx, req)
 		assert.Equal(t, tc.expected, err)
@@ -131,7 +126,6 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 
 	testcases := []struct {
 		setup                func(*FeatureService)
-		role                 accountproto.Account_Role
 		id                   string
 		cmd                  *featureproto.DeleteSegmentCommand
 		environmentNamespace string
@@ -139,7 +133,6 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 	}{
 		{
 			setup:                nil,
-			role:                 accountproto.Account_OWNER,
 			id:                   "",
 			cmd:                  nil,
 			environmentNamespace: "ns0",
@@ -147,7 +140,6 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 		},
 		{
 			setup:                nil,
-			role:                 accountproto.Account_OWNER,
 			id:                   "id",
 			cmd:                  nil,
 			environmentNamespace: "ns0",
@@ -172,7 +164,6 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrSegmentNotFound)
 			},
-			role:                 accountproto.Account_OWNER,
 			id:                   "id",
 			cmd:                  &featureproto.DeleteSegmentCommand{},
 			environmentNamespace: "ns0",
@@ -197,7 +188,6 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			role:                 accountproto.Account_OWNER,
 			id:                   "id",
 			cmd:                  &featureproto.DeleteSegmentCommand{},
 			environmentNamespace: "ns0",
@@ -209,7 +199,7 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 		if tc.setup != nil {
 			tc.setup(service)
 		}
-		ctx = setToken(ctx, tc.role)
+		ctx = setToken(ctx)
 		req := &featureproto.DeleteSegmentRequest{
 			Id:                   tc.id,
 			Command:              tc.cmd,
@@ -244,7 +234,6 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 	require.NoError(t, err)
 	testcases := []struct {
 		setup                func(*FeatureService)
-		role                 accountproto.Account_Role
 		id                   string
 		cmds                 []*featureproto.Command
 		environmentNamespace string
@@ -252,7 +241,6 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 	}{
 		{
 			setup:                nil,
-			role:                 accountproto.Account_OWNER,
 			id:                   "",
 			cmds:                 nil,
 			environmentNamespace: "ns0",
@@ -260,7 +248,6 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 		},
 		{
 			setup:                nil,
-			role:                 accountproto.Account_OWNER,
 			id:                   "id",
 			cmds:                 nil,
 			environmentNamespace: "ns0",
@@ -273,8 +260,7 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			role: accountproto.Account_OWNER,
-			id:   "id",
+			id: "id",
 			cmds: []*featureproto.Command{
 				{Command: changeSegmentNameCmd},
 			},
@@ -287,7 +273,7 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 		if tc.setup != nil {
 			tc.setup(service)
 		}
-		ctx = setToken(ctx, tc.role)
+		ctx = setToken(ctx)
 		req := &featureproto.UpdateSegmentRequest{
 			Id:                   tc.id,
 			Commands:             tc.cmds,
@@ -367,7 +353,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 		if tc.setup != nil {
 			tc.setup(service)
 		}
-		ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
+		ctx = setToken(ctx)
 		req := &featureproto.GetSegmentRequest{Id: tc.id, EnvironmentNamespace: tc.environmentNamespace}
 		_, err := service.GetSegment(ctx, req)
 		assert.Equal(t, tc.expected, err)
@@ -431,14 +417,14 @@ func TestListSegmentsMySQL(t *testing.T) {
 		if tc.setup != nil {
 			tc.setup(service)
 		}
-		ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
+		ctx = setToken(ctx)
 		req := &featureproto.ListSegmentsRequest{PageSize: tc.pageSize, EnvironmentNamespace: tc.environmentNamespace}
 		_, err := service.ListSegments(ctx, req)
 		assert.Equal(t, tc.expected, err)
 	}
 }
 
-func setToken(ctx context.Context, role accountproto.Account_Role) context.Context {
+func setToken(ctx context.Context) context.Context {
 	t := &token.IDToken{
 		Issuer:   "issuer",
 		Subject:  "sub",

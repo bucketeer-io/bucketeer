@@ -56,7 +56,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -125,7 +125,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, accountproto.Account_OWNER)
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -194,7 +194,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -300,7 +300,7 @@ func createAuditLogs(t *testing.T) []*proto.AuditLog {
 	}
 }
 
-func createContextWithToken(t *testing.T, role accountproto.Account_Role) context.Context {
+func createContextWithToken(t *testing.T) context.Context {
 	t.Helper()
 	token := &token.IDToken{
 		Email:         "test@example.com",

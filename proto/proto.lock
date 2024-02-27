@@ -5987,21 +5987,13 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "role",
-                "type": "bucketeer.account.Account.Role",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "is_admin",
                 "type": "bool"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
