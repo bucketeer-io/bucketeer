@@ -56,12 +56,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
+	createError := func(status *gstatus.Status, msg string, localizer locale.Localizer) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
@@ -71,50 +66,86 @@ func TestListAuditLogsMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*auditlogService)
-		input       *proto.ListAuditLogsRequest
-		expected    *proto.ListAuditLogsResponse
-		expectedErr error
+		desc           string
+		service        *auditlogService
+		context        context.Context
+		setup          func(*auditlogService)
+		input          *proto.ListAuditLogsRequest
+		expected       *proto.ListAuditLogsResponse
+		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
-			desc:        "err: ErrInvalidCursor",
-			setup:       nil,
-			input:       &proto.ListAuditLogsRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
-			expected:    nil,
-			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
+			desc:     "err: ErrInvalidCursor",
+			service:  newAuditLogService(t, mockController),
+			context:  createContextWithToken(t, accountproto.Account_UNASSIGNED, true),
+			setup:    nil,
+			input:    &proto.ListAuditLogsRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"), localizer)
+			},
 		},
 		{
-			desc: "err: ErrInternal",
+			desc:    "err: ErrInternal",
+			service: newAuditLogService(t, mockController),
+			context: createContextWithToken(t, accountproto.Account_UNASSIGNED, true),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
-			input:       &proto.ListAuditLogsRequest{EnvironmentNamespace: "ns0"},
-			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			input:    &proto.ListAuditLogsRequest{EnvironmentNamespace: "ns0"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+			},
 		},
 		{
-			desc: "success",
+			desc:    "success",
+			service: newAuditLogService(t, mockController),
+			context: createContextWithToken(t, accountproto.Account_UNASSIGNED, true),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
-			input:       &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
-			expected:    &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
-			expectedErr: nil,
+			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			expected: &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success with Viewer Account",
+			service: newAuditLogServiceForViewer(t, mockController),
+			context: createContextWithToken(t, accountproto.Account_UNASSIGNED, false),
+			setup: func(s *auditlogService) {
+				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(createAuditLogs(t), 2, int64(10), nil)
+			},
+			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			expected: &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newAuditLogService(t, mockController)
+			s := p.service
 			if p.setup != nil {
 				p.setup(s)
 			}
+			ctx := p.context
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"ja"},
+			})
+			localizer := locale.NewLocalizer(ctx)
+
 			actual, err := s.ListAuditLogs(ctx, p.input)
-			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.getExpectedErr(localizer), err)
+
 			assert.Equal(t, p.expected, actual)
 		})
 	}
@@ -125,7 +156,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, accountproto.Account_OWNER)
+	ctx := createContextWithToken(t, accountproto.Account_OWNER, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -194,7 +225,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED)
+	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED, false)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -276,18 +307,6 @@ func TestViewerEnvironmentRole(t *testing.T) {
 		setup  func(*auditlogService)
 		action func(context.Context, *auditlogService) error
 	}{
-		{
-			desc: "ListAuditLogs",
-			setup: func(s *auditlogService) {
-				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(createAuditLogs(t), 2, int64(10), nil)
-			},
-			action: func(ctx context.Context, s *auditlogService) error {
-				_, err := s.ListAuditLogs(ctx, &proto.ListAuditLogsRequest{EnvironmentNamespace: "ns0"})
-				return err
-			},
-		},
 		{
 			desc: "ListFeatureHistory",
 			setup: func(s *auditlogService) {
@@ -378,11 +397,11 @@ func createAuditLogs(t *testing.T) []*proto.AuditLog {
 	}
 }
 
-func createContextWithToken(t *testing.T, role accountproto.Account_Role) context.Context {
+func createContextWithToken(t *testing.T, role accountproto.Account_Role, isSystemAdmin bool) context.Context {
 	t.Helper()
 	token := &token.IDToken{
 		Email:         "test@example.com",
-		IsSystemAdmin: true,
+		IsSystemAdmin: isSystemAdmin,
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
