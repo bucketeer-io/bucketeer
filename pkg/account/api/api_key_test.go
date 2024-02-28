@@ -576,7 +576,7 @@ func TestViewerEnvironmentRole(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithDefaultToken(t, accountproto.Account_VIEWER, false)
+	ctx := createContextWithDefaultToken(t, false)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
