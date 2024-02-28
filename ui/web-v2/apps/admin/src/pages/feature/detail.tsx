@@ -6,6 +6,7 @@ import {
   listFlagTriggers,
   selectAll as selectAllFlagTriggers,
 } from '@/modules/flagTriggers';
+import { listProgressiveRollout } from '@/modules/porgressiveRollout';
 import { AutoOpsRule } from '@/proto/autoops/auto_ops_rule_pb';
 import { ListFlagTriggersResponse } from '@/proto/feature/service_pb';
 import { SerializedError } from '@reduxjs/toolkit';
@@ -69,6 +70,7 @@ export const FeatureDetailPage: FC = memo(() => {
     ],
     shallowEqual
   );
+
   const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
     (state) =>
       selectAllAutoOpsRules(state.autoOpsRules).filter(
@@ -97,6 +99,12 @@ export const FeatureDetailPage: FC = memo(() => {
       );
       dispatch(
         listFlagTriggers({
+          featureId: featureId,
+          environmentNamespace: currentEnvironment.id,
+        })
+      );
+      dispatch(
+        listProgressiveRollout({
           featureId: featureId,
           environmentNamespace: currentEnvironment.id,
         })

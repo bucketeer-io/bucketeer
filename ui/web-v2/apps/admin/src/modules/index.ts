@@ -18,6 +18,7 @@ import { meSlice } from './me';
 import { myOrganizationSlice } from './myOrganization';
 import { notificationSlice } from './notifications';
 import { opsCountsSlice } from './opsCounts';
+import { progressiveRolloutSlice } from './porgressiveRollout';
 import { projectsSlice } from './projects';
 import { pushSlice } from './pushes';
 import { segmentsSlice } from './segments';
@@ -31,6 +32,7 @@ export const reducers = combineReducers({
   apiKeys: apiKeySlice.reducer,
   auth: authSlice.reducer,
   autoOpsRules: autoOpsRulesSlice.reducer,
+  progressiveRollout: progressiveRolloutSlice.reducer,
   opsCounts: opsCountsSlice.reducer,
   environments: environmentsSlice.reducer,
   evaluationTimeseriesCount: evaluationTimeseriesCountSlice.reducer,

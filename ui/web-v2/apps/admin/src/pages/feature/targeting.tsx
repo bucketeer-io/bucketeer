@@ -266,14 +266,19 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
           featureId={featureId}
           onOpenConfirmDialog={() => setIsConfirmDialogOpen(true)}
         />
-        <FeatureConfirmDialog
-          open={isConfirmDialogOpen}
-          handleSubmit={handleSubmit(handleUpdate)}
-          onClose={() => setIsConfirmDialogOpen(false)}
-          title={f(messages.feature.confirm.title)}
-          description={f(messages.feature.confirm.description)}
-          displayResetSampling={true}
-        />
+        {isConfirmDialogOpen && (
+          <FeatureConfirmDialog
+            open={isConfirmDialogOpen}
+            handleSubmit={handleSubmit(handleUpdate)}
+            onClose={() => setIsConfirmDialogOpen(false)}
+            title={f(messages.feature.confirm.title)}
+            description={f(messages.feature.confirm.description)}
+            displayResetSampling={true}
+            featureId={featureId}
+            isSwitchEnabledConfirm
+            isEnabled={dirtyFields.enabled && getDefaultValues(feature).enabled}
+          />
+        )}
       </FormProvider>
     );
   }

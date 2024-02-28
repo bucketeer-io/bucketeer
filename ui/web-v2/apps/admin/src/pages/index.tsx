@@ -16,7 +16,6 @@ import {
   Redirect,
   useRouteMatch,
   useParams,
-  useLocation,
   useHistory,
 } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
@@ -63,8 +62,6 @@ import { SegmentIndexPage } from './segment';
 import { SettingsIndexPage } from './settings';
 
 export const App: FC = memo(() => {
-  const location = useLocation();
-
   useEffect(() => {
     if (
       !window.location.href.includes('localhost') &&

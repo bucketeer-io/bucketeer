@@ -26,6 +26,14 @@ import { ListSkeleton } from '../ListSkeleton';
 import { Pagination } from '../Pagination';
 import { RelativeDateText } from '../RelativeDateText';
 
+export const isExperimentStatusWaitingRunnning = (
+  status: Experiment.StatusMap[keyof Experiment.StatusMap]
+): boolean => {
+  return (
+    status === Experiment.Status.WAITING || status === Experiment.Status.RUNNING
+  );
+};
+
 export interface ExperimentListProps {
   searchOptions: ExperimentSearchOptions;
   onChangePage: (page: number) => void;
@@ -66,11 +74,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
       experimentSatus: Experiment.StatusMap[keyof Experiment.StatusMap]
     ): Array<MenuItem> => {
       const items: Array<MenuItem> = [];
-      const isExperimentWaitingRunnning =
-        experimentSatus === Experiment.Status.WAITING ||
-        experimentSatus === Experiment.Status.RUNNING;
-
-      if (isExperimentWaitingRunnning) {
+      if (isExperimentStatusWaitingRunnning(experimentSatus)) {
         items.push({
           action: MenuActions.STOP,
           name: intl.formatMessage(messages.experiment.stop.button),
@@ -81,8 +85,8 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
         action: MenuActions.ARCHIVE,
         name: intl.formatMessage(messages.experiment.action.archive),
         iconElement: <MUArchiveIcon />,
-        disabled: isExperimentWaitingRunnning,
-        tooltipMessage: isExperimentWaitingRunnning
+        disabled: isExperimentStatusWaitingRunnning(experimentSatus),
+        tooltipMessage: isExperimentStatusWaitingRunnning(experimentSatus)
           ? intl.formatMessage(messages.experiment.action.archiveTooltip)
           : null,
         alignRight: true,

@@ -1,4 +1,6 @@
 import { yupLocale } from '@/lang/yup';
+import { isArraySorted } from '@/utils/isArraySorted';
+import { isIntervals5MinutesApart } from '@/utils/isIntervals5MinutesApart';
 import * as yup from 'yup';
 
 import { ClauseType } from '../../components/FeatureAutoOpsRulesForm';
@@ -168,6 +170,102 @@ export const operationFormSchema = yup.object().shape({
       .moreThan(0)
       .max(100),
     operator: yup.string(),
+  }),
+  progressiveRollout: yup.object().shape({
+    template: yup.object().shape({
+      increments: yup
+        .number()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .required()
+        .min(1)
+        .max(100),
+      datetime: yup.object().shape({
+        time: yup
+          .date()
+          .test(
+            'isLaterThanNow',
+            intl.formatMessage(messages.input.error.notLaterThanCurrentTime),
+            function (value) {
+              const { from } = this as any;
+              if (from[3].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT) {
+                return value.getTime() > new Date().getTime();
+              }
+              return true;
+            }
+          ),
+      }),
+    }),
+    manual: yup.object().shape({
+      schedulesList: yup.array().of(
+        yup.object().shape({
+          weight: yup
+            .number()
+            .transform((value) => (isNaN(value) ? undefined : value))
+            .required()
+            .min(1)
+            .max(100)
+            .test('isAscending', '', function (value) {
+              const { from } = this as any;
+
+              if (from[3].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT) {
+                return isArraySorted(
+                  from[3].value.progressiveRollout.manual.schedulesList.map(
+                    (d) => Number(d.weight)
+                  )
+                );
+              }
+              return true;
+            }),
+          executeAt: yup.object().shape({
+            time: yup
+              .date()
+              .test(
+                'isLaterThanNow',
+                intl.formatMessage(
+                  messages.input.error.notLaterThanCurrentTime
+                ),
+                function (value) {
+                  const { from } = this as any;
+                  if (
+                    from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
+                  ) {
+                    return value.getTime() > new Date().getTime();
+                  }
+                  return true;
+                }
+              )
+              .test('isAscending', '', function () {
+                const { from } = this as any;
+
+                if (
+                  from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
+                ) {
+                  return isArraySorted(
+                    from[4].value.progressiveRollout.manual.schedulesList.map(
+                      (d) => d.executeAt.time.getTime()
+                    )
+                  );
+                }
+                return true;
+              })
+              .test('timeIntervals', '', function () {
+                const { from } = this as any;
+
+                if (
+                  from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
+                ) {
+                  return isIntervals5MinutesApart(
+                    from[4].value.progressiveRollout.manual.schedulesList.map(
+                      (d) => d.executeAt.time.getTime()
+                    )
+                  );
+                }
+                return true;
+              }),
+          }),
+        })
+      ),
+    }),
   }),
 });
 
