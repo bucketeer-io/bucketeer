@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -231,10 +230,10 @@ func (s *eventCounterService) convertEvaluationCounts(
 		vcsMap[row.VariationID] = vc
 	}
 	vcs := make([]*ecproto.VariationCount, 0, len(vcsMap))
-	for _, vc := range vcsMap {
-		vcs = append(vcs, vc)
+	// we should keep the order of variationIDs
+	for _, vid := range variationIDs {
+		vcs = append(vcs, vcsMap[vid])
 	}
-	sort.SliceStable(vcs, func(i, j int) bool { return vcs[i].VariationId < vcs[j].VariationId })
 	return vcs
 }
 
@@ -1012,10 +1011,10 @@ func (s *eventCounterService) convertGoalCounts(
 		vcsMap[row.VariationID] = vc
 	}
 	vcs := make([]*ecproto.VariationCount, 0, len(vcsMap))
-	for _, vc := range vcsMap {
-		vcs = append(vcs, vc)
+	// we should keep the order of variationIDs
+	for _, vid := range variationIDs {
+		vcs = append(vcs, vcsMap[vid])
 	}
-	sort.SliceStable(vcs, func(i, j int) bool { return vcs[i].VariationId < vcs[j].VariationId })
 	return vcs
 }
 
