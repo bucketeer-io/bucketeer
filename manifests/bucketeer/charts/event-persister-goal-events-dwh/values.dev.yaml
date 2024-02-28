@@ -35,6 +35,11 @@ env:
     addr: localenv-redis-headless.default.svc.cluster.local:6379
     poolMaxIdle: 25
     poolMaxActive: 25
+  mysqlUser: bucketeer
+  mysqlPass: bucketeer
+  mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+  mysqlPort: 3306
+  mysqlDbName: bucketeer
 
 
 tls:
