@@ -32,8 +32,13 @@ env:
   pullerMaxOutstandingBytes: "1000000000"
   runningDurationPerBatch: 15s
   # redis settings
-  redis:
-    serverName: batch-redis
+  persistentRedis:
+    serverName: batch-peristent-redis
+    addr: localenv-redis-headless.default.svc.cluster.local:6379
+    poolMaxIdle: 25
+    poolMaxActive: 25
+  nonPersistentRedis:
+    serverName: batch-non-peristent-redis
     addr: localenv-redis-headless.default.svc.cluster.local:6379
     poolMaxIdle: 25
     poolMaxActive: 25
