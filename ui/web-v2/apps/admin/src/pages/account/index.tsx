@@ -188,7 +188,7 @@ export const AccountIndexPage: FC = memo(() => {
   const { accountId } = useParams<{ accountId: string }>();
   const isNew = accountId == ID_NEW;
   const isUpdate = accountId ? accountId != ID_NEW : false;
-  const [open, setOpen] = useState(isNew);
+  const [open, setOpen] = useState(isNew || isUpdate);
   const [account, getAccountError] = useSelector<
     AppState,
     [AccountV2.AsObject | undefined, SerializedError | null]
@@ -436,6 +436,27 @@ export const AccountIndexPage: FC = memo(() => {
       searchOptions.page ? Number(searchOptions.page) : 1
     );
   }, [updateAccountList]);
+
+  useEffect(() => {
+    if (isUpdate) {
+      dispatch(
+        getAccount({
+          organizationId: currentEnvironment.organizationId,
+          email: accountId,
+        })
+      ).then((e) => {
+        const payload = e.payload as AccountV2.AsObject;
+        const envRole = payload.environmentRolesList.find(
+          (e) => e.environmentId === currentEnvironment.id
+        );
+        resetUpdate({
+          name: payload.name,
+          email: payload.email,
+          role: getRoleV1(payload.organizationRole, envRole.role).value,
+        });
+      });
+    }
+  }, []);
 
   return (
     <>

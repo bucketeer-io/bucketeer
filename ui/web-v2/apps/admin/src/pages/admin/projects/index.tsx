@@ -44,10 +44,7 @@ import {
   stringifySearchParams,
 } from '../../../utils/search-params';
 
-import {
-  addFormSchema,
-  updateFormSchema,
-} from './formSchema';
+import { addFormSchema, updateFormSchema } from './formSchema';
 
 interface Sort {
   orderBy: OrderBy;
@@ -94,7 +91,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
   const { projectId } = useParams<{ projectId: string }>();
   const isNew = projectId == ID_NEW;
   const isUpdate = projectId ? projectId != ID_NEW : false;
-  const [open, setOpen] = useState(isNew);
+  const [open, setOpen] = useState(isNew || isUpdate);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isConvertConfirmDialogOpen, setIsConvertConfirmDialogOpen] =
     useState(false);
@@ -179,7 +176,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
         creatorEmail: p.creatorEmail,
       });
       history.push({
-        pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_PROJECTS}/${p.urlCode}`,
+        pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_PROJECTS}/${p.id}`,
         search: location.search,
       });
     },
@@ -334,6 +331,25 @@ export const AdminProjectIndexPage: FC = memo(() => {
     },
     [dispatch, convertReset, setIsConvertConfirmDialogOpen]
   );
+
+  useEffect(() => {
+    if (isUpdate) {
+      dispatch(
+        getProject({
+          id: projectId,
+        })
+      ).then((e) => {
+        const project = e.payload as Project.AsObject;
+        resetUpdate({
+          id: project.id,
+          name: project.name,
+          urlCode: project.urlCode,
+          description: project.description,
+          creatorEmail: project.creatorEmail,
+        });
+      });
+    }
+  }, [projectId]);
 
   useEffect(() => {
     history.listen(() => {

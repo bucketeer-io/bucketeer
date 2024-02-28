@@ -25,11 +25,13 @@ export const AdminNotificationUpdateForm: FC<AdminNotificationUpdateFormProps> =
       formState: { errors, isValid, isDirty, isSubmitted },
     } = methods;
 
-    const [defaultValues] = useState(() =>
-      SOURCE_TYPE_ITEMS.filter((item) =>
-        getValues().sourceTypes.includes(Number(item.value))
-      )
+    const defaultValues = SOURCE_TYPE_ITEMS.filter((item) =>
+      getValues()?.sourceTypes?.includes(Number(item.value))
     );
+
+    if (!getValues()?.sourceTypes) {
+      return null;
+    }
 
     return (
       <div className="w-[500px]">

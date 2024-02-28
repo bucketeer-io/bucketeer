@@ -28,7 +28,7 @@ export const NotificationUpdateForm: FC<NotificationUpdateFormProps> = memo(
 
     const [defaultValues] = useState(() =>
       SOURCE_TYPE_ITEMS.filter((item) =>
-        getValues().sourceTypes.includes(Number(item.value))
+        getValues()?.sourceTypes?.includes(Number(item.value))
       )
     );
 

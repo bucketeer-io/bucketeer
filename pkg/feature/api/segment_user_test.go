@@ -30,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -58,7 +57,6 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 		desc                 string
 		setup                func(*FeatureService)
 		environmentNamespace string
-		role                 accountproto.Account_Role
 		segmentID            string
 		cmd                  *featureproto.BulkUploadSegmentUsersCommand
 		expectedErr          error
@@ -67,7 +65,6 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			desc:                 "ErrMissingSegmentID",
 			setup:                nil,
 			environmentNamespace: "ns0",
-			role:                 accountproto.Account_OWNER,
 			segmentID:            "",
 			cmd:                  nil,
 			expectedErr:          createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
@@ -76,7 +73,6 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			desc:                 "ErrMissingCommand",
 			setup:                nil,
 			environmentNamespace: "ns0",
-			role:                 accountproto.Account_OWNER,
 			segmentID:            "id",
 			cmd:                  nil,
 			expectedErr:          createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
@@ -85,7 +81,6 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			desc:                 "ErrMissingSegmentUsersData",
 			setup:                nil,
 			environmentNamespace: "ns0",
-			role:                 accountproto.Account_OWNER,
 			segmentID:            "id",
 			cmd:                  &featureproto.BulkUploadSegmentUsersCommand{},
 			expectedErr:          createError(statusMissingSegmentUsersData, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_data")),
@@ -94,7 +89,6 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			desc:                 "ErrExceededMaxSegmentUsersDataSize",
 			setup:                nil,
 			environmentNamespace: "ns0",
-			role:                 accountproto.Account_OWNER,
 			segmentID:            "id",
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data: []byte(strings.Repeat("a", maxSegmentUsersDataSize+1)),
@@ -105,7 +99,6 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			desc:                 "ErrUnknownSegmentUserState",
 			setup:                nil,
 			environmentNamespace: "ns0",
-			role:                 accountproto.Account_OWNER,
 			segmentID:            "id",
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data:  []byte("data"),
@@ -122,7 +115,6 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				).Return(v2fs.ErrSegmentNotFound)
 			},
 			environmentNamespace: "ns0",
-			role:                 accountproto.Account_OWNER,
 			segmentID:            "not_found_id",
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data:  []byte("data"),
@@ -139,7 +131,6 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				).Return(createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)))
 			},
 			environmentNamespace: "ns0",
-			role:                 accountproto.Account_OWNER,
 			segmentID:            "id",
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data:  []byte("data"),
@@ -156,7 +147,6 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			environmentNamespace: "ns0",
-			role:                 accountproto.Account_OWNER,
 			segmentID:            "id",
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data:  []byte("data"),
@@ -177,7 +167,7 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				SegmentId:            tc.segmentID,
 				Command:              tc.cmd,
 			}
-			ctx = setToken(ctx, tc.role)
+			ctx = setToken(ctx)
 			_, err := service.BulkUploadSegmentUsers(ctx, req)
 			assert.Equal(t, tc.expectedErr, err)
 		})
@@ -263,7 +253,7 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			if tc.setup != nil {
 				tc.setup(service)
 			}
-			ctx = setToken(ctx, accountproto.Account_UNASSIGNED)
+			ctx = setToken(ctx)
 			req := &featureproto.BulkDownloadSegmentUsersRequest{
 				EnvironmentNamespace: tc.environmentNamespace,
 				SegmentId:            tc.segmentID,

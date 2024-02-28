@@ -77,7 +77,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 		{
 			desc:     "err: ErrInvalidCursor",
 			service:  newAuditLogService(t, mockController),
-			context:  createContextWithToken(t, accountproto.Account_UNASSIGNED, true),
+			context:  createContextWithToken(t, true),
 			setup:    nil,
 			input:    &proto.ListAuditLogsRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
 			expected: nil,
@@ -88,7 +88,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 		{
 			desc:    "err: ErrInternal",
 			service: newAuditLogService(t, mockController),
-			context: createContextWithToken(t, accountproto.Account_UNASSIGNED, true),
+			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -103,7 +103,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 		{
 			desc:    "success",
 			service: newAuditLogService(t, mockController),
-			context: createContextWithToken(t, accountproto.Account_UNASSIGNED, true),
+			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -118,7 +118,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 		{
 			desc:    "success with Viewer Account",
 			service: newAuditLogServiceForViewer(t, mockController),
-			context: createContextWithToken(t, accountproto.Account_UNASSIGNED, false),
+			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -156,7 +156,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, accountproto.Account_OWNER, true)
+	ctx := createContextWithToken(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -225,7 +225,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, accountproto.Account_UNASSIGNED, false)
+	ctx := createContextWithToken(t, false)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -397,7 +397,7 @@ func createAuditLogs(t *testing.T) []*proto.AuditLog {
 	}
 }
 
-func createContextWithToken(t *testing.T, role accountproto.Account_Role, isSystemAdmin bool) context.Context {
+func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
 	t.Helper()
 	token := &token.IDToken{
 		Email:         "test@example.com",

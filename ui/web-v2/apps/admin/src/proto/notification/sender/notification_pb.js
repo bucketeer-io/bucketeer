@@ -518,7 +518,8 @@ proto.bucketeer.notification.sender.DomainEventNotification.toObject = function(
     entityType: jspb.Message.getFieldWithDefault(msg, 3, 0),
     entityId: jspb.Message.getFieldWithDefault(msg, 4, ""),
     type: jspb.Message.getFieldWithDefault(msg, 5, 0),
-    environmentId: jspb.Message.getFieldWithDefault(msg, 6, "")
+    environmentName: jspb.Message.getFieldWithDefault(msg, 7, ""),
+    environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 8, "")
   };
 
   if (includeInstance) {
@@ -572,9 +573,13 @@ proto.bucketeer.notification.sender.DomainEventNotification.deserializeBinaryFro
       var value = /** @type {!proto.bucketeer.event.domain.Event.Type} */ (reader.readEnum());
       msg.setType(value);
       break;
-    case 6:
+    case 7:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentId(value);
+      msg.setEnvironmentName(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentUrlCode(value);
       break;
     default:
       reader.skipField();
@@ -634,10 +639,17 @@ proto.bucketeer.notification.sender.DomainEventNotification.serializeBinaryToWri
       f
     );
   }
-  f = message.getEnvironmentId();
+  f = message.getEnvironmentName();
   if (f.length > 0) {
     writer.writeString(
-      6,
+      7,
+      f
+    );
+  }
+  f = message.getEnvironmentUrlCode();
+  if (f.length > 0) {
+    writer.writeString(
+      8,
       f
     );
   }
@@ -736,11 +748,11 @@ proto.bucketeer.notification.sender.DomainEventNotification.prototype.setType = 
 
 
 /**
- * optional string environment_id = 6;
+ * optional string environment_name = 7;
  * @return {string}
  */
-proto.bucketeer.notification.sender.DomainEventNotification.prototype.getEnvironmentId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+proto.bucketeer.notification.sender.DomainEventNotification.prototype.getEnvironmentName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
 };
 
 
@@ -748,8 +760,26 @@ proto.bucketeer.notification.sender.DomainEventNotification.prototype.getEnviron
  * @param {string} value
  * @return {!proto.bucketeer.notification.sender.DomainEventNotification} returns this
  */
-proto.bucketeer.notification.sender.DomainEventNotification.prototype.setEnvironmentId = function(value) {
-  return jspb.Message.setProto3StringField(this, 6, value);
+proto.bucketeer.notification.sender.DomainEventNotification.prototype.setEnvironmentName = function(value) {
+  return jspb.Message.setProto3StringField(this, 7, value);
+};
+
+
+/**
+ * optional string environment_url_code = 8;
+ * @return {string}
+ */
+proto.bucketeer.notification.sender.DomainEventNotification.prototype.getEnvironmentUrlCode = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.sender.DomainEventNotification} returns this
+ */
+proto.bucketeer.notification.sender.DomainEventNotification.prototype.setEnvironmentUrlCode = function(value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
 };
 
 
@@ -794,7 +824,8 @@ proto.bucketeer.notification.sender.FeatureStaleNotification.toObject = function
   var f, obj = {
     featuresList: jspb.Message.toObjectList(msg.getFeaturesList(),
     proto_feature_feature_pb.Feature.toObject, includeInstance),
-    environmentId: jspb.Message.getFieldWithDefault(msg, 3, "")
+    environmentName: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 5, "")
   };
 
   if (includeInstance) {
@@ -836,9 +867,13 @@ proto.bucketeer.notification.sender.FeatureStaleNotification.deserializeBinaryFr
       reader.readMessage(value,proto_feature_feature_pb.Feature.deserializeBinaryFromReader);
       msg.addFeatures(value);
       break;
-    case 3:
+    case 4:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentId(value);
+      msg.setEnvironmentName(value);
+      break;
+    case 5:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentUrlCode(value);
       break;
     default:
       reader.skipField();
@@ -877,10 +912,17 @@ proto.bucketeer.notification.sender.FeatureStaleNotification.serializeBinaryToWr
       proto_feature_feature_pb.Feature.serializeBinaryToWriter
     );
   }
-  f = message.getEnvironmentId();
+  f = message.getEnvironmentName();
   if (f.length > 0) {
     writer.writeString(
-      3,
+      4,
+      f
+    );
+  }
+  f = message.getEnvironmentUrlCode();
+  if (f.length > 0) {
+    writer.writeString(
+      5,
       f
     );
   }
@@ -926,11 +968,11 @@ proto.bucketeer.notification.sender.FeatureStaleNotification.prototype.clearFeat
 
 
 /**
- * optional string environment_id = 3;
+ * optional string environment_name = 4;
  * @return {string}
  */
-proto.bucketeer.notification.sender.FeatureStaleNotification.prototype.getEnvironmentId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+proto.bucketeer.notification.sender.FeatureStaleNotification.prototype.getEnvironmentName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
 };
 
 
@@ -938,8 +980,26 @@ proto.bucketeer.notification.sender.FeatureStaleNotification.prototype.getEnviro
  * @param {string} value
  * @return {!proto.bucketeer.notification.sender.FeatureStaleNotification} returns this
  */
-proto.bucketeer.notification.sender.FeatureStaleNotification.prototype.setEnvironmentId = function(value) {
-  return jspb.Message.setProto3StringField(this, 3, value);
+proto.bucketeer.notification.sender.FeatureStaleNotification.prototype.setEnvironmentName = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional string environment_url_code = 5;
+ * @return {string}
+ */
+proto.bucketeer.notification.sender.FeatureStaleNotification.prototype.getEnvironmentUrlCode = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.sender.FeatureStaleNotification} returns this
+ */
+proto.bucketeer.notification.sender.FeatureStaleNotification.prototype.setEnvironmentUrlCode = function(value) {
+  return jspb.Message.setProto3StringField(this, 5, value);
 };
 
 
@@ -982,9 +1042,10 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.toOb
  */
 proto.bucketeer.notification.sender.ExperimentRunningNotification.toObject = function(includeInstance, msg) {
   var f, obj = {
-    environmentId: jspb.Message.getFieldWithDefault(msg, 2, ""),
     experimentsList: jspb.Message.toObjectList(msg.getExperimentsList(),
-    proto_experiment_experiment_pb.Experiment.toObject, includeInstance)
+    proto_experiment_experiment_pb.Experiment.toObject, includeInstance),
+    environmentName: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 5, "")
   };
 
   if (includeInstance) {
@@ -1021,14 +1082,18 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.deserializeBin
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 2:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentId(value);
-      break;
     case 3:
       var value = new proto_experiment_experiment_pb.Experiment;
       reader.readMessage(value,proto_experiment_experiment_pb.Experiment.deserializeBinaryFromReader);
       msg.addExperiments(value);
+      break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentName(value);
+      break;
+    case 5:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentUrlCode(value);
       break;
     default:
       reader.skipField();
@@ -1059,13 +1124,6 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.seri
  */
 proto.bucketeer.notification.sender.ExperimentRunningNotification.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getEnvironmentId();
-  if (f.length > 0) {
-    writer.writeString(
-      2,
-      f
-    );
-  }
   f = message.getExperimentsList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
@@ -1074,24 +1132,20 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.serializeBinar
       proto_experiment_experiment_pb.Experiment.serializeBinaryToWriter
     );
   }
-};
-
-
-/**
- * optional string environment_id = 2;
- * @return {string}
- */
-proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.getEnvironmentId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.notification.sender.ExperimentRunningNotification} returns this
- */
-proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.setEnvironmentId = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
+  f = message.getEnvironmentName();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
+    );
+  }
+  f = message.getEnvironmentUrlCode();
+  if (f.length > 0) {
+    writer.writeString(
+      5,
+      f
+    );
+  }
 };
 
 
@@ -1133,6 +1187,42 @@ proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.clea
 };
 
 
+/**
+ * optional string environment_name = 4;
+ * @return {string}
+ */
+proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.getEnvironmentName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.sender.ExperimentRunningNotification} returns this
+ */
+proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.setEnvironmentName = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional string environment_url_code = 5;
+ * @return {string}
+ */
+proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.getEnvironmentUrlCode = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.sender.ExperimentRunningNotification} returns this
+ */
+proto.bucketeer.notification.sender.ExperimentRunningNotification.prototype.setEnvironmentUrlCode = function(value) {
+  return jspb.Message.setProto3StringField(this, 5, value);
+};
+
+
 
 
 
@@ -1165,10 +1255,11 @@ proto.bucketeer.notification.sender.MauCountNotification.prototype.toObject = fu
  */
 proto.bucketeer.notification.sender.MauCountNotification.toObject = function(includeInstance, msg) {
   var f, obj = {
-    environmentId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     eventCount: jspb.Message.getFieldWithDefault(msg, 2, 0),
     userCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
-    month: jspb.Message.getFieldWithDefault(msg, 4, 0)
+    month: jspb.Message.getFieldWithDefault(msg, 4, 0),
+    environmentName: jspb.Message.getFieldWithDefault(msg, 5, ""),
+    environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 6, "")
   };
 
   if (includeInstance) {
@@ -1205,10 +1296,6 @@ proto.bucketeer.notification.sender.MauCountNotification.deserializeBinaryFromRe
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentId(value);
-      break;
     case 2:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setEventCount(value);
@@ -1220,6 +1307,14 @@ proto.bucketeer.notification.sender.MauCountNotification.deserializeBinaryFromRe
     case 4:
       var value = /** @type {number} */ (reader.readInt32());
       msg.setMonth(value);
+      break;
+    case 5:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentName(value);
+      break;
+    case 6:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEnvironmentUrlCode(value);
       break;
     default:
       reader.skipField();
@@ -1250,13 +1345,6 @@ proto.bucketeer.notification.sender.MauCountNotification.prototype.serializeBina
  */
 proto.bucketeer.notification.sender.MauCountNotification.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getEnvironmentId();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
   f = message.getEventCount();
   if (f !== 0) {
     writer.writeInt64(
@@ -1278,24 +1366,20 @@ proto.bucketeer.notification.sender.MauCountNotification.serializeBinaryToWriter
       f
     );
   }
-};
-
-
-/**
- * optional string environment_id = 1;
- * @return {string}
- */
-proto.bucketeer.notification.sender.MauCountNotification.prototype.getEnvironmentId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.notification.sender.MauCountNotification} returns this
- */
-proto.bucketeer.notification.sender.MauCountNotification.prototype.setEnvironmentId = function(value) {
-  return jspb.Message.setProto3StringField(this, 1, value);
+  f = message.getEnvironmentName();
+  if (f.length > 0) {
+    writer.writeString(
+      5,
+      f
+    );
+  }
+  f = message.getEnvironmentUrlCode();
+  if (f.length > 0) {
+    writer.writeString(
+      6,
+      f
+    );
+  }
 };
 
 
@@ -1350,6 +1434,42 @@ proto.bucketeer.notification.sender.MauCountNotification.prototype.getMonth = fu
  */
 proto.bucketeer.notification.sender.MauCountNotification.prototype.setMonth = function(value) {
   return jspb.Message.setProto3IntField(this, 4, value);
+};
+
+
+/**
+ * optional string environment_name = 5;
+ * @return {string}
+ */
+proto.bucketeer.notification.sender.MauCountNotification.prototype.getEnvironmentName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.sender.MauCountNotification} returns this
+ */
+proto.bucketeer.notification.sender.MauCountNotification.prototype.setEnvironmentName = function(value) {
+  return jspb.Message.setProto3StringField(this, 5, value);
+};
+
+
+/**
+ * optional string environment_url_code = 6;
+ * @return {string}
+ */
+proto.bucketeer.notification.sender.MauCountNotification.prototype.getEnvironmentUrlCode = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.sender.MauCountNotification} returns this
+ */
+proto.bucketeer.notification.sender.MauCountNotification.prototype.setEnvironmentUrlCode = function(value) {
+  return jspb.Message.setProto3StringField(this, 6, value);
 };
 
 

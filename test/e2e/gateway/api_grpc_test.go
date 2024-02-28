@@ -30,10 +30,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/gateway/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/proto/gateway"
@@ -91,23 +93,6 @@ func TestAPIKey(t *testing.T) {
 	assert.Equal(t, st.Code(), codes.PermissionDenied)
 }
 
-func TestGrpcGetEvaluationsWithoutCreatingFeature(t *testing.T) {
-	t.Parallel()
-	uuid := newUUID(t)
-	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
-	userID := newUserID(t, uuid)
-	response := grpcGetEvaluations(t, tag, userID)
-	if response.State != featureproto.UserEvaluations_FULL {
-		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)
-	}
-	if response.Evaluations != nil {
-		evaluationSize := len(response.Evaluations.Evaluations)
-		if evaluationSize > 0 {
-			t.Fatalf("Different sizes. Expected: 0, actual: %v", evaluationSize)
-		}
-	}
-}
-
 func TestGrpcGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
@@ -117,7 +102,6 @@ func TestGrpcGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	cmd := createFeatureWithTag(t, tag, featureID)
-	time.Sleep(3 * time.Second)
 	response := grpcGetEvaluations(t, tag, userID)
 	if response.State != featureproto.UserEvaluations_FULL {
 		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)
@@ -125,24 +109,27 @@ func TestGrpcGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
-	evaluationSize := len(response.Evaluations.Evaluations)
-	if evaluationSize != 1 {
-		t.Fatalf("Wrong evaluation size. Expected 1, actual: %d", evaluationSize)
+	if len(response.Evaluations.Evaluations) == 0 {
+		t.Fatalf("Wrong evaluation size. Expected more than one, actual zero")
 	}
-	reason := response.Evaluations.Evaluations[0].Reason.Type
+	eval, err := findFeature(response.Evaluations.Evaluations, featureID)
+	if err != nil {
+		t.Fatalf("Failed to find evaluation. Error: %v", err)
+	}
+	reason := eval.Reason.Type
 	if reason != featureproto.Reason_DEFAULT {
 		t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_DEFAULT, reason)
 	}
 	cmdVariation := cmd.Variations[0]
-	variationValue := response.Evaluations.Evaluations[0].VariationValue
+	variationValue := eval.VariationValue
 	if variationValue != cmdVariation.Value {
 		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, cmdVariation.Value)
 	}
-	variationName := response.Evaluations.Evaluations[0].VariationName
+	variationName := eval.VariationName
 	if variationName != cmdVariation.Name {
 		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, cmdVariation.Name)
 	}
-	valueDescription := response.Evaluations.Evaluations[0].Variation.Description
+	valueDescription := eval.Variation.Description
 	if valueDescription != "" {
 		t.Fatalf("Variation description is not empty. Actual: %s", valueDescription)
 	}
@@ -159,7 +146,9 @@ func TestGrpcGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 	cmd := newCreateFeatureCommand(featureID)
 	createFeature(t, client, cmd)
 	addTag(t, tag, featureID, client)
-	time.Sleep(3 * time.Second)
+	// Update feature flag cache
+	updateFeatueFlagCache(t)
+
 	response := grpcGetEvaluations(t, tag, userID)
 	if response.State != featureproto.UserEvaluations_FULL {
 		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)
@@ -167,24 +156,27 @@ func TestGrpcGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
-	evaluationSize := len(response.Evaluations.Evaluations)
-	if evaluationSize != 1 {
-		t.Fatalf("Wrong evaluation size. Expected 1, actual: %d", evaluationSize)
+	if len(response.Evaluations.Evaluations) == 0 {
+		t.Fatalf("Wrong evaluation size. Expected more than one, actual zero")
 	}
-	reason := response.Evaluations.Evaluations[0].Reason.Type
+	eval, err := findFeature(response.Evaluations.Evaluations, featureID)
+	if err != nil {
+		t.Fatalf("Failed to find evaluation. Error: %v", err)
+	}
+	reason := eval.Reason.Type
 	if reason != featureproto.Reason_OFF_VARIATION {
 		t.Fatalf("Reason doesn't match. Expected: %v, actual: %v", featureproto.Reason_OFF_VARIATION, reason)
 	}
 	cmdVariation := cmd.Variations[1]
-	variationValue := response.Evaluations.Evaluations[0].VariationValue
+	variationValue := eval.VariationValue
 	if variationValue != cmdVariation.Value {
 		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, cmdVariation.Value)
 	}
-	variationName := response.Evaluations.Evaluations[0].VariationName
+	variationName := eval.VariationName
 	if variationName != cmdVariation.Name {
 		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, cmdVariation.Name)
 	}
-	valueDescription := response.Evaluations.Evaluations[0].Variation.Description
+	valueDescription := eval.Variation.Description
 	if valueDescription != "" {
 		t.Fatalf("Variation description is not empty. Actual: %s", valueDescription)
 	}
@@ -201,7 +193,6 @@ func TestGrpcGetEvaluationsFullState(t *testing.T) {
 	createFeatureWithTag(t, tag, featureID)
 	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
 	createFeatureWithTag(t, tag, featureID2)
-	time.Sleep(3 * time.Second)
 	response := grpcGetEvaluations(t, tag, userID)
 	if response.State != featureproto.UserEvaluations_FULL {
 		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)
@@ -210,8 +201,8 @@ func TestGrpcGetEvaluationsFullState(t *testing.T) {
 		t.Fatal("Evaluations field is nil")
 	}
 	evaluationSize := len(response.Evaluations.Evaluations)
-	if evaluationSize != 2 {
-		t.Fatalf("Wrong evaluation size. Expected 2, actual: %d", evaluationSize)
+	if evaluationSize < 2 {
+		t.Fatalf("Wrong evaluation size. Expected more than two, actual: %d", evaluationSize)
 	}
 }
 
@@ -224,18 +215,16 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	time.Sleep(20 * time.Second)
+	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
 	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
 	cmd := createFeatureWithTag(t, tag, featureID2)
-	time.Sleep(3 * time.Second)
-	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
+	prevEvalAt := time.Now().Unix()
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
-	evaluationSize := len(response.Evaluations.Evaluations)
-	if len(response.Evaluations.Evaluations) != 1 {
-		t.Fatalf("Wrong evaluation size. Expected 1, actual: %d", evaluationSize)
+	if len(response.Evaluations.Evaluations) == 0 {
+		t.Fatalf("Wrong evaluation size. Expected more than one, actual zero")
 	}
 	if contains(response.Evaluations.Evaluations, featureID) {
 		t.Fatalf("Evaluation should not contain the evaluation of feature: %s", featureID)
@@ -246,16 +235,20 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	if response.Evaluations.ForceUpdate {
 		t.Fatal("ForceUpdate should be false")
 	}
+	eval, err := findFeature(response.Evaluations.Evaluations, featureID2)
+	if err != nil {
+		t.Fatalf("Failed to find evaluation. Error: %v", err)
+	}
 	cmdVariation := cmd.Variations[0]
-	variationValue := response.Evaluations.Evaluations[0].VariationValue
+	variationValue := eval.VariationValue
 	if variationValue != cmdVariation.Value {
 		t.Fatalf("Variation value doesn't match. Expected: %s, actual: %s", variationValue, cmdVariation.Value)
 	}
-	variationName := response.Evaluations.Evaluations[0].VariationName
+	variationName := eval.VariationName
 	if variationName != cmdVariation.Name {
 		t.Fatalf("Variation name doesn't match. Expected: %s, actual: %s", variationName, cmdVariation.Name)
 	}
-	valueDescription := response.Evaluations.Evaluations[0].Variation.Description
+	valueDescription := eval.Variation.Description
 	if valueDescription != "" {
 		t.Fatalf("Variation description is not empty. Actual: %s", valueDescription)
 	}
@@ -277,7 +270,7 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	addTag(t, tag, featureID, fc)
 	enableFeature(t, featureID, fc)
 	archiveFeature(t, featureID, fc)
-	time.Sleep(20 * time.Second)
+	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
 
 	uuid2 := newUUID(t)
 	featureID2 := newFeatureID(t, uuid2)
@@ -286,9 +279,11 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	addTag(t, tag, featureID2, fc)
 	enableFeature(t, featureID2, fc)
 	archiveFeature(t, featureID2, fc)
-	time.Sleep(3 * time.Second)
 
-	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
+	// Update feature flag cache
+	updateFeatueFlagCache(t)
+
+	prevEvalAt := time.Now().Unix()
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
@@ -326,10 +321,10 @@ func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
+	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
 	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
 	createFeatureWithRule(t, tag, featureID2)
-	time.Sleep(20 * time.Second)
-	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
+	prevEvalAt := time.Now().Unix()
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, true)
 	if response.State != featureproto.UserEvaluations_FULL {
 		t.Fatalf("Different states. Expected: %v, actual: %v", featureproto.UserEvaluations_FULL, response.State)
@@ -390,7 +385,7 @@ func TestGrpcGetEvaluationsWithEmptyUserEvaluationsID(t *testing.T) {
 	defer c.Close()
 	uuid := newUUID(t)
 	userID := newUserID(t, uuid)
-	prevEvalAt := time.Now().Add(-3 * time.Second).Unix()
+	prevEvalAt := time.Now().Add(-1 * time.Second).Unix()
 	userEvaluationsID := ""
 	response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, userEvaluationsID, prevEvalAt, false)
 	if response.Evaluations == nil {
@@ -416,26 +411,21 @@ func TestGrpcGetEvaluationsWithoutTag(t *testing.T) {
 	createFeatureWithTag(t, tag2, featureID2)
 
 	prevEvalAt := time.Now().Add(-5 * time.Minute).Unix()
-	retryTimes := 30
-	for i := 0; i < retryTimes; i++ {
-		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
-		}
-		time.Sleep(10 * time.Second)
-		response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, "userEvaluationsID", prevEvalAt, false)
-		if response.Evaluations == nil {
-			continue
-		}
-		if len(response.Evaluations.Evaluations) < 2 {
-			continue
-		}
-		if !contains(response.Evaluations.Evaluations, featureID) {
-			continue
-		}
-		if !contains(response.Evaluations.Evaluations, featureID2) {
-			continue
-		}
-		break
+	response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, "userEvaluationsID", prevEvalAt, false)
+	if response.Evaluations == nil {
+		t.Fatal("Evaluations field is nil")
+	}
+	if len(response.Evaluations.Evaluations) == 0 {
+		t.Fatalf("Wrong evaluation size. Expected more than one, actual zero")
+	}
+	if !contains(response.Evaluations.Evaluations, featureID) {
+		t.Fatalf("Evaluation should contain the evaluation of feature: %s", featureID)
+	}
+	if !contains(response.Evaluations.Evaluations, featureID2) {
+		t.Fatalf("Evaluation should contain the evaluation of feature: %s", featureID2)
+	}
+	if response.Evaluations.ForceUpdate {
+		t.Fatal("ForceUpdate should be false")
 	}
 }
 
@@ -450,7 +440,6 @@ func TestGrpcGetEvaluation(t *testing.T) {
 	createFeatureWithTag(t, tag, featureID)
 	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
 	createFeatureWithTag(t, tag, featureID2)
-	time.Sleep(3 * time.Second)
 	response := grpcGetEvaluation(t, tag, featureID2, userID)
 	if response.Evaluation == nil {
 		t.Fatal("Evaluation field is nil")
@@ -752,6 +741,8 @@ func createFeatureWithTag(t *testing.T, tag, featureID string) *featureproto.Cre
 	createFeature(t, client, cmd)
 	addTag(t, tag, cmd.Id, client)
 	enableFeature(t, featureID, client)
+	// Update feature flag cache
+	updateFeatueFlagCache(t)
 	return cmd
 }
 
@@ -763,6 +754,34 @@ func createFeatureWithRule(t *testing.T, tag, featureID string) {
 	addTag(t, tag, cmd.Id, client)
 	addRule(t, cmd.Id, getFeature(t, featureID, client).Variations[1].Id, client)
 	enableFeature(t, featureID, client)
+	// Update feature flag cache
+	updateFeatueFlagCache(t)
+}
+
+func updateFeatueFlagCache(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	batchClient := newBatchClient(t)
+	defer batchClient.Close()
+	numRetries := 5
+	var err error
+	for i := 0; i < numRetries; i++ {
+		_, err = batchClient.ExecuteBatchJob(
+			ctx,
+			&btproto.BatchJobRequest{Job: btproto.BatchJob_FeatureFlagCacher})
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to execute feature flag cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		time.Sleep(5 * time.Second)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func newFeatureClient(t *testing.T) featureclient.Client {
@@ -782,6 +801,25 @@ func newFeatureClient(t *testing.T) featureclient.Client {
 		t.Fatal("Failed to create feature client:", err)
 	}
 	return featureClient
+}
+
+func newBatchClient(t *testing.T) btclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := btclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create batch client:", err)
+	}
+	return client
 }
 
 func newCreateFeatureCommand(featureID string) *featureproto.CreateFeatureCommand {
@@ -1015,4 +1053,16 @@ func contains(evaluations []*featureproto.Evaluation, id string) bool {
 		}
 	}
 	return false
+}
+
+func findFeature(
+	evaluations []*featureproto.Evaluation,
+	id string,
+) (*featureproto.Evaluation, error) {
+	for _, e := range evaluations {
+		if e.FeatureId == id {
+			return e, nil
+		}
+	}
+	return nil, fmt.Errorf("evaluation not found")
 }

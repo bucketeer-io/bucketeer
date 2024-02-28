@@ -1,4 +1,8 @@
-import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '@/constants/routing';
+import {
+  PAGE_PATH_FEATURES,
+  PAGE_PATH_FEATURE_AUTOOPS,
+  PAGE_PATH_ROOT,
+} from '@/constants/routing';
 import { AppState } from '@/modules';
 import { createAutoOpsRule } from '@/modules/autoOpsRules';
 import {
@@ -6,10 +10,15 @@ import {
   selectAll as selectAllFeatures,
 } from '@/modules/features';
 import { useCurrentEnvironment } from '@/modules/me';
+import {
+  listProgressiveRollout,
+  selectAll as selectAllProgressiveRollouts,
+} from '@/modules/porgressiveRollout';
 import { addToast } from '@/modules/toasts';
 import { OpsType } from '@/proto/autoops/auto_ops_rule_pb';
 import { DatetimeClause } from '@/proto/autoops/clause_pb';
 import { CreateAutoOpsRuleCommand } from '@/proto/autoops/command_pb';
+import { ProgressiveRollout } from '@/proto/autoops/progressive_rollout_pb';
 import { Feature } from '@/proto/feature/feature_pb';
 import { ListFeaturesRequest } from '@/proto/feature/service_pb';
 import { AppDispatch } from '@/store';
@@ -19,17 +28,19 @@ import {
   ExclamationIcon,
   InformationCircleIcon,
 } from '@heroicons/react/solid';
+import dayjs from 'dayjs';
 import { FC, useEffect, useState } from 'react';
 import ReactDatePicker from 'react-datepicker';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 import { FEATURE_UPDATE_COMMENT_MAX_LENGTH } from '../../constants/feature';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
+import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
 import { CheckBox } from '../CheckBox';
 import { getFlagStatus, FlagStatus } from '../FeatureList';
 import { Modal } from '../Modal';
@@ -71,6 +82,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   const { formatMessage: f } = useIntl();
   const methods = useFormContext();
   const currentEnvironment = useCurrentEnvironment();
+  const history = useHistory();
   const [flagList, setFlagList] = useState([]);
   const [isFlagActive, setIsFlagActive] = useState(false);
   const [selectedSwitchEnabledType, setSelectedSwitchEnabledType] = useState(
@@ -78,10 +90,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   );
   const [scheduleErrorMessage, setScheduleErrorMessage] = useState('');
 
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
-
-  const [datetime, setDatetime] = useState(date);
+  const [datetime, setDatetime] = useState(dayjs().add(1, 'hour').toDate());
 
   const {
     register,
@@ -93,6 +102,28 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
     (state) => selectAllFeatures(state.features),
     shallowEqual
   );
+
+  const progressiveRollout = useSelector<
+    AppState,
+    ProgressiveRollout.AsObject[]
+  >(
+    (state) =>
+      selectAllProgressiveRollouts(state.progressiveRollout).filter(
+        (rule) => rule.featureId === featureId
+      ),
+    shallowEqual
+  );
+
+  useEffect(() => {
+    if (isSwitchEnabledConfirm && isEnabled) {
+      dispatch(
+        listProgressiveRollout({
+          featureId: featureId,
+          environmentNamespace: currentEnvironment.id,
+        })
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (isArchive && open) {
@@ -400,6 +431,46 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
           </div>
         </div>
       )}
+      {isSwitchEnabledConfirm &&
+        isEnabled &&
+        progressiveRollout.find((p) =>
+          isProgressiveRolloutsRunningWaiting(p.status)
+        ) && (
+          <div className="bg-yellow-50 p-4 mt-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <ExclamationIcon
+                  className="h-5 w-5 text-yellow-400"
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-yellow-700">
+                  {f(
+                    messages.autoOps.progressiveRolloutWarningMessages
+                      .progressiveRolloutInProgress,
+                    {
+                      link: (
+                        <span
+                          onClick={() => {
+                            history.push(
+                              `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}`
+                            );
+                          }}
+                          className="underline text-primary cursor-pointer ml-1"
+                        >
+                          <span>
+                            {f(messages.sourceType.progressiveRollout)}
+                          </span>
+                        </span>
+                      ),
+                    }
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       <div className="pt-5">
         <div className="flex justify-end">
           <button

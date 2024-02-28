@@ -22,9 +22,11 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	acclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/api"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
+	cacher "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/cacher"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/calculator"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/mau"
@@ -74,6 +76,7 @@ type server struct {
 	mysqlPort   *int
 	mysqlDBName *string
 	// gRPC service
+	accountService              *string
 	environmentService          *string
 	experimentService           *string
 	autoOpsService              *string
@@ -89,11 +92,16 @@ type server struct {
 	pullerMaxOutstandingBytes    *int
 	runningDurationPerBatch      *time.Duration
 	maxMPS                       *int
-	// Redis
-	redisServerName    *string
-	redisAddr          *string
-	redisPoolMaxIdle   *int
-	redisPoolMaxActive *int
+	// Persistent Redis
+	persistentRedisServerName    *string
+	persistentRedisAddr          *string
+	persistentRedisPoolMaxIdle   *int
+	persistentRedisPoolMaxActive *int
+	// Non Persistent Redis
+	nonPersistentRedisServerName    *string
+	nonPersistentRedisAddr          *string
+	nonPersistentRedisPoolMaxIdle   *int
+	nonPersistentRedisPoolMaxActive *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -116,6 +124,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
 		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
 		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		accountService: cmd.Flag(
+			"account-service",
+			"bucketeer-account-service address.",
+		).Default("account:9090").String(),
 		environmentService: cmd.Flag(
 			"environment-service",
 			"bucketeer-environment-service address.",
@@ -170,15 +182,37 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"max-mps",
 			"Maximum number of messages per second.",
 		).Required().Int(),
-		redisServerName: cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
-		redisAddr:       cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
-		redisPoolMaxIdle: cmd.Flag(
-			"redis-pool-max-idle",
-			"Maximum number of idle connections in the pool.",
+		persistentRedisServerName: cmd.Flag(
+			"persistent-redis-server-name",
+			"Name of the persistent redis.",
+		).Required().String(),
+		persistentRedisAddr: cmd.Flag(
+			"persistent-redis-addr",
+			"Address of the persistent redis.",
+		).Required().String(),
+		persistentRedisPoolMaxIdle: cmd.Flag(
+			"persistent-redis-pool-max-idle",
+			"Maximum number of idle in the persistent redis connections pool.",
 		).Default("5").Int(),
-		redisPoolMaxActive: cmd.Flag(
-			"redis-pool-max-active",
-			"Maximum number of connections allocated by the pool at a given time.",
+		persistentRedisPoolMaxActive: cmd.Flag(
+			"persistent-redis-pool-max-active",
+			"Maximum number of connections allocated by the persistent redis connections pool at a given time.",
+		).Default("10").Int(),
+		nonPersistentRedisServerName: cmd.Flag(
+			"non-persistent-redis-server-name",
+			"Name of the non-persistent redis.",
+		).Required().String(),
+		nonPersistentRedisAddr: cmd.Flag(
+			"non-persistent-redis-addr",
+			"Address of the non-persistent redis.",
+		).Required().String(),
+		nonPersistentRedisPoolMaxIdle: cmd.Flag(
+			"non-persistent-redis-pool-max-idle",
+			"Maximum number of idle in the non-persistent redis connections pool.",
+		).Default("5").Int(),
+		nonPersistentRedisPoolMaxActive: cmd.Flag(
+			"non-persistent-redis-pool-max-active",
+			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
 	}
 	r.RegisterCommand(server)
@@ -198,6 +232,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
+	if err != nil {
+		return err
+	}
+
+	accountClient, err := acclient.NewClient(*s.accountService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
 	if err != nil {
 		return err
 	}
@@ -303,20 +348,31 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	redisV3Client, err := redisv3.NewClient(
-		*s.redisAddr,
-		redisv3.WithPoolSize(*s.redisPoolMaxActive),
-		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),
-		redisv3.WithServerName(*s.redisServerName),
+	persistentRedisClient, err := redisv3.NewClient(
+		*s.persistentRedisAddr,
+		redisv3.WithPoolSize(*s.persistentRedisPoolMaxActive),
+		redisv3.WithMinIdleConns(*s.persistentRedisPoolMaxIdle),
+		redisv3.WithServerName(*s.persistentRedisServerName),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
 	)
-
 	if err != nil {
 		return err
 	}
-	defer redisV3Client.Close()
-	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
+	defer persistentRedisClient.Close()
+
+	nonPersistentRedisClient, err := redisv3.NewClient(
+		*s.nonPersistentRedisAddr,
+		redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
+		redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
+		redisv3.WithServerName(*s.nonPersistentRedisServerName),
+		redisv3.WithMetrics(registerer),
+		redisv3.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer nonPersistentRedisClient.Close()
 
 	service := api.NewBatchService(
 		experiment.NewExperimentStatusUpdater(
@@ -371,7 +427,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		rediscounter.NewRedisCounterDeleter(
-			redisV3Cache,
+			cachev3.NewRedisCache(persistentRedisClient),
 			environmentClient,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
@@ -417,13 +473,46 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			notification.WithLogger(logger),
 			notification.WithMetrics(registerer),
 		),
+		cacher.NewFeatureFlagCacher(
+			environmentClient,
+			featureClient,
+			cachev3.NewRedisCache(nonPersistentRedisClient),
+			jobs.WithLogger(logger),
+		),
+		cacher.NewSegmentUserCacher(
+			environmentClient,
+			featureClient,
+			cachev3.NewRedisCache(nonPersistentRedisClient),
+			jobs.WithLogger(logger),
+		),
+		cacher.NewAPIKeyCacher(
+			environmentClient,
+			accountClient,
+			cachev3.NewRedisCache(nonPersistentRedisClient),
+			jobs.WithLogger(logger),
+		),
+		cacher.NewExperimentCacher(
+			environmentClient,
+			experimentClient,
+			cachev3.NewRedisCache(nonPersistentRedisClient),
+			jobs.WithLogger(logger),
+		),
+		cacher.NewAutoOpsRulesCacher(
+			environmentClient,
+			autoOpsClient,
+			// Because the event-perister-ops uses persistent redis
+			// We must use the same instance for caching.
+			cachev3.NewRedisCache(persistentRedisClient),
+			jobs.WithLogger(logger),
+		),
 		logger,
 	)
 
 	healthChecker := health.NewGrpcChecker(
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
-		health.WithCheck("redis", redisV3Client.Check),
+		health.WithCheck("persistent-redis", persistentRedisClient.Check),
+		health.WithCheck("non-persistent-redis", nonPersistentRedisClient.Check),
 	)
 	go healthChecker.Run(ctx)
 
@@ -439,6 +528,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	defer func() {
 		server.Stop(serverShutDownTimeout)
+		accountClient.Close()
 		notificationClient.Close()
 		experimentClient.Close()
 		environmentClient.Close()

@@ -266,9 +266,6 @@ export class Editor extends jspb.Message {
   getEmail(): string;
   setEmail(value: string): void;
 
-  getRole(): proto_account_account_pb.Account.RoleMap[keyof proto_account_account_pb.Account.RoleMap];
-  setRole(value: proto_account_account_pb.Account.RoleMap[keyof proto_account_account_pb.Account.RoleMap]): void;
-
   getIsAdmin(): boolean;
   setIsAdmin(value: boolean): void;
 
@@ -285,7 +282,6 @@ export class Editor extends jspb.Message {
 export namespace Editor {
   export type AsObject = {
     email: string,
-    role: proto_account_account_pb.Account.RoleMap[keyof proto_account_account_pb.Account.RoleMap],
     isAdmin: boolean,
   }
 }

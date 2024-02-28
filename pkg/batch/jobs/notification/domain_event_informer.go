@@ -140,6 +140,7 @@ func (i *domainEventInformer) Run(ctx context.Context) error {
 			select {
 			case msg, ok := <-rateLimitedPuller.MessageCh():
 				if !ok {
+					i.logger.Error("DomainEventInformer failed to pull message from message channel")
 					return nil
 				}
 				receivedCounter.WithLabelValues(typeDomainEvent).Inc()
@@ -205,7 +206,11 @@ func (i *domainEventInformer) handleMessage(msg *puller.Message) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	environmentID := ""
+	environmentName := ""
+	// TODO: The environmentURLCode will be dynamic when the console v3 is ready.
+	// Currently, it inserts the url code `admin` in the domain event URL util
+	// https://github.com/bucketeer-io/bucketeer/blob/main/pkg/domainevent/domain/url.go#L36-L40
+	environmentURLCode := ""
 	if !domainEvent.IsAdminEvent {
 		environment, err := i.getEnvironment(ctx, domainEvent.EnvironmentNamespace)
 		if err != nil {
@@ -218,9 +223,15 @@ func (i *domainEventInformer) handleMessage(msg *puller.Message) {
 			msg.Nack()
 			return
 		}
-		environmentID = environment.Id
+		environmentName = environment.Name
+		environmentURLCode = environment.UrlCode
 	}
-	ne, err := i.createNotificationEvent(domainEvent, environmentID, domainEvent.IsAdminEvent)
+	ne, err := i.createNotificationEvent(
+		domainEvent,
+		environmentName,
+		environmentURLCode,
+		domainEvent.IsAdminEvent,
+	)
 	if err != nil {
 		handledCounter.WithLabelValues(typeDomainEvent, codes.BadMessage.String()).Inc()
 		msg.Ack()
@@ -238,7 +249,7 @@ func (i *domainEventInformer) handleMessage(msg *puller.Message) {
 
 func (i *domainEventInformer) createNotificationEvent(
 	event *domaineventproto.Event,
-	environmentID string,
+	environmentName, environmentURLCode string,
 	isAdminEvent bool,
 ) (*senderproto.NotificationEvent, error) {
 	id, err := uuid.NewUUID()
@@ -257,11 +268,12 @@ func (i *domainEventInformer) createNotificationEvent(
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_DomainEvent,
 			DomainEventNotification: &senderproto.DomainEventNotification{
-				EnvironmentId: environmentID,
-				Editor:        event.Editor,
-				EntityType:    event.EntityType,
-				EntityId:      event.EntityId,
-				Type:          event.Type,
+				EnvironmentName:    environmentName,
+				EnvironmentUrlCode: environmentURLCode,
+				Editor:             event.Editor,
+				EntityType:         event.EntityType,
+				EntityId:           event.EntityId,
+				Type:               event.Type,
 			},
 		},
 		IsAdminEvent: isAdminEvent,

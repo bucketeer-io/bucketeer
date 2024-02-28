@@ -268,9 +268,6 @@ func TestListExperiments(t *testing.T) {
 					nil,
 					errors.New("internal"),
 				)
-				p.cache.(*cachemock.MockExperimentsCache).EXPECT().Put(experiments, environmentNamespace).Return(
-					nil,
-				)
 				p.experimentClient.(*ecmock.MockClient).EXPECT().ListExperiments(
 					ctx,
 					&exproto.ListExperimentsRequest{

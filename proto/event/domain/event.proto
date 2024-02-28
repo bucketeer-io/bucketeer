@@ -233,7 +233,7 @@ message Event {
 
 message Editor {
   string email = 1;
-  bucketeer.account.Account.Role role = 2 [deprecated = true];
+  reserved 2;  // bucketeer.account.Account.Role role = 2 [deprecated = true];
   bool is_admin = 3;
 }
 

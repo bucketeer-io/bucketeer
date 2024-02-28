@@ -314,6 +314,10 @@ export const messages = {
       id: 'autoOps.schedule',
       defaultMessage: 'Schedule',
     }),
+    progressiveRollout: defineMessage({
+      id: 'autoOps.progressiveRollout',
+      defaultMessage: 'Progressive Rollout',
+    }),
     eventRate: defineMessage({
       id: 'autoOps.eventRate',
       defaultMessage: 'Event Rate',
@@ -332,34 +336,58 @@ export const messages = {
         id: 'infoBlocks.scheduleInfo',
         defaultMessage: 'Schedule a flag to turn on or off',
       }),
-      killSwitch: defineMessage({
-        id: 'infoBlocks.killSwitch',
-        defaultMessage: 'Kill Switch',
-      }),
       killSwitchInfo: defineMessage({
         id: 'infoBlocks.killSwitchInfo',
         defaultMessage: 'Turn off automatically a flag based on KPI events',
       }),
-      progressiveRollout: defineMessage({
-        id: 'infoBlocks.progressiveRollout',
-        defaultMessage: 'Progressive Rollout',
-      }),
       progressiveRolloutInfo: defineMessage({
         id: 'infoBlocks.progressiveRolloutInfo',
-        defaultMessage: 'Coming soon',
+        defaultMessage: 'Automate to release a feature progressively',
       }),
     },
-    editOperation: defineMessage({
-      id: 'autoOps.editOperation',
-      defaultMessage: 'Edit Operation',
-    }),
     operationDetails: defineMessage({
       id: 'autoOps.operationDetails',
       defaultMessage: 'Operation Details',
     }),
-    deleteOperation: defineMessage({
-      id: 'autoOps.deleteOperation',
-      defaultMessage: 'Delete Operation',
+    editSchedule: defineMessage({
+      id: 'autoOps.editSchedule',
+      defaultMessage: 'Edit Schedule',
+    }),
+    editKillSwitch: defineMessage({
+      id: 'autoOps.editKillSwitch',
+      defaultMessage: 'Edit Kill Switch',
+    }),
+    deleteSchedule: defineMessage({
+      id: 'autoOps.deleteSchedule',
+      defaultMessage: 'Delete Schedule',
+    }),
+    deleteScheduleDescription: defineMessage({
+      id: 'trigger.deleteScheduleDescription',
+      defaultMessage: 'The schedule will be deleted permanently.',
+    }),
+    deleteKillSwitch: defineMessage({
+      id: 'autoOps.deleteKillSwitch',
+      defaultMessage: 'Delete Kill Switch',
+    }),
+    deleteKillSwitchDescription: defineMessage({
+      id: 'trigger.deleteKillSwitchDescription',
+      defaultMessage: 'The kill switch will be deleted permanently.',
+    }),
+    deleteProgressiveRollout: defineMessage({
+      id: 'autoOps.deleteProgressiveRollout',
+      defaultMessage: 'Delete Progressive Rollout',
+    }),
+    deleteProgressiveRolloutDescription: defineMessage({
+      id: 'trigger.deleteProgressiveRolloutDescription',
+      defaultMessage: 'The progressive rollout will be deleted permanently.',
+    }),
+    stopProgressiveRollout: defineMessage({
+      id: 'autoOps.stopProgressiveRollout',
+      defaultMessage: 'Stop Progressive Rollout',
+    }),
+    stopProgressiveRolloutDescription: defineMessage({
+      id: 'trigger.stopProgressiveRolloutDescription',
+      defaultMessage: 'The progressive rollout will be stopped.',
     }),
     createAnOperation: defineMessage({
       id: 'autoOps.createAnOperation',
@@ -397,9 +425,9 @@ export const messages = {
       id: 'autoOps.active',
       defaultMessage: 'Active',
     }),
-    completed: defineMessage({
-      id: 'autoOps.completed',
-      defaultMessage: 'Completed',
+    finished: defineMessage({
+      id: 'autoOps.finished',
+      defaultMessage: 'Finished',
     }),
     goalCount: defineMessage({
       id: 'autoOps.goalCount',
@@ -408,6 +436,99 @@ export const messages = {
     evaluationCount: defineMessage({
       id: 'autoOps.evaluationCount',
       defaultMessage: 'Evaluation Count',
+    }),
+    increment: defineMessage({
+      id: 'autoOps.increment',
+      defaultMessage: 'Increment',
+    }),
+    frequency: defineMessage({
+      id: 'autoOps.frequency',
+      defaultMessage: 'Frequency',
+    }),
+    hourly: defineMessage({
+      id: 'autoOps.hourly',
+      defaultMessage: 'Hourly',
+    }),
+    daily: defineMessage({
+      id: 'autoOps.daily',
+      defaultMessage: 'Daily',
+    }),
+    weekly: defineMessage({
+      id: 'autoOps.weekly',
+      defaultMessage: 'Weekly',
+    }),
+    template: defineMessage({
+      id: 'autoOps.template',
+      defaultMessage: 'Template',
+    }),
+    manual: defineMessage({
+      id: 'autoOps.manual',
+      defaultMessage: 'Manual',
+    }),
+    weight: defineMessage({
+      id: 'autoOps.weight',
+      defaultMessage: 'Weight',
+    }),
+    executeAt: defineMessage({
+      id: 'autoOps.executeAt',
+      defaultMessage: 'Execute at',
+    }),
+    weightIncreasingOrder: defineMessage({
+      id: 'autoOps.weightIncreasingOrder',
+      defaultMessage: 'The weight must be in increasing order.',
+    }),
+    dateIncreasingOrder: defineMessage({
+      id: 'autoOps.dateIncreasingOrder',
+      defaultMessage: 'The date must be in increasing order.',
+    }),
+    timeInterval5MinutesApart: defineMessage({
+      id: 'autoOps.timeInterval5MinutesApart',
+      defaultMessage:
+        'The scheduled time interval must be at least 5 minutes apart.',
+    }),
+    progressiveRolloutWarningMessages: {
+      title: defineMessage({
+        id: 'progressiveRolloutWarningMessages.title',
+        defaultMessage:
+          'The progressive rollout cannot be created. Please check the following conditions.',
+      }),
+      variations: defineMessage({
+        id: 'progressiveRolloutWarningMessages.variations',
+        defaultMessage: 'The flag must have only 2 variations.',
+      }),
+      alreadyProgressiveRollout: defineMessage({
+        id: 'progressiveRolloutWarningMessages.alreadyProgressiveRollout',
+        defaultMessage:
+          'Cannot execute more than one progressive rollout at the same time.',
+      }),
+      experimentOnProgress: defineMessage({
+        id: 'progressiveRolloutWarningMessages.experimentOnProgress',
+        defaultMessage:
+          'To create a Progressive Rollout, you must stop the current {link}.',
+      }),
+      progressiveRolloutInProgress: defineMessage({
+        id: 'progressiveRolloutWarningMessages.progressiveRolloutInProgress',
+        defaultMessage: 'There is a {link} in progress. It will stop it.',
+      }),
+      moreInformation: defineMessage({
+        id: 'progressiveRolloutWarningMessages.moreInformation',
+        defaultMessage: 'For more information, please see the {link}.',
+      }),
+    },
+    stoppedByUser: defineMessage({
+      id: 'autoOps.stoppedByUser',
+      defaultMessage:
+        '{clockIcon} Stopped {relativeDate} by {stoppedByIcon} User',
+    }),
+    stoppedByKillSwitch: defineMessage({
+      id: 'autoOps.stoppedByKillSwitch',
+      defaultMessage:
+        '{clockIcon} Stopped {relativeDate} by {stoppedByIcon} Kill Switch',
+    }),
+    stoppedBySchedule: defineMessage({
+      id: 'autoOps.stoppedBySchedule',
+      defaultMessage:
+        '{clockIcon} Stopped {relativeDate} by {stoppedByIcon} Schedule',
     }),
   },
   trigger: {
@@ -637,6 +758,10 @@ export const messages = {
       id: 'button.add',
       defaultMessage: 'Add',
     }),
+    delete: defineMessage({
+      id: 'button.delete',
+      defaultMessage: 'Delete',
+    }),
     edit: defineMessage({
       id: 'button.edit',
       defaultMessage: 'Edit',
@@ -644,6 +769,10 @@ export const messages = {
     save: defineMessage({
       id: 'button.save',
       defaultMessage: 'Save',
+    }),
+    stop: defineMessage({
+      id: 'button.stop',
+      defaultMessage: 'Stop',
     }),
     result: defineMessage({
       id: 'button.result',
@@ -1232,6 +1361,11 @@ export const messages = {
             'Get started by filling in the information below to create your new experiment.',
         }),
       },
+      hasProgressiveRollout: defineMessage({
+        id: 'experiment.add.hasProgressiveRollout',
+        defaultMessage:
+          'The selected feature flag has a {link}. Please stop or delete it before creating the experiment.',
+      }),
     },
     update: {
       header: {
@@ -1451,6 +1585,15 @@ export const messages = {
       defaultMessage:
         'Enable targeting settings. You can configure targeting users, complex rules, default strategy, and off variation.',
     }),
+    documentation: defineMessage({
+      id: 'feature.documentation',
+      defaultMessage: 'Documentation',
+    }),
+    isProgressiveRolloutsRunning: defineMessage({
+      id: 'feature.isProgressiveRolloutsRunning',
+      defaultMessage:
+        'While a progressive rollout is in progress, new variations cannot be added, but changes can be made.',
+    }),
     flagIsPrerequisite: defineMessage({
       id: 'feature.flagIsPrerequisite',
       defaultMessage:
@@ -1538,6 +1681,11 @@ export const messages = {
     defaultStrategy: defineMessage({
       id: 'feature.defaultStrategy',
       defaultMessage: 'Default strategy',
+    }),
+    runningProgressiveRolloutMessage: defineMessage({
+      id: 'feature.runningProgressiveRolloutMessage',
+      defaultMessage:
+        'To update the Default Strategy, you must stop or delete the current {link}',
     }),
     onVariation: defineMessage({
       id: 'feature.onVariation',

@@ -4014,7 +4014,6 @@ proto.bucketeer.event.domain.Editor.prototype.toObject = function(opt_includeIns
 proto.bucketeer.event.domain.Editor.toObject = function(includeInstance, msg) {
   var f, obj = {
     email: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    role: jspb.Message.getFieldWithDefault(msg, 2, 0),
     isAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
   };
 
@@ -4056,10 +4055,6 @@ proto.bucketeer.event.domain.Editor.deserializeBinaryFromReader = function(msg, 
       var value = /** @type {string} */ (reader.readString());
       msg.setEmail(value);
       break;
-    case 2:
-      var value = /** @type {!proto.bucketeer.account.Account.Role} */ (reader.readEnum());
-      msg.setRole(value);
-      break;
     case 3:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setIsAdmin(value);
@@ -4100,13 +4095,6 @@ proto.bucketeer.event.domain.Editor.serializeBinaryToWriter = function(message, 
       f
     );
   }
-  f = message.getRole();
-  if (f !== 0.0) {
-    writer.writeEnum(
-      2,
-      f
-    );
-  }
   f = message.getIsAdmin();
   if (f) {
     writer.writeBool(
@@ -4132,24 +4120,6 @@ proto.bucketeer.event.domain.Editor.prototype.getEmail = function() {
  */
 proto.bucketeer.event.domain.Editor.prototype.setEmail = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
-};
-
-
-/**
- * optional bucketeer.account.Account.Role role = 2;
- * @return {!proto.bucketeer.account.Account.Role}
- */
-proto.bucketeer.event.domain.Editor.prototype.getRole = function() {
-  return /** @type {!proto.bucketeer.account.Account.Role} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
-};
-
-
-/**
- * @param {!proto.bucketeer.account.Account.Role} value
- * @return {!proto.bucketeer.event.domain.Editor} returns this
- */
-proto.bucketeer.event.domain.Editor.prototype.setRole = function(value) {
-  return jspb.Message.setProto3EnumField(this, 2, value);
 };
 
 

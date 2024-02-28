@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
@@ -123,7 +124,9 @@ type Persister struct {
 	ctx                   context.Context
 	cancel                func()
 	doneCh                chan struct{}
+	envLastUsedCache      environmentLastUsedInfoCache
 	evaluationCountCacher cache.MultiGetDeleteCountCache
+	mutex                 sync.Mutex
 }
 
 func NewPersister(
@@ -155,6 +158,7 @@ func NewPersister(
 		cancel:                cancel,
 		doneCh:                make(chan struct{}),
 		evaluationCountCacher: v3Cache,
+		envLastUsedCache:      environmentLastUsedInfoCache{},
 		mysqlClient:           mysqlClient,
 	}
 }
@@ -167,6 +171,7 @@ func (p *Persister) Run() error {
 	for i := 0; i < p.opts.numWorkers; i++ {
 		p.group.Go(p.batch)
 	}
+	p.group.Go(p.writeFlagLastUsedInfoCache)
 	return p.group.Wait()
 }
 
@@ -191,11 +196,8 @@ func (p *Persister) Check(ctx context.Context) health.Status {
 
 func (p *Persister) batch() error {
 	batch := make(map[string]*puller.Message)
-	envCache := environmentLastUsedInfoCache{}
 	timer := time.NewTimer(p.opts.flushInterval)
 	defer timer.Stop()
-	timerWriteCache := time.NewTimer(p.opts.writeCacheInterval)
-	defer timerWriteCache.Stop()
 	updateEvaluationCounter := func(envEvents environmentEventMap) {
 		// Increment the evaluation event count in the Redis
 		fails := p.incrementEnvEvents(envEvents)
@@ -204,12 +206,6 @@ func (p *Persister) batch() error {
 		// Reset the maps and the timer
 		batch = make(map[string]*puller.Message)
 		timer.Reset(p.opts.flushInterval)
-	}
-	writeLastUsedInfoCache := func() {
-		p.writeEnvLastUsedInfo(envCache)
-		// Reset the cache and the timer
-		envCache = make(environmentLastUsedInfoCache)
-		timerWriteCache.Reset(p.opts.writeCacheInterval)
 	}
 	for {
 		select {
@@ -237,17 +233,14 @@ func (p *Persister) batch() error {
 			}
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
-			p.cacheLastUsedInfoPerEnv(envEvents, envCache)
+			p.cacheLastUsedInfoPerEnv(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-timer.C:
+			p.logger.Debug("Update evaluation count timer triggered")
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
-			p.cacheLastUsedInfoPerEnv(envEvents, envCache)
+			p.cacheLastUsedInfoPerEnv(envEvents)
 			updateEvaluationCounter(envEvents)
-		case <-timerWriteCache.C:
-			p.logger.Debug("Write cache timer triggered")
-			// Write the feature flag last-used cache in the MySQL
-			writeLastUsedInfoCache()
 		case <-p.ctx.Done():
 			// Nack the messages to be redelivered
 			for _, msg := range batch {
@@ -382,17 +375,14 @@ func (p *Persister) countUser(key, userID string) error {
 	return nil
 }
 
-func (p *Persister) cacheLastUsedInfoPerEnv(
-	envEvents environmentEventMap,
-	envCache environmentLastUsedInfoCache,
-) {
+func (p *Persister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {
 	for environmentNamespace, events := range envEvents {
 		for _, event := range events {
-			p.cacheEnvLastUsedInfo(event, envCache, environmentNamespace)
+			p.cacheEnvLastUsedInfo(event, environmentNamespace)
 		}
 		p.logger.Debug("Cache has been updated",
 			zap.String("environmentNamespace", environmentNamespace),
-			zap.Int("cacheSize", len(envCache[environmentNamespace])),
+			zap.Int("cacheSize", len(p.envLastUsedCache[environmentNamespace])),
 			zap.Int("eventSize", len(events)),
 		)
 	}
@@ -400,9 +390,10 @@ func (p *Persister) cacheLastUsedInfoPerEnv(
 
 func (p *Persister) cacheEnvLastUsedInfo(
 	event *eventproto.EvaluationEvent,
-	envCache environmentLastUsedInfoCache,
 	environmentNamespace string,
 ) {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 	var clientVersion string
 	if event.User == nil {
 		p.logger.Warn("Failed to cache last used info. User is nil.",
@@ -411,7 +402,7 @@ func (p *Persister) cacheEnvLastUsedInfo(
 		clientVersion = event.User.Data[userDataAppVersion]
 	}
 	id := ftdomain.FeatureLastUsedInfoID(event.FeatureId, event.FeatureVersion)
-	if cache, ok := envCache[environmentNamespace]; ok {
+	if cache, ok := p.envLastUsedCache[environmentNamespace]; ok {
 		if info, ok := cache[id]; ok {
 			info.UsedAt(event.Timestamp)
 			if err := info.SetClientVersion(clientVersion); err != nil {
@@ -439,17 +430,35 @@ func (p *Persister) cacheEnvLastUsedInfo(
 		event.Timestamp,
 		clientVersion,
 	)
-	envCache[environmentNamespace] = cache
+	p.envLastUsedCache[environmentNamespace] = cache
 }
 
-func (p *Persister) writeEnvLastUsedInfo(envCache environmentLastUsedInfoCache) {
-	for environmentNamespace, cache := range envCache {
+// Write the feature flag last-used cache in the MySQL and reset the cache
+func (p *Persister) writeFlagLastUsedInfoCache() error {
+	timer := time.NewTimer(p.opts.writeCacheInterval)
+	for {
+		select {
+		case <-p.ctx.Done():
+			return nil
+		case <-timer.C:
+			p.logger.Debug("Write cache timer triggered")
+			p.writeEnvLastUsedInfo()
+			timer.Reset(p.opts.writeCacheInterval)
+		}
+	}
+}
+
+func (p *Persister) writeEnvLastUsedInfo() {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	for environmentNamespace, cache := range p.envLastUsedCache {
 		info := make([]*ftdomain.FeatureLastUsedInfo, 0, len(cache))
 		for _, v := range cache {
 			info = append(info, v)
 		}
 		if err := p.upsertMultiFeatureLastUsedInfo(context.Background(), info, environmentNamespace); err != nil {
-			p.logger.Error("Failed to write featureLastUsedInfo", zap.Error(err),
+			p.logger.Error("Failed to write feature last-used info", zap.Error(err),
 				zap.String("environmentNamespace", environmentNamespace))
 			continue
 		}
@@ -458,6 +467,8 @@ func (p *Persister) writeEnvLastUsedInfo(envCache environmentLastUsedInfoCache) 
 			zap.Int("cacheSize", len(info)),
 		)
 	}
+	// Reset the cache
+	p.envLastUsedCache = make(environmentLastUsedInfoCache)
 }
 
 func (p *Persister) upsertMultiFeatureLastUsedInfo(
