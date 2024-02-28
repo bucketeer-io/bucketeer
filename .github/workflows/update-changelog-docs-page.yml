@@ -19,7 +19,7 @@ jobs:
           fetch-depth: 0
       - name: Store the tag value
         id: release_tag
-        run: echo "value=$(git describe --tags --always --abbrev=7)" >> $GITHUB_OUTPUT
+        run: echo "value=$(git describe --tags --always --abbrev=0)" >> $GITHUB_OUTPUT
       - name: Store the first line of commit message
         id: commit_url
         run: echo "value=$(echo '${{ github.event.head_commit.url }}' | head -n 1)" >> $GITHUB_OUTPUT
@@ -43,6 +43,6 @@ jobs:
         with:
           repo: ${{ env.DOC_REPO }}
           token: ${{ secrets.REPO_ACCESS_PAT }}
-          workflow: create-changelog.yaml
+          workflow: update-changelog.yaml
           ref: main
           inputs: '{"doc_filename": "${{ env.DOC_FILENAME }}", "doc_filepath": "${{ env.DOC_FILEPATH }}", "doc_title": "${{ env.DOC_TITLE }}", "doc_slug": "${{ env.DOC_SLUG }}", "changelog_url": "${{ env.CHANGELOG_URL }}", "from_repository_name": "${{ env.FROM_REPOSITORY_NAME }}", "from_repository_url": "${{ env.FROM_REPOSITORY_URL }}", "commit_url": "${{ needs.setup.outputs.COMMIT_URL }}", "release_tag": "${{ needs.setup.outputs.RELEASE_TAG }}"}'
