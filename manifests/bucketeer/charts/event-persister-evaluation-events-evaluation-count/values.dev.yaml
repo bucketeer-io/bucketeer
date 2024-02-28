@@ -26,6 +26,11 @@ env:
   pullerNumGoroutines: 5
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
+  mysqlUser: bucketeer
+  mysqlPass: bucketeer
+  mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+  mysqlPort: 3306
+  mysqlDBName: bucketeer
 
 
 

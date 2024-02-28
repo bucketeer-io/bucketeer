@@ -33,6 +33,11 @@ env:
   flushSize: 100
   flushInterval: 2s
   flushTimeout: 30s
+  mysqlUser: bucketeer
+  mysqlPass: bucketeer
+  mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+  mysqlPort: 3306
+  mysqlDbName: bucketeer
 
 tls:
   service:
