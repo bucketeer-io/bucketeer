@@ -129,6 +129,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
           enabled: null,
           hasExperiment: null,
           maintainerId: null,
+          archived: false,
           orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
           orderDirection: ListFeaturesRequest.OrderDirection.ASC,
         })
