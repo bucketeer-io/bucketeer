@@ -62,7 +62,7 @@ Apache License 2.0, see [LICENSE](https://github.com/bucketeer-io/bucketeer/blob
 
 We would ❤️ for you to contribute to Bucketeer and help improve it! Anyone can use and enjoy it!
 
-Please follow our contribution guide [here](https://docs.bucketeer.io/contribution-guide/).
+Please follow our contribution guide [here](https://docs.bucketeer.io/contribution-guide/contributing).
 
 Big thanks to all Bucketeer contributors who have helped us since the beginning!
 
