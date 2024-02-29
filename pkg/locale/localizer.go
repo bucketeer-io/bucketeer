@@ -116,12 +116,6 @@ const (
 	DifferentVariationsSize                  = "DifferentVariationsSize"
 	WaitingOrRunningProgressiveRolloutExists = "WaitingOrRunningProgressiveRolloutExists"
 	// auto ops
-	AutoOpsFeatureDisabled                  = "AutoOpsFeatureDisabled"
-	AutoOpsFeatureHasIndividualTargeting    = "AutoOpsFeatureHasIndividualTargeting"
-	AutoOpsFeatureHasPrerequisites          = "AutoOpsFeatureHasPrerequisites"
-	AutoOpsFeatureHasRules                  = "AutoOpsFeatureHasRules"
-	AutoOpsHasDatetime                      = "AutoOpsHasDatetime"
-	AutoOpsHasWebhook                       = "AutoOpsHasWebhook"
 	AutoOpsInvalidScheduleSpans             = "AutoOpsInvalidScheduleSpans"
 	AutoOpsInvalidVariationSize             = "AutoOpsInvalidVariationSize"
 	AutoOpsWaitingOrRunningExperimentExists = "AutoOpsWaitingOrRunningExperimentExists"
