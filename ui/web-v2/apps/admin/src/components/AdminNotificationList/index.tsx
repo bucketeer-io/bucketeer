@@ -61,7 +61,7 @@ export const AdminNotificationList: FC<AdminNotificationListProps> = memo(
           <a
             className="link"
             target="_blank"
-            href="https://bucketeer.io/docs#/notification"
+            href="https://docs.bucketeer.io/integration/notifications"
             rel="noreferrer"
           >
             {f(messages.readMore)}
