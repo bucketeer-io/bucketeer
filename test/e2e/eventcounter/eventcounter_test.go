@@ -418,8 +418,8 @@ func TestGrpcExperimentResult(t *testing.T) {
 			if len(gr.VariationResults) != 2 {
 				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
 			}
-			vsA := getVariationResult(gr.VariationResults, experiment.Variations[0].Id)
-			vsB := getVariationResult(gr.VariationResults, experiment.Variations[1].Id)
+			vsA := gr.VariationResults[0]
+			vsB := gr.VariationResults[1]
 			// These counts are based on the number of events sent earlier
 			if vsA.EvaluationCount.EventCount != 4 || // variation A
 				vsA.EvaluationCount.UserCount != 3 ||
@@ -657,8 +657,8 @@ func TestExperimentResult(t *testing.T) {
 			if len(gr.VariationResults) != 2 {
 				t.Fatalf("the number of variation results is not correct: %d", len(gr.VariationResults))
 			}
-			vsA := getVariationResult(gr.VariationResults, experiment.Variations[0].Id)
-			vsB := getVariationResult(gr.VariationResults, experiment.Variations[1].Id)
+			vsA := gr.VariationResults[0]
+			vsB := gr.VariationResults[1]
 			// These counts are based on the number of events sent earlier
 			if vsA.EvaluationCount.EventCount != 4 || // variation A
 				vsA.EvaluationCount.UserCount != 3 ||
@@ -1580,15 +1580,6 @@ LOOP:
 }
 
 func getVariationCount(vcs []*ecproto.VariationCount, id string) *ecproto.VariationCount {
-	for _, vc := range vcs {
-		if vc.VariationId == id {
-			return vc
-		}
-	}
-	return nil
-}
-
-func getVariationResult(vcs []*ecproto.VariationResult, id string) *ecproto.VariationResult {
 	for _, vc := range vcs {
 		if vc.VariationId == id {
 			return vc
