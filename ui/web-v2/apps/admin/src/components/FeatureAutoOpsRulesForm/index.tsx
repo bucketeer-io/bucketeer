@@ -915,8 +915,18 @@ const DateTimeOperation = memo(
           />
         </div>
         <div className="flex justify-between mt-2">
-          <span>Off</span>
-          <span>On</span>
+          {rule.opsType === OpsType.ENABLE_FEATURE && (
+            <>
+              <span>Off</span>
+              <span>On</span>
+            </>
+          )}
+          {rule.opsType === OpsType.DISABLE_FEATURE && (
+            <>
+              <span>On</span>
+              <span>Off</span>
+            </>
+          )}
         </div>
         <div className="flex justify-between mt-1">
           <span className="text-xs text-gray-400">{createdAt}</span>
