@@ -326,10 +326,10 @@ export const AdminProjectIndexPage: FC = memo(() => {
       ).then(() => {
         convertReset();
         setIsConvertConfirmDialogOpen(false);
-        updateProjectList(null, 1);
+        updateProjectList(searchOptions, 1);
       });
     },
-    [dispatch, convertReset, setIsConvertConfirmDialogOpen]
+    [dispatch, convertReset, setIsConvertConfirmDialogOpen, searchOptions]
   );
 
   useEffect(() => {

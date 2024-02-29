@@ -346,7 +346,7 @@ export const NotificationIndexPage: FC = memo(() => {
         setIsDeleteConfirmDialogOpen(false);
       });
     },
-    [dispatch, setIsDeleteConfirmDialogOpen]
+    [dispatch, setIsDeleteConfirmDialogOpen, searchOptions]
   );
 
   useEffect(() => {

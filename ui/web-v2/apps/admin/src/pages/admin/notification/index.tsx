@@ -331,7 +331,7 @@ export const AdminNotificationIndexPage: FC = memo(() => {
         setIsDeleteConfirmDialogOpen(false);
       });
     },
-    [dispatch, setIsDeleteConfirmDialogOpen]
+    [dispatch, setIsDeleteConfirmDialogOpen, searchOptions]
   );
 
   useEffect(() => {

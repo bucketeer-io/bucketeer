@@ -284,10 +284,10 @@ export const GoalIndexPage: FC = memo(() => {
       ).then(() => {
         archiveReset();
         setIsArchiveConfirmDialogOpen(false);
-        updateGoalList(null, 1);
+        updateGoalList(searchOptions, 1);
       });
     },
-    [dispatch, archiveReset, setIsArchiveConfirmDialogOpen]
+    [dispatch, archiveReset, setIsArchiveConfirmDialogOpen, searchOptions]
   );
 
   const handleClose = useCallback(() => {

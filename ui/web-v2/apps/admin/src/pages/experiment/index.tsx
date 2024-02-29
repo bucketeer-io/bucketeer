@@ -257,10 +257,10 @@ export const ExperimentIndexPage: FC = memo(() => {
         })
       ).then(() => {
         handleClose();
-        updateExperimentList(null, 1);
+        updateExperimentList(searchOptions, 1);
       });
     },
-    [dispatch]
+    [dispatch, searchOptions]
   );
 
   const handleUpdate = useCallback(
@@ -331,10 +331,10 @@ export const ExperimentIndexPage: FC = memo(() => {
       ).then(() => {
         archiveReset();
         setIsArchiveConfirmDialogOpen(false);
-        updateExperimentList(null, 1);
+        updateExperimentList(searchOptions, 1);
       });
     },
-    [dispatch, archiveReset, setIsArchiveConfirmDialogOpen]
+    [dispatch, archiveReset, setIsArchiveConfirmDialogOpen, searchOptions]
   );
 
   const handleStop = useCallback(async () => {
@@ -344,10 +344,10 @@ export const ExperimentIndexPage: FC = memo(() => {
         experimentId: experimentIdForStop,
       })
     ).then(() => {
-      updateExperimentList(null, 1);
+      updateExperimentList(searchOptions, 1);
       setIsStopConfirmDialogOpen(false);
     });
-  }, [dispatch, experimentIdForStop]);
+  }, [dispatch, experimentIdForStop, searchOptions]);
 
   useEffect(() => {
     if (isUpdate) {
