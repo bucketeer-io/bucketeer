@@ -434,109 +434,8 @@ func TestGrpcExperimentResult(t *testing.T) {
 				vsB.ExperimentCount.UserCount != 2 {
 				continue
 			}
-			for _, vr := range gr.VariationResults {
-				// variation a
-				if vr.VariationId == experiment.Variations[0].Id {
-					vv := experiment.Variations[0].Value
-					// Evaluation
-					if vr.EvaluationCount.EventCount != 4 {
-						t.Fatalf("variation: %s: evaluation event count is not correct: %d", vv, vr.EvaluationCount.EventCount)
-					}
-					if vr.EvaluationCount.UserCount != 3 {
-						t.Fatalf("variation: %s: evaluation user count is not correct: %d", vv, vr.EvaluationCount.UserCount)
-					}
-					// Experiment
-					if vr.ExperimentCount.EventCount != 4 {
-						t.Fatalf("variation: %s: experiment event count is not correct: %d", vv, vr.ExperimentCount.EventCount)
-					}
-					if vr.ExperimentCount.UserCount != 3 {
-						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
-					}
-					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.9, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
-					}
-					// cvr prob best
-					if vr.CvrProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", vv, vr.CvrProbBest.Mean)
-					}
-					if vr.CvrProbBest.Sd <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", vv, vr.CvrProbBest.Sd)
-					}
-					if vr.CvrProbBest.Rhat <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", vv, vr.CvrProbBest.Rhat)
-					}
-					// cvr prob beat baseline
-					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", vv, vr.CvrProbBeatBaseline.Mean)
-					}
-					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Sd, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", vv, vr.CvrProbBeatBaseline.Sd)
-					}
-					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Rhat, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", vv, vr.CvrProbBeatBaseline.Rhat)
-					}
-					// value sum per user prob best
-					if vr.GoalValueSumPerUserProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBest.Mean)
-					}
-					// value sum per user prob beat baseline
-					if diff := cmp.Diff(vr.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBeatBaseline.Mean)
-					}
-					continue
-				}
-				// variation b
-				if vr.VariationId == experiment.Variations[1].Id {
-					vv := experiment.Variations[1].Value
-					// Evaluation
-					if vr.EvaluationCount.EventCount != 3 {
-						t.Fatalf("variation: %s: evaluation event count is not correct: %d", vv, vr.EvaluationCount.EventCount)
-					}
-					if vr.EvaluationCount.UserCount != 2 {
-						t.Fatalf("variation: %s: evaluation user count is not correct: %d", vv, vr.EvaluationCount.UserCount)
-					}
-					// Experiment
-					if vr.ExperimentCount.EventCount != 3 {
-						t.Fatalf("variation: %s: experiment event count is not correct: %d", vv, vr.ExperimentCount.EventCount)
-					}
-					if vr.ExperimentCount.UserCount != 2 {
-						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
-					}
-					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.35, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
-					}
-					// cvr prob best
-					if vr.CvrProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", vv, vr.CvrProbBest.Mean)
-					}
-					if vr.CvrProbBest.Sd <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", vv, vr.CvrProbBest.Sd)
-					}
-					if vr.CvrProbBest.Rhat <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", vv, vr.CvrProbBest.Rhat)
-					}
-					// cvr prob beat baseline
-					if vr.CvrProbBeatBaseline.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", vv, vr.CvrProbBeatBaseline.Mean)
-					}
-					if vr.CvrProbBeatBaseline.Sd <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", vv, vr.CvrProbBeatBaseline.Sd)
-					}
-					if vr.CvrProbBeatBaseline.Rhat <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", vv, vr.CvrProbBeatBaseline.Rhat)
-					}
-					// value sum per user prob best
-					if vr.GoalValueSumPerUserProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBest.Mean)
-					}
-					// value sum per user prob beat baseline
-					if vr.GoalValueSumPerUserProbBeatBaseline.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBeatBaseline.Mean)
-					}
-					continue
-				}
-				t.Fatalf("unknown variation results: %s", vr.VariationId)
-			}
+			checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
+			checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
 			break
 		}
 	}
@@ -673,109 +572,8 @@ func TestExperimentResult(t *testing.T) {
 				vsB.ExperimentCount.UserCount != 2 {
 				continue
 			}
-			for _, vr := range gr.VariationResults {
-				// variation a
-				if vr.VariationId == experiment.Variations[0].Id {
-					vv := experiment.Variations[0].Value
-					// Evaluation
-					if vr.EvaluationCount.EventCount != 4 {
-						t.Fatalf("variation: %s: evaluation event count is not correct: %d", vv, vr.EvaluationCount.EventCount)
-					}
-					if vr.EvaluationCount.UserCount != 3 {
-						t.Fatalf("variation: %s: evaluation user count is not correct: %d", vv, vr.EvaluationCount.UserCount)
-					}
-					// Experiment
-					if vr.ExperimentCount.EventCount != 4 {
-						t.Fatalf("variation: %s: experiment event count is not correct: %d", vv, vr.ExperimentCount.EventCount)
-					}
-					if vr.ExperimentCount.UserCount != 3 {
-						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
-					}
-					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.9, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
-					}
-					// cvr prob best
-					if vr.CvrProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", vv, vr.CvrProbBest.Mean)
-					}
-					if vr.CvrProbBest.Sd <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", vv, vr.CvrProbBest.Sd)
-					}
-					if vr.CvrProbBest.Rhat <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", vv, vr.CvrProbBest.Rhat)
-					}
-					// cvr prob beat baseline
-					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", vv, vr.CvrProbBeatBaseline.Mean)
-					}
-					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Sd, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", vv, vr.CvrProbBeatBaseline.Sd)
-					}
-					if diff := cmp.Diff(vr.CvrProbBeatBaseline.Rhat, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", vv, vr.CvrProbBeatBaseline.Rhat)
-					}
-					// value sum per user prob best
-					if vr.GoalValueSumPerUserProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBest.Mean)
-					}
-					// value sum per user prob beat baseline
-					if diff := cmp.Diff(vr.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBeatBaseline.Mean)
-					}
-					continue
-				}
-				// variation b
-				if vr.VariationId == experiment.Variations[1].Id {
-					vv := experiment.Variations[1].Value
-					// Evaluation
-					if vr.EvaluationCount.EventCount != 3 {
-						t.Fatalf("variation: %s: evaluation event count is not correct: %d", vv, vr.EvaluationCount.EventCount)
-					}
-					if vr.EvaluationCount.UserCount != 2 {
-						t.Fatalf("variation: %s: evaluation user count is not correct: %d", vv, vr.EvaluationCount.UserCount)
-					}
-					// Experiment
-					if vr.ExperimentCount.EventCount != 3 {
-						t.Fatalf("variation: %s: experiment event count is not correct: %d", vv, vr.ExperimentCount.EventCount)
-					}
-					if vr.ExperimentCount.UserCount != 2 {
-						t.Fatalf("variation: %s: experiment user count is not correct: %d", vv, vr.ExperimentCount.UserCount)
-					}
-					if diff := cmp.Diff(vr.ExperimentCount.ValueSum, 0.35, compareFloatOpt); diff != "" {
-						t.Fatalf("variation: %s: experiment value sum is not correct: %f", vv, vr.ExperimentCount.ValueSum)
-					}
-					// cvr prob best
-					if vr.CvrProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", vv, vr.CvrProbBest.Mean)
-					}
-					if vr.CvrProbBest.Sd <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", vv, vr.CvrProbBest.Sd)
-					}
-					if vr.CvrProbBest.Rhat <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", vv, vr.CvrProbBest.Rhat)
-					}
-					// cvr prob beat baseline
-					if vr.CvrProbBeatBaseline.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", vv, vr.CvrProbBeatBaseline.Mean)
-					}
-					if vr.CvrProbBeatBaseline.Sd <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", vv, vr.CvrProbBeatBaseline.Sd)
-					}
-					if vr.CvrProbBeatBaseline.Rhat <= float64(0.0) {
-						t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", vv, vr.CvrProbBeatBaseline.Rhat)
-					}
-					// value sum per user prob best
-					if vr.GoalValueSumPerUserProbBest.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBest.Mean)
-					}
-					// value sum per user prob beat baseline
-					if vr.GoalValueSumPerUserProbBeatBaseline.Mean <= float64(0.0) {
-						t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", vv, vr.GoalValueSumPerUserProbBeatBaseline.Mean)
-					}
-					continue
-				}
-				t.Fatalf("unknown variation results: %s", vr.VariationId)
-			}
+			checkExperimentVariationResultA(t, vsA, experiment.Variations[0].Value)
+			checkExperimentVariationResultB(t, vsB, experiment.Variations[1].Value)
 			break
 		}
 	}
@@ -2299,4 +2097,105 @@ func getEvaluationTimeseriesCount(
 		t.Fatal(err)
 	}
 	return res
+}
+
+// This check the result for variation A
+func checkExperimentVariationResultA(t *testing.T, vsA *ecproto.VariationResult, variationValue string) {
+	t.Helper()
+	// Evaluation
+	if vsA.EvaluationCount.EventCount != 4 {
+		t.Fatalf("variation: %s: evaluation event count is not correct: %d", variationValue, vsA.EvaluationCount.EventCount)
+	}
+	if vsA.EvaluationCount.UserCount != 3 {
+		t.Fatalf("variation: %s: evaluation user count is not correct: %d", variationValue, vsA.EvaluationCount.UserCount)
+	}
+	// Experiment
+	if vsA.ExperimentCount.EventCount != 4 {
+		t.Fatalf("variation: %s: experiment event count is not correct: %d", variationValue, vsA.ExperimentCount.EventCount)
+	}
+	if vsA.ExperimentCount.UserCount != 3 {
+		t.Fatalf("variation: %s: experiment user count is not correct: %d", variationValue, vsA.ExperimentCount.UserCount)
+	}
+	if diff := cmp.Diff(vsA.ExperimentCount.ValueSum, 0.9, compareFloatOpt); diff != "" {
+		t.Fatalf("variation: %s: experiment value sum is not correct: %f", variationValue, vsA.ExperimentCount.ValueSum)
+	}
+	// cvr prob best
+	if vsA.CvrProbBest.Mean <= float64(0.0) {
+		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, vsA.CvrProbBest.Mean)
+	}
+	if vsA.CvrProbBest.Sd <= float64(0.0) {
+		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, vsA.CvrProbBest.Sd)
+	}
+	if vsA.CvrProbBest.Rhat <= float64(0.0) {
+		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, vsA.CvrProbBest.Rhat)
+	}
+	// cvr prob beat baseline
+	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Mean)
+	}
+	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Sd, 0.0, compareFloatOpt); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Sd)
+	}
+	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Rhat, 0.0, compareFloatOpt); diff != "" {
+		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Rhat)
+	}
+	// value sum per user prob best
+	if vsA.GoalValueSumPerUserProbBest.Mean <= float64(0.0) {
+		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, vsA.GoalValueSumPerUserProbBest.Mean)
+	}
+	// value sum per user prob beat baseline
+	if diff := cmp.Diff(vsA.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
+		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, vsA.GoalValueSumPerUserProbBeatBaseline.Mean)
+	}
+}
+
+// This check the result for variation B
+func checkExperimentVariationResultB(t *testing.T, vsB *ecproto.VariationResult, variationValue string) {
+	t.Helper()
+	// Evaluation
+	// Evaluation
+	if vsB.EvaluationCount.EventCount != 3 {
+		t.Fatalf("variation: %s: evaluation event count is not correct: %d", variationValue, vsB.EvaluationCount.EventCount)
+	}
+	if vsB.EvaluationCount.UserCount != 2 {
+		t.Fatalf("variation: %s: evaluation user count is not correct: %d", variationValue, vsB.EvaluationCount.UserCount)
+	}
+	// Experiment
+	if vsB.ExperimentCount.EventCount != 3 {
+		t.Fatalf("variation: %s: experiment event count is not correct: %d", variationValue, vsB.ExperimentCount.EventCount)
+	}
+	if vsB.ExperimentCount.UserCount != 2 {
+		t.Fatalf("variation: %s: experiment user count is not correct: %d", variationValue, vsB.ExperimentCount.UserCount)
+	}
+	if diff := cmp.Diff(vsB.ExperimentCount.ValueSum, 0.35, compareFloatOpt); diff != "" {
+		t.Fatalf("variation: %s: experiment value sum is not correct: %f", variationValue, vsB.ExperimentCount.ValueSum)
+	}
+	// cvr prob best
+	if vsB.CvrProbBest.Mean <= float64(0.0) {
+		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, vsB.CvrProbBest.Mean)
+	}
+	if vsB.CvrProbBest.Sd <= float64(0.0) {
+		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, vsB.CvrProbBest.Sd)
+	}
+	if vsB.CvrProbBest.Rhat <= float64(0.0) {
+		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, vsB.CvrProbBest.Rhat)
+	}
+	// cvr prob beat baseline
+	if vsB.CvrProbBeatBaseline.Mean <= float64(0.0) {
+		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Mean)
+	}
+	if vsB.CvrProbBeatBaseline.Sd <= float64(0.0) {
+		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Sd)
+	}
+	if vsB.CvrProbBeatBaseline.Rhat <= float64(0.0) {
+		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Rhat)
+	}
+	// value sum per user prob best
+	if vsB.GoalValueSumPerUserProbBest.Mean <= float64(0.0) {
+		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, vsB.GoalValueSumPerUserProbBest.Mean)
+	}
+	// value sum per user prob beat baseline
+	if vsB.GoalValueSumPerUserProbBeatBaseline.Mean <= float64(0.0) {
+		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, vsB.GoalValueSumPerUserProbBeatBaseline.Mean)
+	}
 }
