@@ -26,7 +26,6 @@ jobs:
           package-name: release-please-action
           bump-minor-pre-major: true
           bump-patch-for-minor-pre-major: true
-          release-as: 0.4.0
           token: ${{ secrets.REPO_ACCESS_PAT }} # We need to set the PAT so the publishing workflow can be triggered
           extra-files: |
             manifests/bucketeer/values.yaml
