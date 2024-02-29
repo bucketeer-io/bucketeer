@@ -59,7 +59,7 @@ export const PushList: FC<PushListProps> = memo(
           <a
             className="link"
             target="_blank"
-            href="https://bucketeer.io/docs#/push-propagation"
+            href="https://docs.bucketeer.io/integration/pushes"
             rel="noreferrer"
           >
             {f(messages.readMore)}
