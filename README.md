@@ -62,7 +62,7 @@ Apache License 2.0, see [LICENSE](https://github.com/bucketeer-io/bucketeer/blob
 
 We would ❤️ for you to contribute to Bucketeer and help improve it! Anyone can use and enjoy it!
 
-Please follow our contribution guide [here](https://docs.bucketeer.io/contribution-guide/).
+Please follow our contribution guide [here](https://docs.bucketeer.io/contribution-guide/contributing).
 
 Big thanks to all Bucketeer contributors who have helped us since the beginning!
 
@@ -90,3 +90,4 @@ Big thanks to all Bucketeer contributors who have helped us since the beginning!
 <a href="https://github.com/YukiMatsumura"><img src="https://avatars.githubusercontent.com/u/1576836?v=4" title="YukiMatsumura" width="80" height="80"></a>
 <a href="https://github.com/yysskk"><img src="https://avatars.githubusercontent.com/u/7744927?v=4" title="yysskk" width="80" height="80"></a>
 <a href="https://github.com/xenbase"><img src="https://avatars.githubusercontent.com/u/1312483?v=4" title="xenbase" width="80" height="80"></a>
+<a href="https://github.com/unvalley"><img src="https://avatars.githubusercontent.com/u/38400669?v=4" title="xenbase" width="80" height="80"></a>
