@@ -37,8 +37,7 @@ import (
 )
 
 const (
-	fiveMinutes     = 5 * time.Minute
-	listRequestSize = 500
+	fiveMinutes = 5 * time.Minute
 )
 
 func (s *AutoOpsService) CreateProgressiveRollout(
@@ -845,36 +844,6 @@ func (s *AutoOpsService) validateCommand(
 		return nil
 	}
 	return nil
-}
-
-func (s *AutoOpsService) listAutoOpsRulesByFeatureID(
-	ctx context.Context,
-	req *autoopsproto.CreateProgressiveRolloutRequest,
-	localizer locale.Localizer,
-	storage v2as.AutoOpsRuleStorage,
-) ([]*autoopsproto.AutoOpsRule, error) {
-	allRules := []*autoopsproto.AutoOpsRule{}
-	cursor := ""
-	for {
-		rules, c, err := s.listAutoOpsRules(
-			ctx,
-			listRequestSize,
-			cursor,
-			[]string{req.Command.FeatureId},
-			req.EnvironmentNamespace,
-			localizer,
-			storage,
-		)
-		if err != nil {
-			return nil, err
-		}
-		allRules = append(allRules, rules...)
-		size := len(rules)
-		if size == 0 || size < listRequestSize {
-			return allRules, nil
-		}
-		cursor = c
-	}
 }
 
 func (s *AutoOpsService) getFeature(
