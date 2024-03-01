@@ -55,20 +55,19 @@ func CheckEnvironmentRole(
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
-	// TODO remove this condition after migration to AccountV2
-	if !token.IsSystemAdmin {
-		// get account for the environment namespace
-		account, err := getAccountFunc(token.Email)
-		if err != nil {
-			if code := status.Code(err); code == codes.NotFound {
-				return nil, ErrUnauthenticated
-			}
-			return nil, ErrInternal
-		}
-		accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
-		return checkRole(account.Email, accountEnvRole, requiredRole, false)
+	if token.IsSystemAdmin {
+		return checkRole(token.Email, accountproto.AccountV2_Role_Environment_EDITOR, requiredRole, true)
 	}
-	return checkRole(token.Email, accountproto.AccountV2_Role_Environment_EDITOR, requiredRole, true)
+	// get account for the environment namespace
+	account, err := getAccountFunc(token.Email)
+	if err != nil {
+		if code := status.Code(err); code == codes.NotFound {
+			return nil, ErrUnauthenticated
+		}
+		return nil, ErrInternal
+	}
+	accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
+	return checkRole(account.Email, accountEnvRole, requiredRole, false)
 }
 
 func getRole(roles []*accountproto.AccountV2_EnvironmentRole, envID string) accountproto.AccountV2_Role_Environment {
@@ -103,7 +102,6 @@ func CheckOrganizationRole(
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
-	// TODO remove this condition after migration to AccountV2
 	if token.IsSystemAdmin {
 		return &eventproto.Editor{
 			Email:   token.Email,
