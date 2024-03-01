@@ -281,11 +281,11 @@ export const PushIndexPage: FC = memo(() => {
           id: data.push.id,
         })
       ).then(() => {
-        updatePushList(null, 1);
+        updatePushList(searchOptions, 1);
         setIsConfirmDialogOpen(false);
       });
     },
-    [dispatch, setIsConfirmDialogOpen]
+    [dispatch, setIsConfirmDialogOpen, searchOptions]
   );
 
   useEffect(() => {

@@ -117,6 +117,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
           status: null,
           orderBy: ListGoalsRequest.OrderBy.DEFAULT,
           orderDirection: ListGoalsRequest.OrderDirection.ASC,
+          archived: false,
         })
       );
       dispatch(
@@ -129,6 +130,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
           enabled: null,
           hasExperiment: null,
           maintainerId: null,
+          archived: false,
           orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
           orderDirection: ListFeaturesRequest.OrderDirection.ASC,
         })
