@@ -52,7 +52,6 @@ func (c *InMemoryCache) startEvicter(evictionInterval time.Duration) {
 		case now := <-ticker.C:
 			c.evictExpired(now)
 		case <-c.doneCh:
-			ticker.Stop()
 			return
 		}
 	}
