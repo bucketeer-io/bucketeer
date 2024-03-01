@@ -130,20 +130,8 @@ func TestGetFlagTrigger(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	baseFlagTrigger := &proto.FlagTrigger{
-		Id:                   "1",
-		FeatureId:            "featureId",
-		EnvironmentNamespace: "ns0",
-		Type:                 proto.FlagTrigger_Type_WEBHOOK,
-		Action:               proto.FlagTrigger_Action_ON,
-		Description:          "base",
-		TriggerCount:         100,
-		LastTriggeredAt:      500,
-		Token:                "test-token",
-		Disabled:             false,
-		CreatedAt:            200,
-		UpdatedAt:            300,
-	}
+	baseId := "1"
+	baseEnvironmentNamespace := "ns0"
 
 	patterns := []struct {
 		desc           string
@@ -194,26 +182,55 @@ func TestGetFlagTrigger(t *testing.T) {
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.FlagTrigger{
-					FlagTrigger: baseFlagTrigger,
+					FlagTrigger: &proto.FlagTrigger{
+						Id:                   baseId,
+						FeatureId:            "featureId",
+						EnvironmentNamespace: baseEnvironmentNamespace,
+						Type:                 proto.FlagTrigger_Type_WEBHOOK,
+						Action:               proto.FlagTrigger_Action_ON,
+						Description:          "base",
+						TriggerCount:         100,
+						LastTriggeredAt:      500,
+						Token:                "test-token",
+						Disabled:             false,
+						CreatedAt:            200,
+						UpdatedAt:            300,
+					},
 				}, nil)
 			},
-			input: &proto.GetFlagTriggerRequest{Id: baseFlagTrigger.Id, EnvironmentNamespace: baseFlagTrigger.EnvironmentNamespace},
+			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentNamespace: baseEnvironmentNamespace},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
 		},
 		{
-			desc:    "Success with Viewer Account",
+			desc: "Success with Viewer Account",
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
 			service: createFeatureServiceForViewer(mockController),
-			context: createContextWithTokenRoleUnassigned(),
 			setup: func(s *FeatureService) {
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.FlagTrigger{
-					FlagTrigger: baseFlagTrigger,
+					FlagTrigger: &proto.FlagTrigger{
+						Id:                   "1",
+						FeatureId:            "featureId",
+						EnvironmentNamespace: "ns0",
+						Type:                 proto.FlagTrigger_Type_WEBHOOK,
+						Action:               proto.FlagTrigger_Action_ON,
+						Description:          "base",
+						TriggerCount:         100,
+						LastTriggeredAt:      500,
+						Token:                "test-token",
+						Disabled:             false,
+						CreatedAt:            200,
+						UpdatedAt:            300,
+					},
 				}, nil)
 			},
-			input: &proto.GetFlagTriggerRequest{Id: baseFlagTrigger.Id, EnvironmentNamespace: baseFlagTrigger.EnvironmentNamespace},
+			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentNamespace: baseEnvironmentNamespace},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},

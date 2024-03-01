@@ -225,12 +225,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, false)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
+	createError := func(localizer locale.Localizer, status *gstatus.Status, msg string) error {
 		st, err := status.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
@@ -240,32 +235,44 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*auditlogService)
-		input       *proto.ListFeatureHistoryRequest
-		expected    *proto.ListFeatureHistoryResponse
-		expectedErr error
+		desc           string
+		service        *auditlogService
+		context        context.Context
+		setup          func(*auditlogService)
+		input          *proto.ListFeatureHistoryRequest
+		expected       *proto.ListFeatureHistoryResponse
+		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
-			desc:        "err: ErrInvalidCursor",
-			setup:       nil,
-			input:       &proto.ListFeatureHistoryRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
-			expected:    nil,
-			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
+			desc:     "err: ErrInvalidCursor",
+			service:  newAuditLogService(t, mockController),
+			context:  createContextWithToken(t, false),
+			setup:    nil,
+			input:    &proto.ListFeatureHistoryRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(localizer, statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"))
+			},
 		},
 		{
-			desc: "err: ErrInternal",
+			desc:    "err: ErrInternal",
+			service: newAuditLogService(t, mockController),
+			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
-			input:       &proto.ListFeatureHistoryRequest{EnvironmentNamespace: "ns0"},
-			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			input:    &proto.ListFeatureHistoryRequest{EnvironmentNamespace: "ns0"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(localizer, statusInternal, localizer.MustLocalize(locale.InternalServerError))
+			},
 		},
 		{
-			desc: "success",
+			desc:    "success",
+			service: newAuditLogService(t, mockController),
+			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -274,59 +281,44 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			input: &proto.ListFeatureHistoryRequest{
 				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0",
 			},
-			expected:    &proto.ListFeatureHistoryResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: int64(10)},
-			expectedErr: nil,
+			expected: &proto.ListFeatureHistoryResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: int64(10)},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
 		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			s := newAuditLogService(t, mockController)
-			if p.setup != nil {
-				p.setup(s)
-			}
-			actual, err := s.ListFeatureHistory(ctx, p.input)
-			assert.Equal(t, p.expectedErr, err)
-			assert.Equal(t, p.expected, actual)
-		})
-	}
-}
-
-// Test that the APIs are successful with a Viewer account that is not SystemAdmin.
-func TestViewerEnvironmentRole(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	ctx := createContextWithTokenRoleUnassigned(t)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	service := newAuditLogServiceForViewer(t, mockController)
-	patterns := []struct {
-		desc   string
-		setup  func(*auditlogService)
-		action func(context.Context, *auditlogService) error
-	}{
 		{
-			desc: "ListFeatureHistory",
+			desc:    "success with viewer account",
+			service: newAuditLogServiceForViewer(t, mockController),
+			context: createContextWithTokenRoleUnassigned(t),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
-			action: func(ctx context.Context, s *auditlogService) error {
-				_, err := s.ListFeatureHistory(ctx, &proto.ListFeatureHistoryRequest{EnvironmentNamespace: "ns0"})
-				return err
+			input: &proto.ListFeatureHistoryRequest{
+				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0",
+			},
+			expected: &proto.ListFeatureHistoryResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: int64(10)},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
 			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			s := p.service
 			if p.setup != nil {
-				p.setup(service)
+				p.setup(s)
 			}
-			err := p.action(ctx, service)
-			assert.Nil(t, err, "%s", p.desc)
+			ctx := p.context
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"ja"},
+			})
+			localizer := locale.NewLocalizer(ctx)
+
+			actual, err := s.ListFeatureHistory(ctx, p.input)
+			assert.Equal(t, p.getExpectedErr(localizer), err)
+			assert.Equal(t, p.expected, actual)
 		})
 	}
 }

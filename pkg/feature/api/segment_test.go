@@ -361,9 +361,9 @@ func TestGetSegmentMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer account",
-			service: createFeatureService(mockController),
+			service: createFeatureServiceForViewer(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithTokenRoleUnassigned(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {

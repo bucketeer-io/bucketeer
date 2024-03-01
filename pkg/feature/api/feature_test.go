@@ -4235,12 +4235,3 @@ func newUUID(t *testing.T) string {
 	}
 	return id.String()
 }
-
-//func createError(t *testing.T, status *gstatus.Status, msg string, localizer locale.Localizer) error {
-//	st, err := status.WithDetails(&errdetails.LocalizedMessage{
-//		Locale:  localizer.GetLocale(),
-//		Message: msg,
-//	})
-//	require.NoError(t, err)
-//	return st.Err()
-//}

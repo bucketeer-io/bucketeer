@@ -546,17 +546,20 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
+		service     *AutoOpsService
 		setup       func(*AutoOpsService)
 		req         *autoopsproto.GetAutoOpsRuleRequest
 		expectedErr error
 	}{
 		{
 			desc:        "err: ErrIDRequired",
+			service:     createAutoOpsService(mockController, nil),
 			req:         &autoopsproto.GetAutoOpsRuleRequest{EnvironmentNamespace: "ns0"},
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNotFound",
+			desc:    "err: ErrNotFound",
+			service: createAutoOpsService(mockController, nil),
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -568,7 +571,21 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
-			desc: "success",
+			desc:    "success",
+			service: createAutoOpsService(mockController, nil),
+			setup: func(s *AutoOpsService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "aid1", EnvironmentNamespace: "ns0"},
+			expectedErr: nil,
+		},
+		{
+			desc:    "success with view account",
+			service: createServiceForViewer(mockController),
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -582,7 +599,7 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := p.service
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -598,11 +615,33 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
+		desc        string
+		service     *AutoOpsService
+		context     context.Context
 		setup       func(*AutoOpsService)
 		req         *autoopsproto.ListAutoOpsRulesRequest
 		expectedErr error
 	}{
 		{
+			desc:    "success",
+			service: createAutoOpsService(mockController, nil),
+			context: createContextWithTokenRoleUnassigned(t),
+			setup: func(s *AutoOpsService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			expectedErr: nil,
+		},
+		{
+			desc:    "success with view ",
+			service: createServiceForViewer(mockController),
+			context: createContextWithTokenRoleUnassigned(t),
 			setup: func(s *AutoOpsService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -617,11 +656,67 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := createAutoOpsService(mockController, nil)
+		service := p.service
 		if p.setup != nil {
 			p.setup(service)
 		}
-		_, err := service.ListAutoOpsRules(createContextWithTokenRoleUnassigned(t), p.req)
+		_, err := service.ListAutoOpsRules(p.context, p.req)
+		assert.Equal(t, p.expectedErr, err)
+	}
+}
+
+func TestListOpsCountsMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		service     *AutoOpsService
+		context     context.Context
+		setup       func(*AutoOpsService)
+		req         *autoopsproto.ListOpsCountsRequest
+		expectedErr error
+	}{
+		{
+			desc:    "success",
+			service: createAutoOpsService(mockController, nil),
+			context: createContextWithTokenRoleUnassigned(t),
+			setup: func(s *AutoOpsService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			expectedErr: nil,
+		},
+		{
+			desc:    "success with view ",
+			service: createServiceForViewer(mockController),
+			context: createContextWithTokenRoleUnassigned(t),
+			setup: func(s *AutoOpsService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		service := p.service
+		if p.setup != nil {
+			p.setup(service)
+		}
+		_, err := service.ListOpsCounts(p.context, p.req)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -761,82 +856,6 @@ func TestExistGoal(t *testing.T) {
 			actual, err := s.existGoal(context.Background(), "ns-0", p.goalID)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-// Test that the APIs are successful with a Viewer account that is not SystemAdmin.
-func TestViewerEnvironmentRole(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	ctx := createContextWithTokenRoleUnassigned(t)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	service := createServiceForViewer(mockController)
-	patterns := []struct {
-		desc   string
-		setup  func(opsService *AutoOpsService)
-		action func(context.Context, *AutoOpsService) error
-	}{
-		{
-			desc: "ListAutoOpsRules",
-			setup: func(s *AutoOpsService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-			},
-			action: func(ctx context.Context, s *AutoOpsService) error {
-				_, err := s.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{EnvironmentNamespace: "ns0"})
-				return err
-			},
-		},
-		{
-			desc: "GetAutoOpsRule",
-			setup: func(s *AutoOpsService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-			},
-			action: func(ctx context.Context, s *AutoOpsService) error {
-				_, err := s.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-					Id:                   "aid1",
-					EnvironmentNamespace: "ns0"})
-				return err
-			},
-		},
-		{
-			desc: "ListOpsCounts",
-			setup: func(s *AutoOpsService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-			},
-			action: func(ctx context.Context, s *AutoOpsService) error {
-				_, err := s.ListOpsCounts(ctx, &autoopsproto.ListOpsCountsRequest{EnvironmentNamespace: "ns0"})
-				return err
-			},
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			if p.setup != nil {
-				p.setup(service)
-			}
-			err := p.action(ctx, service)
-			assert.Nil(t, err, "%s", p.desc)
 		})
 	}
 }
