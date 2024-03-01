@@ -179,13 +179,13 @@ func NewPersister(
 
 func (p *persister) Run() error {
 	defer close(p.doneCh)
-	timer := time.NewTimer(p.opts.checkInterval)
-	defer timer.Stop()
+	ticker := time.NewTicker(p.opts.checkInterval)
+	defer ticker.Stop()
 	subscription := make(chan struct{})
 	go p.subscribe(subscription)
 	for {
 		select {
-		case <-timer.C:
+		case <-ticker.C:
 			// check if there are not been triggerd auto ops rules
 			exist, err := p.checkAutoOpsRules(p.ctx)
 			if err != nil {
@@ -233,7 +233,6 @@ func (p *persister) Run() error {
 					p.logger.Debug("Subscription does not exist", zap.String("subscription", p.subscription))
 				}
 			}
-			timer.Reset(p.opts.checkInterval)
 		case <-p.ctx.Done():
 			p.logger.Debug("Context is done")
 			if p.IsRunning() {
@@ -334,8 +333,8 @@ func (p *persister) checkAutoOpsRules(ctx context.Context) (bool, error) {
 
 func (p *persister) batch() error {
 	batch := make(map[string]*puller.Message)
-	timer := time.NewTimer(p.opts.flushInterval)
-	defer timer.Stop()
+	ticker := time.NewTicker(p.opts.flushInterval)
+	defer ticker.Stop()
 	for {
 		select {
 		case msg, ok := <-p.rateLimitedPuller.MessageCh():
@@ -361,13 +360,11 @@ func (p *persister) batch() error {
 			}
 			p.send(batch)
 			batch = make(map[string]*puller.Message)
-			timer.Reset(p.opts.flushInterval)
-		case <-timer.C:
+		case <-ticker.C:
 			if len(batch) > 0 {
 				p.send(batch)
 				batch = make(map[string]*puller.Message)
 			}
-			timer.Reset(p.opts.flushInterval)
 		case <-p.runningPullerCtx.Done():
 			batchSize := len(batch)
 			p.logger.Info("Context is done", zap.Int("batchSize", batchSize))
