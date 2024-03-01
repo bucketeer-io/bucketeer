@@ -876,9 +876,20 @@ func (s *AutoOpsService) validateTargetFeature(
 		}
 		return dt.Err()
 	}
+	if err := s.checkIfHasExperiment(ctx, f.Id, localizer); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AutoOpsService) checkIfHasExperiment(
+	ctx context.Context,
+	featureID string,
+	localizer locale.Localizer,
+) error {
 	// Check if the feature has scheduled or running experiment
 	resp, err := s.experimentClient.ListExperiments(ctx, &exprpto.ListExperimentsRequest{
-		FeatureId: f.Id,
+		FeatureId: featureID,
 		Statuses: []exprpto.Experiment_Status{
 			exprpto.Experiment_WAITING,
 			exprpto.Experiment_RUNNING,
