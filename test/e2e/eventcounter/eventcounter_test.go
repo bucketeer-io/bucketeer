@@ -1463,7 +1463,7 @@ func createExperimentWithMultiGoals(
 	// Update experiment cache
 	batchClient := newBatchClient(t)
 	defer batchClient.Close()
-	numRetries := 5
+	numRetries := 6
 	for i := 0; i < numRetries; i++ {
 		_, err = batchClient.ExecuteBatchJob(
 			ctx,
@@ -1475,7 +1475,7 @@ func createExperimentWithMultiGoals(
 		if st.Code() == codes.Internal {
 			t.Fatal(err)
 		}
-		fmt.Printf("Failed to execute experiment cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		fmt.Printf("Failed to execute experiment cacher batch. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
 	}
 	if err != nil {
@@ -1489,7 +1489,7 @@ func updateFeatueFlagCache(t *testing.T) {
 	defer cancel()
 	batchClient := newBatchClient(t)
 	defer batchClient.Close()
-	numRetries := 5
+	numRetries := 6
 	var err error
 	for i := 0; i < numRetries; i++ {
 		_, err = batchClient.ExecuteBatchJob(
@@ -1502,7 +1502,7 @@ func updateFeatueFlagCache(t *testing.T) {
 		if st.Code() == codes.Internal {
 			t.Fatal(err)
 		}
-		fmt.Printf("Failed to execute feature flag cacher batch. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		fmt.Printf("Failed to execute feature flag cacher batch. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
 	}
 	if err != nil {
@@ -1941,7 +1941,21 @@ func getEvaluation(t *testing.T, tag string, userID string) *gatewayproto.GetEva
 		Tag:  tag,
 		User: &userproto.User{Id: userID},
 	}
-	response, err := c.GetEvaluations(ctx, req)
+	var response *gatewayproto.GetEvaluationsResponse
+	var err error
+	numRetries := 6
+	for i := 0; i < numRetries; i++ {
+		response, err = c.GetEvaluations(ctx, req)
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to get evaluations. Error code: %d. Retrying in 5 seconds.\n", st.Code())
+		time.Sleep(5 * time.Second)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1956,14 +1970,25 @@ func getExperiment(t *testing.T, c experimentclient.Client, id string) *experime
 		EnvironmentNamespace: *environmentNamespace,
 		Id:                   id,
 	}
-	res, err := c.GetExperiment(ctx, req)
-	if err != nil {
-		// pass not found error
-		if err.Error() != "rpc error: code = NotFound desc = eventcounter: not found" {
+	var response *experimentproto.GetExperimentResponse
+	var err error
+	numRetries := 6
+	for i := 0; i < numRetries; i++ {
+		response, err = c.GetExperiment(ctx, req)
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
 			t.Fatal(err)
 		}
+		fmt.Printf("Failed to get experiment. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", id, st.Code())
+		time.Sleep(5 * time.Second)
 	}
-	return res
+	if err != nil {
+		t.Fatal(err)
+	}
+	return response
 }
 
 func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) *ecproto.GetExperimentResultResponse {
@@ -1974,12 +1999,23 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) *
 		ExperimentId:         experimentID,
 		EnvironmentNamespace: *environmentNamespace,
 	}
-	response, err := c.GetExperimentResult(ctx, req)
-	if err != nil {
-		// pass not found error
-		if err.Error() != "rpc error: code = NotFound desc = eventcounter: not found" {
+	var response *ecproto.GetExperimentResultResponse
+	var err error
+	numRetries := 6
+	for i := 0; i < numRetries; i++ {
+		response, err = c.GetExperimentResult(ctx, req)
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
 			t.Fatal(err)
 		}
+		fmt.Printf("Failed to get experiment result. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", experimentID, st.Code())
+		time.Sleep(5 * time.Second)
+	}
+	if err != nil {
+		t.Fatal(err)
 	}
 	return response
 }
@@ -1997,7 +2033,21 @@ func getExperimentEvaluationCount(t *testing.T, c ecclient.Client, featureID str
 		FeatureVersion:       featureVersion,
 		VariationIds:         variationIDs,
 	}
-	response, err := c.GetExperimentEvaluationCount(ctx, req)
+	var response *ecproto.GetExperimentEvaluationCountResponse
+	var err error
+	numRetries := 6
+	for i := 0; i < numRetries; i++ {
+		response, err = c.GetExperimentEvaluationCount(ctx, req)
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to get experiment evaluation count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
+		time.Sleep(5 * time.Second)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2020,7 +2070,7 @@ func getExperimentGoalCount(t *testing.T, c ecclient.Client, goalID, featureID s
 	}
 	var response *ecproto.GetExperimentGoalCountResponse
 	var err error
-	numRetries := 5
+	numRetries := 6
 	for i := 0; i < numRetries; i++ {
 		response, err = c.GetExperimentGoalCount(ctx, req)
 		if err == nil {
@@ -2030,7 +2080,7 @@ func getExperimentGoalCount(t *testing.T, c ecclient.Client, goalID, featureID s
 		if st.Code() == codes.Internal {
 			t.Fatal(err)
 		}
-		fmt.Printf("Failed to get experiment goal count. Error code: %d\n. Retrying in 5 seconds.", st.Code())
+		fmt.Printf("Failed to get experiment goal count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
 	}
 	if err != nil {
@@ -2047,9 +2097,20 @@ func getFeature(t *testing.T, client featureclient.Client, featureID string) *fe
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	response, err := client.GetFeature(ctx, getReq)
-	if err != nil {
-		t.Fatal("Failed to get feature:", err)
+	var response *featureproto.GetFeatureResponse
+	var err error
+	numRetries := 6
+	for i := 0; i < numRetries; i++ {
+		response, err = client.GetFeature(ctx, getReq)
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Internal {
+			t.Fatal(err)
+		}
+		fmt.Printf("Failed to get feature. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
+		time.Sleep(5 * time.Second)
 	}
 	return response.Feature
 }
